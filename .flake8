@@ -1,0 +1,6 @@
+[flake8]
+# W293 blank line contains whitespace
+# W504 line break after binary operator
+# W291 trailing whitespace
+ignore = W293, W504, W291
+max-line-length = 140

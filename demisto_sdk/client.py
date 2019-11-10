@@ -4,13 +4,14 @@
 # Python client that invokes functions in the Demisto SDK.
 # To use the client, you should generate an API key under Settings->Integrations->API Keys
 #
-# Author:       Lior
+# Author:       Demisto
 # Version:      0.1
 #
 
 import sys
 from .packages.unifier import Unifier
 from .packages.splitter import Splitter
+from .content.creator import Creator
 from .common.configuration import Configuration
 
 
@@ -47,3 +48,7 @@ class Client:
                      yml_type=''):
         splitter = Splitter(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
         return splitter.extract_code(dest_path)
+
+    def create_content(self, circle_artifacts):
+        creator = Creator(circle_artifacts, self.dir_to_prefix)
+        creator.create_content()

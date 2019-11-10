@@ -166,4 +166,3 @@ class Splitter:
                     'Could not auto determine yml type ({}/{}) based on path: {}'
                         .format(SCRIPT, INTEGRATION, self.yml_path))
         return yml_type
-

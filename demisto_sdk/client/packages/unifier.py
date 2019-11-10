@@ -194,5 +194,3 @@ class Unifier:
         if remove_print_future:  # docs generation requires to leave this
             script_code = script_code.replace("from __future__ import print_function", "")
         return script_code
-
-

@@ -162,8 +162,6 @@ class Splitter:
             elif INTEGRATION in self.yml_path.lower():
                 yml_type = INTEGRATION
             else:
-                raise ValueError(
-                    'Could not auto determine yml type ({}/{}) based on path: {}'
-                        .format(SCRIPT, INTEGRATION, self.yml_path))
+                raise ValueError('Could not auto determine yml type ({}/{}) based on path: {}'
+                                 .format(SCRIPT, INTEGRATION, self.yml_path))
         return yml_type
-

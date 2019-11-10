@@ -4,7 +4,7 @@
 # Python client that invokes functions in the Demisto SDK.
 # To use the client, you should generate an API key under Settings->Integrations->API Keys
 #
-# Author:       Lior
+# Author:       Demisto
 # Version:      0.1
 #
 

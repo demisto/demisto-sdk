@@ -1,20 +1,24 @@
 #!/usr/bin/env python3.7
 
-# Client
+# DemistoSDK
 # Python client that invokes functions in the Demisto SDK.
-# To use the client, you should generate an API key under Settings->Integrations->API Keys
 #
 # Author:       Demisto
 # Version:      0.1
 #
 
 import sys
-from .packages.unifier import Unifier
-from .packages.splitter import Splitter
+
+from demisto_sdk.common.tools import str2bool
+from .yaml_tools.unifier import Unifier
+from .yaml_tools.extractor import Extractor
 from .common.configuration import Configuration
 
 
-class Client:
+class DemistoSDK:
+    SCRIPT = 'script'
+    INTEGRATION = 'integration'
+
     def __init__(self, configuration=Configuration()):
         self.dir_to_prefix = {
             'Integrations': 'integration',
@@ -40,10 +44,10 @@ class Client:
 
     def migrate_file(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):
-        splitter = Splitter(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
+        splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
         return splitter.migrate()
 
     def extract_code(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):
-        splitter = Splitter(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
+        splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
         return splitter.extract_code(dest_path)

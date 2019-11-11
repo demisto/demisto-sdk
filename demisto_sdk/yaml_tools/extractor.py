@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import yaml
 import os
 import base64
@@ -16,7 +14,7 @@ INTEGRATION = 'integration'
 SCRIPT = 'script'
 
 
-class Splitter:
+class Extractor:
     def __init__(self, yml_path: str, dest_path: str, add_demisto_mock: bool, add_common_server: bool, yml_type: str,
                  configuration: Configuration):
         self.yml_path = yml_path

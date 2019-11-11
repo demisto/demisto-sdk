@@ -9,7 +9,6 @@
 
 import sys
 
-from demisto_sdk.common.tools import str2bool
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .common.configuration import Configuration

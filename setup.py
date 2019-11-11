@@ -35,6 +35,9 @@ setup(
     install_requires=requirements,
     packages=find_packages(),
     include_package_data=True,
+    entry_points={
+        'console_scripts': ['demisto_sdk=demisto_sdk.__main__:console_entry']
+    },
     long_description=readme,
     long_description_content_type='text/markdown',
     license='MIT',

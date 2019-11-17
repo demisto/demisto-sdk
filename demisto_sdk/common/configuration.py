@@ -16,14 +16,12 @@ class Configuration:
 
 
 class ValidationConfiguration(Configuration):
-    def __init__(self, default_env_dir=None, is_backward_check=True, prev_ver='origin/master', is_forked=False,
-                 is_circle=False, print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
-                 use_git=False):
+    def __init__(self, default_env_dir=None, is_backward_check=True, prev_ver='origin/master', use_git=False,
+                 is_circle=False, print_ignored_files=False, validate_conf_json=True, validate_id_set=False):
         """
 
         :param is_backward_check:
         :param prev_ver:
-        :param is_forked:
         :param is_circle (bool): whether we are running on circle or local env.
         :param print_ignored_files (bool): should print ignored files when iterating over changed files.
         """
@@ -31,7 +29,6 @@ class ValidationConfiguration(Configuration):
         self.content_dir = os.path.abspath(self.env_dir + '/../..')
         self.is_backward_check = is_backward_check
         self.prev_ver = prev_ver
-        self.is_forked = is_forked
         self.is_circle = is_circle
         self.print_ignored_files = print_ignored_files
         self.validate_conf_json = validate_conf_json

@@ -3,7 +3,7 @@ import re
 
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.common.tools import str2bool, run_command, print_color, LOG_COLORS
-from demisto_sdk.common.constants import SCRIPT_CHOICE, INTEGRATION_CHOICE, EXTERNAL_PR_REGEX
+from demisto_sdk.common.constants import SCRIPT_CHOICE, INTEGRATION_CHOICE
 from demisto_sdk.common.configuration import ValidationConfiguration
 
 
@@ -65,13 +65,11 @@ def main():
 
 def validate_files(args):
     branch_name = ''
-    is_forked = False
     use_git = args.use_git
     if use_git:
         branches = run_command('git branch')
         branch_name_reg = re.search(r'\* (.*)', branches)
         branch_name = branch_name_reg.group(1)
-        is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None
 
     is_circle = args.circle
     is_backward_check = args.backward_comp
@@ -79,7 +77,7 @@ def validate_files(args):
 
     print_color('Starting validating files structure', LOG_COLORS.GREEN)
     configuration = ValidationConfiguration.create(is_backward_check=is_backward_check, is_circle=is_circle,
-                                                   prev_ver=prev_ver, is_forked=is_forked, validate_conf_json=False,
+                                                   prev_ver=prev_ver, validate_conf_json=False,
                                                    use_git=use_git)
     configuration.append_sys_path()
     sdk = DemistoSDK(configuration)

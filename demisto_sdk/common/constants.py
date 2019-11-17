@@ -302,7 +302,6 @@ INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoin
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
                           'Deception', 'Email Gateway']
 
-EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 SCRIPT_CHOICE = 'script'
 INTEGRATION_CHOICE = 'integration'

@@ -12,6 +12,7 @@ import sys
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .common.configuration import Configuration
+from .validation.file_validator import FilesValidator
 
 
 class DemistoSDK:
@@ -50,3 +51,7 @@ class DemistoSDK:
                      yml_type=''):
         splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
         return splitter.extract_code(dest_path)
+
+    def validate(self, branch_name):
+        validator = FilesValidator(self.config)
+        return validator.is_valid_structure(branch_name, validate_conf=False)

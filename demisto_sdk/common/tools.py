@@ -311,6 +311,17 @@ def run_threads_list(threads_list):
         t.join()
 
 
+def get_dockerimage45(script_object):
+    """Get the docker image used up to 4.5 (including).
+
+    Arguments:
+        script_object {dict} -- [script object containing the dockerimage configuration]
+    """
+    if 'dockerimage45' in script_object:
+        return script_object['dockerimage45']
+    return script_object.get('dockerimage', '')
+
+
 def get_docker_images(script_obj):
     imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
     alt_imgs = script_obj.get('alt_dockerimages')

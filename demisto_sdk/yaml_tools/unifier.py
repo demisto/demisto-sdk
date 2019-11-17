@@ -6,9 +6,12 @@ import yaml
 import base64
 import re
 
+from demisto_sdk.common.tools import get_yaml
+from demisto_sdk.common.constants import TYPE_TO_EXTENSION
+
 
 class Unifier:
-    def __init__(self, package_path: str, dir_name: str, dest_path='', integration_prefix='integration',
+    def __init__(self, package_path: str, dir_name='Integrations', dest_path='', integration_prefix='integration',
                  script_prefix='script', image_prefix='data:image/png;base64,'):
         self.dir_to_prefix = {
             'Integrations': integration_prefix,
@@ -183,6 +186,22 @@ class Unifier:
         assert yml_script.strip() == clean_code.strip()
 
         return yml_text, script_path
+
+    def get_script_package_data(self):
+        if self.package_path[-1] != os.sep:
+            package_path = os.path.join(self.package_path, '')
+        yml_files = glob.glob(package_path + '*.yml')
+        if not yml_files:
+            raise Exception("No yml files found in package path: {}. "
+                            "Is this really a package dir? If not remove it.".format(package_path))
+        yml_path = yml_files[0]
+        code_type = get_yaml(yml_path).get('type')
+        unifier = Unifier(package_path)
+        code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
+        with open(code_path, 'r') as code_file:
+            code = code_file.read()
+
+        return yml_path, code
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):

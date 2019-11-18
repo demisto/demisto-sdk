@@ -14,7 +14,7 @@ import os
 import glob
 import yaml
 
-
+# TODO: do not import *
 from demisto_sdk.common.constants import *
 from demisto_sdk.common.hook_validations.id import IDSetValidator
 from demisto_sdk.common.hook_validations.image import ImageValidator

@@ -9,7 +9,7 @@
 
 import sys
 
-from .common.tools import run_command, print_color, LOG_COLORS, re
+from .common.tools import print_color, LOG_COLORS
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .common.configuration import Configuration

@@ -6,7 +6,7 @@ from collections import OrderedDict
 from multiprocessing import Pool, cpu_count
 import time
 
-
+# TODO: do not import *
 from demisto_sdk.common.constants import *
 from demisto_sdk.common.tools import get_yaml, get_to_version, get_from_version, collect_ids,\
     get_script_or_integration_id, LOG_COLORS, print_color, run_command

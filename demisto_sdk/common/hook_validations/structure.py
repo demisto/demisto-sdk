@@ -4,6 +4,7 @@ import os
 from pykwalify.core import Core
 
 from demisto_sdk.common.configuration import Configuration
+# TODO: do not import *
 from demisto_sdk.common.constants import *
 from demisto_sdk.common.tools import print_error, print_warning, run_command, get_yaml, get_json, checked_type, \
     get_release_notes_file_path, get_latest_release_notes_text

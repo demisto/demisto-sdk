@@ -1,7 +1,6 @@
 import json
 import yaml
 import os
-import sys
 from pykwalify.core import Core
 
 from demisto_sdk.common.configuration import ValidationConfiguration

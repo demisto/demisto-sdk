@@ -85,4 +85,3 @@ def test_is_valid_conf_json_negative_sanity_check():
 
     assert validator.is_valid_conf_json() is False, \
         "The conf validator didn't find the missing description sections although they don't exist"
-

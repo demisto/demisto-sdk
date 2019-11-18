@@ -8,6 +8,7 @@ from demisto_sdk.common.configuration import ValidationConfiguration
 
 
 def main():
+    # TODO: define parsers in classes
     parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers(help='stuff', dest='command')

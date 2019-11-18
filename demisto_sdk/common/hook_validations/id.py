@@ -4,6 +4,7 @@ import json
 from distutils.version import LooseVersion
 from collections import OrderedDict
 
+from demisto_sdk.common.configuration import ValidationConfiguration
 from demisto_sdk.common.tools import get_script_or_integration_id, collect_ids, print_error
 from demisto_sdk.common.constants import INTEGRATION_REGEX, TEST_PLAYBOOK_REGEX, SCRIPT_JS_REGEX, \
     SCRIPT_REGEX, TEST_SCRIPT_REGEX, INTEGRATION_YML_REGEX, PLAYBOOK_REGEX, SCRIPT_YML_REGEX, SCRIPT_PY_REGEX
@@ -33,12 +34,11 @@ class IDSetValidator:
 
     ID_SET_PATH = "./Tests/id_set.json"
 
-    def __init__(self, is_circle, is_test_run=False):
-        self.is_circle = is_circle
-
-        if not is_test_run and is_circle:
+    def __init__(self, is_test_run=False, configuration=ValidationConfiguration()):
+        self.is_circle = configuration.is_circle
+        if not is_test_run and self.is_circle:
             self.id_set = self.load_id_set()
-
+            self.id_set_path = os.path.join(configuration.env_dir, 'configs', 'id_set.json')
             self.script_set = self.id_set[self.SCRIPTS_SECTION]
             self.playbook_set = self.id_set[self.PLAYBOOK_SECTION]
             self.integration_set = self.id_set[self.INTEGRATION_SECTION]

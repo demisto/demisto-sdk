@@ -49,7 +49,7 @@ class FilesValidator:
         if self.configuration.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
         if self.configuration.validate_id_set:
-            self.id_set_validator = IDSetValidator(self.configuration.is_circle)
+            self.id_set_validator = IDSetValidator(configuration=self.configuration)
 
     @staticmethod
     def is_py_script_or_integration(file_path):

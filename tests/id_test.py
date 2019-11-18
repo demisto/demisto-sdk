@@ -1,10 +1,10 @@
 from demisto_sdk.common.hook_validations.id import IDSetValidator
-from demisto_sdk.common.configuration import ValidationConfiguration
-CONFIG = ValidationConfiguration()
+from demisto_sdk.common.configuration import Configuration
+CONFIG = Configuration()
 
 
 def test_validness_in_set():
-    validator = IDSetValidator(configuration=CONFIG, is_test_run=True)
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -20,7 +20,7 @@ def test_validness_in_set():
 
 
 def test_obj_not_found_in_set():
-    validator = IDSetValidator(configuration=CONFIG, is_test_run=True)
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -42,7 +42,7 @@ def test_obj_not_found_in_set():
 
 
 def test_obj_data_mismatch_in_set():
-    validator = IDSetValidator(configuration=CONFIG, is_test_run=True)
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -87,7 +87,7 @@ def test_duplicated_id_same_set():
 
 
 def test_duplicated_id_different_set():
-    validator = IDSetValidator(configuration=CONFIG, is_test_run=True)
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -111,7 +111,7 @@ def test_duplicated_id_different_set():
 
 
 def test_duplicated_id_with_same_versioning_diff_data():
-    validator = IDSetValidator(configuration=CONFIG, is_test_run=True)
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -135,7 +135,7 @@ def test_duplicated_id_with_same_versioning_diff_data():
 
 
 def test_duplicated_id_with_diff_versioning():
-    validator = IDSetValidator(configuration=CONFIG, is_test_run=True)
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {

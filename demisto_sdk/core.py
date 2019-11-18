@@ -9,6 +9,7 @@
 
 import sys
 
+from .common.tools import run_command, print_color, LOG_COLORS, re
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .common.configuration import Configuration
@@ -52,6 +53,10 @@ class DemistoSDK:
         splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
         return splitter.extract_code(dest_path)
 
-    def validate(self, branch_name):
-        validator = FilesValidator(self.config)
-        return validator.is_valid_structure(branch_name, validate_conf=False)
+    def validate(self, **kwargs):
+        sys.path.append(self.config.content_dir)
+
+        print_color('Starting validating files structure', LOG_COLORS.GREEN)
+
+        validator = FilesValidator(**kwargs)
+        return validator.is_valid_structure()

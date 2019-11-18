@@ -3,7 +3,7 @@ import yaml
 import os
 from pykwalify.core import Core
 
-from demisto_sdk.common.configuration import ValidationConfiguration
+from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import *
 from demisto_sdk.common.tools import print_error, print_warning, run_command, get_yaml, get_json, checked_type, \
     get_release_notes_file_path, get_latest_release_notes_text
@@ -65,8 +65,9 @@ class StructureValidator:
         INCIDENT_FIELD_REGEX: "incidentfield",
     }
 
-    def __init__(self, file_path, is_added_file=False, is_renamed=False, configuration=ValidationConfiguration()):
+    def __init__(self, file_path, use_git=True, is_added_file=False, is_renamed=False, configuration=Configuration()):
         self._is_valid = True
+        self.use_git = use_git
         self.file_path = file_path
         self.is_added_file = is_added_file
         self.is_renamed = is_renamed
@@ -83,7 +84,7 @@ class StructureValidator:
         self.is_valid_version()
         self.is_file_id_without_slashes()
 
-        if self.configuration.use_git:
+        if self.use_git:
             if not self.is_added_file:  # In case the file is modified
                 self.is_id_not_modified()
                 self.is_valid_fromversion_on_modified()

@@ -1,14 +1,12 @@
 import argparse
-import re
 
 from demisto_sdk.core import DemistoSDK
-from demisto_sdk.common.tools import str2bool, run_command, print_color, LOG_COLORS
-from demisto_sdk.common.constants import SCRIPT_CHOICE, INTEGRATION_CHOICE
-from demisto_sdk.common.configuration import ValidationConfiguration
+from demisto_sdk.common.tools import str2bool, print_color, LOG_COLORS
+from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
 def main():
-    # TODO: define parsers in classes
+    # TODO: Typings and docstrings
     parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers(help='stuff', dest='command')
@@ -19,6 +17,10 @@ def main():
                                    help='To check backward compatibility.')
     validation_parser.add_argument('-t', '--test-filter', type=str2bool, default=False,
                                    help='Check that tests are valid.')
+    validation_parser.add_argument('-j', '--conf-json', type=str2bool, default=False,
+                                   help='Validate the conf.json file.')
+    validation_parser.add_argument('-i', '--id-set', type=str2bool, default=False,
+                                   help='Create the id_set.json file.')
     validation_parser.add_argument('-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
     validation_parser.add_argument('-g', '--use-git', type=str2bool, default=True, help='Validate changes using git.')
 
@@ -36,7 +38,7 @@ def main():
                                      " Pass to -o option a directory in this case.")
     extract_parser.add_argument("-t", "--type",
                                 help="Yaml type. If not specified will try to determine type based upon path.",
-                                choices=[SCRIPT_CHOICE, INTEGRATION_CHOICE], default=None)
+                                choices=[SCRIPT_PREFIX, INTEGRATION_PREFIX], default=None)
     extract_parser.add_argument("-d", "--demistomock", help="Add an import for demisto mock",
                                 choices=[True, False], type=str2bool, default=True)
     extract_parser.add_argument("-c", "--commonserver",
@@ -59,28 +61,11 @@ def main():
     elif args.command == 'unify':
         sdk.unify_package(args.indir, args.outdir)
     elif args.command == 'validate':
-        validate_files(args)
+        if sdk.validate(is_backward_check=args.is_backward_check, is_circle=args.is_circle,
+                        prev_ver=args.prev_ver, validate_conf_json=args.validate_conf_json, use_git=args.use_git):
+            print_color('The files are valid', LOG_COLORS.GREEN)
+        else:
+            print_color('The files are invalid', LOG_COLORS.RED)
+
     else:
         print('Use demisto_sdk -h for help with the commands.')
-
-
-def validate_files(args):
-    branch_name = ''
-    use_git = args.use_git
-    if use_git:
-        branches = run_command('git branch')
-        branch_name_reg = re.search(r'\* (.*)', branches)
-        branch_name = branch_name_reg.group(1)
-
-    is_circle = args.circle
-    is_backward_check = args.backward_comp
-    prev_ver = args.prev_ver
-
-    print_color('Starting validating files structure', LOG_COLORS.GREEN)
-    configuration = ValidationConfiguration.create(is_backward_check=is_backward_check, is_circle=is_circle,
-                                                   prev_ver=prev_ver, validate_conf_json=False,
-                                                   use_git=use_git)
-    configuration.append_sys_path()
-    sdk = DemistoSDK(configuration)
-    if not sdk.validate(branch_name):
-        print_color('omg', LOG_COLORS.RED)

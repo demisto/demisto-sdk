@@ -303,5 +303,5 @@ INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoin
                           'Deception', 'Email Gateway']
 
 DEF_DOCKER = 'demisto/python:1.3-alpine'
-SCRIPT_CHOICE = 'script'
-INTEGRATION_CHOICE = 'integration'
+SCRIPT_PREFIX = 'script'
+INTEGRATION_PREFIX = 'integration'

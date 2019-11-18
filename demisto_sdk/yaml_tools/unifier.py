@@ -7,12 +7,12 @@ import base64
 import re
 
 from demisto_sdk.common.tools import get_yaml
-from demisto_sdk.common.constants import TYPE_TO_EXTENSION
+from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, INTEGRATION_PREFIX
 
 
 class Unifier:
-    def __init__(self, package_path: str, dir_name='Integrations', dest_path='', integration_prefix='integration',
-                 script_prefix='script', image_prefix='data:image/png;base64,'):
+    def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='',
+                 integration_prefix=INTEGRATION_PREFIX, script_prefix='script', image_prefix='data:image/png;base64,'):
         self.dir_to_prefix = {
             'Integrations': integration_prefix,
             'Beta_Integrations': integration_prefix,

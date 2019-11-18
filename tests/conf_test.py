@@ -18,6 +18,8 @@ TESTS_SECTION = [
     }
 ]
 
+# TODO: Unskip
+
 
 @pytest.mark.skip(reason="pending conf json fix")
 def test_conf_json_description():

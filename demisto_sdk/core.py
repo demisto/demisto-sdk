@@ -9,9 +9,11 @@
 
 import sys
 
+from .common.tools import print_color, LOG_COLORS
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .common.configuration import Configuration
+from .validation.file_validator import FilesValidator
 
 
 class DemistoSDK:
@@ -50,3 +52,11 @@ class DemistoSDK:
                      yml_type=''):
         splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
         return splitter.extract_code(dest_path)
+
+    def validate(self, **kwargs):
+        sys.path.append(self.config.content_dir)
+
+        print_color('Starting validating files structure', LOG_COLORS.GREEN)
+
+        validator = FilesValidator(**kwargs)
+        return validator.is_valid_structure()

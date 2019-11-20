@@ -18,7 +18,7 @@ You can import the SDK core class in your code as follows:
 `from demisto_sdk.core import DemistoSDK`
 
 ## Dev Environment Setup
-We build for 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
+We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
 
 Install `tox`:
 ```

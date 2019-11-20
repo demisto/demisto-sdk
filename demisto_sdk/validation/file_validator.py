@@ -40,7 +40,7 @@ class FilesValidator:
         id_set_validator (IDSetValidator): object for validating the id_set.json file(Created in Circle only).
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='master', use_git=True, is_circle=False,
+    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=True, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
                  configuration=Configuration()):
         self.branch_name = ''

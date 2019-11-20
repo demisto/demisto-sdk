@@ -184,4 +184,4 @@ class Extractor:
         parser.add_argument("-c", "--commonserver",
                             help=("Add an import for CommonServerPython. "
                                   " If not specified will import unless this is CommonServerPython"),
-                            choices=[True, False], type=str2bool, default=None)
+                            choices=[True, False], type=str2bool, default=True)

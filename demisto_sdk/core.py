@@ -58,7 +58,7 @@ class DemistoSDK:
             else:
                 print_color('The files are invalid', LOG_COLORS.RED)
         else:
-            print('Use demisto_sdk -h for help with the commands.')
+            print('Use demisto_sdk -h to see the available commands.')
 
     def unify_package(self, package_path, dest_path):
         directory_name = ""

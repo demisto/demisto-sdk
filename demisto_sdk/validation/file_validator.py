@@ -41,9 +41,9 @@ class FilesValidator:
         id_set_validator (IDSetValidator): object for validating the id_set.json file(Created in Circle only).
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=True,
+    def __init__(self, is_backward_check=True, prev_ver='master', use_git=True,
                  is_circle=False, print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
-                 configuration=Configuration):
+                 configuration=Configuration()):
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
@@ -51,10 +51,14 @@ class FilesValidator:
             branch_name_reg = re.search(r'\* (.*)', branches)
             self.branch_name = branch_name_reg.group(1)
 
+        self.prev_ver = prev_ver
+        if not self.prev_ver:
+            # validate against master if no version was provided
+            self.prev_ver = 'master'
+
         self._is_valid = True
         self.configuration = configuration
         self.is_backward_check = is_backward_check
-        self.prev_ver = prev_ver
         self.is_circle = is_circle
         self.print_ignored_files = print_ignored_files
         self.validate_conf_json = validate_conf_json
@@ -139,7 +143,6 @@ class FilesValidator:
         """Get lists of the modified and added files in your branch according to the git diff output.
 
         Args:
-            branch_name (string): The name of the branch we are working on.
             tag (string): String of git tag used to update modified files
 
         Returns:
@@ -348,13 +351,11 @@ class FilesValidator:
                         'The files are:\n{}'.format('\n'.join(list(invalid_files))))
             self._is_valid = False
 
-    def validate_committed_files(self, branch_name):
+    def validate_committed_files(self):
         """Validate that all the committed files in your branch are valid
 
-        Args:
-            branch_name (string): The name of the branch you are working on.
         """
-        modified_files, added_files, old_format_files = self.get_modified_and_added_files(branch_name, )
+        modified_files, added_files, old_format_files = self.get_modified_and_added_files()
         schema_changed = False
         for f in modified_files:
             if isinstance(f, tuple):
@@ -399,11 +400,8 @@ class FilesValidator:
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False
 
-    def is_valid_structure(self, branch_name=''):
+    def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.
-
-        Args:
-            branch_name (string): The name of the branch we are working on.
 
         Returns:
             (bool). Whether the structure is valid or not.
@@ -411,10 +409,11 @@ class FilesValidator:
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False
-        if branch_name:
-            if branch_name != 'master' and not branch_name.startswith('19.') and not branch_name.startswith('20.'):
+        if self.branch_name:
+            if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
+                                                 not self.branch_name.startswith('20.')):
                 # validates only committed files
-                self.validate_committed_files(branch_name)
+                self.validate_committed_files()
                 self.validate_against_previous_version(no_error=True)
             else:
                 self.validate_against_previous_version(no_error=True)
@@ -429,20 +428,15 @@ class FilesValidator:
         """Validate all files that were changed between previous version and branch_sha
 
         Args:
-            branch_sha (str): Current branch SHA1 to validate
             no_error (bool): If set to true will restore self._is_valid after run (will not return new errors)
         """
-        if not self.prev_ver:
-            with open('./.circleci/config.yml') as f:
-                config = yaml.safe_load(f)
-                prev_branch_sha = config['jobs']['build']['environment']['GIT_SHA1']
-
-        print_color('Starting validation against {}'.format(prev_branch_sha), LOG_COLORS.GREEN)
-        modified_files, _, _ = self.get_modified_and_added_files(self.branch_name)
-        prev_self_valid = self._is_valid
-        self.validate_modified_files(modified_files)
-        if no_error:
-            self._is_valid = prev_self_valid
+        if self.prev_ver and self.prev_ver != 'master':
+            print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
+            modified_files, _, _ = self.get_modified_and_added_files(self.prev_ver)
+            prev_self_valid = self._is_valid
+            self.validate_modified_files(modified_files)
+            if no_error:
+                self._is_valid = prev_self_valid
 
     @staticmethod
     def _is_py_script_or_integration(file_path):

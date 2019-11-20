@@ -61,8 +61,8 @@ def main():
     elif args.command == 'unify':
         sdk.unify_package(args.indir, args.outdir)
     elif args.command == 'validate':
-        if sdk.validate(is_backward_check=args.is_backward_check, is_circle=args.is_circle,
-                        prev_ver=args.prev_ver, validate_conf_json=args.validate_conf_json, use_git=args.use_git):
+        if sdk.validate(is_backward_check=args.backward_comp, is_circle=args.circle,
+                        prev_ver=args.prev_ver, validate_conf_json=args.conf_json, use_git=args.use_git):
             print_color('The files are valid', LOG_COLORS.GREEN)
         else:
             print_color('The files are invalid', LOG_COLORS.RED)

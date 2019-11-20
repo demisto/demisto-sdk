@@ -25,8 +25,10 @@ class Unifier:
         }
 
         self.image_prefix = image_prefix
-
         self.package_path = package_path
+        if not self.package_path.endswith('/'):
+            self.package_path += '/'
+
         self.dir_name = dir_name
         self.dest_path = dest_path
 

@@ -27,7 +27,7 @@ class DemistoSDK:
             'Scripts': 'script'
         }
 
-        self.config = configuration
+        self.configuration = configuration
 
     def unify_package(self, package_path, dest_path):
         directory_name = ""
@@ -45,18 +45,18 @@ class DemistoSDK:
 
     def migrate_file(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):
-        splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
+        splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.configuration)
         return splitter.migrate()
 
     def extract_code(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):
-        splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.config)
+        splitter = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.configuration)
         return splitter.extract_code(dest_path)
 
     def validate(self, **kwargs):
-        sys.path.append(self.config.content_dir)
+        sys.path.append(self.configuration.content_dir)
 
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
-        validator = FilesValidator(**kwargs)
+        validator = FilesValidator(configuration=self.configuration, **kwargs)
         return validator.is_valid_structure()

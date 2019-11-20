@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/demisto/demisto-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/demisto/demisto-sdk/tree/master)
+
 # Demisto SDK 
 
 The Demisto SDK library can be used to manage your Demisto content with ease and efficiency.

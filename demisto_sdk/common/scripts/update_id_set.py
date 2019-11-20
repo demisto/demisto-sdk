@@ -1,7 +1,6 @@
 import os
 import glob
 import json
-import argparse
 from collections import OrderedDict
 from multiprocessing import Pool, cpu_count
 import time

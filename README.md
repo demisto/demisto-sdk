@@ -15,7 +15,8 @@ The library uses python 3.7+.
 You can use the SDK in the CLI as follows:
 `demisto_sdk <action> <args>`. For more information, run `demisto_sdk -h`.
 
-Examples:
+#### Examples:
+
 `demisto_sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m` 
 will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
 

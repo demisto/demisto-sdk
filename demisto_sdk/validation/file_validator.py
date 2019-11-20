@@ -12,7 +12,6 @@ for that task.
 from __future__ import print_function
 import os
 import glob
-import yaml
 
 # TODO: do not import *
 from demisto_sdk.common.constants import *

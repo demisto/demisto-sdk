@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os
 import io
 import glob
@@ -6,13 +5,15 @@ import yaml
 import base64
 import re
 
-from demisto_sdk.common.tools import get_yaml
-from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, INTEGRATION_PREFIX
+from ..common.tools import get_yaml
+from ..common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, INTEGRATION_PREFIX
 
 
 class Unifier:
+
     def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='',
                  integration_prefix=INTEGRATION_PREFIX, script_prefix='script', image_prefix='data:image/png;base64,'):
+
         self.dir_to_prefix = {
             'Integrations': integration_prefix,
             'Beta_Integrations': integration_prefix,
@@ -214,3 +215,10 @@ class Unifier:
         if remove_print_future:  # docs generation requires to leave this
             script_code = script_code.replace("from __future__ import print_function", "")
         return script_code
+
+    @staticmethod
+    def add_sub_parser(subparsers):
+        parser = subparsers.add_parser('unify',
+                                       help='Unify code, image and description files to a single Demisto yaml file')
+        parser.add_argument("-i", "--indir", help="The path to the files to unify", required=True)
+        parser.add_argument("-o", "--outdir", help="The output dir to write the unified yml to", required=True)

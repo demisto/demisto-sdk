@@ -7,7 +7,8 @@ import tempfile
 from io import open
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
-from ..common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir
+from ..common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir, str2bool
+from ..common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 from ..common.configuration import Configuration
 
 INTEGRATION = 'integration'
@@ -15,6 +16,7 @@ SCRIPT = 'script'
 
 
 class Extractor:
+
     def __init__(self, yml_path: str, dest_path: str, add_demisto_mock: bool, add_common_server: bool, yml_type: str,
                  configuration: Configuration):
         self.yml_path = yml_path
@@ -163,3 +165,23 @@ class Extractor:
                 raise ValueError('Could not auto determine yml type ({}/{}) based on path: {}'
                                  .format(SCRIPT, INTEGRATION, self.yml_path))
         return yml_type
+
+    @staticmethod
+    def add_sub_parser(subparsers):
+        parser = subparsers.add_parser('extract', help='Extract code, image and description files' 
+                                                       ' from a demisto integration or script yaml file')
+        parser.add_argument("-i", "--infile", help="The yml file to extract from", required=True)
+        parser.add_argument("-o", "--outfile",
+                            help="The output file or dir (if doing migrate) to write the code to", required=True)
+        parser.add_argument("-m", "--migrate", action='store_true',
+                            help="Migrate an integration to package format."
+                                 " Pass to -o option a directory in this case.")
+        parser.add_argument("-t", "--type",
+                            help="Yaml type. If not specified will try to determine type based upon path.",
+                            choices=[SCRIPT_PREFIX, INTEGRATION_PREFIX], default=None)
+        parser.add_argument("-d", "--demistomock", help="Add an import for demisto mock",
+                            choices=[True, False], type=str2bool, default=True)
+        parser.add_argument("-c", "--commonserver",
+                            help=("Add an import for CommonServerPython. "
+                                  " If not specified will import unless this is CommonServerPython"),
+                            choices=[True, False], type=str2bool, default=None)

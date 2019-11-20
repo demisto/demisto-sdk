@@ -14,19 +14,19 @@ import os
 import glob
 
 # TODO: do not import *
-from demisto_sdk.common.constants import *
-from demisto_sdk.common.hook_validations.id import IDSetValidator
-from demisto_sdk.common.hook_validations.image import ImageValidator
-from demisto_sdk.yaml_tools.unifier import Unifier
-from demisto_sdk.common.hook_validations.script import ScriptValidator
-from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
-from demisto_sdk.common.hook_validations.structure import StructureValidator
-from demisto_sdk.common.hook_validations.integration import IntegrationValidator
-from demisto_sdk.common.hook_validations.description import DescriptionValidator
-from demisto_sdk.common.hook_validations.incident_field import IncidentFieldValidator
-from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, LOG_COLORS, \
-    get_yaml, filter_packagify_changes, collect_ids
-from demisto_sdk.common.configuration import Configuration
+from ..common.constants import *
+from ..common.hook_validations.id import IDSetValidator
+from ..common.hook_validations.image import ImageValidator
+from ..yaml_tools.unifier import Unifier
+from ..common.hook_validations.script import ScriptValidator
+from ..common.hook_validations.conf_json import ConfJsonValidator
+from ..common.hook_validations.structure import StructureValidator
+from ..common.hook_validations.integration import IntegrationValidator
+from ..common.hook_validations.description import DescriptionValidator
+from ..common.hook_validations.incident_field import IncidentFieldValidator
+from ..common.tools import checked_type, run_command, print_error, print_warning, print_color, LOG_COLORS, \
+    get_yaml, filter_packagify_changes, collect_ids, str2bool
+from ..common.configuration import Configuration
 
 
 class FilesValidator:
@@ -40,8 +40,8 @@ class FilesValidator:
         id_set_validator (IDSetValidator): object for validating the id_set.json file(Created in Circle only).
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='master', use_git=True,
-                 is_circle=False, print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
+    def __init__(self, is_backward_check=True, prev_ver='master', use_git=True, is_circle=False,
+                 print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
                  configuration=Configuration()):
         self.branch_name = ''
         self.use_git = use_git
@@ -53,7 +53,7 @@ class FilesValidator:
         self.prev_ver = prev_ver
         if not self.prev_ver:
             # validate against master if no version was provided
-            self.prev_ver = 'master'
+            self.prev_ver = 'origin/master'
 
         self._is_valid = True
         self.configuration = configuration
@@ -453,3 +453,16 @@ class FilesValidator:
             return True
 
         return False
+
+    @staticmethod
+    def add_sub_parser(subparsers):
+        parser = subparsers.add_parser('validate', help='Validate content files')
+        parser.add_argument('-c', '--circle', type=str2bool, default=False, help='Is CircleCi or not')
+        parser.add_argument('-b', '--backward-comp', type=str2bool, default=True,
+                            help='To check backward compatibility.')
+        parser.add_argument('-t', '--test-filter', type=str2bool, default=False,
+                            help='Check that tests are valid.')
+        parser.add_argument('-j', '--conf-json', action='store_true', help='Validate the conf.json file.')
+        parser.add_argument('-i', '--id-set', action='store_true', help='Create the id_set.json file.')
+        parser.add_argument('-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+        parser.add_argument('-g', '--use-git', type=str2bool, default=True, help='Validate changes using git.')

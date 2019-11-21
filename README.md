@@ -1,5 +1,4 @@
 [![CircleCI](https://circleci.com/gh/demisto/demisto-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/demisto/demisto-sdk/tree/master)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/demisto/demisto-sdk.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/demisto/demisto-sdk/context:python)
 
 # Demisto SDK 
 
@@ -14,16 +13,16 @@ The library uses python 3.7+.
 
 ### CLI
 You can use the SDK in the CLI as follows:
-`demisto_sdk <action> <args>`. For more information, run `demisto_sdk -h`.
+`demisto-sdk <action> <args>`. For more information, run `demisto-sdk -h`.
 
 #### Examples:
 
-`demisto_sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m` 
+`demisto-sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m` 
 will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
 
-`demisto_sdk unify -i Integrations/MyInt -o Integrations` will grab the integration components and unify them to a single yaml file.
+`demisto-sdk unify -i Integrations/MyInt -o Integrations` will grab the integration components and unify them to a single yaml file.
 
-`demisto_sdk validate` will validate your content files.
+`demisto-sdk validate` will validate your content files.
 
 
 ### In the code

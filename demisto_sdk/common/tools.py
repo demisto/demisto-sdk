@@ -11,6 +11,9 @@ from distutils.version import LooseVersion
 from .constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, CONTENT_GITHUB_LINK, \
     PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, DEF_DOCKER
 
+# disable insecure warnings
+requests.packages.urllib3.disable_warnings()
+
 
 class LOG_COLORS:
     NATIVE = '\033[m'
@@ -60,12 +63,18 @@ def run_command(command, is_silenced=True, exit_on_error=True):
 
 
 def get_remote_file(full_file_path, tag='master'):
+    # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
+    tag = tag.lstrip('origin/')
+
+    # The replace in the end is for Windows support
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
-    res = requests.get(github_path, verify=False)
-    if res.status_code != 200:
+    try:
+        res = requests.get(github_path, verify=False)
+        res.raise_for_status()
+    except Exception as exc:
         print_warning('Could not find the old entity file under "{}".\n'
                       'please make sure that you did not break backward compatibility. '
-                      'Reason: {}'.format(github_path, res.reason))
+                      'Reason: {}'.format(github_path, exc))
         return {}
 
     if full_file_path.endswith('json'):
@@ -309,6 +318,17 @@ def run_threads_list(threads_list):
     # wait for the commands to complete
     for t in threads_list:
         t.join()
+
+
+def get_dockerimage45(script_object):
+    """Get the docker image used up to 4.5 (including).
+
+    Arguments:
+        script_object {dict} -- [script object containing the dockerimage configuration]
+    """
+    if 'dockerimage45' in script_object:
+        return script_object['dockerimage45']
+    return script_object.get('dockerimage', '')
 
 
 def get_docker_images(script_obj):

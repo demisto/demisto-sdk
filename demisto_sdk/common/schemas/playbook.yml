@@ -1,0 +1,256 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  version:
+    type: int
+    required: true
+  sourceplaybookid:
+    type: str
+    required: false
+  name:
+    type: str
+    required: true
+  description:
+    type: str
+    required: true
+  starttaskid:
+    type: str
+    required: true
+  view:
+    type: str
+    required: true
+  outputs:
+      type: seq
+      sequence:
+        - include: output_schema
+  inputs:
+    type: seq
+    sequence:
+      - include: input_schema
+  tags:
+    type: seq
+    sequence:
+      - type: str
+  tasks:
+    type: map
+    required: true
+    matching-rule: 'all'
+    mapping:
+      regex;(^[0-9]+$):
+        type: map
+        mapping:
+          id:
+            type: text
+            required: true
+          taskid:
+            type: str
+            required: true
+          type:
+            type: str
+            required: true
+            enum: ['regular', 'playbook', 'condition', 'start', 'title', 'section', 'standard', 'collection']
+          form:
+            type: map
+            allowempty: True
+          message:
+            type: map
+            allowempty: True
+          defaultassigneecomplex:
+            type: map
+            allowempty: True
+          scriptarguments:
+            type: map
+            allowempty: True
+          timertriggers:
+            allowempty: True
+            type: seq
+            sequence:
+            - include: timertriggers_schema
+          ignoreworker:
+            type: bool
+          task:
+            type: map
+            required: true
+            mapping:
+              id:
+                type: text
+                required: true
+              version:
+                type: int
+                required: true
+              name:
+                type: str
+                required: true
+              playbookName:
+                type: str
+              description:
+                type: str
+                required: true
+              scriptName:
+                type: str
+              script:
+                type: str
+              tags:
+                sequence:
+                - type: str
+              type:
+                type: str
+                enum: ['regular', 'playbook', 'condition', 'start', 'title', 'section', 'standard', 'collection']
+              iscommand:
+                type: bool
+                required: true
+              brand:
+                type: text
+                required: true
+              issystemtask:
+                type: bool
+              clonedfrom:
+                type: str
+          note:
+            type: bool
+          nexttasks:
+            type: map
+            mapping:
+              regex;(.+):
+                type: seq
+                sequence:
+                  - type: str
+          loop:
+            type: map
+            mapping:
+              iscommand:
+                type: bool
+              builtincondition:
+                type: seq
+                sequence:
+                  - include: arg_filters_schema
+              scriptId:
+                type: str
+              scriptArguments:
+                type: map
+                allowempty: True
+              exitCondition:
+                type: str
+              wait:
+                type: int
+          conditions:
+            type: seq
+            sequence:
+              - include: condition_schema
+          view:
+            type: str
+            required: true
+          results:
+            type: seq
+            sequence:
+              - type: str
+          continueonerror:
+            type: bool
+          reputationcalc:
+            type: int
+          separatecontext:
+            type: bool
+  system:
+    type: bool
+  fromversion:
+    type: text
+    required: true
+  toversion:
+    type: text
+  tests:
+    type: seq
+    sequence:
+    - type: str
+  rolename:
+    type: seq
+    sequence:
+    - type: str
+
+
+# playbook->tasks
+schema;task_schema:
+  type: map
+  allowempty: True
+
+# playbook->inputs
+schema;input_schema:
+  type: map
+  mapping:
+    key:
+      type: str
+      required: true
+    value:
+      type: any
+    description:
+      type: str
+      required: true
+    required:
+      type: bool
+
+# playbook->outputs
+schema;output_schema:
+  type: map
+  mapping:
+    contextPath:
+      type: str
+      required: true
+    type:
+      type: text
+    description:
+      type: str
+      required: true
+
+# playbook->tasks->conditions
+schema;condition_schema:
+  type: map
+  mapping:
+    label:
+      type: str
+      required: true
+    condition:
+      type: seq
+      sequence:
+        - include: arg_filters_schema
+
+
+schema;arg_filters_schema:
+  type: seq
+  sequence:
+    - include: arg_filter_schema
+
+schema;arg_filter_schema:
+  type: map
+  mapping:
+    operator:
+      type: str
+      required: true
+    ignorecase:
+      type: bool
+    left:
+      type: map
+      required: true
+      mapping:
+        value:
+          type: any
+          required: true
+        iscontext:
+          type: bool
+          required: true
+    right:
+      type: map
+      mapping:
+        value:
+          type: any
+          required: true
+        iscontext:
+          type: bool
+
+schema;timertriggers_schema:
+  type: map
+  mapping:
+    fieldname:
+      type: str
+    action:
+      type: str

@@ -1,7 +1,6 @@
 import os
 import glob
 import json
-import argparse
 from collections import OrderedDict
 from multiprocessing import Pool, cpu_count
 import time
@@ -475,21 +474,3 @@ def update_id_set():
             json.dump(new_ids_dict, id_set_file, indent=4)
 
     print("Finished updating id_set.json")
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Utility CircleCI usage')
-    parser.add_argument('-r', '--reCreate', action='store_true', help='Is re-create id_set or update it')
-    options = parser.parse_args()
-
-    if options.reCreate:
-        print("Re creating the id_set.json")
-        re_create_id_set()
-
-    else:
-        if os.path.isfile('./Tests/id_set.json'):
-            print("Updating the id_set.json")
-            update_id_set()
-        else:
-            print("./Tests/id_set.json is missing. Recreating...")
-            re_create_id_set()

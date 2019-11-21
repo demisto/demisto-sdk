@@ -1,4 +1,5 @@
 [![CircleCI](https://circleci.com/gh/demisto/demisto-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/demisto/demisto-sdk/tree/master)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/demisto/demisto-sdk.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/demisto/demisto-sdk/context:python)
 
 # Demisto SDK 
 
@@ -66,6 +67,8 @@ tox -q -e py37
 MIT - See [LICENSE](LICENSE) for more information.
   
 ## Contributing
+Contributions are welcome and appreciated.
+
 ## Push changes to GitHub
 
 The Demisto SDK is MIT Licensed and accepts contributions via GitHub pull requests.
@@ -74,6 +77,16 @@ If you are a first time GitHub contributor, please look at these links explainin
 * https://help.github.com/articles/creating-a-pull-request-from-a-fork/
 
 **Working on your first Pull Request?** You can learn how from this *free* series [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github)
+
+## Review Process
+A member of the team will be assigned to review the pull request. Comments will be provided by the team member as the review process progresses.
+
+You will see a few [GitHub Status Checks](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-status-checks) that help validate that your pull request is according to our standards:
+
+* **ci/circleci: build**: We use [CircleCI](https://circleci.com/gh/demisto/content) to run a full build on each commit of your pull request. The build will run our content validation hooks, linting and unit test. We require that the build pass (green build). If it is failing our content-bot will also add instructive comments about what sections are failing in the build. Follow the `details` link of the status to see the full build UI of CircleCI.
+* **LGTM analysis: Python**: We use [LGTM](https://lgtm.com) for continues code analysis. If your PR introduces new LGTM alerts, the LGTM bot will add a comment with links for more details. Usually, these alerts are valid and you should try to fix them. If the alert is a false positive, specify this in a comment of the PR.
+* **license/cla**: Status check that all contributors have signed our contributor license agreement (see below). 
+
 
 ## Contributor License Agreement
 Before merging any PRs, we need all contributors to sign a contributor license agreement. By signing a contributor license agreement, we ensure that the community is free to use your contributions.

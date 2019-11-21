@@ -33,7 +33,7 @@ class DemistoSDK:
 
         self.parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-        self.subparsers = self.parser.add_subparsers(help='stuff', dest='command')
+        self.subparsers = self.parser.add_subparsers(dest='command')
         self.initialize_parsers()
         self.configuration = configuration
 

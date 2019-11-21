@@ -21,7 +21,7 @@ You can use the SDK in the CLI as follows:
 `demisto_sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m` 
 will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
 
-`demisto_sdk unify -i Integrations/MyInt -i Integrations` will grab the integration components and unify them to a single yaml file.
+`demisto_sdk unify -i Integrations/MyInt -o Integrations` will grab the integration components and unify them to a single yaml file.
 
 `demisto_sdk validate` will validate your content files.
 

@@ -277,7 +277,8 @@ def vulndb_get_vuln_by_vendor_and_product_name_command():
     max_size = demisto.args().get('max_size')
 
     res = http_request(
-        f'{API_URL}/vulnerabilities/find_by_vendor_and_product_name?vendor_name={vendor_name}&product_name={product_name}',
+        f'{API_URL}/vulnerabilities/find_by_vendor_and_product_name?vendor_name={vendor_name}'
+        f'&product_name={product_name}',
         max_size)
 
     vulndb_vulnerability_results_to_demisto_results(res)

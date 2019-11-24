@@ -73,6 +73,7 @@ Contributions are welcome and appreciated.
 You can read the following docs to get started:
 
 [Development Guide](docs/development_guide.md)
+
 [Validation Testing](docs/validation_testing.md)
 
 ## Push changes to GitHub

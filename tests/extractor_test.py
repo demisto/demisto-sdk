@@ -3,7 +3,6 @@ from mock import patch
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DEFAULT_IMAGE_BASE64
 import os
-import shutil
 import base64
 
 

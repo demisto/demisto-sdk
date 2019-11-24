@@ -3,7 +3,6 @@ import io
 import glob
 import yaml
 import base64
-import re
 
 from ..common.tools import get_yaml
 from ..common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, INTEGRATION_PREFIX
@@ -140,16 +139,13 @@ class Unifier:
         :rtype: str
         """
 
-        ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|test_.*\.py|_test\.py'
-                        r'|conftest\.py')
-        if not self.package_path.endswith('/'):
-            self.package_path += '/'
-        if self.package_path.endswith('Scripts/CommonServerPython/'):
-            return self.package_path + 'CommonServerPython.py'
-
-        script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(self.package_path + '*' + script_type)))[0]
-        return script_path
+        # We assume here the code file has the same name as the integration name, plus the addition of the type
+        integration_name = os.path.basename(os.path.dirname(self.package_path))
+        code_file_path = self.package_path + integration_name + script_type
+        if not os.path.isfile(code_file_path):
+            raise Exception('Code file does not exists or has different name than {}'
+                            .format(integration_name + script_type))
+        return code_file_path
 
     def insert_script_to_yml(self, script_type, yml_text, yml_data):
         script_path = self.get_code_file(script_type)
@@ -191,6 +187,7 @@ class Unifier:
         return yml_text, script_path
 
     def get_script_package_data(self):
+        package_path = self.package_path
         if self.package_path[-1] != os.sep:
             package_path = os.path.join(self.package_path, '')
         yml_files = glob.glob(package_path + '*.yml')
@@ -198,7 +195,7 @@ class Unifier:
             raise Exception("No yml files found in package path: {}. "
                             "Is this really a package dir? If not remove it.".format(package_path))
         yml_path = yml_files[0]
-        code_type = get_yaml(yml_path).get('type')
+        code_type = get_yaml(yml_path).get('script').get('type')
         unifier = Unifier(package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
         with open(code_path, 'r') as code_file:

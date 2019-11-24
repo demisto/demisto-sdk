@@ -68,6 +68,13 @@ MIT - See [LICENSE](LICENSE) for more information.
 ## Contributing
 Contributions are welcome and appreciated.
 
+## Development
+
+You can read the following docs to get started:
+
+[Development Guide](docs/development_guide.md)
+[Validation Testing](docs/validation_testing.md)
+
 ## Push changes to GitHub
 
 The Demisto SDK is MIT Licensed and accepts contributions via GitHub pull requests.
@@ -90,7 +97,7 @@ You will see a few [GitHub Status Checks](https://help.github.com/en/github/coll
 ## Contributor License Agreement
 Before merging any PRs, we need all contributors to sign a contributor license agreement. By signing a contributor license agreement, we ensure that the community is free to use your contributions.
 
-When you contribute a new pull request, a bot will evaluate whether you have signed the CLA. If required, the bot will comment on the pull request, including a link to accept the agreement. The CLA document is available for review as a [PDF](cla.pdf).
+When you contribute a new pull request, a bot will evaluate whether you have signed the CLA. If required, the bot will comment on the pull request, including a link to accept the agreement. The CLA document is available for review as a [PDF](docs/cla.pdf).
 
 If the `license/cla` status check remains on *Pending*, even though all contributors have accepted the CLA, you can recheck the CLA status by visiting the following link (replace **[PRID]** with the ID of your PR): https://cla-assistant.io/check/demisto/demisto-sdk?pullRequest=[PRID] .
 

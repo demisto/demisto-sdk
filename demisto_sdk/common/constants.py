@@ -305,3 +305,9 @@ INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoin
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 SCRIPT_PREFIX = 'script'
 INTEGRATION_PREFIX = 'integration'
+
+DIR_TO_PREFIX = {
+    'Integrations': 'integration',
+    'Beta_Integrations': 'integration',
+    'Scripts': 'script'
+}

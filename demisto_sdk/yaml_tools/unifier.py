@@ -139,12 +139,12 @@ class Unifier:
         :rtype: str
         """
 
-        # We assume here the code file has the same name as the integration name, plus the addition of the type
-        integration_name = os.path.basename(os.path.dirname(self.package_path))
-        code_file_path = self.package_path + integration_name + script_type
+        # We assume here the code file has the same name as the integration/script name, plus the addition of the type
+        package_name = os.path.basename(os.path.dirname(self.package_path))
+        code_file_path = self.package_path + package_name + script_type
         if not os.path.isfile(code_file_path):
             raise Exception('Code file does not exists or has different name than {}'
-                            .format(integration_name + script_type))
+                            .format(package_name + script_type))
         return code_file_path
 
     def insert_script_to_yml(self, script_type, yml_text, yml_data):
@@ -195,7 +195,7 @@ class Unifier:
             raise Exception("No yml files found in package path: {}. "
                             "Is this really a package dir? If not remove it.".format(package_path))
         yml_path = yml_files[0]
-        code_type = get_yaml(yml_path).get('script').get('type')
+        code_type = get_yaml(yml_path).get('type')
         unifier = Unifier(package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
         with open(code_path, 'r') as code_file:

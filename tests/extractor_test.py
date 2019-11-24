@@ -90,22 +90,3 @@ def test_extract_code():
             assert 'from CommonServerPython import *\n' not in file_data
             assert file_data[-1] == '\n'
         os.remove('tests/test_files/temp_file.txt')
-
-
-def test_migrate():
-    from demisto_sdk.yaml_tools.extractor import Extractor
-    configuration = Configuration()
-    yml_path = 'tests/test_files/integration-Zoom.yml'
-    dest_path = 'tests/test_files/Zoom'
-    extractor = Extractor(yml_path=yml_path, dest_path=dest_path, add_demisto_mock=True, add_common_server=True,
-                          yml_type='', configuration=configuration)
-    extractor.migrate()
-    assert os.path.isdir('tests/test_files/Zoom')
-    assert os.path.isfile('tests/test_files/Zoom/CHANGELOG.md')
-    assert os.path.isfile('tests/test_files/Zoom/Pipfile')
-    assert os.path.isfile('tests/test_files/Zoom/Pipfile.lock')
-    assert os.path.isfile('tests/test_files/Zoom/Zoom.py')
-    assert os.path.isfile('tests/test_files/Zoom/Zoom.yml')
-    assert os.path.isfile('tests/test_files/Zoom/Zoom_description.md')
-    assert os.path.isfile('tests/test_files/Zoom/Zoom_image.png')
-    shutil.rmtree('tests/test_files/Zoom')

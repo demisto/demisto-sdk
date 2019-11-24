@@ -22,6 +22,8 @@ def test_get_code_file():
     unifier = Unifier("tests/test_files")
     with raises(Exception):
         unifier.get_code_file(".py")
+    unifier = Unifier("tests/test_files/CalculateGeoDistance/")
+    assert unifier.get_code_file('.py') == "tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py"
 
 
 def test_get_script_package_data():
@@ -29,11 +31,11 @@ def test_get_script_package_data():
     unifier = Unifier("tests/")
     with raises(Exception):
         unifier.get_script_package_data()
-    unifier = Unifier("tests/test_files/VulnDB/")
-    with open("tests/test_files/VulnDB/VulnDB.py", "r") as code_file:
+    unifier = Unifier("tests/test_files/CalculateGeoDistance")
+    with open("tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py", "r") as code_file:
         code = code_file.read()
     yml_path, code_data = unifier.get_script_package_data()
-    assert yml_path == "tests/test_files/VulnDB/VulnDB.yml"
+    assert yml_path == "tests/test_files/CalculateGeoDistance/CalculateGeoDistance.yml"
     assert code_data == code
 
 
@@ -48,6 +50,10 @@ def test_get_data():
         data, found_data_path = unifier.get_data("*png")
         assert data == image
         assert found_data_path == "tests/test_files/VulnDB/VulnDB_image.png"
+        unifier.dir_name = "Scripts"
+        data, found_data_path = unifier.get_data("*png")
+        assert data is None
+        assert found_data_path is None
 
 
 def test_insert_description_to_yml():

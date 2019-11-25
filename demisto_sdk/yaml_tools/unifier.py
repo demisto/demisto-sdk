@@ -6,13 +6,13 @@ import base64
 import re
 
 from ..common.tools import get_yaml, server_version_compare
-from ..common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX
+from ..common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, SCRIPTS_DIR,\
+    BETA_INTEGRATIONS_DIR
 
 
 class Unifier:
 
-    def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='',
-                 image_prefix='data:image/png;base64,'):
+    def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='', image_prefix=DEFAULT_IMAGE_PREFIX):
 
         self.image_prefix = image_prefix
         self.package_path = package_path
@@ -108,7 +108,7 @@ class Unifier:
 
         script_obj = yml_data
 
-        if self.dir_name != 'Scripts':
+        if self.dir_name != SCRIPTS_DIR:
             script_obj = yml_data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
@@ -118,7 +118,7 @@ class Unifier:
         yml_text, script_path = self.insert_script_to_yml(script_type, yml_text, yml_data)
         image_path = None
         desc_path = None
-        if self.dir_name in ('Integrations', 'Beta_Integrations'):
+        if self.dir_name in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR):
             yml_text, image_path = self.insert_image_to_yml(yml_data, yml_text)
             yml_text, desc_path = self.insert_description_to_yml(yml_data, yml_text)
 

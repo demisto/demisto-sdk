@@ -10,7 +10,8 @@
 import sys
 import argparse
 
-from .common.tools import print_color, LOG_COLORS
+from .common.constants import DIR_TO_PREFIX
+from .common.tools import print_color, print_error, LOG_COLORS
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .common.configuration import Configuration
@@ -25,12 +26,6 @@ class DemistoSDK:
     INTEGRATION = 'integration'
 
     def __init__(self, configuration=Configuration()):
-        self.dir_to_prefix = {
-            'Integrations': 'integration',
-            'Beta_Integrations': 'integration',
-            'Scripts': 'script'
-        }
-
         self.parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         self.subparsers = self.parser.add_subparsers(dest='command')
@@ -58,18 +53,17 @@ class DemistoSDK:
             else:
                 print_color('The files are invalid', LOG_COLORS.RED)
         else:
-            print('Use demisto_sdk -h to see the available commands.')
+            print('Use demisto-sdk -h to see the available commands.')
 
     def unify_package(self, package_path, dest_path):
         directory_name = ""
-        for dir_name in self.dir_to_prefix.keys():
+        for dir_name in DIR_TO_PREFIX.keys():
             if dir_name in package_path:
                 directory_name = dir_name
 
         if not directory_name:
-            print("You have failed to provide a legal file path, a legal file path "
-                  "should contain either Integrations or Scripts directories")
-            sys.exit(1)
+            print_error("You have failed to provide a legal file path, a legal file path "
+                        "should contain either Integrations or Scripts directories")
 
         unifier = Unifier(package_path, directory_name, dest_path)
         return unifier.merge_script_package_to_yml()

@@ -1,6 +1,5 @@
-v0.1.0 Release
+v0.1.1 Release
 
-Capabilities:
-**Extract** components(code, image, description etc.) from a Demisto YAML file into a directory.
-**Unify** components(code, image, description etc.) to a single Demisto YAML file.
-**Validate** Demisto content files.
+Added new logic to unifier
+Added detailed README
+Some small adjustments and fixes

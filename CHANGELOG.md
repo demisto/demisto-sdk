@@ -10,7 +10,7 @@
 * Added detailed README
 * Some small adjustments and fixes
 
-### 0.0.1
+### 0.1.0
 
 Capabilities:
 * **Extract** components(code, image, description etc.) from a Demisto YAML file into a directory.

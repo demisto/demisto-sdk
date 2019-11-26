@@ -220,6 +220,14 @@ class ContentCreator(SDKClass):
                 if dir_name in DIR_TO_PREFIX:
                     packages_dirs = get_child_directories(content_dir)
                     for package_dir in packages_dirs:
+                        ymls = glob.glob(os.path.join(package_dir, '*.yml'))
+                        if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
+                            msg = 'Skipping package: {} -'.format(package_dir)
+                            if not ymls:
+                                print_color('{} No yml files found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                            else:
+                                print_color('{} Only unified yml found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                            continue
                         package_dir_name = os.path.basename(package_dir)
                         unifier = Unifier(package_dir, dir_name, dest_dir)
                         unifier.merge_script_package_to_yml()

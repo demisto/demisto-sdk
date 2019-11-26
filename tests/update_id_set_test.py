@@ -1,6 +1,7 @@
 import os
 import unittest
 import pytest
+from collections import OrderedDict
 from demisto_sdk.common.scripts.update_id_set import has_duplicate, get_integration_data, get_script_data, \
     get_playbook_data
 
@@ -86,32 +87,30 @@ def test_had_duplicates(id_set, id_to_check, result):
 
 
 INTEGRATION_DATA = {
-    "Cortex XDR - IR": {
-        "name": "Cortex XDR - IR",
-        "file_path": "Packs/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml",
-        "fromversion": "4.1.0",
-        "commands": [
-            "xdr-get-incidents",
-            "xdr-get-incident-extra-data",
-            "xdr-update-incident"
+    "Cortex XDR - IR": OrderedDict(
+        [
+            ("name", "Cortex XDR - IR"),
+            ("file_path", "/root/project/tests/test_files/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"),
+            ("fromversion", "4.1.0"),
+            ("commands", ["xdr-get-incidents", "xdr-get-incident-extra-data", "xdr-update-incident"])
         ]
-    }
+    )
 }
 
 SCRIPT_DATA = {
-    "EntryWidgetNumberHostsXDR": {
-        "name": "EntryWidgetNumberHostsXDR",
-        "file_path": "Packs/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml",
-        "fromversion": "5.0.0",
-        "tests": [
-            "No test - no need to test widget"
+    "EntryWidgetNumberHostsXDR": OrderedDict(
+        [
+            ("name", "EntryWidgetNumberHostsXDR"),
+            ("file_path", "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml"),
+            ("fromversion", "5.0.0"),
+            ("tests", ["No test - no need to test widget"])
         ]
-    }
+    )
 }
 
 PLAYBOOK_DATA = {
     "name": "Cortex XDR Incident Handling",
-    "file_path": "Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
+    "file_path": "/root/project/tests/test_files/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
     "fromversion": "4.5.0",
     "implementing_scripts": [
         "XDRSyncScript",

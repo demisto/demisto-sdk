@@ -14,6 +14,7 @@ from .common.constants import DIR_TO_PREFIX
 from .common.tools import print_color, print_error, LOG_COLORS
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
+from .dev_tools.linter import Linter
 from .common.configuration import Configuration
 from .validation.file_validator import FilesValidator
 
@@ -36,6 +37,7 @@ class DemistoSDK:
         Unifier.add_sub_parser(self.subparsers)
         Extractor.add_sub_parser(self.subparsers)
         FilesValidator.add_sub_parser(self.subparsers)
+        Linter.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -52,10 +54,20 @@ class DemistoSDK:
                 print_color('The files are valid', LOG_COLORS.GREEN)
             else:
                 print_color('The files are invalid', LOG_COLORS.RED)
+        elif args.command == 'lint':
+            return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
+                             no_test=args.no_test, root=args.root, keep_container=args.keep_container,
+                             verbose=args.verbose, cpu_num=args.cpu_num)
+
         else:
             print('Use demisto-sdk -h to see the available commands.')
 
     def unify_package(self, package_path, dest_path):
+        """
+        Unify a package containing components(code, image, description etc.) to a single Demisto YAML file.
+        :param package_path: The path to the package.
+        :param dest_path: The destination file path.
+        """
         directory_name = ""
         for dir_name in DIR_TO_PREFIX.keys():
             if dir_name in package_path:
@@ -70,11 +82,29 @@ class DemistoSDK:
 
     def migrate_file(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):
+        """
+        Extract components from a Demisto YAML file to a directory.
+        :param yml_path: The YAML file path.
+        :param dest_path: The destination directory.
+        :param add_demisto_mock: Whether to add an import to demistomock.
+        :param add_common_server: Whether to add an import to CommonServer.
+        :param yml_type: The YAML type - either integration or script.
+        :return: The migration result
+        """
         extractor = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.configuration)
         return extractor.migrate()
 
     def extract_code(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):
+        """
+        Extract the code from a Demisto YAML file.
+        :param yml_path: The path to the YAML file.
+        :param dest_path: The destination file path.
+        :param add_demisto_mock:
+        :param add_common_server:
+        :param yml_type:
+        :return: The extraction result
+        """
         extractor = Extractor(yml_path, dest_path, add_demisto_mock, add_common_server, yml_type, self.configuration)
         return extractor.extract_code(dest_path)
 
@@ -86,3 +116,13 @@ class DemistoSDK:
         validator = FilesValidator(configuration=self.configuration, **kwargs)
 
         return validator.is_valid_structure()
+
+    def lint(self, project_dir: str, **kwargs):
+        """
+        Run lint on python code in a provided directory.
+        :param project_dir The directory containing the code.
+        :param kwargs Optional arguments.
+        :return: The lint result.
+        """
+        linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
+        return linter.run_dev_packages()

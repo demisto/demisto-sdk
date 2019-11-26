@@ -14,7 +14,7 @@ from .unifier import Unifier
 
 class ContentCreator(SDKClass):
 
-    def __init__(self, artifacts_path: str, content_bundle_path: str, test_bundle_path: str, packs_bundle_path: str):
+    def __init__(self, artifacts_path: str, content_bundle_path='', test_bundle_path='', packs_bundle_path=''):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
 
         # temp folder names

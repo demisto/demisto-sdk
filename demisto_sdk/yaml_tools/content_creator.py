@@ -275,11 +275,11 @@ class ContentCreator(SDKClass):
             print(f'finished create content artifacts at {self.artifacts_path}')
         finally:
             if not self.preserve_bundles:
-                if os._exists(self.content_bundle):
+                if os.path.exists(self.content_bundle):
                     shutil.rmtree(self.content_bundle)
-                if os._exists(self.test_bundle):
+                if os.path.exists(self.test_bundle):
                     shutil.rmtree(self.test_bundle)
-                if os._exists(self.packs_bundle):
+                if os.path.exists(self.packs_bundle):
                     shutil.rmtree(self.packs_bundle)
 
     @staticmethod

@@ -192,7 +192,7 @@ class Unifier:
             return self.package_path + 'CommonServerPython.py'
 
         script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(self.package_path + '*' + script_type)))[0]
+                                  glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
         return script_path
 
     def insert_script_to_yml(self, script_type, yml_text, yml_data):

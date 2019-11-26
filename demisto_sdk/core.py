@@ -42,7 +42,7 @@ class DemistoSDK:
         FilesValidator.add_sub_parser(self.subparsers)
         Linter.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
-        ContentCreator.add_tools_to_bundle(self.subparsers)
+        ContentCreator.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()

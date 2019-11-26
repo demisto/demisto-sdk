@@ -79,20 +79,20 @@ class ContentCreator(SDKClass):
         package_dir_name = os.path.basename(package_dir)
         for package in scanned_packages:
             ymls = glob.glob(os.path.join(package, '*.yml'))
-            should_unify = True
-            if not ymls or ymls[0].endswith('_unified.yml'):
-                should_unify = False
-            if should_unify:
-                unification_tool = Unifier(package, package_dir_name, dest_dir)
-                if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
-                    # there are some packages that we don't want to include in the content zip
-                    # for example HelloWorld integration
-                    unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
-                    print('skipping {}'.format(package))
-                unification_tool.merge_script_package_to_yml()
-            else:
-                print_color('Skipping package: {} - No yml files found in the package directory'.format(package),
-                            LOG_COLORS.YELLOW)
+            if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
+                msg = 'Skipping package: {} -'.format(package)
+                if not ymls:
+                    print_color('{} No yml files found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                else:
+                    print_color('{} Only unified yml found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                continue
+            unification_tool = Unifier(package, package_dir_name, dest_dir)
+            if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
+                # there are some packages that we don't want to include in the content zip
+                # for example HelloWorld integration
+                unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
+                print('skipping {}'.format(package))
+            unification_tool.merge_script_package_to_yml()
 
     def add_tools_to_bundle(self, bundle):
         for directory in glob.glob(os.path.join('Tools', '*')):
@@ -193,7 +193,7 @@ class ContentCreator(SDKClass):
             for sub_dir_path in sub_dirs_paths:
                 dir_name = os.path.basename(sub_dir_path)
                 if dir_name == 'TestPlaybooks':
-                    self.copy_test_files(self.test_bundle, sub_dir_path)
+                    self.copy_test_files(sub_dir_path)
                 else:
                     # handle one-level deep content
                     self.copy_dir_files(sub_dir_path, self.content_bundle)

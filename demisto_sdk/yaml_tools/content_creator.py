@@ -154,8 +154,12 @@ class ContentCreator(SDKClass):
         for path in scan_files:
             dpath = os.path.basename(path)
             # this part is a workaround because server doesn't support indicatorfield-*.json naming
-            if dir_name == 'IndicatorFields':
-                new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
+            if dir_name in ['IndicatorFields', 'IncidentFields']:
+                if not dpath.startswith('incidentfield-'):
+                    dpath = f'incidentfield-{dpath}'
+                new_path = dpath
+                if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
+                    new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
                 if os.path.isfile(new_path):
                     raise NameError('Failed while trying to create {}. File already exists.'.format(new_path))
                 dpath = new_path

@@ -145,14 +145,3 @@ def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
 
         with pytest.raises(ValueError):
             unifier.insert_script_to_yml(".py", "", test_yml_data)
-
-
-@pytest.mark.parametrize('package_path, dir_name, dest_path', [
-    ("tests/test_files/VulnDB/", "Integrations", "tests/test_files/"),
-    ("tests/test_files/CalculateGeoDistance/", "Scripts", "tests/test_files/")])
-def test_merge_script_package_to_yml(package_path, dir_name, dest_path):
-    from demisto_sdk.yaml_tools.unifier import Unifier
-    unifier = Unifier(package_path=package_path, dir_name=dir_name, dest_path=dest_path)
-    output_path, _, _, _, _ = unifier.merge_script_package_to_yml()
-    assert os.path.isfile(output_path) is True
-    os.remove(output_path)

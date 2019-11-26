@@ -24,8 +24,9 @@ from ..common.hook_validations.structure import StructureValidator
 from ..common.hook_validations.integration import IntegrationValidator
 from ..common.hook_validations.description import DescriptionValidator
 from ..common.hook_validations.incident_field import IncidentFieldValidator
+from ..common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from ..common.tools import checked_type, run_command, print_error, print_warning, print_color, LOG_COLORS, \
-    get_yaml, filter_packagify_changes, collect_ids, str2bool
+    get_yaml, filter_packagify_changes, collect_ids, str2bool, is_file_path_in_pack, get_pack_name
 from ..common.configuration import Configuration
 
 
@@ -180,7 +181,22 @@ class FilesValidator:
             modified_files = modified_files - set(non_committed_deleted_files)
             added_files = added_files - set(non_committed_modified_files) - set(non_committed_deleted_files)
 
-        return modified_files, added_files, old_format_files
+        packs = self.get_packs(modified_files, added_files)
+
+        return modified_files, added_files, old_format_files, packs
+
+    @staticmethod
+    def get_packs(modified_files, added_files):
+        packs = set()
+        changed_files = modified_files.union(added_files)
+        for changed_file in changed_files:
+            if isinstance(changed_file, tuple):
+                changed_file = changed_file[1]
+            pack = get_pack_name(changed_file)
+            if pack and is_file_path_in_pack(changed_file):
+                packs.add(pack)
+
+        return packs
 
     def validate_modified_files(self, modified_files):
         """Validate the modified files from your branch.
@@ -354,7 +370,7 @@ class FilesValidator:
         """Validate that all the committed files in your branch are valid
 
         """
-        modified_files, added_files, old_format_files = self.get_modified_and_added_files()
+        modified_files, added_files, old_format_files, packs = self.get_modified_and_added_files()
         schema_changed = False
         for f in modified_files:
             if isinstance(f, tuple):
@@ -368,6 +384,15 @@ class FilesValidator:
             self.validate_modified_files(modified_files)
             self.validate_added_files(added_files)
             self.validate_no_old_format(old_format_files)
+            self.validate_pack_unique_files(packs)
+
+    def validate_pack_unique_files(self, packs):
+        for pack in packs:
+            pack_unique_files_validator = PackUniqueFilesValidator(pack)
+            pack_errors = pack_unique_files_validator.validate_pack_unique_files()
+            if pack_errors:
+                print_error(pack_errors)
+                self._is_valid = False
 
     def validate_all_files(self):
         """Validate all files in the repo are in the right format."""
@@ -431,7 +456,7 @@ class FilesValidator:
         """
         if self.prev_ver and self.prev_ver != 'master':
             print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
-            modified_files, _, _ = self.get_modified_and_added_files(self.prev_ver)
+            modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
             prev_self_valid = self._is_valid
             self.validate_modified_files(modified_files)
             if no_error:

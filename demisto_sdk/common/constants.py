@@ -74,6 +74,7 @@ INTEGRATION_YML_REGEX = r'{}/([^\\/]+)/\1.yml$'.format(INTEGRATIONS_DIR)
 INTEGRATION_REGEX = r'{}/(integration-[^\\/]+)\.yml$'.format(INTEGRATIONS_DIR)
 INTEGRATION_README_REGEX = r'{}/([^\\/]+)/README.md$'.format(INTEGRATIONS_DIR)
 
+PACKS_DIR_REGEX = r'^(?:./)?{}/'.format(PACKS_DIR)
 PACKS_INTEGRATION_JS_REGEX = r'{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
     PACKS_DIR, INTEGRATIONS_DIR)
 PACKS_SCRIPT_JS_REGEX = r'{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
@@ -119,6 +120,12 @@ MISC_REGEX = r'{}.*reputations.*\.json$'.format(MISC_DIR)
 REPUTATION_REGEX = r'{}.*reputation-.*\.json$'.format(MISC_DIR)
 REPORT_REGEX = r'{}.*report-.*\.json$'.format(REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}.reputations.json$'.format(MISC_DIR)
+
+# Pack Unique Files
+PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
+PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
+PACKS_PACK_META_FILE_NAME = 'pack-metadata.json'
+PACKS_README_FILE_NAME = 'README.md'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -185,6 +192,7 @@ CHECKED_TYPES_REGEXES = [
     # Scripts yaml
     SCRIPT_YML_REGEX,
     SCRIPT_REGEX,
+    PACKS_SCRIPT_YML_REGEX,
     # Widgets
     WIDGETS_REGEX,
     PACKS_WIDGETS_REGEX,

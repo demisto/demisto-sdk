@@ -73,7 +73,7 @@ class StructureValidator:
         self.is_added_file = is_added_file
         self.is_renamed = is_renamed
         self.configuration = configuration
-        self.schema_path = '{}/schemas/'.format(self.configuration.env_dir)
+        self.schema_path = os.path.join(self.configuration.env_dir, 'schemas')
 
     def is_file_valid(self):
         """Check if the file as a valid structure.

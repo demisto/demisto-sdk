@@ -1,8 +1,8 @@
 import glob
 import base64
 
-from demisto_sdk.common.tools import re, print_error, os, get_yaml
-from demisto_sdk.common.constants import IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_YML_REGEX, DEFAULT_IMAGE_BASE64
+from demisto_sdk.validation.tools import re, print_error, os, get_yaml
+from demisto_sdk.validation.constants import IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_YML_REGEX, DEFAULT_IMAGE_BASE64
 
 
 class ImageValidator:

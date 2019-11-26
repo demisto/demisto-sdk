@@ -1,7 +1,7 @@
 import glob
 
-from demisto_sdk.common.tools import re, print_error, print_warning, os, get_yaml
-from demisto_sdk.common.constants import INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_DISCLAIMER
+from demisto_sdk.validation.tools import re, print_error, print_warning, os, get_yaml
+from demisto_sdk.validation.constants import INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_DISCLAIMER
 
 
 class DescriptionValidator:

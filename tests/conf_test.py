@@ -1,5 +1,5 @@
 import pytest
-from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
+from demisto_sdk.validation.hook_validations.conf_json import ConfJsonValidator
 
 
 WITH_DESCRIPTION = {

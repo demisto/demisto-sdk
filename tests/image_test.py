@@ -1,5 +1,5 @@
 import os
-from demisto_sdk.common.hook_validations import image
+from demisto_sdk.validation.hook_validations import image
 
 
 def test_is_not_default_image():

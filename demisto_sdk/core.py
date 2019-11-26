@@ -10,11 +10,11 @@
 import sys
 import argparse
 
-from .common.constants import DIR_TO_PREFIX
-from .common.tools import print_color, print_error, LOG_COLORS
+from demisto_sdk.validation.configuration import Configuration
+from demisto_sdk.validation.constants import DIR_TO_PREFIX
+from demisto_sdk.validation.tools import print_color, print_error, LOG_COLORS
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
-from .common.configuration import Configuration
 from .validation.file_validator import FilesValidator
 
 

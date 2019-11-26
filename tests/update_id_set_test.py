@@ -90,7 +90,8 @@ INTEGRATION_DATA = {
     "Cortex XDR - IR": OrderedDict(
         [
             ("name", "Cortex XDR - IR"),
-            ("file_path", "/root/project/tests/test_files/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"),
+            ("file_path",
+                "/root/project/tests/test_files/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"),
             ("fromversion", "4.1.0"),
             ("commands", ["xdr-get-incidents", "xdr-get-incident-extra-data", "xdr-update-incident"])
         ]
@@ -101,7 +102,8 @@ SCRIPT_DATA = {
     "EntryWidgetNumberHostsXDR": OrderedDict(
         [
             ("name", "EntryWidgetNumberHostsXDR"),
-            ("file_path", "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml"),
+            ("file_path", "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/"
+                "EntryWidgetNumberHostsXDR.yml"),
             ("fromversion", "5.0.0"),
             ("tests", ["No test - no need to test widget"])
         ]
@@ -144,7 +146,8 @@ class TestIntegration(unittest.TestCase):
         """
         Test for getting the script data
         """
-        file_path = f'{__file__}/../test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'
+        file_path = f'{__file__}/../test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/" \
+            "EntryWidgetNumberHostsXDR.yml'
         file_path = os.path.normpath(file_path)
         data = get_script_data(file_path)
         self.assertDictEqual(data, SCRIPT_DATA)

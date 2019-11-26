@@ -7,7 +7,7 @@ import yaml
 from ..common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX
-from ..common.tools import get_child_directories, get_child_files, print_warning, print_color, LOG_COLORS
+from ..common.tools import get_child_directories, get_child_files, print_warning
 from ..common.sdk_baseclass import SDKClass
 from .unifier import Unifier
 
@@ -82,9 +82,9 @@ class ContentCreator(SDKClass):
             if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
                 msg = 'Skipping package: {} -'.format(package)
                 if not ymls:
-                    print_color('{} No yml files found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                    print_warning('{} No yml files found in the package directory'.format(msg))
                 else:
-                    print_color('{} Only unified yml found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                    print_warning('{} Only unified yml found in the package directory'.format(msg))
                 continue
             unification_tool = Unifier(package, package_dir_name, dest_dir)
             if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
@@ -104,14 +104,14 @@ class ContentCreator(SDKClass):
                     zipf.write(os.path.join(root, file_name), file_name)
             zipf.close()
 
-    # def copy_playbook_yml(self, path, out_path, *args):
-    #     '''Add "playbook-" prefix to playbook file's copy destination filename if it wasn't already present'''
-    #     dest_dir_path = os.path.dirname(out_path)
-    #     dest_file_name = os.path.basename(out_path)
-    #     if not dest_file_name.startswith('playbook-'):
-    #         new_name = '{}{}'.format('playbook-', dest_file_name)
-    #         out_path = os.path.join(dest_dir_path, new_name)
-    #     shutil.copyfile(path, out_path)
+    def copy_playbook_yml(self, path, out_path, *args):
+        '''Add "playbook-" prefix to playbook file's copy destination filename if it wasn't already present'''
+        dest_dir_path = os.path.dirname(out_path)
+        dest_file_name = os.path.basename(out_path)
+        if not dest_file_name.startswith('playbook-'):
+            new_name = '{}{}'.format('playbook-', dest_file_name)
+            out_path = os.path.join(dest_dir_path, new_name)
+        shutil.copyfile(path, out_path)
 
     def copy_content_yml(self, path, out_path, yml_info):
         parent_dir_name = os.path.basename(os.path.dirname(path))
@@ -132,8 +132,8 @@ class ContentCreator(SDKClass):
     def copy_dir_yml(self, dir_path, bundle):
         scan_files = glob.glob(os.path.join(dir_path, '*.yml'))
         content_files = 0
-        # dir_name = os.path.basename(dir_path)
-        # copy_func = copy_playbook_yml if dir_name in ['Playbooks', 'TestPlaybooks'] else copy_content_yml
+        dir_name = os.path.basename(dir_path)
+        copy_func = self.copy_playbook_yml if dir_name in ['Playbooks', 'TestPlaybooks'] else self.copy_content_yml
         for path in scan_files:
             if len(os.path.basename(path)) >= self.file_name_max_size:
                 self.long_file_names.append(path)
@@ -143,7 +143,7 @@ class ContentCreator(SDKClass):
 
             ver = yml_info.get('fromversion', '0')
             print(f' - processing: {ver} ({path})')
-            self.copy_content_yml(path, os.path.join(bundle, os.path.basename(path)), yml_info)
+            copy_func(path, os.path.join(bundle, os.path.basename(path)), yml_info)
             content_files += 1
         print(f' - total files: {content_files}')
 
@@ -224,9 +224,9 @@ class ContentCreator(SDKClass):
                         if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
                             msg = 'Skipping package: {} -'.format(package_dir)
                             if not ymls:
-                                print_color('{} No yml files found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                                print_warning('{} No yml files found in the package directory'.format(msg))
                             else:
-                                print_color('{} Only unified yml found in the package directory'.format(msg), LOG_COLORS.YELLOW)
+                                print_warning('{} Only unified yml found in the package directory'.format(msg))
                             continue
                         package_dir_name = os.path.basename(package_dir)
                         unifier = Unifier(package_dir, dir_name, dest_dir)
@@ -281,15 +281,12 @@ class ContentCreator(SDKClass):
                                 os.path.join(self.content_bundle, 'doc-CommonServer.json'))
             else:
                 print_warning('./Documentation/doc-CommonServer.json was not found and '
-                              'therefore was not added to the content bundle.')
+                              'therefore was not added to the content bundle')
 
             print('Compressing bundles...')
             shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
             shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
             shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
-            # shutil.copyfile(self.content_zip + '.zip', os.path.join(self.artifacts_path, self.content_zip + '.zip'))
-            # shutil.copyfile(self.test_zip + '.zip', os.path.join(self.artifacts_path, self.test_zip + '.zip'))
-            # shutil.copyfile(self.packs_zip + '.zip', os.path.join(self.artifacts_path, self.packs_zip + '.zip'))
             shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
             if os.path.exists('release-notes.md'):
                 print('copying release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
@@ -297,7 +294,7 @@ class ContentCreator(SDKClass):
             else:
                 print_warning('release-notes.md was not found in the content directory and therefore not '
                               'copied over to the artifacts directory')
-            print(f'finished create content artifacts at {self.artifacts_path}')
+            print(f'finished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
         finally:
             if not self.preserve_bundles:
                 if os.path.exists(self.content_bundle):

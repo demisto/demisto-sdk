@@ -14,13 +14,18 @@ from .unifier import Unifier
 
 class ContentCreator(SDKClass):
 
-    def __init__(self, artifacts_path: str, content_bundle_path='', test_bundle_path='', packs_bundle_path=''):
+    def __init__(self, artifacts_path: str, content_bundle_path='',
+                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
+        self.preserve_bundles = preserve_bundles
 
         # temp folder names
-        self.content_bundle = content_bundle_path if content_bundle_path else 'bundle_content'
-        self.test_bundle = test_bundle_path if test_bundle_path else 'bundle_test'
-        self.packs_bundle = packs_bundle_path if packs_bundle_path else 'bundle_packs'
+        self.content_bundle = content_bundle_path if content_bundle_path else os.path.join(self.artifacts_path,
+                                                                                           'bundle_content')
+        self.test_bundle = test_bundle_path if test_bundle_path else os.path.join(self.artifacts_path,
+                                                                                  'bundle_test')
+        self.packs_bundle = packs_bundle_path if packs_bundle_path else os.path.join(self.artifacts_path,
+                                                                                     'bundle_packs')
 
         # directories in which content resides
         self.content_directories = [
@@ -226,56 +231,63 @@ class ContentCreator(SDKClass):
     def create_content(self):
         print('Starting to create content artifact...')
 
-        print('creating dir for bundles...')
-        for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
-            os.mkdir(bundle_dir)
-        
-        self.add_tools_to_bundle(self.content_bundle)
+        try:
+            print('creating dir for bundles...')
+            for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
+                os.mkdir(bundle_dir)
+            
+            self.add_tools_to_bundle(self.content_bundle)
 
-        for package_dir in DIR_TO_PREFIX:
-            # handles nested package directories
-            self.create_unifieds_and_copy(package_dir)
-        
-        for content_dir in self.content_directories:
-            print(f'Copying dir {content_dir} to bundles...')
-            self.copy_dir_files(content_dir, self.content_bundle)
-        
-        self.copy_test_files()
+            for package_dir in DIR_TO_PREFIX:
+                # handles nested package directories
+                self.create_unifieds_and_copy(package_dir)
+            
+            for content_dir in self.content_directories:
+                print(f'Copying dir {content_dir} to bundles...')
+                self.copy_dir_files(content_dir, self.content_bundle)
+            
+            self.copy_test_files()
 
-        # handle copying packs content to bundles for zipping to content_new.zip and content_test.zip
-        packs = get_child_directories(PACKS_DIR)
-        self.copy_packs_content_to_old_bundles(packs)
+            # handle copying packs content to bundles for zipping to content_new.zip and content_test.zip
+            packs = get_child_directories(PACKS_DIR)
+            self.copy_packs_content_to_old_bundles(packs)
 
-        # handle copying packs content to packs_bundle for zipping to `content_packs.zip`
-        self.copy_packs_content_to_packs_bundle(packs)
+            # handle copying packs content to packs_bundle for zipping to `content_packs.zip`
+            self.copy_packs_content_to_packs_bundle(packs)
 
-        print('Copying content descriptor to content and test bundles')
-        for bundle_dir in [self.content_bundle, self.test_bundle]:
-            shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
-        
-        print('copying common server doc to content bundle')
-        shutil.copyfile('./Documentation/doc-CommonServer.json', 
-                        os.path.join(self.content_bundle, 'doc-CommonServer.json'))
+            print('Copying content descriptor to content and test bundles')
+            for bundle_dir in [self.content_bundle, self.test_bundle]:
+                shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
+            
+            print('copying common server doc to content bundle')
+            shutil.copyfile('./Documentation/doc-CommonServer.json', 
+                            os.path.join(self.content_bundle, 'doc-CommonServer.json'))
 
-        print('Compressing bundles...')
-        shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
-        shutil.make_archive(self.test_zip, 'zip', self.test_zip)
-        shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
-        shutil.copyfile(self.content_zip + '.zip', os.path.join(self.artifacts_path, self.content_zip + '.zip'))
-        shutil.copyfile(self.test_zip + '.zip', os.path.join(self.artifacts_path, self.test_zip + '.zip'))
-        shutil.copyfile(self.packs_zip + '.zip', os.path.join(self.artifacts_path, self.packs_zip + '.zip'))
-        shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
-        shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
-
-        # TODO: Delete all of the files and directories that were created along the way
-        shutil.rmtree(self.content_bundle)
-        shutil.rmtree(self.test_bundle)
-        shutil.rmtree(self.packs_bundle)
-        print(f'finished create content artifacts at {self.artifacts_path}')
+            print('Compressing bundles...')
+            shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
+            shutil.make_archive(self.test_zip, 'zip', self.test_zip)
+            shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
+            shutil.copyfile(self.content_zip + '.zip', os.path.join(self.artifacts_path, self.content_zip + '.zip'))
+            shutil.copyfile(self.test_zip + '.zip', os.path.join(self.artifacts_path, self.test_zip + '.zip'))
+            shutil.copyfile(self.packs_zip + '.zip', os.path.join(self.artifacts_path, self.packs_zip + '.zip'))
+            shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
+            shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+            print(f'finished create content artifacts at {self.artifacts_path}')
+        finally:
+            if not self.preserve_bundles:
+                if os._exists(self.content_bundle):
+                    shutil.rmtree(self.content_bundle)
+                if os._exists(self.test_bundle):
+                    shutil.rmtree(self.test_bundle)
+                if os._exists(self.packs_bundle):
+                    shutil.rmtree(self.packs_bundle)
 
     @staticmethod
     def add_sub_parser(subparsers):
         parser = subparsers.add_parser('create',
                                        help='Create content artifacts')
-        parser.add_argument("-a", "--artifacts_path", 
-                            help="The path of the directory in which you want to save the created content artifacts")
+        parser.add_argument('-a', '--artifacts_path', 
+                            help='The path of the directory in which you want to save the created content artifacts')
+        parser.add_argument('-p', '--preserve_bundles', action='store_true',
+                            help='Flag for if you\'d like to keep the bundles created in the process of making'
+                                 'the content artifacts')

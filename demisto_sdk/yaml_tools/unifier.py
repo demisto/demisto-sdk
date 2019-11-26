@@ -3,50 +3,93 @@ import io
 import glob
 import yaml
 import base64
+import re
 
-from ..common.tools import get_yaml
-from ..common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, INTEGRATION_PREFIX
+from ..common.tools import get_yaml, server_version_compare
+from ..common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, SCRIPTS_DIR,\
+    BETA_INTEGRATIONS_DIR
 
 
 class Unifier:
 
-    def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='',
-                 integration_prefix=INTEGRATION_PREFIX, script_prefix='script', image_prefix='data:image/png;base64,'):
-
-        self.dir_to_prefix = {
-            'Integrations': integration_prefix,
-            'Beta_Integrations': integration_prefix,
-            'Scripts': script_prefix
-        }
-
-        self.type_to_ext = {
-            'python': '.py',
-            'javascript': '.js'
-        }
+    def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='', image_prefix=DEFAULT_IMAGE_PREFIX):
 
         self.image_prefix = image_prefix
         self.package_path = package_path
-        if not self.package_path.endswith('/'):
-            self.package_path += '/'
+        if self.package_path[-1] != os.sep:
+            self.package_path = os.path.join(self.package_path, '')
 
         self.dir_name = dir_name
         self.dest_path = dest_path
 
+        self.is_ci = os.getenv('CI', False)
+
+    def write_yaml_with_docker(self, yml_text, yml_data, script_obj):
+        """Write out the yaml file taking into account the dockerimage45 tag.
+        If it is present will create 2 integration files
+        One for 4.5 and below and one for 5.0.
+
+        Arguments:
+            output_path {str} -- output path
+            yml_text {str} -- yml text
+            yml_data {dict} -- yml object
+            script_obj {dict} -- script object
+
+        Returns:
+            dict -- dictionary mapping output path to text data
+        """
+        output_map = {self.dest_path: yml_text}
+        if 'dockerimage45' in script_obj:
+            # we need to split into two files 45 and 50. Current one will be from version 5.0
+            yml_text = re.sub(r'^\s*dockerimage45:.*\n?', '', yml_text,
+                              flags=re.MULTILINE)  # remove the dockerimage45 line
+            yml_text45 = yml_text
+            if 'fromversion' in yml_data:
+                # validate that this is a script/integration which targets both 4.5 and 5.0+.
+                if server_version_compare(yml_data['fromversion'], '5.0.0') >= 0:
+                    raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
+                yml_text = re.sub(r'^fromversion:.*$', 'fromversion: 5.0.0', yml_text, flags=re.MULTILINE)
+            else:
+                yml_text = 'fromversion: 5.0.0\n' + yml_text
+            if 'toversion' in yml_data:
+                # validate that this is a script/integration which targets both 4.5 and 5.0+.
+                if server_version_compare(yml_data['toversion'], '5.0.0') < 0:
+                    raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
+                yml_text45 = re.sub(r'^toversion:.*$', 'toversion: 4.5.9', yml_text45, flags=re.MULTILINE)
+            else:
+                yml_text45 = 'toversion: 4.5.9\n' + yml_text45
+            if script_obj.get('dockerimage45'):  # we have a value for dockerimage45 set it as dockerimage
+                yml_text45 = re.sub(r'(^\s*dockerimage:).*$', r'\1 ' + script_obj.get('dockerimage45'),
+                                    yml_text45, flags=re.MULTILINE)
+            else:  # no value for dockerimage45 remove the dockerimage entry
+                yml_text45 = re.sub(r'^\s*dockerimage:.*\n?', '', yml_text45, flags=re.MULTILINE)
+            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
+            output_map = {
+                self.dest_path: yml_text,
+                output_path45: yml_text45
+            }
+        for file_path, file_text in output_map.items():
+            if self.is_ci and os.path.isfile(file_path):
+                raise ValueError('Output file already exists: {}.'
+                                 ' Make sure to remove this file from source control'
+                                 ' or rename this package (for example if it is a v2).'.format(self.dest_path))
+            with io.open(file_path, mode='w', encoding='utf-8') as file_:
+                file_.write(file_text)
+        return output_map
+
     def merge_script_package_to_yml(self):
         """Merge the various components to create an output yml file
-
-        Args:
 
         Returns:
             output path, script path, image path
         """
         print("Merging package: {}".format(self.package_path))
-        output_filename = '{}-{}.yml'.format(self.dir_to_prefix[self.dir_name],
+        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name],
                                              os.path.basename(os.path.dirname(self.package_path)))
         if self.dest_path:
-            output_path = os.path.join(self.dest_path, output_filename)
+            self.dest_path = os.path.join(self.dest_path, output_filename)
         else:
-            output_path = os.path.join(self.dir_name, output_filename)
+            self.dest_path = os.path.join(self.dir_name, output_filename)
 
         yml_paths = glob.glob(self.package_path + '*.yml')
         yml_path = yml_paths[0]
@@ -54,8 +97,8 @@ class Unifier:
             # The plugin creates a unified YML file for the package.
             # In case this script runs locally and there is a unified YML file in the package we need to ignore it.
             # Also,
-            # we don't take the unified file by default because there might be packages
-            # that were not created by the plugin.
+            # we don't take the unified file by default because
+            # there might be packages that were not created by the plugin.
             if 'unified' not in path:
                 yml_path = path
                 break
@@ -63,10 +106,11 @@ class Unifier:
         with open(yml_path, 'r') as yml_file:
             yml_data = yaml.safe_load(yml_file)
 
-        if self.dir_name == 'Scripts':
-            script_type = self.type_to_ext[yml_data['type']]
-        elif self.dir_name == 'Integrations' or 'Beta_Integrations':
-            script_type = self.type_to_ext[yml_data['script']['type']]
+        script_obj = yml_data
+
+        if self.dir_name != SCRIPTS_DIR:
+            script_obj = yml_data['script']
+        script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
         with io.open(yml_path, mode='r', encoding='utf-8') as yml_file:
             yml_text = yml_file.read()
@@ -74,13 +118,12 @@ class Unifier:
         yml_text, script_path = self.insert_script_to_yml(script_type, yml_text, yml_data)
         image_path = None
         desc_path = None
-        if self.dir_name == 'Integrations' or self.dir_name == 'Beta_Integrations':
+        if self.dir_name in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR):
             yml_text, image_path = self.insert_image_to_yml(yml_data, yml_text)
             yml_text, desc_path = self.insert_description_to_yml(yml_data, yml_text)
 
-        with io.open(output_path, mode='w', encoding='utf-8') as f:
-            f.write(yml_text)
-        return output_path, yml_path, script_path, image_path, desc_path
+        output_map = self.write_yaml_with_docker(yml_text, yml_data, script_obj)
+        return list(output_map.keys()), yml_path, script_path, image_path, desc_path
 
     def insert_image_to_yml(self, yml_data, yml_text):
         image_data, found_img_path = self.get_data("*png")
@@ -139,13 +182,16 @@ class Unifier:
         :rtype: str
         """
 
-        # We assume here the code file has the same name as the integration/script name, plus the addition of the type
-        package_name = os.path.basename(os.path.dirname(self.package_path))
-        code_file_path = self.package_path + package_name + script_type
-        if not os.path.isfile(code_file_path):
-            raise Exception('Code file does not exists or has different name than {}'
-                            .format(package_name + script_type))
-        return code_file_path
+        ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|test_.*\.py|_test\.py'
+                        r'|conftest\.py')
+        if not self.package_path.endswith('/'):
+            self.package_path += '/'
+        if self.package_path.endswith('Scripts/CommonServerPython/'):
+            return self.package_path + 'CommonServerPython.py'
+
+        script_path = list(filter(lambda x: not re.search(ignore_regex, x),
+                                  glob.glob(self.package_path + '*' + script_type)))[0]
+        return script_path
 
     def insert_script_to_yml(self, script_type, yml_text, yml_data):
         script_path = self.get_code_file(script_type)
@@ -187,16 +233,13 @@ class Unifier:
         return yml_text, script_path
 
     def get_script_package_data(self):
-        package_path = self.package_path
-        if self.package_path[-1] != os.sep:
-            package_path = os.path.join(self.package_path, '')
-        yml_files = glob.glob(package_path + '*.yml')
+        yml_files = glob.glob(self.package_path + '*.yml')
         if not yml_files:
             raise Exception("No yml files found in package path: {}. "
-                            "Is this really a package dir? If not remove it.".format(package_path))
+                            "Is this really a package dir? If not remove it.".format(self.package_path))
         yml_path = yml_files[0]
         code_type = get_yaml(yml_path).get('type')
-        unifier = Unifier(package_path)
+        unifier = Unifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
         with open(code_path, 'r') as code_file:
             code = code_file.read()

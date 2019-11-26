@@ -137,4 +137,4 @@ class DemistoSDK:
 
         validator = SecretsValidator(configuration=self.configuration, **kwargs)
 
-        return validator.main()
+        return validator.find_secrets()

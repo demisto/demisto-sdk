@@ -417,7 +417,7 @@ class SecretsValidator():
         parser.add_argument('-wl', '--whitelist', default='./Tests/secrets_white_list.json',
                             help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 
-    def main(self):
+    def find_secrets(self):
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
         is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None

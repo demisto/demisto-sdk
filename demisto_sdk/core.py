@@ -66,7 +66,7 @@ class DemistoSDK:
         elif args.command == 'secrets':
             self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
         elif args.command == 'create':
-            self.create_content_artifacts(args.artifacts_path)
+            self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
         else:
             print('Use demisto-sdk -h to see the available commands.')
 
@@ -144,8 +144,8 @@ class DemistoSDK:
 
         return validator.find_secrets()
 
-    def create_content_artifacts(self, artifact_path):
-        cc = ContentCreator(artifact_path)
+    def create_content_artifacts(self, artifact_path, preserve_bundles):
+        cc = ContentCreator(artifact_path, preserve_bundles=preserve_bundles)
         cc.create_content()
         if cc.long_file_names:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'

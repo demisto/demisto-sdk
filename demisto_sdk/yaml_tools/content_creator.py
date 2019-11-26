@@ -18,9 +18,9 @@ class ContentCreator(SDKClass):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
 
         # temp folder names
-        self.content_bundle = content_bundle_path if content_bundle_path else 'content_bundle'
-        self.test_bundle = test_bundle_path if test_bundle_path else 'test_bundle'
-        self.packs_bundle = packs_bundle_path if packs_bundle_path else 'packs_bundle'
+        self.content_bundle = content_bundle_path if content_bundle_path else 'bundle_content'
+        self.test_bundle = test_bundle_path if test_bundle_path else 'bundle_test'
+        self.packs_bundle = packs_bundle_path if packs_bundle_path else 'bundle_packs'
 
         # directories in which content resides
         self.content_directories = [

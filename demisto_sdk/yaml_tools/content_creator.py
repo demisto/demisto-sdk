@@ -48,9 +48,9 @@ class ContentCreator(SDKClass):
         self.packages_to_skip = ['HelloWorld', 'HelloWorldSimple', 'HelloWorldScript']
 
         # zip files names (the extension will be added later - shutil demands file name without extension)
-        self.content_zip = 'content_new'
-        self.test_zip = 'content_test'
-        self.packs_zip = 'content_packs'
+        self.content_zip = os.path.join(self.artifacts_path, 'content_new')
+        self.test_zip = os.path.join(self.artifacts_path, 'content_test')
+        self.packs_zip = os.path.join(self.artifacts_path, 'content_packs')
 
         # server can't handle long file names
         self.file_name_max_size = 85
@@ -285,11 +285,11 @@ class ContentCreator(SDKClass):
 
             print('Compressing bundles...')
             shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
-            shutil.make_archive(self.test_zip, 'zip', self.test_zip)
+            shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
             shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
-            shutil.copyfile(self.content_zip + '.zip', os.path.join(self.artifacts_path, self.content_zip + '.zip'))
-            shutil.copyfile(self.test_zip + '.zip', os.path.join(self.artifacts_path, self.test_zip + '.zip'))
-            shutil.copyfile(self.packs_zip + '.zip', os.path.join(self.artifacts_path, self.packs_zip + '.zip'))
+            # shutil.copyfile(self.content_zip + '.zip', os.path.join(self.artifacts_path, self.content_zip + '.zip'))
+            # shutil.copyfile(self.test_zip + '.zip', os.path.join(self.artifacts_path, self.test_zip + '.zip'))
+            # shutil.copyfile(self.packs_zip + '.zip', os.path.join(self.artifacts_path, self.packs_zip + '.zip'))
             shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
             if os.path.exists('release-notes.md'):
                 print('copying release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))

@@ -13,10 +13,6 @@ class TestSecrets:
     WHITE_LIST_FILE_NAME = 'secrets_white_list.json'
     validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(FILES_PATH, WHITE_LIST_FILE_NAME))
 
-    def test_get_secrets(self):
-        secrets = self.validator.get_secrets('master', True)
-        assert not secrets
-
     def test_get_diff_text_files(self):
         changed_files = '''
         A       Integrations/Recorded_Future/Recorded_Future.yml

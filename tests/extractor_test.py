@@ -31,7 +31,7 @@ def test_extract_long_description():
         extractor = Extractor('', '', False, False, '', configuration)
         extractor.yml_type = ''
         extractor.yml_path = 'script'
-        assert extractor.extract_long_description('output_path') is None
+        assert extractor.extract_long_description('output_path') == 0
         # Test opening the file and writing to it
         extractor.yml_path = 'tests/test_files/integration-Zoom.yml'
         extractor.extract_long_description('tests/test_files/temp_file.txt')
@@ -49,7 +49,7 @@ def test_extract_image():
         extractor = Extractor('', '', False, False, '', configuration)
         extractor.yml_type = ''
         extractor.yml_path = 'script'
-        assert extractor.extract_image('output_path') is None
+        assert extractor.extract_image('output_path') == 0
         # Test opening the file and writing to it
         extractor.yml_path = 'tests/test_files/integration-Zoom.yml'
         extractor.extract_image('tests/test_files/temp_image.png')

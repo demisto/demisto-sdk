@@ -6,7 +6,8 @@ import string
 import PyPDF2
 
 from bs4 import BeautifulSoup
-from demisto_sdk.common.constants import *
+from demisto_sdk.common.constants import re, REQUIRED_YML_FILE_TYPES, PACKS_DIR, PACKS_WHITELIST_FILE_NAME, \
+    INTEGRATION_README_REGEX, EXTERNAL_PR_REGEX
 from demisto_sdk.common.tools import run_command, print_error, str2bool, print_color, LOG_COLORS, checked_type, \
     is_file_path_in_pack, get_pack_name
 from ..common.configuration import Configuration

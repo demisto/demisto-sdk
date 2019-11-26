@@ -1,4 +1,4 @@
-from pytest import raises
+import pytest
 from mock import patch
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DEFAULT_IMAGE_BASE64
@@ -6,23 +6,20 @@ import os
 import base64
 
 
-def test_get_yml_type():
+@pytest.mark.parametrize('yml_path', ['script', 'integration'])
+def test_get_yml_type(yml_path):
     from demisto_sdk.yaml_tools.extractor import Extractor
     configuration = Configuration()
     with patch.object(Extractor, '__init__', lambda a, b, c, d, e, f, g: None):
         extractor = Extractor('', '', False, False, '', configuration)
-        # Test script case
+        # Test script/integration case
         extractor.yml_type = ''
-        extractor.yml_path = 'script'
-        assert extractor.get_yml_type() == 'script'
-        # Test integration case
-        extractor.yml_type = ''
-        extractor.yml_path = 'integration'
-        assert extractor.get_yml_type() == 'integration'
+        extractor.yml_path = yml_path
+        assert extractor.get_yml_type() == yml_path
         # Test error
         extractor.yml_type = ''
         extractor.yml_path = 'path'
-        with raises(ValueError):
+        with pytest.raises(ValueError):
             extractor.get_yml_type()
 
 

@@ -268,6 +268,9 @@ class ContentCreator(SDKClass):
         shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
 
         # TODO: Delete all of the files and directories that were created along the way
+        shutil.rmtree(self.content_bundle)
+        shutil.rmtree(self.test_bundle)
+        shutil.rmtree(self.packs_bundle)
         print(f'finished create content artifacts at {self.artifacts_path}')
 
     @staticmethod

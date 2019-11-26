@@ -7,7 +7,7 @@ import yaml
 from ..common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX
-from ..common.tools import get_child_directories, get_child_files, print_color, LOG_COLORS
+from ..common.tools import get_child_directories, get_child_files, print_warning, print_color, LOG_COLORS
 from ..common.sdk_baseclass import SDKClass
 from .unifier import Unifier
 
@@ -275,9 +275,13 @@ class ContentCreator(SDKClass):
             for bundle_dir in [self.content_bundle, self.test_bundle]:
                 shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
             
-            print('copying common server doc to content bundle')
-            shutil.copyfile('./Documentation/doc-CommonServer.json', 
-                            os.path.join(self.content_bundle, 'doc-CommonServer.json'))
+            if os.path.exists('./Documentation/doc-CommonServer.json'):
+                print('copying common server doc to content bundle')
+                shutil.copyfile('./Documentation/doc-CommonServer.json', 
+                                os.path.join(self.content_bundle, 'doc-CommonServer.json'))
+            else:
+                print_warning('./Documentation/doc-CommonServer.json was not found and '
+                              'therefore was not added to the content bundle.')
 
             print('Compressing bundles...')
             shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
@@ -287,7 +291,12 @@ class ContentCreator(SDKClass):
             shutil.copyfile(self.test_zip + '.zip', os.path.join(self.artifacts_path, self.test_zip + '.zip'))
             shutil.copyfile(self.packs_zip + '.zip', os.path.join(self.artifacts_path, self.packs_zip + '.zip'))
             shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
-            shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+            if os.path.exists('release-notes.md'):
+                print('copying release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
+                shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+            else:
+                print_warning('release-notes.md was not found in the content directory and therefore not '
+                              'copied over to the artifacts directory')
             print(f'finished create content artifacts at {self.artifacts_path}')
         finally:
             if not self.preserve_bundles:
@@ -306,4 +315,4 @@ class ContentCreator(SDKClass):
                             help='The path of the directory in which you want to save the created content artifacts')
         parser.add_argument('-p', '--preserve_bundles', action='store_true',
                             help='Flag for if you\'d like to keep the bundles created in the process of making'
-                                 'the content artifacts')
+                                 ' the content artifacts')

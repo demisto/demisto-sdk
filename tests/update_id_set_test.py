@@ -98,12 +98,13 @@ INTEGRATION_DATA = {
     )
 }
 
+SCRIPT_FILE_PATH = "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/" \
+    "EntryWidgetNumberHostsXDR.yml"
 SCRIPT_DATA = {
     "EntryWidgetNumberHostsXDR": OrderedDict(
         [
             ("name", "EntryWidgetNumberHostsXDR"),
-            ("file_path", "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/"
-                "EntryWidgetNumberHostsXDR.yml"),
+            ("file_path", SCRIPT_FILE_PATH),
             ("fromversion", "5.0.0"),
             ("tests", ["No test - no need to test widget"])
         ]

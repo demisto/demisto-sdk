@@ -1,3 +1,4 @@
+import os
 import unittest
 import pytest
 from demisto_sdk.common.scripts.update_id_set import has_duplicate, get_integration_data, get_script_data, \
@@ -135,7 +136,8 @@ class TestIntegration(unittest.TestCase):
         """
         Test for getting all the integration data
         """
-        file_path = 'Packs/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'
+        file_path = f'{__file__}/../test_files/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'
+        file_path = os.path.normpath(file_path)
         data = get_integration_data(file_path)
         self.assertDictEqual(data, INTEGRATION_DATA)
 
@@ -143,7 +145,8 @@ class TestIntegration(unittest.TestCase):
         """
         Test for getting the script data
         """
-        file_path = 'Packs/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'
+        file_path = f'{__file__}/../test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'
+        file_path = os.path.normpath(file_path)
         data = get_script_data(file_path)
         self.assertDictEqual(data, SCRIPT_DATA)
 
@@ -151,7 +154,8 @@ class TestIntegration(unittest.TestCase):
         """
         Test for getting the playbook data
         """
-        file_path = 'Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml'
+        file_path = f'{__file__}/../test_files/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml'
+        file_path = os.path.normpath(file_path)
         data = get_playbook_data(file_path)['Cortex XDR Incident Handling']
         self.assertEqual(data['name'], PLAYBOOK_DATA['name'])
         self.assertEqual(data['file_path'], PLAYBOOK_DATA['file_path'])

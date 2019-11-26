@@ -2,7 +2,6 @@ import pytest
 from mock import patch
 import yaml
 import base64
-import os
 
 
 def test_clean_python_code():

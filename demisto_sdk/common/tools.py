@@ -376,3 +376,29 @@ def get_pipenv_dir(py_version, envs_dirs_base):
         string -- full path to the pipenv dir
     """
     return "{}{}".format(envs_dirs_base, int(py_version))
+
+
+def print_v(msg, log_verbose=False):
+    if log_verbose:
+        print(msg)
+
+
+def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
+    """
+    Get the requirements for the specified py version.
+
+    Arguments:
+        py_version {float} -- python version as float (2.7, 3.7)
+
+    Raises:
+        ValueError -- If can't detect python version
+
+    Returns:
+        string -- requirement required for the project
+    """
+    env_dir = get_pipenv_dir(py_version, envs_dirs_base)
+    stderr_out = None if log_verbose else subprocess.DEVNULL
+    requirements = subprocess.check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
+                                           stderr=stderr_out)
+    print_v("dev requirements:\n{}".format(requirements))
+    return requirements

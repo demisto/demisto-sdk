@@ -31,6 +31,12 @@ CHECKED_TYPES_REGEXES = (
     PACKS_TEST_PLAYBOOKS_REGEX
 )
 
+INTEGRATIONS_PATH_LIST = [
+    ['Integrations', '*'],
+    ['Beta_Integrations', '*'],
+    ['Packs', '*', 'Integrations', '*']
+]
+
 
 def checked_type(file_path, regex_list=CHECKED_TYPES_REGEXES):
     for regex in regex_list:
@@ -344,13 +350,8 @@ def process_test_playbook_path(file_path):
 
 
 def get_integrations_paths():
-    path_list = [
-        ['Integrations', '*'],
-        ['Beta_Integrations', '*'],
-        ['Packs', '*', 'Integrations', '*']
-    ]
     integration_files = list()
-    for path in path_list:
+    for path in INTEGRATIONS_PATH_LIST:
         integration_files.extend(glob.glob(os.path.join(*path)))
 
     return integration_files

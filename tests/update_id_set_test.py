@@ -98,8 +98,8 @@ INTEGRATION_DATA = {
     )
 }
 
-SCRIPT_FILE_PATH = "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/" \
-    "EntryWidgetNumberHostsXDR.yml"
+SCRIPT_FILE_PATH = "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/"
+SCRIPT_FILE_PATH += "EntryWidgetNumberHostsXDR.yml"
 SCRIPT_DATA = {
     "EntryWidgetNumberHostsXDR": OrderedDict(
         [

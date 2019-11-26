@@ -78,8 +78,11 @@ class ContentCreator(SDKClass):
         scanned_packages = glob.glob(os.path.join(package_dir, '*/'))
         package_dir_name = os.path.basename(package_dir)
         for package in scanned_packages:
-            ymls = glob.glob(os.path.join(package,  '*.yml'))
-            if ymls:
+            ymls = glob.glob(os.path.join(package, '*.yml'))
+            should_unify = True
+            if not ymls or ymls[0].endswith('_unified.yml'):
+                should_unify = False
+            if should_unify:
                 unification_tool = Unifier(package, package_dir_name, dest_dir)
                 if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
                     # there are some packages that we don't want to include in the content zip

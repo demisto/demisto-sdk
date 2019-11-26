@@ -98,13 +98,12 @@ INTEGRATION_DATA = {
     )
 }
 
-SCRIPT_FILE_PATH = "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/"
-SCRIPT_FILE_PATH += "EntryWidgetNumberHostsXDR.yml"
 SCRIPT_DATA = {
     "EntryWidgetNumberHostsXDR": OrderedDict(
         [
             ("name", "EntryWidgetNumberHostsXDR"),
-            ("file_path", SCRIPT_FILE_PATH),
+            ("file_path", "/root/project/tests/test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/"
+                "EntryWidgetNumberHostsXDR.yml"),
             ("fromversion", "5.0.0"),
             ("tests", ["No test - no need to test widget"])
         ]
@@ -147,8 +146,8 @@ class TestIntegration(unittest.TestCase):
         """
         Test for getting the script data
         """
-        file_path = f'{__file__}/../test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/" \
-            "EntryWidgetNumberHostsXDR.yml'
+        file_path = f'{__file__}/../test_files/CortexXDR/Scripts/EntryWidgetNumberHostsXDR/' \
+            'EntryWidgetNumberHostsXDR.yml'
         file_path = os.path.normpath(file_path)
         data = get_script_data(file_path)
         self.assertDictEqual(data, SCRIPT_DATA)

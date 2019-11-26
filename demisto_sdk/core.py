@@ -9,12 +9,14 @@
 
 import sys
 import argparse
+import json
 
 from .common.constants import DIR_TO_PREFIX
 from .common.tools import print_color, print_error, LOG_COLORS
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .dev_tools.linter import Linter
+from .yaml_tools.content_creator import ContentCreator
 from .common.configuration import Configuration
 from .validation.file_validator import FilesValidator
 from .validation.secrets import SecretsValidator
@@ -40,6 +42,7 @@ class DemistoSDK:
         FilesValidator.add_sub_parser(self.subparsers)
         Linter.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
+        ContentCreator.add_tools_to_bundle(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -62,6 +65,8 @@ class DemistoSDK:
                              verbose=args.verbose, cpu_num=args.cpu_num)
         elif args.command == 'secrets':
             self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
+        elif args.command == 'create':
+            self.create_content_artifacts(args.artifacts_path)
         else:
             print('Use demisto-sdk -h to see the available commands.')
 
@@ -138,3 +143,10 @@ class DemistoSDK:
         validator = SecretsValidator(configuration=self.configuration, **kwargs)
 
         return validator.find_secrets()
+
+    def create_content_artifacts(self, artifact_path):
+        cc = ContentCreator(artifact_path)
+        cc.create_content()
+        if cc.long_file_names:
+            print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
+                        f'{json.dumps(cc.long_file_names, indent=4)}')

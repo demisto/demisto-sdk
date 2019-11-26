@@ -8,11 +8,10 @@ from ..common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORT
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX
 from ..common.tools import get_child_directories, get_child_files, print_warning
-from ..common.sdk_baseclass import SDKClass
 from .unifier import Unifier
 
 
-class ContentCreator(SDKClass):
+class ContentCreator:
 
     def __init__(self, artifacts_path: str, content_bundle_path='',
                  test_bundle_path='', packs_bundle_path='', preserve_bundles=False):

@@ -1,9 +1,12 @@
+import os
+
 from demisto_sdk.common.constants import PACKS_README_FILE_NAME
 from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 
 
 class TestPackUniqueFilesValidator:
-    FAKE_PACK_PATH = 'Tests/scripts/hook_validations/tests/tests_data/fake_pack'
+    FILES_PATH = os.path.normpath(os.path.join(__file__, '..', 'test_files'))
+    FAKE_PACK_PATH = os.path.join(FILES_PATH, 'fake_pack')
     FAKE_PATH_NAME = 'fake_pack'
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH

@@ -7,7 +7,7 @@ import yaml
 from ..common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX
-from ..common.tools import get_child_directories, get_child_files
+from ..common.tools import get_child_directories, get_child_files, print_color, LOG_COLORS
 from ..common.sdk_baseclass import SDKClass
 from .unifier import Unifier
 
@@ -78,13 +78,18 @@ class ContentCreator(SDKClass):
         scanned_packages = glob.glob(os.path.join(package_dir, '*/'))
         package_dir_name = os.path.basename(package_dir)
         for package in scanned_packages:
-            unification_tool = Unifier(package, package_dir_name, dest_dir)
-            if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
-                # there are some packages that we don't want to include in the content zip
-                # for example HelloWorld integration
-                unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
-                print('skipping {}'.format(package))
-            unification_tool.merge_script_package_to_yml()
+            ymls = glob.glob(os.path.join(package,  '*.yml'))
+            if ymls:
+                unification_tool = Unifier(package, package_dir_name, dest_dir)
+                if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
+                    # there are some packages that we don't want to include in the content zip
+                    # for example HelloWorld integration
+                    unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
+                    print('skipping {}'.format(package))
+                unification_tool.merge_script_package_to_yml()
+            else:
+                print_color('Skipping package: {} - No yml files found in the package directory'.format(package),
+                            LOG_COLORS.YELLOW)
 
     def add_tools_to_bundle(self, bundle):
         for directory in glob.glob(os.path.join('Tools', '*')):

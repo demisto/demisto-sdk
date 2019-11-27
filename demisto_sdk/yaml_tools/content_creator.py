@@ -6,7 +6,8 @@ import io
 import yaml
 from ..common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
-    BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX
+    BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX, \
+    TOOLS_DIR
 from ..common.tools import get_child_directories, get_child_files, print_warning
 from .unifier import Unifier
 
@@ -94,7 +95,7 @@ class ContentCreator:
             unification_tool.merge_script_package_to_yml()
 
     def add_tools_to_bundle(self, bundle):
-        for directory in glob.glob(os.path.join('Tools', '*')):
+        for directory in glob.glob(os.path.join(TOOLS_DIR, '*')):
             zipf = zipfile.ZipFile(os.path.join(bundle, f'tools-{os.path.basename(directory)}.zip'), 'w',
                                    zipfile.ZIP_DEFLATED)
             zipf.comment = b'{ "system": true }'
@@ -117,7 +118,7 @@ class ContentCreator:
         parent_dir_name = os.path.basename(os.path.dirname(path))
         if parent_dir_name in DIR_TO_PREFIX and not os.path.basename(path).startswith('playbook-'):
             script_obj = yml_info
-            if parent_dir_name != 'Scripts':
+            if parent_dir_name != SCRIPTS_DIR:
                 script_obj = yml_info['script']
             with io.open(path, mode='r', encoding='utf-8') as file_:
                 yml_text = file_.read()

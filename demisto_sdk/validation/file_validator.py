@@ -30,7 +30,7 @@ from demisto_sdk.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
-    LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool
+    LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool, get_pack_name, is_file_path_in_pack
 from demisto_sdk.yaml_tools.unifier import Unifier
 
 

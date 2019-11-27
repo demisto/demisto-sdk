@@ -10,10 +10,11 @@ from demisto_sdk.common.constants import re, REQUIRED_YML_FILE_TYPES, PACKS_DIR,
     INTEGRATION_README_REGEX, EXTERNAL_PR_REGEX
 from demisto_sdk.common.tools import run_command, print_error, str2bool, print_color, LOG_COLORS, checked_type, \
     is_file_path_in_pack, get_pack_name
-from ..common.configuration import Configuration
 
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
+from demisto_sdk.validation.configuration import Configuration
+
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']
 SKIPPED_FILES = {'secrets_white_list', 'id_set.json', 'conf.json', 'Pipfile', 'secrets-ignore', 'ami_builds.json',

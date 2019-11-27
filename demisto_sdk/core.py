@@ -18,7 +18,6 @@ from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .dev_tools.linter import Linter
 from .yaml_tools.content_creator import ContentCreator
-from .common.configuration import Configuration
 from .validation.file_validator import FilesValidator
 from .validation.secrets import SecretsValidator
 

@@ -15,6 +15,7 @@ from demisto_sdk.common.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBO
     JSON_ALL_LAYOUT_REGEXES, JSON_ALL_INCIDENT_FIELD_REGEXES, JSON_ALL_REPORTS_REGEXES, MISC_REPUTATIONS_REGEX, \
     MISC_REGEX, Errors, ACCEPTED_FILE_EXTENSIONS
 from demisto_sdk.common.tools import get_remote_file, get_matching_regex, print_error
+from demisto_sdk.validation.configuration import Configuration
 
 try:
     from pykwalify.core import Core
@@ -60,8 +61,8 @@ class StructureValidator(object):
         'reputations': [MISC_REGEX]
     }
 
-    def __init__(self, file_path, old_file_path=None):
-        # type: (str, Optional[str]) -> None
+    def __init__(self, file_path, old_file_path=None, configuration=Configuration()):
+        # type: (str, Optional[str], Configuration) -> None
         self.is_valid = None  # type: Optional[bool]
         self.file_path = file_path
         self.scheme_name = self.scheme_of_file_by_path()

@@ -7,9 +7,11 @@ import tempfile
 from io import open
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
-from ..common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir, str2bool
-from ..common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-from ..common.configuration import Configuration
+
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir, \
+    str2bool
+from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 INTEGRATION = 'integration'
 SCRIPT = 'script'
@@ -168,7 +170,7 @@ class Extractor:
 
     @staticmethod
     def add_sub_parser(subparsers):
-        parser = subparsers.add_parser('extract', help='Extract code, image and description files' 
+        parser = subparsers.add_parser('extract', help='Extract code, image and description files'
                                                        ' from a demisto integration or script yaml file')
         parser.add_argument("-i", "--infile", help="The yml file to extract from", required=True)
         parser.add_argument("-o", "--outfile",

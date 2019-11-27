@@ -1,18 +1,21 @@
 import re
 import os
 import sys
-import yaml
 import json
-import requests
 import argparse
-import subprocess
+from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
+from typing import Union, Optional
 
-from .constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, CONTENT_GITHUB_LINK, \
-    PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, DEF_DOCKER, PACKS_DIR_REGEX, PACKS_DIR
+import urllib3
+import yaml
+import requests
+
+from demisto_sdk.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, CONTENT_GITHUB_LINK, \
+    PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, DEF_DOCKER
 
 # disable insecure warnings
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 
 class LOG_COLORS:
@@ -47,9 +50,9 @@ def run_command(command, is_silenced=True, exit_on_error=True):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True)
     else:
-        p = subprocess.Popen(command.split())
+        p = Popen(command.split())
 
     output, err = p.communicate()
     if err:
@@ -102,9 +105,11 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
             details = get_remote_file(file_path, tag)
             if details:
-                uniq_identifier = '_'.join([details['name'],
-                                           details.get('fromversion', '0.0.0'),
-                                           details.get('toversion', '99.99.99')])
+                uniq_identifier = '_'.join([
+                    details['name'],
+                    details.get('fromversion', '0.0.0'),
+                    details.get('toversion', '99.99.99')
+                ])
                 packagify_diff[uniq_identifier] = file_path
 
     updated_added_files = set()
@@ -113,9 +118,11 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
             with open(file_path) as f:
                 details = yaml.safe_load(f.read())
 
-            uniq_identifier = '_'.join([details['name'],
-                                        details.get('fromversion', '0.0.0'),
-                                        details.get('toversion', '99.99.99')])
+            uniq_identifier = '_'.join([
+                details['name'],
+                details.get('fromversion', '0.0.0'),
+                details.get('toversion', '99.99.99')
+            ])
             if uniq_identifier in packagify_diff:
                 # if name appears as added and removed, this is packagify process - treat as modified.
                 removed_files.remove(packagify_diff[uniq_identifier])
@@ -169,36 +176,27 @@ def get_last_release_version():
     return tags[0]
 
 
-def get_yaml(file_path):
+def get_file(method, file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), "r") as f:
-        if file_path.endswith(".yaml") or file_path.endswith('.yml'):
+        if file_path.endswith(type_of_file):
             try:
-                data_dictionary = yaml.safe_load(f)
+                data_dictionary = method(f)
             except Exception as e:
-                print_error(file_path + " has yml structure issue. Error was: " + str(e))
+                print_error(
+                    "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
                 return []
-
     if type(data_dictionary) is dict:
         return data_dictionary
-    else:
-        return {}
+    return {}
+
+
+def get_yaml(file_path):
+    return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
 
 
 def get_json(file_path):
-    data_dictionary = None
-    with open(os.path.expanduser(file_path), "r") as f:
-        if file_path.endswith(".json"):
-            try:
-                data_dictionary = json.load(f)
-            except Exception as e:
-                print_error(file_path + " has json structure issue. Error was: " + str(e))
-                return []
-
-    if type(data_dictionary) is dict:
-        return data_dictionary
-    else:
-        return {}
+    return get_file(json.load, file_path, 'json')
 
 
 def get_script_or_integration_id(file_path):
@@ -231,6 +229,8 @@ def get_from_version(file_path):
 
         return from_version
 
+    return '0.0.0'
+
 
 def get_to_version(file_path):
     data_dictionary = get_yaml(file_path)
@@ -243,14 +243,17 @@ def get_to_version(file_path):
 
         return to_version
 
+    return '99.99.99'
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+
+    if v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+    raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def get_release_notes_file_path(file_path):
@@ -258,10 +261,10 @@ def get_release_notes_file_path(file_path):
 
     if re.match(PACKAGE_YML_FILE_REGEX, file_path):
         return os.path.join(dir_name, 'CHANGELOG.md')
-    else:
-        # outside of packages, change log file will include the original file name.
-        file_name = os.path.basename(file_path)
-        return os.path.join(dir_name, os.path.splitext(file_name)[0] + '_CHANGELOG.md')
+
+    # outside of packages, change log file will include the original file name.
+    file_name = os.path.basename(file_path)
+    return os.path.join(dir_name, os.path.splitext(file_name)[0] + '_CHANGELOG.md')
 
 
 def get_latest_release_notes_text(rn_path):
@@ -286,9 +289,13 @@ def get_latest_release_notes_text(rn_path):
     return new_rn if new_rn else None
 
 
-def checked_type(file_path, compared_regexes=CHECKED_TYPES_REGEXES):
-    if any(re.match(regex, file_path, re.IGNORECASE) for regex in compared_regexes):
-        return True
+def checked_type(file_path, compared_regexes=None, return_regex=False):
+    compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
+    for regex in compared_regexes:
+        if re.match(regex, file_path, re.IGNORECASE):
+            if return_regex:
+                return regex
+            return True
     return False
 
 
@@ -307,23 +314,12 @@ def server_version_compare(v1, v2):
         negative if v2 later version than v1.
     """
 
-    v1 = re.sub('[\'\"]', '', v1)
-    v2 = re.sub('[\'\"]', '', v2)
-
-    if v1 == "" or v2 == "":
+    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    if _v1 == _v2:
         return 0
-
-    v1_nums = [int(d) for d in v1.split(".")]
-    v2_nums = [int(d) for d in v2.split(".")]
-
-    for i in range(min(len(v1_nums), len(v2_nums))):
-        if v1_nums[i] != v2_nums[i]:
-            return v1_nums[i] - v2_nums[i]
-
-    # versions are equal to the i th number
-
-    # versions are equal
-    return 0
+    if _v1 > _v2:
+        return 1
+    return -1
 
 
 def run_threads_list(threads_list):
@@ -352,6 +348,33 @@ def get_dockerimage45(script_object):
     return script_object.get('dockerimage', '')
 
 
+def is_file_path_in_pack(file_path):
+    return bool(re.findall(PACKS_DIR_REGEX, file_path))
+
+
+def get_pack_name(file_path):
+    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
+    return match.group(1) if match else None
+
+
+def pack_name_to_path(pack_name):
+    return os.path.join(PACKS_DIR, pack_name)
+
+
+def get_matching_regex(string_to_match, regexes):
+    # type: (str, Union[list, str]) -> Optional[str]
+    """Gets a string and find id the regexes list matches the string. if do, return regex else None.
+
+    Args:
+        string_to_match: String to find matching regex
+        regexes: regexes to check.
+
+    Returns:
+        matching regex if exists, else None
+    """
+    return checked_type(string_to_match, regexes, return_regex=True)
+
+
 def get_docker_images(script_obj):
     imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
     alt_imgs = script_obj.get('alt_dockerimages')
@@ -363,21 +386,18 @@ def get_docker_images(script_obj):
 def get_python_version(docker_image, log_verbose):
     """
     Get the python version of a docker image
-
     Arguments:
         docker_image {string} -- Docker image being used by the project
-
     Return:
         python version as a float (2.7, 3.7)
-
     Raises:
         ValueError -- if version is not supported
     """
-    stderr_out = None if log_verbose else subprocess.DEVNULL
-    py_ver = subprocess.check_output(["docker", "run", "--rm", docker_image,
-                                      "python", "-c",
-                                      "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
-                                     universal_newlines=True, stderr=stderr_out).strip()
+    stderr_out = None if log_verbose else os.subprocess.DEVNULL
+    py_ver = os.subprocess.check_output(["docker", "run", "--rm", docker_image,
+                                         "python", "-c",
+                                         "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
+                                        universal_newlines=True, stderr=stderr_out).strip()
     print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
@@ -389,10 +409,8 @@ def get_python_version(docker_image, log_verbose):
 def get_pipenv_dir(py_version, envs_dirs_base):
     """
     Get the direcotry holding pipenv files for the specified python version
-
     Arguments:
         py_version {float} -- python version as 2.7 or 3.7
-
     Returns:
         string -- full path to the pipenv dir
     """
@@ -418,21 +436,8 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
         string -- requirement required for the project
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    stderr_out = None if log_verbose else subprocess.DEVNULL
-    requirements = subprocess.check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
-                                           stderr=stderr_out)
+    stderr_out = None if log_verbose else DEVNULL
+    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
+                                stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))
     return requirements
-
-
-def is_file_path_in_pack(file_path):
-    return bool(re.findall(PACKS_DIR_REGEX, file_path))
-
-
-def get_pack_name(file_path):
-    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
-    return match.group(1) if match else None
-
-
-def pack_name_to_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name)

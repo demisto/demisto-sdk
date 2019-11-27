@@ -10,24 +10,29 @@ Note - if it is run for all the files in the repo it won't check releaseNotes, u
 for that task.
 """
 from __future__ import print_function
-import os
-import glob
 
-# TODO: do not import *
-from ..common.constants import *
-from ..common.hook_validations.id import IDSetValidator
-from ..common.hook_validations.image import ImageValidator
-from ..yaml_tools.unifier import Unifier
-from ..common.hook_validations.script import ScriptValidator
-from ..common.hook_validations.conf_json import ConfJsonValidator
-from ..common.hook_validations.structure import StructureValidator
-from ..common.hook_validations.integration import IntegrationValidator
-from ..common.hook_validations.description import DescriptionValidator
-from ..common.hook_validations.incident_field import IncidentFieldValidator
-from ..common.hook_validations.pack_unique_files import PackUniqueFilesValidator
-from ..common.tools import checked_type, run_command, print_error, print_warning, print_color, LOG_COLORS, \
-    get_yaml, filter_packagify_changes, collect_ids, str2bool, is_file_path_in_pack, get_pack_name
-from ..common.configuration import Configuration
+import glob
+import os
+import re
+
+from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
+    IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
+    IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \
+    INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
+    YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES
+from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
+from demisto_sdk.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.common.hook_validations.id import IDSetValidator
+from demisto_sdk.common.hook_validations.image import ImageValidator
+from demisto_sdk.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.common.hook_validations.script import ScriptValidator
+from demisto_sdk.common.hook_validations.structure import StructureValidator
+from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
+    LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool, get_pack_name, is_file_path_in_pack
+from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class FilesValidator:
@@ -41,7 +46,7 @@ class FilesValidator:
         id_set_validator (IDSetValidator): object for validating the id_set.json file(Created in Circle only).
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=True, is_circle=False,
+    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
                  configuration=Configuration()):
         self.branch_name = ''
@@ -125,8 +130,8 @@ class FilesValidator:
                 modified_files_list.add(file_path)
 
             elif file_status.lower() not in KNOWN_FILE_STATUSES:
-                print_error('{} file status is an unknown known one, please check. File status was: {}'.format(
-                    file_path, file_status))
+                print_error('{} file status is an unknown one, please check. File status was: {}'
+                            .format(file_path, file_status))
 
             elif print_ignored_files and not checked_type(file_path, IGNORED_TYPES_REGEXES):
                 print_warning('Ignoring file path: {}'.format(file_path))
@@ -162,24 +167,23 @@ class FilesValidator:
 
         if not self.is_circle:
             files_string = run_command('git diff --name-status --no-merges HEAD')
-            non_committed_modified_files, non_committed_added_files, non_committed_deleted_files, \
-                non_committed_old_format_files = self.get_modified_files(
-                    files_string, print_ignored_files=self.print_ignored_files)
+            nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.get_modified_files(
+                files_string, print_ignored_files=self.print_ignored_files)
 
             all_changed_files_string = run_command('git diff --name-status {}'.format(tag))
             modified_files_from_tag, added_files_from_tag, _, _ = \
                 self.get_modified_files(all_changed_files_string,
                                         print_ignored_files=self.print_ignored_files)
 
-            old_format_files = old_format_files.union(non_committed_old_format_files)
+            old_format_files = old_format_files.union(nc_old_format_files)
             modified_files = modified_files.union(
-                modified_files_from_tag.intersection(non_committed_modified_files))
+                modified_files_from_tag.intersection(nc_modified_files))
 
             added_files = added_files.union(
-                added_files_from_tag.intersection(non_committed_added_files))
+                added_files_from_tag.intersection(nc_added_files))
 
-            modified_files = modified_files - set(non_committed_deleted_files)
-            added_files = added_files - set(non_committed_modified_files) - set(non_committed_deleted_files)
+            modified_files = modified_files - set(nc_deleted_files)
+            added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
 
         packs = self.get_packs(modified_files, added_files)
 
@@ -216,21 +220,14 @@ class FilesValidator:
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 
-            structure_validator = StructureValidator(file_path,
-                                                     use_git=self.use_git,
-                                                     is_added_file=self.branch_name and not
-                                                     (False or self.is_backward_check),
-                                                     is_renamed=self.branch_name and old_file_path is not None,
-                                                     configuration=self.configuration)
-            if not structure_validator.is_file_valid():
+            structure_validator = StructureValidator(file_path, old_file_path)
+            if not structure_validator.is_valid_file():
                 self._is_valid = False
             if self.validate_id_set:
                 if not self.id_set_validator.is_file_valid_in_set(file_path):
                     self._is_valid = False
 
-            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
-
+            elif checked_type(file_path, YML_INTEGRATION_REGEXES):
                 image_validator = ImageValidator(file_path)
                 if not image_validator.is_valid():
                     self._is_valid = False
@@ -239,38 +236,33 @@ class FilesValidator:
                 if not description_validator.is_valid():
                     self._is_valid = False
 
-                integration_validator = IntegrationValidator(file_path, old_file_path=old_file_path,
-                                                             old_git_branch=self.prev_ver)
+                integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
-                if not integration_validator.is_valid_integration():
+                if not integration_validator.is_valid_file():
                     self._is_valid = False
 
-            elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
+            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
                 description_validator = DescriptionValidator(file_path)
                 if not description_validator.is_valid_beta_description():
                     self._is_valid = False
-                integration_validator = IntegrationValidator(file_path, old_file_path=old_file_path)
+                integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
-            elif re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
-                script_validator = ScriptValidator(file_path, old_file_path=old_file_path,
-                                                   old_git_branch=self.prev_ver)
+            elif checked_type(file_path, SCRIPT_REGEX):
+                script_validator = ScriptValidator(structure_validator)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
-                if not script_validator.is_valid_script():
+                if not script_validator.is_valid_file():
                     self._is_valid = False
 
-            elif re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE):
-
+            elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
                 unifier = Unifier(os.path.dirname(file_path))
                 yml_path, _ = unifier.get_script_package_data()
-                script_validator = ScriptValidator(yml_path, old_file_path=old_file_path,
-                                                   old_git_branch=self.prev_ver)
+                # Set file path to the yml file
+                structure_validator.file_path = yml_path
+                script_validator = ScriptValidator(structure_validator)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -280,8 +272,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE):
-                incident_field_validator = IncidentFieldValidator(file_path, old_file_path=old_file_path,
-                                                                  old_git_branch=self.prev_ver)
+                incident_field_validator = IncidentFieldValidator(structure_validator)
                 if not incident_field_validator.is_valid():
                     self._is_valid = False
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
@@ -298,9 +289,8 @@ class FilesValidator:
         for file_path in added_files:
             print('Validating {}'.format(file_path))
 
-            structure_validator = StructureValidator(file_path, use_git=self.use_git,
-                                                     is_added_file=True, configuration=self.configuration)
-            if not structure_validator.is_file_valid():
+            structure_validator = StructureValidator(file_path)
+            if not structure_validator.is_valid_file():
                 self._is_valid = False
 
             if self.validate_id_set:
@@ -326,8 +316,8 @@ class FilesValidator:
                 if not description_validator.is_valid():
                     self._is_valid = False
 
-                integration_validator = IntegrationValidator(file_path)
-                if not integration_validator.is_valid_integration():
+                integration_validator = IntegrationValidator(structure_validator)
+                if not integration_validator.is_valid_file():
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
@@ -336,8 +326,8 @@ class FilesValidator:
                 if not description_validator.is_valid_beta_description():
                     self._is_valid = False
 
-                integration_validator = IntegrationValidator(file_path)
-                if not integration_validator.is_valid_beta_integration(is_new=True):
+                integration_validator = IntegrationValidator(structure_validator)
+                if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
                 image_validator = ImageValidator(file_path)
@@ -396,13 +386,23 @@ class FilesValidator:
 
     def validate_all_files(self):
         """Validate all files in the repo are in the right format."""
-        for regex in CHECKED_TYPES_REGEXES:
-            splitted_regex = regex.split('.*')
-            directory = splitted_regex[0]
+        for root, dirs, _ in os.walk(PACKS_DIR):
+            for dir_in_dirs in dirs:
+                for directory in PACKS_DIRECTORIES:
+                    for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir_in_dirs, directory)):
+                        for inner_dir in inner_dirs:
+                            try:
+                                file_path = glob.glob(os.path.normpath(os.path.join(inner_root, inner_dir, '*.yml')))[0]
+                                print("Validating {}".format(file_path))
+                                structure_validator = StructureValidator(file_path)
+                                if not structure_validator.is_valid_scheme():
+                                    self._is_valid = False
+                            except IndexError:
+                                print("No yml file to validate in {}".format(os.path.join(inner_root, inner_dir)))
+
+        for directory in DIR_LIST:
+            print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
             for root, dirs, files in os.walk(directory):
-                if root not in DIR_LIST:  # Skipping in case we entered a package
-                    continue
-                print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
                 for file_name in files:
                     file_path = os.path.join(root, file_name)
                     # skipping hidden files
@@ -410,19 +410,21 @@ class FilesValidator:
                         continue
 
                     print('Validating ' + file_name)
-                    structure_validator = StructureValidator(file_path, use_git=self.use_git,
-                                                             configuration=self.configuration)
+                    structure_validator = StructureValidator(file_path)
                     if not structure_validator.is_valid_scheme():
                         self._is_valid = False
 
-                if root in PACKAGE_SUPPORTING_DIRECTORIES:
-                    for inner_dir in dirs:
+        for directory in PACKAGE_SUPPORTING_DIRECTORIES:
+            for root, dirs, files in os.walk(directory):
+                for inner_dir in dirs:
+                    try:
                         file_path = glob.glob(os.path.join(root, inner_dir, '*.yml'))[0]
                         print('Validating ' + file_path)
-                        structure_validator = StructureValidator(file_path, use_git=self.use_git,
-                                                                 configuration=self.configuration)
+                        structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False
+                    except IndexError:
+                        print("No yml file to validate in {}".format(os.path.join(root, inner_dir)))
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.
@@ -433,7 +435,7 @@ class FilesValidator:
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False
-        if self.branch_name:
+        if self.use_git:
             if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                                  not self.branch_name.startswith('20.')):
                 # validates only committed files
@@ -473,7 +475,7 @@ class FilesValidator:
         parser.add_argument('-j', '--conf-json', action='store_true', help='Validate the conf.json file.')
         parser.add_argument('-i', '--id-set', action='store_true', help='Create the id_set.json file.')
         parser.add_argument('-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
-        parser.add_argument('-g', '--use-git', type=str2bool, default=True, help='Validate changes using git.')
+        parser.add_argument('-g', '--use-git', action='store_true', help='Validate changes using git.')
 
     @staticmethod
     def _is_py_script_or_integration(file_path):

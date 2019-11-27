@@ -11,13 +11,13 @@ import sys
 import argparse
 import json
 
-from .common.constants import DIR_TO_PREFIX
-from .common.tools import print_color, print_error, LOG_COLORS
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.common.constants import DIR_TO_PREFIX
+from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
 from .yaml_tools.unifier import Unifier
 from .yaml_tools.extractor import Extractor
 from .dev_tools.linter import Linter
 from .yaml_tools.content_creator import ContentCreator
-from .common.configuration import Configuration
 from .validation.file_validator import FilesValidator
 from .validation.secrets import SecretsValidator
 

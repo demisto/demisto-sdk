@@ -1,5 +1,4 @@
 import os
-import shutil
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple

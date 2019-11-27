@@ -15,6 +15,7 @@ import glob
 import os
 import re
 
+from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.validation.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
@@ -386,9 +387,9 @@ class FilesValidator:
     def validate_all_files(self):
         """Validate all files in the repo are in the right format."""
         for root, dirs, _ in os.walk(PACKS_DIR):
-            for dir in dirs:
+            for dir_in_dirs in dirs:
                 for directory in PACKS_DIRECTORIES:
-                    for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir, directory)):
+                    for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir_in_dirs, directory)):
                         for inner_dir in inner_dirs:
                             try:
                                 file_path = glob.glob(os.path.normpath(os.path.join(inner_root, inner_dir, '*.yml')))[0]

@@ -19,7 +19,6 @@ from demisto_sdk.validation.configuration import Configuration
 
 try:
     from pykwalify.core import Core
-    from pykwalify.errors import SchemaError, RuleError, CoreError
 except ImportError:
     print('Please install pykwalify, you can do it by running: `pip install -I pykwalify`')
     sys.exit(1)
@@ -111,7 +110,8 @@ class StructureValidator(object):
         if self.scheme_name is None:
             return True
         try:
-            path = os.path.normpath(os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
+            path = os.path.normpath(
+                os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
             core = Core(source_file=self.file_path,
                         schema_files=[path])
             core.validate(raise_exception=True)

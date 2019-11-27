@@ -3,7 +3,7 @@ import os
 import sys
 import json
 import argparse
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
 from typing import Union, Optional
 
@@ -436,21 +436,8 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
         string -- requirement required for the project
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    stderr_out = None if log_verbose else subprocess.DEVNULL
-    requirements = subprocess.check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
-                                           stderr=stderr_out)
+    stderr_out = None if log_verbose else DEVNULL
+    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
+                                stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))
     return requirements
-
-
-def is_file_path_in_pack(file_path):
-    return bool(re.findall(PACKS_DIR_REGEX, file_path))
-
-
-def get_pack_name(file_path):
-    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
-    return match.group(1) if match else None
-
-
-def pack_name_to_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name)

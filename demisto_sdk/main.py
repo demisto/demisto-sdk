@@ -1,5 +1,3 @@
-import os
-
 from demisto_sdk.core import DemistoSDK
 
 

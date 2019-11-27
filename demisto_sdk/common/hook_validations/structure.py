@@ -17,12 +17,6 @@ from demisto_sdk.common.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBO
 from demisto_sdk.common.tools import get_remote_file, get_matching_regex, print_error
 from demisto_sdk.validation.configuration import Configuration
 
-try:
-    from pykwalify.core import Core
-except ImportError:
-    print('Please install pykwalify, you can do it by running: `pip install -I pykwalify`')
-    sys.exit(1)
-
 
 class StructureValidator(object):
     """Structure validator is designed to validate the correctness of the file structure we enter to content repo.

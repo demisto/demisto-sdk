@@ -1,5 +1,3 @@
 pytest
 pytest-mock
-PyPDF2
-bs4
 mock

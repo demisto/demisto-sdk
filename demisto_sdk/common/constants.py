@@ -79,8 +79,8 @@ class Errors(object):
 
     @staticmethod
     def from_version_modified(file_path):
-        return "{}: You've added fromversion to an existing file in the system, this is not allowed, please undo.".format(
-            file_path)
+        return "{}: You've added fromversion to an existing file in the system, this is not allowed, please undo." \
+            .format(file_path)
 
     @classmethod
     def breaking_backwards_no_old_script(cls, e):
@@ -117,8 +117,8 @@ class Errors(object):
 
     @staticmethod
     def no_beta_in_display(file_path):
-        return "{} :Field 'display' in Beta integration yml file should include the string \"beta\", but was not found" \
-               " in the file.".format(file_path)
+        return "{} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
+               "but was not found in the file.".format(file_path)
 
     @staticmethod
     def id_might_changed():

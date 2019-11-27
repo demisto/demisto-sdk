@@ -394,7 +394,7 @@ def get_python_version(docker_image, log_verbose):
         ValueError -- if version is not supported
     """
     stderr_out = None if log_verbose else DEVNULL
-    py_ver = os.subprocess.check_output(["docker", "run", "--rm", docker_image,
+    py_ver = check_output(["docker", "run", "--rm", docker_image,
                                          "python", "-c",
                                          "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
                                         universal_newlines=True, stderr=stderr_out).strip()

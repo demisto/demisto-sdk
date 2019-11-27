@@ -134,6 +134,28 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     return modified_files, updated_added_files, removed_files
 
 
+def get_child_directories(directory):
+    '''Return a list of paths of immediate child directories of the 'directory' argument'''
+    if not os.path.isdir(directory):
+        return []
+    child_directories = [
+        os.path.join(directory, path) for
+        path in os.listdir(directory) if os.path.isdir(os.path.join(directory, path))
+    ]
+    return child_directories
+
+
+def get_child_files(directory):
+    '''Return a list of paths of immediate child files of the 'directory' argument'''
+    if not os.path.isdir(directory):
+        return []
+    child_files = [
+        os.path.join(directory, path) for
+        path in os.listdir(directory) if os.path.isfile(os.path.join(directory, path))
+    ]
+    return child_files
+
+
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)

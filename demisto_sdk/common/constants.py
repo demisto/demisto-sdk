@@ -5,6 +5,10 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def no_yml_file(file_path):
+        return "{} No yml file to validate.".format(file_path)
+
+    @staticmethod
     def wrong_filename(filepath, file_type):
         return '{} is not a valid {} filename.'.format(filepath, file_type)
 

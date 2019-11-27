@@ -21,7 +21,8 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \
     INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
-    YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES
+    YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES, \
+    Errors
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -398,7 +399,7 @@ class FilesValidator:
                                 if not structure_validator.is_valid_scheme():
                                     self._is_valid = False
                             except IndexError:
-                                print("No yml file to validate in {}".format(os.path.join(inner_root, inner_dir)))
+                                print(Errors.no_yml_file(os.path.join(inner_root, inner_dir)))
 
         for directory in DIR_LIST:
             print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
@@ -424,7 +425,7 @@ class FilesValidator:
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False
                     except IndexError:
-                        print("No yml file to validate in {}".format(os.path.join(root, inner_dir)))
+                        print(Errors.no_yml_file(os.path.join(root, inner_dir)))
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.

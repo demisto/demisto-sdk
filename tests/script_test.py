@@ -1,8 +1,8 @@
 from mock import patch
 import pytest
 
-from demisto_sdk.validation.hook_validations.script import ScriptValidator
-from demisto_sdk.validation.hook_validations.structure import StructureValidator
+from demisto_sdk.common.hook_validations.script import ScriptValidator
+from demisto_sdk.common.hook_validations.structure import StructureValidator
 
 
 def get_validator(current_file=None, old_file=None, file_path=""):

@@ -5,10 +5,10 @@ from distutils.version import LooseVersion
 from collections import OrderedDict
 
 from demisto_sdk.validation.configuration import Configuration
-from demisto_sdk.validation.tools import get_script_or_integration_id, collect_ids, print_error
-from demisto_sdk.validation.constants import INTEGRATION_REGEX, TEST_PLAYBOOK_REGEX, SCRIPT_JS_REGEX, \
+from demisto_sdk.common.tools import get_script_or_integration_id, collect_ids, print_error
+from demisto_sdk.common.constants import INTEGRATION_REGEX, TEST_PLAYBOOK_REGEX, SCRIPT_JS_REGEX, \
     SCRIPT_REGEX, TEST_SCRIPT_REGEX, INTEGRATION_YML_REGEX, PLAYBOOK_REGEX, SCRIPT_YML_REGEX, SCRIPT_PY_REGEX
-from demisto_sdk.validation.scripts.update_id_set import get_script_data, get_playbook_data, get_integration_data
+from demisto_sdk.common.scripts.update_id_set import get_script_data, get_playbook_data, get_integration_data
 from demisto_sdk.yaml_tools.unifier import Unifier
 
 

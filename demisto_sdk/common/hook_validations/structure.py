@@ -10,11 +10,11 @@ from typing import Optional
 
 import yaml
 
-from demisto_sdk.validation.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBOOKS_REGEX, YML_SCRIPT_REGEXES, \
+from demisto_sdk.common.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBOOKS_REGEX, YML_SCRIPT_REGEXES, \
     JSON_ALL_WIDGETS_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_CONNECTIONS_REGEXES, JSON_ALL_CLASSIFIER_REGEXES, \
     JSON_ALL_LAYOUT_REGEXES, JSON_ALL_INCIDENT_FIELD_REGEXES, JSON_ALL_REPORTS_REGEXES, MISC_REPUTATIONS_REGEX, \
     MISC_REGEX, Errors, ACCEPTED_FILE_EXTENSIONS
-from demisto_sdk.validation.tools import get_remote_file, get_matching_regex, print_error
+from demisto_sdk.common.tools import get_remote_file, get_matching_regex, print_error
 
 try:
     from pykwalify.core import Core

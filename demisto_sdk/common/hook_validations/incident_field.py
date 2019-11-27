@@ -1,8 +1,8 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
-from demisto_sdk.validation.hook_validations.base_validator import BaseValidator
-from demisto_sdk.validation.tools import print_error
+from demisto_sdk.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.common.tools import print_error
 
 
 class IncidentFieldValidator(BaseValidator):

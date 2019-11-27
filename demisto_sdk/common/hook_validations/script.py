@@ -1,6 +1,6 @@
-from demisto_sdk.validation.constants import PYTHON_SUBTYPES, Errors
-from demisto_sdk.validation.hook_validations.base_validator import BaseValidator
-from demisto_sdk.validation.tools import print_error, server_version_compare, get_dockerimage45
+from demisto_sdk.common.constants import PYTHON_SUBTYPES, Errors
+from demisto_sdk.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.common.tools import print_error, server_version_compare, get_dockerimage45
 
 
 class ScriptValidator(BaseValidator):

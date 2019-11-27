@@ -16,20 +16,20 @@ import os
 import re
 
 from demisto_sdk.validation.configuration import Configuration
-from demisto_sdk.validation.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
+from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \
     INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
     YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES
-from demisto_sdk.validation.hook_validations.conf_json import ConfJsonValidator
-from demisto_sdk.validation.hook_validations.description import DescriptionValidator
-from demisto_sdk.validation.hook_validations.id import IDSetValidator
-from demisto_sdk.validation.hook_validations.image import ImageValidator
-from demisto_sdk.validation.hook_validations.incident_field import IncidentFieldValidator
-from demisto_sdk.validation.hook_validations.integration import IntegrationValidator
-from demisto_sdk.validation.hook_validations.script import ScriptValidator
-from demisto_sdk.validation.hook_validations.structure import StructureValidator
-from demisto_sdk.validation.tools import checked_type, run_command, print_error, print_warning, print_color, \
+from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
+from demisto_sdk.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.common.hook_validations.id import IDSetValidator
+from demisto_sdk.common.hook_validations.image import ImageValidator
+from demisto_sdk.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.common.hook_validations.script import ScriptValidator
+from demisto_sdk.common.hook_validations.structure import StructureValidator
+from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool
 from demisto_sdk.yaml_tools.unifier import Unifier
 

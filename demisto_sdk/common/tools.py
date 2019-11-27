@@ -11,7 +11,7 @@ import urllib3
 import yaml
 import requests
 
-from demisto_sdk.validation.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, CONTENT_GITHUB_LINK, \
+from demisto_sdk.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, CONTENT_GITHUB_LINK, \
     PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, DEF_DOCKER
 
 # disable insecure warnings

@@ -2,9 +2,9 @@ import os
 
 import pytest
 
-from demisto_sdk.validation import tools
-from demisto_sdk.validation.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX
-from demisto_sdk.validation.tools import get_matching_regex, server_version_compare
+from demisto_sdk.common import tools
+from demisto_sdk.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX
+from demisto_sdk.common.tools import get_matching_regex, server_version_compare
 
 
 class TestGetFile:

@@ -5,8 +5,8 @@ import yaml
 import base64
 import re
 
-from demisto_sdk.validation.tools import get_yaml, server_version_compare
-from demisto_sdk.validation.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
+from demisto_sdk.common.tools import get_yaml, server_version_compare
+from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
 

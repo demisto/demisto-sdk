@@ -1,8 +1,8 @@
-from demisto_sdk.validation.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES
-from demisto_sdk.validation.hook_validations.base_validator import BaseValidator
-from demisto_sdk.validation.hook_validations.tests_constants import BANG_COMMAND_NAMES, DBOT_SCORES_DICT, \
+from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES
+from demisto_sdk.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.common.hook_validations.tests_constants import BANG_COMMAND_NAMES, DBOT_SCORES_DICT, \
     IOC_OUTPUTS_DICT
-from demisto_sdk.validation.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
 
 
 class IntegrationValidator(BaseValidator):

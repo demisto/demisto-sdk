@@ -2,9 +2,9 @@ import os
 import re
 from abc import abstractmethod
 
-from demisto_sdk.validation.constants import Errors
-from demisto_sdk.validation.hook_validations.structure import StructureValidator
-from demisto_sdk.validation.tools import print_error, print_warning, get_release_notes_file_path, \
+from demisto_sdk.common.constants import Errors
+from demisto_sdk.common.hook_validations.structure import StructureValidator
+from demisto_sdk.common.tools import print_error, get_release_notes_file_path, \
     get_latest_release_notes_text, run_command
 
 

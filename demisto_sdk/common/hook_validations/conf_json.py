@@ -1,6 +1,6 @@
 import json
 
-from demisto_sdk.validation.tools import print_error
+from demisto_sdk.common.tools import print_error
 
 
 class ConfJsonValidator:

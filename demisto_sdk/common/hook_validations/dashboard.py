@@ -1,4 +1,4 @@
-from demisto_sdk.validation.hook_validations.base_validator import BaseValidator
+from demisto_sdk.common.hook_validations.base_validator import BaseValidator
 
 
 class DashboardValidator(BaseValidator):

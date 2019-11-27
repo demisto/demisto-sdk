@@ -1,7 +1,7 @@
 import pytest
 
-from demisto_sdk.validation.hook_validations.incident_field import IncidentFieldValidator
-from demisto_sdk.validation.hook_validations.structure import StructureValidator
+from demisto_sdk.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.common.hook_validations.structure import StructureValidator
 from mock import patch
 
 

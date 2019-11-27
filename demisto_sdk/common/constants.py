@@ -207,6 +207,7 @@ MISC_DIR = 'Misc'
 CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
+TOOLS_DIR = 'Tools'
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
 DEFAULT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAACYVBMVEVHcEwAT4UAT4UAT4YAf/8A//8AT4UAf78AT4U' \
@@ -240,6 +241,7 @@ DEFAULT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAACYVBMVEVH
 # file types regexes
 PIPFILE_REGEX = r'.*/Pipfile(\.lock)?'
 TEST_DATA_REGEX = r'.*test_data.*'
+TEST_FILES_REGEX = r'.*test_files.*'
 DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
@@ -315,6 +317,12 @@ MISC_REGEX = r'{}{}.*reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_D
 REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
+
+# Pack Unique Files
+PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
+PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
+PACKS_PACK_META_FILE_NAME = 'pack-metadata.json'
+PACKS_README_FILE_NAME = 'README.md'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'

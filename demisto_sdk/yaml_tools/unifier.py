@@ -84,14 +84,16 @@ class Unifier:
             output path, script path, image path
         """
         print("Merging package: {}".format(self.package_path))
-        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name],
-                                             os.path.basename(os.path.dirname(self.package_path)))
+        if self.package_path.endswith('/'):
+            self.package_path = self.package_path.rstrip('/')
+        package_dir_name = os.path.basename(self.package_path)
+        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
         else:
             self.dest_path = os.path.join(self.dir_name, output_filename)
 
-        yml_paths = glob.glob(self.package_path + '*.yml')
+        yml_paths = glob.glob(os.path.join(self.package_path, '*.yml'))
         yml_path = yml_paths[0]
         for path in yml_paths:
             # The plugin creates a unified YML file for the package.
@@ -163,7 +165,7 @@ class Unifier:
         return yml_text, found_desc_path
 
     def get_data(self, extension):
-        data_path = glob.glob(self.package_path + extension)
+        data_path = glob.glob(os.path.join(self.package_path, extension))
         data = None
         found_data_path = None
         if self.dir_name in ('Integrations', 'Beta_Integrations') and data_path:
@@ -190,7 +192,7 @@ class Unifier:
             return self.package_path + 'CommonServerPython.py'
 
         script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(self.package_path + '*' + script_type)))[0]
+                                  glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
         return script_path
 
     def insert_script_to_yml(self, script_type, yml_text, yml_data):
@@ -233,7 +235,7 @@ class Unifier:
         return yml_text, script_path
 
     def get_script_package_data(self):
-        yml_files = glob.glob(self.package_path + '*.yml')
+        yml_files = glob.glob(os.path.join(self.package_path, '*.yml'))
         if not yml_files:
             raise Exception("No yml files found in package path: {}. "
                             "Is this really a package dir? If not remove it.".format(self.package_path))

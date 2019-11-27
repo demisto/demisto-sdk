@@ -141,6 +141,28 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     return modified_files, updated_added_files, removed_files
 
 
+def get_child_directories(directory):
+    '''Return a list of paths of immediate child directories of the 'directory' argument'''
+    if not os.path.isdir(directory):
+        return []
+    child_directories = [
+        os.path.join(directory, path) for
+        path in os.listdir(directory) if os.path.isdir(os.path.join(directory, path))
+    ]
+    return child_directories
+
+
+def get_child_files(directory):
+    '''Return a list of paths of immediate child files of the 'directory' argument'''
+    if not os.path.isdir(directory):
+        return []
+    child_files = [
+        os.path.join(directory, path) for
+        path in os.listdir(directory) if os.path.isfile(os.path.join(directory, path))
+    ]
+    return child_files
+
+
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)
@@ -393,3 +415,42 @@ def get_pipenv_dir(py_version, envs_dirs_base):
         string -- full path to the pipenv dir
     """
     return "{}{}".format(envs_dirs_base, int(py_version))
+
+
+def print_v(msg, log_verbose=False):
+    if log_verbose:
+        print(msg)
+
+
+def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
+    """
+    Get the requirements for the specified py version.
+
+    Arguments:
+        py_version {float} -- python version as float (2.7, 3.7)
+
+    Raises:
+        ValueError -- If can't detect python version
+
+    Returns:
+        string -- requirement required for the project
+    """
+    env_dir = get_pipenv_dir(py_version, envs_dirs_base)
+    stderr_out = None if log_verbose else subprocess.DEVNULL
+    requirements = subprocess.check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
+                                           stderr=stderr_out)
+    print_v("dev requirements:\n{}".format(requirements))
+    return requirements
+
+
+def is_file_path_in_pack(file_path):
+    return bool(re.findall(PACKS_DIR_REGEX, file_path))
+
+
+def get_pack_name(file_path):
+    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
+    return match.group(1) if match else None
+
+
+def pack_name_to_path(pack_name):
+    return os.path.join(PACKS_DIR, pack_name)

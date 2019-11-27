@@ -27,7 +27,7 @@ class Extractor:
         self.yml_type = yml_type
         self.config = configuration
 
-    def migrate(self):
+    def migrate(self) -> int:
         print("Starting migration of: {} to dir: {}".format(self.yml_path, self.dest_path))
         arg_path = self.dest_path
         output_path = os.path.abspath(self.dest_path)
@@ -109,7 +109,7 @@ class Extractor:
               )
         return 0
 
-    def extract_code(self, output_file):
+    def extract_code(self, output_file) -> int:
         yml_type = self.get_yml_type()
         print("Extracting code to: {} ...".format(self.dest_path))
         common_server = self.common_server
@@ -130,10 +130,10 @@ class Extractor:
                 code_file.write("\n")
         return 0
 
-    def extract_image(self, output_path):
+    def extract_image(self, output_path) -> int:
         yml_type = self.get_yml_type()
         if yml_type == SCRIPT:
-            return  # no image in script type
+            return 0  # no image in script type
         print("Extracting image to: {} ...".format(output_path))
         with open(self.yml_path, 'rb') as yml_file:
             yml_data = yaml.safe_load(yml_file)
@@ -142,10 +142,10 @@ class Extractor:
             image_file.write(base64.decodebytes(image_b64.encode('utf-8')))
         return 0
 
-    def extract_long_description(self, output_path):
+    def extract_long_description(self, output_path) -> int:
         yml_type = self.get_yml_type()
         if yml_type == SCRIPT:
-            return  # no long description in script type
+            return 0  # no long description in script type
         with open(self.yml_path, 'rb') as yml_file:
             yml_data = yaml.safe_load(yml_file)
             long_description = yml_data.get('detaileddescription')
@@ -155,7 +155,7 @@ class Extractor:
                 desc_file.write(long_description)
         return 0
 
-    def get_yml_type(self):
+    def get_yml_type(self) -> str:
         yml_type = None
         if not self.yml_type:
             if SCRIPT in self.yml_path.lower():

@@ -113,6 +113,7 @@ class ContentCreator:
         shutil.copyfile(path, out_path)
 
     def copy_content_yml(self, path, out_path, yml_info):
+        '''Copy content ymls (except for playbooks) to the out_path (presumably a bundle)'''
         parent_dir_name = os.path.basename(os.path.dirname(path))
         if parent_dir_name in DIR_TO_PREFIX and not os.path.basename(path).startswith('playbook-'):
             script_obj = yml_info
@@ -129,6 +130,7 @@ class ContentCreator:
         shutil.copyfile(path, out_path)
 
     def copy_dir_yml(self, dir_path, bundle):
+        '''Copy the yml files inside a directory to a bundle'''
         scan_files = glob.glob(os.path.join(dir_path, '*.yml'))
         content_files = 0
         dir_name = os.path.basename(dir_path)
@@ -147,6 +149,7 @@ class ContentCreator:
         print(f' - total files: {content_files}')
 
     def copy_dir_json(self, dir_path, bundle):
+        '''Copy the json files inside a directory to a bundle'''
         # handle *.json files
         dir_name = os.path.basename(dir_path)
         scan_files = glob.glob(os.path.join(dir_path, '*.json'))
@@ -172,12 +175,14 @@ class ContentCreator:
             shutil.copyfile(path, os.path.join(bundle, dpath))
 
     def copy_dir_files(self, *args):
+        '''Copy the yml and json files from inside a directory to a bundle'''
         # handle *.json files
         self.copy_dir_json(*args)
         # handle *.yml files
         self.copy_dir_yml(*args)
 
     def copy_test_files(self, test_playbooks_dir=TEST_PLAYBOOKS_DIR):
+        '''Copy test playbook ymls to the test bundle'''
         print('Copying test files to test bundle')
         scan_files = glob.glob(os.path.join(test_playbooks_dir, '*'))
         for path in scan_files:
@@ -192,6 +197,11 @@ class ContentCreator:
                 shutil.copyfile(path, os.path.join(self.test_bundle, os.path.basename(path)))
 
     def copy_packs_content_to_old_bundles(self, packs):
+        '''
+        Copy relevant content (yml and json files) from packs to the appropriate bundle. Test playbooks to the
+        bundle that gets zipped to 'content_test.zip' and the rest of the content to the bundle that gets zipped to
+        'content_new.zip'. Adds file prefixes where necessary according to how server expects to ingest the files.
+        '''
         for pack in packs:
             # each pack directory has it's own content subdirs, 'Integrations',
             # 'Scripts', 'TestPlaybooks', 'Layouts' etc.
@@ -209,6 +219,12 @@ class ContentCreator:
                         self.create_unifieds_and_copy(sub_dir_path)
 
     def copy_packs_content_to_packs_bundle(self, packs):
+        '''
+        Copy content in packs to the bundle that gets zipped to 'content_packs.zip'. Preserves directory structure
+        except that packages inside the "Integrations" or "Scripts" directory inside a pack are flattened. Adds file
+        prefixes according to how server expects to ingest the files, e.g. 'integration-' is prepended to integration
+        yml filenames and 'script-' is prepended to script yml filenames and so on and so forth.
+        '''
         for pack in packs:
             pack_name = os.path.basename(pack)
             pack_dst = os.path.join(self.packs_bundle, pack_name)
@@ -251,6 +267,7 @@ class ContentCreator:
                     self.copy_dir_files(content_dir, dest_dir)
 
     def create_content(self):
+        '''Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"'''
         print('Starting to create content artifact...')
 
         try:

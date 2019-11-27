@@ -9,8 +9,8 @@ import time
 from datetime import datetime
 
 from demisto_sdk.common.configuration import Configuration
-from ..yaml_tools.unifier import Unifier
-from ..common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements
+from demisto_sdk.common.tools import get_docker_images, print_v, get_python_version, get_dev_requirements
+from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class Linter:

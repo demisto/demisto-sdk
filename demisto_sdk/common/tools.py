@@ -142,7 +142,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
 
 
 def get_child_directories(directory):
-    '''Return a list of paths of immediate child directories of the 'directory' argument'''
+    """Return a list of paths of immediate child directories of the 'directory' argument"""
     if not os.path.isdir(directory):
         return []
     child_directories = [
@@ -153,7 +153,7 @@ def get_child_directories(directory):
 
 
 def get_child_files(directory):
-    '''Return a list of paths of immediate child files of the 'directory' argument'''
+    """Return a list of paths of immediate child files of the 'directory' argument"""
     if not os.path.isdir(directory):
         return []
     child_files = [
@@ -393,7 +393,7 @@ def get_python_version(docker_image, log_verbose):
     Raises:
         ValueError -- if version is not supported
     """
-    stderr_out = None if log_verbose else os.subprocess.DEVNULL
+    stderr_out = None if log_verbose else DEVNULL
     py_ver = os.subprocess.check_output(["docker", "run", "--rm", docker_image,
                                          "python", "-c",
                                          "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],

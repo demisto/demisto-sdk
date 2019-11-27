@@ -52,9 +52,11 @@ class FilesValidator:
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
+            print('Using git')
             branches = run_command('git branch')
             branch_name_reg = re.search(r'\* (.*)', branches)
             self.branch_name = branch_name_reg.group(1)
+            print(f'Running validation on branch {self.branch_name}')
 
         self.prev_ver = prev_ver
         if not self.prev_ver:
@@ -369,6 +371,7 @@ class FilesValidator:
                 schema_changed = True
         # Ensure schema change did not break BC
         if schema_changed:
+            print("Schema changed, validating all files")
             self.validate_all_files()
         else:
             self.validate_modified_files(modified_files)
@@ -424,7 +427,7 @@ class FilesValidator:
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False
                     except IndexError:
-                        print("No yml file to validate in {}".format(os.path.join(root, inner_dir)))
+                        print("{} No yml found file to validate.".format(os.path.join(root, inner_dir)))
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.
@@ -438,14 +441,15 @@ class FilesValidator:
         if self.use_git:
             if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                                  not self.branch_name.startswith('20.')):
-                # validates only committed files
+                print("Validates only committed files")
                 self.validate_committed_files()
                 self.validate_against_previous_version(no_error=True)
             else:
                 self.validate_against_previous_version(no_error=True)
-                # validates all of Content repo directories according to their schemas
+                print("Validates all of Content repo directories according to their schemas")
                 self.validate_all_files()
         else:
+            print("No using git, validating all files")
             self.validate_all_files()
 
         return self._is_valid

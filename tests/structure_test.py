@@ -20,16 +20,16 @@ class TestStructureValidator:
     @classmethod
     def setup_class(cls):
         print("Setups class")
-        for dir in DIR_LIST:
-            if not os.path.exists(dir):
-                os.mkdir(dir)
+        for directory in DIR_LIST:
+            if not os.path.exists(directory):
+                os.mkdir(directory)
 
     @classmethod
     def teardown_class(cls):
         print("Tearing down class")
-        for dir in DIR_LIST:
-            if os.path.exists(dir):
-                shutil.rmtree(dir)
+        for directory in DIR_LIST:
+            if os.path.exists(directory):
+                shutil.rmtree(directory)
 
     SCHEME_VALIDATION_INPUTS = [
         (VALID_TEST_PLAYBOOK_PATH, 'playbook', True, "Found a problem in the scheme although there is no problem"),

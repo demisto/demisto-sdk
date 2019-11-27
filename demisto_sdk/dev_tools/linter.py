@@ -8,7 +8,7 @@ import shutil
 import time
 from datetime import datetime
 
-from demisto_sdk.validation.configuration import Configuration
+from demisto_sdk.common.configuration import Configuration
 from ..yaml_tools.unifier import Unifier
 from ..common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements
 

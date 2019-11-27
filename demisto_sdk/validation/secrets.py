@@ -13,7 +13,7 @@ from demisto_sdk.common.tools import run_command, print_error, str2bool, print_c
 
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
-from demisto_sdk.validation.configuration import Configuration
+from demisto_sdk.common.configuration import Configuration
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']

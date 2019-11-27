@@ -5,20 +5,20 @@ Module contains validation of schemas, ids and paths.
 import json
 import os
 import re
-import sys
 from typing import Optional
 
 import yaml
+from pykwalify.core import Core
 
 from demisto_sdk.common.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBOOKS_REGEX, YML_SCRIPT_REGEXES, \
     JSON_ALL_WIDGETS_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_CONNECTIONS_REGEXES, JSON_ALL_CLASSIFIER_REGEXES, \
     JSON_ALL_LAYOUT_REGEXES, JSON_ALL_INCIDENT_FIELD_REGEXES, JSON_ALL_REPORTS_REGEXES, MISC_REPUTATIONS_REGEX, \
     MISC_REGEX, Errors, ACCEPTED_FILE_EXTENSIONS
 from demisto_sdk.common.tools import get_remote_file, get_matching_regex, print_error
-from demisto_sdk.validation.configuration import Configuration
+from demisto_sdk.common.configuration import Configuration
 
 
-class StructureValidator(object):
+class StructureValidator:
     """Structure validator is designed to validate the correctness of the file structure we enter to content repo.
 
         Attributes:

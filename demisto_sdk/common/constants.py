@@ -1,7 +1,7 @@
 import re
 
 
-class Errors(object):
+class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod

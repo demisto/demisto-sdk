@@ -16,7 +16,7 @@ import os
 import re
 
 from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
-from demisto_sdk.validation.configuration import Configuration
+from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \

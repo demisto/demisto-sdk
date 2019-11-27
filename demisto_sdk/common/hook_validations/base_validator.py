@@ -8,7 +8,7 @@ from demisto_sdk.common.tools import print_error, get_release_notes_file_path, \
     get_latest_release_notes_text, run_command
 
 
-class BaseValidator(object):
+class BaseValidator:
     DEFAULT_VERSION = -1
 
     def __init__(self, structure_validator):

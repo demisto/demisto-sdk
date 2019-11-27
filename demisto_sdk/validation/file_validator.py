@@ -19,8 +19,8 @@ from demisto_sdk.validation.configuration import Configuration
 from demisto_sdk.validation.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \
-    INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
-    YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES
+    INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
+    YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES
 from demisto_sdk.validation.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.validation.hook_validations.description import DescriptionValidator
 from demisto_sdk.validation.hook_validations.id import IDSetValidator
@@ -31,7 +31,7 @@ from demisto_sdk.validation.hook_validations.script import ScriptValidator
 from demisto_sdk.validation.hook_validations.structure import StructureValidator
 from demisto_sdk.validation.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool
-from ..yaml_tools.unifier import Unifier
+from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class FilesValidator:
@@ -45,7 +45,7 @@ class FilesValidator:
         id_set_validator (IDSetValidator): object for validating the id_set.json file(Created in Circle only).
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=True, is_circle=False,
+    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
                  configuration=Configuration()):
         self.branch_name = ''
@@ -361,12 +361,23 @@ class FilesValidator:
 
     def validate_all_files(self):
         """Validate all files in the repo are in the right format."""
-        for regex in CHECKED_TYPES_REGEXES:
-            splitted_regex = regex.split('.*')
-            directory = splitted_regex[0]
+        for root, dirs, _ in os.walk(PACKS_DIR):
+            for dir in dirs:
+                for directory in PACKS_DIRECTORIES:
+                    for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir, directory)):
+                        for inner_dir in inner_dirs:
+                            try:
+                                file_path = glob.glob(os.path.normpath(os.path.join(inner_root, inner_dir, '*.yml')))[0]
+                                print("Validating {}".format(file_path))
+                                structure_validator = StructureValidator(file_path)
+                                if not structure_validator.is_valid_scheme():
+                                    self._is_valid = False
+                            except IndexError:
+                                print("No yml file to validate in {}".format(os.path.join(inner_root, inner_dir)))
+        exit(1)
+
+        for directory in DIR_LIST:
             for root, dirs, files in os.walk(directory):
-                if root not in DIR_LIST:  # Skipping in case we entered a package
-                    continue
                 print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
                 for file_name in files:
                     file_path = os.path.join(root, file_name)
@@ -379,13 +390,17 @@ class FilesValidator:
                     if not structure_validator.is_valid_scheme():
                         self._is_valid = False
 
-                if root in PACKAGE_SUPPORTING_DIRECTORIES:
-                    for inner_dir in dirs:
+        for directory in PACKAGE_SUPPORTING_DIRECTORIES:
+            for root, dirs, files in os.walk(directory):
+                for inner_dir in dirs:
+                    try:
                         file_path = glob.glob(os.path.join(root, inner_dir, '*.yml'))[0]
                         print('Validating ' + file_path)
                         structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False
+                    except IndexError:
+                        print("No yml file to validate in {}".format(os.path.join(root, inner_dir)))
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.
@@ -436,7 +451,7 @@ class FilesValidator:
         parser.add_argument('-j', '--conf-json', action='store_true', help='Validate the conf.json file.')
         parser.add_argument('-i', '--id-set', action='store_true', help='Create the id_set.json file.')
         parser.add_argument('-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
-        parser.add_argument('-g', '--use-git', type=str2bool, default=True, help='Validate changes using git.')
+        parser.add_argument('-g', '--use-git', action='store_true', help='Validate changes using git.')
 
     @staticmethod
     def _is_py_script_or_integration(file_path):

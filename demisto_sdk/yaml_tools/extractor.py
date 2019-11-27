@@ -7,9 +7,10 @@ import tempfile
 from io import open
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
+
+from demisto_sdk.validation.configuration import Configuration
 from demisto_sdk.validation.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir, str2bool
-from demisto_sdk.common import SCRIPT_PREFIX, INTEGRATION_PREFIX
-from demisto_sdk.common import Configuration
+from demisto_sdk.validation.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 INTEGRATION = 'integration'
 SCRIPT = 'script'

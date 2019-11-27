@@ -1,4 +1,5 @@
 import os
+import shutil
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple
@@ -28,7 +29,7 @@ class TestStructureValidator:
         print("Tearing down class")
         for dir in DIR_LIST:
             if os.path.exists(dir):
-                os.rmdir(dir)
+                shutil.rmtree(dir)
 
     SCHEME_VALIDATION_INPUTS = [
         (VALID_TEST_PLAYBOOK_PATH, 'playbook', True, "Found a problem in the scheme although there is no problem"),

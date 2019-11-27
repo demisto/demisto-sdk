@@ -12,7 +12,7 @@ import yaml
 import requests
 
 from demisto_sdk.validation.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, CONTENT_GITHUB_LINK, \
-    PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX
+    PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, DEF_DOCKER
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -351,3 +351,45 @@ def get_matching_regex(string_to_match, regexes):
         matching regex if exists, else None
     """
     return checked_type(string_to_match, regexes, return_regex=True)
+
+
+def get_docker_images(script_obj):
+    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
+    alt_imgs = script_obj.get('alt_dockerimages')
+    if alt_imgs:
+        imgs.extend(alt_imgs)
+    return imgs
+
+
+def get_python_version(docker_image, log_verbose):
+    """
+    Get the python version of a docker image
+    Arguments:
+        docker_image {string} -- Docker image being used by the project
+    Return:
+        python version as a float (2.7, 3.7)
+    Raises:
+        ValueError -- if version is not supported
+    """
+    stderr_out = None if log_verbose else os.subprocess.DEVNULL
+    py_ver = os.subprocess.check_output(["docker", "run", "--rm", docker_image,
+                                         "python", "-c",
+                                         "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
+                                        universal_newlines=True, stderr=stderr_out).strip()
+    print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+    py_num = float(py_ver)
+    if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
+        raise ValueError("Python vesion for docker image: {} is not supported: {}. "
+                         "We only support python 2.7.* and python3 >= 3.4.".format(docker_image, py_num))
+    return py_num
+
+
+def get_pipenv_dir(py_version, envs_dirs_base):
+    """
+    Get the direcotry holding pipenv files for the specified python version
+    Arguments:
+        py_version {float} -- python version as 2.7 or 3.7
+    Returns:
+        string -- full path to the pipenv dir
+    """
+    return "{}{}".format(envs_dirs_base, int(py_version))

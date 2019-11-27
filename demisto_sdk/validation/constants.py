@@ -190,6 +190,7 @@ class Errors(object):
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
+NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
 SCRIPTS_DIR = 'Scripts'
 PLAYBOOKS_DIR = 'Playbooks'
@@ -497,6 +498,9 @@ CHECKED_TYPES_REGEXES = [
     REPUTATION_REGEX
 ]
 
+CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in
+                          CHECKED_TYPES_REGEXES]
+
 PATHS_TO_VALIDATE = sum(
     [
         PYTHON_ALL_REGEXES,
@@ -541,7 +545,13 @@ DIR_LIST = [
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
 ]
-
+PACKS_DIRECTORIES = [
+    SCRIPTS_DIR,
+    INTEGRATIONS_DIR,
+    DASHBOARDS_DIR,
+    WIDGETS_DIR,
+    INDICATOR_FIELDS_DIR,
+]
 SPELLCHECK_FILE_TYPES = [
     INTEGRATION_REGEX,
     INTEGRATION_YML_REGEX,
@@ -648,3 +658,7 @@ DIR_TO_PREFIX = {
     'Beta_Integrations': INTEGRATION_PREFIX,
     'Scripts': SCRIPT_PREFIX
 }
+
+ACCEPTED_FILE_EXTENSIONS = [
+    '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
+]

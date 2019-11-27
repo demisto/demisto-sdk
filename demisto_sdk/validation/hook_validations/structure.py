@@ -13,12 +13,12 @@ import yaml
 from demisto_sdk.validation.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBOOKS_REGEX, YML_SCRIPT_REGEXES, \
     JSON_ALL_WIDGETS_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_CONNECTIONS_REGEXES, JSON_ALL_CLASSIFIER_REGEXES, \
     JSON_ALL_LAYOUT_REGEXES, JSON_ALL_INCIDENT_FIELD_REGEXES, JSON_ALL_REPORTS_REGEXES, MISC_REPUTATIONS_REGEX, \
-    MISC_REGEX, Errors
+    MISC_REGEX, Errors, ACCEPTED_FILE_EXTENSIONS
 from demisto_sdk.validation.tools import get_remote_file, get_matching_regex, print_error
 
 try:
     from pykwalify.core import Core
-    from pykwalify.errors import SchemaError, RuleError
+    from pykwalify.errors import SchemaError, RuleError, CoreError
 except ImportError:
     print('Please install pykwalify, you can do it by running: `pip install -I pykwalify`')
     sys.exit(1)
@@ -36,7 +36,7 @@ class StructureValidator(object):
             current_file (dict): loaded json.
             old_file: (dict) loaded file from git.
         """
-    SCHEMAS_PATH = "demisto_sdk/validation/schemas"
+    SCHEMAS_PATH = "schemas"
 
     FILE_SUFFIX_TO_LOAD_FUNCTION = {
         '.yml': yaml.safe_load,
@@ -108,11 +108,12 @@ class StructureValidator(object):
         """
         if self.scheme_name is None:
             return True
-        core = Core(source_file=self.file_path,
-                    schema_files=[os.path.join(self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name))])
         try:
+            path = os.path.normpath(os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
+            core = Core(source_file=self.file_path,
+                        schema_files=[path])
             core.validate(raise_exception=True)
-        except (SchemaError, RuleError) as err:
+        except Exception as err:
             print_error('Failed: {} failed.\n{}'.format(self.file_path, str(err)))
             self.is_valid = False
             return False
@@ -190,18 +191,20 @@ class StructureValidator(object):
         return True
 
     def load_data_from_file(self):
-        # type: () -> dict
+        # type: () -> Optional[dict]
         """Loads data according to function defined in FILE_SUFFIX_TO_LOAD_FUNCTION
         Returns:
              (dict)
         """
         file_extension = os.path.splitext(self.file_path)[1]
-        if file_extension not in self.FILE_SUFFIX_TO_LOAD_FUNCTION:
-            print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
-        load_function = self.FILE_SUFFIX_TO_LOAD_FUNCTION[file_extension]
-        with open(self.file_path, 'r') as file_obj:
-            loaded_file_data = load_function(file_obj)  # type: ignore
-            return loaded_file_data
+        if file_extension in ACCEPTED_FILE_EXTENSIONS:
+            if file_extension in self.FILE_SUFFIX_TO_LOAD_FUNCTION:
+                load_function = self.FILE_SUFFIX_TO_LOAD_FUNCTION[file_extension]
+                with open(self.file_path, 'r') as file_obj:
+                    loaded_file_data = load_function(file_obj)  # type: ignore
+                    return loaded_file_data
+            return None
+        print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
 
     def get_file_type(self):
         # type: () -> Optional[str]
@@ -217,8 +220,6 @@ class StructureValidator(object):
             for regex in regexes:
                 if re.search(regex, self.file_path, re.IGNORECASE):
                     return file_type
-        self.is_valid = False
-        print_error(Errors.wrong_path(self.file_path))
         return None
 
     def is_valid_file_path(self):

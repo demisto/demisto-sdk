@@ -102,7 +102,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     # map IDs to removed files
     packagify_diff = {}  # type: dict
     for file_path in removed_files:
-        if file_path.split('/')[0] in PACKAGE_SUPPORTING_DIRECTORIES:
+        if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
             details = get_remote_file(file_path, tag)
             if details:
                 uniq_identifier = '_'.join([
@@ -114,7 +114,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
 
     updated_added_files = set()
     for file_path in added_files:
-        if file_path.split('/')[0] in PACKAGE_SUPPORTING_DIRECTORIES:
+        if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
             with open(file_path) as f:
                 details = yaml.safe_load(f.read())
 
@@ -178,13 +178,13 @@ def get_last_release_version():
 
 def get_file(method, file_path, type_of_file):
     data_dictionary = None
-    with open(os.path.expanduser(file_path), 'r') as f:
+    with open(os.path.expanduser(file_path), "r") as f:
         if file_path.endswith(type_of_file):
             try:
                 data_dictionary = method(f)
             except Exception as e:
                 print_error(
-                    '{} has a structure issue of file type{}. Error was: {}'.format(file_path, type_of_file, str(e)))
+                    "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
                 return []
     if type(data_dictionary) is dict:
         return data_dictionary
@@ -220,10 +220,10 @@ def get_from_version(file_path):
 
     if data_dictionary:
         from_version = data_dictionary.get('fromversion', '0.0.0')
-        if from_version == '':
-            return '0.0.0'
+        if from_version == "":
+            return "0.0.0"
 
-        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):
+        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
             raise ValueError("{} fromversion is invalid \"{}\". "
                              "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, from_version))
 
@@ -237,7 +237,7 @@ def get_to_version(file_path):
 
     if data_dictionary:
         to_version = data_dictionary.get('toversion', '99.99.99')
-        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', to_version):
+        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", to_version):
             raise ValueError("{} toversion is invalid \"{}\". "
                              "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, to_version))
 
@@ -384,7 +384,6 @@ def get_docker_images(script_obj):
 
 
 def get_python_version(docker_image, log_verbose):
-    # type: (str, bool) -> float
     """
     Get the python version of a docker image
     Arguments:
@@ -395,15 +394,15 @@ def get_python_version(docker_image, log_verbose):
         ValueError -- if version is not supported
     """
     stderr_out = None if log_verbose else DEVNULL
-    py_ver = check_output(['docker', 'run', '--rm', docker_image,
-                           'python', '-c',
+    py_ver = check_output(["docker", "run", "--rm", docker_image,
+                           "python", "-c",
                            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
                           universal_newlines=True, stderr=stderr_out).strip()
-    print('Detected python version: [{}] for docker image: {}'.format(py_ver, docker_image))
+    print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError('Python vesion for docker image: {} is not supported: {}. '
-                         'We only support python 2.7.* and python3 >= 3.4.'.format(docker_image, py_num))
+        raise ValueError("Python vesion for docker image: {} is not supported: {}. "
+                         "We only support python 2.7.* and python3 >= 3.4.".format(docker_image, py_num))
     return py_num
 
 
@@ -415,7 +414,7 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     Returns:
         string -- full path to the pipenv dir
     """
-    return '{}{}'.format(envs_dirs_base, int(py_version))
+    return "{}{}".format(envs_dirs_base, int(py_version))
 
 
 def print_v(msg, log_verbose=False):
@@ -440,5 +439,5 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
     stderr_out = None if log_verbose else DEVNULL
     requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
                                 stderr=stderr_out)
-    print_v('dev requirements:\n{}'.format(requirements))
+    print_v("dev requirements:\n{}".format(requirements))
     return requirements

@@ -619,7 +619,7 @@ class PB_Status:
 
 
 # change log regexes
-UNRELEASE_HEADER = '## [Unreleased]\n'
+UNRELEASE_HEADER = '## [Unreleased]\n'  # lgtm[js/regex/duplicate-in-character-class]
 CONTENT_RELEASE_TAG_REGEX = r'^\d{2}\.\d{1,2}\.\d'
 RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r'([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}'
 

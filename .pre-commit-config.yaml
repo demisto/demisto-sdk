@@ -17,6 +17,6 @@ repos:
     -   id: mypy
         language_version: python3
 -   repo: https://gitlab.com/pycqa/flake8
-    rev: e571167161a42a5da052eaf247ab13ac0c56b7c6  # pick a git hash / tag to point to
+    rev: e571167161a42a5da052eaf247ab13ac0c56b7c6
     hooks:
         - id: flake8

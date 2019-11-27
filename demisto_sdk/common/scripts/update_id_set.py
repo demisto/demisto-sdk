@@ -3,17 +3,19 @@ import itertools
 import os
 import glob
 import json
+import re
 from collections import OrderedDict
 from multiprocessing import Pool, cpu_count
 from distutils.version import LooseVersion
 import time
 
-# TODO: do not import *
-from demisto_sdk.common.constants import *
-from demisto_sdk.common.tools import get_yaml, get_to_version, get_from_version, collect_ids,\
+from demisto_sdk.common.constants import INTEGRATION_REGEX, INTEGRATION_YML_REGEX, PACKS_INTEGRATION_YML_REGEX, \
+    PACKS_INTEGRATION_REGEX, SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PLAYBOOK_REGEX, TEST_PLAYBOOK_REGEX, \
+    PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, SCRIPTS_REGEX_LIST, BETA_INTEGRATION_REGEX, \
+    BETA_PLAYBOOK_REGEX, TEST_SCRIPT_REGEX
+from demisto_sdk.common.tools import get_yaml, get_to_version, get_from_version, collect_ids, \
     get_script_or_integration_id, LOG_COLORS, print_color, print_error, print_warning, run_command
 from demisto_sdk.yaml_tools.unifier import Unifier
-
 
 CHECKED_TYPES_REGEXES = (
     # Integrations
@@ -501,10 +503,10 @@ def has_duplicate(id_set, id_to_check):
         # C: 3.5.2 - 3.5.4
         # D: 4.5.0 - 99.99.99
         if any([
-                dict1_from_version <= dict2_from_version < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
-                dict1_from_version < dict2_to_version <= dict1_to_version,  # will catch (B, C), (A, C)
-                dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
-                dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
+            dict1_from_version <= dict2_from_version < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
+            dict1_from_version < dict2_to_version <= dict1_to_version,  # will catch (B, C), (A, C)
+            dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
+            dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
             return True
 

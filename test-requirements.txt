@@ -1,3 +1,4 @@
 pytest
 PyPDF2
 bs4
+mock

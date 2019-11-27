@@ -401,8 +401,8 @@ class FilesValidator:
                                 print("No yml file to validate in {}".format(os.path.join(inner_root, inner_dir)))
 
         for directory in DIR_LIST:
+            print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
             for root, dirs, files in os.walk(directory):
-                print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
                 for file_name in files:
                     file_path = os.path.join(root, file_name)
                     # skipping hidden files

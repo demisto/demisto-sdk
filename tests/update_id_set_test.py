@@ -140,6 +140,7 @@ class TestIntegration(unittest.TestCase):
         file_path = f'{__file__}/../test_files/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'
         file_path = os.path.normpath(file_path)
         data = get_integration_data(file_path)
+        INTEGRATION_DATA["Cortex XDR - IR"]["file_path"] = file_path
         self.assertDictEqual(data, INTEGRATION_DATA)
 
     def test_get_script_data(self):
@@ -150,6 +151,7 @@ class TestIntegration(unittest.TestCase):
             'EntryWidgetNumberHostsXDR.yml'
         file_path = os.path.normpath(file_path)
         data = get_script_data(file_path)
+        SCRIPT_DATA["EntryWidgetNumberHostsXDR"]["file_path"] = file_path
         self.assertDictEqual(data, SCRIPT_DATA)
 
     def test_get_playbook_data(self):
@@ -159,6 +161,7 @@ class TestIntegration(unittest.TestCase):
         file_path = f'{__file__}/../test_files/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml'
         file_path = os.path.normpath(file_path)
         data = get_playbook_data(file_path)['Cortex XDR Incident Handling']
+        PLAYBOOK_DATA["file_path"] = file_path
         self.assertEqual(data['name'], PLAYBOOK_DATA['name'])
         self.assertEqual(data['file_path'], PLAYBOOK_DATA['file_path'])
         self.assertEqual(data['fromversion'], PLAYBOOK_DATA['fromversion'])

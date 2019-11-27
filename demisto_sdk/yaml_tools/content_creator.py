@@ -4,12 +4,12 @@ import shutil
 import zipfile
 import io
 import yaml
-from ..common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
+from demisto_sdk.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX, \
     TOOLS_DIR
-from ..common.tools import get_child_directories, get_child_files, print_warning
-from .unifier import Unifier
+from demisto_sdk.common.tools import get_child_directories, get_child_files, print_warning
+from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class ContentCreator:

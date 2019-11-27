@@ -1,5 +1,4 @@
 import os
-import shutil
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple
@@ -17,19 +16,32 @@ from tests.validators_test import TestValidators
 
 
 class TestStructureValidator:
+    INPUTS_TARGETS = [
+        TestValidators.LAYOUT_TARGET,
+        TestValidators.DASHBOARD_TARGET,
+        TestValidators.WIDGET_TARGET,
+        TestValidators.PLAYBOOK_TARGET,
+        TestValidators.INTEGRATION_TARGET,
+        TestValidators.INCIDENT_FIELD_TARGET,
+        TestValidators.PLAYBOOK_PACK_TARGET,
+    ]
+
     @classmethod
     def setup_class(cls):
-        print("Setups class")
+        # checking that the files in the test are not exists so they won't overwrites.
+        for target in cls.INPUTS_TARGETS:
+            if isfile(target) is True:
+                pytest.fail(f"{target} File in tests already exists!")
+        # Creating directory for tests if they're not exists
         for directory in DIR_LIST:
             if not os.path.exists(directory):
                 os.mkdir(directory)
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down class")
-        for directory in DIR_LIST:
-            if os.path.exists(directory):
-                shutil.rmtree(directory)
+        for target in cls.INPUTS_TARGETS:
+            if isfile(target) is True:
+                os.remove(target)
 
     SCHEME_VALIDATION_INPUTS = [
         (VALID_TEST_PLAYBOOK_PATH, 'playbook', True, "Found a problem in the scheme although there is no problem"),
@@ -128,20 +140,3 @@ class TestStructureValidator:
         structure = StructureValidator(source)
         StructureValidator.scheme_name = scheme_name
         assert structure.is_valid_file() is answer
-
-
-class TestGeneral:
-    INPUTS = [
-        TestValidators.LAYOUT_TARGET,
-        TestValidators.DASHBOARD_TARGET,
-        TestValidators.WIDGET_TARGET,
-        TestValidators.PLAYBOOK_TARGET,
-        TestValidators.INTEGRATION_TARGET,
-        TestValidators.INCIDENT_FIELD_TARGET,
-        TestValidators.PLAYBOOK_PACK_TARGET,
-    ]
-
-    @pytest.mark.parametrize('target', INPUTS)
-    def test_file_not_exists_on_test_path(self, target):
-        """Check that all the paths used for tests are'nt exists so we won't break builds #MakesSadeHappy"""
-        assert isfile(target) is False

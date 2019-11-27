@@ -399,7 +399,6 @@ class FilesValidator:
                                     self._is_valid = False
                             except IndexError:
                                 print("No yml file to validate in {}".format(os.path.join(inner_root, inner_dir)))
-        exit(1)
 
         for directory in DIR_LIST:
             for root, dirs, files in os.walk(directory):

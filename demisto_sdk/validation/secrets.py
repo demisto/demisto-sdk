@@ -410,8 +410,9 @@ class SecretsValidator():
     def add_sub_parser(subparsers):
         from argparse import ArgumentDefaultsHelpFormatter
         description = """Run Secrets validator to catch sensitive data before exposing your code to public repository.
-         Attach full path to whitelist to allow manual whitelists.
-         """
+         Attach full path to whitelist to allow manual whitelists. Default file path to secrets is
+          "./Tests/secrets_white_list.json" 
+          """
         parser = subparsers.add_parser('secrets', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument('-c', '--circle', type=str2bool, default=False, help='Is CircleCi or not')
         parser.add_argument('-wl', '--whitelist', default='./Tests/secrets_white_list.json',

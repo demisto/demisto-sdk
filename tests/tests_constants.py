@@ -18,17 +18,3 @@ INVALID_INCIDENT_FIELD_PATH = "./tests/test_files/incidentfield-invalid.json"
 INVALID_WIDGET_VERSION_PATH = "./tests/test_files/widget-invalid-version.json"
 VALID_SCRIPT_PATH = "./tests/test_files/script-valid.yml"
 INVALID_SCRIPT_PATH = "./tests/test_files/script-invalid.yml"
-BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip'}
-DBOT_SCORES_DICT = {
-    'DBotScore.Indicator': 'The indicator that was tested.',
-    'DBotScore.Type': 'The indicator type.',
-    'DBotScore.Vendor': 'The vendor used to calculate the score.',
-    'DBotScore.Score': 'The actual score.'
-}
-
-IOC_OUTPUTS_DICT = {
-    'domain': {'Domain.Name'},
-    'file': {'File.MD5', 'File.SHA1', 'File.SHA256'},
-    'ip': {'IP.Address'},
-    'url': {'URL.Data'}
-}

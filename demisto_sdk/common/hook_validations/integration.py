@@ -1,7 +1,6 @@
-from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES
+from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
+    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.common.hook_validations.tests_constants import BANG_COMMAND_NAMES, DBOT_SCORES_DICT, \
-    IOC_OUTPUTS_DICT
 from demisto_sdk.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
 
 
@@ -343,7 +342,7 @@ class IntegrationValidator(BaseValidator):
     def _is_sub_set(supposed_bigger_list, supposed_smaller_list):
         # type: (list, list) -> bool
         """Check if supposed_smaller_list is a subset of the supposed_bigger_list"""
-        return all([item in supposed_bigger_list for item in supposed_smaller_list])
+        return all(item in supposed_bigger_list for item in supposed_smaller_list)
 
     def _get_command_to_context_paths(self, integration_json):
         # type: (dict) -> dict

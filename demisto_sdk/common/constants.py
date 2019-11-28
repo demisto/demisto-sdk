@@ -668,3 +668,19 @@ DIR_TO_PREFIX = {
 ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
+
+BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip'}
+
+DBOT_SCORES_DICT = {
+    'DBotScore.Indicator': 'The indicator that was tested.',
+    'DBotScore.Type': 'The indicator type.',
+    'DBotScore.Vendor': 'The vendor used to calculate the score.',
+    'DBotScore.Score': 'The actual score.'
+}
+
+IOC_OUTPUTS_DICT = {
+    'domain': {'Domain.Name'},
+    'file': {'File.MD5', 'File.SHA1', 'File.SHA256'},
+    'ip': {'IP.Address'},
+    'url': {'URL.Data'}
+}

@@ -18,7 +18,7 @@ class Errors:
 
     @staticmethod
     def wrong_version(file_path, expected="-1"):
-        return "{}: The version for our files should always be {}, please update the file.".format(expected, file_path)
+        return "{}: The version for our files should always be {}, please update the file.".format(file_path, expected)
 
     @staticmethod
     def wrong_version_reputations(file_path, object_id, version):

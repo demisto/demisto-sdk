@@ -14,7 +14,7 @@ repos:
     -   id: double-quote-string-fixer
     -   id: flake8
 - repo: git://github.com/FalconSocial/pre-commit-python-sorter
-  rev: 1.0.4
+  hash: 1.0.4
   hooks:
   - id: python-import-sorter
     args: ['--silent-overwrite']

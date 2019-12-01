@@ -1,3 +1,4 @@
+import requests
 import yaml
 import glob
 import subprocess
@@ -9,7 +10,8 @@ import time
 from datetime import datetime
 
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements
+from demisto_sdk.common.constants import Errors
+from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, print_error
 from demisto_sdk.yaml_tools.unifier import Unifier
 
 
@@ -38,12 +40,32 @@ class Linter:
         self.root = root
         self.keep_container = keep_container
         self.cpu_num = cpu_num
+        self._get_common_server_python()
         self.run_args = {
             'pylint': not no_pylint,
             'flake8': not no_flake8,
             'mypy': not no_mypy,
             'tests': not no_test
         }
+
+    @staticmethod
+    def _get_common_server_python():
+        # Getting common server python in not exists
+        common_server_python_path = "./Scripts/CommonServerPython/CommonServerPython.py"
+        common_server_target_path = "./CommonServerPython.py"
+        if not os.path.isfile(common_server_target_path):
+            try:
+                shutil.copyfile(common_server_python_path, common_server_target_path)
+            except OSError:
+                # File not exists, trying to get from github.
+                common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
+                                            "CommonServerPython/CommonServerPython.py"
+                try:
+                    contents = requests.get(common_server_target_path, verify=False).content
+                    with open(common_server_target_path, "w+") as f:
+                        f.write(contents)
+                except Exception:
+                    print_error(Errors.no_common_server_python(common_server_remote_path))
 
     def run_dev_packages(self) -> int:
         # load yaml

@@ -166,8 +166,10 @@ class ContentCreator:
             new_path = dpath
             if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
                 new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
-            if os.path.isfile(new_path):
-                raise NameError('Failed while trying to create {}. File already exists.'.format(new_path))
+            if os.path.isfile(os.path.join(bundle, new_path)):
+                raise NameError(
+                    f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
+                )
             dpath = new_path
 
             if len(dpath) >= self.file_name_max_size:

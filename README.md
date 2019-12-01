@@ -16,19 +16,131 @@ The library uses python 3.7+.
 
 ### CLI
 You can use the SDK in the CLI as follows:
-`demisto-sdk <action> <args>`. For more information, run `demisto-sdk -h`.
-
-#### Examples:
-
-`demisto-sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m` 
-will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
-
-`demisto-sdk unify -i Integrations/MyInt -o Integrations` will grab the integration components and unify them to a single yaml file.
-
-`demisto-sdk validate` will validate your content files.
+`demisto-sdk <command> <args>`.  
+For more information, run `demisto-sdk -h`.  
+For more information on a specific command execute `demisto-sdk <command> -h`.
 
 
-### In the code
+## Commands
+
+### Unify
+
+Unify code, image and description files to a single Demisto yaml file.  
+**Arguments**:
+* *-i, --indir*  
+  The path to the directory in which the files reside
+* *-o, --outdir*  
+  The path to the directory into which to write the unified yml file
+
+**Examples**:  
+`demisto-sdk unify -i Integrations/MyInt -o Integrations`  
+This will grab the integration components and unify them to a single yaml file.
+
+### Extract
+
+Extract code, image and description files from a demisto integration or script yml file.  
+**Arguments**:
+* *-i INFILE, --infile INFILE*  
+                        The yml file to extract from
+* *-o OUTFILE, --outfile OUTFILE*  
+                        The output file or dir (if doing migrate) to write the
+                        code to
+* *-m, --migrate*  
+                        Migrate an integration to package format. Pass to -o
+                        option a directory in this case.
+* *-t {script,integration}, --type {script,integration}*  
+                        Yaml type. If not specified will try to determine type
+                        based upon path.
+* *-d {True,False}, --demistomock {True,False}*  
+                        Add an import for demisto mock, true by default
+* *-c {True,False}, --commonserver {True,False}*  
+                        Add an import for CommonServerPython. If not specified
+                        will import unless this is CommonServerPython
+
+**Examples**:  
+`demisto-sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`  
+This will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
+
+### Validate
+
+Validate your content files.  
+**Arguments**:  
+* *-c CIRCLE, --circle CIRCLE*  
+                        Is CircleCi or not
+* *-b BACKWARD_COMP, --backward-comp BACKWARD_COMP*  
+                        To check backward compatibility.
+* *-t TEST_FILTER, --test-filter TEST_FILTER*  
+                        Check that tests are valid.
+* *-j, --conf-json*  
+                        Validate the conf.json file.
+* *-i, --id-set*  
+                        Create the id_set.json file.
+* *-p PREV_VER, --prev-ver PREV_VER*  
+                        Previous branch or SHA1 commit to run checks against.
+* *-g, --use-git*  
+                        Validate changes using git.
+
+**Examples**:  
+`demisto-sdk validate`  
+This will validate your content files.
+
+### Lint
+
+Run lintings (flake8, mypy, pylint) and pytest. pylint and pytest will run within the docker image of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.  
+**Arguments**:  
+* *-d DIR, --dir DIR*  
+  Specify directory of integration/script (default: None)
+* *--no-pylint*  
+  Do NOT run pylint linter (default: False)
+* *--no-mypy*  
+  Do NOT run mypy static type checking (default: False)
+* *--no-flake8*  
+  Do NOT run flake8 linter (default: False)
+* *--no-test*  
+  Do NOT test (skip pytest) (default: False)
+* *-r, --root*  
+  Run pytest container with root user (default: False)
+* *-k, --keep-container*  
+  Keep the test container (default: False)
+* *-v, --verbose*  
+  Verbose output (default: False)
+* *--cpu-num CPU_NUM*  
+  Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
+
+**Examples**:  
+`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR --no-mypy`  
+This will run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" directory.
+
+### Secrets
+
+Run Secrets validator to catch sensitive data before exposing your code to public repository. Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "./Tests/secrets_white_list.json".  
+**Arguments**:  
+* *-c CIRCLE, --circle CIRCLE*  
+                        Is CircleCi or not (default: False)
+* *-wl WHITELIST, --whitelist WHITELIST*  
+                        Full path to whitelist file, file name should be "secrets_white_list.json" (default: ./Tests/secrets_white_list.json)
+
+**Examples**:  
+`demisto-sdk secrets`  
+This will run the secrets validator on your files.
+
+### Create
+
+Create content artifacts.  
+**Arguments**:  
+* *-a ARTIFACTS_PATH, --artifacts_path ARTIFACTS_PATH*  
+                        The path of the directory in which you want to save
+                        the created content artifacts
+* *-p, --preserve_bundles*  
+                        Flag for if you'd like to keep the bundles created in
+                        the process of making the content artifacts
+
+**Examples**:  
+`demisto-sdk create -a .`  
+This will create content artifacts in the current directory.
+
+
+## In the code
 You can import the SDK core class in your python code as follows:
 
 `from demisto_sdk.core import DemistoSDK`

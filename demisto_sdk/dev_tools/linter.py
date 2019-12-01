@@ -58,10 +58,11 @@ class Linter:
                 shutil.copyfile(common_server_python_path, common_server_target_path)
             except OSError:
                 # File not exists, trying to get from github.
-                common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
+                common_server_remote_path = "http://raw.githubusercontent.com/demisto/content/master/Scripts/" \
                                             "CommonServerPython/CommonServerPython.py"
                 try:
-                    contents = requests.get(common_server_target_path, verify=False).content
+                    res = requests.get(common_server_remote_path, verify=False)
+                    contents = res.content
                     with open(common_server_target_path, "w+") as f:
                         f.write(contents)
                 except Exception:

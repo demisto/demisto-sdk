@@ -6,7 +6,7 @@ def test_is_not_default_image():
     int_path = os.path.normpath(os.path.join(__file__, '..', 'test_files', 'integration-Zoom.yml'))
     image.INTEGRATION_REGEX = int_path
     image_validator = image.ImageValidator(int_path)
-    assert image_validator.is_not_default_image() is True
+    assert image_validator.is_not_default_image() is False
     image_path = os.path.normpath(os.path.join(__file__, '..', 'test_files', 'default_image.png'))
     image.INTEGRATION_YML_REGEX = image_path
     image_validator = image.ImageValidator(image_path)

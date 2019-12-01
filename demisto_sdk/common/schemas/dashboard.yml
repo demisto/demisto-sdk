@@ -2,25 +2,25 @@ type: map
 mapping:
   id:
     type: str
-    required: yes
+    required: true
   version:
     type: number
-    required: yes
+    required: true
   fromVersion:
     type: str
   toVersion:
     type: str
   name:
     type: str
-    required: yes
+    required: true
   description:
     type: str
-    required: yes
+    required: true
   fromDateLicense:
     type: str
   isPredefined:
     type: bool
-    required: yes
+    required: true
   fromDate:
     type: str
   toDate:
@@ -40,26 +40,26 @@ schema;layout_schema:
   mapping:
     id:
       type: str
-      required: yes
+      required: true
     forceRange:
       type: bool
-      required: yes
+      required: true
     x:
       type: number
-      required: yes
+      required: true
     y:
       type: number
-      required: yes
+      required: true
     h:
       type: number
-      required: yes
+      required: true
     w:
       type: number
-      required: yes
+      required: true
     i:
       type: str
-      required: yes
+      required: true
     widget:
       type: map
-      required: yes
+      required: true
       allowempty: True

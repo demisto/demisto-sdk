@@ -9,14 +9,17 @@
 
 import sys
 import argparse
+import json
 
-from .common.constants import DIR_TO_PREFIX
-from .common.tools import print_color, print_error, LOG_COLORS
-from .yaml_tools.unifier import Unifier
-from .yaml_tools.extractor import Extractor
-from .dev_tools.linter import Linter
-from .common.configuration import Configuration
-from .validation.file_validator import FilesValidator
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.common.constants import DIR_TO_PREFIX
+from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
+from demisto_sdk.dev_tools.linter import Linter
+from demisto_sdk.validation.file_validator import FilesValidator
+from demisto_sdk.validation.secrets import SecretsValidator
+from demisto_sdk.yaml_tools.content_creator import ContentCreator
+from demisto_sdk.yaml_tools.extractor import Extractor
+from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class DemistoSDK:
@@ -38,6 +41,8 @@ class DemistoSDK:
         Extractor.add_sub_parser(self.subparsers)
         FilesValidator.add_sub_parser(self.subparsers)
         Linter.add_sub_parser(self.subparsers)
+        SecretsValidator.add_sub_parser(self.subparsers)
+        ContentCreator.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -58,7 +63,10 @@ class DemistoSDK:
             return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                              no_test=args.no_test, root=args.root, keep_container=args.keep_container,
                              verbose=args.verbose, cpu_num=args.cpu_num)
-
+        elif args.command == 'secrets':
+            self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
+        elif args.command == 'create':
+            self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
         else:
             print('Use demisto-sdk -h to see the available commands.')
 
@@ -126,3 +134,19 @@ class DemistoSDK:
         """
         linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
         return linter.run_dev_packages()
+
+    def secrets(self, **kwargs):
+        sys.path.append(self.configuration.content_dir)
+
+        print_color('Starting secrets detection', LOG_COLORS.GREEN)
+
+        validator = SecretsValidator(configuration=self.configuration, **kwargs)
+
+        return validator.find_secrets()
+
+    def create_content_artifacts(self, artifact_path, preserve_bundles):
+        cc = ContentCreator(artifact_path, preserve_bundles=preserve_bundles)
+        cc.create_content()
+        if cc.long_file_names:
+            print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
+                        f'{json.dumps(cc.long_file_names, indent=4)}')

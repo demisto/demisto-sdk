@@ -4,6 +4,12 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.1.2
+* Restructuring validation to support content packs
+* Added secrets validation
+* Added content bundle creation
+* Added lint and unit test run
+
 ### 0.1.1
 
 * Added new logic to the unifier

@@ -8,9 +8,9 @@ import shutil
 import time
 from datetime import datetime
 
-from ..yaml_tools.unifier import Unifier
-from ..common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements
-from ..common.configuration import Configuration
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements
+from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class Linter:
@@ -157,7 +157,7 @@ class Linter:
         wait_print = True
         for x in range(60):
             images_ls = subprocess.check_output(['docker', 'image', 'ls', '--format',
-                                                '{{.Repository}}:{{.Tag}}', target_image],
+                                                 '{{.Repository}}:{{.Tag}}', target_image],
                                                 universal_newlines=True).strip()
             if images_ls == target_image:
                 print('{}: Using already existing docker image: {}'.format(datetime.now(), target_image))

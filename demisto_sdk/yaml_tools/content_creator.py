@@ -122,7 +122,7 @@ class ContentCreator:
                 script_obj = yml_info['script']
             with io.open(path, mode='r', encoding='utf-8') as file_:
                 yml_text = file_.read()
-            unifier = Unifier(path, parent_dir_name, out_path)
+            unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
             out_map = unifier.write_yaml_with_docker(yml_text, yml_info, script_obj)
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))

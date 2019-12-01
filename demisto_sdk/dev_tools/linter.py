@@ -50,23 +50,26 @@ class Linter:
 
     @staticmethod
     def _get_common_server_python():
+        # type: () -> bool
         # Getting common server python in not exists
         common_server_python_path = "./Scripts/CommonServerPython/CommonServerPython.py"
         common_server_target_path = "./CommonServerPython.py"
+        common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
+                                    "CommonServerPython/CommonServerPython.py"
         if not os.path.isfile(common_server_target_path):
             try:
                 shutil.copyfile(common_server_python_path, common_server_target_path)
             except OSError:
                 # File not exists, trying to get from github.
-                common_server_remote_path = "http://raw.githubusercontent.com/demisto/content/master/Scripts/" \
-                                            "CommonServerPython/CommonServerPython.py"
+
                 try:
                     res = requests.get(common_server_remote_path, verify=False)
-                    contents = res.content
                     with open(common_server_target_path, "w+") as f:
-                        f.write(contents)
-                except Exception:
+                        f.write(res.text)
+                except requests.exceptions.RequestException:
                     print_error(Errors.no_common_server_python(common_server_remote_path))
+                    return False
+        return True
 
     def run_dev_packages(self) -> int:
         # load yaml

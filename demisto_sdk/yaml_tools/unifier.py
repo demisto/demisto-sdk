@@ -185,7 +185,7 @@ class Unifier:
         """
 
         # We assume here the code file has the same name as the integration/script name, plus the addition of the type
-        package_name = os.path.basename(os.path.dirname(self.package_path))
+        package_name = os.path.basename(self.package_path)
         code_file_path = self.package_path + package_name + script_type
         if not os.path.isfile(code_file_path):
             raise Exception('Code file does not exists or has different name than {}'

@@ -24,7 +24,7 @@ class Linter:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
-        dev_scripts_dir = os.path.join(self.configuration.env_dir, 'scripts', 'dev_scripts')
+        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'scripts', 'dev_scripts')
         self.run_dev_tasks_script_name = 'run_dev_tasks.sh'
         self.run_mypy_script_name = 'run_mypy.sh'
         self.container_setup_script_name = 'pkg_dev_container_setup.sh'
@@ -32,7 +32,7 @@ class Linter:
         self.container_setup_script = os.path.join(dev_scripts_dir, self.container_setup_script_name)
         self.run_mypy_script = os.path.join(dev_scripts_dir, self.run_mypy_script_name)
         self.docker_login_completed = False
-        self.project_dir = os.path.abspath(project_dir)
+        self.project_dir = os.path.abspath(os.path.join(self.configuration.env_dir, project_dir))
         if self.project_dir[-1] != os.sep:
             self.project_dir = os.path.join(self.project_dir, '')
 
@@ -73,6 +73,7 @@ class Linter:
     def run_dev_packages(self) -> int:
         # load yaml
 
+        print(self.project_dir)
         yml_path = glob.glob(self.project_dir + '/*.yml')[0]
         print_v('Using yaml file: {}'.format(yml_path))
         with open(yml_path, 'r') as yml_file:

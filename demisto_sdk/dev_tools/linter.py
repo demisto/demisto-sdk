@@ -49,8 +49,7 @@ class Linter:
         }
 
     @staticmethod
-    def _get_common_server_python():
-        # type: () -> bool
+    def _get_common_server_python() -> bool:
         # Getting common server python in not exists
         common_server_python_path = "./Scripts/CommonServerPython/CommonServerPython.py"
         common_server_target_path = "./CommonServerPython.py"
@@ -60,7 +59,7 @@ class Linter:
             try:
                 shutil.copyfile(common_server_python_path, common_server_target_path)
             except OSError:
-                # File not exists, trying to get from github.
+                # File does not exists, trying to get from github.
 
                 try:
                     res = requests.get(common_server_remote_path, verify=False)

@@ -8,7 +8,7 @@ import yaml
 
 from demisto_sdk.common.constants import DIR_LIST
 from demisto_sdk.common.hook_validations.structure import StructureValidator
-from demisto_sdk.common.hook_validations.tests_constants import VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, \
+from tests.tests_constants import VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, \
     VALID_INTEGRATION_TEST_PATH, VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH, VALID_PLAYBOOK_ID_PATH, \
     INVALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_PATH, VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, INVALID_WIDGET_PATH, \
     VALID_WIDGET_PATH, VALID_DASHBOARD_PATH, INVALID_DASHBOARD_PATH, INVALID_REPUTATION_PATH
@@ -25,6 +25,7 @@ class TestStructureValidator:
         TestValidators.INCIDENT_FIELD_TARGET,
         TestValidators.PLAYBOOK_PACK_TARGET,
     ]
+    CREATED_DIRS = list()
 
     @classmethod
     def setup_class(cls):
@@ -35,6 +36,7 @@ class TestStructureValidator:
         # Creating directory for tests if they're not exists
         for directory in DIR_LIST:
             if not os.path.exists(directory):
+                cls.CREATED_DIRS.append(directory)
                 os.mkdir(directory)
 
     @classmethod
@@ -42,6 +44,9 @@ class TestStructureValidator:
         for target in cls.INPUTS_TARGETS:
             if isfile(target) is True:
                 os.remove(target)
+        for directory in cls.CREATED_DIRS:
+            if os.path.exists(directory):
+                os.rmdir(directory)
 
     SCHEME_VALIDATION_INPUTS = [
         (VALID_TEST_PLAYBOOK_PATH, 'playbook', True, "Found a problem in the scheme although there is no problem"),

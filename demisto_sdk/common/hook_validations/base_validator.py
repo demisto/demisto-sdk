@@ -53,9 +53,6 @@ class BaseValidator:
         Returns:
             (bool): is there release notes
         """
-        if self.old_file:
-            print_error(Errors.might_need_release_notes(self.file_path))
-            return True
         if os.path.isfile(self.file_path):
             rn_path = get_release_notes_file_path(self.file_path)
             release_notes = get_latest_release_notes_text(rn_path)

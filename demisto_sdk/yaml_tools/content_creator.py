@@ -122,7 +122,7 @@ class ContentCreator:
                 script_obj = yml_info['script']
             with io.open(path, mode='r', encoding='utf-8') as file_:
                 yml_text = file_.read()
-            unifier = Unifier(path, parent_dir_name, out_path)
+            unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
             out_map = unifier.write_yaml_with_docker(yml_text, yml_info, script_obj)
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))
@@ -166,8 +166,10 @@ class ContentCreator:
             new_path = dpath
             if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
                 new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
-            if os.path.isfile(new_path):
-                raise NameError('Failed while trying to create {}. File already exists.'.format(new_path))
+            if os.path.isfile(os.path.join(bundle, new_path)):
+                raise NameError(
+                    f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
+                )
             dpath = new_path
 
             if len(dpath) >= self.file_name_max_size:

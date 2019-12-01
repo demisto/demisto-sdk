@@ -29,18 +29,20 @@ class TestValidators:
     INCIDENT_FIELD_TARGET = "IncidentFields/incidentfield-test.json"
     PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
     SCRIPT_TARGET = "./Scripts/script-test.yml"
+    CREATED_DIRS = list()
 
     @classmethod
     def setup_class(cls):
         print("Setups class")
         for dir in DIR_LIST:
             if not os.path.exists(dir):
+                cls.CREATED_DIRS.append(dir)
                 os.mkdir(dir)
 
     @classmethod
     def teardown_class(cls):
         print("Tearing down class")
-        for dir in DIR_LIST:
+        for dir in cls.CREATED_DIRS:
             if os.path.exists(dir):
                 os.rmdir(dir)
 

@@ -177,20 +177,22 @@ class Unifier:
 
     def get_code_file(self, script_type):
         """Return the first code file in the specified directory path
-
         :param script_type: script type: .py or .js
         :type script_type: str
         :return: path to found code file
         :rtype: str
         """
 
-        # We assume here the code file has the same name as the integration/script name, plus the addition of the type
-        package_name = os.path.basename(os.path.dirname(self.package_path))
-        code_file_path = self.package_path + package_name + script_type
-        if not os.path.isfile(code_file_path):
-            raise Exception('Code file does not exists or has different name than {}'
-                            .format(package_name + script_type))
-        return code_file_path
+        ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
+                        r'|conftest\.py')
+        if not self.package_path.endswith('/'):
+            self.package_path += '/'
+        if self.package_path.endswith('Scripts/CommonServerPython/'):
+            return self.package_path + 'CommonServerPython.py'
+
+        script_path = list(filter(lambda x: not re.search(ignore_regex, x),
+                                  glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
+        return script_path
 
     def insert_script_to_yml(self, script_type, yml_text, yml_data):
         script_path = self.get_code_file(script_type)

@@ -191,6 +191,11 @@ class Errors:
         return "{}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
             .format(file_path, category, '\n'.join(INTEGRATION_CATEGORIES))
 
+    @staticmethod
+    def no_common_server_python(path):
+        return "Could not get CommonServerPythonScript.py file. Please download it manually from {} and " \
+               "add it to the root of the repository.".format(path)
+
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'

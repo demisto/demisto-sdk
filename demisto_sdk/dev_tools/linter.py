@@ -72,8 +72,6 @@ class Linter:
 
     def run_dev_packages(self) -> int:
         # load yaml
-
-        print(self.project_dir)
         yml_path = glob.glob(self.project_dir + '/*.yml')[0]
         print_v('Using yaml file: {}'.format(yml_path))
         with open(yml_path, 'r') as yml_file:

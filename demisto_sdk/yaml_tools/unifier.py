@@ -183,7 +183,7 @@ class Unifier:
         :rtype: str
         """
 
-        ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|test_.*\.py|_test\.py'
+        ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
                         r'|conftest\.py')
         if not self.package_path.endswith('/'):
             self.package_path += '/'

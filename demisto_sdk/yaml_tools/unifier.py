@@ -69,7 +69,7 @@ class Unifier:
                 output_path45: yml_text45
             }
         for file_path, file_text in output_map.items():
-            if self.is_ci and os.path.isfile(file_path):
+            if os.path.isfile(file_path):
                 raise ValueError('Output file already exists: {}.'
                                  ' Make sure to remove this file from source control'
                                  ' or rename this package (for example if it is a v2).'.format(self.dest_path))

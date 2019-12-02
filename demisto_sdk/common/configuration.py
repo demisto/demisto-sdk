@@ -13,4 +13,4 @@ class Configuration:
             self.env_dir = env_dir
         self.envs_dirs_base = '{}/dev_envs/default_python'.format(self.sdk_env_dir)
 
-        self.content_dir = os.path.abspath(os.getcwd())
+        self.content_dir = os.path.normpath(os.getcwd())

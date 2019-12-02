@@ -28,7 +28,7 @@ class Linter:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
-        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'scripts', 'dev_scripts')
+        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'common', 'scripts', 'dev_scripts')
         self.run_dev_tasks_script_name = 'run_dev_tasks.sh'
         self.run_mypy_script_name = 'run_mypy.sh'
         self.container_setup_script_name = 'pkg_dev_container_setup.sh'
@@ -36,7 +36,7 @@ class Linter:
         self.container_setup_script = os.path.join(dev_scripts_dir, self.container_setup_script_name)
         self.run_mypy_script = os.path.join(dev_scripts_dir, self.run_mypy_script_name)
         self.docker_login_completed = False
-        self.project_dir = os.path.abspath(os.path.join(self.configuration.env_dir, project_dir))
+        self.project_dir = os.path.normpath(os.path.join(self.configuration.env_dir, project_dir))
         if self.project_dir[-1] != os.sep:
             self.project_dir = os.path.join(self.project_dir, '')
 
@@ -137,7 +137,7 @@ class Linter:
         lint_files = self._get_lint_files()
         print("========= Running mypy on: {} ===============".format(lint_files))
         sys.stdout.flush()
-        script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
+        script_path = os.path.normpath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
         subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
         print("mypy completed")
 
@@ -292,7 +292,7 @@ class Linter:
     def _get_lint_files(self):
         unifier = Unifier(self.project_dir)
         code_file = unifier.get_code_file('.py')
-        return os.path.abspath(code_file)
+        return os.path.normpath(code_file)
 
     @staticmethod
     def add_sub_parser(subparsers):

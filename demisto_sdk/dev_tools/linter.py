@@ -16,7 +16,7 @@ from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class Linter:
-    common_server_target_path = "./CommonServerPython.py"
+    common_server_target_path = "CommonServerPython.py"
     common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
                                 "CommonServerPython/CommonServerPython.py"
 

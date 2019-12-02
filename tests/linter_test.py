@@ -15,6 +15,7 @@ class TestLinter:
         linter.remove_common_server_python()
         assert ans
 
+    @pytest.mark.skip(reason="No mypy")
     @pytest.mark.parametrize("directory", DIR_LIST)
     def test_run_mypy(self, directory):
         linter = Linter(directory)

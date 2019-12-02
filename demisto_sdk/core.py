@@ -122,7 +122,7 @@ class DemistoSDK:
         return extractor.extract_code(dest_path)
 
     def validate(self, **kwargs):
-        sys.path.append(self.configuration.content_dir)
+        sys.path.append(self.configuration.env_dir)
 
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
@@ -138,10 +138,11 @@ class DemistoSDK:
         :return: The lint result.
         """
         linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
-        return linter.run_dev_packages()
+        ans = linter.run_dev_packages()
+        return ans
 
     def secrets(self, **kwargs):
-        sys.path.append(self.configuration.content_dir)
+        sys.path.append(self.configuration.env_dir)
 
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
 

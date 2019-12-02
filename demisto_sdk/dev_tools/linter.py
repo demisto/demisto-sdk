@@ -16,6 +16,10 @@ from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class Linter:
+    common_server_target_path = "CommonServerPython.py"
+    common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
+                                "CommonServerPython/CommonServerPython.py"
+
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration()):
@@ -24,7 +28,7 @@ class Linter:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
-        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'scripts', 'dev_scripts')
+        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'common', 'scripts', 'dev_scripts')
         self.run_dev_tasks_script_name = 'run_dev_tasks.sh'
         self.run_mypy_script_name = 'run_mypy.sh'
         self.container_setup_script_name = 'pkg_dev_container_setup.sh'
@@ -40,7 +44,7 @@ class Linter:
         self.root = root
         self.keep_container = keep_container
         self.cpu_num = cpu_num
-        self._get_common_server_python()
+        self.common_server_created = False
         self.run_args = {
             'pylint': not no_pylint,
             'flake8': not no_flake8,
@@ -48,27 +52,30 @@ class Linter:
             'tests': not no_test
         }
 
-    @staticmethod
-    def _get_common_server_python() -> bool:
-        # Getting common server python in not exists
-        common_server_python_path = "./Scripts/CommonServerPython/CommonServerPython.py"
-        common_server_target_path = "./CommonServerPython.py"
-        common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
-                                    "CommonServerPython/CommonServerPython.py"
-        if not os.path.isfile(common_server_target_path):
+    def get_common_server_python(self) -> bool:
+        """Getting common server python in not exists
+        changes self.common_server_created to True if needed.
+        Returns:
+            True if exists/created, else False
+        """
+        # If not CommonServerPython is dir
+        if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
+            # Get file from git
             try:
-                shutil.copyfile(common_server_python_path, common_server_target_path)
-            except OSError:
-                # File does not exists, trying to get from github.
-
-                try:
-                    res = requests.get(common_server_remote_path, verify=False)
-                    with open(common_server_target_path, "w+") as f:
-                        f.write(res.text)
-                except requests.exceptions.RequestException:
-                    print_error(Errors.no_common_server_python(common_server_remote_path))
-                    return False
+                res = requests.get(self.common_server_remote_path, verify=False)
+                with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
+                    f.write(res.text)
+                    self.common_server_created = True
+            except requests.exceptions.RequestException:
+                print_error(Errors.no_common_server_python(self.common_server_remote_path))
+                return False
         return True
+
+    def remove_common_server_python(self):
+        """checking if file exists and removing it
+        """
+        if self.common_server_created:
+            os.remove(os.path.join(self.project_dir, self.common_server_target_path))
 
     def run_dev_packages(self) -> int:
         # load yaml
@@ -122,15 +129,20 @@ class Linter:
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
         sys.stdout.flush()
-        subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.content_dir)
+        subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.env_dir)
         print("flake8 completed")
 
     def run_mypy(self, py_num):
-        lint_files = self._get_lint_files()
-        print("========= Running mypy on: {} ===============".format(lint_files))
-        sys.stdout.flush()
-        subprocess.check_call(['bash', self.run_mypy_script, str(py_num), lint_files], cwd=self.project_dir)
-        print("mypy completed")
+        try:
+            self.get_common_server_python()
+            lint_files = self._get_lint_files()
+            print("========= Running mypy on: {} ===============".format(lint_files))
+            sys.stdout.flush()
+            script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
+            subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
+            print("mypy completed")
+        finally:
+            self.remove_common_server_python()
 
     def _docker_login(self):
         if self.docker_login_completed:
@@ -269,13 +281,13 @@ class Linter:
     def _setup_dev_files(self):
         # copy demistomock and common server
         try:
-            shutil.copy(self.configuration.content_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
+            shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
             open(self.project_dir + '/CommonServerUserPython.py', 'a').close()  # create empty file
             shutil.rmtree(self.project_dir + '/__pycache__', ignore_errors=True)
-            shutil.copy(self.configuration.content_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
+            shutil.copy(self.configuration.env_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
             if "/Scripts/CommonServerPython" not in self.project_dir:
                 # Otherwise we already have the CommonServerPython.py file
-                shutil.copy(self.configuration.content_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
+                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
                             self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)), self.log_verbose)
@@ -283,7 +295,7 @@ class Linter:
     def _get_lint_files(self):
         unifier = Unifier(self.project_dir)
         code_file = unifier.get_code_file('.py')
-        return os.path.basename(code_file)
+        return os.path.abspath(code_file)
 
     @staticmethod
     def add_sub_parser(subparsers):

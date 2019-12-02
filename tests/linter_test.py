@@ -4,10 +4,10 @@ from demisto_sdk.dev_tools.linter import Linter
 
 
 class TestLinter:
-
     DIR_LIST = [
         "tests/test_files/fake_integration"
     ]
+
     @pytest.mark.parametrize("directory", DIR_LIST)
     def test_get_common_server_python(self, directory):
         linter = Linter(directory)
@@ -18,4 +18,4 @@ class TestLinter:
     @pytest.mark.parametrize("directory", DIR_LIST)
     def test_run_mypy(self, directory):
         linter = Linter(directory)
-        linter.run_mypy("3.7")
+        linter.run_mypy("2.7")

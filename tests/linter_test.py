@@ -1,4 +1,3 @@
-import os
 import pytest
 
 from demisto_sdk.dev_tools.linter import Linter

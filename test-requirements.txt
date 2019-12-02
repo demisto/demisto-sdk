@@ -4,3 +4,4 @@ mock
 urllib3
 flake8
 mypy
+pre-commit

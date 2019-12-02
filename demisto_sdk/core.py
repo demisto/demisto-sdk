@@ -138,7 +138,9 @@ class DemistoSDK:
         :return: The lint result.
         """
         linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
-        return linter.run_dev_packages()
+        ans = linter.run_dev_packages()
+        linter.remove_common_server_python()
+        return ans
 
     def secrets(self, **kwargs):
         sys.path.append(self.configuration.content_dir)

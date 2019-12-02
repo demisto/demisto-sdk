@@ -138,7 +138,7 @@ class Linter:
         print("========= Running mypy on: {} ===============".format(lint_files))
         sys.stdout.flush()
         script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
-        raise f"{script_path}, {lint_files}"
+        raise Exception(f"{script_path}, {lint_files}")
         subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
         print("mypy completed")
 

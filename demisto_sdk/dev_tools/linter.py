@@ -16,6 +16,10 @@ from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class Linter:
+    common_server_target_path = "./CommonServerPython.py"
+    common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
+                                "CommonServerPython/CommonServerPython.py"
+
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration()):
@@ -40,7 +44,7 @@ class Linter:
         self.root = root
         self.keep_container = keep_container
         self.cpu_num = cpu_num
-        self._get_common_server_python()
+        self.common_server_created = self._get_common_server_python()
         self.run_args = {
             'pylint': not no_pylint,
             'flake8': not no_flake8,
@@ -48,27 +52,29 @@ class Linter:
             'tests': not no_test
         }
 
-    @staticmethod
-    def _get_common_server_python() -> bool:
-        # Getting common server python in not exists
-        common_server_python_path = "./Scripts/CommonServerPython/CommonServerPython.py"
-        common_server_target_path = "./CommonServerPython.py"
-        common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
-                                    "CommonServerPython/CommonServerPython.py"
-        if not os.path.isfile(common_server_target_path):
+    def _get_common_server_python(self) -> bool:
+        """Getting common server python in not exists
+        Returns:
+            True if successful, else False
+        """
+        # If not CommonServerPython is dir
+        if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
+            # Get file from git
             try:
-                shutil.copyfile(common_server_python_path, common_server_target_path)
-            except OSError:
-                # File does not exists, trying to get from github.
-
-                try:
-                    res = requests.get(common_server_remote_path, verify=False)
-                    with open(common_server_target_path, "w+") as f:
-                        f.write(res.text)
-                except requests.exceptions.RequestException:
-                    print_error(Errors.no_common_server_python(common_server_remote_path))
-                    return False
+                res = requests.get(self.common_server_remote_path, verify=False)
+                with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
+                    f.write(res.text)
+                    self.common_server_created = True
+            except requests.exceptions.RequestException:
+                print_error(Errors.no_common_server_python(self.common_server_remote_path))
+                return False
         return True
+
+    def remove_common_server_python(self):
+        """checking if file exists and removing it
+        """
+        if self.common_server_created:
+            os.remove(os.path.join(self.project_dir, self.common_server_target_path))
 
     def run_dev_packages(self) -> int:
         # load yaml

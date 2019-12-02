@@ -277,17 +277,17 @@ class ContentCreator:
             print('creating dir for bundles...')
             for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
                 os.mkdir(bundle_dir)
-
+            
             self.add_tools_to_bundle(self.content_bundle)
 
             for package_dir in DIR_TO_PREFIX:
                 # handles nested package directories
                 self.create_unifieds_and_copy(package_dir)
-
+            
             for content_dir in self.content_directories:
                 print(f'Copying dir {content_dir} to bundles...')
                 self.copy_dir_files(content_dir, self.content_bundle)
-
+            
             self.copy_test_files()
 
             # handle copying packs content to bundles for zipping to content_new.zip and content_test.zip
@@ -300,10 +300,10 @@ class ContentCreator:
             print('Copying content descriptor to content and test bundles')
             for bundle_dir in [self.content_bundle, self.test_bundle]:
                 shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
-
+            
             if os.path.exists('./Documentation/doc-CommonServer.json'):
                 print('copying common server doc to content bundle')
-                shutil.copyfile('./Documentation/doc-CommonServer.json',
+                shutil.copyfile('./Documentation/doc-CommonServer.json', 
                                 os.path.join(self.content_bundle, 'doc-CommonServer.json'))
             else:
                 print_warning('./Documentation/doc-CommonServer.json was not found and '
@@ -334,7 +334,7 @@ class ContentCreator:
     def add_sub_parser(subparsers):
         parser = subparsers.add_parser('create',
                                        help='Create content artifacts')
-        parser.add_argument('-a', '--artifacts_path',
+        parser.add_argument('-a', '--artifacts_path', 
                             help='The path of the directory in which you want to save the created content artifacts')
         parser.add_argument('-p', '--preserve_bundles', action='store_true',
                             help='Flag for if you\'d like to keep the bundles created in the process of making'

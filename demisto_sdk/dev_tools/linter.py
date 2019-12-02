@@ -291,7 +291,7 @@ class Linter:
     def _get_lint_files(self):
         unifier = Unifier(self.project_dir)
         code_file = unifier.get_code_file('.py')
-        return os.path.basename(code_file)
+        return os.path.abspath(code_file)
 
     @staticmethod
     def add_sub_parser(subparsers):

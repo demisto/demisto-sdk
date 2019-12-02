@@ -28,7 +28,7 @@ if [[ "$PY_VERSION" = "2.7" ]]; then
     fi
 fi
 
-mypy --python-version $PY_VERSION --check-untyped-defs --ignore-missing-imports \
+python3 -m mypy --python-version $PY_VERSION --check-untyped-defs --ignore-missing-imports \
     --follow-imports=silent --show-column-numbers --show-error-codes --pretty \
     --allow-redefinition $PY_FILE 2>&1
 

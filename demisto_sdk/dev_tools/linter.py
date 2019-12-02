@@ -137,8 +137,8 @@ class Linter:
         lint_files = self._get_lint_files()
         print("========= Running mypy on: {} ===============".format(lint_files))
         sys.stdout.flush()
-        subprocess.check_call(['bash', os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script),
-                               str(py_num), lint_files], cwd=self.project_dir)
+        script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
+        subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
         print("mypy completed")
 
     def _docker_login(self):

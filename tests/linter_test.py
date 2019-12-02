@@ -14,3 +14,8 @@ class TestLinter:
         ans = linter._get_common_server_python()
         linter.remove_common_server_python()
         assert ans
+
+    @pytest.mark.parametrize("directory", DIR_LIST)
+    def test_run_mypy(self, directory):
+        linter = Linter(directory)
+        linter.run_mypy("3.7")

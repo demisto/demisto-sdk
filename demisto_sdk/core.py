@@ -32,9 +32,10 @@ class DemistoSDK:
     def __init__(self, configuration=Configuration()):
         self.parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        self.parser.add_argument('-d', '--env-dir', help='Specify a working directory.')
         self.subparsers = self.parser.add_subparsers(dest='command')
-        self.initialize_parsers()
         self.configuration = configuration
+        self.initialize_parsers()
 
     def initialize_parsers(self):
         Unifier.add_sub_parser(self.subparsers)
@@ -46,6 +47,10 @@ class DemistoSDK:
 
     def parse_args(self):
         args = self.parser.parse_args()
+
+        if args.env_dir:
+            self.configuration.env_dir = args.env_dir
+
         if args.command == 'extract':
             if args.migrate:
                 self.migrate_file(args.infile, args.outfile, args.demistomock, args.commonserver, args.type)

@@ -75,7 +75,7 @@ class DemistoSDK:
             else:
                 print('Use demisto-sdk -h to see the available commands.')
         except Exception as e:
-            print_error('Error! The operation failed: {}'.format(str(e)))
+            print_error('Error! The operation [{}] failed: {}'.format(args.command, str(e)))
 
     def unify_package(self, package_path, dest_path):
         """

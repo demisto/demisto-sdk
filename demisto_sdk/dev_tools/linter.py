@@ -28,7 +28,7 @@ class Linter:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
-        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'scripts', 'dev_scripts')
+        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'common', 'scripts', 'dev_scripts')
         self.run_dev_tasks_script_name = 'run_dev_tasks.sh'
         self.run_mypy_script_name = 'run_mypy.sh'
         self.container_setup_script_name = 'pkg_dev_container_setup.sh'
@@ -45,7 +45,6 @@ class Linter:
         self.keep_container = keep_container
         self.cpu_num = cpu_num
         self.common_server_created = False
-        self._get_common_server_python()
         self.run_args = {
             'pylint': not no_pylint,
             'flake8': not no_flake8,
@@ -53,7 +52,7 @@ class Linter:
             'tests': not no_test
         }
 
-    def _get_common_server_python(self) -> bool:
+    def get_common_server_python(self) -> bool:
         """Getting common server python in not exists
         changes self.common_server_created to True if needed.
         Returns:
@@ -130,15 +129,20 @@ class Linter:
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
         sys.stdout.flush()
-        subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.content_dir)
+        subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.env_dir)
         print("flake8 completed")
 
     def run_mypy(self, py_num):
-        lint_files = self._get_lint_files()
-        print("========= Running mypy on: {} ===============".format(lint_files))
-        sys.stdout.flush()
-        subprocess.check_call(['bash', self.run_mypy_script, str(py_num), lint_files], cwd=self.project_dir)
-        print("mypy completed")
+        try:
+            self.get_common_server_python()
+            lint_files = self._get_lint_files()
+            print("========= Running mypy on: {} ===============".format(lint_files))
+            sys.stdout.flush()
+            script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
+            subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
+            print("mypy completed")
+        finally:
+            self.remove_common_server_python()
 
     def _docker_login(self):
         if self.docker_login_completed:
@@ -277,13 +281,13 @@ class Linter:
     def _setup_dev_files(self):
         # copy demistomock and common server
         try:
-            shutil.copy(self.configuration.content_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
+            shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
             open(self.project_dir + '/CommonServerUserPython.py', 'a').close()  # create empty file
             shutil.rmtree(self.project_dir + '/__pycache__', ignore_errors=True)
-            shutil.copy(self.configuration.content_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
+            shutil.copy(self.configuration.env_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
             if "/Scripts/CommonServerPython" not in self.project_dir:
                 # Otherwise we already have the CommonServerPython.py file
-                shutil.copy(self.configuration.content_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
+                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
                             self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)), self.log_verbose)

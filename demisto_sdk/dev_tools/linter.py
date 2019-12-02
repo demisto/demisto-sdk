@@ -44,7 +44,8 @@ class Linter:
         self.root = root
         self.keep_container = keep_container
         self.cpu_num = cpu_num
-        self.common_server_created = self._get_common_server_python()
+        self.common_server_created = False
+        self._get_common_server_python()
         self.run_args = {
             'pylint': not no_pylint,
             'flake8': not no_flake8,

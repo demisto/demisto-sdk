@@ -50,6 +50,7 @@ class DemistoSDK:
 
         if args.env_dir:
             self.configuration.env_dir = args.env_dir
+
         if args.command == 'extract':
             if args.migrate:
                 self.migrate_file(args.infile, args.outfile, args.demistomock, args.commonserver, args.type)

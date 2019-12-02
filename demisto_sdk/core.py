@@ -139,7 +139,6 @@ class DemistoSDK:
         """
         linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
         ans = linter.run_dev_packages()
-        linter.remove_common_server_python()
         return ans
 
     def secrets(self, **kwargs):

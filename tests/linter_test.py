@@ -11,7 +11,7 @@ class TestLinter:
     @pytest.mark.parametrize("directory", DIR_LIST)
     def test_get_common_server_python(self, directory):
         linter = Linter(directory)
-        ans = linter._get_common_server_python()
+        ans = linter.get_common_server_python()
         linter.remove_common_server_python()
         assert ans
 

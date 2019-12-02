@@ -45,7 +45,6 @@ class Linter:
         self.keep_container = keep_container
         self.cpu_num = cpu_num
         self.common_server_created = False
-        self._get_common_server_python()
         self.run_args = {
             'pylint': not no_pylint,
             'flake8': not no_flake8,
@@ -53,7 +52,7 @@ class Linter:
             'tests': not no_test
         }
 
-    def _get_common_server_python(self) -> bool:
+    def get_common_server_python(self) -> bool:
         """Getting common server python in not exists
         changes self.common_server_created to True if needed.
         Returns:
@@ -134,14 +133,16 @@ class Linter:
         print("flake8 completed")
 
     def run_mypy(self, py_num):
-        lint_files = self._get_lint_files()
-        print("========= Running mypy on: {} ===============".format(lint_files))
-        sys.stdout.flush()
-        script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
-        print_error(f"{script_path}, {lint_files}")
-        raise Exception(f"{script_path}, {lint_files}")
-        subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
-        print("mypy completed")
+        try:
+            self.get_common_server_python()
+            lint_files = self._get_lint_files()
+            print("========= Running mypy on: {} ===============".format(lint_files))
+            sys.stdout.flush()
+            script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
+            subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
+            print("mypy completed")
+        finally:
+            self.remove_common_server_python()
 
     def _docker_login(self):
         if self.docker_login_completed:

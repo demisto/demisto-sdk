@@ -161,6 +161,12 @@ Then setup dev virtual envs for python 3 (will also install all necessary requir
 tox --devenv venv3 --devenv py37
 ```
 
+## Running git hooks
+We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:
+```bash
+pre-commit install
+```
+It is recommended to run ```pre-commit autoupdate``` to keep hooks updated.
 
 ## Running Unit Tests
 We use pytest to run unit tests. Inside a virtual env you can run unit test using:

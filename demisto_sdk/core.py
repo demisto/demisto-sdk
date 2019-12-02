@@ -124,7 +124,7 @@ class DemistoSDK:
         return extractor.extract_code(dest_path)
 
     def validate(self, **kwargs):
-        sys.path.append(self.configuration.content_dir)
+        sys.path.append(self.configuration.env_dir)
 
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
@@ -141,11 +141,10 @@ class DemistoSDK:
         """
         linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
         ans = linter.run_dev_packages()
-        linter.remove_common_server_python()
         return ans
 
     def secrets(self, **kwargs):
-        sys.path.append(self.configuration.content_dir)
+        sys.path.append(self.configuration.env_dir)
 
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
 

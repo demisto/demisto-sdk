@@ -129,7 +129,7 @@ class Linter:
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
         sys.stdout.flush()
-        subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.content_dir)
+        subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.env_dir)
         print("flake8 completed")
 
     def run_mypy(self, py_num):
@@ -281,13 +281,13 @@ class Linter:
     def _setup_dev_files(self):
         # copy demistomock and common server
         try:
-            shutil.copy(self.configuration.content_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
+            shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
             open(self.project_dir + '/CommonServerUserPython.py', 'a').close()  # create empty file
             shutil.rmtree(self.project_dir + '/__pycache__', ignore_errors=True)
-            shutil.copy(self.configuration.content_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
+            shutil.copy(self.configuration.env_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
             if "/Scripts/CommonServerPython" not in self.project_dir:
                 # Otherwise we already have the CommonServerPython.py file
-                shutil.copy(self.configuration.content_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
+                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
                             self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)), self.log_verbose)

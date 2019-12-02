@@ -54,8 +54,9 @@ class Linter:
 
     def _get_common_server_python(self) -> bool:
         """Getting common server python in not exists
+        changes self.common_server_created to True if needed.
         Returns:
-            True if successful, else False
+            True if exists/created, else False
         """
         # If not CommonServerPython is dir
         if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):

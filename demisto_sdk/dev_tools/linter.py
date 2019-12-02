@@ -1,13 +1,14 @@
-import requests
-import yaml
 import glob
-import subprocess
-import os
 import hashlib
-import sys
+import os
 import shutil
+import subprocess
+import sys
 import time
 from datetime import datetime
+
+import requests
+import yaml
 
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import Errors
@@ -23,7 +24,6 @@ class Linter:
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration()):
-
         if no_test and no_pylint and no_flake8 and no_mypy:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
@@ -176,7 +176,6 @@ class Linter:
         Returns:
             string -- image name to use
         """
-
         if ':' not in docker_base_image:
             docker_base_image += ':latest'
         with open(self.container_setup_script, "rb") as f:
@@ -253,7 +252,8 @@ class Linter:
 
     def _docker_run(self, docker_image):
         workdir = '/devwork'  # this is setup in CONTAINER_SETUP_SCRIPT
-        pylint_files = self._get_lint_files()
+        pylint_files = os.path.basename(self._get_lint_files())
+
         run_params = ['docker', 'create', '-w', workdir,
                       '-e', 'PYLINT_FILES={}'.format(pylint_files)]
         if not self.root:
@@ -266,8 +266,9 @@ class Linter:
         run_params.extend([docker_image, 'sh', './{}'.format(self.run_dev_tasks_script_name)])
         container_id = subprocess.check_output(run_params, universal_newlines=True).strip()
         try:
-            print(subprocess.check_output(['docker', 'cp', self.project_dir + '/.', container_id + ':' + workdir],
-                                          universal_newlines=True, stderr=subprocess.STDOUT))
+            print(subprocess.check_output(
+                ['docker', 'cp', self.project_dir + '/.', container_id + ':' + workdir],
+                universal_newlines=True, stderr=subprocess.STDOUT))
             print(subprocess.check_output(['docker', 'cp', self.run_dev_tasks_script, container_id + ':' + workdir],
                                           universal_newlines=True, stderr=subprocess.STDOUT))
             print(subprocess.check_output(['docker', 'start', '-a', container_id],

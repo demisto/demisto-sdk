@@ -170,6 +170,7 @@ It is recommended to run ```pre-commit autoupdate``` to keep hooks updated.
 
 ## Running Unit Tests
 We use pytest to run unit tests. Inside a virtual env you can run unit test using:
+**Note that the working directory of the project must be the root directory '$PROJECT_PATH/'.**
 ```
 python -m pytest -v
 ```

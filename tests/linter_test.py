@@ -1,6 +1,5 @@
 import pytest
 
-from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.linter import Linter
 
 

@@ -28,7 +28,7 @@ class Linter:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
-        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'scripts', 'dev_scripts')
+        dev_scripts_dir = os.path.join(self.configuration.env_dir, 'scripts', 'dev_scripts')
         self.run_dev_tasks_script_name = 'run_dev_tasks.sh'
         self.run_mypy_script_name = 'run_mypy.sh'
         self.container_setup_script_name = 'pkg_dev_container_setup.sh'

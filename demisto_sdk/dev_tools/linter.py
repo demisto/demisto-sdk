@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-
+import threading
 import requests
 import yaml
 
@@ -14,6 +14,7 @@ from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, print_error,\
     get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.dev_tools.thread_lock import LOCK
 
 
 class Linter:
@@ -100,7 +101,11 @@ class Linter:
         for docker in dockers:
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
+                LOCK.acquire(blocking=True)
+                print("========For: {} ========".format(self.project_dir))
                 py_num = get_python_version(docker, self.log_verbose)
+                print("")
+                LOCK.release()
                 self._setup_dev_files()
                 try:
                     if self.run_args['flake8']:
@@ -119,17 +124,24 @@ class Linter:
                     if not self.log_verbose:
                         sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n"
                                          .format(" ".join(sys.argv[:])))
+
+                    print("")
+                    if LOCK.locked():
+                        LOCK.release()
+
                     # circle ci docker setup sometimes fails on
                     if try_num > 1 or not ex.output or 'read: connection reset by peer' not in ex.output:
                         return 2
                     else:
                         sys.stderr.write("Retrying as failure seems to be docker communication related...\n")
+
                 finally:
                     sys.stdout.flush()
                     sys.stderr.flush()
         return 0
 
     def run_flake8(self, py_num):
+        LOCK.acquire(blocking=True)
         lint_files = self._get_lint_files()
         print("========= Running flake8 on: {}===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
@@ -137,8 +149,11 @@ class Linter:
         sys.stdout.flush()
         subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.env_dir)
         print("flake8 completed for: {}".format(lint_files))
+        print("")
+        LOCK.release()
 
     def run_mypy(self, py_num):
+        LOCK.acquire(blocking=True)
         try:
             self.get_common_server_python()
             lint_files = self._get_lint_files()
@@ -147,8 +162,10 @@ class Linter:
             script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
             subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
             print("mypy completed for: {}".format(lint_files))
+            print("")
         finally:
             self.remove_common_server_python()
+            LOCK.release()
 
     def run_bandit(self, py_num):
 

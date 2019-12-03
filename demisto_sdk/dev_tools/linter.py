@@ -6,7 +6,6 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-import threading
 import requests
 import yaml
 

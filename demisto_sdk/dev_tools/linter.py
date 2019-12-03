@@ -125,12 +125,13 @@ class Linter:
         return 0
 
     def run_flake8(self, py_num):
-        print("========= Running flake8 ===============")
+        lint_files = self._get_lint_files()
+        print("========= Running flake8 on: {}===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
         sys.stdout.flush()
         subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.env_dir)
-        print("flake8 completed")
+        print("flake8 completed for: {}".format(lint_files))
 
     def run_mypy(self, py_num):
         try:
@@ -140,7 +141,7 @@ class Linter:
             sys.stdout.flush()
             script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
             subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
-            print("mypy completed")
+            print("mypy completed for: {}".format(lint_files))
         finally:
             self.remove_common_server_python()
 

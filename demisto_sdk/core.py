@@ -14,7 +14,6 @@ import json
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DIR_TO_PREFIX
 from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
-from demisto_sdk.dev_tools.linter import Linter
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator

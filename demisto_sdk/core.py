@@ -42,7 +42,6 @@ class DemistoSDK:
         Unifier.add_sub_parser(self.subparsers)
         Extractor.add_sub_parser(self.subparsers)
         FilesValidator.add_sub_parser(self.subparsers)
-        Linter.add_sub_parser(self.subparsers)
         LintManager.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
         ContentCreator.add_sub_parser(self.subparsers)

@@ -69,7 +69,7 @@ class DemistoSDK:
             elif args.command == 'lint':
                 return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                                  no_test=args.no_test, root=args.root, keep_container=args.keep_container,
-                                 verbose=args.verbose, cpu_num=args.cpu_num)
+                                 verbose=args.verbose, cpu_num=args.cpu_num, parallel=args.parallel)
             elif args.command == 'secrets':
                 self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
             elif args.command == 'create':

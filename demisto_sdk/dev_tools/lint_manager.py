@@ -121,7 +121,8 @@ class LintManager:
         description = """Run lintings (flake8, mypy, pylint) and pytest. pylint and pytest will run within the docker
             image of an integration/script.
             Meant to be used with integrations/scripts that use the folder (package) structure.
-            Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder. """
+            Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder. 
+            """
         parser = subparsers.add_parser('lint', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument("-d", "--dir", help="Specify directory of integration/script", required=True)
         parser.add_argument("--no-pylint", help="Do NOT run pylint linter", action='store_true')

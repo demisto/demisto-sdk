@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import concurrent.futures
-
 from typing import Tuple
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_color, LOG_COLORS

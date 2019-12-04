@@ -27,9 +27,9 @@ For more information on a specific command execute `demisto-sdk <command> -h`.
 
 Unify code, image and description files to a single Demisto yaml file.  
 **Arguments**:
-* *-i, --indir*  
+* *-i INDIR, --indir INDIR*  
   The path to the directory in which the files reside
-* *-o, --outdir*  
+* *-o OUTDIR, --outdir OUTDIR*  
   The path to the directory into which to write the unified yml file
 
 **Examples**:  

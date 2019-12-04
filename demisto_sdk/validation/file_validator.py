@@ -498,3 +498,11 @@ class FilesValidator:
             return True
 
         return False
+
+    def is_valid_release_notes(self):
+        structure_validator = StructureValidator(file_path, old_file_path)
+        if not structure_validator.is_valid_file():
+            self._is_valid = False
+        if self.validate_id_set:
+            if not self.id_set_validator.is_file_valid_in_set(file_path):
+                self._is_valid = False

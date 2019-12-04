@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import re
+from demisto_sdk.common.tools import run_command
 
 from demisto_sdk.common.tools import print_error, get_latest_release_notes_text, \
     get_release_notes_file_path
@@ -21,6 +22,34 @@ class ReleaseNotesValidator:
         self.release_notes_path = get_release_notes_file_path(self.file_path)
         self.release_notes = get_latest_release_notes_text(self.release_notes_path)
 
+    def is_release_notes_changed(self):
+        """Validates that a new comment was added to release notes.
+
+        git diff with the --unified=10000 option means that if there exists a
+        difference between origin/master and current branch, the output will have at most 10000
+        lines of context.
+
+        Returns:
+            bool. True if comment was added, False otherwise.
+
+        """
+        master_release_notes = run_command(F'git diff --unified=10000 '
+                                           F'origin/master {self.release_notes_path}')  # type: str
+
+        # there exists a difference between origin/master and current branch
+        if master_release_notes:
+            diff_releases = master_release_notes.split('##')
+            unreleased_section = diff_releases[1]
+
+            adds_in_diff = unreleased_section.count('+')
+            removes_in_diff = unreleased_section.count('-')
+
+            # means that at least one new line was added
+            if adds_in_diff - removes_in_diff > 0:
+                return True
+
+        return False
+
     def is_valid_release_notes_structure(self):
         """Validates that the release notes written in the correct manner.
 
@@ -30,7 +59,7 @@ class ReleaseNotesValidator:
             ends with '.'
 
         multi_line_release_notes_regex meaning:
-            starts with tab, then '-' then space
+            starts with tab, then '-' ,then space
             ends with '.'
 
         Returns:
@@ -62,7 +91,8 @@ class ReleaseNotesValidator:
     def validate_file_release_notes(self):
         """Validate that the file has proper release notes when modified.
 
-        Returns: True if release notes file exists, False otherwise.
+        Returns:
+            bool. True if release notes file exists, False otherwise.
         """
         if os.path.isfile(self.file_path):
             # check release notes file exists and contains text
@@ -75,14 +105,15 @@ class ReleaseNotesValidator:
 
     def is_file_valid(self):
         # type: () -> bool
-        """Checks if given file is valid
+        """Checks if given file is valid.
 
         Return:
-            (bool): Is file is valid
+            bool. True if file's release notes are valid, False otherwise.
         """
-        answers = [
+        validations = [
             self.validate_file_release_notes(),
-            self.is_valid_release_notes_structure()
+            self.is_valid_release_notes_structure(),
+            self.is_release_notes_changed()
         ]
 
-        return all(answers)
+        return all(validations)

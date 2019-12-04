@@ -10,7 +10,8 @@ from demisto_sdk.common.constants import PACKS_INTEGRATION_PY_REGEX, PACKS_INTEG
     INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_JS_REGEX, PACKS_SCRIPT_JS_REGEX, INDICATOR_FIELDS_REGEX, \
     INCIDENT_TYPE_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR, BETA_INTEGRATION_REGEX, \
     INTEGRATION_PY_REGEX, INTEGRATION_JS_REGEX, INTEGRATIONS_DIR, SCRIPT_PY_REGEX, SCRIPT_JS_REGEX, \
-    INTEGRATION_YML_REGEX, INTEGRATION_REGEX, SCRIPT_YML_REGEX, SCRIPT_REGEX, SCRIPTS_DIR, BETA_SCRIPT_REGEX
+    INTEGRATION_YML_REGEX, INTEGRATION_REGEX, SCRIPT_YML_REGEX, SCRIPT_REGEX, SCRIPTS_DIR, BETA_SCRIPT_REGEX, \
+    PACKAGE_YML_FILE_REGEX
 
 from demisto_sdk.common.tools import checked_type
 
@@ -170,6 +171,10 @@ def test_beta_integration_yml_files():
 
 
 test_packs_regex_params = [
+    (['Packs/XDR/Integrations/XDR/XDR.yml', 'Packs/XDR/Scripts/Random/Random.yml', 'Integrations/XDR/XDR.yml'],
+     ['Packs/Integrations/XDR/XDR_test.py', 'Packs/Scripts/Random/Random.py', 'Scripts/Random/Random.py',
+      'Scripts/script-CBAlerts.md'],
+     [PACKAGE_YML_FILE_REGEX]),
     (['Packs/XDR/Integrations/XDR/XDR.py'],
      ['Packs/Integrations/XDR/XDR_test.py', 'Packs/Sade/Integrations/XDR/test_yarden.py'],
      [PACKS_INTEGRATION_PY_REGEX]),

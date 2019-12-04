@@ -34,6 +34,7 @@ from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool, get_pack_name, is_file_path_in_pack
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 
 
 class FilesValidator:
@@ -205,6 +206,12 @@ class FilesValidator:
 
         return packs
 
+    @staticmethod
+    def is_valid_release_notes(self, file_path):
+        release_notes_validator = ReleaseNotesValidator(file_path)
+        if not release_notes_validator.is_valid_file():
+            self._is_valid = False
+
     def validate_modified_files(self, modified_files):
         """Validate the modified files from your branch.
 
@@ -281,6 +288,8 @@ class FilesValidator:
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
+            self.is_valid_release_notes(file_path)
+
     def validate_added_files(self, added_files):
         """Validate the added files from your branch.
 
@@ -341,6 +350,8 @@ class FilesValidator:
                 incident_field_validator = IncidentFieldValidator(file_path)
                 if not incident_field_validator.is_valid():
                     self._is_valid = False
+
+            self.is_valid_release_files(file_path)
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).
@@ -488,7 +499,6 @@ class FilesValidator:
         if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False
-
             return True
 
         if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
@@ -498,11 +508,3 @@ class FilesValidator:
             return True
 
         return False
-
-    def is_valid_release_notes(self):
-        structure_validator = StructureValidator(file_path, old_file_path)
-        if not structure_validator.is_valid_file():
-            self._is_valid = False
-        if self.validate_id_set:
-            if not self.id_set_validator.is_file_valid_in_set(file_path):
-                self._is_valid = False

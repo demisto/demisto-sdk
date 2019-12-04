@@ -8,7 +8,6 @@ repos:
     -   id: check-json
     -   id: check-yaml
     -   id: debug-statements
-        language_version: python3
     -   id: name-tests-test
     -   id: requirements-txt-fixer
     -   id: flake8

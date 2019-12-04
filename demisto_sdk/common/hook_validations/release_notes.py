@@ -40,9 +40,16 @@ class ReleaseNotesValidator:
         if master_release_notes:
             diff_releases = master_release_notes.split('##')
             unreleased_section = diff_releases[1]
+            unreleased_section_lines = unreleased_section.split('\n')
 
-            adds_in_diff = unreleased_section.count('+')
-            removes_in_diff = unreleased_section.count('-')
+            adds_in_diff = 0
+            removes_in_diff = 0
+
+            for line in unreleased_section_lines:
+                if line.startswith('+'):
+                    adds_in_diff += 1
+                elif line.startswith('-'):
+                    removes_in_diff += 1
 
             # means that at least one new line was added
             if adds_in_diff - removes_in_diff > 0:
@@ -94,8 +101,8 @@ class ReleaseNotesValidator:
         Returns:
             bool. True if release notes file exists, False otherwise.
         """
-        if os.path.isfile(self.file_path):
-            # check release notes file exists and contains text
+        # checks that release notes file exists and contains text
+        if os.path.isfile(self.release_notes_path):
             if self.release_notes is None:
                 print_error(F'File {self.file_path} is missing release notes, '
                             F'Please add it under {self.release_notes_path}')

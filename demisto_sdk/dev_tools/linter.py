@@ -12,7 +12,7 @@ import yaml
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, print_error,\
-                                get_yml_paths_in_dir
+    get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 
 

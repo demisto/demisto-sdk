@@ -1,12 +1,12 @@
-import mock
+from mock import patch
 import pytest
 from demisto_sdk.common.tools import run_command
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 
 
 def get_validator(file_path=""):
-    with mock.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None) as init, \
-            mock.patch('demisto_sdk.common.tools.run_command', lambda a: a.split('master ')[1]) as rc:
+    with patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None) as init, \
+            patch('demisto_sdk.common.tools.run_command', lambda a: a.split('master ')[1]) as rc:
         release_notes_validator = ReleaseNotesValidator("")
         release_notes_validator.file_path = file_path
         release_notes_validator.release_notes_path = file_path

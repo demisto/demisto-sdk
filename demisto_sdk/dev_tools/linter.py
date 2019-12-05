@@ -79,11 +79,11 @@ class Linter:
 
     def run_dev_packages(self) -> int:
         # load yaml
-        try:
-            yml_path = glob.glob(self.project_dir + '/*.yml')[0]
-        except IndexError:
+        yml_files = glob.glob(self.project_dir + '/*.yml')
+        if not yml_files:
             print('No yml files were found in {} directory.'.format(self.project_dir))
             return 1
+        yml_path = yml_files[0]
         print_v('Using yaml file: {}'.format(yml_path))
         with open(yml_path, 'r') as yml_file:
             yml_data = yaml.safe_load(yml_file)

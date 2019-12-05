@@ -14,41 +14,6 @@ def get_validator(file_path=""):
     return release_notes_validator
 
 
-single_line_good_rn = 'Some rn.'
-single_line_bad_rn_1 = '  - Some rn.'
-single_line_bad_rn_2 = 'Some rn'
-single_line_list_good_rn = 'List rn.\n' \
-                           '  - item #1.\n' \
-                           '\t- item #2.'
-single_line_list_bad_rn_1 = 'List rn.\n' \
-                            '  -item #1.\n' \
-                            '\t- item #2.'
-single_line_list_bad_rn_2 = 'List rn.\n' \
-                            '  item #1.\n' \
-                            '\t- item #2.'
-multi_line_good_rn = '  - comment 1.\n' \
-                     '\t- comment 2..'
-multi_line_bad_rn_1 = ' - comment 1\n' \
-                      '  - comment 2.'
-multi_line_bad_rn_2 = 'comment 1.\n' \
-                      'comment 2.'
-rn_structure_test_package = [(single_line_good_rn, True),
-                             (single_line_bad_rn_1, False),
-                             (single_line_bad_rn_2, False),
-                             (single_line_list_good_rn, True),
-                             (single_line_list_bad_rn_1, False),
-                             (single_line_list_bad_rn_2, False),
-                             (multi_line_good_rn, True),
-                             (multi_line_bad_rn_1, False),
-                             (multi_line_bad_rn_2, False)]
-
-
-@pytest.mark.parametrize('release_notes_test, expected_result', rn_structure_test_package)
-def test_rn_structure(release_notes_test, expected_result):
-    validator = get_validator("")
-    assert validator.is_valid_rn_structure(release_notes_test) == expected_result
-
-
 diff_nothing = ''
 
 diff_changed_the_same_line = 'diff --git a/Integrations/integration-VirusTotal_CHANGELOG.md b/Integrations/' \

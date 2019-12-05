@@ -7,6 +7,7 @@ from demisto_sdk.common.tools import run_command
 from demisto_sdk.common.tools import print_error, get_latest_release_notes_text, \
     get_release_notes_file_path
 
+release_notes_standard = 'https://github.com/demisto/content/blob/master/docs/release_notes/README.md'
 
 class ReleaseNotesValidator:
     """Release notes validator is designed to ensure the existence and correctness of the release notes in content repo.
@@ -55,6 +56,8 @@ class ReleaseNotesValidator:
             if adds_in_diff - removes_in_diff > 0:
                 return True
 
+        print_error(F'File {self.release_notes_path} is not formatted according to '
+                    F'release notes standards.\nFix according to {release_notes_standard}')
         return False
 
     def is_valid_release_notes_structure(self):
@@ -73,16 +76,30 @@ class ReleaseNotesValidator:
             bool. True if release notes structure valid, False otherwise
 
         """
-        release_notes_standard = 'https://github.com/demisto/content/blob/master/docs/release_notes/README.md'
-        one_line_release_notes_regex = r'[^\r\n\t\f\v\ \_\-][a-zA-Z0-9].*\.$'
-        multi_line_release_notes_regex = r'(\t| {2,4})+(\- .*\.$|\- ?$)'
+        hyphen_release_notes_regex = r'- ?'
+        one_line_release_notes_regex = r'[a-zA-Z0-9].*\.$'
+        multi_line_release_notes_regex = r'(\t+| {2,4})- .*\.$|- ?$'
 
         release_notes_comments = self.release_notes.split('\n')
+        print(release_notes_comments)
+
         if len(release_notes_comments) == 1:
-            if not (self.release_notes == '-' or re.match(one_line_release_notes_regex, self.release_notes)):
+            if not (re.match(hyphen_release_notes_regex, self.release_notes) or
+                    re.match(one_line_release_notes_regex, self.release_notes)):
+                print_error(F'File {self.release_notes_path} is not formatted according to '
+                            F'release notes standards.\nFix according to {release_notes_standard}')
+                return False
+
+        elif len(release_notes_comments) == 2:
+            if re.match(multi_line_release_notes_regex, release_notes_comments[0]) and \
+                    release_notes_comments[1] == '':
+                print_error(F'File {self.release_notes_path} is not formatted according to '
+                            F'release notes standards.\nFix according to {release_notes_standard}')
                 return False
 
         else:
+            release_notes_comments = release_notes_comments[:-1]
+
             # if it's one line comment with list
             if re.match(one_line_release_notes_regex, release_notes_comments[0]):
                 release_notes_comments = release_notes_comments[1:]
@@ -102,11 +119,15 @@ class ReleaseNotesValidator:
             bool. True if release notes file exists, False otherwise.
         """
         # checks that release notes file exists and contains text
-        if os.path.isfile(self.release_notes_path):
-            if self.release_notes is None:
-                print_error(F'File {self.file_path} is missing release notes, '
-                            F'Please add it under {self.release_notes_path}')
-                return False
+        if not os.path.isfile(self.release_notes_path):
+            print_error(F'File {self.file_path} is missing release notes, '
+                        F'Please add it under {self.release_notes_path}')
+            return False
+
+        if self.release_notes is None:
+            print_error(F'File {self.file_path} is missing release notes, '
+                        F'Please add it under {self.release_notes_path}')
+            return False
 
         return True
 

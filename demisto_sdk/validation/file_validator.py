@@ -206,7 +206,6 @@ class FilesValidator:
 
         return packs
 
-    @staticmethod
     def is_valid_release_notes(self, file_path):
         release_notes_validator = ReleaseNotesValidator(file_path)
         if not release_notes_validator.is_valid_file():

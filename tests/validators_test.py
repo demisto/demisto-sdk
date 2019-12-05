@@ -15,20 +15,27 @@ from demisto_sdk.common.hook_validations.structure import StructureValidator
 from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
     VALID_SCRIPT_PATH, INVALID_SCRIPT_PATH, INVALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, \
-    INVALID_INCIDENT_FIELD_PATH
+    INVALID_INCIDENT_FIELD_PATH, VALID_INTEGRATION_TEST_PATH, VALID_ONE_LINE_CHANGELOG_PATH, \
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH, \
+    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH, \
+    INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH
 from demisto_sdk.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
+
+LAYOUT_TARGET = "./Layouts/layout-mock.json"
+REPUTATION_TARGET = "./Misc/reputations.json"
+WIDGET_TARGET = "./Widgets/widget-mocks.json"
+DASHBOARD_TARGET = "./Dashboards/dashboard-mocks.json"
+PLAYBOOK_TARGET = "Playbooks/playbook-test.yml"
+INTEGRATION_TARGET = "./Integrations/integration-test.yml"
+INCIDENT_FIELD_TARGET = "IncidentFields/incidentfield-test.json"
+PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
+SCRIPT_TARGET = "./Scripts/script-test.yml"
+SCRIPT_RELEASE_NOTES_TARGET = "./Scripts/script-test_CHANGELOG.md"
+INTEGRATION_RELEASE_NOTES_TARGET = "./Integrations/integration-test_CHANGELOG.md"
 
 
 class TestValidators:
-    LAYOUT_TARGET = "./Layouts/layout-mock.json"
-    REPUTATION_TARGET = "./Misc/reputations.json"
-    WIDGET_TARGET = "./Widgets/widget-mocks.json"
-    DASHBOARD_TARGET = "./Dashboards/dashboard-mocks.json"
-    PLAYBOOK_TARGET = "Playbooks/playbook-test.yml"
-    INTEGRATION_TARGET = "Integrations/integration-test.yml"
-    INCIDENT_FIELD_TARGET = "IncidentFields/incidentfield-test.json"
-    PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
-    SCRIPT_TARGET = "./Scripts/script-test.yml"
     CREATED_DIRS = list()
 
     @classmethod
@@ -93,3 +100,78 @@ class TestValidators:
             assert validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
+
+    INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
+        (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, SCRIPT_RELEASE_NOTES_TARGET,
+         ReleaseNotesValidator, True),
+        (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, INTEGRATION_RELEASE_NOTES_TARGET,
+         ReleaseNotesValidator, False),
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
+         INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, True),
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
+         SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, False)
+    ]
+
+    @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
+                             'validator, answer',
+                             INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
+    def test_is_release_notes_exists(self, source_dummy, target_dummy,
+                                     source_release_notes, target_release_notes, validator, answer):
+        # type: (str, str, str, str, Type[BaseValidator], Any) -> None
+        try:
+            copyfile(source_dummy, target_dummy)
+            copyfile(source_release_notes, target_release_notes)
+            validator = ReleaseNotesValidator(target_dummy)
+            assert validator.validate_file_release_notes() is answer
+        finally:
+            os.remove(target_dummy)
+            os.remove(target_release_notes)
+
+    @staticmethod
+    def create_release_notes_structure_test_package():
+        changelog_needed = [
+            (VALID_SCRIPT_PATH, 'Script'),
+            (VALID_INTEGRATION_TEST_PATH, 'Integration')
+        ]
+
+        changelog_files_answer = [
+            (VALID_ONE_LINE_CHANGELOG_PATH, True),
+            (VALID_ONE_LINE_LIST_CHANGELOG_PATH, True),
+            (VALID_MULTI_LINE_CHANGELOG_PATH, True),
+            (VALID_MULTI_LINE_LIST_CHANGELOG_PATH, True),
+            (INVALID_ONE_LINE_1_CHANGELOG_PATH, False),
+            (INVALID_ONE_LINE_2_CHANGELOG_PATH, False),
+            (INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH, False),
+            (INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, False),
+            (INVALID_MULTI_LINE_1_CHANGELOG_PATH, False),
+            (INVALID_MULTI_LINE_2_CHANGELOG_PATH, False)
+        ]
+
+        test_package = list()
+
+        for (dummy_file, type) in changelog_needed:
+            for (release_notes_file, answer) in changelog_files_answer:
+                if type == 'Script':
+                    test_package.append((dummy_file, SCRIPT_TARGET, release_notes_file,
+                                         SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
+                elif type == 'Integration':
+                    test_package.append((dummy_file, INTEGRATION_TARGET, release_notes_file,
+                                         INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
+
+        return test_package
+
+    test_package = create_release_notes_structure_test_package.__func__()
+
+    @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
+                             'validator, answer', test_package)
+    def test_valid_release_notes_structure(self, source_dummy, target_dummy,
+                                           source_release_notes, target_release_notes, validator, answer):
+        # type: (str, str, str, str, Type[BaseValidator], Any) -> None
+        try:
+            copyfile(source_dummy, target_dummy)
+            copyfile(source_release_notes, target_release_notes)
+            validator = ReleaseNotesValidator(target_dummy)
+            assert validator.is_valid_release_notes_structure() is answer
+        finally:
+            os.remove(target_dummy)
+            os.remove(target_release_notes)

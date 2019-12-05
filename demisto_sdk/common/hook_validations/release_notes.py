@@ -9,6 +9,7 @@ from demisto_sdk.common.tools import print_error, get_latest_release_notes_text,
 
 release_notes_standard = 'https://github.com/demisto/content/blob/master/docs/release_notes/README.md'
 
+
 class ReleaseNotesValidator:
     """Release notes validator is designed to ensure the existence and correctness of the release notes in content repo.
 
@@ -22,6 +23,8 @@ class ReleaseNotesValidator:
         self.file_path = file_path
         self.release_notes_path = get_release_notes_file_path(self.file_path)
         self.release_notes = get_latest_release_notes_text(self.release_notes_path)
+        self.master_diff = run_command(F'git diff --unified=10000 '
+                                       F'origin/master {self.release_notes_path}')  # type: str
 
     def is_release_notes_changed(self):
         """Validates that a new comment was added to release notes.
@@ -34,12 +37,9 @@ class ReleaseNotesValidator:
             bool. True if comment was added, False otherwise.
 
         """
-        master_release_notes = run_command(F'git diff --unified=10000 '
-                                           F'origin/master {self.release_notes_path}')  # type: str
-
         # there exists a difference between origin/master and current branch
-        if master_release_notes:
-            diff_releases = master_release_notes.split('##')
+        if self.master_diff:
+            diff_releases = self.master_diff.split('##')
             unreleased_section = diff_releases[1]
             unreleased_section_lines = unreleased_section.split('\n')
 

@@ -1,16 +1,16 @@
 from mock import patch
 import pytest
-from demisto_sdk.common.tools import run_command
+from demisto_sdk.common import tools
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 
 
-def get_validator(file_path=""):
-    with patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None) as init, \
-            patch('demisto_sdk.common.tools.run_command', lambda a: a.split('master ')[1]) as rc:
+def get_validator(file_path="", diff=''):
+    with patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None):
         release_notes_validator = ReleaseNotesValidator("")
         release_notes_validator.file_path = file_path
         release_notes_validator.release_notes_path = file_path
         release_notes_validator.release_notes = file_path
+        release_notes_validator.master_diff = diff
     return release_notes_validator
 
 
@@ -88,5 +88,5 @@ diff_package = [(diff_nothing, False),
 
 @pytest.mark.parametrize('release_notes_diff, expected_result', diff_package)
 def test_rn_master_diff(release_notes_diff, expected_result):
-    validator = get_validator(release_notes_diff)
+    validator = get_validator(diff=release_notes_diff)
     assert validator.is_release_notes_changed() == expected_result

@@ -3,6 +3,7 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
+from mock import patch
 
 from demisto_sdk.common.constants import DIR_LIST
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
@@ -111,6 +112,7 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
+            patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.validate_file_release_notes() is answer
         finally:
@@ -139,12 +141,12 @@ class TestValidators:
 
         test_package = list()
 
-        for (dummy_file, type) in changelog_needed:
+        for (dummy_file, file_type) in changelog_needed:
             for (release_notes_file, answer) in changelog_files_answer:
-                if type == 'Script':
+                if file_type == 'Script':
                     test_package.append((dummy_file, SCRIPT_TARGET, release_notes_file,
                                          SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
-                elif type == 'Integration':
+                elif file_type == 'Integration':
                     test_package.append((dummy_file, INTEGRATION_TARGET, release_notes_file,
                                          INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
 
@@ -160,8 +162,13 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
+            patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.is_valid_release_notes_structure() is answer
         finally:
             os.remove(target_dummy)
             os.remove(target_release_notes)
+
+    @staticmethod
+    def mock_get_master_diff():
+        return 'Comment.'

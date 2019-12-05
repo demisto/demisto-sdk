@@ -23,15 +23,30 @@ class ReleaseNotesValidator:
         self.file_path = file_path
         self.release_notes_path = get_release_notes_file_path(self.file_path)
         self.release_notes = get_latest_release_notes_text(self.release_notes_path)
-        self.master_diff = run_command(F'git diff --unified=10000 '
-                                       F'origin/master {self.release_notes_path}')  # type: str
+        self.master_diff = self.get_master_diff()
 
-    def is_release_notes_changed(self):
-        """Validates that a new comment was added to release notes.
+    def get_master_diff(self):
+        # type: () -> str
+        """Gets difference between current branch and origin/master
 
         git diff with the --unified=10000 option means that if there exists a
         difference between origin/master and current branch, the output will have at most 10000
         lines of context.
+
+        Returns:
+            str. empty string if no changes made or no origin/master branch, otherwise full difference context.
+
+        """
+        try:
+            return run_command(F'git diff --unified=10000 '
+                               F'origin/master {self.release_notes_path}')  # type: str
+
+        finally:
+            return ''
+
+    def is_release_notes_changed(self):
+        # type: () -> bool
+        """Validates that a new comment was added to release notes.
 
         Returns:
             bool. True if comment was added, False otherwise.
@@ -61,6 +76,7 @@ class ReleaseNotesValidator:
         return False
 
     def is_valid_release_notes_structure(self):
+        # type: () -> bool
         """Validates that the release notes written in the correct manner.
 
         one_line_release_notes_regex meaning:
@@ -113,6 +129,7 @@ class ReleaseNotesValidator:
         return True
 
     def validate_file_release_notes(self):
+        # type: () -> bool
         """Validate that the file has proper release notes when modified.
 
         Returns:

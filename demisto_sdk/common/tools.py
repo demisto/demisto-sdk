@@ -34,7 +34,7 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
-    yml_files = glob.glob(os.path.join(project_dir, '/*.yml'))
+    yml_files = glob.glob(os.path.join(project_dir, '*.yml'))
     if not yml_files:
         if error_msg:
             print(error_msg)

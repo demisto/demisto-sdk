@@ -1,5 +1,5 @@
 import os
-
+import glob
 import pytest
 
 from demisto_sdk.common import tools
@@ -7,7 +7,7 @@ from demisto_sdk.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PL
 from demisto_sdk.common.tools import get_matching_regex, server_version_compare
 
 
-class TestGetFile:
+class TestGenericFunctions:
     PATH_TO_HERE = './tests/test_files/'
     FILE_PATHS = [
         (os.path.join(PATH_TO_HERE, 'fake_integration.yml'), tools.get_yaml),
@@ -17,6 +17,16 @@ class TestGetFile:
     @pytest.mark.parametrize('file_path, func', FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    @pytest.mark.parametrize('dir_path', ['demisto_sdk', 'tests/test_files'])
+    def test_get_yml_paths_in_dir(self, dir_path):
+        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
+        assert sorted(yml_paths) == sorted(glob.glob(os.path.join(dir_path, '*yml')))
+        yml_paths_test = glob.glob(os.path.join(dir_path, '*yml'))
+        if yml_paths_test:
+            assert first_yml_path == yml_paths[0]
+        else:
+            assert not first_yml_path
 
 
 class TestGetRemoteFile:

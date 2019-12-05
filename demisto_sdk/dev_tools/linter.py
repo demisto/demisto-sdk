@@ -1,4 +1,3 @@
-import glob
 import hashlib
 import os
 import shutil
@@ -12,7 +11,8 @@ import yaml
 
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import Errors
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, print_error
+from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, print_error,\
+                                get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 
 
@@ -79,11 +79,9 @@ class Linter:
 
     def run_dev_packages(self) -> int:
         # load yaml
-        yml_files = glob.glob(self.project_dir + '/*.yml')
-        if not yml_files:
-            print('No yml files were found in {} directory.'.format(self.project_dir))
+        _, yml_path = get_yml_paths_in_dir(self.project_dir, Errors.no_yml_file(self.project_dir))
+        if not yml_path:
             return 1
-        yml_path = yml_files[0]
         print_v('Using yaml file: {}'.format(yml_path))
         with open(yml_path, 'r') as yml_file:
             yml_data = yaml.safe_load(yml_file)

@@ -2,10 +2,11 @@ import re
 import os
 import sys
 import json
+import glob
 import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 
 import urllib3
 import yaml
@@ -23,6 +24,22 @@ class LOG_COLORS:
     RED = '\033[01;31m'
     GREEN = '\033[01;32m'
     YELLOW = '\033[0;33m'
+
+
+def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
+    """
+    Gets the project directory and returns the path of the first yml file in that directory
+    :param project_dir: string path to the project_dir
+    :param error_msg: the error msg to show to the user in case not yml files found in the directory
+    :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
+    string path to the first yml file in project_dir
+    """
+    yml_files = glob.glob(os.path.join(project_dir, '*.yml'))
+    if not yml_files:
+        if error_msg:
+            print(error_msg)
+        return [], ''
+    return yml_files, yml_files[0]
 
 
 # print srt in the given color

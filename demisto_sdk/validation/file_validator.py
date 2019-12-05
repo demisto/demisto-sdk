@@ -11,7 +11,6 @@ for that task.
 """
 from __future__ import print_function
 
-import glob
 import os
 import re
 
@@ -32,7 +31,8 @@ from demisto_sdk.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
-    LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool, get_pack_name, is_file_path_in_pack
+    LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool, get_pack_name, is_file_path_in_pack, \
+    get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 
 
@@ -395,14 +395,14 @@ class FilesValidator:
                 for directory in PACKS_DIRECTORIES:
                     for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir_in_dirs, directory)):
                         for inner_dir in inner_dirs:
-                            try:
-                                file_path = glob.glob(os.path.normpath(os.path.join(inner_root, inner_dir, '*.yml')))[0]
+                            project_dir = os.path.join(inner_root, inner_dir)
+                            _, file_path = get_yml_paths_in_dir(os.path.normpath(project_dir),
+                                                                Errors.no_yml_file(project_dir))
+                            if file_path:
                                 print("Validating {}".format(file_path))
                                 structure_validator = StructureValidator(file_path)
                                 if not structure_validator.is_valid_scheme():
                                     self._is_valid = False
-                            except IndexError:
-                                print(Errors.no_yml_file(os.path.join(inner_root, inner_dir)))
 
         for directory in DIR_LIST:
             print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
@@ -421,14 +421,13 @@ class FilesValidator:
         for directory in PACKAGE_SUPPORTING_DIRECTORIES:
             for root, dirs, files in os.walk(directory):
                 for inner_dir in dirs:
-                    try:
-                        file_path = glob.glob(os.path.join(root, inner_dir, '*.yml'))[0]
+                    project_dir = os.path.join(root, inner_dir)
+                    _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
+                    if file_path:
                         print('Validating ' + file_path)
                         structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False
-                    except IndexError:
-                        print(Errors.no_yml_file(os.path.join(root, inner_dir)))
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.

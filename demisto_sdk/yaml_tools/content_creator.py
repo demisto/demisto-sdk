@@ -8,7 +8,7 @@ from demisto_sdk.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_D
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX, \
     TOOLS_DIR
-from demisto_sdk.common.tools import get_child_directories, get_child_files, print_warning
+from demisto_sdk.common.tools import get_child_directories, get_child_files, print_warning, get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 
 
@@ -78,7 +78,7 @@ class ContentCreator:
         scanned_packages = glob.glob(os.path.join(package_dir, '*/'))
         package_dir_name = os.path.basename(package_dir)
         for package in scanned_packages:
-            ymls = glob.glob(os.path.join(package, '*.yml'))
+            ymls, _ = get_yml_paths_in_dir(package, error_msg='')
             if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
                 msg = 'Skipping package: {} -'.format(package)
                 if not ymls:
@@ -132,7 +132,7 @@ class ContentCreator:
 
     def copy_dir_yml(self, dir_path, bundle):
         '''Copy the yml files inside a directory to a bundle'''
-        scan_files = glob.glob(os.path.join(dir_path, '*.yml'))
+        scan_files, _ = get_yml_paths_in_dir(dir_path, error_msg='')
         content_files = 0
         dir_name = os.path.basename(dir_path)
         copy_func = self.copy_playbook_yml if dir_name in ['Playbooks', 'TestPlaybooks'] else self.copy_content_yml
@@ -245,7 +245,7 @@ class ContentCreator:
                 if dir_name in DIR_TO_PREFIX:
                     packages_dirs = get_child_directories(content_dir)
                     for package_dir in packages_dirs:
-                        ymls = glob.glob(os.path.join(package_dir, '*.yml'))
+                        ymls, _ = get_yml_paths_in_dir(package_dir, error_msg='')
                         if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
                             msg = 'Skipping package: {} -'.format(package_dir)
                             if not ymls:

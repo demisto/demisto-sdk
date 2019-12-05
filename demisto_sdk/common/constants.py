@@ -7,7 +7,7 @@ class Errors:
 
     @staticmethod
     def no_yml_file(file_path):
-        return "{} No yml file to validate.".format(file_path)
+        return "No yml files were found in {} directory.".format(file_path)
 
     @staticmethod
     def wrong_filename(filepath, file_type):

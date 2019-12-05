@@ -21,7 +21,7 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', 'tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
         yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
-        yml_paths_test = glob.glob(os.path.join(dir_path, '/*yml'))
+        yml_paths_test = glob.glob(os.path.join(dir_path, '*yml'))
         assert sorted(yml_paths) == sorted(yml_paths_test)
         if yml_paths_test:
             assert first_yml_path == yml_paths_test[0]

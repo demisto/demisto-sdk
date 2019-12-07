@@ -20,3 +20,8 @@ class TestLinter:
     def test_run_mypy(self, directory):
         linter = Linter(directory)
         linter.run_mypy("2.7")
+
+    @pytest.mark.parametrize("directory", DIR_LIST)
+    def test_run_bandit(self, directory):
+        linter = Linter(directory)
+        linter.run_bandit("3.7")

@@ -22,9 +22,9 @@ class Linter:
                                 "CommonServerPython/CommonServerPython.py"
 
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
-                 no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
-                 cpu_num: int = 0, configuration: Configuration = Configuration()):
-        if no_test and no_pylint and no_flake8 and no_mypy:
+                 no_mypy: bool = False, no_bandit: bool = False, verbose: bool = False, root: bool = False,
+                 keep_container: bool = False, cpu_num: int = 0, configuration: Configuration = Configuration()):
+        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
@@ -49,6 +49,7 @@ class Linter:
             'pylint': not no_pylint,
             'flake8': not no_flake8,
             'mypy': not no_mypy,
+            'bandit': not no_bandit,
             'tests': not no_test
         }
 
@@ -106,6 +107,8 @@ class Linter:
                         self.run_flake8(py_num)
                     if self.run_args['mypy']:
                         self.run_mypy(py_num)
+                    if self.run_args['bandit']:
+                        self.run_bandit(py_num)
                     if self.run_args['tests'] or self.run_args['pylint']:
                         requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
                         docker_image_created = self._docker_image_create(docker, requirements)
@@ -145,6 +148,16 @@ class Linter:
             print("mypy completed")
         finally:
             self.remove_common_server_python()
+
+    def run_bandit(self, py_num):
+
+        lint_files = self._get_lint_files()
+        print("========= Running bandit on: {} ===============".format(lint_files))
+        python_exe = 'python2' if py_num < 3 else 'python3'
+        print_v('Using: {} to run bandit'.format(python_exe))
+        sys.stdout.flush()
+        subprocess.check_call([python_exe, '-m', 'bandit', '-lll', '-iii', '-q', lint_files], cwd=self.project_dir)
+        print("bandit completed")
 
     def _docker_login(self):
         if self.docker_login_completed:
@@ -298,13 +311,14 @@ class Linter:
     def _get_lint_files(self):
         unifier = Unifier(self.project_dir)
         code_file = unifier.get_code_file('.py')
+        print('hi1')
         return os.path.abspath(code_file)
 
     @staticmethod
     def add_sub_parser(subparsers):
         from argparse import ArgumentDefaultsHelpFormatter
-        description = """Run lintings (flake8, mypy, pylint) and pytest. pylint and pytest will run within the docker
-        image of an integration/script.
+        description = """Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the
+        docker image of an integration/script.
         Meant to be used with integrations/scripts that use the folder (package) structure.
         Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder. """
         parser = subparsers.add_parser('lint', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
@@ -312,6 +326,7 @@ class Linter:
         parser.add_argument("--no-pylint", help="Do NOT run pylint linter", action='store_true')
         parser.add_argument("--no-mypy", help="Do NOT run mypy static type checking", action='store_true')
         parser.add_argument("--no-flake8", help="Do NOT run flake8 linter", action='store_true')
+        parser.add_argument("--no-bandit", help="Do NOT run bandit linter", action='store_true')
         parser.add_argument("--no-test", help="Do NOT test (skip pytest)", action='store_true')
         parser.add_argument("-r", "--root", help="Run pytest container with root user", action='store_true')
         parser.add_argument("-k", "--keep-container", help="Keep the test container", action='store_true')

@@ -311,7 +311,6 @@ class Linter:
     def _get_lint_files(self):
         unifier = Unifier(self.project_dir)
         code_file = unifier.get_code_file('.py')
-        print('hi1')
         return os.path.abspath(code_file)
 
     @staticmethod

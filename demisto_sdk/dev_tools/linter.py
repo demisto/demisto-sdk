@@ -1,29 +1,46 @@
-import hashlib
 import os
-import shutil
-import subprocess
 import sys
 import time
+import shutil
+import hashlib
+import threading
+import subprocess
 from datetime import datetime
-
 import requests
 import yaml
 
-from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import Errors
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, print_error,\
-    get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, \
+    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir
 
 
 class Linter:
+    """Linter used to activate lint command.
+
+        Attributes:
+            project_dir (str): The directory to run lint on.
+            no_test (bool): Whether to skip pytest.
+            no_pylint (bool): Whether to skip pylint.
+            no_flake8 (bool): Whether to skip flake8.
+            no_mypy (bool): Whether to skip mypy.
+            verbose (bool): Whether to output a detailed response.
+            root (bool): Whether to run pytest container with root user.
+            keep_container (bool): Whether to keep the test container.
+            cpu_num (int): Number of CPUs to run pytest on.
+            configuration (Configuration): The system configuration.
+            lock (threading.Lock): A mutex lock to be used for multi-thread lint.
+        """
     common_server_target_path = "CommonServerPython.py"
     common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
                                 "CommonServerPython/CommonServerPython.py"
 
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
-                 no_mypy: bool = False, no_bandit: bool = False, verbose: bool = False, root: bool = False,
-                 keep_container: bool = False, cpu_num: int = 0, configuration: Configuration = Configuration()):
+                 no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
+                 cpu_num: int = 0, configuration: Configuration = Configuration(),
+                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False,):
+
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
@@ -52,12 +69,13 @@ class Linter:
             'bandit': not no_bandit,
             'tests': not no_test
         }
+        self.lock = lock
 
     def get_common_server_python(self) -> bool:
-        """Getting common server python in not exists
-        changes self.common_server_created to True if needed.
+        """Getting common server python in not exists changes self.common_server_created to True if needed.
+
         Returns:
-            True if exists/created, else False
+            bool. True if exists/created, else False
         """
         # If not CommonServerPython is dir
         if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
@@ -74,6 +92,9 @@ class Linter:
 
     def remove_common_server_python(self):
         """checking if file exists and removing it
+
+            Returns:
+                None.
         """
         if self.common_server_created:
             os.remove(os.path.join(self.project_dir, self.common_server_target_path))
@@ -100,7 +121,10 @@ class Linter:
         for docker in dockers:
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
+                self.lock.acquire(blocking=True)
+                print("============ Starting process for: {} ============".format(self.project_dir))
                 py_num = get_python_version(docker, self.log_verbose)
+                self.lock.release()
                 self._setup_dev_files()
                 try:
                     if self.run_args['flake8']:
@@ -110,34 +134,69 @@ class Linter:
                     if self.run_args['bandit']:
                         self.run_bandit(py_num)
                     if self.run_args['tests'] or self.run_args['pylint']:
+
                         requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
+                        self.lock.acquire()
+                        print_color("========== Running tests for: {} =========".format(self.project_dir),
+                                    LOG_COLORS.YELLOW)
                         docker_image_created = self._docker_image_create(docker, requirements)
                         self._docker_run(docker_image_created)
+                        self.lock.release()
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:
-                    sys.stderr.write("[FAILED {}] Error: {} Output: {}\n".format(self.project_dir, str(ex), ex.output))
+                    if ex.output:
+                        print_color("{}\n".format(ex.output), LOG_COLORS.RED)
+                    else:
+                        print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
+                            self.project_dir), LOG_COLORS.RED)
+
                     if not self.log_verbose:
-                        sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n"
+                        sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n\n"
                                          .format(" ".join(sys.argv[:])))
+
+                    if self.lock.locked():
+                        self.lock.release()
+
                     # circle ci docker setup sometimes fails on
                     if try_num > 1 or not ex.output or 'read: connection reset by peer' not in ex.output:
                         return 2
                     else:
                         sys.stderr.write("Retrying as failure seems to be docker communication related...\n")
+
                 finally:
                     sys.stdout.flush()
                     sys.stderr.flush()
         return 0
 
     def run_flake8(self, py_num):
-        print("========= Running flake8 ===============")
+        """Runs flake8
+
+        Args:
+            py_num: The python version in use
+
+        Returns:
+            None.
+        """
+        self.lock.acquire(blocking=True)
+        lint_files = self._get_lint_files()
+        print("========= Running flake8 on: {}===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
         sys.stdout.flush()
         subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.env_dir)
-        print("flake8 completed")
+        print_color("flake8 completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
+        self.lock.release()
 
     def run_mypy(self, py_num):
+        """Runs mypy
+
+        Args:
+            py_num: The python version in use
+
+        Returns:
+            None.
+        """
+        self.lock.acquire(blocking=True)
         try:
             self.get_common_server_python()
             lint_files = self._get_lint_files()
@@ -145,19 +204,29 @@ class Linter:
             sys.stdout.flush()
             script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
             subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
-            print("mypy completed")
+            print("mypy completed for: {}\n".format(lint_files))
         finally:
             self.remove_common_server_python()
+            self.lock.release()
 
     def run_bandit(self, py_num):
+        """Run bandit
 
+        Args:
+            py_num: The python version in use
+
+        Returns:
+            None.
+        """
+        self.lock.acquire()
         lint_files = self._get_lint_files()
         print("========= Running bandit on: {} ===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run bandit'.format(python_exe))
         sys.stdout.flush()
         subprocess.check_call([python_exe, '-m', 'bandit', '-lll', '-iii', '-q', lint_files], cwd=self.project_dir)
-        print("bandit completed")
+        print_color("bandit completed\n", LOG_COLORS.GREEN)
+        self.lock.release()
 
     def _docker_login(self):
         if self.docker_login_completed:
@@ -180,16 +249,15 @@ class Linter:
         return True
 
     def _docker_image_create(self, docker_base_image, requirements):
-        """
-        Create the docker image with dev dependencies. Will check if already existing.
+        """Create the docker image with dev dependencies. Will check if already existing.
         Uses a hash of the requirements to determine the image tag
 
         Arguments:
-            docker_base_image {string} -- docker image to use as base for installing dev deps
-            requirements {string} -- requirements doc
+            docker_base_image (string): docker image to use as base for installing dev deps
+            requirements (string): requirements doc
 
         Returns:
-            string -- image name to use
+            string. image name to use
         """
         if ':' not in docker_base_image:
             docker_base_image += ':latest'

@@ -115,7 +115,8 @@ class Linter:
             if script_type == 'powershell':
                 # TODO powershell linting
                 return 0
-            print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_type))
+            print('The script {} is not of type "python". Found type: {}. Nothing to do.'.format(self.project_dir,
+                                                                                                 script_type))
             return 1
         dockers = get_docker_images(script_obj)
         for docker in dockers:

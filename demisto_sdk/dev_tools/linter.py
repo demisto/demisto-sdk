@@ -1,8 +1,6 @@
 import os
-import hashlib
 import sys
 import time
-import glob
 import shutil
 import hashlib
 import threading
@@ -12,12 +10,10 @@ import requests
 import yaml
 
 from demisto_sdk.common.constants import Errors
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, print_error,\
-    get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, \
-    print_error, print_color, LOG_COLORS
+    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir
 
 
 class Linter:
@@ -43,10 +39,8 @@ class Linter:
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration(),
-                 lock: threading.Lock = threading.Lock()):
-        if no_test and no_pylint and no_flake8 and no_mypy:
-                 no_mypy: bool = False, no_bandit: bool = False, verbose: bool = False, root: bool = False,
-                 keep_container: bool = False, cpu_num: int = 0, configuration: Configuration = Configuration()):
+                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False,):
+
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
@@ -153,7 +147,8 @@ class Linter:
                     if ex.output:
                         print_color("{}\n".format(ex.output), LOG_COLORS.RED)
                     else:
-                        print_color("========= Test Failed =========\n", LOG_COLORS.RED)
+                        print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
+                            self.project_dir), LOG_COLORS.RED)
 
                     if not self.log_verbose:
                         sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n\n"
@@ -215,14 +210,23 @@ class Linter:
             self.lock.release()
 
     def run_bandit(self, py_num):
+        """Run bandit
 
+        Args:
+            py_num: The python version in use
+
+        Returns:
+            None.
+        """
+        self.lock.acquire()
         lint_files = self._get_lint_files()
         print("========= Running bandit on: {} ===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run bandit'.format(python_exe))
         sys.stdout.flush()
         subprocess.check_call([python_exe, '-m', 'bandit', '-lll', '-iii', '-q', lint_files], cwd=self.project_dir)
-        print("bandit completed")
+        print_color("bandit completed\n", LOG_COLORS.GREEN)
+        self.lock.release()
 
     def _docker_login(self):
         if self.docker_login_completed:

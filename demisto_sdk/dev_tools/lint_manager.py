@@ -29,9 +29,10 @@ class LintManager:
         max_workers (int): How many workers to run for multi-thread run.
         configuration (Configuration): The system configuration.
     """
+
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
-                 cpu_num: int = 0, parallel: bool = False, max_workers: int = 10,
+                 cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
                  configuration: Configuration = Configuration()):
 
         if no_test and no_pylint and no_flake8 and no_mypy:
@@ -49,7 +50,8 @@ class LintManager:
             'pylint': not no_pylint,
             'flake8': not no_flake8,
             'mypy': not no_mypy,
-            'tests': not no_test
+            'tests': not no_test,
+            'bandit': not no_bandit
         }
         self.pkgs = project_dir_list.split(',')
         self.configuration = configuration
@@ -65,7 +67,8 @@ class LintManager:
             linter = Linter(self.pkgs[0], no_test=not self.run_args['tests'],
                             no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
                             no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
-                            keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration)
+                            keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
+                            no_bandit=not self.run_args['bandit'])
 
             return linter.run_dev_packages()
 
@@ -73,7 +76,7 @@ class LintManager:
         else:
             return self.run_parallel_packages()
 
-    def run_parallel_packages(self) -> int:
+    def run_parallel_packages(self):
         """Runs the Lint command in parallel on several threads.
 
         Returns:
@@ -159,11 +162,11 @@ class LintManager:
                         no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
                         no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
                         keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
-                        lock=LOCK)
+                        lock=LOCK, no_bandit=not self.run_args['bandit'])
 
         return linter.run_dev_packages(), package_dir
 
-    def _print_final_results(self, good_pkgs: str, fail_pkgs: str):
+    def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]):
         """Print the results of parallel lint command.
 
         Args:
@@ -193,7 +196,7 @@ class LintManager:
         description = """Run lintings (flake8, mypy, pylint) and pytest. pylint and pytest will run within the docker
             image of an integration/script.
             Meant to be used with integrations/scripts that use the folder (package) structure.
-            Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder. 
+            Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
             """
         parser = subparsers.add_parser('lint', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument("-d", "--dir", help="Specify directory of integration/script", required=True)
@@ -201,6 +204,7 @@ class LintManager:
         parser.add_argument("--no-mypy", help="Do NOT run mypy static type checking", action='store_true')
         parser.add_argument("--no-flake8", help="Do NOT run flake8 linter", action='store_true')
         parser.add_argument("--no-test", help="Do NOT test (skip pytest)", action='store_true')
+        parser.add_argument("--no-bandit", help="Do NOT run bandit linter", action='store_true')
         parser.add_argument("-r", "--root", help="Run pytest container with root user", action='store_true')
         parser.add_argument("-k", "--keep-container", help="Keep the test container", action='store_true')
         parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true')

@@ -15,7 +15,7 @@
 
 pylint_return=0
 if [ -z "${PYLINT_SKIP}" ]; then
-    echo "======== Running pylint on files: ${PYLINT_FILES} ==========="
+    echo "=============== Running pylint on files: ${PYLINT_FILES} ==============="
     python -m pylint -E -e string -d duplicate-string-formatting-argument -f parseable --generated-members=requests.packages.urllib3,requests.codes.ok \
         ${PYLINT_FILES}
     pylint_return=$?
@@ -23,6 +23,7 @@ if [ -z "${PYLINT_SKIP}" ]; then
 fi
 
 if [ -z "${PYTEST_SKIP}" ]; then
+    echo ""
     echo "========= Running pytest ==============="
 fi
 
@@ -38,7 +39,7 @@ if [ -z "${PYTEST_SKIP}" -a -z "${PYTEST_FAIL_NO_TESTS}" ]; then
             echo "========= No tests found. Skipping. ========"
             echo "========= Output of: pytest --collect-only ========"
             echo "$collect_res"
-            echo "========= End of Output ========"
+            echo -e "\e[32m=============== End of Output for: ${PYLINT_FILES} ===============\e[39m"
             PYTEST_SKIP=1
         ;;
     esac

@@ -67,7 +67,8 @@ class DemistoSDK:
             elif args.command == 'lint':
                 return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                                  no_test=args.no_test, root=args.root, keep_container=args.keep_container,
-                                 verbose=args.verbose, cpu_num=args.cpu_num, parallel=args.parallel)
+                                 verbose=args.verbose, cpu_num=args.cpu_num, parallel=args.parallel,
+                                 max_workers=args.max_workers)
             elif args.command == 'secrets':
                 self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
             elif args.command == 'create':
@@ -133,13 +134,16 @@ class DemistoSDK:
         return validator.is_valid_structure()
 
     def lint(self, project_dir: str, **kwargs):
+        """Run lint on python code in a provided directory.
+
+        Args:
+            project_dir: The directory containing the code.
+            **kwargs: Optional arguments.
+
+        Returns:
+            The lint result.
         """
-        Run lint on python code in a provided directory.
-        :param project_dir The directory containing the code.
-        :param kwargs Optional arguments.
-        :return: The lint result.
-        """
-        lint_manager = LintManager(configuration=self.configuration, project_dir=project_dir, **kwargs)
+        lint_manager = LintManager(configuration=self.configuration, project_dir_list=project_dir, **kwargs)
         ans = lint_manager.run_dev_packages()
         return ans
 

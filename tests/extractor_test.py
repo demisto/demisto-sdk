@@ -6,8 +6,13 @@ import os
 import base64
 
 
-@pytest.mark.parametrize('yml_path', ['script', 'integration'])
-def test_get_yml_type(yml_path):
+inputs_outputs = [
+    ('Scripts/FakeScript/FakeScript.yml', 'script'), 
+    ('Integrations/FakeInt/FakeInt.yml', 'integration')
+]
+
+@pytest.mark.parametrize('yml_path,expected', inputs_outputs)
+def test_get_yml_type(yml_path, expected):
     from demisto_sdk.yaml_tools.extractor import Extractor
     configuration = Configuration()
     with patch.object(Extractor, '__init__', lambda a, b, c, d, e, f, g: None):
@@ -15,7 +20,10 @@ def test_get_yml_type(yml_path):
         # Test script/integration case
         extractor.yml_type = ''
         extractor.yml_path = yml_path
-        assert extractor.get_yml_type() == yml_path
+        assert extractor.get_yml_type() == expected
+        # Test when type is set
+        extractor.yml_type = expected
+        assert extractor.get_yml_type() == expected
         # Test error
         extractor.yml_type = ''
         extractor.yml_path = 'path'

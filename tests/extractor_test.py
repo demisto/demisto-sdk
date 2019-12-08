@@ -11,6 +11,7 @@ inputs_outputs = [
     ('Integrations/FakeInt/FakeInt.yml', 'integration')
 ]
 
+
 @pytest.mark.parametrize('yml_path,expected', inputs_outputs)
 def test_get_yml_type(yml_path, expected):
     from demisto_sdk.yaml_tools.extractor import Extractor

@@ -157,8 +157,8 @@ class Extractor:
         return 0
 
     def get_yml_type(self) -> str:
-        yml_type = None
-        if not self.yml_type:
+        yml_type = self.yml_type
+        if not yml_type:
             if SCRIPT in self.yml_path.lower():
                 yml_type = SCRIPT
             elif INTEGRATION in self.yml_path.lower():

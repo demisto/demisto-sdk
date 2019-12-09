@@ -20,6 +20,7 @@ from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.dev_tools.spell_checker import SpellCheck
 
 
 class DemistoSDK:
@@ -44,6 +45,7 @@ class DemistoSDK:
         Linter.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
         ContentCreator.add_sub_parser(self.subparsers)
+        SpellCheck.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -72,6 +74,8 @@ class DemistoSDK:
                 self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
             elif args.command == 'create':
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
+            elif args.command == 'spell-check':
+                self.spell_check(path=args.path)
             else:
                 print('Use demisto-sdk -h to see the available commands.')
         except Exception as e:
@@ -158,3 +162,15 @@ class DemistoSDK:
         if cc.long_file_names:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
                         f'{json.dumps(cc.long_file_names, indent=4)}')
+
+    def spell_check(self, path: str) -> int:
+        """Runs SpellCheck for spell-check command.
+
+        Args:
+            path (str): The path to the checked file.
+
+        Returns:
+          int. 0 if no problematic words found, 1 otherwise.
+        """
+        spell_checker = SpellCheck(path=path)
+        return spell_checker.run_spell_check()

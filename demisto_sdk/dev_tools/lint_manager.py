@@ -1,5 +1,4 @@
 import os
-import sys
 import threading
 import subprocess
 import concurrent.futures
@@ -33,7 +32,7 @@ class LintManager:
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
-                 configuration: Configuration = Configuration()):
+                 no_bc_check: bool = False, configuration: Configuration = Configuration()):
 
         if no_test and no_pylint and no_flake8 and no_mypy:
             raise ValueError("Nothing to run as all --no-* options specified.")
@@ -55,35 +54,50 @@ class LintManager:
         }
         self.pkgs = project_dir_list.split(',')
         self.configuration = configuration
+        self.no_bc_check = no_bc_check
 
     def run_dev_packages(self) -> int:
         """Runs the Lint command on all given packages.
 
         Returns:
-            int. 0 on a successful run and 1 otherwise.
+            int. 0 on success and 1 if any package failed
         """
         # if we dont run in parallel we run a single process
-        if not self.parallel:
-            linter = Linter(self.pkgs[0], no_test=not self.run_args['tests'],
-                            no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
-                            no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
-                            keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
-                            no_bandit=not self.run_args['bandit'])
+        if not self.no_bc_check:
+            pkgs_to_run = self._get_packages_to_run()
 
-            return linter.run_dev_packages()
+        else:
+            pkgs_to_run = self.pkgs
+
+        overall_status_code = 0
+        if not self.parallel:
+            for project_dir in pkgs_to_run:
+                linter = Linter(project_dir, no_test=not self.run_args['tests'],
+                                no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
+                                no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
+                                keep_container=self.keep_container, cpu_num=self.cpu_num,
+                                configuration=self.configuration, no_bandit=not self.run_args['bandit'])
+
+                run_status_code = linter.run_dev_packages()
+                if run_status_code > 0:
+                    overall_status_code = run_status_code
+
+            return overall_status_code
 
         # we run parallel processes
         else:
-            return self.run_parallel_packages()
+            return self.run_parallel_packages(pkgs_to_run)
 
-    def run_parallel_packages(self):
+    def run_parallel_packages(self, pkgs_to_run: List[str]) -> int:
         """Runs the Lint command in parallel on several threads.
 
+        Args:
+            pkgs_to_run: The packages to run in parallel
+
         Returns:
-            int. 0 on a successful run and 1 otherwise.
+            int. 0 on success and 1 if any package failed
         """
         max_workers = int(self.max_workers)
-        pkgs_to_run = self._get_packages_to_run()
 
         print("Starting parallel run for [{}] packages with [{}] max workers.\n".format(len(pkgs_to_run), max_workers))
         fail_pkgs = []
@@ -112,7 +126,7 @@ class LintManager:
                 else:
                     fail_pkgs.append(package_ran)
 
-            self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
+            return self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
 
     def _get_packages_to_run(self) -> List[str]:
         """Checks which packages had changes in them and should run on Lint.
@@ -166,7 +180,7 @@ class LintManager:
 
         return linter.run_dev_packages(), package_dir
 
-    def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]):
+    def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]) -> int:
         """Print the results of parallel lint command.
 
         Args:
@@ -174,7 +188,7 @@ class LintManager:
             fail_pkgs (list): A list of packages that failed lint
 
         Returns:
-            None.
+            int. 0 on success and 1 if any package failed
         """
         if fail_pkgs:
             print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)
@@ -188,7 +202,10 @@ class LintManager:
             print_color("\n******* No changed packages found *******\n", LOG_COLORS.YELLOW)
 
         if fail_pkgs:
-            sys.exit(1)
+            return 1
+
+        else:
+            return 0
 
     @staticmethod
     def add_sub_parser(subparsers):
@@ -215,3 +232,4 @@ class LintManager:
         )
         parser.add_argument("-p", "--parallel", help="Run dev tasks in parallel", action='store_true')
         parser.add_argument("-m", "--max-workers", help="How many threads to run in parallel")
+        parser.add_argument("--no-bc", help="Check diff with $DIFF_COMPARE env variable", action='store_true')

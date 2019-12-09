@@ -180,7 +180,7 @@ class Linter:
         """
         self.lock.acquire(blocking=True)
         lint_files = self._get_lint_files()
-        print("========= Running flake8 on: {}===============".format(lint_files))
+        print("\n========= Running flake8 on: {}===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
         sys.stdout.flush()
@@ -226,7 +226,7 @@ class Linter:
         print_v('Using: {} to run bandit'.format(python_exe))
         sys.stdout.flush()
         subprocess.check_call([python_exe, '-m', 'bandit', '-lll', '-iii', '-q', lint_files], cwd=self.project_dir)
-        print_color("bandit completed\n", LOG_COLORS.GREEN)
+        print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
         self.lock.release()
 
     def _docker_login(self):

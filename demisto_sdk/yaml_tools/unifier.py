@@ -5,7 +5,8 @@ import yaml
 import base64
 import re
 
-from demisto_sdk.common.tools import get_yaml, server_version_compare
+from demisto_sdk.common.constants import Errors
+from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
@@ -93,8 +94,7 @@ class Unifier:
         else:
             self.dest_path = os.path.join(self.dir_name, output_filename)
 
-        yml_paths = glob.glob(os.path.join(self.package_path, '*.yml'))
-        yml_path = yml_paths[0]
+        yml_paths, yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
         for path in yml_paths:
             # The plugin creates a unified YML file for the package.
             # In case this script runs locally and there is a unified YML file in the package we need to ignore it.
@@ -234,11 +234,10 @@ class Unifier:
         return yml_text, script_path
 
     def get_script_package_data(self):
-        yml_files = glob.glob(os.path.join(self.package_path, '*.yml'))
-        if not yml_files:
+        _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
+        if not yml_path:
             raise Exception("No yml files found in package path: {}. "
                             "Is this really a package dir? If not remove it.".format(self.package_path))
-        yml_path = yml_files[0]
         code_type = get_yaml(yml_path).get('type')
         unifier = Unifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])

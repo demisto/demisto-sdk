@@ -123,7 +123,8 @@ class Linter:
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
                 self.lock.acquire(blocking=True)
-                print("============ Starting process for: {} ============".format(self.project_dir))
+                print_color("============ Starting process for: {} ============".format(self.project_dir),
+                            LOG_COLORS.YELLOW)
                 py_num = get_python_version(docker, self.log_verbose)
                 self.lock.release()
                 self._setup_dev_files()

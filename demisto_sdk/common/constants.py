@@ -691,15 +691,6 @@ IOC_OUTPUTS_DICT = {
     'url': {'URL.Data'}
 }
 
-DISPLAYABLE_LINES = [
-    "description",
-    "name",
-    "display",
-    "comment"
-]
-
-SCRIPT_ARGS = 'scriptarguments'
-
 KNOWN_WORDS = [
     "Phishing",
     "remediate",
@@ -707,5 +698,5 @@ KNOWN_WORDS = [
     "firewalls",
     "IOCs",
     "Emails",
-    "Google"
+    "Google",
 ]

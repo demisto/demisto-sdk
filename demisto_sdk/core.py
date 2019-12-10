@@ -75,7 +75,7 @@ class DemistoSDK:
             elif args.command == 'create':
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
             elif args.command == 'spell-check':
-                self.spell_check(path=args.path)
+                self.spell_check(path=args.path, known_words=args.known_words)
             else:
                 print('Use demisto-sdk -h to see the available commands.')
         except Exception as e:
@@ -163,14 +163,14 @@ class DemistoSDK:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
                         f'{json.dumps(cc.long_file_names, indent=4)}')
 
-    def spell_check(self, path: str) -> int:
+    def spell_check(self, path: str, **kwargs) -> bool:
         """Runs SpellCheck for spell-check command.
 
         Args:
             path (str): The path to the checked file.
 
         Returns:
-          int. 0 if no problematic words found, 1 otherwise.
+          bool. True if no problematic words found, False otherwise.
         """
-        spell_checker = SpellCheck(path=path)
+        spell_checker = SpellCheck(path=path, **kwargs)
         return spell_checker.run_spell_check()

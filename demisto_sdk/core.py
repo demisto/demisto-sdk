@@ -15,6 +15,8 @@ from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DIR_TO_PREFIX
 from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
 from demisto_sdk.dev_tools.linter import Linter
+from demisto_sdk.dev_tools.uploader import Uploader
+from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
@@ -44,6 +46,8 @@ class DemistoSDK:
         Linter.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
         ContentCreator.add_sub_parser(self.subparsers)
+        Uploader.add_sub_parser(self.subparsers)
+        Runner.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -68,6 +72,10 @@ class DemistoSDK:
                 return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                                  no_bandit=args.no_bandit, no_test=args.no_test, root=args.root,
                                  keep_container=args.keep_container, verbose=args.verbose, cpu_num=args.cpu_num)
+            elif args.command == 'upload':
+                self.upload(infile=args.infile, url=args.url, insecure=args.insecure, verbose=args.verbose)
+            elif args.command == 'run':
+                self.run(query=args.query, url=args.url, insecure=args.insecure, verbose=args.verbose, debug_mode=args.debug_mode)
             elif args.command == 'secrets':
                 self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
             elif args.command == 'create':
@@ -142,6 +150,23 @@ class DemistoSDK:
         linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
         ans = linter.run_dev_packages()
         return ans
+
+    def upload(self, **kwargs):
+        """
+        Upload integration yml (generated with the unify command)
+        to a Demisto instance.
+        :param kwargs Arguments
+        """
+        uploader = Uploader(configuration=self.configuration, **kwargs)
+        uploader.upload()
+
+    def run(self, **kwargs):
+        """
+        Run integration command on a remote Demisto instance.
+        :param kwargs Arguments
+        """
+        runner = Runner(configuration=self.configuration, **kwargs)
+        runner.run()
 
     def secrets(self, **kwargs):
         sys.path.append(self.configuration.env_dir)

@@ -5,7 +5,6 @@ from typing import List, Tuple
 
 import pytest
 import yaml
-from mock import patch
 
 from demisto_sdk.common.constants import DIR_LIST
 from demisto_sdk.common.hook_validations.structure import StructureValidator
@@ -55,9 +54,9 @@ class TestStructureValidator:
     ]
 
     @pytest.mark.parametrize("path, scheme, answer, error", SCHEME_VALIDATION_INPUTS)
-    def test_scheme_validation_playbook(self, path, scheme, answer, error):
-        with patch.object(StructureValidator, 'scheme_of_file_by_path', return_value=scheme):
-            validator = StructureValidator(file_path=path)
+    def test_scheme_validation_playbook(self, path, scheme, answer, error, mocker):
+        mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value=scheme)
+        validator = StructureValidator(file_path=path)
         assert validator.is_valid_scheme() is answer, error
 
     INPUTS_VALID_FROM_VERSION_MODIFIED = [
@@ -107,10 +106,10 @@ class TestStructureValidator:
     ]
 
     @pytest.mark.parametrize('path, answer', INPUTS_IS_PATH_VALID)
-    def test_is_valid_file_path(self, path, answer):
-        with patch.object(StructureValidator, "load_data_from_file", return_value=None):
-            structure = StructureValidator(path)
-            structure.scheme_name = None
+    def test_is_valid_file_path(self, path, answer, mocker):
+        mocker.patch.object(StructureValidator, "load_data_from_file", return_value=None)
+        structure = StructureValidator(path)
+        structure.scheme_name = None
         assert structure.is_valid_file_path() is answer
 
     INPUTS_IS_VALID_FILE = [
@@ -140,10 +139,10 @@ class TestStructureValidator:
     ]
 
     @pytest.mark.parametrize('source, scheme_name, answer', INPUTS_LOCKED_PATHS)
-    def test_is_file_valid_locked_paths(self, source, scheme_name, answer):
+    def test_is_file_valid_locked_paths(self, source, scheme_name, answer, mocker):
         """Tests locked path (as reputations.json) so we won't override the file"""
-        # with patch.object(StructureValidator, "is_valid_file_path", return_value=answer):
-        #    structure = StructureValidator(source)
-        #    StructureValidator.scheme_name = scheme_name
+        # mocker.patch.object(StructureValidator, "is_valid_file_path", return_value=answer):
+        # structure = StructureValidator(source)
+        # StructureValidator.scheme_name = scheme_name
         # Currently there isn't a scheme for reputations so test cant pass.
         # assert structure.is_valid_file() is answer

@@ -2,6 +2,7 @@ import yaml
 from typing import Set
 from spellchecker import SpellChecker
 
+from argparse import ArgumentDefaultsHelpFormatter
 from demisto_sdk.common.constants import KNOWN_WORDS
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
@@ -17,7 +18,7 @@ USER_VISIBLE_LINE_KEYS = [
 
 
 class SpellCheck:
-    """Preform a spell check on the given .yml or .md file.
+    """Perform a spell check on the given .yml or .md file.
         Attributes:
             path (str): The path to the current file being checked.
             known_words (str): The path to a file containing known words.
@@ -25,8 +26,8 @@ class SpellCheck:
             unknown_words (set): A set of unknown words found in the given file.
     """
 
-    def __init__(self, path: str, known_words: str):
-        self.path = path
+    def __init__(self, checked_file_path: str, known_words: str):
+        self.checked_file_path = checked_file_path
         self.spellchecker = SpellChecker()
         self.unknown_words = set([])  # type:Set
         self.known_words = known_words
@@ -37,44 +38,41 @@ class SpellCheck:
         Returns:
             bool. True if no problematic words found, False otherwise.
         """
-        # adding known words file if given
+        # adding known words file if given - these words will not count as misspelled
         if self.known_words:
             known_words_file = open(self.known_words, 'r')
             self.spellchecker.word_frequency.load_text_file(known_words_file)
 
         # adding the KNOWN_WORDS to the spellchecker recognized words.
         self.spellchecker.word_frequency.load_words(KNOWN_WORDS)
-        if self.path.endswith('.md'):
-            with open(self.path, 'r') as md_file:
-                md_file_lines = md_file.readlines()
+        if self.checked_file_path.endswith('.md'):
+            self.check_md_file()
 
-            self.check_md_file(md_file_lines=md_file_lines)
-
-        elif self.path.endswith('.yml'):
-            with open(self.path, 'r') as yaml_file:
+        elif self.checked_file_path.endswith('.yml'):
+            with open(self.checked_file_path, 'r') as yaml_file:
                 yml_info = yaml.safe_load(yaml_file)
 
             self.check_yaml(yml_info=yml_info)
 
         else:
             print_error("The file {} is not supported for spell-check command.\n"
-                        "Only .yml or .md files are supported.".format(self.path))
+                        "Only .yml or .md files are supported.".format(self.checked_file_path))
             return False
 
         if self.unknown_words:
             print_error(u"Words that might be misspelled were found in {}:\n\n{}".format(
-                self.path, '\n'.join(self.unknown_words)))
+                self.checked_file_path, '\n'.join(self.unknown_words)))
             return False
 
-        print_color("No misspelled words found in {}".format(self.path), LOG_COLORS.GREEN)
+        print_color("No misspelled words found in {}".format(self.checked_file_path), LOG_COLORS.GREEN)
         return True
 
-    def check_md_file(self, md_file_lines):
+    def check_md_file(self):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.
-
-        Args:
-            md_file_lines (list): A line list of the .md file contents
         """
+        with open(self.checked_file_path, 'r') as md_file:
+            md_file_lines = md_file.readlines()
+
         for line in md_file_lines:
             for word in line.split():
                 if word.isalpha() and self.spellchecker.unknown([word]):
@@ -90,14 +88,14 @@ class SpellCheck:
         # has a value which can be comprised of a string, a sub-dictionary or a list of dictionaries.
         # The following code separates the spell check to these cases.
         for key, value in yml_info.items():
-            # case 1: a String.
+            # case 1: the value is a user visible string.
             if key in USER_VISIBLE_LINE_KEYS:
 
                 # separate the string to individual words
                 for word in value.split():
 
                     # Drop commas, full-stops and brackets.
-                    if word.endswith(',') or word.endswith('.') or word.endswith(')'):
+                    if word.endswith(',') or word.endswith('.') or word.endswith(')') or word.endswith(':'):
                         word = word[:-1]
 
                     if word.startswith('('):
@@ -122,7 +120,6 @@ class SpellCheck:
 
     @staticmethod
     def add_sub_parser(subparsers):
-        from argparse import ArgumentDefaultsHelpFormatter
         description = """Run spell check on a given yml/md file. """
         parser = subparsers.add_parser('spell-check', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument("-p", "--path", help="Specify path of yml/md file", required=True)

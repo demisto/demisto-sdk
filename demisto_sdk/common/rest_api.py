@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import requests
 
-from demisto_sdk.common.tools import print_color, print_error, print_v, LOG_COLORS
+from demisto_sdk.common.tools import print_v
 
 
 DEMISTO_API_KEY_ENV = 'DEMISTO_API_KEY'
@@ -22,7 +22,7 @@ class Client:
         verify_cert (bool, optional): Verify remote certificate. Defaults to True.
         verbose (bool, optional): Verbose logging.
     """
-    def __init__(self, base_url: str, verify_cert: bool=True, verbose: bool=False):
+    def __init__(self, base_url: str, verify_cert: bool = True, verbose: bool = False):
         self.base_url = base_url
         self.verify_cert = verify_cert
         self.log_verbose = verbose

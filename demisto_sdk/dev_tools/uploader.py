@@ -1,16 +1,11 @@
-import os
-from urllib.parse import urljoin
-
-import requests
-
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
+from demisto_sdk.common.tools import print_color, LOG_COLORS
 from demisto_sdk.common.rest_api import Client, DEMISTO_API_KEY_ENV
 
 
 class Uploader:
-    def __init__(self, infile: str, url: str, insecure: bool=False,
-                 verbose: bool=False, configuration: Configuration = Configuration()):
+    def __init__(self, infile: str, url: str, insecure: bool = False,
+                 verbose: bool = False, configuration: Configuration = Configuration()):
         self.infile = infile
         self.base_url = url
         self.verify_cert = not insecure

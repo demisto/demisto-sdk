@@ -1,11 +1,7 @@
-import os
 import re
-from urllib.parse import urljoin
-
-import requests
 
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS, print_v, print_warning
+from demisto_sdk.common.tools import print_color, LOG_COLORS, print_v, print_warning
 from demisto_sdk.common.rest_api import Client, DEMISTO_API_KEY_ENV
 
 
@@ -14,8 +10,8 @@ FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
 
 class Runner:
-    def __init__(self, query: str, url: str, insecure: bool=False, debug_mode: bool=False,
-                 verbose: bool=False, configuration: Configuration = Configuration()):
+    def __init__(self, query: str, url: str, insecure: bool = False, debug_mode: bool = False,
+                 verbose: bool = False, configuration: Configuration = Configuration()):
         self.query = query
         self.base_url = url
         self.verify_cert = not insecure
@@ -26,10 +22,6 @@ class Runner:
         """Do the job. Run the integration command on the remote Demisto instance
         and pretty prints the result.
         """
-        if not DEMISTO_API_KEY_ENV in os.environ:
-            print_color(f'Error: Environment variable {DEMISTO_API_KEY_ENV} not found', LOG_COLORS.RED)
-            return
-
         playground_id = self._get_playground_id()
 
         query = self.query
@@ -107,14 +99,14 @@ class Runner:
 
         print_color('## Detailed Log', LOG_COLORS.YELLOW)
         for l in result.iter_lines():
-            l = l.decode('utf-8')
+            dl = l.decode('utf-8')
 
-            if SECTIONS_REGEX.match(l):
-                print_color(l, LOG_COLORS.YELLOW)
-            elif FULL_LOG_REGEX.match(l):
+            if SECTIONS_REGEX.match(dl):
+                print_color(dl, LOG_COLORS.YELLOW)
+            elif FULL_LOG_REGEX.match(dl):
                 print_color('Full Integration Log:', LOG_COLORS.YELLOW)
             else:
-                print(l)
+                print(dl)
 
     @staticmethod
     def add_sub_parser(subparsers):

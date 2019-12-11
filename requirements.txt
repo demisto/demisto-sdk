@@ -1,6 +1,11 @@
+bandit>=0.0.1
+bs4>=0.0.1
+flake8>=0.0.1
+mypy>=0.0.1
+pykwalify>=1.7.0
+pylint>=0.0.1
+PyPDF2>=1.26.0
+pytest>=0.0.1
 PyYAML>=5.1.2
 requests>=2.22.0
 ruamel.yaml>=0.16.5
-pykwalify>=1.7.0
-bs4>=0.0.1
-PyPDF2>=1.26.0

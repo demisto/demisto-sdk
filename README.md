@@ -177,7 +177,7 @@ Now install your pipenv environment.
 Using the terminal go to the Demisto-SDK repository and run the following:
  ```
  pip install pipenv
- pipenv install -r requirments.txt
+ pipenv install -r requirements.txt
  pipenv install demisto-sdk
  ```
 

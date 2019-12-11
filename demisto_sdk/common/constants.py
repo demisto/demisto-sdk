@@ -280,10 +280,6 @@ PACKS_INTEGRATION_JS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
 PACKS_SCRIPT_JS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
-PACKS_INTEGRATION_PS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.ps1'.format(
-    CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
-PACKS_SCRIPT_PS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.ps1'.format(
-    CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
 PACKS_INTEGRATION_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.py'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
 PACKS_INTEGRATION_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(

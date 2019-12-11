@@ -150,18 +150,46 @@ You can import the SDK core class in your python code as follows:
 ## Dev Environment Setup
 We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
 
-Install `tox`:
-```
-pip install tox
-```
-List configured environments:
-```
-tox -l
-```
-Then setup dev virtual envs for python 3 (will also install all necessary requirements):
-```
-tox --devenv venv3 --devenv py37
-```
+1) Clone the Demisto-SDK repository to your existing Demisto directory. It is recommended to use SSH when cloning.
+2) Run:
+     ```
+     pip install demisto-sdk.
+     ```
+3) Using the terminal go to the Demisto-SDK repository.
+4) Install `tox`:
+    ```
+    pip install tox
+    ```
+    List configured environments:
+    ```
+    tox -l
+    ```
+    Then setup dev virtual envs for python 3 (will also install all necessary requirements):
+    ```
+    tox --devenv venv3 --devenv py37
+    ```
+5) Run:
+    ```
+    python setup.py install
+    ```
+
+Now install your pipenv environment.
+Using the terminal go to the Demisto-SDK repository and run the following:
+ ```
+ pip install pipenv
+ pipenv install -r requirments.txt
+ pipenv install demisto-sdk
+ ```
+
+### How to run commands in your development environment
+In the Demisto-SDK repository while on the git branch you want to activate and run:
+ ```
+ pipenv shell
+ ```
+Then using the terminal, while in the shell, make your way to Demisto's content repository.
+
+Now while in the content repository you can use the  ```demisto-sdk ``` commands as you normally would,
+including any changes you may have made on your git branch.
 
 ## Running git hooks
 We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:

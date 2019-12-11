@@ -128,7 +128,7 @@ class Client:
         api_url = urljoin(self.base_url, ENTRY_EXECUTE_PATH)
 
         print_v(
-            f'Executing query {query} in investigation {investigation_id} via {api_url}',
+            f'Executing query {query} on investigation with the ID: '{investigation_id}' via {api_url}',
             self.log_verbose
         )
 

@@ -12,7 +12,7 @@ class Uploader:
         self.log_verbose = verbose
 
     def upload(self):
-        """Do the job. Upload the integration YML to the remote Demisto instance.
+        """Upload the integration specified in self.infile to the remote Demisto instance.
         """
 
         with open(self.infile, 'r') as f:

@@ -1,4 +1,4 @@
-bandit>=0.0.1
+bandit>=1.6.2
 bs4>=0.0.1
 flake8>=0.0.1
 mypy>=0.0.1

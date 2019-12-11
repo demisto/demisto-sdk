@@ -1,7 +1,7 @@
 import re
 
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_color, LOG_COLORS, print_v, print_warning
+from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
 from demisto_sdk.common.rest_api import Client, DEMISTO_API_KEY_ENV
 
 
@@ -32,7 +32,7 @@ class Runner:
 
         if self.debug_mode:
             if log_id is None:
-                print_warning('Error: no log id returned')
+                print_warning('Entry with debug log not found')
                 return
 
             self._pretty_print_log(log_id)
@@ -54,15 +54,27 @@ class Runner:
 
         total = ans.get('total', None)
         if total != 1:
-            raise RuntimeError(f'Error searching Playground: number of results should {total}')
+            print_error(
+                'Got unexpected amount of results. If you are using MT environment, '
+                'use the Tenant as Demisto\'s URL instead of the Master.'
+            )
+            raise RuntimeError(
+                f'Got unexpected amount of results in getPlaygroundInvestigationID. '
+                f'Response was: {total}'
+            )
 
-        result = ans['data'][0]['id']
+        data = ans.get('data', None)
+        if data is None:
+            raise RuntimeError(f'Missing data field in response')
+
+        result = data[0]['id']
         print_v(f'Playground ID: {result}', self.log_verbose)
 
         return result
 
     def _run_query(self, playground_id: str, query: str):
-        """Runs a query on the Playground of the remote Demisto instance.
+        """Run a query on the Playground of the remote Demisto instance.
+        Print the readable output and return the id of the debug log file.
         """
         client = Client(
             base_url=self.base_url,
@@ -71,18 +83,21 @@ class Runner:
         )
         ans = client.run_query(playground_id, query)
 
-        log_id = None
-        for entry in ans:
-            contents = entry.get('contents', None)
-            if contents:
-                print_color('## Readable Output', LOG_COLORS.YELLOW)
-                print(contents)
-                print()
+        # ans should have an entry with 'contents' - the readable output
+        # of the command
+        centry = next((entry for entry in ans if entry.get('contents', None)), None)
+        if centry:
+            print_color('## Readable Output', LOG_COLORS.YELLOW)
+            print(centry['contents'])
+            print()
+        else:
+            print_warning('Entry with query output not found')
 
-            if entry.get('fileID', ""):
-                log_id = entry['id']
+        # and an entry with a fileID defined, that is the fileID of the
+        # debug log file
+        lentry = next((entry for entry in ans if entry.get('fileID', None)), None)
 
-        return log_id
+        return lentry['id'] if lentry else None
 
     def _pretty_print_log(self, log_id: str):
         """Retrieve & pretty print debug mode log file

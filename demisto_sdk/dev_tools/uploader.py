@@ -23,7 +23,7 @@ class Uploader:
             )
             client.upload_integration(f)
 
-        print_color('Upload: OK', LOG_COLORS.GREEN)
+        print_color(f'Uploaded '{self.infile}' successfully', LOG_COLORS.GREEN)
 
     @staticmethod
     def add_sub_parser(subparsers):

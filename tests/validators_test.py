@@ -3,7 +3,6 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-from mock import patch
 
 from demisto_sdk.common.constants import DIR_LIST
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
@@ -13,6 +12,9 @@ from demisto_sdk.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
+from demisto_sdk.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
+
 from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
     VALID_SCRIPT_PATH, INVALID_SCRIPT_PATH, INVALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, \
@@ -22,8 +24,6 @@ from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH, \
     LAYOUT_TARGET, WIDGET_TARGET, DASHBOARD_TARGET, INTEGRATION_TARGET, \
     INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET
-from demisto_sdk.common.hook_validations.widget import WidgetValidator
-from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 
 
 class TestValidators:
@@ -107,12 +107,12 @@ class TestValidators:
                              'validator, answer',
                              INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
     def test_is_release_notes_exists(self, source_dummy, target_dummy,
-                                     source_release_notes, target_release_notes, validator, answer):
+                                     source_release_notes, target_release_notes, validator, answer, mocker):
         # type: (str, str, str, str, Type[BaseValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
+            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.validate_file_release_notes() is answer
         finally:
@@ -157,12 +157,12 @@ class TestValidators:
     @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
                              'validator, answer', test_package)
     def test_valid_release_notes_structure(self, source_dummy, target_dummy,
-                                           source_release_notes, target_release_notes, validator, answer):
+                                           source_release_notes, target_release_notes, validator, answer, mocker):
         # type: (str, str, str, str, Type[BaseValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
+            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.is_valid_release_notes_structure() is answer
         finally:

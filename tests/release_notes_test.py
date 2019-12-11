@@ -1,5 +1,6 @@
 from mock import patch
 import pytest
+
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 
 

@@ -2,8 +2,8 @@ from __future__ import print_function
 
 import os
 import re
-from demisto_sdk.common.tools import run_command
 
+from demisto_sdk.common.tools import run_command
 from demisto_sdk.common.tools import print_error, get_latest_release_notes_text, \
     get_release_notes_file_path
 

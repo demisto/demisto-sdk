@@ -350,7 +350,7 @@ class FilesValidator:
                 if not incident_field_validator.is_valid():
                     self._is_valid = False
 
-            self.is_valid_release_files(file_path)
+            self.is_valid_release_notes(file_path)
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).

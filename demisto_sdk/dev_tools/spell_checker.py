@@ -51,7 +51,7 @@ class SpellCheck:
         elif self.checked_file_path.endswith('.yml'):
             with open(self.checked_file_path, 'r') as yaml_file:
                 yml_info = yaml.safe_load(yaml_file)
-            print(yml_info)
+
             self.check_yaml(yml_info=yml_info)
 
         else:

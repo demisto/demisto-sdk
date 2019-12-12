@@ -114,7 +114,7 @@ class TestValidators:
             copyfile(source_release_notes, target_release_notes)
             mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
-            assert validator.validate_file_release_notes() is answer
+            assert validator.validate_file_release_notes_exists() is answer
         finally:
             os.remove(target_dummy)
             os.remove(target_release_notes)

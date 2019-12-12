@@ -276,10 +276,10 @@ class FilesValidator:
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
-            elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
-                image_validator = ImageValidator(file_path)
-                if not image_validator.is_valid():
-                    self._is_valid = False
+            # elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
+            #     image_validator = ImageValidator(file_path)
+            #     if not image_validator.is_valid():
+            #         self._is_valid = False
 
             elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE):
                 incident_field_validator = IncidentFieldValidator(structure_validator)

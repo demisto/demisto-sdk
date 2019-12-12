@@ -9,3 +9,11 @@ class PlaybookValidator(BaseValidator):
     def is_valid_version(self):
         # type: () -> bool
         return self._is_valid_version()
+
+    def is_valid_playbook(self):
+        # type: () -> bool
+        """Check whether the playbook is valid or not"""
+        answers = [
+            self.is_valid_version()
+        ]
+        return all(answers)

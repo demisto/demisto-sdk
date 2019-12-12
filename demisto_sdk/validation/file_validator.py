@@ -208,7 +208,7 @@ class FilesValidator:
 
     def is_valid_release_notes(self, file_path):
         release_notes_validator = ReleaseNotesValidator(file_path)
-        if not release_notes_validator.is_valid_file():
+        if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
     def validate_modified_files(self, modified_files):

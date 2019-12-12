@@ -29,7 +29,7 @@ class ReleaseNotesValidator:
     def get_master_diff(self):
         """Gets difference between current branch and origin/master
 
-        git diff with the --unified=200 option means that if there exists a
+        git diff with the --unified=100 option means that if there exists a
         difference between origin/master and current branch, the output will have at most 100
         lines of context.
 
@@ -57,7 +57,7 @@ class ReleaseNotesValidator:
             for line in unreleased_section_lines:
                 if line.startswith('+'):
                     adds_in_diff += 1
-                elif line.startswith('-'):
+                elif line.startswith('-') and not re.match(r'- *$', line):
                     removes_in_diff += 1
 
             # means that at least one new line was added
@@ -72,8 +72,11 @@ class ReleaseNotesValidator:
         """Validates that the release notes written in the correct manner.
 
         one_line_release_notes_regex meaning:
-            starts with a letter or number
-            ends with '.'
+            Option #1:
+                starts with a letter or number
+                ends with '.'
+            Option #2:
+                starts with '-' with none or one trailing spaces.
 
         multi_line_release_notes_regex meaning:
             Option #1:
@@ -85,29 +88,18 @@ class ReleaseNotesValidator:
         Returns:
             bool. True if release notes structure valid, False otherwise
         """
-        hyphen_release_notes_regex = r'- ?'
-        one_line_release_notes_regex = r'[a-zA-Z0-9].*\.$'
+        one_line_release_notes_regex = r'[a-zA-Z0-9].*\.$|- ?$'
         multi_line_release_notes_regex = r'(\t+| {2,4})- .*\.$|- ?$'
 
         release_notes_comments = self.latest_release_notes.split('\n')
 
         if len(release_notes_comments) == 1:
-            if not (re.match(hyphen_release_notes_regex, self.latest_release_notes) or
-                    re.match(one_line_release_notes_regex, self.latest_release_notes)):
-                print_error(F'File {self.release_notes_path} is not formatted according to '
-                            F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
-                return False
-
-        elif len(release_notes_comments) == 2:
-            if re.match(multi_line_release_notes_regex, release_notes_comments[0]) and \
-                    release_notes_comments[1] == '':
+            if not re.match(one_line_release_notes_regex, self.latest_release_notes):
                 print_error(F'File {self.release_notes_path} is not formatted according to '
                             F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
                 return False
 
         else:
-            release_notes_comments = release_notes_comments[:-1]
-
             # if it's one line comment with list
             if re.match(one_line_release_notes_regex, release_notes_comments[0]):
                 release_notes_comments = release_notes_comments[1:]
@@ -120,14 +112,14 @@ class ReleaseNotesValidator:
 
         return True
 
-    def validate_file_release_notes(self):
+    def validate_file_release_notes_exists(self):
         """Validate that the file has proper release notes when modified.
 
         Returns:
             bool. True if release notes file exists, False otherwise.
         """
         # checks that release notes file exists and contains text
-        if not os.path.isfile(self.release_notes_path) and self.latest_release_notes is None:
+        if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
             print_error(F'File {self.file_path} is missing release notes, '
                         F'Please add it under {self.release_notes_path}')
             return False
@@ -140,10 +132,13 @@ class ReleaseNotesValidator:
         Return:
             bool. True if file's release notes are valid, False otherwise.
         """
+        # verifying that the other tests are even necessary
+        if not self.validate_file_release_notes_exists():
+            return False
+
         validations = [
-            self.validate_file_release_notes(),
+            self.is_release_notes_changed(),
             self.is_valid_release_notes_structure(),
-            self.is_release_notes_changed()
         ]
 
         return all(validations)

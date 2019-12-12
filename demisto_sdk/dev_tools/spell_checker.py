@@ -1,7 +1,10 @@
+import ssl
 import yaml
+import nltk
 from typing import Set
 from spellchecker import SpellChecker
 
+from nltk.corpus import words
 from argparse import ArgumentDefaultsHelpFormatter
 from demisto_sdk.common.constants import KNOWN_WORDS
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
@@ -38,13 +41,9 @@ class SpellCheck:
         Returns:
             bool. True if no problematic words found, False otherwise.
         """
-        # adding known words file if given - these words will not count as misspelled
-        if self.known_words:
-            known_words_file = open(self.known_words, 'r')
-            self.spellchecker.word_frequency.load_text_file(known_words_file)
 
-        # adding the KNOWN_WORDS to the spellchecker recognized words.
-        self.spellchecker.word_frequency.load_words(KNOWN_WORDS)
+        self.add_known_words()
+
         if self.checked_file_path.endswith('.md'):
             self.check_md_file()
 
@@ -55,17 +54,40 @@ class SpellCheck:
             self.check_yaml(yml_info=yml_info)
 
         else:
-            print_error("The file {} is not supported for spell-check command.\n"
+            print_error("\nThe file {} is not supported for spell-check command.\n"
                         "Only .yml or .md files are supported.".format(self.checked_file_path))
             return False
 
         if len(self.unknown_words) > 0:
-            print_error(u"Words that might be misspelled were found in {}:\n\n{}".format(
+            print_error(u"\nWords that might be misspelled were found in {}:\n\n{}".format(
                 self.checked_file_path, '\n'.join(self.unknown_words)))
             return False
 
-        print_color("No misspelled words found in {}".format(self.checked_file_path), LOG_COLORS.GREEN)
+        print_color("\nNo misspelled words found in {}".format(self.checked_file_path), LOG_COLORS.GREEN)
         return True
+
+    def add_known_words(self):
+        # adding known words file if given - these words will not count as misspelled
+        if self.known_words:
+            known_words_file = open(self.known_words, 'r')
+            self.spellchecker.word_frequency.load_text_file(known_words_file)
+
+        # adding the KNOWN_WORDS to the spellchecker recognized words.
+        self.spellchecker.word_frequency.load_words(KNOWN_WORDS)
+
+        # disabling SSL connection for nltk download.
+        try:
+            _create_unverified_https_context = ssl._create_unverified_context
+        except AttributeError:
+            pass
+        else:
+            ssl._create_default_https_context = _create_unverified_https_context
+
+        # downloading words set from nltk.
+        nltk.download('words')
+
+        # adding nltk's word set to spellchecker.
+        self.spellchecker.word_frequency.load_words(words.words())
 
     def check_md_file(self):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.

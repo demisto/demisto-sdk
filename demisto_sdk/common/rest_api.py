@@ -1,17 +1,9 @@
 import os
 import json
 from urllib.parse import urljoin
-
 import requests
 
 from demisto_sdk.common.tools import print_v
-
-
-DEMISTO_API_KEY_ENV = 'DEMISTO_API_KEY'
-INTEGRATION_UPLOAD_PATH = "/settings/integration-conf/upload"
-ENTRY_EXECUTE_PATH = "/entry/execute/sync"
-ENTRY_DOWNLOAD_PATH = "/entry/download/"
-INVESTIGATION_SEARCH_PATH = "/investigations/search"
 
 
 class Client:
@@ -22,6 +14,12 @@ class Client:
         verify_cert (bool, optional): Verify remote certificate. Defaults to True.
         verbose (bool, optional): Verbose logging.
     """
+    DEMISTO_API_KEY_ENV = 'DEMISTO_API_KEY'
+    INTEGRATION_UPLOAD_PATH = "/settings/integration-conf/upload"
+    ENTRY_EXECUTE_PATH = "/entry/execute/sync"
+    ENTRY_DOWNLOAD_PATH = "/entry/download/"
+    INVESTIGATION_SEARCH_PATH = "/investigations/search"
+
     def __init__(self, base_url: str, verify_cert: bool = True, verbose: bool = False):
         self.base_url = base_url
         self.verify_cert = verify_cert
@@ -36,24 +34,24 @@ class Client:
         Returns:
             str: API Key
         """
-        ans = os.environ.get(DEMISTO_API_KEY_ENV, None)
+        ans = os.environ.get(self.DEMISTO_API_KEY_ENV, None)
         if ans is None:
-            raise RuntimeError(f'Error: Environment variable {DEMISTO_API_KEY_ENV} not found')
+            raise RuntimeError(f'Error: Environment variable {self.DEMISTO_API_KEY_ENV} not found')
 
         return ans
 
-    def upload_integration(self, ymlf):
+    def upload_integration(self, yml_file):
         """Upload an integration YML file to a remote Demisto instance.
 
         Args:
-            ymlf (stream): The open file object to be uploaded
+            yml_file (stream): The open file object to be uploaded
         """
         api_key = self.get_api_key()
 
-        api_url = urljoin(self.base_url, INTEGRATION_UPLOAD_PATH)
-        files = {'file': ymlf}
+        api_url = urljoin(self.base_url, self.INTEGRATION_UPLOAD_PATH)
+        files = {'file': yml_file}
 
-        print_v(f'Uploading integration to {api_url}', self.log_verbose)
+        print_v(f'Uploading integration to {self.base_url}', self.log_verbose)
 
         result = requests.post(
             url=api_url,
@@ -76,21 +74,21 @@ class Client:
 
         result.close()
 
-    def search_investigations(self, sfilter):
+    def search_investigations(self, search_filter):
         """Search investigations.
         
         Args:
-            sfilter (dict): Filter for the search
+            search_filter (dict): Filter for the search
 
         Returns:
             dict: API Response
         """
         api_key = self.get_api_key()
 
-        api_url = urljoin(self.base_url, INVESTIGATION_SEARCH_PATH)
+        api_url = urljoin(self.base_url, self.INVESTIGATION_SEARCH_PATH)
 
         print_v(
-            f'Searching investigations on {api_url} with filter {json.dumps(sfilter, indent=4)}',
+            f'Searching investigations on {self.base_url} with filter {json.dumps(search_filter, indent=4)}',
             self.log_verbose
         )
 
@@ -102,7 +100,7 @@ class Client:
                 'Content-Type': 'application/json',
                 'Authorization': api_key
             },
-            json=sfilter
+            json=search_filter
         )
 
         result.raise_for_status()
@@ -114,21 +112,23 @@ class Client:
         return ans
 
     def run_query(self, investigation_id: str, query: str):
-        """[summary]
+        """Run a query on the given investigation on your configured Demisto instance
         
         Args:
-            investigation_id (str): [description]
-            query (str): [description]
+            investigation_id (str): The investigation ID you are looking for in the Demisto
+                    instance, could be the playground as well
+            query (str): The query to run on Demisto.
 
         Returns:
-            dict: query result
+            dict: Query result
         """
         api_key = self.get_api_key()
 
-        api_url = urljoin(self.base_url, ENTRY_EXECUTE_PATH)
+        api_url = urljoin(self.base_url, self.ENTRY_EXECUTE_PATH)
 
         print_v(
-            f'Executing query {query} on investigation with the ID: '{investigation_id}' via {api_url}',
+            f'Executing query {query} on investigation with the ID: \'{investigation_id}\' '
+            f'via {self.base_url}',
             self.log_verbose
         )
 
@@ -169,10 +169,10 @@ class Client:
         """
         api_key = self.get_api_key()
 
-        api_url = urljoin(self.base_url, ENTRY_DOWNLOAD_PATH)
+        api_url = urljoin(self.base_url, self.ENTRY_DOWNLOAD_PATH)
         download_path = urljoin(api_url, file_id)
 
-        print_v(f'Downloading {file_id} via {api_url}', self.log_verbose)
+        print_v(f'Downloading {file_id} via {self.base_url}', self.log_verbose)
 
         result = requests.get(
             url=download_path,

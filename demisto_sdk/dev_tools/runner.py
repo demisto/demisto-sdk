@@ -2,14 +2,16 @@ import re
 
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
-from demisto_sdk.common.rest_api import Client, DEMISTO_API_KEY_ENV
-
-
-SECTIONS_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
-FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
+from demisto_sdk.common.rest_api import Client
 
 
 class Runner:
+    """Class for run command. Runs a command on a remote Demisto instance and pretty
+    prints the result.
+    """
+    SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
+    FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
+
     def __init__(self, query: str, url: str, insecure: bool = False, debug_mode: bool = False,
                  verbose: bool = False, configuration: Configuration = Configuration()):
         self.query = query
@@ -19,7 +21,7 @@ class Runner:
         self.debug_mode = debug_mode
 
     def run(self):
-        """Do the job. Run the integration command on the remote Demisto instance
+        """Run the integration command on the remote Demisto instance
         and pretty prints the result.
         """
         playground_id = self._get_playground_id()
@@ -35,7 +37,7 @@ class Runner:
                 print_warning('Entry with debug log not found')
                 return
 
-            self._pretty_print_log(log_id)
+            self._export_debug_log(log_id)
 
     def _get_playground_id(self):
         """Retrieve Playground ID from the remote Demisto instance.
@@ -85,22 +87,22 @@ class Runner:
 
         # ans should have an entry with 'contents' - the readable output
         # of the command
-        centry = next((entry for entry in ans if entry.get('contents', None)), None)
-        if centry:
+        contents_entry = next((entry for entry in ans if entry.get('contents', None)), None)
+        if contents_entry:
             print_color('## Readable Output', LOG_COLORS.YELLOW)
-            print(centry['contents'])
+            print(contents_entry['contents'])
             print()
         else:
             print_warning('Entry with query output not found')
 
         # and an entry with a fileID defined, that is the fileID of the
         # debug log file
-        lentry = next((entry for entry in ans if entry.get('fileID', None)), None)
+        log_entry = next((entry for entry in ans if entry.get('fileID', None)), None)
 
-        return lentry['id'] if lentry else None
+        return log_entry['id'] if log_entry else None
 
-    def _pretty_print_log(self, log_id: str):
-        """Retrieve & pretty print debug mode log file
+    def _export_debug_log(self, log_id: str):
+        """Retrieve & rexport debug mode log file
         
         Args:
             log_id (str): artifact id of the log file
@@ -112,25 +114,35 @@ class Runner:
         )
         result = client.download_file(log_id)
 
-        print_color('## Detailed Log', LOG_COLORS.YELLOW)
-        for l in result.iter_lines():
-            dl = l.decode('utf-8')
+        if self.debug_mode == '-':
+            print_color('## Detailed Log', LOG_COLORS.YELLOW)
+            for line in result.iter_lines():
+                decoded_line = line.decode('utf-8')
 
-            if SECTIONS_REGEX.match(dl):
-                print_color(dl, LOG_COLORS.YELLOW)
-            elif FULL_LOG_REGEX.match(dl):
-                print_color('Full Integration Log:', LOG_COLORS.YELLOW)
-            else:
-                print(dl)
+                if self.SECTIONS_HEADER_REGEX.match(decoded_line):
+                    print_color(decoded_line, LOG_COLORS.YELLOW)
+                elif self.FULL_LOG_REGEX.match(decoded_line):
+                    print_color('Full Integration Log:', LOG_COLORS.YELLOW)
+                else:
+                    print(decoded_line)
+        else:
+            with open(self.debug_mode, 'w+b') as fout:
+                for chunk in result.iter_content(chunk_size=1024*1024):
+                    fout.write(chunk)
+            print_color(f'Debug Log successfully exported to {self.debug_mode}', LOG_COLORS.GREEN)
 
     @staticmethod
     def add_sub_parser(subparsers):
         from argparse import ArgumentDefaultsHelpFormatter
         description = f"""Run integration command on remote Demisto instance in the playground.
-        {DEMISTO_API_KEY_ENV} environment variable should contain a valid Demisto API Key."""
+        {Client.DEMISTO_API_KEY_ENV} environment variable should contain a valid Demisto API Key."""
         parser = subparsers.add_parser('run', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument("-q", "--query", help="The query to run", required=True)
         parser.add_argument("-u", "--url", help="Base URL of the Demisto instance", required=True)
         parser.add_argument("-k", "--insecure", help="Skip certificate validation", action="store_true")
         parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true')
-        parser.add_argument("-D", "--debug-mode", help="Enable debug mode", action='store_true')
+        parser.add_argument(
+            "-D", "--debug-mode", metavar="DEBUG_LOG",
+            help="Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used",
+            nargs='?', const='-', default=False
+        )

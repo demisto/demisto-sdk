@@ -21,7 +21,7 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \
     INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
     YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES, \
-    Errors, PLAYBOOK_REGEX
+    Errors, PLAYBOOKS_REGEXES_LIST
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -262,7 +262,7 @@ class FilesValidator:
                 if not script_validator.is_valid_file():
                     self._is_valid = False
 
-            elif checked_type(file_path, [PLAYBOOK_REGEX, TEST_PLAYBOOK_REGEX]):
+            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
                 playbook_validator = PlaybookValidator(structure_validator)
                 if not playbook_validator.is_valid_playbook():
                     self._is_valid = False

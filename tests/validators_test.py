@@ -9,12 +9,11 @@ from demisto_sdk.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.common.hook_validations.dashboard import DashboardValidator
 from demisto_sdk.common.hook_validations.incident_field import IncidentFieldValidator
 from demisto_sdk.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 from demisto_sdk.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.widget import WidgetValidator
-from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
-
 from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
     VALID_SCRIPT_PATH, INVALID_SCRIPT_PATH, INVALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, \

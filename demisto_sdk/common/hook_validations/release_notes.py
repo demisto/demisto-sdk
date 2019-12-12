@@ -100,6 +100,9 @@ class ReleaseNotesValidator:
                 return False
 
         else:
+            if not release_notes_comments[-1]:
+                release_notes_comments = release_notes_comments[:-1]
+
             # if it's one line comment with list
             if re.match(one_line_release_notes_regex, release_notes_comments[0]):
                 release_notes_comments = release_notes_comments[1:]

@@ -29,14 +29,14 @@ class ReleaseNotesValidator:
     def get_master_diff(self):
         """Gets difference between current branch and origin/master
 
-        git diff with the --unified=10000 option means that if there exists a
-        difference between origin/master and current branch, the output will have at most 10000
+        git diff with the --unified=200 option means that if there exists a
+        difference between origin/master and current branch, the output will have at most 100
         lines of context.
 
         Returns:
             str. empty string if no changes made or no origin/master branch, otherwise full difference context.
         """
-        return run_command(F'git diff --unified=10000 '
+        return run_command(F'git diff --unified=100 '
                            F'origin/master {self.release_notes_path}')  # type: str
 
     def is_release_notes_changed(self):

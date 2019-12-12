@@ -172,8 +172,8 @@ Run integration command in the playground of a remote Demisto instance and retri
                         Skip certificate validation
 * *-v, --verbose*
                         Verbose output
-* *-D, --debug-mode*
-                        Enable debug mode
+* *-D [DEBUG_LOG], --debug-mode [DEBUG_LOG]*
+                        Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used
 
 **Examples**:
 `DEMISTO_API_KEY=<API KEY> demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -u https://demisto.local -D`

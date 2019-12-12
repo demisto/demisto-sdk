@@ -20,7 +20,7 @@ USER_VISIBLE_LINE_KEYS = [
 class SpellCheck:
     """Perform a spell check on the given .yml or .md file.
         Attributes:
-            path (str): The path to the current file being checked.
+            checked_file_path (str): The path to the current file being checked.
             known_words (str): The path to a file containing known words.
             spellchecker (SpellChecker): The spell-checking object.
             unknown_words (set): A set of unknown words found in the given file.
@@ -51,7 +51,7 @@ class SpellCheck:
         elif self.checked_file_path.endswith('.yml'):
             with open(self.checked_file_path, 'r') as yaml_file:
                 yml_info = yaml.safe_load(yaml_file)
-
+            print(yml_info)
             self.check_yaml(yml_info=yml_info)
 
         else:
@@ -59,7 +59,7 @@ class SpellCheck:
                         "Only .yml or .md files are supported.".format(self.checked_file_path))
             return False
 
-        if self.unknown_words:
+        if len(self.unknown_words) > 0:
             print_error(u"Words that might be misspelled were found in {}:\n\n{}".format(
                 self.checked_file_path, '\n'.join(self.unknown_words)))
             return False
@@ -108,7 +108,7 @@ class SpellCheck:
             else:
                 # case 2: a sub-dictionary
                 if isinstance(value, dict):
-                    # ignore command arguments in playbooks - no need to check these.
+                    # 'scriptarguments' is the field name for command arguments in  playbooks.
                     if key != 'scriptarguments':
                         self.check_yaml(value)
 

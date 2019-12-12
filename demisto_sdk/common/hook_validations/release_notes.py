@@ -18,7 +18,7 @@ class ReleaseNotesValidator:
         master_diff (str): the changes in the changelog file compared to origin/master.
     """
 
-    RELEASE_NOTES_STANDARD = 'https://github.com/demisto/content/blob/master/docs/release_notes/README.md'
+    LINK_TO_RELEASE_NOTES_STANDARD = 'https://github.com/demisto/content/blob/master/docs/release_notes/README.md'
 
     def __init__(self, file_path):
         self.file_path = file_path
@@ -65,7 +65,7 @@ class ReleaseNotesValidator:
                 return True
 
         print_error(F'File {self.release_notes_path} is not formatted according to '
-                    F'release notes standards.\nFix according to {self.RELEASE_NOTES_STANDARD}')
+                    F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
         return False
 
     def is_valid_release_notes_structure(self):
@@ -95,14 +95,14 @@ class ReleaseNotesValidator:
             if not (re.match(hyphen_release_notes_regex, self.latest_release_notes) or
                     re.match(one_line_release_notes_regex, self.latest_release_notes)):
                 print_error(F'File {self.release_notes_path} is not formatted according to '
-                            F'release notes standards.\nFix according to {self.RELEASE_NOTES_STANDARD}')
+                            F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
                 return False
 
         elif len(release_notes_comments) == 2:
             if re.match(multi_line_release_notes_regex, release_notes_comments[0]) and \
                     release_notes_comments[1] == '':
                 print_error(F'File {self.release_notes_path} is not formatted according to '
-                            F'release notes standards.\nFix according to {self.RELEASE_NOTES_STANDARD}')
+                            F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
                 return False
 
         else:
@@ -115,7 +115,7 @@ class ReleaseNotesValidator:
             for comment in release_notes_comments:
                 if not re.match(multi_line_release_notes_regex, comment):
                     print_error(F'File {self.release_notes_path} is not formatted according to '
-                                F'release notes standards.\nFix according to {self.RELEASE_NOTES_STANDARD}')
+                                F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
                     return False
 
         return True

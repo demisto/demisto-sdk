@@ -49,7 +49,7 @@ class ScriptValidator(BaseValidator):
 
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
-        """Check whether the Integration is valid or not, update the _is_valid field to determine that"""
+        """Check whether the script is valid or not"""
         is_script_valid = any([
             self.is_valid_subtype(),
             super(ScriptValidator, self).is_valid_file(validate_rn)

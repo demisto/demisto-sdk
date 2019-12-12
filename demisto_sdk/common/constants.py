@@ -328,6 +328,14 @@ REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 
+ID_IN_COMMONFIELDS = [  # entities in which 'id' key is in under 'commonfields'
+    'integration',
+    'script'
+]
+ID_IN_ROOT = [  # entities in which 'id' key is in the root
+    'playbook'
+]
+
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'

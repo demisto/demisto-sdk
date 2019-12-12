@@ -6,6 +6,7 @@ from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.tools import print_error, get_release_notes_file_path, \
     get_latest_release_notes_text, run_command
+from demisto_sdk.common.constants import ID_IN_COMMONFIELDS, ID_IN_ROOT
 
 
 class BaseValidator:
@@ -99,4 +100,19 @@ class BaseValidator:
         for arg, required in new_dict.items():
             if arg not in old_dict.keys() and required:
                 return False
+        return True
+
+    def _is_id_equals_name(self, file_type):
+        """Validate that the id of the file equals to the name."""
+        file_id = ''
+        if file_type in ID_IN_ROOT:
+            file_id = self.current_file.get('id')
+        elif file_type in ID_IN_COMMONFIELDS:
+            file_id = self.current_file.get('commonfields', {}).get('id')
+
+        name = self.current_file.get('name', '')
+        if file_id != name:
+            print_error("The ID of the {} '{}' should be equal to its name, "
+                        "please update the file.".format(self.file_path, file_type))
+            return False
         return True

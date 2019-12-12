@@ -11,6 +11,10 @@ class PlaybookValidator(BaseValidator):
     def is_valid_playbook(self):  # type: () -> bool
         """Check whether the playbook is valid or not"""
         answers = [
-            self.is_valid_version()
+            self.is_valid_version(),
+            self.is_id_equals_name()
         ]
         return all(answers)
+
+    def is_id_equals_name(self):
+        return super(PlaybookValidator, self)._is_id_equals_name('playbook')

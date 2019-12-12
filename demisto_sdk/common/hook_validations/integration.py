@@ -37,14 +37,15 @@ class IntegrationValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
         """Check whether the Integration is valid or not"""
-        super(IntegrationValidator, self).is_valid_file(validate_rn)
         answers = [
+            super(IntegrationValidator, self).is_valid_file(validate_rn),
             self.is_valid_subtype(),
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
             self.is_valid_version(),
+            self.is_id_equals_name()
         ]
         return all(answers)
 
@@ -433,3 +434,6 @@ class IntegrationValidator(BaseValidator):
                 self.is_valid = False
                 return True
         return False
+
+    def is_id_equals_name(self):
+        return super(IntegrationValidator, self)._is_id_equals_name('integration')

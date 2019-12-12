@@ -111,7 +111,7 @@ class FilesValidator:
                     and not file_path.endswith('_test.py'):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
-            elif file_path.endswith('.js') or file_path.endswith('.py'):
+            elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
                 continue
 
             if file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \

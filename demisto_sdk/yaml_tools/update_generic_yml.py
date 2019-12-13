@@ -5,7 +5,14 @@ import yamlordereddictloader
 from demisto_sdk.common.tools import print_color, LOG_COLORS
 
 
-class UpdateGenericYML:
+class BaseUpdateYML:
+    """Base Update YML is the base class for all updaters.
+
+        Attributes:
+            source_path (str): the path to the file we are updating at the moment.
+            destination_path (str): the path to save the updated version of the YML.
+    """
+
     DEFAULT_YML_VERSION = -1
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
         'class IntegrationYMLFormat': 'commonfields',
@@ -51,12 +58,12 @@ class UpdateGenericYML:
         self.yml_data['name'] = self.yml_data.get('name', '').replace('_copy', '').replace('_dev', '')
 
     def update_id_to_equal_name(self):
-        """Updates the id of the yml to be the same as it's name.
+        """Updates the id of the YML to be the same as it's name.
         """
         self.id_and_version_location['id'] = self.yml_data['name']
 
     def set_version_to_default(self):
-        """Replaces the version of yml to -1
+        """Replaces the version of the YML to -1.
         """
         self.id_and_version_location['version'] = self.DEFAULT_YML_VERSION
 

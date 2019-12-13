@@ -12,10 +12,11 @@ from demisto_sdk.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
+from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
 from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
     VALID_SCRIPT_PATH, INVALID_SCRIPT_PATH, INVALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, \
-    INVALID_INCIDENT_FIELD_PATH
+    INVALID_INCIDENT_FIELD_PATH, INVALID_PLAYBOOK_PATH, VALID_TEST_PLAYBOOK_PATH
 from demisto_sdk.common.hook_validations.widget import WidgetValidator
 
 
@@ -58,6 +59,8 @@ class TestValidators:
         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
         (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),
         (INVALID_SCRIPT_PATH, SCRIPT_TARGET, False, ScriptValidator),
+        (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
+        (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)

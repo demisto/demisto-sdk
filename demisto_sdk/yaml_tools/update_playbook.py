@@ -38,59 +38,14 @@ def update_playbook_task_name(playbook):
     return playbook
 
 
-def replace_version(playbook):
-    """Replaces the version of playbook with -1
-
-    Args:
-        playbook: playbook dict loaded from yaml
-
-    Returns:
-        Dict. updated playbook dict
-
-    """
-    playbook['version'] = -1
-
-    return playbook
-
-
-def update_id_to_be_equal_name(playbook):
-    """Updates the id of the playbook to be the same as playbook name.
-
-    The reason for that is that demisto generates id - uuid for playbooks/scripts/integrations
-
-    Args:
-        playbook: playbook dict loaded from yaml
-
-    Returns:
-        Dict. updated playbook dict
-
-    """
-    playbook['id'] = playbook['name']
-
-    return playbook
-
-
-
-
-
 def update_playbook(source_path, destination_path):
     print(F'Starting update playbook for {source_path}')
 
     with open(source_path) as f:
         playbook = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
 
-    playbook = update_replace_copy_dev(playbook)
-
-    # add description to tasks that shouldn't have description like start, end, title
     playbook = add_description(playbook)
-
-    # update the name of playbooks tasks to be equal to the name of the playbook
     playbook = update_playbook_task_name(playbook)
-
-    # replace version to be -1
-    playbook = replace_version(playbook)
-
-    playbook = update_id_to_be_equal_name(playbook)
 
     if not destination_path:
         destination_path = ntpath.basename(source_path)
@@ -115,18 +70,3 @@ def update_playbook(source_path, destination_path):
             default_flow_style=False)
 
     print(F'Finished updating {source_path} - new yml saved at {destination_path}')
-
-
-def main(argv):
-    if len(argv) < 1:
-        print('Please provide <source playbook path>, <optional - destination playbook path>')
-        sys.exit(1)
-
-    source_path = argv[0]
-    destination_path = argv[1] if len(argv) >= 2 else ''
-
-    update_playbook(source_path, destination_path)
-
-
-if __name__ == '__main__':
-    main(sys.argv[1:])

@@ -7,11 +7,13 @@ from demisto_sdk.common.tools import print_color, LOG_COLORS
 
 
 class BaseUpdateYML:
-    """Base Update YML is the base class for all updaters.
+    """BaseUpdateYML is the base class for all updaters.
 
         Attributes:
             source_file (str): the path to the file we are updating at the moment.
             output_file_name (str): the desired file name to save the updated version of the YML to.
+            yml_data (Dict): YML file data arranged in a Dict.
+            id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
 
     DEFAULT_YML_VERSION = -1

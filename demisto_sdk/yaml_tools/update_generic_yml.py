@@ -1,7 +1,8 @@
+import os
 import sys
-import ntpath
 import yaml
 import yamlordereddictloader
+
 from demisto_sdk.common.tools import print_color, LOG_COLORS
 
 
@@ -9,8 +10,8 @@ class BaseUpdateYML:
     """Base Update YML is the base class for all updaters.
 
         Attributes:
-            source_path (str): the path to the file we are updating at the moment.
-            destination_path (str): the path to save the updated version of the YML.
+            source_file (str): the path to the file we are updating at the moment.
+            output_file_name (str): the desired file name to save the updated version of the YML to.
     """
 
     DEFAULT_YML_VERSION = -1
@@ -20,16 +21,35 @@ class BaseUpdateYML:
         'class PlaybookYMLFormat': '',
     }
 
-    def __init__(self, source_path='', destination_path=''):
-        self.source_path = source_path
-        self.destination_path = destination_path
+    def __init__(self, source_file='', output_file_name=''):
+        self.source_file = source_file
 
-        if not self.source_path:
-            print_color('Please provide <source path>, <optional - destination path>', LOG_COLORS.RED)
+        if not self.source_file:
+            print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
             sys.exit(1)
 
+        try:
+            self.yml_data = self.get_yml_data_as_dict()
+        except yaml.YAMLError:
+            print_color('Provided file is not a valid YML.', LOG_COLORS.RED)
+            sys.exit(1)
+
+        self.output_file_name = self.set_output_file_name(output_file_name)
         self.id_and_version_location = self.get_id_and_version_path_object()
-        self.yml_data = self.get_yml_data_as_dict()
+
+    def set_output_file_name(self, output_file_name):
+        """Creates and format the output file name according to user input.
+
+        :param output_file_name: The name the user defined.
+        :return:
+            str. the full formatted output file name.
+        """
+        file_name_builder = os.path.basename(output_file_name) or os.path.basename(self.source_file)
+
+        if not file_name_builder.startswith('playbook-'):
+            file_name_builder = F'playbook-{file_name_builder}'
+
+        return file_name_builder
 
     def get_yml_data_as_dict(self):
         """Converts YML file data to Dict.
@@ -37,7 +57,7 @@ class BaseUpdateYML:
         Returns:
             Dict. Data from YML.
         """
-        with open(self.source_path) as f:
+        with open(self.source_file) as f:
             return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
 
     def get_id_and_version_path_object(self):
@@ -67,10 +87,32 @@ class BaseUpdateYML:
         """
         self.id_and_version_location['version'] = self.DEFAULT_YML_VERSION
 
+    def save_yml_to_destination_file(self):
+        """Safely saves formatted YML data to destination file.
+        """
+        # Configure safe dumper (multiline for strings)
+        yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
+
+        def repr_str(dumper, data):
+            if '\n' in data:
+                return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
+            return dumper.org_represent_str(data)
+        yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
+
+        with open(self.output_file_name, 'w') as f:
+            yaml.dump(
+                self.yml_data,
+                f,
+                Dumper=yamlordereddictloader.SafeDumper,
+                default_flow_style=False)
+
     def update_yml(self):
-        print_color(F'========Starting update for playbook {self.source_path}========', LOG_COLORS.YELLOW)
+        """Manager function for the generic YML updates.
+        """
+        print_color(F'========Starting generic updates for YML: {self.source_file}========', LOG_COLORS.YELLOW)
 
         self.remove_copy_and_dev_suffixes_from_name()
         self.update_id_to_equal_name()
         self.set_version_to_default()
 
+        print_color(F'========Finished generic updates for YML: {self.output_file_name}========', LOG_COLORS.YELLOW)

@@ -76,7 +76,7 @@ class DemistoSDK:
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
             # TODO: need to make this mandatory for build.
             elif args.command == 'spell-check':
-                self.spell_check(path=args.path, known_words=args.known_words)
+                self.spell_check(path=args.path, known_words_file_path=args.known_words)
             else:
                 print('Use demisto-sdk -h to see the available commands.')
         except Exception as e:

@@ -6,7 +6,7 @@ from spellchecker import SpellChecker
 
 from nltk.corpus import words
 from argparse import ArgumentDefaultsHelpFormatter
-from demisto_sdk.common.constants import KNOWN_WORDS
+from demisto_sdk.common.known_words import KNOWN_WORDS
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
 
@@ -24,16 +24,16 @@ class SpellCheck:
     """Perform a spell check on the given .yml or .md file.
         Attributes:
             checked_file_path (str): The path to the current file being checked.
-            known_words (str): The path to a file containing known words.
+            known_words_file_path (str): The path to a file containing known words.
             spellchecker (SpellChecker): The spell-checking object.
             unknown_words (set): A set of unknown words found in the given file.
     """
 
-    def __init__(self, checked_file_path: str, known_words: str):
+    def __init__(self, checked_file_path: str, known_words_file_path: str):
         self.checked_file_path = checked_file_path
         self.spellchecker = SpellChecker()
         self.unknown_words = set([])  # type:Set
-        self.known_words = known_words
+        self.known_words_file_path = known_words_file_path
 
     def run_spell_check(self):
         """Runs spell-check on the given file.
@@ -68,13 +68,15 @@ class SpellCheck:
 
     def add_known_words(self):
         # adding known words file if given - these words will not count as misspelled
-        if self.known_words:
-            known_words_file = open(self.known_words, 'r')
-            self.spellchecker.word_frequency.load_text_file(known_words_file)
+        if self.known_words_file_path:
+            with open(self.known_words_file_path, 'r') as known_words_file:
+                self.spellchecker.word_frequency.load_text_file(known_words_file)
 
         # adding the KNOWN_WORDS to the spellchecker recognized words.
         self.spellchecker.word_frequency.load_words(KNOWN_WORDS)
 
+        # nltk - natural language tool kit - is a large package containing several dictionaries.
+        #
         # disabling SSL connection for nltk download.
         try:
             _create_unverified_https_context = ssl._create_unverified_context

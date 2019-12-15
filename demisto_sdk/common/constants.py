@@ -695,13 +695,3 @@ IOC_OUTPUTS_DICT = {
     'ip': {'IP.Address'},
     'url': {'URL.Data'}
 }
-
-KNOWN_WORDS = [
-    "Phishing",
-    "remediate",
-    "playbook",
-    "firewalls",
-    "IOCs",
-    "Emails",
-    "Google",
-]

@@ -1,6 +1,6 @@
 from argparse import ArgumentDefaultsHelpFormatter
 
-# from demisto_sdk.common.tools import print_color, LOG_COLORS
+from demisto_sdk.common.tools import print_color, LOG_COLORS
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
 
 
@@ -22,9 +22,11 @@ class ScriptYMLFormat(BaseUpdateYML):
         """
         super().update_yml()
 
-        # when new format function will be added, this would be relevant.
-        # print_color(F'========Starting specific updates for script: {self.source_file}=======', LOG_COLORS.YELLOW)
-        # print_color(F'========Finished generic updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+        print_color(F'========Starting specific updates for script: {self.source_file}=======', LOG_COLORS.YELLOW)
+
+        self.save_yml_to_destination_file()
+
+        print_color(F'========Finished generic updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
     @staticmethod
     def add_sub_parser(subparsers):

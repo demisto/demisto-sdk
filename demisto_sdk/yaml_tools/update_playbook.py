@@ -42,6 +42,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         self.add_description()
         self.update_playbook_task_name()
+        self.save_yml_to_destination_file()
 
         print_color(F'========Finished generic updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 

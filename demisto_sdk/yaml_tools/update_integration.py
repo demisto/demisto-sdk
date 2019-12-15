@@ -16,8 +16,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
     """
     ARGUMENTS_CORRECT_POSSIBLE_DESCRIPTION = {
         # Dict. [possible_names_given]: [desired_name, desired_description]
-        ['insecure', 'unsecure']: ['insecure', 'Trust any certificate (not secure)'],
-        ['proxy']: ['proxy', 'Use system proxy settings']
+        ('insecure', 'unsecure'): ['insecure', 'Trust any certificate (not secure)'],
+        ('proxy'): ['proxy', 'Use system proxy settings']
     }
 
     def __init__(self, source_file='', output_file_name=''):
@@ -66,6 +66,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
         self.update_proxy_insecure_param_to_default()
         self.set_reputation_commands_basic_argument_to_default()
+        self.save_yml_to_destination_file()
 
         print_color(F'========Finished generic updates for integration: {self.output_file_name}=======',
                     LOG_COLORS.YELLOW)

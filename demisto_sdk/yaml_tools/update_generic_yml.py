@@ -18,9 +18,9 @@ class BaseUpdateYML:
 
     DEFAULT_YML_VERSION = -1
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
-        'class IntegrationYMLFormat': 'commonfields',
-        'class ScriptYMLFormat': 'commonfields',
-        'class PlaybookYMLFormat': '',
+        '<class \'demisto_sdk.yaml_tools.update_integration.IntegrationYMLFormat\'>': 'commonfields',
+        '<class \'demisto_sdk.yaml_tools.update_integration.ScriptYMLFormat\'>': 'commonfields',
+        '<class \'demisto_sdk.yaml_tools.update_integration.PlaybookYMLFormat\'>': '',
     }
 
     def __init__(self, source_file='', output_file_name=''):
@@ -46,12 +46,12 @@ class BaseUpdateYML:
         :return:
             str. the full formatted output file name.
         """
-        file_name_builder = os.path.basename(output_file_name) or os.path.basename(self.source_file)
+        source_dir = os.path.dirname(self.source_file)
+        file_name = output_file_name or os.path.basename(self.source_file)
+        if not file_name.startswith('playbook-'):
+            file_name = F'playbook-{file_name}'
 
-        if not file_name_builder.startswith('playbook-'):
-            file_name_builder = F'playbook-{file_name_builder}'
-
-        return file_name_builder
+        return os.path.join(source_dir, file_name)
 
     def get_yml_data_as_dict(self):
         """Converts YML file data to Dict.

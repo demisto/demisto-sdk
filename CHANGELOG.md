@@ -3,6 +3,8 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.1.2
+* Added Release Notes Validator.
 
 ### 0.1.2
 * Restructuring validation to support content packs

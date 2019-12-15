@@ -64,8 +64,7 @@ class ReleaseNotesValidator:
             if adds_in_diff - removes_in_diff > 0:
                 return True
 
-        print_error(F'File {self.release_notes_path} is not formatted according to '
-                    F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
+        print_error(F'No new comment has been added in the release notes file: {self.release_notes_path}')
         return False
 
     def is_valid_release_notes_structure(self):

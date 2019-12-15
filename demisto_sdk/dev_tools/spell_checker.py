@@ -76,8 +76,8 @@ class SpellCheck:
         self.spellchecker.word_frequency.load_words(KNOWN_WORDS)
 
         # nltk - natural language tool kit - is a large package containing several dictionaries.
-        #
-        # disabling SSL connection for nltk download.
+        # to use it we need to download one of it's dictionaries - we will use the reasonably sized "words" dict.
+        # to avoid SSL download error  we disable SSL connection.
         try:
             _create_unverified_https_context = ssl._create_unverified_context
         except AttributeError:
@@ -85,7 +85,7 @@ class SpellCheck:
         else:
             ssl._create_default_https_context = _create_unverified_https_context
 
-        # downloading words set from nltk.
+        # downloading "words" set from nltk.
         nltk.download('words')
 
         # adding nltk's word set to spellchecker.

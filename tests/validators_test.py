@@ -14,18 +14,17 @@ from demisto_sdk.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.common.hook_validations.widget import WidgetValidator
 from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
     VALID_SCRIPT_PATH, INVALID_SCRIPT_PATH, INVALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, \
-    INVALID_INCIDENT_FIELD_PATH, INVALID_PLAYBOOK_PATH, VALID_TEST_PLAYBOOK_PATH
-from demisto_sdk.common.hook_validations.widget import WidgetValidator
-INVALID_INCIDENT_FIELD_PATH, VALID_INTEGRATION_TEST_PATH, VALID_ONE_LINE_CHANGELOG_PATH, \
+    INVALID_INCIDENT_FIELD_PATH, VALID_INTEGRATION_TEST_PATH, VALID_ONE_LINE_CHANGELOG_PATH, \
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH, \
     INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH, \
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH, \
     LAYOUT_TARGET, WIDGET_TARGET, DASHBOARD_TARGET, INTEGRATION_TARGET, \
-    INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET
+    INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, \
+    VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH
+from demisto_sdk.common.hook_validations.widget import WidgetValidator
 
 
 class TestValidators:
@@ -34,17 +33,17 @@ class TestValidators:
     @classmethod
     def setup_class(cls):
         print("Setups class")
-        for dir in DIR_LIST:
-            if not os.path.exists(dir):
-                cls.CREATED_DIRS.append(dir)
-                os.mkdir(dir)
+        for dir_to_create in DIR_LIST:
+            if not os.path.exists(dir_to_create):
+                cls.CREATED_DIRS.append(dir_to_create)
+                os.mkdir(dir_to_create)
 
     @classmethod
     def teardown_class(cls):
         print("Tearing down class")
-        for dir in cls.CREATED_DIRS:
-            if os.path.exists(dir):
-                os.rmdir(dir)
+        for dir_to_delete in cls.CREATED_DIRS:
+            if os.path.exists(dir_to_delete):
+                os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),

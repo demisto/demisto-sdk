@@ -1,7 +1,8 @@
 from argparse import ArgumentDefaultsHelpFormatter
 
+from demisto_sdk.common.tools import print_color, LOG_COLORS
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
-from demisto_sdk.common.constants import BANG_COMMAND_NAMES, DBOT_SCORES_DICT
+from demisto_sdk.common.constants import BANG_COMMAND_NAMES
 
 
 class IntegrationYMLFormat(BaseUpdateYML):
@@ -56,9 +57,23 @@ class IntegrationYMLFormat(BaseUpdateYML):
                         ]
                     )
 
+    def format_file(self):
+        """Manager function for the integration YML updater.
+        """
+        super().update_yml()
+
+        print_color(F'========Starting specific updates for integration: {self.source_file}=======', LOG_COLORS.YELLOW)
+
+        self.update_proxy_insecure_param_to_default()
+        self.set_reputation_commands_basic_argument_to_default()
+
+        print_color(F'========Finished generic updates for integration: {self.output_file_name}=======',
+                    LOG_COLORS.YELLOW)
+
     @staticmethod
     def add_sub_parser(subparsers):
         description = """Run formatter on a given playbook yml file. """
         parser = subparsers.add_parser('format', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
+        parser.add_argument("-t", "--type", help="Specify the type of yml file to be formatted.", required=True)
         parser.add_argument("-p", "--path", help="Specify path of playbook yml file", required=True)
         parser.add_argument("-o", "--output-file", help="Specify path where the formatted file will be saved to")

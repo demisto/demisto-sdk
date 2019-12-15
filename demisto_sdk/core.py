@@ -78,6 +78,8 @@ class DemistoSDK:
                 self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
             elif args.command == 'create':
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
+            elif args.command == 'format':
+                self.format_yml_files(args.type, args.path, args.output_file)
             else:
                 print('Use demisto-sdk -h to see the available commands.')
         except Exception as e:
@@ -165,12 +167,19 @@ class DemistoSDK:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
                         f'{json.dumps(cc.long_file_names, indent=4)}')
 
-    def format_yml_files(self, path: str, **kwargs) -> bool:
+    def format_yml_files(self, file_type: str, path: str, output_file_name: str) -> bool:
         """Runs the appropriate formatter for the given file.
         Args:
+            file_type (str): the type of the yml file to format.
             path (str): The path to the checked file.
-        Returns:
-          bool. True if no problematic words found, False otherwise.
+            output_file_name (str): The name of the output file to include the changes.
         """
-        spell_checker = SpellCheck(checked_file_path=path, **kwargs)
-        return spell_checker.run_spell_check(
+        file_type_and_linked_class = {
+            'integration': IntegrationYMLFormat,
+            'script': ScriptYMLFormat,
+            'playbook': PlaybookYMLFormat
+        }
+
+        if file_type in file_type_and_linked_class:
+            format_object = file_type_and_linked_class[file_type](path, output_file_name)
+            format_object.format_file()

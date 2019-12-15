@@ -111,10 +111,10 @@ class BaseUpdateYML:
     def update_yml(self):
         """Manager function for the generic YML updates.
         """
-        print_color(F'========Starting generic updates for YML: {self.source_file}========', LOG_COLORS.YELLOW)
+        print_color(F'=======Starting generic updates for YML: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.remove_copy_and_dev_suffixes_from_name()
         self.update_id_to_equal_name()
         self.set_version_to_default()
 
-        print_color(F'========Finished generic updates for YML: {self.output_file_name}========', LOG_COLORS.YELLOW)
+        print_color(F'=======Finished generic updates for YML: {self.output_file_name}=======', LOG_COLORS.YELLOW)

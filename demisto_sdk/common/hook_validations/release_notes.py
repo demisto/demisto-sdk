@@ -17,7 +17,9 @@ class ReleaseNotesValidator:
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
         master_diff (str): the changes in the changelog file compared to origin/master.
     """
-
+    COMMENT_FILLER_REGEX = r'- ?$'
+    SINGLE_LINE_REAL_COMMENT_REGEX = r'[a-zA-Z0-9].*\.$'
+    MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
     LINK_TO_RELEASE_NOTES_STANDARD = 'https://github.com/demisto/content/blob/master/docs/release_notes/README.md'
 
     def __init__(self, file_path):
@@ -67,55 +69,48 @@ class ReleaseNotesValidator:
         print_error(F'No new comment has been added in the release notes file: {self.release_notes_path}')
         return False
 
+    def is_valid_one_line_comment(self, release_notes_comments):
+        if re.match(self.SINGLE_LINE_REAL_COMMENT_REGEX, release_notes_comments[0]) or \
+                re.match(self.COMMENT_FILLER_REGEX, release_notes_comments[0]):
+            return True
+
+        return False
+
+    def is_valid_multi_line_comment(self, release_notes_comments):
+        for comment in release_notes_comments:
+            if not (re.match(self.MULTI_LINE_REAL_COMMENT_REGEX, comment) or
+                    re.match(self.COMMENT_FILLER_REGEX, comment)):
+                return False
+
+        return True
+
     def is_valid_release_notes_structure(self):
         """Validates that the release notes written in the correct manner.
-
-        one_line_release_notes_regex meaning:
-            Option #1:
-                starts with a letter or number
-                ends with '.'
-            Option #2:
-                starts with '-' with none or one trailing spaces.
-
-        multi_line_release_notes_regex meaning:
-            Option #1:
-                starts with tab or two to four spaces, then '-' ,then space
-                each line ends with '.'
-            Option #2:
-                starts with '-' with none or one trailing spaces.
 
         Returns:
             bool. True if release notes structure valid, False otherwise
         """
-        one_line_release_notes_regex = r'[a-zA-Z0-9].*\.$|- ?$'
-        multi_line_release_notes_regex = r'(\t+| {2,4})- .*\.$|- ?$'
-
         release_notes_comments = self.latest_release_notes.split('\n')
 
         if not release_notes_comments[-1]:
             release_notes_comments = release_notes_comments[:-1]
 
-        if len(release_notes_comments) == 1:
-            if not re.match(one_line_release_notes_regex, self.latest_release_notes):
-                print_error(F'File {self.release_notes_path} is not formatted according to '
-                            F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
-                return False
+        if len(release_notes_comments) == 1 and self.is_valid_one_line_comment(release_notes_comments):
+            return True
+
+        elif len(release_notes_comments) <= 1:
+            print_error(F'File {self.release_notes_path} is not formatted according to '
+                        F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
+            return False
 
         else:
-            if len(release_notes_comments) <= 1:
+            if self.is_valid_one_line_comment(release_notes_comments):
+                release_notes_comments = release_notes_comments[1:]
+
+            if not self.is_valid_multi_line_comment(release_notes_comments):
                 print_error(F'File {self.release_notes_path} is not formatted according to '
                             F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
                 return False
-
-            # if it's one line comment with list
-            if re.match(one_line_release_notes_regex, release_notes_comments[0]):
-                release_notes_comments = release_notes_comments[1:]
-
-            for comment in release_notes_comments:
-                if not re.match(multi_line_release_notes_regex, comment):
-                    print_error(F'File {self.release_notes_path} is not formatted according to '
-                                F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
-                    return False
 
         return True
 

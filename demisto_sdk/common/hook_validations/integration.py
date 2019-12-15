@@ -36,7 +36,7 @@ class IntegrationValidator(BaseValidator):
 
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
-        """Check whether the Integration is valid or not, update the _is_valid field to determine that"""
+        """Check whether the Integration is valid or not"""
         super(IntegrationValidator, self).is_valid_file(validate_rn)
         answers = [
             self.is_valid_subtype(),

@@ -2,7 +2,10 @@ bandit
 flake8
 mock
 mypy
+nltk
 pre-commit
+pyspellchecker
 pytest
 pytest-mock
+ssl
 urllib3

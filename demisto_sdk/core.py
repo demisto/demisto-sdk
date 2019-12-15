@@ -164,14 +164,15 @@ class DemistoSDK:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
                         f'{json.dumps(cc.long_file_names, indent=4)}')
 
-    def spell_check(self, path: str, **kwargs) -> bool:
+    def spell_check(self, path: str, known_words_file_path: str) -> bool:
         """Runs SpellCheck for spell-check command.
 
         Args:
             path (str): The path to the checked file.
+            known_words_file_path (str): A path to a file containing known words.
 
         Returns:
           bool. True if no problematic words found, False otherwise.
         """
-        spell_checker = SpellCheck(checked_file_path=path, **kwargs)
+        spell_checker = SpellCheck(checked_file_path=path, known_words_file_path=known_words_file_path)
         return spell_checker.run_spell_check()

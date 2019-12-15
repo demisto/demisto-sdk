@@ -29,7 +29,7 @@ class SpellCheck:
             unknown_words (set): A set of unknown words found in the given file.
     """
 
-    def __init__(self, checked_file_path: str, known_words_file_path: str):
+    def __init__(self, checked_file_path: str, known_words_file_path: str = None):
         self.checked_file_path = checked_file_path
         self.spellchecker = SpellChecker()
         self.unknown_words = set([])  # type:Set

@@ -174,13 +174,32 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
     ```
 
 Now install your pipenv environment.
+Firstly if you want to use pipenv in your zsh terminal see this [link](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/pipenv).
+
+
 Using the terminal go to the Demisto-SDK repository and run the following:
- ```
- pip install pipenv
- pipenv install -r requirements.txt
- pipenv install -r test-requirements.txt
- pipenv install demisto-sdk
- ```
+1) Make sure you have pipenv by running
+     ```
+     pipenv --version
+      ```
+    If nor run:
+    ```
+    pip install pipenv
+    ```
+2) Now we will setup pipenv in editable mode on the repository, such that any dependency add will be
+updated as you add it:
+      ```
+    pipenv install -e .
+    ```
+3) Install all existing requirements on your pipenv environment by running:
+    ```
+    pipenv install -r requirements.txt
+    pipenv install -r test-requirements.txt
+    ```
+4) Finally we install demisto-sdk on pipenv:
+    ```
+    pipenv install demisto-sdk
+    ```
 
 ### How to run commands in your development environment
 In the Demisto-SDK repository while on the git branch you want to activate and run:

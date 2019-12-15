@@ -1,3 +1,5 @@
+from argparse import ArgumentDefaultsHelpFormatter
+
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
 
 
@@ -12,3 +14,10 @@ class ScriptYMLFormat(BaseUpdateYML):
     """
     def __init__(self, source_file='', output_file_name=''):
         super().__init__(source_file, output_file_name)
+
+    @staticmethod
+    def add_sub_parser(subparsers):
+        description = """Run formatter on a given playbook yml file. """
+        parser = subparsers.add_parser('format', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
+        parser.add_argument("-p", "--path", help="Specify path of playbook yml file", required=True)
+        parser.add_argument("-o", "--output-file", help="Specify path where the formatted file will be saved to")

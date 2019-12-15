@@ -1,4 +1,4 @@
-from copy import deepcopy
+from argparse import ArgumentDefaultsHelpFormatter
 
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
 from demisto_sdk.common.constants import BANG_COMMAND_NAMES, DBOT_SCORES_DICT
@@ -56,32 +56,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
                         ]
                     )
 
-    def set_reputation_commands_dbot_context_paths(self):
-        """Sets the DBot context paths for reputation commands.
-        """
-        dbot_dict_copy = deepcopy(DBOT_SCORES_DICT)
-
-        integration_commands = self.yml_data.get('script', {}).get('commands', [])
-        for command in integration_commands:
-            if command.get('name', '') in BANG_COMMAND_NAMES:
-                outputs_exists = command.get('outputs')
-                for context_path in outputs_exists:
-                    for dbot_context_path in DBOT_SCORES_DICT:
-                        if dbot_context_path in context_path:
-                            context_path['description'] = DBOT_SCORES_DICT[dbot_context_path]
-
-                            if dbot_context_path == 'DBotScore.Score':
-                                context_path['type'] = 'Number'
-                            else:
-                                context_path['type'] = 'String'
-
-                            del dbot_dict_copy[dbot_context_path]
-
-                for dbot_path_not_in_outputs in dbot_dict_copy.keys():
-                    outputs_exists.append(
-                        [
-                            ('contextPath', dbot_path_not_in_outputs),
-                            ('description', DBOT_SCORES_DICT[dbot_path_not_in_outputs]),
-                            ('type', 'String') if dbot_path_not_in_outputs != 'DBotScore.Score' else ('type', 'Number')
-                        ]
-                    )
+    @staticmethod
+    def add_sub_parser(subparsers):
+        description = """Run formatter on a given playbook yml file. """
+        parser = subparsers.add_parser('format', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
+        parser.add_argument("-p", "--path", help="Specify path of playbook yml file", required=True)
+        parser.add_argument("-o", "--output-file", help="Specify path where the formatted file will be saved to")

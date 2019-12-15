@@ -20,6 +20,9 @@ from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
+from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
+from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 
 
 class DemistoSDK:
@@ -44,6 +47,9 @@ class DemistoSDK:
         Linter.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
         ContentCreator.add_sub_parser(self.subparsers)
+        IntegrationYMLFormat.add_sub_parser(self.subparsers)
+        ScriptYMLFormat.add_sub_parser(self.subparsers)
+        PlaybookYMLFormat.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -158,3 +164,13 @@ class DemistoSDK:
         if cc.long_file_names:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
                         f'{json.dumps(cc.long_file_names, indent=4)}')
+
+    def format_yml_files(self, path: str, **kwargs) -> bool:
+        """Runs the appropriate formatter for the given file.
+        Args:
+            path (str): The path to the checked file.
+        Returns:
+          bool. True if no problematic words found, False otherwise.
+        """
+        spell_checker = SpellCheck(checked_file_path=path, **kwargs)
+        return spell_checker.run_spell_check(

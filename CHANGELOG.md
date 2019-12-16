@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.1.9
+* Improved user outputs for `unifier`, `secrets` and `extract` commands.
+
 ### 0.1.8
 * Added support for `--version`.
 * Fixed an issue in file_validator when calling `checked_type` method with script regex.

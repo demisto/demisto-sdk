@@ -80,7 +80,13 @@ class Extractor:
             fp = tempfile.NamedTemporaryFile(delete=False)
             fp.write(requirements.encode('utf-8'))
             fp.close()
-            subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+            try:
+                subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+
+            except Exception:
+                print_color("Failed installing requirements in pipenv.\n "
+                            "Please try installing manually after extract ends\n", LOG_COLORS.RED)
+
             os.unlink(fp.name)
             print("Installing flake8 for linting")
             subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)

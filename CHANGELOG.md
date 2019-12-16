@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.1.8
+* Added support for `--version`
+
 ### 0.1.2
 * Restructuring validation to support content packs
 * Added secrets validation

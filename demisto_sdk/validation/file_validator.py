@@ -21,7 +21,7 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \
     INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
     YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES, \
-    Errors, PLAYBOOKS_REGEXES_LIST
+    Errors, PLAYBOOKS_REGEXES_LIST, INDICATOR_FIELDS_REGEX
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -281,12 +281,18 @@ class FilesValidator:
                 if not image_validator.is_valid():
                     self._is_valid = False
 
-            elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE):
+            # incident fields and indicator fields are using the same scheme.
+            elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(INDICATOR_FIELDS_REGEX, file_path, re.IGNORECASE):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
-                if not incident_field_validator.is_valid():
+                if not incident_field_validator.is_valid_file():
                     self._is_valid = False
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
+
+            else:
+                print_error("The file type of {} is not supported in validate command".format(file_path))
+                self._is_valid = False
 
     def validate_added_files(self, added_files):
         """Validate the added files from your branch.
@@ -339,15 +345,20 @@ class FilesValidator:
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
+
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
                 image_validator = ImageValidator(file_path)
                 if not image_validator.is_valid():
                     self._is_valid = False
 
-            elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE):
+            # incident fields and indicator fields are using the same scheme.
+            elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(INDICATOR_FIELDS_REGEX, file_path, re.IGNORECASE):
                 incident_field_validator = IncidentFieldValidator(file_path)
-                if not incident_field_validator.is_valid():
+                if not incident_field_validator.is_valid_file():
                     self._is_valid = False
+            else:
+                print_error("The file type of {} is not supported in validate command".format(file_path))
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).

@@ -150,13 +150,10 @@ You can import the SDK core class in your python code as follows:
 ## Dev Environment Setup
 We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
 
-1) Clone the Demisto-SDK repository to your existing Demisto directory. It is recommended to use SSH when cloning.
-2) Run:
-     ```
-     pip install demisto-sdk.
-     ```
-3) Using the terminal go to the Demisto-SDK repository.
-4) Install `tox`:
+1) Firstly we want your IDE to have an up to date version of the Demisto-SDK code.
+To do that clone the Demisto-SDK repository to your existing Demisto directory. It is recommended to use SSH when cloning.
+2) Using the terminal go to the Demisto-SDK repository - we will set up the development environment there.
+3) Install `tox`:
     ```
     pip install tox
     ```
@@ -168,21 +165,21 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
     ```
     tox --devenv venv3 --devenv py37
     ```
-5) Run:
+4) Now we will make sure the requirements are installed on your computer by running:
     ```
     python setup.py install
     ```
 
-Now install your pipenv environment.
+Now install your [pipenv](https://github.com/pypa/pipenv) environment.
 Firstly if you want to use pipenv in your zsh terminal see this [link](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/pipenv).
 
 
 Using the terminal go to the Demisto-SDK repository and run the following:
-1) Make sure you have pipenv by running
+1) Make sure you have pipenv by running:
      ```
      pipenv --version
       ```
-    If nor run:
+    If not, run:
     ```
     pip install pipenv
     ```

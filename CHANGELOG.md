@@ -6,6 +6,7 @@
 
 ### 0.1.8
 * Added support for `--version`
+* ￿fixed an issue with the `checked_type` function parameter
 
 ### 0.1.2
 * Restructuring validation to support content packs

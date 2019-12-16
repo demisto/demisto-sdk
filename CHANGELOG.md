@@ -6,7 +6,7 @@
 
 ### 0.1.8
 * Added support for `--version`.
-* ￿fixed an issue in file_validator when calling `checked_type` method with script regex.
+* Fixed an issue in file_validator when calling `checked_type` method with script regex.
 
 ### 0.1.2
 * Restructuring validation to support content packs.

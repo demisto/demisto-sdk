@@ -34,7 +34,7 @@ class DemistoSDK:
         self.parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         self.parser.add_argument('-d', '--env-dir', help='Specify a working directory.')
-        self.parser.add_argument('-v', '--version', help='Specify a working directory.',
+        self.parser.add_argument('-v', '--version', help='Get the demisto-sdk version.',
                                  action='store_true', default=False)
         self.subparsers = self.parser.add_subparsers(dest='command')
         self.configuration = configuration

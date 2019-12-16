@@ -150,10 +150,22 @@ You can import the SDK core class in your python code as follows:
 ## Dev Environment Setup
 We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
 
-1) Firstly we want your IDE to have an up to date version of the Demisto-SDK code.
+1) [pyenv](https://github.com/pyenv/pyenv) is an easy tool to control the versions of python on your environment.
+[Install pyenv](https://github.com/pyenv/pyenv#installation) and then run:
+    ```
+    pyenv install 3.7.0
+    pyenv install 3.7.5
+    pyenv install 3.8.0
+    ```
+
+2)  Set your IDE to have an up to date version of the Demisto-SDK code.
 To do that clone the Demisto-SDK repository to your existing Demisto directory. It is recommended to use SSH when cloning.
-2) Using the terminal go to the Demisto-SDK repository - we will set up the development environment there.
-3) Install `tox`:
+
+    **Note:** Make sure to set your IDE interpreter to python 3.7 or 3.8.
+
+3) Using the terminal go to the Demisto-SDK repository - we will set up the development environment there.
+
+4) Install `tox`:
     ```
     pip install tox
     ```
@@ -165,43 +177,12 @@ To do that clone the Demisto-SDK repository to your existing Demisto directory. 
     ```
     tox --devenv venv3 --devenv py37
     ```
-4) Now we will make sure the requirements are installed on your computer by running:
-    ```
-    python setup.py install
-    ```
 
-Now install your [pipenv](https://github.com/pypa/pipenv) environment.
-Firstly if you want to use pipenv in your zsh terminal see this [link](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/pipenv).
-
-
-Using the terminal go to the Demisto-SDK repository and run the following:
-1) Make sure you have pipenv by running:
-     ```
-     pipenv --version
-      ```
-    If not, run:
-    ```
-    pip install pipenv
-    ```
-2) Now we will setup pipenv in editable mode on the repository, such that any dependency add will be
-updated as you add it:
-      ```
-    pipenv install -e .
-    ```
-3) Install all existing requirements on your pipenv environment by running:
-    ```
-    pipenv install -r requirements.txt
-    pipenv install -r test-requirements.txt
-    ```
-4) Finally we install demisto-sdk on pipenv:
-    ```
-    pipenv install demisto-sdk
-    ```
 
 ### How to run commands in your development environment
 In the Demisto-SDK repository while on the git branch you want to activate and run:
  ```
- pipenv shell
+ source ./py37/bin/activate
  ```
 Then using the terminal, while in the shell, make your way to Demisto's content repository.
 

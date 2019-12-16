@@ -8,13 +8,22 @@ class PlaybookValidator(BaseValidator):
         # type: () -> bool
         return self._is_valid_version()
 
-    def is_valid_playbook(self):  # type: () -> bool
+    def is_valid_playbook(self, is_new_playbook):  # type: (bool) -> bool
         """Check whether the playbook is valid or not"""
-        answers = [
-            self.is_valid_version(),
-            self.is_id_equals_name()
-        ]
-        return all(answers)
+        if is_new_playbook:
+            new_playbook_checks = [
+                self.is_valid_version(),
+                self.is_id_equals_name()
+            ]
+            answers = all(new_playbook_checks)
+        else:
+            modified_playbook_checks = [
+                self.is_valid_version()
+            ]
+            answers = all(modified_playbook_checks)
+
+        return answers
 
     def is_id_equals_name(self):
+        """Check whether the playbook ID is equal to its name"""
         return super(PlaybookValidator, self)._is_id_equals_name('playbook')

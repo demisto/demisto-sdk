@@ -154,4 +154,5 @@ class ScriptValidator(BaseValidator):
         return False
 
     def is_id_equals_name(self):
+        """Check whether the script ID is equal to its name"""
         return super(ScriptValidator, self)._is_id_equals_name('script')

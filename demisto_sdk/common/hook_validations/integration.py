@@ -14,6 +14,7 @@ class IntegrationValidator(BaseValidator):
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
             return True
         self.is_valid = False
+        print_error(Errors.wrong_version(self.file_path))
         return False
 
     def is_backward_compatible(self):
@@ -44,7 +45,6 @@ class IntegrationValidator(BaseValidator):
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
-            self.is_valid_version(),
             self.is_id_equals_name()
         ]
         return all(answers)
@@ -436,4 +436,5 @@ class IntegrationValidator(BaseValidator):
         return False
 
     def is_id_equals_name(self):
+        """Check whether the integration ID is equal to its name"""
         return super(IntegrationValidator, self)._is_id_equals_name('integration')

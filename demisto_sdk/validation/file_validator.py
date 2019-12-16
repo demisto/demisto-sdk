@@ -191,7 +191,6 @@ class FilesValidator:
             added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
 
         packs = self.get_packs(modified_files, added_files)
-
         return modified_files, added_files, old_format_files, packs
 
     @staticmethod
@@ -255,7 +254,7 @@ class FilesValidator:
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
-            elif checked_type(file_path, SCRIPT_REGEX):
+            elif checked_type(file_path, [SCRIPT_REGEX]):
                 script_validator = ScriptValidator(structure_validator)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
@@ -264,7 +263,7 @@ class FilesValidator:
 
             elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
                 playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook():
+                if not playbook_validator.is_valid_playbook(is_new_playbook=False):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
@@ -274,6 +273,8 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
+                    self._is_valid = False
+                if not script_validator.is_valid_file():
                     self._is_valid = False
 
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
@@ -310,9 +311,15 @@ class FilesValidator:
                 if self.id_set_validator.is_file_has_used_id(file_path):
                     self._is_valid = False
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                if not self.conf_json_validator.is_test_in_conf_json(collect_ids(file_path)):
+            returned_playbook_regex = checked_type(file_path, PLAYBOOKS_REGEXES_LIST, re.IGNORECASE)
+
+            if returned_playbook_regex:
+                playbook_validator = PlaybookValidator(structure_validator)
+                if not playbook_validator.is_valid_playbook(is_new_playbook=True):
                     self._is_valid = False
+                if returned_playbook_regex == TEST_PLAYBOOK_REGEX:
+                    if not self.conf_json_validator.is_test_in_conf_json(collect_ids(file_path)):
+                        self._is_valid = False
 
             elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \

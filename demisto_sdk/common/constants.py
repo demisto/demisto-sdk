@@ -328,7 +328,7 @@ REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 
-ID_IN_COMMONFIELDS = [  # entities in which 'id' key is in under 'commonfields'
+ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
     'script'
 ]

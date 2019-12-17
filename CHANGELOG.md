@@ -8,7 +8,7 @@
 
 * Added Release Notes Validator.
 * Fixed the Unifier selection of your python file to use as the code.
-* **Validate** now supports Indocator fields.
+* **Validate** now supports Indicator fields.
 * Fixed a bug where **validate** and **secrets** did not return exit code 1 on failure.
 * **Validate** now runs on newly added scripts.
 

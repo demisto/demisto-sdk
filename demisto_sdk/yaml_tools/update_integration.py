@@ -15,7 +15,6 @@ class IntegrationYMLFormat(BaseUpdateYML):
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
     ARGUMENTS_CORRECT_POSSIBLE_DESCRIPTION = {
-        # Dict. [possible_names_given]: [desired_name, desired_description]
         ('insecure', 'unsecure'): ['insecure', 'Trust any certificate (not secure)'],
         ('proxy'): ['proxy', 'Use system proxy settings']
     }
@@ -43,18 +42,23 @@ class IntegrationYMLFormat(BaseUpdateYML):
         for command in integration_commands:
             command_name = command.get('name', '')
             if command_name in BANG_COMMAND_NAMES:
-                if command_name in command['arguments']:
+                if command_name in command.get('arguments'):
                     command['arguments']['default'] = True
                 else:
-                    command.get('arguments').appemd(
-                        [
-                            ('default', True),
-                            ('description', ''),
-                            ('isArray', True),
-                            ('name', command_name),
-                            ('required', True),
-                            ('secret', False)
-                        ]
+                    command.get('arguments').append(
+                        {
+                            'test': str(command.get('arguments')[0])
+                        }
+                    )
+                    command.get('arguments').append(
+                        {
+                            'default': True,
+                            'description': '',
+                            'isArray': True,
+                            'name': command_name,
+                            'required': True,
+                            'secret': False
+                        }
                     )
 
     def format_file(self):

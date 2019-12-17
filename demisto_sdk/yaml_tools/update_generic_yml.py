@@ -48,6 +48,8 @@ class BaseUpdateYML:
         """
         source_dir = os.path.dirname(self.source_file)
         file_name = output_file_name or os.path.basename(self.source_file)
+
+        # if str(type(self)) == '<class \'demisto_sdk.yaml_tools.update_integration.PlaybookYMLFormat\'>'
         if not file_name.startswith('playbook-'):
             file_name = F'playbook-{file_name}'
 
@@ -78,6 +80,8 @@ class BaseUpdateYML:
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
         self.yml_data['name'] = self.yml_data.get('name', '').replace('_copy', '').replace('_dev', '')
+        if self.yml_data.get('display'):
+            self.yml_data['display'] = self.yml_data.get('display', '').replace('_copy', '').replace('_dev', '')
 
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name.

@@ -60,7 +60,6 @@ class BaseValidator:
 
             # check release_notes file exists and contain text
             if release_notes is None:
-                print_error(Errors.missing_release_notes(self.file_path, rn_path))
                 self.is_valid = False
                 return False
         return True

@@ -10,20 +10,20 @@ from demisto_sdk.common.constants import DIR_LIST
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from tests.tests_constants import VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, \
     VALID_INTEGRATION_TEST_PATH, VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH, VALID_PLAYBOOK_ID_PATH, \
-    INVALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_PATH, VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, INVALID_WIDGET_PATH, \
-    VALID_WIDGET_PATH, VALID_DASHBOARD_PATH, INVALID_DASHBOARD_PATH, INVALID_REPUTATION_PATH
-from tests.validators_test import TestValidators
+    INVALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, INVALID_WIDGET_PATH, \
+    VALID_WIDGET_PATH, VALID_DASHBOARD_PATH, INVALID_DASHBOARD_PATH, LAYOUT_TARGET, \
+    DASHBOARD_TARGET, WIDGET_TARGET, PLAYBOOK_TARGET, INTEGRATION_TARGET, INCIDENT_FIELD_TARGET, PLAYBOOK_PACK_TARGET
 
 
 class TestStructureValidator:
     INPUTS_TARGETS = [
-        TestValidators.LAYOUT_TARGET,
-        TestValidators.DASHBOARD_TARGET,
-        TestValidators.WIDGET_TARGET,
-        TestValidators.PLAYBOOK_TARGET,
-        TestValidators.INTEGRATION_TARGET,
-        TestValidators.INCIDENT_FIELD_TARGET,
-        TestValidators.PLAYBOOK_PACK_TARGET,
+        LAYOUT_TARGET,
+        DASHBOARD_TARGET,
+        WIDGET_TARGET,
+        PLAYBOOK_TARGET,
+        INTEGRATION_TARGET,
+        INCIDENT_FIELD_TARGET,
+        PLAYBOOK_PACK_TARGET,
     ]
     CREATED_DIRS = list()
 
@@ -113,15 +113,15 @@ class TestStructureValidator:
         assert structure.is_valid_file_path() is answer
 
     INPUTS_IS_VALID_FILE = [
-        (VALID_LAYOUT_PATH, TestValidators.LAYOUT_TARGET, True),
-        (INVALID_LAYOUT_PATH, TestValidators.LAYOUT_TARGET, False),
-        (INVALID_WIDGET_PATH, TestValidators.WIDGET_TARGET, False),
-        (VALID_WIDGET_PATH, TestValidators.WIDGET_TARGET, True),
-        (VALID_DASHBOARD_PATH, TestValidators.DASHBOARD_TARGET, True),
-        (INVALID_DASHBOARD_PATH, TestValidators.DASHBOARD_TARGET, False),
-        (VALID_TEST_PLAYBOOK_PATH, TestValidators.PLAYBOOK_TARGET, True),
-        (VALID_INTEGRATION_TEST_PATH, TestValidators.INTEGRATION_TARGET, True),
-        (INVALID_PLAYBOOK_PATH, TestValidators.INTEGRATION_TARGET, False),
+        (VALID_LAYOUT_PATH, LAYOUT_TARGET, True),
+        (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False),
+        (INVALID_WIDGET_PATH, WIDGET_TARGET, False),
+        (VALID_WIDGET_PATH, WIDGET_TARGET, True),
+        (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True),
+        (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False),
+        (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True),
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, True),
+        (INVALID_PLAYBOOK_PATH, INTEGRATION_TARGET, False),
     ]  # type: List[Tuple[str, str, bool]]
 
     @pytest.mark.parametrize('source, target, answer', INPUTS_IS_VALID_FILE)
@@ -132,16 +132,3 @@ class TestStructureValidator:
             assert structure.is_valid_file() is answer
         finally:
             os.remove(target)
-
-    INPUTS_LOCKED_PATHS = [
-        (VALID_REPUTATION_PATH, "reputations", True),
-        (INVALID_REPUTATION_PATH, "reputations", False),
-    ]
-
-    @pytest.mark.parametrize('source, scheme_name, answer', INPUTS_LOCKED_PATHS)
-    def test_is_file_valid_locked_paths(self, source, scheme_name, answer, mocker):
-        """Tests locked path (as reputations.json) so we won't override the file"""
-        mocker.patch.object(StructureValidator, "is_valid_file_path", return_value=answer)
-        structure = StructureValidator(source)
-        StructureValidator.scheme_name = scheme_name
-        assert structure.is_valid_file() is answer

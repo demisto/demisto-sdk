@@ -184,7 +184,7 @@ class Unifier:
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py')
+                        r'|conftest\.py|__init__\.py')
         if not self.package_path.endswith('/'):
             self.package_path += '/'
         if self.package_path.endswith('Scripts/CommonServerPython/'):

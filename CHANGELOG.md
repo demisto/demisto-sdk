@@ -4,7 +4,14 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.2.0
+
+* **Validate** now supports Indocator fields.
+* Fixed a bug where **validate** and **secrets** did not return exit code 1 on failure.
+* **Validate** now runs on newly added scripts.
+
 ### 0.1.8
+
 * Added support for `--version`.
 * Fixed an issue in file_validator when calling `checked_type` method with script regex.
 

@@ -20,7 +20,7 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
     YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES, \
-    Errors, PLAYBOOKS_REGEXES_LIST, JSON_ALL_INCIDENT_FIELD_REGEXES
+    Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -285,7 +285,7 @@ class FilesValidator:
                     self._is_valid = False
 
             # incident fields and indicator fields are using the same scheme.
-            elif checked_type(file_path, JSON_ALL_INCIDENT_FIELD_REGEXES):
+            elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
                 if not incident_field_validator.is_valid_file():
                     self._is_valid = False
@@ -366,7 +366,7 @@ class FilesValidator:
                     self._is_valid = False
 
             # incident fields and indicator fields are using the same scheme.
-            elif checked_type(file_path, JSON_ALL_INCIDENT_FIELD_REGEXES):
+            elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
                 incident_field_validator = IncidentFieldValidator(file_path)
                 if not incident_field_validator.is_valid_file():
                     self._is_valid = False

@@ -8,8 +8,12 @@ class PlaybookValidator(BaseValidator):
         # type: () -> bool
         return self._is_valid_version()
 
-    def is_valid_playbook(self, is_new_playbook):  # type: (bool) -> bool
+    def is_valid_playbook(self, is_new_playbook=True):  # type: (bool) -> bool
         """Check whether the playbook is valid or not"""
+
+        # for new playbooks - run all playbook checks.
+        # for modified playbooks - only validate the version.
+
         if is_new_playbook:
             new_playbook_checks = [
                 self.is_valid_version(),

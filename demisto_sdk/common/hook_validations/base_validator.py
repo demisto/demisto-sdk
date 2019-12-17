@@ -102,7 +102,13 @@ class BaseValidator:
         return True
 
     def _is_id_equals_name(self, file_type):
-        """Validate that the id of the file equals to the name."""
+        """Validate that the id of the file equals to the name.
+         Args:
+            file_type (str): the file type. can be 'integration', 'script' or 'playbook'
+
+        Returns:
+            bool. Whether the file id equals to its name
+        """
         file_id = ''
         if file_type in ID_IN_ROOT:
             file_id = self.current_file.get('id')

@@ -335,7 +335,7 @@ class FilesValidator:
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook(is_new_playbook=True):
+                if not playbook_validator.is_valid_playbook():
                     self._is_valid = False
 
             elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \

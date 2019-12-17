@@ -3,12 +3,11 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+
 ### 0.2.0
+
 * Added Release Notes Validator.
 * Fixed the Unifier selection of your python file to use as the code.
-
-### 0.2.0
-
 * **Validate** now supports Indocator fields.
 * Fixed a bug where **validate** and **secrets** did not return exit code 1 on failure.
 * **Validate** now runs on newly added scripts.

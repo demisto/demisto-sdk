@@ -298,13 +298,14 @@ class FilesValidator:
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
+            elif 'CHANGELOG' in file_path:
+                self.is_valid_release_notes(file_path)
+
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images and Descriptions")
+                            "Incident fields, Indicator fields, Images, Release notes and Descriptions")
                 self._is_valid = False
-
-            self.is_valid_release_notes(file_path)
 
     def validate_added_files(self, added_files):
         """Validate the added files from your branch.
@@ -378,13 +379,15 @@ class FilesValidator:
                 incident_field_validator = IncidentFieldValidator(file_path)
                 if not incident_field_validator.is_valid_file():
                     self._is_valid = False
+
+            elif 'CHANGELOG' in file_path:
+                self.is_valid_release_notes(file_path)
+
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images and Descriptions")
+                            "Incident fields, Indicator fields, Images, Release notes and Descriptions")
                 self._is_valid = False
-
-            self.is_valid_release_notes(file_path)
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).

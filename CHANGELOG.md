@@ -3,6 +3,9 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.2.0
+* Added Release Notes Validator.
+* Fixed the Unifier selection of your python file to use as the code.
 
 ### 0.2.0
 

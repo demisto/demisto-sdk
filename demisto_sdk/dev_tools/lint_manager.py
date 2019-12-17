@@ -69,7 +69,8 @@ class LintManager:
         else:
             pkgs_to_run = self.pkgs
 
-        overall_status_code = 0
+        good_pkgs = []
+        fail_pkgs = []
         if not self.parallel:
             for project_dir in pkgs_to_run:
                 linter = Linter(project_dir, no_test=not self.run_args['tests'],
@@ -80,9 +81,13 @@ class LintManager:
 
                 run_status_code = linter.run_dev_packages()
                 if run_status_code > 0:
-                    overall_status_code = run_status_code
+                    fail_pkgs.append(project_dir)
+                else:
+                    good_pkgs.append(project_dir)
 
-            return overall_status_code
+            self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
+
+            return 1 if fail_pkgs else 0
 
         # we run parallel processes
         else:

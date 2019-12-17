@@ -143,6 +143,8 @@ class Linter:
                                     LOG_COLORS.YELLOW)
                         docker_image_created = self._docker_image_create(docker, requirements)
                         self._docker_run(docker_image_created)
+                        print_color("============ Finished process for: {} ============".format(self.project_dir),
+                                    LOG_COLORS.GREEN)
                         self.lock.release()
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:

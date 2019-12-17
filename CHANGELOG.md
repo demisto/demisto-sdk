@@ -3,6 +3,8 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.2.0
+* Added Release Notes Validator.
 
 ### 0.1.8
 * Added support for `--version`.

@@ -51,8 +51,8 @@ class ScriptValidator(BaseValidator):
         # type: (bool) -> bool
         """Check whether the script is valid or not"""
         is_script_valid = all([
+            super(ScriptValidator, self).is_valid_file(validate_rn),
             self.is_valid_subtype(),
-            super(ScriptValidator, self).is_valid_file(validate_rn)
             self.is_id_equals_name()
         ])
 

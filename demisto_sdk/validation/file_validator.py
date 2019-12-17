@@ -261,7 +261,7 @@ class FilesValidator:
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
-            elif checked_type(file_path, SCRIPT_REGEX):
+            elif checked_type(file_path, [SCRIPT_REGEX]):
                 script_validator = ScriptValidator(structure_validator)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False

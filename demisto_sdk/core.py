@@ -4,12 +4,13 @@
 # Python client that invokes functions in the Demisto SDK.
 #
 # Author:       Demisto
-# Version:      0.1
+# Version:      0.1.8
 #
 
 import sys
-import argparse
 import json
+import argparse
+from pkg_resources import get_distribution
 
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DIR_TO_PREFIX
@@ -33,6 +34,8 @@ class DemistoSDK:
         self.parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         self.parser.add_argument('-d', '--env-dir', help='Specify a working directory.')
+        self.parser.add_argument('-v', '--version', help='Get the demisto-sdk version.',
+                                 action='store_true', default=False)
         self.subparsers = self.parser.add_subparsers(dest='command')
         self.configuration = configuration
         self.initialize_parsers()
@@ -50,6 +53,12 @@ class DemistoSDK:
 
         if args.env_dir:
             self.configuration.env_dir = args.env_dir
+
+        if args.version:
+            version = get_distribution('demisto-sdk').version
+            print(version)
+            sys.exit(0)
+
         try:
             if args.command == 'extract':
                 if args.migrate:

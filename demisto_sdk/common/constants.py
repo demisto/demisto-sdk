@@ -300,6 +300,8 @@ PACKS_INCIDENT_TYPES_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_W
                                                                      INCIDENT_TYPES_DIR)
 PACKS_INCIDENT_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                       INCIDENT_FIELDS_DIR)
+PACKS_INDICATOR_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
+                                                                       INDICATOR_FIELDS_DIR)
 PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, LAYOUTS_DIR)
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
@@ -425,6 +427,13 @@ YML_ALL_REGEXES: List[str] = sum(
         YML_TEST_PLAYBOOKS_REGEXES
     ], []
 )
+
+JSON_INDICATOR_AND_INCIDENT_FIELDS = [
+    INCIDENT_FIELD_REGEX,
+    INDICATOR_FIELDS_REGEX,
+    PACKS_INCIDENT_FIELDS_REGEX,
+    PACKS_INDICATOR_FIELDS_REGEX
+]
 
 JSON_ALL_WIDGETS_REGEXES = [
     WIDGETS_REGEX,

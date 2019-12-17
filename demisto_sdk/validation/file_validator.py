@@ -340,6 +340,16 @@ class FilesValidator:
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
+            elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
+                unifier = Unifier(os.path.dirname(file_path))
+                yml_path, _ = unifier.get_script_package_data()
+                # Set file path to the yml file
+                structure_validator.file_path = yml_path
+                script_validator = ScriptValidator(structure_validator)
+
+                if not script_validator.is_valid_file():
+                    self._is_valid = False
+
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
                 description_validator = DescriptionValidator(file_path)

@@ -18,10 +18,9 @@ from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFile
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
-    IMAGE_REGEX, INCIDENT_FIELD_REGEX, TEST_PLAYBOOK_REGEX, \
-    INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
+    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
     YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES, \
-    Errors, PLAYBOOKS_REGEXES_LIST, INDICATOR_FIELDS_REGEX
+    Errors, PLAYBOOKS_REGEXES_LIST, JSON_ALL_INCIDENT_FIELD_REGEXES
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -228,6 +227,7 @@ class FilesValidator:
             structure_validator = StructureValidator(file_path, old_file_path)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
+
             if self.validate_id_set:
                 if not self.id_set_validator.is_file_valid_in_set(file_path):
                     self._is_valid = False
@@ -276,14 +276,16 @@ class FilesValidator:
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
+                if not script_validator.is_valid_file():
+                    self._is_valid = False
+
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
                 image_validator = ImageValidator(file_path)
                 if not image_validator.is_valid():
                     self._is_valid = False
 
             # incident fields and indicator fields are using the same scheme.
-            elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INDICATOR_FIELDS_REGEX, file_path, re.IGNORECASE):
+            elif checked_type(file_path, JSON_ALL_INCIDENT_FIELD_REGEXES):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
                 if not incident_field_validator.is_valid_file():
                     self._is_valid = False
@@ -292,6 +294,8 @@ class FilesValidator:
 
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
+                print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
+                            "Incident fields, Indicator fields, Images and Descriptions")
                 self._is_valid = False
 
     def validate_added_files(self, added_files):
@@ -352,13 +356,15 @@ class FilesValidator:
                     self._is_valid = False
 
             # incident fields and indicator fields are using the same scheme.
-            elif re.match(INCIDENT_FIELD_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INDICATOR_FIELDS_REGEX, file_path, re.IGNORECASE):
+            elif checked_type(file_path, JSON_ALL_INCIDENT_FIELD_REGEXES):
                 incident_field_validator = IncidentFieldValidator(file_path)
                 if not incident_field_validator.is_valid_file():
                     self._is_valid = False
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
+                print_error("validate command supports: Integrations, Scripts, Playbooks, "
+                            "Incident fields, Indicator fields, Images and Descriptions")
+                self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).

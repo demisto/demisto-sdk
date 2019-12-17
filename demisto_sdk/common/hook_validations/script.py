@@ -50,7 +50,7 @@ class ScriptValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
         """Check whether the script is valid or not"""
-        is_script_valid = any([
+        is_script_valid = all([
             self.is_valid_subtype(),
             super(ScriptValidator, self).is_valid_file(validate_rn)
         ])
@@ -111,7 +111,6 @@ class ScriptValidator(BaseValidator):
 
     def is_there_duplicates_args(self):
         # type: () -> bool
-
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
         if len(args) != len(set(args)):

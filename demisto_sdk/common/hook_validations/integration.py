@@ -273,7 +273,7 @@ class IntegrationValidator(BaseValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         is_there_duplicates = False
         for command in commands:
-            arg_list = []
+            arg_list = []  # type: list
             for arg in command.get('arguments', []):
                 if arg in arg_list:
                     self.is_valid = False
@@ -291,7 +291,7 @@ class IntegrationValidator(BaseValidator):
             bool. True if there are duplicates, False otherwise.
         """
         configurations = self.current_file.get('configuration', [])
-        param_list = []
+        param_list = []  # type: list
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
@@ -313,7 +313,7 @@ class IntegrationValidator(BaseValidator):
         Returns:
             dict. command name to a list of it's arguments.
         """
-        command_to_args = {}
+        command_to_args = {}  # type: dict
         commands = integration_json.get('script', {}).get('commands', [])
         for command in commands:
             command_to_args[command['name']] = {}
@@ -436,5 +436,9 @@ class IntegrationValidator(BaseValidator):
         return False
 
     def is_id_equals_name(self):
-        """Check whether the integration ID is equal to its name"""
+        """Check whether the integration's ID is equal to its name
+
+            Returns:
+                bool. Whether the integration's id equals to its name
+            """
         return super(IntegrationValidator, self)._is_id_equals_name('integration')

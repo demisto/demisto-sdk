@@ -32,7 +32,7 @@ from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
 
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
-    LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool, get_pack_name, is_file_path_in_pack, \
+    LOG_COLORS, get_yaml, filter_packagify_changes, str2bool, get_pack_name, is_file_path_in_pack, \
     get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
@@ -230,10 +230,11 @@ class FilesValidator:
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 
+            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+                continue
+
             structure_validator = StructureValidator(file_path, old_file_path)
             if not structure_validator.is_valid_file():
-                if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                    continue
                 self._is_valid = False
 
             if self.validate_id_set:
@@ -320,10 +321,11 @@ class FilesValidator:
         for file_path in added_files:
             print('Validating {}'.format(file_path))
 
+            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+                continue
+
             structure_validator = StructureValidator(file_path)
             if not structure_validator.is_valid_file():
-                if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                    continue
                 self._is_valid = False
 
             if self.validate_id_set:
@@ -331,13 +333,6 @@ class FilesValidator:
                     self._is_valid = False
 
                 if self.id_set_validator.is_file_has_used_id(file_path):
-                    self._is_valid = False
-
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                if not self.conf_json_validator.is_test_in_conf_json(collect_ids(file_path)):
-                    self._is_valid = False
-                playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook():
                     self._is_valid = False
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):

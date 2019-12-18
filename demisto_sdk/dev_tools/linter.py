@@ -5,6 +5,7 @@ import shutil
 import hashlib
 import threading
 import subprocess
+from subprocess import Popen, PIPE
 from datetime import datetime
 import requests
 import yaml
@@ -138,13 +139,18 @@ class Linter:
                     if self.run_args['tests'] or self.run_args['pylint']:
 
                         requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
-                        self.lock.acquire()
-                        print_color("========== Running tests for: {} =========".format(self.project_dir),
-                                    LOG_COLORS.YELLOW)
                         docker_image_created = self._docker_image_create(docker, requirements)
-                        self._docker_run(docker_image_created)
-                        print_color("============ Finished process for: {} ============".format(self.project_dir),
-                                    LOG_COLORS.GREEN)
+                        self.lock.acquire()
+                        output, status_code = self._docker_run(docker_image_created)
+                        print_color("========== Running tests/pylint for: {} =========".format(self.project_dir),
+                                    LOG_COLORS.YELLOW)
+                        if status_code == 1:
+                            raise subprocess.CalledProcessError(*output)
+
+                        else:
+                            # print(output)
+                            print_color("============ Finished process for: {} ============".format(self.project_dir),
+                                        LOG_COLORS.GREEN)
                         self.lock.release()
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:
@@ -351,7 +357,13 @@ class Linter:
             run_params.extend(['-e', 'PYLINT_SKIP=1'])
         run_params.extend(['-e', 'CPU_NUM={}'.format(self.cpu_num)])
         run_params.extend([docker_image, 'sh', './{}'.format(self.run_dev_tasks_script_name)])
-        container_id = subprocess.check_output(run_params, universal_newlines=True).strip()
+        p = Popen(run_params, universal_newlines=True, stdout=PIPE, stderr=PIPE)
+        output, err = p.communicate()
+        if err:
+            return err, 1
+            # TODO: update this
+
+        container_id = output.strip()
         try:
             print(subprocess.check_output(
                 ['docker', 'cp', self.project_dir + '/.', container_id + ':' + workdir],
@@ -360,6 +372,8 @@ class Linter:
                                           universal_newlines=True, stderr=subprocess.STDOUT))
             print(subprocess.check_output(['docker', 'start', '-a', container_id],
                                           universal_newlines=True, stderr=subprocess.STDOUT))
+
+            return output, 0
         finally:
             if not self.keep_container:
                 subprocess.check_output(['docker', 'rm', container_id])

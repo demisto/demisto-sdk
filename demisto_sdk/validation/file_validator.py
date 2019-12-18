@@ -232,6 +232,8 @@ class FilesValidator:
 
             structure_validator = StructureValidator(file_path, old_file_path)
             if not structure_validator.is_valid_file():
+                if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+                    continue
                 self._is_valid = False
 
             if self.validate_id_set:
@@ -307,7 +309,7 @@ class FilesValidator:
                             "Incident fields, Indicator fields, Images, Release notes and Descriptions")
                 self._is_valid = False
 
-    def validate_added_files(self, added_files):
+    def validate_added_files(self, added_files):  # noqa: C901
         """Validate the added files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
@@ -320,6 +322,8 @@ class FilesValidator:
 
             structure_validator = StructureValidator(file_path)
             if not structure_validator.is_valid_file():
+                if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+                    continue
                 self._is_valid = False
 
             if self.validate_id_set:
@@ -331,6 +335,9 @@ class FilesValidator:
 
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 if not self.conf_json_validator.is_test_in_conf_json(collect_ids(file_path)):
+                    self._is_valid = False
+                playbook_validator = PlaybookValidator(structure_validator)
+                if not playbook_validator.is_valid_playbook():
                     self._is_valid = False
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):

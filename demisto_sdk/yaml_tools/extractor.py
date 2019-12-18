@@ -11,22 +11,28 @@ from ruamel.yaml.scalarstring import SingleQuotedScalarString
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir, \
     str2bool
-from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 INTEGRATION = 'integration'
 SCRIPT = 'script'
 
 
 class Extractor:
-
-    def __init__(self, yml_path: str, dest_path: str, add_demisto_mock: bool, add_common_server: bool, yml_type: str,
-                 configuration: Configuration):
-        self.yml_path = yml_path
-        self.dest_path = dest_path
-        self.demisto_mock = add_demisto_mock
-        self.common_server = add_common_server
+    def __init__(self, infile: str, outfile: str, demisto_mock: str, common_server: str, yml_type: str,
+                 configuration: Configuration, migrate: bool):
+        self.yml_path = infile
+        self.dest_path = outfile
+        self.demisto_mock = str2bool(demisto_mock)
+        self.common_server = str2bool(common_server)
         self.yml_type = yml_type
         self.config = configuration
+        self.is_migrate = migrate
+
+    def run(self):
+        if self.is_migrate:
+            self.migrate()
+
+        else:
+            self.extract_code
 
     def migrate(self) -> int:
         print("Starting migration of: {} to dir: {}".format(self.yml_path, self.dest_path))
@@ -110,7 +116,7 @@ class Extractor:
               )
         return 0
 
-    def extract_code(self, output_file) -> int:
+    def extract_code(self) -> int:
         yml_type = self.get_yml_type()
         print("Extracting code to: {} ...".format(self.dest_path))
         common_server = self.common_server
@@ -121,7 +127,7 @@ class Extractor:
             script = yml_data['script']
             if yml_type == INTEGRATION:  # in integration the script is stored at a second level
                 script = script['script']
-        with open(output_file, 'w', encoding='utf-8') as code_file:
+        with open(self.dest_path, 'w', encoding='utf-8') as code_file:
             if self.demisto_mock:
                 code_file.write("import demistomock as demisto\n")
             if common_server:

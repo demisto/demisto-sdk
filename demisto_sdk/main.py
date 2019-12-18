@@ -2,17 +2,14 @@ import sys
 import click
 from pkg_resources import get_distribution
 
+from demisto_sdk.core import DemistoSDK
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
-class DemistoSDK():
-    def __init__(self):
-        self.configuration = None
-
-
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
+
 
 @click.group(invoke_without_command=True)
 @click.option(
@@ -54,28 +51,28 @@ def main(config, version, env_dir):
     default=False
 )
 @click.option(
-    '--type', '-t',
+    '--yml-type', '-y',
     help="Yaml type. If not specified will try to determine type based upon path.",
     type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
-    '--demistomock', '-d',
+    '--demisto-mock', '-d',
     help="Add an import for demisto mock, true by default",
-    type=click.Choice([True, False]),
+    type=click.Choice(["True", "False"]),
     default=True
 )
 @click.option(
-    '--commonserver', '-c',
+    '--common-server', '-c',
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
-    type=click.Choice([True, False]),
+    type=click.Choice(["True", "False"]),
     default=False
 )
 @pass_config
 def extract(config, **kwargs):
     print(config.configuration.env_dir)
-    # extractor = Extractor(configuration=Configuration(), **kwargs)
-    # return extractor.execute()
+    extractor = Extractor(configuration=Configuration(), **kwargs)
+    return extractor.run()
 
 # def m(migrate, outfile, infile, type, commonserver, demistomock):
 #     print(migrate)

@@ -1,76 +1,86 @@
 import sys
-from demisto_sdk.core import DemistoSDK
-
-
-
 import click
+from pkg_resources import get_distribution
 
-#
-# def get_colors(ctx, args, incomplete):
-#     raise Exception(ctx.__dict__)
-#     colors = [('-red', 'red'),
-#               ('-blue', 'blue'),
-#               ('-green', 'green')]
-#     return [c for c in colors if incomplete in c[0]]
-#
-#
-# def get_colors2(ctx, args, incomplete):
-#     colors = [('red', 'adfa'),
-#               ('blue', 'asdf'),
-#               ('green', 'sadf')]
-#     return [c for c in colors if incomplete in c[0]]
-#
-#
-#
-# def get_colors3(ctx, args, incomplete):
-#     colors = [('validate', 'adfa'),
-#               ('build', 'asdf'),
-#               ('green', 'sadf')]
-#     return [c for c in colors if incomplete in c[0]]
-#
-#
-# @click.command()
-# @click.option("-validate")
-# @click.option("-kaki")
-# def cmd1(validate):
-#     click.echo('Chosen color is %s' % validate)
-#
-#
-# @click.command()
-# @click.argument("kaka", type=click.STRING, autocompletion=get_colors2)
-# def cmd2(kaka):
-#     click.echo('Chosen color is %s' % kaka)
-#
-# @click.command()
-# @click.argument("command_name", type=click.STRING, autocompletion=get_colors3, allow_interspersed_args=True,
-#                 context=click.Context(command=command_nameallow_interspersed_args=True))
-# # @click.option('-validate', type=click.Choice(['circle', 'bla']))
-# def main(command_name):
-#     # TODO: Typings and docstrings
-#     # sdk = DemistoSDK()
-#     # return sdk.parse_args()
-#     if command_name == "validate":
-#         cmd1()
-#     else:
-#         cmd2()
-#     return 0
-
-@click.group()
-def main():
-   pass
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.yaml_tools.extractor import Extractor
+from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
-@main.command(name="current")
-@click.argument('location')
+class DemistoSDK():
+    def __init__(self):
+        self.configuration = None
+
+
+pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
+
+@click.group(invoke_without_command=True)
 @click.option(
-    '--api-key', '-a',
-    help='your API key for the OpenWeatherMap API',
+    '-d', '--env-dir', help='Specify a working directory.'
 )
-def kak(location, api_key):
-    print("Asdfsf")
+@click.option(
+    '-v', '--version', help='Get the demisto-sdk version.',
+    is_flag=True, default=False
+)
+@pass_config
+def main(config, version, env_dir):
+    config.configuration = Configuration()
+    if version:
+        version = get_distribution('demisto-sdk').version
+        print(version)
+
+    if env_dir:
+        config.env_dir = env_dir
 
 
-@main.command(name="somethine")
+@main.command(name="extract",
+              help="Extract code, image and description files "
+                   "from a Demisto integration or script yaml file")
+@click.option(
+    '--infile', '-i',
+    help='The yml file to extract from',
+    required=True
+)
+@click.option(
+    '--outfile', '-o',
+    required=True,
+    help="The output file or dir (if doing migrate) to write the code to"
+)
+@click.option(
+    '--migrate', '-m',
+    help="Migrate an integration to package format."
+         " Pass to -o option a directory in this case.",
+    is_flag=True,
+    default=False
+)
+@click.option(
+    '--type', '-t',
+    help="Yaml type. If not specified will try to determine type based upon path.",
+    type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
+)
+@click.option(
+    '--demistomock', '-d',
+    help="Add an import for demisto mock, true by default",
+    type=click.Choice([True, False]),
+    default=True
+)
+@click.option(
+    '--commonserver', '-c',
+    help="Add an import for CommonServerPython."
+         "If not specified will import unless this is CommonServerPython",
+    type=click.Choice([True, False]),
+    default=False
+)
+@pass_config
+def extract(config, **kwargs):
+    print(config.configuration.env_dir)
+    # extractor = Extractor(configuration=Configuration(), **kwargs)
+    # return extractor.execute()
+
+# def m(migrate, outfile, infile, type, commonserver, demistomock):
+#     print(migrate)
+
+@main.command(name="something")
 @click.argument('location')
 @click.option(
     '--sdf', '-s',

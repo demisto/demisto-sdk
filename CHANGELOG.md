@@ -4,6 +4,10 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.2.1
+
+* **Validate** now checks that the id and name fields are identical in yml files
+
 ### 0.2.0
 
 * Added Release Notes Validator.

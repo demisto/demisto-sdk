@@ -79,6 +79,15 @@ class FilesValidator:
         if self.validate_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=self.configuration)
 
+    def run(self):
+        print_color('Starting validating files structure', LOG_COLORS.GREEN)
+        if self.is_valid_structure():
+            print_color('The files are valid', LOG_COLORS.GREEN)
+            return 0
+        else:
+            print_color('The files are invalid', LOG_COLORS.RED)
+            return 1
+
     @staticmethod
     def get_modified_files(files_string, tag='master', print_ignored_files=False):
         """Get lists of the modified files in your branch according to the files string.
@@ -517,16 +526,16 @@ class FilesValidator:
 
     @staticmethod
     def add_sub_parser(subparsers):
-        parser = subparsers.add_parser('validate', help='Validate your content files')
+        # parser = subparsers.add_parser('validate', help='Validate your content files')
         parser.add_argument('-c', '--circle', type=str2bool, default=False, help='Is CircleCi or not')
         parser.add_argument('-b', '--backward-comp', type=str2bool, default=True,
                             help='To check backward compatibility.')
         parser.add_argument('-t', '--test-filter', type=str2bool, default=False,
                             help='Check that tests are valid.')
-        parser.add_argument('-j', '--conf-json', action='store_true', help='Validate the conf.json file.')
-        parser.add_argument('-i', '--id-set', action='store_true', help='Create the id_set.json file.')
-        parser.add_argument('-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
-        parser.add_argument('-g', '--use-git', action='store_true', help='Validate changes using git.')
+        # parser.add_argument('-j', '--conf-json', action='store_true', help='Validate the conf.json file.')
+        # parser.add_argument('-i', '--id-set', action='store_true', help='Create the id_set.json file.')
+        # parser.add_argument('-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+        # parser.add_argument('-g', '--use-git', action='store_true', help='Validate changes using git.')
 
     @staticmethod
     def _is_py_script_or_integration(file_path):

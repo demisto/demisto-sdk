@@ -9,18 +9,11 @@
 
 import sys
 import json
-import argparse
-from pkg_resources import get_distribution
 
-from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.constants import DIR_TO_PREFIX
 from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
 from demisto_sdk.dev_tools.linter import Linter
-from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
-from demisto_sdk.yaml_tools.extractor import Extractor
-from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class DemistoSDK:
@@ -34,7 +27,6 @@ class DemistoSDK:
         self.configuration = None
 
     def initialize_parsers(self):
-        FilesValidator.add_sub_parser(self.subparsers)
         Linter.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
         ContentCreator.add_sub_parser(self.subparsers)
@@ -43,16 +35,6 @@ class DemistoSDK:
     #     args = self.parser.parse_args()
     #
     #     try:
-    #         elif args.command == 'validate':
-    #
-    #             if self.validate(is_backward_check=args.backward_comp, is_circle=args.circle,
-    #                              prev_ver=args.prev_ver, validate_conf_json=args.conf_json, use_git=args.use_git):
-    #                 print_color('The files are valid', LOG_COLORS.GREEN)
-    #
-    #             else:
-    #                 print_color('The files are invalid', LOG_COLORS.RED)
-    #                 return 1
-    #
     #         elif args.command == 'lint':
     #             return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
     #                              no_bandit=args.no_bandit, no_test=args.no_test, root=args.root,
@@ -74,15 +56,6 @@ class DemistoSDK:
     #     except Exception as e:
     #         print_error('Error! The operation [{}] failed: {}'.format(args.command, str(e)))
     #         return 1
-
-    def validate(self, **kwargs):
-        sys.path.append(self.configuration.env_dir)
-
-        print_color('Starting validating files structure', LOG_COLORS.GREEN)
-
-        validator = FilesValidator(configuration=self.configuration, **kwargs)
-
-        return validator.is_valid_structure()
 
     def lint(self, project_dir: str, **kwargs):
         """

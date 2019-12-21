@@ -3,9 +3,10 @@ import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
-from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.yaml_tools.extractor import Extractor
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
@@ -87,6 +88,29 @@ def extract(config, **kwargs):
 def unify(**kwargs):
     unifier = Unifier(**kwargs)
     return unifier.merge_script_package_to_yml()
+
+
+@main.command(name="validate",
+              help='Validate your content files')
+@click.option(
+    '-j', '--conf-json', is_flag=True,
+    default=False, help='Validate the conf.json file.')
+@click.option(
+    '-i', '--id-set', is_flag=True,
+    default=False, help='Create the id_set.json file.')
+@click.option(
+    '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+@click.option(
+    '-g', '--use-git', is_flag=True,
+    default=False, help='Validate changes using git.')
+@pass_config
+def validate(config, **kwargs):
+    sys.path.append(config.configuration.env_dir)
+
+    validator = FilesValidator(configuration=config.configuration, is_backward_check=kwargs['backward_comp'],
+                               is_circle=kwargs['circle'], prev_ver=kwargs['prev_ver'],
+                               validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
+    return validator.run()
 
 
 if __name__ == '__main__':

@@ -17,7 +17,7 @@ from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
-@click.group(invoke_without_command=True)
+@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500))
 @click.help_option(
     '-h', '--help'
 )
@@ -42,6 +42,9 @@ def main(config, version, env_dir):
 @main.command(name="extract",
               help="Extract code, image and description files "
                    "from a Demisto integration or script yaml file")
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     '--infile', '-i',
     help='The yml file to extract from',
@@ -99,6 +102,9 @@ def unify(**kwargs):
 
 @main.command(name="validate",
               help='Validate your content files')
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     '-j', '--conf-json', is_flag=True,
     default=False, help='Validate the conf.json file.')
@@ -128,6 +134,9 @@ def validate(config, **kwargs):
 
 @main.command(name="create",
               help='Create content artifacts')
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
 @click.option(
@@ -142,6 +151,9 @@ def create(**kwargs):
               help="Run Secrets validator to catch sensitive data before exposing your code to public repository. "
                    "Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "
                    "'./Tests/secrets_white_list.json' ")
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
@@ -161,6 +173,9 @@ def secrets(config, **kwargs):
                    "docker image of an integration/script. Meant to be used with integrations/scripts that use the "
                    "folder (package) structure. Will lookup up what docker image to use and will setup the dev "
                    "dependencies and file in the target folder. ")
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     "-d", "--dir", help="Specify directory of integration/script", required=True)
 @click.option(

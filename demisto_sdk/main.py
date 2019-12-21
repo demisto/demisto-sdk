@@ -5,6 +5,7 @@ from pkg_resources import get_distribution
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.yaml_tools.extractor import Extractor
+from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
@@ -71,24 +72,21 @@ def main(config, version, env_dir):
 @pass_config
 def extract(config, **kwargs):
     print(config.configuration.env_dir)
-    extractor = Extractor(configuration=Configuration(), **kwargs)
+    extractor = Extractor(configuration=config.configuration, **kwargs)
     return extractor.run()
 
-# def m(migrate, outfile, infile, type, commonserver, demistomock):
-#     print(migrate)
 
-@main.command(name="something")
-@click.argument('location')
+@main.command(name="unify",
+              help='Unify code, image and description files to a single Demisto yaml file')
 @click.option(
-    '--sdf', '-s',
-    help='your API key for the OpenWeatherMap API',
+    "-i", "--indir", help="The path to the files to unify", required=True
 )
 @click.option(
-    '--fuck', '-f',
-    help='your API key for the OpenWeatherMap API',
+    "-o", "--outdir", help="The output dir to write the unified yml to", required=True
 )
-def kak(location, api_key):
-    print("Asdfsf")
+def unify(**kwargs):
+    unifier = Unifier(**kwargs)
+    return unifier.merge_script_package_to_yml()
 
 
 if __name__ == '__main__':

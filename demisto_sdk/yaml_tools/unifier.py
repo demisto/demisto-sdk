@@ -6,22 +6,32 @@ import base64
 import re
 
 from demisto_sdk.common.constants import Errors
-from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir
+from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
 
 class Unifier:
 
-    def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='', image_prefix=DEFAULT_IMAGE_PREFIX):
+    def __init__(self, indir: str, dir_name=INTEGRATIONS_DIR, outdir='',
+                 image_prefix=DEFAULT_IMAGE_PREFIX):
+
+        directory_name = ""
+        for dir_name in DIR_TO_PREFIX.keys():
+            if dir_name in indir:
+                directory_name = dir_name
+
+        if not directory_name:
+            print_error("You have failed to provide a legal file path, a legal file path "
+                        "should contain either Integrations or Scripts directories")
 
         self.image_prefix = image_prefix
-        self.package_path = package_path
+        self.package_path = indir
         if self.package_path[-1] != os.sep:
             self.package_path = os.path.join(self.package_path, '')
 
         self.dir_name = dir_name
-        self.dest_path = dest_path
+        self.dest_path = outdir
 
         self.is_ci = os.getenv('CI', False)
 
@@ -71,9 +81,10 @@ class Unifier:
             }
         for file_path, file_text in output_map.items():
             if os.path.isfile(file_path):
-                raise ValueError('Output file already exists: {}.'
-                                 ' Make sure to remove this file from source control'
-                                 ' or rename this package (for example if it is a v2).'.format(self.dest_path))
+                # raise ValueError('Output file already exists: {}.'
+                #                  ' Make sure to remove this file from source control'
+                #                  ' or rename this package (for example if it is a v2).'.format(self.dest_path))
+                continue
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
                 file_.write(file_text)
         return output_map
@@ -255,10 +266,3 @@ class Unifier:
         if remove_print_future:  # docs generation requires to leave this
             script_code = script_code.replace("from __future__ import print_function", "")
         return script_code
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        parser = subparsers.add_parser('unify',
-                                       help='Unify code, image and description files to a single Demisto yaml file')
-        parser.add_argument("-i", "--indir", help="The path to the files to unify", required=True)
-        parser.add_argument("-o", "--outdir", help="The output dir to write the unified yml to", required=True)

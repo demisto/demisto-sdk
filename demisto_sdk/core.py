@@ -34,7 +34,6 @@ class DemistoSDK:
         self.configuration = None
 
     def initialize_parsers(self):
-        Unifier.add_sub_parser(self.subparsers)
         FilesValidator.add_sub_parser(self.subparsers)
         Linter.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
@@ -44,9 +43,6 @@ class DemistoSDK:
     #     args = self.parser.parse_args()
     #
     #     try:
-    #         elif args.command == 'unify':
-    #             self.unify_package(args.indir, args.outdir)
-    #
     #         elif args.command == 'validate':
     #
     #             if self.validate(is_backward_check=args.backward_comp, is_circle=args.circle,
@@ -79,24 +75,6 @@ class DemistoSDK:
     #         print_error('Error! The operation [{}] failed: {}'.format(args.command, str(e)))
     #         return 1
 
-    def unify_package(self, package_path, dest_path):
-        """
-        Unify a package containing components(code, image, description etc.) to a single Demisto YAML file.
-        :param package_path: The path to the package.
-        :param dest_path: The destination file path.
-        """
-        directory_name = ""
-        for dir_name in DIR_TO_PREFIX.keys():
-            if dir_name in package_path:
-                directory_name = dir_name
-
-        if not directory_name:
-            print_error("You have failed to provide a legal file path, a legal file path "
-                        "should contain either Integrations or Scripts directories")
-
-        unifier = Unifier(package_path, directory_name, dest_path)
-        return unifier.merge_script_package_to_yml()
-
     def validate(self, **kwargs):
         sys.path.append(self.configuration.env_dir)
 
@@ -126,6 +104,7 @@ class DemistoSDK:
 
         return validator.find_secrets()
 
+    @staticmethod
     def create_content_artifacts(self, artifact_path, preserve_bundles):
         cc = ContentCreator(artifact_path, preserve_bundles=preserve_bundles)
         cc.create_content()

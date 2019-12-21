@@ -32,7 +32,7 @@ class Extractor:
             self.migrate()
 
         else:
-            self.extract_code
+            self.extract_code()
 
     def migrate(self) -> int:
         print("Starting migration of: {} to dir: {}".format(self.yml_path, self.dest_path))
@@ -42,7 +42,7 @@ class Extractor:
         base_name = os.path.basename(output_path)
         yml_type = self.get_yml_type()
         code_file = "{}/{}.py".format(output_path, base_name)
-        self.extract_code(code_file)
+        self.extract_code()
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)

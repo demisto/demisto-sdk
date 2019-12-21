@@ -4,6 +4,7 @@ from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.common.tools import str2bool
+from demisto_sdk.dev_tools.linter import Linter
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
@@ -17,6 +18,9 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
 @click.group(invoke_without_command=True)
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     '-d', '--env-dir', help='Specify a working directory.'
 )
@@ -150,6 +154,39 @@ def secrets(config, **kwargs):
     validator = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
                                  white_list_path=kwargs['whitelist'])
     return validator.run()
+
+
+@main.command(name="lint",
+              help="Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the "
+                   "docker image of an integration/script. Meant to be used with integrations/scripts that use the "
+                   "folder (package) structure. Will lookup up what docker image to use and will setup the dev "
+                   "dependencies and file in the target folder. ")
+@click.option(
+    "-d", "--dir", help="Specify directory of integration/script", required=True)
+@click.option(
+    "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
+@click.option(
+    "--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
+@click.option(
+    "--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
+@click.option(
+    "--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option(
+    "--no-test", is_flag=True, help="Do NOT test (skip pytest)")
+@click.option(
+    "-r", "--root", is_flag=True, help="Run pytest container with root user")
+@click.option(
+    "-k", "--keep-container", is_flag=True, help="Keep the test container")
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output")
+@click.option(
+    "--cpu-num",
+    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.)",
+    default=0)
+@pass_config
+def lint(config, dir, **kwargs):
+    linter = Linter(configuration=config.configuration, project_dir=dir, **kwargs)
+    return linter.run_dev_packages()
 
 
 if __name__ == '__main__':

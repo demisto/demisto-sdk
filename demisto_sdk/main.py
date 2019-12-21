@@ -3,6 +3,7 @@ import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
+from demisto_sdk.common.tools import str2bool
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
@@ -68,7 +69,7 @@ def main(config, version, env_dir):
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
     type=click.Choice(["True", "False"]),
-    default=False
+    default='False'
 )
 @pass_config
 def extract(config, **kwargs):
@@ -101,14 +102,20 @@ def unify(**kwargs):
 @click.option(
     '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
+    '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
+    help='Is CircleCi or not')
+@click.option(
+    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='True',
+    help='To check backward compatibility.')
+@click.option(
     '-g', '--use-git', is_flag=True,
     default=False, help='Validate changes using git.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    validator = FilesValidator(configuration=config.configuration, is_backward_check=kwargs['backward_comp'],
-                               is_circle=kwargs['circle'], prev_ver=kwargs['prev_ver'],
+    validator = FilesValidator(configuration=config.configuration, is_backward_check=str2bool(kwargs['backward_comp']),
+                               is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
 

@@ -4,3 +4,4 @@ ruamel.yaml>=0.16.5
 pykwalify>=1.7.0
 bs4>=0.0.1
 PyPDF2>=1.26.0
+click>=7.0

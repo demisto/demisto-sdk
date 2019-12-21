@@ -8,6 +8,7 @@ from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.validation.file_validator import FilesValidator
+from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
@@ -118,6 +119,18 @@ def validate(config, **kwargs):
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
+
+
+@main.command(name="create",
+              help='Create content artifacts')
+@click.option(
+    '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
+@click.option(
+    '-p', '--preserve_bundles', is_flag=True, default=False,
+    help='Flag for if you\'d like to keep the bundles created in the process of making the content artifacts')
+def create(**kwargs):
+    content_creator = ContentCreator(**kwargs)
+    content_creator.run()
 
 
 if __name__ == '__main__':

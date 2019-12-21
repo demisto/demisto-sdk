@@ -7,6 +7,7 @@ from demisto_sdk.common.tools import str2bool
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
@@ -131,6 +132,24 @@ def validate(config, **kwargs):
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
     content_creator.run()
+
+
+@main.command(name="secrets",
+              help="Run Secrets validator to catch sensitive data before exposing your code to public repository. "
+                   "Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "
+                   "'./Tests/secrets_white_list.json' ")
+@click.option(
+    '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
+    help='Is CircleCi or not')
+@click.option(
+    '-wl', '--whitelist', default='./Tests/secrets_white_list.json',
+    help='Full path to whitelist file, file name should be "secrets_white_list.json"')
+@pass_config
+def secrets(config, **kwargs):
+    sys.path.append(config.configuration.env_dir)
+    validator = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
+                                 white_list_path=kwargs['whitelist'])
+    return validator.run()
 
 
 if __name__ == '__main__':

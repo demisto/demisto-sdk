@@ -1,8 +1,9 @@
+import os
 from demisto_sdk.main import main
 
 
 def console_entry() -> None:
-    main()
+    os._exit(main())
 
 
 if __name__ == '__main__':

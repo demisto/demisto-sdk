@@ -20,7 +20,7 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
     YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES, \
-    Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS
+    Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -32,7 +32,7 @@ from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
 
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
-    LOG_COLORS, get_yaml, filter_packagify_changes, collect_ids, str2bool, get_pack_name, is_file_path_in_pack, \
+    LOG_COLORS, get_yaml, filter_packagify_changes, str2bool, get_pack_name, is_file_path_in_pack, \
     get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
@@ -239,6 +239,9 @@ class FilesValidator:
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 
+            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+                continue
+
             structure_validator = StructureValidator(file_path, old_file_path)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
@@ -279,7 +282,7 @@ class FilesValidator:
 
             elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
                 playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook():
+                if not playbook_validator.is_valid_playbook(is_new_playbook=False):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
@@ -316,7 +319,7 @@ class FilesValidator:
                             "Incident fields, Indicator fields, Images, Release notes and Descriptions")
                 self._is_valid = False
 
-    def validate_added_files(self, added_files):
+    def validate_added_files(self, added_files):  # noqa: C901
         """Validate the added files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
@@ -326,6 +329,9 @@ class FilesValidator:
         """
         for file_path in added_files:
             print('Validating {}'.format(file_path))
+
+            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+                continue
 
             structure_validator = StructureValidator(file_path)
             if not structure_validator.is_valid_file():
@@ -338,8 +344,9 @@ class FilesValidator:
                 if self.id_set_validator.is_file_has_used_id(file_path):
                     self._is_valid = False
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                if not self.conf_json_validator.is_test_in_conf_json(collect_ids(file_path)):
+            elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+                playbook_validator = PlaybookValidator(structure_validator)
+                if not playbook_validator.is_valid_playbook():
                     self._is_valid = False
 
             elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \

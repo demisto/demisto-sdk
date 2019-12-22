@@ -4,7 +4,7 @@
 # Python client that invokes functions in the Demisto SDK.
 #
 # Author:       Demisto
-# Version:      0.1.8
+# Version:      0.2.2
 #
 
 class DemistoSDK:

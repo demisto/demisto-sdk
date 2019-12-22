@@ -14,6 +14,7 @@ class IntegrationValidator(BaseValidator):
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
             return True
         self.is_valid = False
+        print_error(Errors.wrong_version(self.file_path))
         return False
 
     def is_backward_compatible(self):
@@ -37,14 +38,14 @@ class IntegrationValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
         """Check whether the Integration is valid or not"""
-        super(IntegrationValidator, self).is_valid_file(validate_rn)
         answers = [
+            super(IntegrationValidator, self).is_valid_file(validate_rn),
             self.is_valid_subtype(),
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
-            self.is_valid_version(),
+            self.is_id_equals_name()
         ]
         return all(answers)
 
@@ -272,7 +273,7 @@ class IntegrationValidator(BaseValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         is_there_duplicates = False
         for command in commands:
-            arg_list = []
+            arg_list = []  # type: list
             for arg in command.get('arguments', []):
                 if arg in arg_list:
                     self.is_valid = False
@@ -290,7 +291,7 @@ class IntegrationValidator(BaseValidator):
             bool. True if there are duplicates, False otherwise.
         """
         configurations = self.current_file.get('configuration', [])
-        param_list = []
+        param_list = []  # type: list
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
@@ -312,7 +313,7 @@ class IntegrationValidator(BaseValidator):
         Returns:
             dict. command name to a list of it's arguments.
         """
-        command_to_args = {}
+        command_to_args = {}  # type: dict
         commands = integration_json.get('script', {}).get('commands', [])
         for command in commands:
             command_to_args[command['name']] = {}
@@ -433,3 +434,11 @@ class IntegrationValidator(BaseValidator):
                 self.is_valid = False
                 return True
         return False
+
+    def is_id_equals_name(self):
+        """Check whether the integration's ID is equal to its name
+
+            Returns:
+                bool. Whether the integration's id equals to its name
+            """
+        return super(IntegrationValidator, self)._is_id_equals_name('integration')

@@ -4,10 +4,15 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.2.2
+
+* Fixing bug where **lint** did not return exit code 1 on failure.
+* Fixing bug where **validate** did not print error message in case no release notes were give.
+
 ### 0.2.1
 
-* **Validate** now checks that the id and name fields are identical in yml files
-* Fixed a bug where sdk did not return any exit code
+* **Validate** now checks that the id and name fields are identical in yml files.
+* Fixed a bug where sdk did not return any exit code.
 
 ### 0.2.0
 

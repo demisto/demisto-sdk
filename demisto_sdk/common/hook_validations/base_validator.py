@@ -6,6 +6,7 @@ from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.tools import print_error, get_release_notes_file_path, \
     get_latest_release_notes_text, run_command
+from demisto_sdk.common.constants import ID_IN_COMMONFIELDS, ID_IN_ROOT
 
 
 class BaseValidator:
@@ -59,7 +60,6 @@ class BaseValidator:
 
             # check release_notes file exists and contain text
             if release_notes is None:
-                print_error(Errors.missing_release_notes(self.file_path, rn_path))
                 self.is_valid = False
                 return False
         return True
@@ -99,4 +99,29 @@ class BaseValidator:
         for arg, required in new_dict.items():
             if arg not in old_dict.keys() and required:
                 return False
+        return True
+
+    def _get_file_id(self, file_type):
+        file_id = ''
+        if file_type in ID_IN_ROOT:
+            file_id = self.current_file.get('id')
+        elif file_type in ID_IN_COMMONFIELDS:
+            file_id = self.current_file.get('commonfields', {}).get('id')
+        return file_id
+
+    def _is_id_equals_name(self, file_type):
+        """Validate that the id of the file equals to the name.
+         Args:
+            file_type (str): the file type. can be 'integration', 'script' or 'playbook'
+
+        Returns:
+            bool. Whether the file's id is equal to to its name
+        """
+
+        file_id = self._get_file_id(file_type)
+        name = self.current_file.get('name', '')
+        if file_id != name:
+            print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
+                        " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
+            return False
         return True

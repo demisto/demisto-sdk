@@ -57,34 +57,50 @@ class DemistoSDK:
         if args.version:
             version = get_distribution('demisto-sdk').version
             print(version)
-            sys.exit(0)
+            return 0
 
         try:
             if args.command == 'extract':
                 if args.migrate:
                     self.migrate_file(args.infile, args.outfile, args.demistomock, args.commonserver, args.type)
+
                 else:
                     self.extract_code(args.infile, args.outfile, args.demistomock, args.commonserver, args.type)
+
             elif args.command == 'unify':
                 self.unify_package(args.indir, args.outdir)
+
             elif args.command == 'validate':
+
                 if self.validate(is_backward_check=args.backward_comp, is_circle=args.circle,
                                  prev_ver=args.prev_ver, validate_conf_json=args.conf_json, use_git=args.use_git):
                     print_color('The files are valid', LOG_COLORS.GREEN)
+
                 else:
                     print_color('The files are invalid', LOG_COLORS.RED)
+                    return 1
+
             elif args.command == 'lint':
                 return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                                  no_bandit=args.no_bandit, no_test=args.no_test, root=args.root,
                                  keep_container=args.keep_container, verbose=args.verbose, cpu_num=args.cpu_num)
+
             elif args.command == 'secrets':
-                self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
+                # returns True is secrets were found
+                if self.secrets(is_circle=args.circle, white_list_path=args.whitelist):
+                    return 1
+
             elif args.command == 'create':
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
+
             else:
                 print('Use demisto-sdk -h to see the available commands.')
+
+            return 0
+
         except Exception as e:
             print_error('Error! The operation [{}] failed: {}'.format(args.command, str(e)))
+            return 1
 
     def unify_package(self, package_path, dest_path):
         """

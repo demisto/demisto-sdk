@@ -161,9 +161,9 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
     pyenv install 3.7.5
     pyenv install 3.8.0
     ```
-    After installing run in `~/dev/demisto/demisto-sdk`:
+    After installing run in `{path_to_demisto-sdk}/demisto-sdk`:
     ```
-    cd ~/dev/demisto/demisto-sdk
+    cd {path_to_demisto-sdk}/demisto-sdk
     pyenv versions
     ```
     And you should see marked with asterisks:

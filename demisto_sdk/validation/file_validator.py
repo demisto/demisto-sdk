@@ -32,7 +32,7 @@ from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
 
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
-    LOG_COLORS, get_yaml, filter_packagify_changes, str2bool, get_pack_name, is_file_path_in_pack, \
+    LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
     get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
@@ -85,7 +85,7 @@ class FilesValidator:
             print_color('The files are valid', LOG_COLORS.GREEN)
             return 0
         else:
-            print_color('The files are invalid', LOG_COLORS.RED)
+            print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
             return 1
 
     @staticmethod

@@ -7,6 +7,7 @@
 # Version:      0.2.2
 #
 
+
 class DemistoSDK:
     """
     The core class for the SDK.

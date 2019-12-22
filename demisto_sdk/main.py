@@ -40,8 +40,7 @@ def main(config, version, env_dir):
 
 
 @main.command(name="extract",
-              help="Extract code, image and description files "
-                   "from a Demisto integration or script yaml file")
+              short_help="Extract code, image and description files from a Demisto integration or script yaml file.")
 @click.help_option(
     '-h', '--help'
 )
@@ -53,14 +52,7 @@ def main(config, version, env_dir):
 @click.option(
     '--outfile', '-o',
     required=True,
-    help="The output file or dir (if doing migrate) to write the code to"
-)
-@click.option(
-    '--migrate', '-m',
-    help="Migrate an integration to package format."
-         " Pass to -o option a directory in this case.",
-    is_flag=True,
-    default=False
+    help="The output dir to write the extracted code/description/image to."
 )
 @click.option(
     '--yml-type', '-y',
@@ -83,11 +75,50 @@ def main(config, version, env_dir):
 @pass_config
 def extract(config, **kwargs):
     extractor = Extractor(configuration=config.configuration, **kwargs)
-    return extractor.run()
+    return extractor.extract_to_package_format()
+
+
+@main.command(name="extract_code",
+              short_help="Extract code from a Demisto integration or script yaml file.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '--infile', '-i',
+    help='The yml file to extract from',
+    required=True
+)
+@click.option(
+    '--outfile', '-o',
+    required=True,
+    help="The output file to write the code to"
+)
+@click.option(
+    '--yml-type', '-y',
+    help="Yaml type. If not specified will try to determine type based upon path.",
+    type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
+)
+@click.option(
+    '--demisto-mock', '-d',
+    help="Add an import for demisto mock, true by default",
+    type=click.Choice(["True", "False"]),
+    default=True
+)
+@click.option(
+    '--common-server', '-c',
+    help="Add an import for CommonServerPython."
+         "If not specified will import unless this is CommonServerPython",
+    type=click.Choice(["True", "False"]),
+    default='False'
+)
+@pass_config
+def extract_code(config, **kwargs):
+    extractor = Extractor(configuration=config.configuration, **kwargs)
+    return extractor.extract_code()
 
 
 @main.command(name="unify",
-              help='Unify code, image and description files to a single Demisto yaml file')
+              short_help='Unify code, image and description files to a single Demisto yaml file.')
 @click.option(
     "-i", "--indir", help="The path to the files to unify", required=True
 )
@@ -100,7 +131,7 @@ def unify(**kwargs):
 
 
 @main.command(name="validate",
-              help='Validate your content files')
+              short_help='Validate your content files.')
 @click.help_option(
     '-h', '--help'
 )
@@ -120,7 +151,7 @@ def unify(**kwargs):
     help='To check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True,
-    default=False, help='Validate changes using git.')
+    default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -132,7 +163,7 @@ def validate(config, **kwargs):
 
 
 @main.command(name="create",
-              help='Create content artifacts')
+              short_help='Create content artifacts.')
 @click.help_option(
     '-h', '--help'
 )
@@ -147,9 +178,9 @@ def create(**kwargs):
 
 
 @main.command(name="secrets",
-              help="Run Secrets validator to catch sensitive data before exposing your code to public repository. "
-                   "Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "
-                   "'./Tests/secrets_white_list.json' ")
+              short_help="Run Secrets validator to catch sensitive data before exposing your code to public repository."
+                         " Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "
+                         "'./Tests/secrets_white_list.json' ")
 @click.help_option(
     '-h', '--help'
 )
@@ -168,10 +199,10 @@ def secrets(config, **kwargs):
 
 
 @main.command(name="lint",
-              help="Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the "
-                   "docker image of an integration/script. Meant to be used with integrations/scripts that use the "
-                   "folder (package) structure. Will lookup up what docker image to use and will setup the dev "
-                   "dependencies and file in the target folder. ")
+              short_help="Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the"
+                         "docker image of an integration/script. Meant to be used with integrations/scripts that use "
+                         "the folder (package) structure. Will lookup up what docker image to use and will setup the "
+                         "dev dependencies and file in the target folder. ")
 @click.help_option(
     '-h', '--help'
 )
@@ -204,7 +235,7 @@ def lint(config, dir, **kwargs):
 
 
 def demisto_sdk_cli():
-    sys.exit(main())
+    print(main())
 
 
 if __name__ == '__main__':

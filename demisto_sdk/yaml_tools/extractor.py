@@ -18,23 +18,20 @@ SCRIPT = 'script'
 
 class Extractor:
     def __init__(self, infile: str, outfile: str, demisto_mock: str, common_server: str, yml_type: str,
-                 configuration: Configuration, migrate: bool):
+                 configuration: Configuration):
         self.yml_path = infile
         self.dest_path = outfile
         self.demisto_mock = str2bool(demisto_mock)
         self.common_server = str2bool(common_server)
         self.yml_type = yml_type
         self.config = configuration
-        self.is_migrate = migrate
 
-    def run(self):
-        if self.is_migrate:
-            self.migrate()
+    def extract_to_package_format(self) -> int:
+        """Extracts the self.yml_path into several files according to the Demisto standard of the package format.
 
-        else:
-            self.extract_code()
-
-    def migrate(self) -> int:
+        Returns:
+             int. status code for the operation.
+        """
         print("Starting migration of: {} to dir: {}".format(self.yml_path, self.dest_path))
         arg_path = self.dest_path
         output_path = os.path.abspath(self.dest_path)

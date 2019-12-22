@@ -186,7 +186,7 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
 `/{path_to_demisto-sdk}/demisto-sdk/.tox/py37/bin/python`
 
 ### How to run commands in your development environment
-In the Demisto-SDK repository while on the git branch you want to activate and run this command to use python 3.7:
+In the Demisto-SDK repository while on the git branch you want to activate and run `tox` and then run this command to use python 3.7:
  ```
  source .tox/py37/bin/activate
   ```

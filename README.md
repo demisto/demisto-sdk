@@ -172,6 +172,11 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
     * 3.8.0 (set by /{path_to_demisto-sdk}/demisto-sdk/.python-version)
     ```
 
+    If not, simply run the following command from the Demisto-SDK repository:
+    ```
+    pyenv local 3.7.5 3.8.0
+    ```
+
 3) Using the terminal go to the Demisto-SDK repository - we will set up the development environment there.
 
 4) Install `tox`:
@@ -186,7 +191,7 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
 `/{path_to_demisto-sdk}/demisto-sdk/.tox/py37/bin/python`
 
 ### How to run commands in your development environment
-In the Demisto-SDK repository while on the git branch you want to activate and run `tox` and then run this command to use python 3.7:
+In the Demisto-SDK repository while on the git branch you want to activate and run this command to use python 3.7:
  ```
  source .tox/py37/bin/activate
   ```
@@ -195,6 +200,13 @@ In the Demisto-SDK repository while on the git branch you want to activate and r
  source .tox/py38/bin/activate
  ```
 While in the virtual environment, you can use the ```demisto-sdk``` commands with all the changes made in your local environment.
+
+In case your local changes to `demisto-sdk` are not updated, you need to update your `tox` environment
+by running this command from the Demisto-SDK repository:
+```angular2
+tox -e {your_env}
+```
+where {your_env} is py37 or py38.
 
 ## Running git hooks
 We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:

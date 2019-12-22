@@ -14,7 +14,7 @@ from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, \
-    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir
+    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
 
 
 class Linter:
@@ -123,10 +123,10 @@ class Linter:
         for docker in dockers:
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
-                self.lock.acquire(blocking=True)
+                py_num = get_python_version(docker, self.log_verbose)
+                self.lock.acquire()
                 print_color("============ Starting process for: {} ============".format(self.project_dir),
                             LOG_COLORS.YELLOW)
-                py_num = get_python_version(docker, self.log_verbose)
                 self.lock.release()
                 self._setup_dev_files()
                 try:
@@ -140,15 +140,15 @@ class Linter:
 
                         requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
                         docker_image_created = self._docker_image_create(docker, requirements)
-                        self.lock.acquire()
                         output, status_code = self._docker_run(docker_image_created)
+                        self.lock.acquire()
                         print_color("========== Running tests/pylint for: {} =========".format(self.project_dir),
                                     LOG_COLORS.YELLOW)
                         if status_code == 1:
                             raise subprocess.CalledProcessError(*output)
 
                         else:
-                            # print(output)
+                            print(output)
                             print_color("============ Finished process for: {} ============".format(self.project_dir),
                                         LOG_COLORS.GREEN)
                         self.lock.release()
@@ -187,13 +187,13 @@ class Linter:
         Returns:
             None.
         """
-        self.lock.acquire(blocking=True)
         lint_files = self._get_lint_files()
-        print("\n========= Running flake8 on: {}===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
-        sys.stdout.flush()
-        subprocess.check_call([python_exe, '-m', 'flake8', self.project_dir], cwd=self.configuration.env_dir)
+        output = run_command(f'{python_exe} -m flake8 {self.project_dir}', cwd=self.configuration.env_dir)
+        self.lock.acquire()
+        print("\n========= Running flake8 on: {}===============".format(lint_files))
+        print(output)
         print_color("flake8 completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
         self.lock.release()
 
@@ -206,14 +206,15 @@ class Linter:
         Returns:
             None.
         """
-        self.lock.acquire(blocking=True)
         try:
             self.get_common_server_python()
             lint_files = self._get_lint_files()
-            print("========= Running mypy on: {} ===============".format(lint_files))
             sys.stdout.flush()
             script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
-            subprocess.check_call(['bash', script_path, str(py_num), lint_files], cwd=self.project_dir)
+            output = run_command(' '.join(['bash', script_path, str(py_num), lint_files]), cwd=self.project_dir)
+            self.lock.acquire()
+            print("========= Running mypy on: {} ===============".format(lint_files))
+            print(output)
             print("mypy completed for: {}\n".format(lint_files))
         finally:
             self.remove_common_server_python()
@@ -228,13 +229,14 @@ class Linter:
         Returns:
             None.
         """
-        self.lock.acquire()
         lint_files = self._get_lint_files()
-        print("========= Running bandit on: {} ===============".format(lint_files))
         python_exe = 'python2' if py_num < 3 else 'python3'
+        output = run_command(' '.join([python_exe, '-m', 'bandit', '-lll', '-iii', '-q', lint_files]),
+                             cwd=self.project_dir)
+        self.lock.acquire()
+        print("========= Running bandit on: {} ===============".format(lint_files))
         print_v('Using: {} to run bandit'.format(python_exe))
-        sys.stdout.flush()
-        subprocess.check_call([python_exe, '-m', 'bandit', '-lll', '-iii', '-q', lint_files], cwd=self.project_dir)
+        print(output)
         print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
         self.lock.release()
 
@@ -357,26 +359,20 @@ class Linter:
             run_params.extend(['-e', 'PYLINT_SKIP=1'])
         run_params.extend(['-e', 'CPU_NUM={}'.format(self.cpu_num)])
         run_params.extend([docker_image, 'sh', './{}'.format(self.run_dev_tasks_script_name)])
-        p = Popen(run_params, universal_newlines=True, stdout=PIPE, stderr=PIPE)
-        output, err = p.communicate()
-        if err:
-            return err, 1
-            # TODO: update this
-
+        output = run_command(' '.join(run_params))
         container_id = output.strip()
         try:
-            print(subprocess.check_output(
-                ['docker', 'cp', self.project_dir + '/.', container_id + ':' + workdir],
-                universal_newlines=True, stderr=subprocess.STDOUT))
-            print(subprocess.check_output(['docker', 'cp', self.run_dev_tasks_script, container_id + ':' + workdir],
-                                          universal_newlines=True, stderr=subprocess.STDOUT))
-            print(subprocess.check_output(['docker', 'start', '-a', container_id],
-                                          universal_newlines=True, stderr=subprocess.STDOUT))
-
+            output = output + '\n' + run_command(' '.join(['docker', 'cp', self.project_dir + '/.', container_id +
+                                                           ':' + workdir]), exit_on_error=False)
+            output = output + '\n' + run_command(' '.join(['docker', 'cp', self.run_dev_tasks_script, container_id +
+                                                           ':' + workdir]), exit_on_error=False)
+            output = output + '\n' + subprocess.check_output(['docker', 'start', '-a', container_id],
+                                                             stderr=subprocess.STDOUT,
+                                                             universal_newlines=True)
             return output, 0
         finally:
             if not self.keep_container:
-                subprocess.check_output(['docker', 'rm', container_id])
+                run_command(f'docker rm {container_id}')
             else:
                 print("Test container [{}] was left available".format(container_id))
 

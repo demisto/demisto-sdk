@@ -36,7 +36,7 @@ def main(config, version, env_dir):
         print(version)
 
     if env_dir:
-        config.env_dir = env_dir
+        config.configuration.env_dir = env_dir
 
 
 @main.command(name="extract",
@@ -82,7 +82,6 @@ def main(config, version, env_dir):
 )
 @pass_config
 def extract(config, **kwargs):
-    print(config.configuration.env_dir)
     extractor = Extractor(configuration=config.configuration, **kwargs)
     return extractor.run()
 

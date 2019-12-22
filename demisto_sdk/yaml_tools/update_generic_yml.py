@@ -32,6 +32,7 @@ class BaseUpdateYML:
 
         try:
             self.yml_data = self.get_yml_data_as_dict()
+            print(self.yml_data)
         except yaml.YAMLError:
             print_color('Provided file is not a valid YML.', LOG_COLORS.RED)
             sys.exit(1)
@@ -49,9 +50,9 @@ class BaseUpdateYML:
         source_dir = os.path.dirname(self.source_file)
         file_name = output_file_name or os.path.basename(self.source_file)
 
-        # if str(type(self)) == '<class \'demisto_sdk.yaml_tools.update_integration.PlaybookYMLFormat\'>'
-        if not file_name.startswith('playbook-'):
-            file_name = F'playbook-{file_name}'
+        if str(type(self)) == '<class \'demisto_sdk.yaml_tools.update_integration.PlaybookYMLFormat\'>':
+            if not file_name.startswith('playbook-'):
+                file_name = F'playbook-{file_name}'
 
         return os.path.join(source_dir, file_name)
 
@@ -111,6 +112,16 @@ class BaseUpdateYML:
                 f,
                 Dumper=yamlordereddictloader.SafeDumper,
                 default_flow_style=False)
+
+    @staticmethod
+    def get_object_as_dict(desired_object):
+        output_dict = dict()
+
+        if desired_object:
+            for item in range(len(desired_object)):
+                output_dict.update(dict(desired_object[item]))
+
+        return output_dict
 
     def update_yml(self):
         """Manager function for the generic YML updates.

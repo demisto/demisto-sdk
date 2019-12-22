@@ -42,14 +42,13 @@ class IntegrationYMLFormat(BaseUpdateYML):
         for command in integration_commands:
             command_name = command.get('name', '')
             if command_name in BANG_COMMAND_NAMES:
-                if command_name in command.get('arguments'):
-                    command['arguments']['default'] = True
+                arguments_dict = self.get_object_as_dict(command.get('arguments'))
+                if command_name in arguments_dict.get('name', ''):
+                    command['arguments'][0].update({'default': True})
                 else:
-                    command.get('arguments').append(
-                        {
-                            'test': str(command.get('arguments')[0])
-                        }
-                    )
+                    if not command.get('arguments'):
+                        command['arguments'] = list()
+
                     command.get('arguments').append(
                         {
                             'default': True,

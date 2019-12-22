@@ -114,7 +114,7 @@ def extract(config, **kwargs):
 @pass_config
 def extract_code(config, **kwargs):
     extractor = Extractor(configuration=config.configuration, **kwargs)
-    return extractor.extract_code()
+    return extractor.extract_code(kwargs['outfile'])
 
 
 @main.command(name="unify",

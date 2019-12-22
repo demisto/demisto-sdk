@@ -39,7 +39,7 @@ class Extractor:
         base_name = os.path.basename(output_path)
         yml_type = self.get_yml_type()
         code_file = "{}/{}.py".format(output_path, base_name)
-        self.extract_code()
+        self.extract_code(code_file)
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)
@@ -113,9 +113,8 @@ class Extractor:
               )
         return 0
 
-    def extract_code(self) -> int:
+    def extract_code(self,code_file_path) -> int:
         yml_type = self.get_yml_type()
-        print("Extracting code to: {} ...".format(self.dest_path))
         common_server = self.common_server
         if common_server is None:
             common_server = "CommonServerPython" not in self.yml_path
@@ -124,7 +123,9 @@ class Extractor:
             script = yml_data['script']
             if yml_type == INTEGRATION:  # in integration the script is stored at a second level
                 script = script['script']
-        with open(self.dest_path, 'w', encoding='utf-8') as code_file:
+
+        print("Extracting code to: {} ...".format(code_file_path))
+        with open(code_file_path, 'wt') as code_file:
             if self.demisto_mock:
                 code_file.write("import demistomock as demisto\n")
             if common_server:
@@ -132,6 +133,7 @@ class Extractor:
             code_file.write(script)
             if script[-1] != '\n':  # make sure files end with a new line (pyml seems to strip the last newline)
                 code_file.write("\n")
+
         return 0
 
     def extract_image(self, output_path) -> int:

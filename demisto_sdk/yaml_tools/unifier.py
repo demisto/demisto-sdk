@@ -17,9 +17,9 @@ class Unifier:
                  image_prefix=DEFAULT_IMAGE_PREFIX):
 
         directory_name = ""
-        for dir_name in DIR_TO_PREFIX.keys():
-            if dir_name in indir:
-                directory_name = dir_name
+        for optional_dir_name in DIR_TO_PREFIX.keys():
+            if optional_dir_name in indir:
+                directory_name = optional_dir_name
 
         if not directory_name:
             print_error("You have failed to provide a legal file path, a legal file path "
@@ -121,8 +121,10 @@ class Unifier:
 
         script_obj = yml_data
 
+        import ipdb;ipdb.set_trace()
         if self.dir_name != SCRIPTS_DIR:
             script_obj = yml_data['script']
+
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
         with io.open(yml_path, mode='r', encoding='utf-8') as yml_file:

@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# Run pylint and pytest in the current directory. 
-# Used by pkg_dev_test_tasks.py to run pylint and pytest 
+# Run pylint and pytest in the current directory.
+# Used by pkg_dev_test_tasks.py to run pylint and pytest
 # inside a docker. Since this is meant to run inside a minimal docker
-# image it uses sh and not bash. Additionally, script tries to keep it 
+# image it uses sh and not bash. Additionally, script tries to keep it
 # simply and not use any shell utilities that may be missing in a minimal docker.
 
 # Env variables:
@@ -55,5 +55,5 @@ if [ $pylint_return -ne 0 -o $pytest_return -ne 0 ]; then
     echo "=========== ERRORS FOUND ===========" 1>&2
     echo "pylint/pytest returned errors. pylint: [$pylint_return], pytest: [$pytest_return]" 1>&2
     echo "====================================" 1>&2
-    exit 3 
+    exit 3
 fi

@@ -121,7 +121,6 @@ class Unifier:
 
         script_obj = yml_data
 
-        import ipdb;ipdb.set_trace()
         if self.dir_name != SCRIPTS_DIR:
             script_obj = yml_data['script']
 

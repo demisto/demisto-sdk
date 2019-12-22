@@ -78,8 +78,7 @@ def test_extract_code():
         extractor.common_server = True
         extractor.demisto_mock = True
         extractor.yml_path = 'tests/test_files/integration-Zoom.yml'
-        extractor.dest_path = 'tests/test_files/temp_file.txt'
-        extractor.extract_code()
+        extractor.extract_code('tests/test_files/temp_file.txt')
         with open('tests/test_files/temp_file.txt', 'rb') as temp_file:
             file_data = temp_file.read().decode('utf-8')
             assert 'import demistomock as demisto\n' in file_data
@@ -88,8 +87,7 @@ def test_extract_code():
         os.remove('tests/test_files/temp_file.txt')
         extractor.common_server = False
         extractor.demisto_mock = False
-        extractor.dest_path = 'tests/test_files/temp_file.txt'
-        extractor.extract_code()
+        extractor.extract_code('tests/test_files/temp_file.txt')
         with open('tests/test_files/temp_file.txt', 'rb') as temp_file:
             file_data = temp_file.read().decode('utf-8')
             assert 'import demistomock as demisto\n' not in file_data

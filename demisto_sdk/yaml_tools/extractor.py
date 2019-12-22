@@ -113,7 +113,7 @@ class Extractor:
               )
         return 0
 
-    def extract_code(self,code_file_path) -> int:
+    def extract_code(self, code_file_path) -> int:
         yml_type = self.get_yml_type()
         common_server = self.common_server
         if common_server is None:

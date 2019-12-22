@@ -7,7 +7,7 @@ import base64
 
 
 inputs_outputs = [
-    ('Scripts/FakeScript/FakeScript.yml', 'script'), 
+    ('Scripts/FakeScript/FakeScript.yml', 'script'),
     ('Integrations/FakeInt/FakeInt.yml', 'integration')
 ]
 
@@ -79,7 +79,7 @@ def test_extract_code():
         extractor.demisto_mock = True
         extractor.yml_path = 'tests/test_files/integration-Zoom.yml'
         extractor.dest_path = 'tests/test_files/temp_file.txt'
-        extractor.extract_code('tests/test_files/temp_file.txt')
+        extractor.extract_code()
         with open('tests/test_files/temp_file.txt', 'rb') as temp_file:
             file_data = temp_file.read().decode('utf-8')
             assert 'import demistomock as demisto\n' in file_data
@@ -88,7 +88,8 @@ def test_extract_code():
         os.remove('tests/test_files/temp_file.txt')
         extractor.common_server = False
         extractor.demisto_mock = False
-        extractor.extract_code('tests/test_files/temp_file.txt')
+        extractor.dest_path = 'tests/test_files/temp_file.txt'
+        extractor.extract_code()
         with open('tests/test_files/temp_file.txt', 'rb') as temp_file:
             file_data = temp_file.read().decode('utf-8')
             assert 'import demistomock as demisto\n' not in file_data

@@ -203,5 +203,9 @@ def lint(config, dir, **kwargs):
     return linter.run_dev_packages()
 
 
+def demisto_sdk_cli():
+    sys.exit(main())
+
+
 if __name__ == '__main__':
     sys.exit(main())

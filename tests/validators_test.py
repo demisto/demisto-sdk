@@ -14,6 +14,8 @@ from demisto_sdk.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.common.hook_validations.integration import IntegrationValidator
+
 from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
     VALID_SCRIPT_PATH, INVALID_SCRIPT_PATH, INVALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, \
@@ -23,7 +25,9 @@ from tests.tests_constants import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH, \
     LAYOUT_TARGET, WIDGET_TARGET, DASHBOARD_TARGET, INTEGRATION_TARGET, \
     INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, \
-    VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH
+    VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_ID_PATH, \
+    VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH
+
 from demisto_sdk.common.hook_validations.widget import WidgetValidator
 
 
@@ -175,3 +179,23 @@ class TestValidators:
     @staticmethod
     def mock_get_master_diff():
         return 'Comment.'
+
+    INPUTS_IS_ID_EQUALS_NAME = [
+        (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),
+        (INVALID_SCRIPT_PATH, SCRIPT_TARGET, False, ScriptValidator),
+        (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
+        (INVALID_PLAYBOOK_ID_PATH, PLAYBOOK_TARGET, False, PlaybookValidator),
+        (VALID_INTEGRATION_ID_PATH, INTEGRATION_TARGET, True, IntegrationValidator),
+        (INVALID_INTEGRATION_ID_PATH, INTEGRATION_TARGET, False, IntegrationValidator)
+    ]
+
+    @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
+    def test_is_id_equals_name(self, source, target, answer, validator):
+        # type: (str, str, Any, Type[BaseValidator]) -> None
+        try:
+            copyfile(str(source), target)
+            structure = StructureValidator(str(source))
+            validator = validator(structure)
+            assert validator.is_id_equals_name() is answer
+        finally:
+            os.remove(target)

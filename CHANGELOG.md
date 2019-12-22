@@ -4,11 +4,16 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.2.1
+
+* **Validate** now checks that the id and name fields are identical in yml files
+* Fixed a bug where sdk did not return any exit code
+
 ### 0.2.0
 
 * Added Release Notes Validator.
 * Fixed the Unifier selection of your python file to use as the code.
-* **Validate** now supports Indocator fields.
+* **Validate** now supports Indicator fields.
 * Fixed a bug where **validate** and **secrets** did not return exit code 1 on failure.
 * **Validate** now runs on newly added scripts.
 

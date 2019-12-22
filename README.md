@@ -150,18 +150,63 @@ You can import the SDK core class in your python code as follows:
 ## Dev Environment Setup
 We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
 
-Install `tox`:
+1) Clone the Demisto-SDK repository (Make sure that you have GitHub account):\
+`git clone https://github.com/demisto/demisto-sdk`
+
+2) **If you are using a default python version 3.7 or 3.8 you can skip this part.**
+
+    [pyenv](https://github.com/pyenv/pyenv) is an easy tool to control the versions of python on your environment.
+[Install pyenv](https://github.com/pyenv/pyenv#installation) and then run:
+    ```
+    pyenv install 3.7.5
+    pyenv install 3.8.0
+    ```
+    After installing run in `{path_to_demisto-sdk}/demisto-sdk`:
+    ```
+    cd {path_to_demisto-sdk}/demisto-sdk
+    pyenv versions
+    ```
+    And you should see marked with asterisks:
+    ```
+    * 3.7.5 (set by /{path_to_demisto-sdk}/demisto-sdk/.python-version)
+    * 3.8.0 (set by /{path_to_demisto-sdk}/demisto-sdk/.python-version)
+    ```
+
+    If not, simply run the following command from the Demisto-SDK repository:
+    ```
+    pyenv local 3.7.5 3.8.0
+    ```
+
+3) Using the terminal go to the Demisto-SDK repository - we will set up the development environment there.
+
+4) Install `tox`:
+    ```
+    pip install tox
+    ```
+    Then setup dev virtual envs for python 3 (will also install all necessary requirements):
+    ```
+    tox
+    ```
+5) Set your IDE to use the virtual environment you created using the following path:
+`/{path_to_demisto-sdk}/demisto-sdk/.tox/py37/bin/python`
+
+### How to run commands in your development environment
+In the Demisto-SDK repository while on the git branch you want to activate and run this command to use python 3.7:
+ ```
+ source .tox/py37/bin/activate
+  ```
+  or this command to use python 3.8:
+   ```
+ source .tox/py38/bin/activate
+ ```
+While in the virtual environment, you can use the ```demisto-sdk``` commands with all the changes made in your local environment.
+
+In case your local changes to `demisto-sdk` are not updated, you need to update your `tox` environment
+by running this command from the Demisto-SDK repository:
+```angular2
+tox -e {your_env}
 ```
-pip install tox
-```
-List configured environments:
-```
-tox -l
-```
-Then setup dev virtual envs for python 3 (will also install all necessary requirements):
-```
-tox --devenv venv3 --devenv py37
-```
+where {your_env} is py37 or py38.
 
 ## Running git hooks
 We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:
@@ -171,20 +216,15 @@ pre-commit install
 It is recommended to run ```pre-commit autoupdate``` to keep hooks updated.
 
 ## Running Unit Tests
-We use pytest to run unit tests. Inside a virtual env you can run unit test using:
-**Note that the working directory of the project must be the root directory '$PROJECT_PATH/'.**
-```
-python -m pytest -v
-```
-Additionally, our build uses tox to run on multiple envs. To use tox to run on all supported environments (py37, py38), run:
-```
-tox -q
-```
-To run on a specific environment, you can use:
-```
-tox -q -e py37
-```
+To run all our unit tests we use: `tox` on all envs.
 
+For additional verbosity use: `tox -vv`
+
+To run `tox` without verbosity run: `tox -q`
+
+To run on a specific environment, you can use: `tox -q -e py37`
+
+To run a specific test run: `pytest -vv tests/{test_file}.py::{TestClass}::{test_function}`
 
 ## License
 MIT - See [LICENSE](LICENSE) for more information.

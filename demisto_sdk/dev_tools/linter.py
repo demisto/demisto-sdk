@@ -101,6 +101,7 @@ class Linter:
             os.remove(os.path.join(self.project_dir, self.common_server_target_path))
 
     def run_dev_packages(self) -> int:
+        return_code = 0
         # load yaml
         _, yml_path = get_yml_paths_in_dir(self.project_dir, Errors.no_yml_file(self.project_dir))
         if not yml_path:
@@ -159,7 +160,7 @@ class Linter:
                     else:
                         print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
                             self.project_dir), LOG_COLORS.RED)
-
+                        return_code = 1
                     if not self.log_verbose:
                         sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n\n"
                                          .format(" ".join(sys.argv[:])))
@@ -176,7 +177,7 @@ class Linter:
                 finally:
                     sys.stdout.flush()
                     sys.stderr.flush()
-        return 0
+        return return_code
 
     def run_flake8(self, py_num):
         """Runs flake8

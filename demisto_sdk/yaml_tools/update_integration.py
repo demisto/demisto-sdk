@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from argparse import ArgumentDefaultsHelpFormatter
 
 from demisto_sdk.common.tools import print_color, LOG_COLORS
@@ -14,9 +15,13 @@ class IntegrationYMLFormat(BaseUpdateYML):
             yml_data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
-    ARGUMENTS_CORRECT_POSSIBLE_DESCRIPTION = {
-        ('insecure', 'unsecure'): ['insecure', 'Trust any certificate (not secure)'],
-        ('proxy'): ['proxy', 'Use system proxy settings']
+    ARGUMENTS_CORRECT_NAME = {
+        'unsecure': 'insecure',
+    }
+
+    ARGUMENTS_DESCRIPTION = {
+        'insecure': 'Trust any certificate (not secure)',
+        'proxy': 'Use system proxy settings'
     }
 
     def __init__(self, source_file='', output_file_name=''):
@@ -25,31 +30,27 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description.
         """
-        integration_configuration_dict = self.yml_data.get('configuration', {})
-        for arguments_list in self.ARGUMENTS_CORRECT_POSSIBLE_DESCRIPTION:
-            for argument in arguments_list:
-                if argument in integration_configuration_dict:
-                    del integration_configuration_dict[argument]
+        for integration_argument in self.yml_data.get('configuration', {}):
+            argument_name = integration_argument.get('name', '')
 
-                    desired_argument_name_and_description = self.ARGUMENTS_CORRECT_POSSIBLE_DESCRIPTION[arguments_list]
-                    integration_configuration_dict[desired_argument_name_and_description[0]] = \
-                        desired_argument_name_and_description[1]
+            if argument_name in self.ARGUMENTS_CORRECT_NAME:
+                argument_name = self.ARGUMENTS_CORRECT_NAME[argument_name]
+                integration_argument['name'] = argument_name
+
+            if argument_name in self.ARGUMENTS_DESCRIPTION:
+                integration_argument['display'] = self.ARGUMENTS_DESCRIPTION[argument_name]
 
     def set_reputation_commands_basic_argument_to_default(self):
         """Sets basic arguments of reputation commands to be default.
         """
         integration_commands = self.yml_data.get('script', {}).get('commands', [])
+
         for command in integration_commands:
             command_name = command.get('name', '')
-            if command_name in BANG_COMMAND_NAMES:
-                arguments_dict = self.get_object_as_dict(command.get('arguments'))
-                if command_name in arguments_dict.get('name', ''):
-                    command['arguments'][0].update({'default': True})
-                else:
-                    if not command.get('arguments'):
-                        command['arguments'] = list()
 
-                    command.get('arguments').append(
+            if command_name in BANG_COMMAND_NAMES:
+                if not (command.get('arguments', []) and command_name not in command['arguments'][0]):
+                    command['arguments'] = [
                         {
                             'default': True,
                             'description': '',
@@ -58,7 +59,14 @@ class IntegrationYMLFormat(BaseUpdateYML):
                             'required': True,
                             'secret': False
                         }
-                    )
+                    ]
+
+                else:
+                    command['arguments'][0].update({
+                        'default': True,
+                        'isArray': True,
+                        'required': True
+                    })
 
     def format_file(self):
         """Manager function for the integration YML updater.

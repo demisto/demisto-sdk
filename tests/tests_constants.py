@@ -39,3 +39,10 @@ PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
 SCRIPT_TARGET = "./Scripts/script-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = "./Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = "./Integrations/integration-test_CHANGELOG.md"
+SOURCE_FORMAT_INTEGRATION_COPY = './tests/test_files/format_New_Integration_copy.yml'
+DESTINATION_FORMAT_INTEGRATION_COPY = './new_format_New_Integration_copy.yml'
+SOURCE_FORMAT_SCRIPT_COPY = './tests/test_files/format_New_script_copy.yml'
+DESTINATION_FORMAT_SCRIPT_COPY = './new_format_New_script_copy.yml'
+SOURCE_PLAYBOOK_SCRIPT_COPY = './tests/test_files/format_new_playbook_copy.yml'
+DESTINATION_PLAYBOOK_SCRIPT_COPY = './new_format_new_playbook_copy.yml'
+

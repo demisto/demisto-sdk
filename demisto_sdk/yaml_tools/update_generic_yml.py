@@ -19,8 +19,8 @@ class BaseUpdateYML:
     DEFAULT_YML_VERSION = -1
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
         '<class \'demisto_sdk.yaml_tools.update_integration.IntegrationYMLFormat\'>': 'commonfields',
-        '<class \'demisto_sdk.yaml_tools.update_integration.ScriptYMLFormat\'>': 'commonfields',
-        '<class \'demisto_sdk.yaml_tools.update_integration.PlaybookYMLFormat\'>': '',
+        '<class \'demisto_sdk.yaml_tools.update_script.ScriptYMLFormat\'>': 'commonfields',
+        '<class \'demisto_sdk.yaml_tools.update_playbook.PlaybookYMLFormat\'>': '',
     }
 
     def __init__(self, source_file='', output_file_name=''):
@@ -32,7 +32,6 @@ class BaseUpdateYML:
 
         try:
             self.yml_data = self.get_yml_data_as_dict()
-            print(self.yml_data)
         except yaml.YAMLError:
             print_color('Provided file is not a valid YML.', LOG_COLORS.RED)
             sys.exit(1)
@@ -73,7 +72,7 @@ class BaseUpdateYML:
         """
         instance_name = str(type(self))
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[instance_name]
-        return self.yml_data.get(path, self)
+        return self.yml_data.get(path, self.yml_data)
 
     def remove_copy_and_dev_suffixes_from_name(self):
         """Removes any _dev and _copy suffixes in the file.
@@ -90,7 +89,7 @@ class BaseUpdateYML:
         self.id_and_version_location['id'] = self.yml_data['name']
 
     def set_version_to_default(self):
-        """Replaces the version of the YML to -1.
+        """Replaces the version of the YML to default.
         """
         self.id_and_version_location['version'] = self.DEFAULT_YML_VERSION
 
@@ -112,16 +111,6 @@ class BaseUpdateYML:
                 f,
                 Dumper=yamlordereddictloader.SafeDumper,
                 default_flow_style=False)
-
-    @staticmethod
-    def get_object_as_dict(desired_object):
-        output_dict = dict()
-
-        if desired_object:
-            for item in range(len(desired_object)):
-                output_dict.update(dict(desired_object[item]))
-
-        return output_dict
 
     def update_yml(self):
         """Manager function for the generic YML updates.

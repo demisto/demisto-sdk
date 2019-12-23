@@ -31,7 +31,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
         """
         for task_id, task in self.yml_data.get('tasks', {}).items():
             if task.get('type', '') == 'playbook':
-                task['task']["name"] = task['task']['playbookName']
+                task['task']['name'] = task['task']['playbookName']
 
     def format_file(self):
         """Manager function for the playbook YML updater.

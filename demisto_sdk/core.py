@@ -83,7 +83,8 @@ class DemistoSDK:
             elif args.command == 'lint':
                 return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                                  no_bandit=args.no_bandit, no_test=args.no_test, root=args.root,
-                                 keep_container=args.keep_container, verbose=args.verbose, cpu_num=args.cpu_num)
+                                 keep_container=args.keep_container, verbose=args.verbose, cpu_num=args.cpu_num,
+                                 requirements=args.requirements)
 
             elif args.command == 'secrets':
                 # returns True is secrets were found

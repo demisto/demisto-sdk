@@ -2,7 +2,8 @@ import glob
 import base64
 
 from demisto_sdk.common.tools import re, print_error, os, get_yaml
-from demisto_sdk.common.constants import IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_YML_REGEX, DEFAULT_IMAGE_BASE64
+from demisto_sdk.common.constants import IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_YML_REGEX, DEFAULT_IMAGE_BASE64, \
+    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX
 
 
 class ImageValidator:
@@ -17,10 +18,12 @@ class ImageValidator:
     def __init__(self, file_path):
         self._is_valid = True
 
-        if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE):
+        if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
+                re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE):
             self.file_path = file_path
         else:
-            if re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
+            if re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
                 try:
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:

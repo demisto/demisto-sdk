@@ -253,13 +253,19 @@ class FilesValidator:
                 integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
+
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
             elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
+                image_validator = ImageValidator(file_path)
+                if not image_validator.is_valid():
+                    self._is_valid = False
+
                 description_validator = DescriptionValidator(file_path)
                 if not description_validator.is_valid_beta_description():
                     self._is_valid = False
+
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False

@@ -125,7 +125,7 @@ class Linter:
                 print_v("Using docker image: {}".format(docker))
                 py_num = get_python_version(docker, self.log_verbose)
                 self.lock.acquire()
-                print_color("============ Starting process for: {} ============".format(self.project_dir),
+                print_color("============ Starting process for: {} ============\n".format(self.project_dir),
                             LOG_COLORS.YELLOW)
                 self.lock.release()
                 self._setup_dev_files()
@@ -155,14 +155,14 @@ class Linter:
                         docker_image_created = self._docker_image_create(docker, requirements)
                         output, status_code = self._docker_run(docker_image_created)
                         self.lock.acquire()
-                        print_color("========== Running tests/pylint for: {} =========".format(self.project_dir),
+                        print_color("\n========== Running tests/pylint for: {} =========".format(self.project_dir),
                                     LOG_COLORS.YELLOW)
                         if status_code == 1:
                             raise subprocess.CalledProcessError(*output)
 
                         else:
                             print(output)
-                            print_color("============ Finished process for: {} ============".format(self.project_dir),
+                            print_color("============ Finished process for: {} ============\n".format(self.project_dir),
                                         LOG_COLORS.GREEN)
                         self.lock.release()
                     break  # all is good no need to retry

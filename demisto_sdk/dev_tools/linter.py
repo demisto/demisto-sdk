@@ -39,7 +39,7 @@ class Linter:
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration(),
-                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False,):
+                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False, requirements: str = ''):
 
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
@@ -70,6 +70,7 @@ class Linter:
             'tests': not no_test
         }
         self.lock = lock
+        self.requirements = requirements
 
     def get_common_server_python(self) -> bool:
         """Getting common server python in not exists changes self.common_server_created to True if needed.
@@ -116,8 +117,7 @@ class Linter:
             if script_type == 'powershell':
                 # TODO powershell linting
                 return 0
-            print('The script {} is not of type "python". Found type: {}. Nothing to do.'.format(self.project_dir,
-                                                                                                 script_type))
+            print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_type))
             return 1
         dockers = get_docker_images(script_obj)
         for docker in dockers:
@@ -147,7 +147,12 @@ class Linter:
                             return_code = result_val
 
                     if self.run_args['tests'] or self.run_args['pylint']:
-                        requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
+                        if not self.requirements:
+                            requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base,
+                                                                self.log_verbose)
+                        else:
+                            requirements = self.requirements
+
                         docker_image_created = self._docker_image_create(docker, requirements)
                         output, status_code = self._docker_run(docker_image_created)
                         self.lock.acquire()

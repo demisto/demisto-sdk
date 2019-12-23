@@ -47,6 +47,7 @@ class ContentCreator:
         ]
 
         self.packages_to_skip = ['HelloWorld', 'HelloWorldSimple', 'HelloWorldScript']
+        self.packs_to_skip = ['ApiModules']
 
         # zip files names (the extension will be added later - shutil demands file name without extension)
         self.content_zip = os.path.join(self.artifacts_path, 'content_new')
@@ -90,7 +91,7 @@ class ContentCreator:
             unification_tool = Unifier(package, package_dir_name, dest_dir)
             if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
                 # there are some packages that we don't want to include in the content zip
-                # for example HelloWorld integration
+                # for example HelloWorld integration and API modules
                 unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
             unification_tool.merge_script_package_to_yml()
@@ -207,6 +208,8 @@ class ContentCreator:
         'content_new.zip'. Adds file prefixes where necessary according to how server expects to ingest the files.
         '''
         for pack in packs:
+            if os.path.basename(pack) in self.packs_to_skip:
+                continue
             # each pack directory has it's own content subdirs, 'Integrations',
             # 'Scripts', 'TestPlaybooks', 'Layouts' etc.
             sub_dirs_paths = get_child_directories(pack)
@@ -231,6 +234,8 @@ class ContentCreator:
         '''
         for pack in packs:
             pack_name = os.path.basename(pack)
+            if pack_name in self.packs_to_skip:
+                continue
             pack_dst = os.path.join(self.packs_bundle, pack_name)
             os.mkdir(pack_dst)
             pack_dirs = get_child_directories(pack)

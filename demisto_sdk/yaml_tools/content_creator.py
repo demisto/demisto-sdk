@@ -91,7 +91,7 @@ class ContentCreator:
             unification_tool = Unifier(package, package_dir_name, dest_dir)
             if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
                 # there are some packages that we don't want to include in the content zip
-                # for example HelloWorld integration and API modules
+                # for example HelloWorld integration
                 unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
             unification_tool.merge_script_package_to_yml()

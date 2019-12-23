@@ -5,11 +5,10 @@ import shutil
 import hashlib
 import threading
 import subprocess
-from subprocess import Popen, PIPE
 from datetime import datetime
 import requests
 import yaml
-
+from subprocess import CalledProcessError
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
@@ -132,13 +131,22 @@ class Linter:
                 self._setup_dev_files()
                 try:
                     if self.run_args['flake8']:
-                        self.run_flake8(py_num)
-                    if self.run_args['mypy']:
-                        self.run_mypy(py_num)
-                    if self.run_args['bandit']:
-                        self.run_bandit(py_num)
-                    if self.run_args['tests'] or self.run_args['pylint']:
+                        result_val = self.run_flake8(py_num)
+                        if result_val:
+                            return_code = result_val
 
+                    if self.run_args['mypy']:
+                        result_val = self.run_mypy(py_num)
+                        if result_val:
+                            return_code = result_val
+
+                    if self.run_args['bandit']:
+                        print("got to bandit on {}".format(self.project_dir))
+                        result_val = self.run_bandit(py_num)
+                        if result_val:
+                            return_code = result_val
+
+                    if self.run_args['tests'] or self.run_args['pylint']:
                         requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
                         docker_image_created = self._docker_image_create(docker, requirements)
                         output, status_code = self._docker_run(docker_image_created)
@@ -154,7 +162,7 @@ class Linter:
                                         LOG_COLORS.GREEN)
                         self.lock.release()
                     break  # all is good no need to retry
-                except subprocess.CalledProcessError as ex:
+                except CalledProcessError as ex:
                     if ex.output:
                         print_color("{}\n".format(ex.output), LOG_COLORS.RED)
                     else:
@@ -179,14 +187,14 @@ class Linter:
                     sys.stderr.flush()
         return return_code
 
-    def run_flake8(self, py_num):
+    def run_flake8(self, py_num) -> int:
         """Runs flake8
 
         Args:
             py_num: The python version in use
 
         Returns:
-            None.
+            int. 0 if flake8 is successful, 1 otherwise.
         """
         lint_files = self._get_lint_files()
         python_exe = 'python2' if py_num < 3 else 'python3'
@@ -194,41 +202,53 @@ class Linter:
         output = run_command(f'{python_exe} -m flake8 {self.project_dir}', cwd=self.configuration.env_dir)
         self.lock.acquire()
         print("\n========= Running flake8 on: {}===============".format(lint_files))
-        print(output)
-        print_color("flake8 completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-        self.lock.release()
+        if len(output) == 0:
+            print_color("flake8 completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
+            self.lock.release()
+            return 0
 
-    def run_mypy(self, py_num):
+        else:
+            print_error(output)
+            self.lock.release()
+            return 1
+
+    def run_mypy(self, py_num) -> int:
         """Runs mypy
 
         Args:
             py_num: The python version in use
 
         Returns:
-            None.
+            int. 0 on successful mypy run, 1 otherwise.
         """
-        try:
-            self.get_common_server_python()
-            lint_files = self._get_lint_files()
-            sys.stdout.flush()
-            script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
-            output = run_command(' '.join(['bash', script_path, str(py_num), lint_files]), cwd=self.project_dir)
-            self.lock.acquire()
-            print("========= Running mypy on: {} ===============".format(lint_files))
+        self.get_common_server_python()
+        lint_files = self._get_lint_files()
+        sys.stdout.flush()
+        script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
+        output = run_command(' '.join(['bash', script_path, str(py_num), lint_files]), cwd=self.project_dir)
+        self.lock.acquire()
+        print("========= Running mypy on: {} ===============".format(lint_files))
+        if 'Success: no issues found in 1 source file' in output:
             print(output)
             print("mypy completed for: {}\n".format(lint_files))
-        finally:
             self.remove_common_server_python()
             self.lock.release()
+            return 0
 
-    def run_bandit(self, py_num):
+        else:
+            print_error(output)
+            self.remove_common_server_python()
+            self.lock.release()
+            return 1
+
+    def run_bandit(self, py_num) -> int:
         """Run bandit
 
         Args:
             py_num: The python version in use
 
         Returns:
-            None.
+            int. 0 on successful bandit run, 1 otherwise.
         """
         lint_files = self._get_lint_files()
         python_exe = 'python2' if py_num < 3 else 'python3'
@@ -237,9 +257,15 @@ class Linter:
         self.lock.acquire()
         print("========= Running bandit on: {} ===============".format(lint_files))
         print_v('Using: {} to run bandit'.format(python_exe))
-        print(output)
-        print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-        self.lock.release()
+        if len(output) == 0:
+            print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
+            self.lock.release()
+            return 0
+
+        else:
+            print_error(output)
+            self.lock.release()
+            return 1
 
     def _docker_login(self):
         if self.docker_login_completed:

@@ -4,6 +4,10 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.2.4
+
+* Adding image validation to Beta_Integration and Packs in **validate**.
+
 ### 0.2.3
 
 * Adding Beta_Integration to the structure validation process.

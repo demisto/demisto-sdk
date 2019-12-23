@@ -6,7 +6,7 @@
 
 ### 0.2.4
 
-* Adding image validation to Beta_Integration in **validate**.
+* Adding image validation to Beta_Integration and Packs in **validate**.
 
 ### 0.2.3
 

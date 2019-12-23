@@ -9,6 +9,7 @@
 * Fixing bug where **lint** did not return exit code 1 on failure.
 * Fixing bug where **validate** did not print error message in case no release notes were give.
 * Adding Beta_Integration to the structure validation process.
+* Fixing bug where **validate** did checks on TestPlaybooks.
 
 ### 0.2.1
 

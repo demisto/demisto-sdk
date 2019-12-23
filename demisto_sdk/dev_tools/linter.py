@@ -141,7 +141,6 @@ class Linter:
                             return_code = result_val
 
                     if self.run_args['bandit']:
-                        print("got to bandit on {}".format(self.project_dir))
                         result_val = self.run_bandit(py_num)
                         if result_val:
                             return_code = result_val

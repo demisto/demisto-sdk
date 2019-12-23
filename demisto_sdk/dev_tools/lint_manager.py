@@ -1,10 +1,13 @@
 import os
+import yaml
 import threading
 import subprocess
 import concurrent.futures
+from demisto_sdk.common.constants import Errors
 from typing import Tuple, List
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_color, LOG_COLORS
+from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements,\
+    print_color, LOG_COLORS, get_yml_paths_in_dir
 
 from demisto_sdk.dev_tools.linter import Linter
 
@@ -55,6 +58,8 @@ class LintManager:
         self.pkgs = project_dir_list.split(',')
         self.configuration = configuration
         self.no_bc_check = no_bc_check
+        self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
+        self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
 
     def run_dev_packages(self) -> int:
         """Runs the Lint command on all given packages.
@@ -73,11 +78,18 @@ class LintManager:
         fail_pkgs = []
         if not self.parallel:
             for project_dir in pkgs_to_run:
+                py_num = self._get_package_python_number(project_dir)
+                if py_num == 2.7:
+                    requirements = self.requirements_for_python2
+                else:
+                    requirements = self.requirements_for_python3
+
                 linter = Linter(project_dir, no_test=not self.run_args['tests'],
                                 no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
                                 no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
                                 keep_container=self.keep_container, cpu_num=self.cpu_num,
-                                configuration=self.configuration, no_bandit=not self.run_args['bandit'])
+                                configuration=self.configuration, no_bandit=not self.run_args['bandit'],
+                                requirements=requirements)
 
                 run_status_code = linter.run_dev_packages()
                 if run_status_code > 0:
@@ -133,6 +145,21 @@ class LintManager:
 
             return self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
 
+    def _get_package_python_number(self, package: str):
+        _, yml_path = get_yml_paths_in_dir(package, Errors.no_yml_file(package))
+        if not yml_path:
+            return 1
+        print_v('Using yaml file: {}'.format(yml_path))
+        with open(yml_path, 'r') as yml_file:
+            yml_data = yaml.safe_load(yml_file)
+        script_obj = yml_data
+        if isinstance(script_obj.get('script'), dict):
+            script_obj = script_obj.get('script')
+
+        dockers = get_docker_images(script_obj)
+        py_num = get_python_version(dockers[0], self.log_verbose, no_prints=True)
+        return py_num
+
     def _get_packages_to_run(self) -> List[str]:
         """Checks which packages had changes in them and should run on Lint.
 
@@ -177,11 +204,17 @@ class LintManager:
         Returns:
             Tuple[int, str]. The result code for the lint command and the package name.
         """
+        py_num = self._get_package_python_number(package_dir)
+        if py_num == 2.7:
+            requirements = self.requirements_for_python2
+        else:
+            requirements = self.requirements_for_python3
+
         linter = Linter(package_dir, no_test=not self.run_args['tests'],
                         no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
                         no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
                         keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
-                        lock=LOCK, no_bandit=not self.run_args['bandit'])
+                        lock=LOCK, no_bandit=not self.run_args['bandit'], requirements=requirements)
 
         return linter.run_dev_packages(), package_dir
 

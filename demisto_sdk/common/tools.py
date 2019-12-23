@@ -401,7 +401,7 @@ def get_docker_images(script_obj):
     return imgs
 
 
-def get_python_version(docker_image, log_verbose):
+def get_python_version(docker_image, log_verbose, no_prints=False):
     """
     Get the python version of a docker image
     Arguments:
@@ -416,7 +416,9 @@ def get_python_version(docker_image, log_verbose):
                            "python", "-c",
                            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
                           universal_newlines=True, stderr=stderr_out).strip()
-    print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+    if not no_prints:
+        print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
         raise ValueError("Python vesion for docker image: {} is not supported: {}. "

@@ -68,7 +68,7 @@ def test_get_script_package_data():
 
 def test_get_data():
     from demisto_sdk.yaml_tools.unifier import Unifier
-    with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
+    with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
         unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
@@ -85,7 +85,7 @@ def test_get_data():
 
 def test_insert_description_to_yml():
     from demisto_sdk.yaml_tools.unifier import Unifier
-    with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
+    with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
         unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
@@ -99,7 +99,7 @@ def test_insert_description_to_yml():
 
 def test_insert_image_to_yml():
     from demisto_sdk.yaml_tools.unifier import Unifier
-    with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
+    with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
         unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
@@ -131,7 +131,7 @@ def test_check_api_module_imports():
      "tests/test_files/CalculateGeoDistance/CalculateGeoDistance")])
 def test_insert_script_to_yml(package_path, dir_name, file_path):
     from demisto_sdk.yaml_tools.unifier import Unifier
-    with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
+    with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
         unifier = Unifier("", None, None, None)
         unifier.package_path = package_path
         unifier.dir_name = dir_name
@@ -162,7 +162,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
     ("tests/test_files/VulnDB/", "fake_directory", "tests/test_files/VulnDB/VulnDB")])
 def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
     from demisto_sdk.yaml_tools.unifier import Unifier
-    with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
+    with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
         unifier = Unifier("", None, None, None)
         unifier.package_path = package_path
         unifier.dir_name = dir_name

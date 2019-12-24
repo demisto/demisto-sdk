@@ -24,7 +24,8 @@ class Linter:
 
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, no_bandit: bool = False, verbose: bool = False, root: bool = False,
-                 keep_container: bool = False, cpu_num: int = 0, configuration: Configuration = Configuration()):
+                 keep_container: bool = False, cpu_num: int = 0, requirements=None,
+                 configuration: Configuration = Configuration()):
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
@@ -53,6 +54,7 @@ class Linter:
             'bandit': not no_bandit,
             'tests': not no_test
         }
+        self.requirements = requirements
 
     def get_common_server_python(self) -> bool:
         """Getting common server python in not exists
@@ -112,7 +114,12 @@ class Linter:
                     if self.run_args['bandit']:
                         self.run_bandit(py_num)
                     if self.run_args['tests'] or self.run_args['pylint']:
-                        requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
+                        if not self.requirements:
+                            requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base,
+                                                                self.log_verbose)
+                        else:
+                            requirements = self.requirements
+
                         docker_image_created = self._docker_image_create(docker, requirements)
                         self._docker_run(docker_image_created)
                     break  # all is good no need to retry
@@ -361,3 +368,4 @@ class Linter:
             help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.)",
             default=0
         )
+        parser.add_argument("--requirements", help="the dev requirements for the lint run")

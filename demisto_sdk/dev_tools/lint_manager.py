@@ -8,6 +8,7 @@ from typing import Tuple, List
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements,\
     print_color, LOG_COLORS, get_yml_paths_in_dir
+from demisto_sdk.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
 from demisto_sdk.dev_tools.linter import Linter
 
@@ -35,7 +36,7 @@ class LintManager:
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
-                 no_bc_check: bool = False, configuration: Configuration = Configuration()):
+                 no_bc_check: bool = False, all: bool = False, configuration: Configuration = Configuration()):
 
         if no_test and no_pylint and no_flake8 and no_mypy:
             raise ValueError("Nothing to run as all --no-* options specified.")
@@ -43,7 +44,6 @@ class LintManager:
         self.parallel = parallel
         self.log_verbose = verbose
         self.root = root
-        self.parallel = parallel
         self.max_workers = 10 if max_workers is None else max_workers
         self.keep_container = keep_container
         self.cpu_num = cpu_num
@@ -55,11 +55,44 @@ class LintManager:
             'tests': not no_test,
             'bandit': not no_bandit
         }
-        self.pkgs = project_dir_list.split(',')
+        if all:
+            self.pkgs = self.get_all_directories()
+
+        else:
+            self.pkgs = project_dir_list.split(',')
+
         self.configuration = configuration
         self.no_bc_check = no_bc_check
         self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
+
+    def get_all_directories(self) -> List[str]:
+        """Gets all integration, script and beta_integrations in packages and packs in content repo.
+
+        Returns:
+            List. A list of integration, script and beta_integration names.
+        """
+        all_directories = []
+        # get all integrations, scripts and beta_integrations from packs
+        for root, _, _ in os.walk(PACKS_DIR):
+            if 'Packs/' in root:
+                if ('Integrations/' in root or 'Scripts/' in root or 'Beta_Integrations/' in root) \
+                        and len(root.split('/')) == 4:
+                    all_directories.append(root)
+
+        for root, _, _ in os.walk(INTEGRATIONS_DIR):
+            if 'Integrations/' in root and len(root.split('/')) == 2:
+                all_directories.append(root)
+
+        for root, _, _ in os.walk(SCRIPTS_DIR):
+            if 'Scripts/' in root and len(root.split('/')) == 2:
+                all_directories.append(root)
+
+        for root, _, _ in os.walk(BETA_INTEGRATIONS_DIR):
+            if 'Beta_Integrations/' in root and len(root.split('/')) == 2:
+                all_directories.append(root)
+
+        return all_directories
 
     def run_dev_packages(self) -> int:
         """Runs the Lint command on all given packages.
@@ -145,7 +178,15 @@ class LintManager:
 
             return self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
 
-    def _get_package_python_number(self, package: str):
+    def _get_package_python_number(self, package: str) -> float:
+        """Gets the python version number of the package.
+
+        Args:
+            package: the package to check its python version number.
+
+        Returns:
+            float. The python version used by the package.
+        """
         _, yml_path = get_yml_paths_in_dir(package, Errors.no_yml_file(package))
         if not yml_path:
             return 1
@@ -254,7 +295,7 @@ class LintManager:
             Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
             """
         parser = subparsers.add_parser('lint', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-d", "--dir", help="Specify directory of integration/script", required=True)
+        parser.add_argument("-d", "--dir", help="Specify directory of integration/script")
         parser.add_argument("--no-pylint", help="Do NOT run pylint linter", action='store_true')
         parser.add_argument("--no-mypy", help="Do NOT run mypy static type checking", action='store_true')
         parser.add_argument("--no-flake8", help="Do NOT run flake8 linter", action='store_true')
@@ -271,3 +312,4 @@ class LintManager:
         parser.add_argument("-p", "--parallel", help="Run dev tasks in parallel", action='store_true')
         parser.add_argument("-m", "--max-workers", help="How many threads to run in parallel")
         parser.add_argument("--no-bc", help="Check diff with $DIFF_COMPARE env variable", action='store_true')
+        parser.add_argument("-a", "--all", help="Run lint on all directories in content repo", action='store_true')

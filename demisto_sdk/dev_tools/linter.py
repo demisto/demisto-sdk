@@ -118,7 +118,7 @@ class Linter:
                 # TODO powershell linting
                 return 0
             print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_type))
-            return 1
+            return 0
         dockers = get_docker_images(script_obj)
         for docker in dockers:
             for try_num in (1, 2):
@@ -168,7 +168,8 @@ class Linter:
                     break  # all is good no need to retry
                 except CalledProcessError as ex:
                     if ex.output:
-                        print_color("{}\n".format(ex.output), LOG_COLORS.RED)
+                        print_color("===========================ERROR IN {}==========================="
+                                    "\n{}\n".format(self.project_dir, ex.output), LOG_COLORS.RED)
                     else:
                         print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
                             self.project_dir), LOG_COLORS.RED)

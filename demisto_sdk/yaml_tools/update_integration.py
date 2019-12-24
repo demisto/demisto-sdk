@@ -81,7 +81,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
         print_color(F'========Starting specific updates for integration: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.update_proxy_insecure_param_to_default()
-        self.set_reputation_commands_basic_argument_to_default()
+        self.set_reputation_commands_basic_argument_as_needed()
         self.save_yml_to_destination_file()
 
         print_color(F'========Finished generic updates for integration: {self.output_file_name}=======',

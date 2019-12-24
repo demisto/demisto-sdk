@@ -71,7 +71,7 @@ INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK = [
 @pytest.mark.parametrize('source_path, bang_command, verifications', INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK)
 def test_bang_commands_default_arguments(source_path, bang_command, verifications):
     base_yml = IntegrationYMLFormat(source_path)
-    base_yml.set_reputation_commands_basic_argument_to_default()
+    base_yml.set_reputation_commands_basic_argument_as_needed()
 
     for command in base_yml.yml_data['script']['commands']:
         if bang_command == command['name']:

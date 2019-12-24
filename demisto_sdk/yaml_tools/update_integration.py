@@ -29,6 +29,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description.
         """
+        print_color(F'Updating proxy and insecure/unsecure integration arguments description to default',
+                    LOG_COLORS.NATIVE)
+
         for integration_argument in self.yml_data.get('configuration', {}):
             argument_name = integration_argument.get('name', '')
 
@@ -39,9 +42,12 @@ class IntegrationYMLFormat(BaseUpdateYML):
             if argument_name in self.ARGUMENTS_DESCRIPTION:
                 integration_argument['display'] = self.ARGUMENTS_DESCRIPTION[argument_name]
 
-    def set_reputation_commands_basic_argument_to_default(self):
-        """Sets basic arguments of reputation commands to be default.
+    def set_reputation_commands_basic_argument_as_needed(self):
+        """Sets basic arguments of reputation commands to be default, isArray and required.
         """
+        print_color(F'Updating reputation commands\' basic arguments to be True for default, isArray and required',
+                    LOG_COLORS.NATIVE)
+
         integration_commands = self.yml_data.get('script', {}).get('commands', [])
 
         for command in integration_commands:

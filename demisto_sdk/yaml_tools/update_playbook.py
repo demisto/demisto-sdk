@@ -20,6 +20,8 @@ class PlaybookYMLFormat(BaseUpdateYML):
     def add_description(self):
         """Add empty description to playbook and tasks of type title, start, end.
         """
+        print_color(F'Adding empty descriptions to relevant tasks', LOG_COLORS.NATIVE)
+
         possible_labels_to_modify = ['start', 'end', 'title', 'playbook']
 
         for task_id, task in self.yml_data.get('tasks', {}).items():
@@ -29,6 +31,8 @@ class PlaybookYMLFormat(BaseUpdateYML):
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running.
         """
+        print_color(F'Updating name of tasks who calls other playbooks to their name', LOG_COLORS.NATIVE)
+
         for task_id, task in self.yml_data.get('tasks', {}).items():
             if task.get('type', '') == 'playbook':
                 task['task']['name'] = task['task']['playbookName']

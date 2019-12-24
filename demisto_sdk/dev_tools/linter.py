@@ -8,7 +8,6 @@ import subprocess
 from datetime import datetime
 import requests
 import yaml
-from subprocess import CalledProcessError
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
@@ -166,7 +165,7 @@ class Linter:
                                         LOG_COLORS.GREEN)
                         self.lock.release()
                     break  # all is good no need to retry
-                except CalledProcessError as ex:
+                except subprocess.CalledProcessError as ex:
                     if ex.output:
                         print_color("===========================ERROR IN {}==========================="
                                     "\n{}\n".format(self.project_dir, ex.output), LOG_COLORS.RED)

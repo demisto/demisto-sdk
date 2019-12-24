@@ -92,6 +92,11 @@ class StructureValidator:
         for scheme_name, regex_list in self.SCHEMA_TO_REGEX.items():
             if get_matching_regex(self.file_path, regex_list):
                 return scheme_name
+
+        pretty_formated_string_of_regexes = json.dumps(self.SCHEMA_TO_REGEX, indent=4, sort_keys=True)
+
+        print_error(f"The file {self.file_path} does not match any scheme we have please, refer to the following list"
+                    f" for the various file name options we have in our repo {pretty_formated_string_of_regexes}")
         return None
 
     def is_valid_scheme(self):
@@ -130,10 +135,11 @@ class StructureValidator:
             file_id = loaded_file_data.get('id')
             if not file_id:
                 # In integrations/scripts, the id is under 'commonfields'.
-                file_id = loaded_file_data.get('commonfields', {}).get('id')
+                file_id = loaded_file_data.get('commonfields', {}).get('id', '')
             if not file_id:
                 # In layout, the id is under 'layout'.
-                file_id = loaded_file_data.get('layout', {}).get('id')
+                file_id = loaded_file_data.get('layout', {}).get('id', '')
+
             return file_id
         except AttributeError:
             return None
@@ -150,6 +156,7 @@ class StructureValidator:
             self.is_valid = False
             print_error(Errors.file_id_contains_slashes())
             return False
+
         return True
 
     def is_id_modified(self):
@@ -184,10 +191,11 @@ class StructureValidator:
             print_error(Errors.from_version_modified(self.file_path))
             self.is_valid = False
             return False
+
         return True
 
     def load_data_from_file(self):
-        # type: () -> Optional[dict]
+        # type: () -> dict
         """Loads data according to function defined in FILE_SUFFIX_TO_LOAD_FUNCTION
         Returns:
              (dict)
@@ -199,8 +207,9 @@ class StructureValidator:
                 with open(self.file_path, 'r') as file_obj:
                     loaded_file_data = load_function(file_obj)  # type: ignore
                     return loaded_file_data
-            return None
+
         print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
+        return {}
 
     def get_file_type(self):
         # type: () -> Optional[str]
@@ -212,6 +221,7 @@ class StructureValidator:
         # If scheme_name exists, already found that the file is in the right path
         if self.scheme_name:
             return self.scheme_name
+
         for file_type, regexes in self.PATHS_TO_VALIDATE.items():
             for regex in regexes:
                 if re.search(regex, self.file_path, re.IGNORECASE):
@@ -220,6 +230,7 @@ class StructureValidator:
 
     def is_valid_file_path(self):
         """Returns is valid filepath exists.
+
         Can be only if file_type or scheme_name exists (runs from init)
 
         Returns:

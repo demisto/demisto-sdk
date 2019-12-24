@@ -1,6 +1,9 @@
 bs4>=0.0.1
+bs4>=0.0.1
 nltk>=3.4.5
 pykwalify>=1.7.0
+pykwalify>=1.7.0
+PyPDF2>=1.26.0
 PyPDF2>=1.26.0
 pyspellchecker>=0.0.1
 PyYAML>=5.1.2

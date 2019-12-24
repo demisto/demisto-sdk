@@ -23,7 +23,8 @@ class Linter:
 
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, no_bandit: bool = False, verbose: bool = False, root: bool = False,
-                 keep_container: bool = False, cpu_num: int = 0, configuration: Configuration = Configuration()):
+                 keep_container: bool = False, cpu_num: int = 0, requirements=None,
+                 configuration: Configuration = Configuration()):
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
@@ -52,6 +53,7 @@ class Linter:
             'bandit': not no_bandit,
             'tests': not no_test
         }
+        self.requirements = requirements
 
     def get_common_server_python(self) -> bool:
         """Getting common server python in not exists
@@ -79,6 +81,7 @@ class Linter:
             os.remove(os.path.join(self.project_dir, self.common_server_target_path))
 
     def run_dev_packages(self) -> int:
+        return_code = 0
         # load yaml
         _, yml_path = get_yml_paths_in_dir(self.project_dir, Errors.no_yml_file(self.project_dir))
         if not yml_path:
@@ -110,12 +113,19 @@ class Linter:
                     if self.run_args['bandit']:
                         self.run_bandit(py_num)
                     if self.run_args['tests'] or self.run_args['pylint']:
-                        requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base, self.log_verbose)
+                        if not self.requirements:
+                            requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base,
+                                                                self.log_verbose)
+                        else:
+                            requirements = self.requirements
+
                         docker_image_created = self._docker_image_create(docker, requirements)
                         self._docker_run(docker_image_created)
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:
                     sys.stderr.write("[FAILED {}] Error: {} Output: {}\n".format(self.project_dir, str(ex), ex.output))
+                    # failed on a test so we change the return_code to 1
+                    return_code = 1
                     if not self.log_verbose:
                         sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n"
                                          .format(" ".join(sys.argv[:])))
@@ -127,7 +137,7 @@ class Linter:
                 finally:
                     sys.stdout.flush()
                     sys.stderr.flush()
-        return 0
+        return return_code
 
     def run_flake8(self, py_num):
         print("========= Running flake8 ===============")
@@ -335,3 +345,4 @@ class Linter:
             help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.)",
             default=0
         )
+        parser.add_argument("--requirements", help="the dev requirements for the lint run")

@@ -263,7 +263,7 @@ SCRIPT_PY_REGEX = r'{}{}/([^\\/]+)/\1.py$'.format(CAN_START_WITH_DOT_SLASH, SCRI
 SCRIPT_TEST_PY_REGEX = r'{}{}/([^\\/]+)/\1_test.py$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
 SCRIPT_JS_REGEX = r'{}{}/([^\\/]+)/\1.js$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
 SCRIPT_PS_REGEX = r'{}{}/([^\\/]+)/\1.ps1$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
-SCRIPT_YML_REGEX = r'{}{}/([^\\/]+)/\1.yml$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
+SCRIPT_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
 TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
 SCRIPT_REGEX = r'{}{}/(script-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
 
@@ -271,7 +271,7 @@ INTEGRATION_PY_REGEX = r'{}{}/([^\\/]+)/\1.py$'.format(CAN_START_WITH_DOT_SLASH,
 INTEGRATION_TEST_PY_REGEX = r'{}{}/([^\\/]+)/\1_test.py$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_JS_REGEX = r'{}{}/([^\\/]+)/\1.js$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_PS_REGEX = r'{}{}/([^\\/]+)/\1.ps1$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_YML_REGEX = r'{}{}/([^\\/]+)/\1.yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
+INTEGRATION_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_REGEX = r'{}{}/(integration-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_README_REGEX = r'{}{}/([^\\/]+)/README.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 
@@ -300,6 +300,8 @@ PACKS_INCIDENT_TYPES_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_W
                                                                      INCIDENT_TYPES_DIR)
 PACKS_INCIDENT_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                       INCIDENT_FIELDS_DIR)
+PACKS_INDICATOR_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
+                                                                       INDICATOR_FIELDS_DIR)
 PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, LAYOUTS_DIR)
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
@@ -327,6 +329,14 @@ MISC_REGEX = r'{}{}.*reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_D
 REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
+
+ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
+    'integration',
+    'script'
+]
+ID_IN_ROOT = [  # entities in which 'id' key is in the root
+    'playbook'
+]
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -364,10 +374,17 @@ PYTHON_ALL_REGEXES: List[str] = sum(
     ], []
 )
 
+INTEGRATION_REGXES: List[str] = [
+    INTEGRATION_REGEX,
+    PACKS_INTEGRATION_REGEX,
+    BETA_INTEGRATION_REGEX
+]
+
 YML_INTEGRATION_REGEXES: List[str] = [
     INTEGRATION_REGEX,
     PACKS_INTEGRATION_YML_REGEX,
     INTEGRATION_YML_REGEX,
+    BETA_INTEGRATION_YML_REGEX
 ]
 
 YML_BETA_INTEGRATIONS_REGEXES: List[str] = [
@@ -425,6 +442,13 @@ YML_ALL_REGEXES: List[str] = sum(
         YML_TEST_PLAYBOOKS_REGEXES
     ], []
 )
+
+JSON_INDICATOR_AND_INCIDENT_FIELDS = [
+    INCIDENT_FIELD_REGEX,
+    INDICATOR_FIELDS_REGEX,
+    PACKS_INCIDENT_FIELDS_REGEX,
+    PACKS_INDICATOR_FIELDS_REGEX
+]
 
 JSON_ALL_WIDGETS_REGEXES = [
     WIDGETS_REGEX,
@@ -540,8 +564,9 @@ PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIO
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
-PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+/)?(?:Integrations|Scripts)/([^\\/]+)/\1.yml'
+PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+/)?(?:Integrations|Scripts|Beta_Integrations)/([^\\/]+)/([^\\/]+).yml'
 PACKS_YML_FILE_REGEX = r'{}/([^/]+)/(?:{}|{})/([^/]+)/\2\.yml'.format(PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR)
+
 
 OLD_YML_FORMAT_FILE = [INTEGRATION_REGEX, SCRIPT_REGEX]
 
@@ -550,7 +575,19 @@ DIR_LIST = [
     BETA_INTEGRATIONS_DIR,
     SCRIPTS_DIR,
     PLAYBOOKS_DIR,
-    TEST_PLAYBOOKS_DIR,
+    REPORTS_DIR,
+    DASHBOARDS_DIR,
+    WIDGETS_DIR,
+    INCIDENT_TYPES_DIR,
+    INCIDENT_FIELDS_DIR,
+    LAYOUTS_DIR,
+    CLASSIFIERS_DIR,
+    MISC_DIR,
+    CONNECTIONS_DIR,
+    INDICATOR_FIELDS_DIR,
+]
+DIR_LIST_FOR_REGULAR_ENTETIES = [
+    PLAYBOOKS_DIR,
     REPORTS_DIR,
     DASHBOARDS_DIR,
     WIDGETS_DIR,

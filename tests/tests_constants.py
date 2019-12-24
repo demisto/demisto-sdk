@@ -43,6 +43,6 @@ SOURCE_FORMAT_INTEGRATION_COPY = './tests/test_files/format_New_Integration_copy
 DESTINATION_FORMAT_INTEGRATION_COPY = './new_format_New_Integration_copy.yml'
 SOURCE_FORMAT_SCRIPT_COPY = './tests/test_files/format_New_script_copy.yml'
 DESTINATION_FORMAT_SCRIPT_COPY = './new_format_New_script_copy.yml'
-SOURCE_PLAYBOOK_SCRIPT_COPY = './tests/test_files/format_new_playbook_copy.yml'
-DESTINATION_PLAYBOOK_SCRIPT_COPY = './new_format_new_playbook_copy.yml'
+SOURCE_FORMAT_PLAYBOOK_COPY = './tests/test_files/format_new_playbook_copy.yml'
+DESTINATION_FORMAT_PLAYBOOK_COPY = './new_format_new_playbook_copy.yml'
 

@@ -24,7 +24,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         for task_id, task in self.yml_data.get('tasks', {}).items():
             if task.get('type', '') in possible_labels_to_modify:
-                task['task']['description'] = ''
+                task['task'].update({'description': ''})
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running.

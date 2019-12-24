@@ -2,8 +2,8 @@ import os
 import pytest
 
 from tests.tests_constants import SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, \
-    SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, SOURCE_PLAYBOOK_SCRIPT_COPY, \
-    DESTINATION_PLAYBOOK_SCRIPT_COPY
+    SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_PLAYBOOK_COPY, \
+    DESTINATION_FORMAT_PLAYBOOK_COPY
 
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
@@ -12,7 +12,7 @@ from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy'),
     (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, ScriptYMLFormat, 'New_script_copy'),
-    (SOURCE_PLAYBOOK_SCRIPT_COPY, DESTINATION_PLAYBOOK_SCRIPT_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy')
+    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy')
 ]
 
 
@@ -53,7 +53,7 @@ def test_proxy_ssl_descriptions(source_path, argument_name, argument_description
     assert argument_count == appearances
 
 
-INTEGRATION_BANG_COMMANDS_ARGUMENTS = [
+INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK = [
     (SOURCE_FORMAT_INTEGRATION_COPY, 'url', [
         ('default', True),
         ('isArray', True),
@@ -68,8 +68,8 @@ INTEGRATION_BANG_COMMANDS_ARGUMENTS = [
 ]
 
 
-@pytest.mark.parametrize('source_path, bang_command, verifications', INTEGRATION_BANG_COMMANDS_ARGUMENTS)
-def test_proxy_ssl_descriptions(source_path, bang_command, verifications):
+@pytest.mark.parametrize('source_path, bang_command, verifications', INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK)
+def test_bang_commands_default_arguments(source_path, bang_command, verifications):
     base_yml = IntegrationYMLFormat(source_path)
     base_yml.set_reputation_commands_basic_argument_to_default()
 
@@ -78,3 +78,13 @@ def test_proxy_ssl_descriptions(source_path, bang_command, verifications):
             command_arguments = command['arguments'][0]
             for verification in verifications:
                 assert command_arguments[verification[0]] == verification[1]
+
+
+@pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
+def test_playbook_task_description_name(source_path):
+    base_yml = PlaybookYMLFormat(source_path)
+    base_yml.add_description()
+    base_yml.update_playbook_task_name()
+
+    assert 'description' in base_yml.yml_data['tasks']['7']['task']
+    assert base_yml.yml_data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API'

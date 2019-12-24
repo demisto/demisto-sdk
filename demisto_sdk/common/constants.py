@@ -564,7 +564,7 @@ PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIO
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
-PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+/)?(?:Integrations|Scripts)/([^\\/]+)/\1.yml'
+PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+/)?(?:Integrations|Scripts|Beta_Integrations)/([^\\/]+)/\1.yml'
 PACKS_YML_FILE_REGEX = r'{}/([^/]+)/(?:{}|{})/([^/]+)/\2\.yml'.format(PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR)
 
 

@@ -235,7 +235,7 @@ class Linter:
         print("========= Running mypy on: {} ===============".format(lint_files))
         if 'Success: no issues found in 1 source file' in output:
             print(output)
-            print("mypy completed for: {}\n".format(lint_files))
+            print_color("mypy completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
             self.remove_common_server_python()
             self.lock.release()
             return 0

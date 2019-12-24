@@ -4,6 +4,7 @@ import glob
 import yaml
 import base64
 import re
+from typing import Tuple
 
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir
@@ -184,12 +185,12 @@ class Unifier:
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|Module\.py')
+                        r'|conftest\.py|__init__\.py|ApiModule\.py')
         if not self.package_path.endswith('/'):
             self.package_path += '/'
         if self.package_path.endswith('Scripts/CommonServerPython/'):
             return self.package_path + 'CommonServerPython.py'
-        if self.package_path.endswith('Module/'):
+        if self.package_path.endswith('ApiModule/'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
         script_path = list(filter(lambda x: not re.search(ignore_regex, x),
@@ -201,6 +202,8 @@ class Unifier:
         with io.open(script_path, mode='r', encoding='utf-8') as script_file:
             script_code = script_file.read()
 
+        # Check if the script imports an API module. If it does,
+        # the API module code will be pasted in place of the import.
         module_import, module_name = self.check_api_module_imports(script_code)
         if module_import:
             script_code = self.insert_module_code(script_code, module_import, module_name)
@@ -253,12 +256,14 @@ class Unifier:
         return yml_path, code
 
     @staticmethod
-    def check_api_module_imports(script_code):
+    def check_api_module_imports(script_code: str) -> Tuple[str, str]:
         """
         Checks integration code for API module imports
         :param script_code: The integration code
         :return: The import string and the imported module name
         """
+
+        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
         module_regex = r'from ([\w\d]+Module) import \*(?:  # noqa: E402)?'
 
         module_match = re.search(module_regex, script_code)
@@ -268,7 +273,7 @@ class Unifier:
             return '', ''
 
     @staticmethod
-    def insert_module_code(script_code, module_import, module_name):
+    def insert_module_code(script_code: str, module_import: str, module_name: str) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
@@ -276,6 +281,7 @@ class Unifier:
         :param module_name: The module name
         :return: The integration script with the module code appended in place of the import
         """
+
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
         try:
             with io.open(module_path, mode='r', encoding='utf-8') as script_file:

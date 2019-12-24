@@ -322,6 +322,8 @@ class Linter:
             unifier = Unifier(self.project_dir)
             code_file_path = unifier.get_code_file('.py')
             try:
+                # Look for an import to an API module in the code. If there is such import, we need to copy the correct
+                # module file to the package directory.
                 with io.open(code_file_path, mode='r', encoding='utf-8') as script_file:
                     _, module_name = unifier.check_api_module_imports(script_file.read())
                 if module_name:

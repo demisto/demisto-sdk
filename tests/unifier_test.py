@@ -3,6 +3,29 @@ from mock import patch
 import yaml
 import base64
 
+DUMMY_SCRIPT = '''
+    def main():
+    """ COMMANDS MANAGER / SWITCH PANEL """
+        command = demisto.command()
+        args = demisto.args()
+        LOG(f'Command being called is {command}')
+
+        params = demisto.params()
+    
+
+    try:
+        if command == 'test-module':
+            demisto.results('ok')
+    except Exception as e:
+        return_error(str(e))
+
+
+    from MicrosoftApiModule import *  # noqa: E402
+
+    if __name__ in ["builtins", "__main__"]:
+        main()
+    '''
+
 
 def test_clean_python_code():
     from demisto_sdk.yaml_tools.unifier import Unifier
@@ -46,7 +69,7 @@ def test_get_script_package_data():
 def test_get_data():
     from demisto_sdk.yaml_tools.unifier import Unifier
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
-        unifier = Unifier(None, None, None, None, None, None)
+        unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
         with open("tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
@@ -63,7 +86,7 @@ def test_get_data():
 def test_insert_description_to_yml():
     from demisto_sdk.yaml_tools.unifier import Unifier
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
-        unifier = Unifier(None, None, None, None, None, None)
+        unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
         with open("tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
@@ -77,7 +100,7 @@ def test_insert_description_to_yml():
 def test_insert_image_to_yml():
     from demisto_sdk.yaml_tools.unifier import Unifier
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
-        unifier = Unifier(None, None, None, None, None, None)
+        unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
         unifier.image_prefix = "data:image/png;base64,"
@@ -94,6 +117,14 @@ def test_insert_image_to_yml():
         assert yml_text == yml_text_test
 
 
+def test_check_api_module_imports():
+    from demisto_sdk.yaml_tools.unifier import Unifier
+    module_import, module_name = Unifier.check_api_module_imports(DUMMY_SCRIPT)
+
+    assert module_import == 'from MicrosoftApiModule import *  # noqa: E402'
+    assert module_name == 'MicrosoftApiModule'
+
+
 @pytest.mark.parametrize('package_path, dir_name, file_path', [
     ("tests/test_files/VulnDB/", "Integrations", "tests/test_files/VulnDB/VulnDB"),
     ("tests/test_files/CalculateGeoDistance/", "Scripts",
@@ -101,7 +132,7 @@ def test_insert_image_to_yml():
 def test_insert_script_to_yml(package_path, dir_name, file_path):
     from demisto_sdk.yaml_tools.unifier import Unifier
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
-        unifier = Unifier("", None, None, None, None, None)
+        unifier = Unifier("", None, None, None)
         unifier.package_path = package_path
         unifier.dir_name = dir_name
         with open(file_path + ".yml", mode="r", encoding="utf-8") as yml_file:
@@ -132,7 +163,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
 def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
     from demisto_sdk.yaml_tools.unifier import Unifier
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e, f, g: None):
-        unifier = Unifier("", None, None, None, None, None)
+        unifier = Unifier("", None, None, None)
         unifier.package_path = package_path
         unifier.dir_name = dir_name
         with open(file_path + ".yml", "r") as yml:

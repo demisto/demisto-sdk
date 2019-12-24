@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from argparse import ArgumentDefaultsHelpFormatter
 
 from demisto_sdk.common.tools import print_color, LOG_COLORS

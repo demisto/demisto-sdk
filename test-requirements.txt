@@ -1,5 +1,4 @@
 bandit
-demisto-py
 flake8
 mock
 mypy

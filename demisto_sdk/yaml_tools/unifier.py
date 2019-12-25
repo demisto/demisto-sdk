@@ -17,7 +17,7 @@ class Unifier:
                  image_prefix=DEFAULT_IMAGE_PREFIX):
 
         directory_name = ""
-        for optional_dir_name in DIR_TO_PREFIX.keys():
+        for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in indir:
                 directory_name = optional_dir_name
 
@@ -81,10 +81,9 @@ class Unifier:
             }
         for file_path, file_text in output_map.items():
             if os.path.isfile(file_path):
-                # raise ValueError('Output file already exists: {}.'
-                #                  ' Make sure to remove this file from source control'
-                #                  ' or rename this package (for example if it is a v2).'.format(self.dest_path))
-                continue
+                raise ValueError('Output file already exists: {}.'
+                                 ' Make sure to remove this file from source control'
+                                 ' or rename this package (for example if it is a v2).'.format(self.dest_path))
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
                 file_.write(file_text)
         return output_map

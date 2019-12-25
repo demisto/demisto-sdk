@@ -532,7 +532,9 @@ class FilesValidator:
                 self._is_valid = prev_self_valid
 
     # parser.add_argument('-t', '--test-filter', type=str2bool, default=False,
-    #                     help='Check that tests are valid.') TODO: need to check where this was used
+    #                     help='Check that tests are valid.')
+    # TODO: after validation there was a step to run the configure_tests script to check that each changed file
+    #  had a relevant test - was used as part of the hooks.
 
     @staticmethod
     def _is_py_script_or_integration(file_path):

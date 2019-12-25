@@ -70,7 +70,7 @@ def main(config, version, env_dir):
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
     type=click.Choice(["True", "False"]),
-    default='False'
+    default='True'
 )
 @pass_config
 def extract(config, **kwargs):
@@ -78,7 +78,7 @@ def extract(config, **kwargs):
     return extractor.extract_to_package_format()
 
 
-@main.command(name="extract_code",
+@main.command(name="extract-code",
               short_help="Extract code from a Demisto integration or script yaml file.")
 @click.help_option(
     '-h', '--help'
@@ -109,7 +109,7 @@ def extract(config, **kwargs):
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
     type=click.Choice(["True", "False"]),
-    default='False'
+    default='True'
 )
 @pass_config
 def extract_code(config, **kwargs):
@@ -118,7 +118,7 @@ def extract_code(config, **kwargs):
 
 
 @main.command(name="unify",
-              short_help='Unify code, image and description files to a single Demisto yaml file.')
+              short_help='Unify code, image, description and yml files to a single Demisto yml file.')
 @click.option(
     "-i", "--indir", help="The path to the files to unify", required=True
 )
@@ -147,8 +147,8 @@ def unify(**kwargs):
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
 @click.option(
-    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='True',
-    help='To check backward compatibility.')
+    '--no-backward-comp', type=click.Choice(["True", "False"]), default='False',
+    help='Do NOT check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
@@ -156,7 +156,8 @@ def unify(**kwargs):
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    validator = FilesValidator(configuration=config.configuration, is_backward_check=str2bool(kwargs['backward_comp']),
+    validator = FilesValidator(configuration=config.configuration,
+                               is_backward_check=not str2bool(kwargs['no-backward-comp']),
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
@@ -171,7 +172,7 @@ def validate(config, **kwargs):
     '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
 @click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False,
-    help='Flag for if you\'d like to keep the bundles created in the process of making the content artifacts')
+    help='Keep the bundles created in the process of making the content artifacts')
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
     content_creator.run()
@@ -179,7 +180,7 @@ def create(**kwargs):
 
 @main.command(name="secrets",
               short_help="Run Secrets validator to catch sensitive data before exposing your code to public repository."
-                         " Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "
+                         " Attach path to whitelist to allow manual whitelists. Default file path to secrets is "
                          "'./Tests/secrets_white_list.json' ")
 @click.help_option(
     '-h', '--help'
@@ -223,7 +224,7 @@ def secrets(config, **kwargs):
 @click.option(
     "-k", "--keep-container", is_flag=True, help="Keep the test container")
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output")
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
     "--cpu-num",
     help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.)",
@@ -235,7 +236,7 @@ def lint(config, dir, **kwargs):
 
 
 def demisto_sdk_cli():
-    print(main())
+    sys.exit(main())
 
 
 if __name__ == '__main__':

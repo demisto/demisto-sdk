@@ -24,6 +24,8 @@ mapping:
     type: bool
   beta:
     type: bool
+  feed:
+    type: bool
   category:
     type: str
     enum: [

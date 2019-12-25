@@ -1,16 +1,16 @@
 import os
 import yaml
 import threading
-import subprocess
 import concurrent.futures
-from demisto_sdk.common.constants import Errors
 from typing import Tuple, List
-from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements,\
-    print_color, LOG_COLORS, get_yml_paths_in_dir
-from demisto_sdk.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
 from demisto_sdk.dev_tools.linter import Linter
+from demisto_sdk.common.constants import Errors
+from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
+from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements,\
+    print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
+
 
 LOCK = threading.Lock()
 
@@ -24,27 +24,31 @@ class LintManager:
         no_pylint (bool): Whether to skip pylint.
         no_flake8 (bool): Whether to skip flake8.
         no_mypy (bool): Whether to skip mypy.
+        no_bandit (bool): Whether to skip bandit.
+        no_bc_check (bool): Whether to skip backwards compatibility checks.
         verbose (bool): Whether to output a detailed response.
         root (bool): Whether to run pytest container with root user.
         keep_container (bool): Whether to keep the test container.
         cpu_num (int): Number of CPUs to run pytest on.
         parallel (bool): Whether to run command on multiple threads.
         max_workers (int): How many workers to run for multi-thread run.
+        run_all_tests (bool): Whether to run all tests.
         configuration (Configuration): The system configuration.
     """
 
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
-                 no_bc_check: bool = False, all: bool = False, configuration: Configuration = Configuration()):
+                 no_bc_check: bool = False, run_all_tests: bool = False,
+                 configuration: Configuration = Configuration()):
 
-        if no_test and no_pylint and no_flake8 and no_mypy:
+        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.parallel = parallel
         self.log_verbose = verbose
         self.root = root
-        self.max_workers = 10 if max_workers is None else max_workers
+        self.max_workers = int(max_workers)
         self.keep_container = keep_container
         self.cpu_num = cpu_num
         self.common_server_created = False
@@ -55,7 +59,7 @@ class LintManager:
             'tests': not no_test,
             'bandit': not no_bandit
         }
-        if all:
+        if run_all_tests:
             self.pkgs = self.get_all_directories()
 
         else:
@@ -66,7 +70,8 @@ class LintManager:
         self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
 
-    def get_all_directories(self) -> List[str]:
+    @staticmethod
+    def get_all_directories() -> List[str]:
         """Gets all integration, script and beta_integrations in packages and packs in content repo.
 
         Returns:
@@ -100,7 +105,7 @@ class LintManager:
         Returns:
             int. 0 on success and 1 if any package failed
         """
-        # if we dont run in parallel we run a single process
+        # TODO: check this out
         if not self.no_bc_check:
             pkgs_to_run = self._get_packages_to_run()
 
@@ -134,8 +139,7 @@ class LintManager:
 
             return 1 if fail_pkgs else 0
 
-        # we run parallel processes
-        else:
+        else:  # we run parallel processes
             return self.run_parallel_packages(pkgs_to_run)
 
     def run_parallel_packages(self, pkgs_to_run: List[str]) -> int:
@@ -147,9 +151,8 @@ class LintManager:
         Returns:
             int. 0 on success and 1 if any package failed
         """
-        max_workers = int(self.max_workers)
-
-        print("Starting parallel run for [{}] packages with [{}] max workers.\n".format(len(pkgs_to_run), max_workers))
+        print("Starting parallel run for [{}] packages with [{}] max workers.\n".format(len(pkgs_to_run),
+                                                                                        self.max_workers))
         fail_pkgs = []
         good_pkgs = []
 
@@ -164,7 +167,7 @@ class LintManager:
             else:
                 fail_pkgs.append('Scripts/CommonServerPython')
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures_submit = [executor.submit(self._run_single_package_thread, directory) for directory in pkgs_to_run]
             for future in list(concurrent.futures.as_completed(futures_submit)):
                 result = future.result()
@@ -207,9 +210,8 @@ class LintManager:
         Returns:
             list[str]. A list of names of packages that should run.
         """
-        pkg_dirs = self.pkgs
         pkgs_to_run = []
-        for directory in pkg_dirs:
+        for directory in self.pkgs:
             if self._check_should_run_pkg(pkg_dir=directory):
                 pkgs_to_run.append(directory)
 
@@ -230,8 +232,8 @@ class LintManager:
         if os.getenv('CONTENT_PRECOMMIT_RUN_DEV_TASKS'):
             # if running in precommit we check against staged
             diff_compare = '--staged'
-        res = subprocess.run(["git", "diff", "--name-only", diff_compare, "--", pkg_dir], text=True,
-                             capture_output=True)
+
+        res = run_command(f"git diff --name-only {diff_compare} -- {pkg_dir}")
         if res.stdout:
             return True
         return False

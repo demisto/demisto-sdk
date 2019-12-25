@@ -1,5 +1,6 @@
 import os
 import sys
+import yaml
 import time
 import shutil
 import hashlib
@@ -7,7 +8,7 @@ import threading
 import subprocess
 from datetime import datetime
 import requests
-import yaml
+
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
@@ -91,11 +92,7 @@ class Linter:
         return True
 
     def remove_common_server_python(self):
-        """checking if file exists and removing it
-
-            Returns:
-                None.
-        """
+        """checking if file exists and removing it."""
         if self.common_server_created:
             os.remove(os.path.join(self.project_dir, self.common_server_target_path))
 
@@ -116,8 +113,10 @@ class Linter:
             if script_type == 'powershell':
                 # TODO powershell linting
                 return 0
+
             print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_type))
             return 0
+
         dockers = get_docker_images(script_obj)
         for docker in dockers:
             for try_num in (1, 2):
@@ -163,7 +162,7 @@ class Linter:
                             print(output)
                             print_color("============ Finished process for: {} ============\n".format(self.project_dir),
                                         LOG_COLORS.GREEN)
-                        self.lock.release()
+
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:
                     if ex.output:
@@ -173,6 +172,7 @@ class Linter:
                         print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
                             self.project_dir), LOG_COLORS.RED)
                         return_code = 1
+
                     if not self.log_verbose:
                         sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n\n"
                                          .format(" ".join(sys.argv[:])))
@@ -187,15 +187,17 @@ class Linter:
                         sys.stderr.write("Retrying as failure seems to be docker communication related...\n")
 
                 finally:
+                    self.lock.release()
                     sys.stdout.flush()
                     sys.stderr.flush()
+
         return return_code
 
     def run_flake8(self, py_num) -> int:
         """Runs flake8
 
         Args:
-            py_num: The python version in use
+            py_num (int): The python version in use
 
         Returns:
             int. 0 if flake8 is successful, 1 otherwise.
@@ -425,26 +427,3 @@ class Linter:
         unifier = Unifier(self.project_dir)
         code_file = unifier.get_code_file('.py')
         return os.path.abspath(code_file)
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        from argparse import ArgumentDefaultsHelpFormatter
-        description = """Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the
-        docker image of an integration/script.
-        Meant to be used with integrations/scripts that use the folder (package) structure.
-        Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder. """
-        parser = subparsers.add_parser('lint', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-d", "--dir", help="Specify directory of integration/script", required=True)
-        parser.add_argument("--no-pylint", help="Do NOT run pylint linter", action='store_true')
-        parser.add_argument("--no-mypy", help="Do NOT run mypy static type checking", action='store_true')
-        parser.add_argument("--no-flake8", help="Do NOT run flake8 linter", action='store_true')
-        parser.add_argument("--no-bandit", help="Do NOT run bandit linter", action='store_true')
-        parser.add_argument("--no-test", help="Do NOT test (skip pytest)", action='store_true')
-        parser.add_argument("-r", "--root", help="Run pytest container with root user", action='store_true')
-        parser.add_argument("-k", "--keep-container", help="Keep the test container", action='store_true')
-        parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true')
-        parser.add_argument(
-            "--cpu-num",
-            help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.)",
-            default=0
-        )

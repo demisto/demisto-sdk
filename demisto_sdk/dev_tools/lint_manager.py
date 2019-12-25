@@ -312,5 +312,5 @@ class LintManager:
         parser.add_argument("-p", "--parallel", help="Run dev tasks in parallel", action='store_true')
         parser.add_argument("-m", "--max-workers", help="How many threads to run in parallel")
         parser.add_argument("--no-bc", help="Check diff with $DIFF_COMPARE env variable", action='store_true')
-        parser.add_argument("-a", "--run_all_tests", help="Run lint on all directories in content repo",
+        parser.add_argument("-a", "--run-all-tests", help="Run lint on all directories in content repo",
                             action='store_true')

@@ -81,7 +81,7 @@ class DemistoSDK:
                     return 1
 
             elif args.command == 'lint':
-                if args.dir is None and args.all is False:
+                if args.dir is None and args.run_all_tests is False:
                     print_error("No directories given for lint command to run on.")
                     return 1
 

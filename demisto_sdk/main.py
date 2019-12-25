@@ -82,8 +82,8 @@ def extract(config, **kwargs):
     return extractor.extract_to_package_format()
 
 
-# ====================== extract_code ====================== #
-@main.command(name="extract_code",
+# ====================== extract-code ====================== #
+@main.command(name="extract-code",
               short_help="Extract code from a Demisto integration or script yaml file.")
 @click.help_option(
     '-h', '--help'
@@ -246,8 +246,8 @@ def lint(config, dir, **kwargs):
     return linter.run_dev_packages()
 
 
-# ====================== run_playbook ====================== #
-@main.command(name="run_playbook",
+# ====================== run-playbook ====================== #
+@main.command(name="run-playbook",
               short_help="Run a playbook in Demisto.")
 @click.help_option(
     '-h', '--help'

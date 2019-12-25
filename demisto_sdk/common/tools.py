@@ -55,21 +55,22 @@ def print_warning(warning_str):
     print_color(warning_str, LOG_COLORS.YELLOW)
 
 
-def run_command(command, is_silenced=True, exit_on_error=True):
+def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     """Run a bash command in the shell.
 
     Args:
         command (string): The string of the command you want to execute.
         is_silenced (bool): Whether to print command output.
         exit_on_error (bool): Whether to exit on command error.
+        cwd (str): the path to the current working directory.
 
     Returns:
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True)
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
-        p = Popen(command.split())
+        p = Popen(command.split(), cwd=cwd)
 
     output, err = p.communicate()
     if err:
@@ -400,7 +401,7 @@ def get_docker_images(script_obj):
     return imgs
 
 
-def get_python_version(docker_image, log_verbose):
+def get_python_version(docker_image, log_verbose, no_prints=False):
     """
     Get the python version of a docker image
     Arguments:
@@ -415,7 +416,9 @@ def get_python_version(docker_image, log_verbose):
                            "python", "-c",
                            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
                           universal_newlines=True, stderr=stderr_out).strip()
-    print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+    if not no_prints:
+        print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
         raise ValueError("Python vesion for docker image: {} is not supported: {}. "

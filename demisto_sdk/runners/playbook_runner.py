@@ -47,7 +47,7 @@ class PlaybookRunner:
                   f'To see the playbook run in real-time please go to : {work_plan_link}',
                   LOG_COLORS.GREEN)
 
-            playbook_results_dict = dict()  # type: dict
+            playbook_results = dict()  # type: dict
             elasped_time = 0
             start_time = time.time()
 
@@ -64,7 +64,7 @@ class PlaybookRunner:
                 print_error(f'The command had timed out while the playbook is in progress.\n'
                             f'To keep tracking the playbook please go to : {work_plan_link}')
             else:
-                if playbook_results_dict["state"] == "failed":
+                if playbook_results["state"] == "failed":
                     print_color("The playbook finished running with status: FAILED", LOG_COLORS.RED)
                 else:
                     print_color("The playbook finished running with status: COMPLETED", LOG_COLORS.GREEN)

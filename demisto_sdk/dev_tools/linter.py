@@ -162,6 +162,7 @@ class Linter:
                             print(output)
                             print_color("============ Finished process for: {} ============\n".format(self.project_dir),
                                         LOG_COLORS.GREEN)
+                        self.lock.release()
 
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:
@@ -187,7 +188,6 @@ class Linter:
                         sys.stderr.write("Retrying as failure seems to be docker communication related...\n")
 
                 finally:
-                    self.lock.release()
                     sys.stdout.flush()
                     sys.stderr.flush()
 
@@ -319,9 +319,8 @@ class Linter:
             print_v("Failed check and delete for lock file: {}. Error: {}".format(lock_file, ex))
         wait_print = True
         for x in range(60):
-            images_ls = subprocess.check_output(['docker', 'image', 'ls', '--format',
-                                                 '{{.Repository}}:{{.Tag}}', target_image],
-                                                universal_newlines=True).strip()
+            images_ls = run_command(' '.join(['docker', 'image', 'ls', '--format', '{{.Repository}}:{{.Tag}}',
+                                              target_image])).strip()
             if images_ls == target_image:
                 print('{}: Using already existing docker image: {}'.format(datetime.now(), target_image))
                 return target_image
@@ -351,9 +350,8 @@ class Linter:
                                                                                                     cpe.output))
             print("{}: Creating docker image: {} (this may take a minute or two...)".format(datetime.now(),
                                                                                             target_image))
-            container_id = subprocess.check_output(
-                ['docker', 'create', '-i', docker_base_image, 'sh', '/' + self.container_setup_script_name],
-                universal_newlines=True).strip()
+            container_id = run_command(' '.join(['docker', 'create', '-i', docker_base_image, 'sh',
+                                                 '/' + self.container_setup_script_name])).strip()
             subprocess.check_call(['docker', 'cp', self.container_setup_script,
                                    container_id + ':/' + self.container_setup_script_name])
             print_v(subprocess.check_output(['docker', 'start', '-a', '-i', container_id],

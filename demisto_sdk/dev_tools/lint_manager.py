@@ -48,7 +48,7 @@ class LintManager:
         self.parallel = parallel
         self.log_verbose = verbose
         self.root = root
-        self.max_workers = int(max_workers)
+        self.max_workers = 10 if max_workers is None else int(max_workers)
         self.keep_container = keep_container
         self.cpu_num = cpu_num
         self.common_server_created = False
@@ -59,14 +59,18 @@ class LintManager:
             'tests': not no_test,
             'bandit': not no_bandit
         }
+        self.no_bc_check = no_bc_check
+
         if run_all_tests:
             self.pkgs = self.get_all_directories()
+            self.no_bc_check = True
 
         else:
             self.pkgs = project_dir_list.split(',')
+            if not self.no_bc_check:
+                self.pkgs = self._get_packages_to_run()
 
         self.configuration = configuration
-        self.no_bc_check = no_bc_check
         self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
 
@@ -105,17 +109,10 @@ class LintManager:
         Returns:
             int. 0 on success and 1 if any package failed
         """
-        # TODO: check this out
-        if not self.no_bc_check:
-            pkgs_to_run = self._get_packages_to_run()
-
-        else:
-            pkgs_to_run = self.pkgs
-
         good_pkgs = []
         fail_pkgs = []
         if not self.parallel:
-            for project_dir in pkgs_to_run:
+            for project_dir in self.pkgs:
                 py_num = self._get_package_python_number(project_dir)
                 if py_num == 2.7:
                     requirements = self.requirements_for_python2
@@ -140,7 +137,7 @@ class LintManager:
             return 1 if fail_pkgs else 0
 
         else:  # we run parallel processes
-            return self.run_parallel_packages(pkgs_to_run)
+            return self.run_parallel_packages(self.pkgs)
 
     def run_parallel_packages(self, pkgs_to_run: List[str]) -> int:
         """Runs the Lint command in parallel on several threads.
@@ -236,6 +233,7 @@ class LintManager:
         res = run_command(f"git diff --name-only {diff_compare} -- {pkg_dir}")
         if res.stdout:
             return True
+
         return False
 
     def _run_single_package_thread(self, package_dir: str) -> Tuple[int, str]:
@@ -314,4 +312,5 @@ class LintManager:
         parser.add_argument("-p", "--parallel", help="Run dev tasks in parallel", action='store_true')
         parser.add_argument("-m", "--max-workers", help="How many threads to run in parallel")
         parser.add_argument("--no-bc", help="Check diff with $DIFF_COMPARE env variable", action='store_true')
-        parser.add_argument("-a", "--all", help="Run lint on all directories in content repo", action='store_true')
+        parser.add_argument("-a", "--run_all_tests", help="Run lint on all directories in content repo",
+                            action='store_true')

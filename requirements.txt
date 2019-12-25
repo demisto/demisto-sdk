@@ -1,5 +1,6 @@
 bs4>=0.0.1
 click>=7.0
+demisto-py==2.0.6
 pykwalify>=1.7.0
 PyPDF2>=1.26.0
 PyYAML>=5.1.2

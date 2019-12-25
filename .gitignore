@@ -93,4 +93,5 @@ git_push.sh
 .vscode
 .pytest_cache
 
-.idea/
+# Idea
+.idea

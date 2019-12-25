@@ -6,6 +6,8 @@
 
 ### 0.2.7
 
+* Added support for multi-package **lint** both with parallel and without.
+* Added all parameter in **lint** to run on all packages and packs in content repository.
 * Added the **run-playbook* command
 
 ### 0.2.6

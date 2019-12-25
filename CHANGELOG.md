@@ -4,6 +4,15 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.2.7
+
+* Added support for multi-package **lint** both with parallel and without.
+* Added all parameter in **lint** to run on all packages and packs in content repository.
+
+### 0.2.6
+
+* Fixed an issue with locating release notes for beta integrations in **validate**.
+
 ### 0.2.5
 
 * Fixed an issue with locating release notes for beta integrations in **validate**.

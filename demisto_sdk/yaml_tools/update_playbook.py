@@ -2,6 +2,7 @@ from argparse import ArgumentDefaultsHelpFormatter
 
 from demisto_sdk.common.tools import print_color, LOG_COLORS
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
+from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
 
 
 class PlaybookYMLFormat(BaseUpdateYML):
@@ -46,6 +47,8 @@ class PlaybookYMLFormat(BaseUpdateYML):
         self.save_yml_to_destination_file()
 
         print_color(F'========Finished updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+
+        self.initiate_file_validator(PlaybookValidator)
 
     @staticmethod
     def add_sub_parser(subparsers):

@@ -1,9 +1,10 @@
 from typing import List
 from argparse import ArgumentDefaultsHelpFormatter
 
+from demisto_sdk.common.constants import BANG_COMMAND_NAMES
 from demisto_sdk.common.tools import print_color, LOG_COLORS
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
-from demisto_sdk.common.constants import BANG_COMMAND_NAMES
+from demisto_sdk.common.hook_validations.integration import IntegrationValidator
 
 
 class IntegrationYMLFormat(BaseUpdateYML):
@@ -79,6 +80,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
         print_color(F'========Finished updates for integration: {self.output_file_name}=======',
                     LOG_COLORS.YELLOW)
+
+        self.initiate_file_validator(IntegrationValidator)
 
     @staticmethod
     def add_sub_parser(subparsers):

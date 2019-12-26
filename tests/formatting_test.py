@@ -16,6 +16,12 @@ BASIC_YML_TEST_PACKS = [
 ]
 
 
+@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title', [(SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy')])
+def test_save_output_file1(source_path, destination_path, formatter, yml_title):
+    base_yml = formatter(source_path, destination_path)
+    base_yml.format_file()
+
+
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title', BASIC_YML_TEST_PACKS)
 def test_basic_yml_updates(source_path, destination_path, formatter, yml_title):
     base_yml = formatter(source_path)

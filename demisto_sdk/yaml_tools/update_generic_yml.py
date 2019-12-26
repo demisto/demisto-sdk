@@ -4,6 +4,7 @@ import yaml
 import yamlordereddictloader
 
 from demisto_sdk.common.tools import print_color, LOG_COLORS
+from demisto_sdk.common.hook_validations.structure import StructureValidator
 
 
 class BaseUpdateYML:
@@ -49,7 +50,7 @@ class BaseUpdateYML:
             str. the full formatted output file name.
         """
         source_dir = os.path.dirname(self.source_file)
-        file_name = os.path.basename(output_file_name) or os.path.basename(self.source_file)
+        file_name = os.path.basename(output_file_name or self.source_file)
 
         if self.__class__.__name__ == 'PlaybookYMLFormat':
             if not file_name.startswith('playbook-'):
@@ -130,3 +131,15 @@ class BaseUpdateYML:
         self.set_version_to_default()
 
         print_color(F'=======Finished generic updates for YML: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+
+    def initiate_file_validator(self, validator_type):
+        print_color('Starting validating files structure', LOG_COLORS.GREEN)
+
+        structure = StructureValidator(str(self.output_file_name))
+        validator = validator_type(structure)
+
+        if validator.is_valid_file():
+            print_color('The files are valid', LOG_COLORS.GREEN)
+
+        else:
+            print_color('The files are invalid', LOG_COLORS.RED)

@@ -1,7 +1,4 @@
-bandit
-flake8
 mock
-mypy
 pre-commit
 pytest
 pytest-mock

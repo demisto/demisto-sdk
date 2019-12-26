@@ -1,4 +1,7 @@
+bandit>=1.6.2
 bs4>=0.0.1
+flake8>=3.7.9
+mypy>=0.761
 pykwalify>=1.7.0
 PyPDF2>=1.26.0
 PyYAML>=5.1.2

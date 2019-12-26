@@ -63,7 +63,7 @@ class BaseUpdateYML:
         Returns:
             Dict. Data from YML.
         """
-        print_color(F'Reading YML data', LOG_COLORS.NATIVE)
+        print(F'Reading YML data')
 
         with open(self.source_file) as f:
             return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
@@ -83,7 +83,7 @@ class BaseUpdateYML:
 
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        print_color(F'Removing _dev and _copy suffixes from name and display tags', LOG_COLORS.NATIVE)
+        print(F'Removing _dev and _copy suffixes from name and display tags')
 
         self.yml_data['name'] = self.yml_data.get('name', '').replace('_copy', '').replace('_dev', '')
         if self.yml_data.get('display'):
@@ -91,19 +91,19 @@ class BaseUpdateYML:
 
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name."""
-        print_color(F'Updating YML ID to be the same as YML name', LOG_COLORS.NATIVE)
+        print(F'Updating YML ID to be the same as YML name')
 
         self.id_and_version_location['id'] = self.yml_data['name']
 
     def set_version_to_default(self):
         """Replaces the version of the YML to default."""
-        print_color(F'Setting YML version to default: {self.DEFAULT_YML_VERSION}', LOG_COLORS.NATIVE)
+        print(F'Setting YML version to default: {self.DEFAULT_YML_VERSION}')
 
         self.id_and_version_location['version'] = self.DEFAULT_YML_VERSION
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print_color(F'Saving output YML file to {self.output_file_name}', LOG_COLORS.NATIVE)
+        print(F'Saving output YML file to {self.output_file_name}')
 
         # Configure safe dumper (multiline for strings)
         yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str

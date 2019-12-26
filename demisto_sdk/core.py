@@ -106,6 +106,7 @@ class DemistoSDK:
 
             elif args.command == 'create':
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
+
             elif args.command == 'format':
                 self.format_yml_files(args.type, args.path, args.output_file)
 

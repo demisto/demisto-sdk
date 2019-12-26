@@ -4,12 +4,13 @@
 # Python client that invokes functions in the Demisto SDK.
 #
 # Author:       Demisto
-# Version:      0.1
+# Version:      0.2.4
 #
 
 import sys
-import argparse
 import json
+import argparse
+from pkg_resources import get_distribution
 
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DIR_TO_PREFIX
@@ -35,6 +36,8 @@ class DemistoSDK:
         self.parser = argparse.ArgumentParser(description='Manage your content with the Demisto SDK.',
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         self.parser.add_argument('-d', '--env-dir', help='Specify a working directory.')
+        self.parser.add_argument('-v', '--version', help='Get the demisto-sdk version.',
+                                 action='store_true', default=False)
         self.subparsers = self.parser.add_subparsers(dest='command')
         self.configuration = configuration
         self.initialize_parsers()
@@ -54,36 +57,62 @@ class DemistoSDK:
 
         if args.env_dir:
             self.configuration.env_dir = args.env_dir
+
+        if args.version:
+            version = get_distribution('demisto-sdk').version
+            print(version)
+            return 0
+
         try:
             if args.command == 'extract':
                 if args.migrate:
                     self.migrate_file(args.infile, args.outfile, args.demistomock, args.commonserver, args.type)
+
                 else:
                     self.extract_code(args.infile, args.outfile, args.demistomock, args.commonserver, args.type)
+
             elif args.command == 'unify':
                 self.unify_package(args.indir, args.outdir)
+
             elif args.command == 'validate':
+
                 if self.validate(is_backward_check=args.backward_comp, is_circle=args.circle,
                                  prev_ver=args.prev_ver, validate_conf_json=args.conf_json, use_git=args.use_git):
                     print_color('The files are valid', LOG_COLORS.GREEN)
+
                 else:
                     print_color('The files are invalid', LOG_COLORS.RED)
+                    return 1
+
             elif args.command == 'lint':
                 return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                                  no_bandit=args.no_bandit, no_test=args.no_test, root=args.root,
-                                 keep_container=args.keep_container, verbose=args.verbose, cpu_num=args.cpu_num)
+                                 keep_container=args.keep_container, verbose=args.verbose, cpu_num=args.cpu_num,
+                                 requirements=args.requirements)
+
             elif args.command == 'upload':
-                self.upload(infile=args.infile, url=args.url, insecure=args.insecure, verbose=args.verbose)
+                self.upload(infile=args.infile, url=args.url, verbose=args.verbose)
+
             elif args.command == 'run':
-                self.run(query=args.query, url=args.url, insecure=args.insecure, verbose=args.verbose, debug_mode=args.debug_mode)
+                self.run(query=args.query, url=args.url, insecure=args.insecure, verbose=args.verbose,
+                         debug_mode=args.debug_mode)
+
             elif args.command == 'secrets':
-                self.secrets(is_circle=args.circle, white_list_path=args.whitelist)
+                # returns True is secrets were found
+                if self.secrets(is_circle=args.circle, white_list_path=args.whitelist):
+                    return 1
+
             elif args.command == 'create':
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
+
             else:
                 print('Use demisto-sdk -h to see the available commands.')
+
+            return 0
+
         except Exception as e:
             print_error('Error! The operation [{}] failed: {}'.format(args.command, str(e)))
+            return 1
 
     def unify_package(self, package_path, dest_path):
         """
@@ -157,7 +186,7 @@ class DemistoSDK:
         to a Demisto instance.
         :param kwargs Arguments
         """
-        uploader = Uploader(configuration=self.configuration, **kwargs)
+        uploader = Uploader(**kwargs)
         uploader.upload()
 
     def run(self, **kwargs):
@@ -165,7 +194,7 @@ class DemistoSDK:
         Run integration command on a remote Demisto instance.
         :param kwargs Arguments
         """
-        runner = Runner(configuration=self.configuration, **kwargs)
+        runner = Runner(**kwargs)
         runner.run()
 
     def secrets(self, **kwargs):

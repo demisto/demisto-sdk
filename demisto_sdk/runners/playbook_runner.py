@@ -1,3 +1,4 @@
+import os
 import time
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -6,21 +7,24 @@ from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
 class PlaybookRunner:
     """PlaybookRunner is a class that's designed to run a playbook in a given Demisto instance.
-    It will decide whether to wait for the playbook to finish its run or just trigger it, according to the 'wait' flag.
 
     Attributes:
-        base_link_to_workplan (str): the base link to the workplan of the created incident.
+        playbook_id (str): the ID of the playbook to run
+        should_wait (bool): whether to wait until the playbook run is completed or not.
+        timeout (int): timeout for the command. The playbook will continue to run in Demisto
+        base_link_to_workplan (str): the base link to see the full playbook run in Demisto.
         demisto_client (demisto_client): object for creating an incident in Demisto.
     """
+    DEMISTO_API_KEY_ENV = 'DEMISTO_API_KEY'
 
-    def __init__(self, playbook_name: str, url: str, api: str, wait: bool, timeout: int):
-        self.playbook_name = playbook_name
+    def __init__(self, playbook_id: str, url: str, wait: bool, timeout: int):
+        self.playbook_id = playbook_id
         self.should_wait = wait
         self.timeout = timeout
         self.base_link_to_workplan = f'{url}/#/WorkPlan/'
         self.demisto_client = demisto_client.configure(
             base_url=url,
-            api_key=api,
+            api_key=self.get_api_key(),
             verify_ssl=False)
 
     def run_playbook(self):
@@ -32,12 +36,12 @@ class PlaybookRunner:
         """
         # create an incident with the given playbook
         incident_id = self.create_incident_with_playbook(
-            incident_name=f'inc_{self.playbook_name}', playbook_name=self.playbook_name)
+            incident_name=f'inc_{self.playbook_id}', playbook_id=self.playbook_id)
         if incident_id == -1:
             return 1
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
-        if self.should_wait:
+        if self.should_wait is True:
             print(f'Waiting for the playbook to finish running.. \n'
                   f'To see the playbook run in real-time please go to : {work_plan_link}',
                   LOG_COLORS.GREEN)
@@ -61,7 +65,7 @@ class PlaybookRunner:
                 if playbook_results["state"] == "failed":
                     print_error("The playbook finished running with status: FAILED")
                 else:
-                    print_color("The playbook finished running with status: COMPLETED", LOG_COLORS.GREEN)
+                    print_color("The playbook has completed it's run successfully", LOG_COLORS.GREEN)
 
         # The command does not wait for the playbook to finish running
         else:
@@ -69,52 +73,51 @@ class PlaybookRunner:
 
         return 0
 
-    def create_incident_with_playbook(self, incident_name, playbook_name):
+    def create_incident_with_playbook(self, incident_name, playbook_id):
         # type: (str, str) -> int
         """Create an incident in Demisto with the given incident_name and the given playbook_id
 
         Args:
             incident_name (str): The name of the incident
-            playbook_name (str): The id of the playbook
+            playbook_id (str): The id of the playbook
 
         Returns:
             int. The new incident's ID. Returns 1 in a case of creation error.
         """
 
-        incident_request = self.create_incident_request(playbook_name, incident_name)
-        print_error(str(type(incident_request)))
+        create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
+        create_incident_request.create_investigation = True
+        create_incident_request.playbook_id = playbook_id
+        create_incident_request.name = incident_name
+
         try:
-            response = self.demisto_client.create_incident(create_incident_request=incident_request)
-        except RuntimeError as err:
-            print_error(str(err))
-            return -1
+            response = self.demisto_client.create_incident(create_incident_request=create_incident_request)
         except ApiException:
-            print_error(f'Failed to create incident with playbook id : "{playbook_name}", '
+            print_error(f'Failed to create incident with playbook id : "{playbook_id}", '
                         'possible reasons are:\n'
-                        '1. This playbook id does not exist \n'
+                        '1. This playbook name does not exist \n'
                         '2. Schema problems in the playbook \n'
                         '3. Unauthorized api key')
             return -1
 
-        print_color(f'The playbook: {self.playbook_name} was triggered successfully.', LOG_COLORS.GREEN)
+        print_color(f'The playbook: {self.playbook_id} was triggered successfully.', LOG_COLORS.GREEN)
         return response.id
 
     def get_playbook_results_dict(self, inc_id):
         playbook_results = self.demisto_client.generic_request(method='GET', path=f'/inv-playbook/{inc_id}')
         return eval(playbook_results[0])
 
-    def create_incident_request(self, playbook_name, incident_name):
-        """
+    def get_api_key(self):
+        """Retrieve the API Key
 
-        Args:
-            playbook_name:
-            incident_name:
+        Raises:
+            RuntimeError: if the API Key environment variable is not found
 
         Returns:
-
+            str: API Key
         """
-        create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
-        create_incident_request.create_investigation = True
-        create_incident_request.playbook_id = playbook_name
-        create_incident_request.name = incident_name
-        return create_incident_request
+        api_key = os.environ.get(self.DEMISTO_API_KEY_ENV, None)
+        if api_key is None:
+            raise RuntimeError(f'Error: Environment variable {self.DEMISTO_API_KEY_ENV} not found')
+
+        return api_key

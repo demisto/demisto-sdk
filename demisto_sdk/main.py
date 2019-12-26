@@ -248,7 +248,10 @@ def lint(config, dir, **kwargs):
 
 # ====================== run-playbook ====================== #
 @main.command(name="run-playbook",
-              short_help="Run a playbook in Demisto.")
+              short_help="Run a playbook in Demisto. "
+                         "DEMISTO_API_KEY environment variable should contain a valid Demisto API Key. "
+                         "Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u "
+                         "'https://demisto.local'.")
 @click.help_option(
     '-h', '--help'
 )
@@ -258,8 +261,8 @@ def lint(config, dir, **kwargs):
     required=True
 )
 @click.option(
-    '--playbook_name', '-p',
-    help="The playbook name to run.",
+    '--playbook_id', '-p',
+    help="The playbook ID to run.",
     required=True
 )
 @click.option(
@@ -268,11 +271,6 @@ def lint(config, dir, **kwargs):
     default="True",
     show_default=True,
     help="Wait until the playbook run is finished and get a response."
-)
-@click.option(
-    '--api', '-a',
-    required=True,
-    help="API key to connect with"
 )
 @click.option(
     '--timeout', '-t',

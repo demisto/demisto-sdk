@@ -18,9 +18,9 @@ class BaseUpdateYML:
 
     DEFAULT_YML_VERSION = -1
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
-        '<class \'demisto_sdk.yaml_tools.update_integration.IntegrationYMLFormat\'>': 'commonfields',
-        '<class \'demisto_sdk.yaml_tools.update_script.ScriptYMLFormat\'>': 'commonfields',
-        '<class \'demisto_sdk.yaml_tools.update_playbook.PlaybookYMLFormat\'>': '',
+        'IntegrationYMLFormat': 'commonfields',
+        'ScriptYMLFormat': 'commonfields',
+        'PlaybookYMLFormat': '',
     }
 
     def __init__(self, source_file='', output_file_name=''):
@@ -42,14 +42,16 @@ class BaseUpdateYML:
     def set_output_file_name(self, output_file_name):
         """Creates and format the output file name according to user input.
 
-        :param output_file_name: The name the user defined.
-        :return:
+        Args:
+            output_file_name: The output file name the user defined.
+
+        Returns:
             str. the full formatted output file name.
         """
         source_dir = os.path.dirname(self.source_file)
-        file_name = output_file_name or os.path.basename(self.source_file)
+        file_name = os.path.basename(output_file_name) or os.path.basename(self.source_file)
 
-        if str(type(self)) == '<class \'demisto_sdk.yaml_tools.update_integration.PlaybookYMLFormat\'>':
+        if self.__class__.__name__ == 'PlaybookYMLFormat':
             if not file_name.startswith('playbook-'):
                 file_name = F'playbook-{file_name}'
 
@@ -69,10 +71,10 @@ class BaseUpdateYML:
     def get_id_and_version_path_object(self):
         """Gets the dict that holds the id and version fields.
 
-        :return:
+        Returns:
             Dict. Holds the id and version fields.
         """
-        instance_name = str(type(self))
+        instance_name = self.__class__.__name__
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[instance_name]
         return self.yml_data.get(path, self.yml_data)
 
@@ -88,22 +90,19 @@ class BaseUpdateYML:
             self.yml_data['display'] = self.yml_data.get('display', '').replace('_copy', '').replace('_dev', '')
 
     def update_id_to_equal_name(self):
-        """Updates the id of the YML to be the same as it's name.
-        """
+        """Updates the id of the YML to be the same as it's name."""
         print_color(F'Updating YML ID to be the same as YML name', LOG_COLORS.NATIVE)
 
         self.id_and_version_location['id'] = self.yml_data['name']
 
     def set_version_to_default(self):
-        """Replaces the version of the YML to default.
-        """
+        """Replaces the version of the YML to default."""
         print_color(F'Setting YML version to default: {self.DEFAULT_YML_VERSION}', LOG_COLORS.NATIVE)
 
         self.id_and_version_location['version'] = self.DEFAULT_YML_VERSION
 
     def save_yml_to_destination_file(self):
-        """Safely saves formatted YML data to destination file.
-        """
+        """Safely saves formatted YML data to destination file."""
         print_color(F'Saving output YML file to {self.output_file_name}', LOG_COLORS.NATIVE)
 
         # Configure safe dumper (multiline for strings)
@@ -123,9 +122,8 @@ class BaseUpdateYML:
                 default_flow_style=False)
 
     def update_yml(self):
-        """Manager function for the generic YML updates.
-        """
-        print_color(F'=======Starting generic updates for YML: {self.source_file}=======', LOG_COLORS.YELLOW)
+        """Manager function for the generic YML updates."""
+        print_color(F'=======Starting updates for YML: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.remove_copy_and_dev_suffixes_from_name()
         self.update_id_to_equal_name()

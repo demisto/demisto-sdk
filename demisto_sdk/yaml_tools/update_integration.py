@@ -14,12 +14,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
             yml_data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
-    ARGUMENTS_CORRECT_NAME = {
-        'unsecure': 'insecure',
-    }
-
     ARGUMENTS_DESCRIPTION = {
         'insecure': 'Trust any certificate (not secure)',
+        'unsecure': 'Trust any certificate (not secure)',
         'proxy': 'Use system proxy settings'
     }
 
@@ -27,24 +24,18 @@ class IntegrationYMLFormat(BaseUpdateYML):
         super().__init__(source_file, output_file_name)
 
     def update_proxy_insecure_param_to_default(self):
-        """Updates important integration arguments names and description.
-        """
+        """Updates important integration arguments names and description."""
         print_color(F'Updating proxy and insecure/unsecure integration arguments description to default',
                     LOG_COLORS.NATIVE)
 
         for integration_argument in self.yml_data.get('configuration', {}):
             argument_name = integration_argument.get('name', '')
 
-            if argument_name in self.ARGUMENTS_CORRECT_NAME:
-                argument_name = self.ARGUMENTS_CORRECT_NAME[argument_name]
-                integration_argument['name'] = argument_name
-
             if argument_name in self.ARGUMENTS_DESCRIPTION:
                 integration_argument['display'] = self.ARGUMENTS_DESCRIPTION[argument_name]
 
     def set_reputation_commands_basic_argument_as_needed(self):
-        """Sets basic arguments of reputation commands to be default, isArray and required.
-        """
+        """Sets basic arguments of reputation commands to be default, isArray and required."""
         print_color(F'Updating reputation commands\' basic arguments to be True for default, isArray and required',
                     LOG_COLORS.NATIVE)
 
@@ -54,8 +45,16 @@ class IntegrationYMLFormat(BaseUpdateYML):
             command_name = command.get('name', '')
 
             if command_name in BANG_COMMAND_NAMES:
-                if not (command.get('arguments', []) and command_name not in command['arguments'][0]):
-                    command['arguments'] = [
+                for argument in command.get('arguments', []):
+                    if argument.get('name', '') == command_name:
+                        argument.update({
+                            'default': True,
+                            'isArray': True,
+                            'required': True
+                        })
+                        continue
+
+                command['arguments'] = [
                         {
                             'default': True,
                             'description': '',
@@ -64,33 +63,25 @@ class IntegrationYMLFormat(BaseUpdateYML):
                             'required': True,
                             'secret': False
                         }
-                    ]
-
-                else:
-                    command['arguments'][0].update({
-                        'default': True,
-                        'isArray': True,
-                        'required': True
-                    })
+                ]
 
     def format_file(self):
-        """Manager function for the integration YML updater.
-        """
+        """Manager function for the integration YML updater."""
         super().update_yml()
 
-        print_color(F'========Starting specific updates for integration: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'========Starting updates for integration: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.update_proxy_insecure_param_to_default()
         self.set_reputation_commands_basic_argument_as_needed()
         self.save_yml_to_destination_file()
 
-        print_color(F'========Finished generic updates for integration: {self.output_file_name}=======',
+        print_color(F'========Finished updates for integration: {self.output_file_name}=======',
                     LOG_COLORS.YELLOW)
 
     @staticmethod
     def add_sub_parser(subparsers):
         description = """Run formatter on a given playbook yml file. """
         parser = subparsers.add_parser('format', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-t", "--type", help="Specify the type of yml file to be formatted.", required=True)
-        parser.add_argument("-p", "--path", help="Specify path of playbook yml file", required=True)
-        parser.add_argument("-o", "--output-file", help="Specify path where the formatted file will be saved to")
+        parser.add_argument("-t", "--type", help="The type of yml file to be formatted.", required=True)
+        parser.add_argument("-p", "--path", help="The path of the playbook yml file", required=True)
+        parser.add_argument("-o", "--output-file", help="The path where the formatted file will be saved to")

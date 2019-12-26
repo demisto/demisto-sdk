@@ -60,9 +60,10 @@ script:
     - name: test-arg
   - name: url
     arguments:
+    - name: test
     - name: url
   - name: email
-    arguments:
+    arguments: []
   dockerimage: demisto/python3:3.7.5.4583
   runonce: false
   subtype: python3

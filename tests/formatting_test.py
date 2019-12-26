@@ -16,6 +16,12 @@ BASIC_YML_TEST_PACKS = [
 ]
 
 
+@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title', [(SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy')])
+def test_save_output_file1(source_path, destination_path, formatter, yml_title):
+    base_yml = formatter(source_path, destination_path)
+    base_yml.format_file()
+
+
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title', BASIC_YML_TEST_PACKS)
 def test_basic_yml_updates(source_path, destination_path, formatter, yml_title):
     base_yml = formatter(source_path)
@@ -34,7 +40,8 @@ def test_save_output_file(source_path, destination_path, formatter, yml_title):
 
 
 INTEGRATION_PROXY_SSL_PACK = [
-    (SOURCE_FORMAT_INTEGRATION_COPY, 'insecure', 'Trust any certificate (not secure)', 2),
+    (SOURCE_FORMAT_INTEGRATION_COPY, 'insecure', 'Trust any certificate (not secure)', 1),
+    (SOURCE_FORMAT_INTEGRATION_COPY, 'unsecure', 'Trust any certificate (not secure)', 1),
     (SOURCE_FORMAT_INTEGRATION_COPY, 'proxy', 'Use system proxy settings', 1)
 ]
 
@@ -75,9 +82,11 @@ def test_bang_commands_default_arguments(source_path, bang_command, verification
 
     for command in base_yml.yml_data['script']['commands']:
         if bang_command == command['name']:
-            command_arguments = command['arguments'][0]
-            for verification in verifications:
-                assert command_arguments[verification[0]] == verification[1]
+            command_arguments = command['arguments']
+            for argument in command_arguments:
+                if argument.get('name', '') == bang_command:
+                    for verification in verifications:
+                        assert argument[verification[0]] == verification[1]
 
 
 @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])

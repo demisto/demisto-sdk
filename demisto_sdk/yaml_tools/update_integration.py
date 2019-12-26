@@ -57,7 +57,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 argument_list = command.get('arguments', [])  # type: List
                 argument_list.append(
                     {
-                        'default1': True,
+                        'default': True,
                         'description': '',
                         'isArray': True,
                         'name': command_name,

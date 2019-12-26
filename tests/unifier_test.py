@@ -152,7 +152,7 @@ def test_insert_module_code(mocker):
     new_code = DUMMY_SCRIPT.replace(import_name, '\n### GENERATED CODE ###\n# This code was inserted in place of an API'
                                                  ' module.{}\n'.format(DUMMY_MODULE))
 
-    code = Unifier.insert_module_code(DUMMY_SCRIPT, import_name,module_name)
+    code = Unifier.insert_module_code(DUMMY_SCRIPT, import_name, module_name)
 
     assert code == new_code
 

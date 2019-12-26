@@ -7,7 +7,7 @@ import base64
 
 
 inputs_outputs = [
-    ('Scripts/FakeScript/FakeScript.yml', 'script'), 
+    ('Scripts/FakeScript/FakeScript.yml', 'script'),
     ('Integrations/FakeInt/FakeInt.yml', 'integration')
 ]
 

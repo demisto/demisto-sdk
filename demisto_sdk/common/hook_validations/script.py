@@ -49,10 +49,11 @@ class ScriptValidator(BaseValidator):
 
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
-        """Check whether the Integration is valid or not, update the _is_valid field to determine that"""
-        is_script_valid = any([
+        """Check whether the script is valid or not"""
+        is_script_valid = all([
+            super(ScriptValidator, self).is_valid_file(validate_rn),
             self.is_valid_subtype(),
-            super(ScriptValidator, self).is_valid_file(validate_rn)
+            self.is_id_equals_name()
         ])
 
         return is_script_valid
@@ -111,7 +112,6 @@ class ScriptValidator(BaseValidator):
 
     def is_there_duplicates_args(self):
         # type: () -> bool
-
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
         if len(args) != len(set(args)):
@@ -151,3 +151,11 @@ class ScriptValidator(BaseValidator):
                 print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
                 return True
         return False
+
+    def is_id_equals_name(self):
+        """Check whether the script's ID is equal to its name
+
+            Returns:
+                bool. Whether the script's id equals to its name
+            """
+        return super(ScriptValidator, self)._is_id_equals_name('script')

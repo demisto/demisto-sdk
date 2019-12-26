@@ -54,16 +54,19 @@ class IntegrationYMLFormat(BaseUpdateYML):
                         })
                         continue
 
-                command['arguments'] = [
-                        {
-                            'default': True,
-                            'description': '',
-                            'isArray': True,
-                            'name': command_name,
-                            'required': True,
-                            'secret': False
-                        }
-                ]
+                argument_list = command.get('arguments', [])  # type: List
+                argument_list.append(
+                    {
+                        'default': True,
+                        'description': '',
+                        'isArray': True,
+                        'name': command_name,
+                        'required': True,
+                        'secret': False
+                    }
+                )
+
+                command['arguments'] = argument_list
 
     def format_file(self):
         """Manager function for the integration YML updater."""

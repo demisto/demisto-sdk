@@ -74,8 +74,8 @@ class BaseUpdateYML:
         Returns:
             Dict. Holds the id and version fields.
         """
-        instance_name = self.__class__.__name__
-        path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[instance_name]
+        yml_type = self.__class__.__name__
+        path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
         return self.yml_data.get(path, self.yml_data)
 
     def remove_copy_and_dev_suffixes_from_name(self):

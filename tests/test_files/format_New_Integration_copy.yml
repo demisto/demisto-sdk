@@ -63,7 +63,8 @@ script:
     - name: test
     - name: url
   - name: email
-    arguments: []
+    arguments:
+      - name: test1
   dockerimage: demisto/python3:3.7.5.4583
   runonce: false
   subtype: python3

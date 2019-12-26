@@ -258,8 +258,8 @@ def lint(config, dir, **kwargs):
     required=True
 )
 @click.option(
-    '--playbook_id', '-p',
-    help="The playbook ID to run.",
+    '--playbook_name', '-p',
+    help="The playbook name to run.",
     required=True
 )
 @click.option(

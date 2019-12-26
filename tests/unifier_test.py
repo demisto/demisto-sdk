@@ -26,6 +26,25 @@ DUMMY_SCRIPT = '''
         main()
     '''
 
+DUMMY_MODULE = '''
+import requests
+import base64
+from typing import Dict, Tuple
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+OPROXY_AUTH_TYPE = 'oproxy'
+SELF_DEPLOYED_AUTH_TYPE = 'self_deployed'
+
+
+class MicrosoftClient(BaseClient):
+
+    def __init__(self, tenant_id: str = '', auth_id: str = '', enc_key: str = '',
+                 token_retrieval_url: str = '', app_name: str = '', refresh_token: str = '',
+                 client_id: str = '', client_secret: str = '', scope: str = '', resource: str = '', app_url: str = '',
+                 verify: bool = True, auth_type: str = OPROXY_AUTH_TYPE, *args, **kwargs):
+ 
+'''
+
 
 def test_clean_python_code():
     from demisto_sdk.yaml_tools.unifier import Unifier
@@ -123,6 +142,19 @@ def test_check_api_module_imports():
 
     assert module_import == 'from MicrosoftApiModule import *  # noqa: E402'
     assert module_name == 'MicrosoftApiModule'
+
+
+def test_insert_module_code(mocker):
+    from demisto_sdk.yaml_tools.unifier import Unifier
+    mocker.patch.object(Unifier, '_get_api_module_code', return_value=DUMMY_MODULE)
+    import_name = 'from MicrosoftApiModule import *  # noqa: E402'
+    module_name = 'MicrosoftApiModule'
+    new_code = DUMMY_SCRIPT.replace(import_name, '\n### GENERATED CODE ###\n# This code was inserted in place of an API'
+                                                 ' module.{}\n'.format(DUMMY_MODULE))
+
+    code = Unifier.insert_module_code(DUMMY_SCRIPT, import_name,module_name)
+
+    assert code == new_code
 
 
 @pytest.mark.parametrize('package_path, dir_name, file_path', [

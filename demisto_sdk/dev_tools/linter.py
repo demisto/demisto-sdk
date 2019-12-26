@@ -128,7 +128,7 @@ class Linter:
                 print_color("============ Starting process for: {} ============\n".format(self.project_dir),
                             LOG_COLORS.YELLOW)
                 self.lock.release()
-                self._setup_dev_files()
+                self._setup_dev_files(py_num)
                 try:
                     if self.run_args['flake8']:
                         result_val = self.run_flake8(py_num)
@@ -432,6 +432,7 @@ class Linter:
         if py_num > 3:
             unifier = Unifier(self.project_dir)
             code_file_path = unifier.get_code_file('.py')
+
             try:
                 # Look for an import to an API module in the code. If there is such import, we need to copy the correct
                 # module file to the package directory.
@@ -441,6 +442,9 @@ class Linter:
                     module_path = os.path.join(self.configuration.env_dir, 'Packs', 'ApiModules', 'Scripts',
                                                module_name, module_name + '.py')
                     print_v('Copying ' + os.path.join(self.configuration.env_dir, 'Scripts', module_path))
+                    if not os.path.exists(module_path):
+                        print_v('API Module {} not found, you might be outside of the content repository or this API'
+                                ' module does not exist'.format(module_name))
                     shutil.copy(os.path.join(module_path), self.project_dir)
             except Exception as e:
                 print_v('Unable to retrieve the module file {}: {}'.format(module_name, str(e)))

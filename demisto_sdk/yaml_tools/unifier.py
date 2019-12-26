@@ -283,17 +283,28 @@ class Unifier:
         """
 
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+        module_code = Unifier._get_api_module_code(module_name, module_path)
+
+        module_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
+            .format(module_code)
+
+        return script_code.replace(module_import, module_code)
+
+    @staticmethod
+    def _get_api_module_code(module_name, module_path):
+        """
+        Attempts to get the API module code from the ApiModules pack.
+        :param module_name: The API module name
+        :param module_path: The API module code file path
+        :return: The API module code
+        """
         try:
             with io.open(module_path, mode='r', encoding='utf-8') as script_file:
-                client_code = script_file.read()
-
-            client_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
-                .format(client_code)
-
+                module_code = script_file.read()
         except Exception as e:
             raise ValueError('Could not retrieve the module [{}] code: {}'.format(module_name, str(e)))
 
-        return script_code.replace(module_import, client_code)
+        return module_code
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):

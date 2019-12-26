@@ -264,7 +264,7 @@ class Unifier:
         """
 
         # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
-        module_regex = r'from ([\w\d]+Module) import \*(?:  # noqa: E402)?'
+        module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
 
         module_match = re.search(module_regex, script_code)
         if module_match:

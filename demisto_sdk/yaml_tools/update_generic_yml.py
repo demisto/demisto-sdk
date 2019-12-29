@@ -132,10 +132,10 @@ class BaseUpdateYML:
 
         print_color(F'=======Finished generic updates for YML: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-    def initiate_file_validator(self, validator_type):
+    def initiate_file_validator(self, validator_type, scheme_type):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
-        structure = StructureValidator(str(self.output_file_name))
+        structure = StructureValidator(file_path=str(self.output_file_name), predefined_scheme=scheme_type)
         validator = validator_type(structure)
 
         if structure.is_valid_file() and validator.is_valid_file():

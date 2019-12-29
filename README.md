@@ -178,7 +178,7 @@ Run integration command in the playground of a remote Demisto instance and retri
                         Skip certificate validation
 * *-v, --verbose*
                         Verbose output
-* *-D [DEBUG_LOG], --debug-mode [DEBUG_LOG]*
+* *-D [DEBUG_LOG], --debug [DEBUG_LOG]*
                         Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used
 
 **Examples**:

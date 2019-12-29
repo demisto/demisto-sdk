@@ -4,6 +4,7 @@ import glob
 import yaml
 import base64
 import re
+from typing import Tuple
 
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir
@@ -184,11 +185,13 @@ class Unifier:
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py')
+                        r'|conftest\.py|__init__\.py|ApiModule\.py')
         if not self.package_path.endswith('/'):
             self.package_path += '/'
         if self.package_path.endswith('Scripts/CommonServerPython/'):
             return self.package_path + 'CommonServerPython.py'
+        if self.package_path.endswith('ApiModule/'):
+            return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
         script_path = list(filter(lambda x: not re.search(ignore_regex, x),
                                   glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
@@ -198,6 +201,12 @@ class Unifier:
         script_path = self.get_code_file(script_type)
         with io.open(script_path, mode='r', encoding='utf-8') as script_file:
             script_code = script_file.read()
+
+        # Check if the script imports an API module. If it does,
+        # the API module code will be pasted in place of the import.
+        module_import, module_name = self.check_api_module_imports(script_code)
+        if module_import:
+            script_code = self.insert_module_code(script_code, module_import, module_name)
 
         clean_code = self.clean_python_code(script_code)
 
@@ -245,6 +254,57 @@ class Unifier:
             code = code_file.read()
 
         return yml_path, code
+
+    @staticmethod
+    def check_api_module_imports(script_code: str) -> Tuple[str, str]:
+        """
+        Checks integration code for API module imports
+        :param script_code: The integration code
+        :return: The import string and the imported module name
+        """
+
+        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
+        module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
+
+        module_match = re.search(module_regex, script_code)
+        if module_match:
+            return module_match.group(), module_match.group(1)
+        else:
+            return '', ''
+
+    @staticmethod
+    def insert_module_code(script_code: str, module_import: str, module_name: str) -> str:
+        """
+        Inserts API module in place of an import to the module according to the module name
+        :param script_code: The integration code
+        :param module_import: The module import string to replace
+        :param module_name: The module name
+        :return: The integration script with the module code appended in place of the import
+        """
+
+        module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+        module_code = Unifier._get_api_module_code(module_name, module_path)
+
+        module_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
+            .format(module_code)
+
+        return script_code.replace(module_import, module_code)
+
+    @staticmethod
+    def _get_api_module_code(module_name, module_path):
+        """
+        Attempts to get the API module code from the ApiModules pack.
+        :param module_name: The API module name
+        :param module_path: The API module code file path
+        :return: The API module code
+        """
+        try:
+            with io.open(module_path, mode='r', encoding='utf-8') as script_file:
+                module_code = script_file.read()
+        except Exception as e:
+            raise ValueError('Could not retrieve the module [{}] code: {}'.format(module_name, str(e)))
+
+        return module_code
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):

@@ -80,6 +80,7 @@ class Extractor:
             fp = tempfile.NamedTemporaryFile(delete=False)
             fp.write(requirements.encode('utf-8'))
             fp.close()
+
             try:
                 subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
 

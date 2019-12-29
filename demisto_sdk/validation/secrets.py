@@ -73,11 +73,14 @@ class SecretsValidator():
                     secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
                     secrets_found_string += '\nThe following expressions were marked as secrets: \n'
                     secrets_found_string += json.dumps(secrets_found[file_name], indent=4)
+
                 if not is_circle:
                     secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
+
                 else:
                     secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
                                             ' remove the files asap and report it.\n'
+
                 secrets_found_string += 'For more information about whitelisting visit: ' \
                                         'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
                 print_error(secrets_found_string)

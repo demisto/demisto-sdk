@@ -8,7 +8,7 @@
 
 * Added support for multi-package **lint** both with parallel and without.
 * Added all parameter in **lint** to run on all packages and packs in content repository.
-* Improved user outputs for `unifier`, `secrets` and `extract` commands.
+* Improved user outputs for **secrets** command.
 
 
 ### 0.2.6

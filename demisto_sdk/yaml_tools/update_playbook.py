@@ -56,7 +56,6 @@ class PlaybookYMLFormat(BaseUpdateYML):
                 else:
                     print_error('Version format is not valid')
 
-
     def format_file(self):
         """Manager function for the playbook YML updater."""
         super().update_yml()

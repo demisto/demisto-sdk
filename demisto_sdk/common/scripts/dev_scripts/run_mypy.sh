@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Run mypy with a set of default parameters. 
-# Will not return an error code even if mypy returns so. 
+# Run mypy with a set of default parameters.
+# Will not return an error code even if mypy returns so.
 # This allows treating mypy as non-fatal.
 #
 # Arguments: python_version python_file

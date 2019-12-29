@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Setup a container for dev testing. 
+# Setup a container for dev testing.
 #
 # In alpine will install necessary python dev tools and then use pip to install
 

@@ -4,7 +4,7 @@
 # Python client that invokes functions in the Demisto SDK.
 #
 # Author:       Demisto
-# Version:      0.1.8
+# Version:      0.2.4
 #
 
 import sys
@@ -15,12 +15,12 @@ from pkg_resources import get_distribution
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DIR_TO_PREFIX
 from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
-from demisto_sdk.dev_tools.linter import Linter
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.dev_tools.lint_manager import LintManager
 
 
 class DemistoSDK:
@@ -44,7 +44,7 @@ class DemistoSDK:
         Unifier.add_sub_parser(self.subparsers)
         Extractor.add_sub_parser(self.subparsers)
         FilesValidator.add_sub_parser(self.subparsers)
-        Linter.add_sub_parser(self.subparsers)
+        LintManager.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
         ContentCreator.add_sub_parser(self.subparsers)
 
@@ -81,9 +81,17 @@ class DemistoSDK:
                     return 1
 
             elif args.command == 'lint':
-                return self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
-                                 no_bandit=args.no_bandit, no_test=args.no_test, root=args.root,
-                                 keep_container=args.keep_container, verbose=args.verbose, cpu_num=args.cpu_num)
+                if args.dir is None and args.run_all_tests is False:
+                    print_error("No directories given for lint command to run on.")
+                    return 1
+
+                ans = self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
+                                no_test=args.no_test, root=args.root, keep_container=args.keep_container,
+                                verbose=args.verbose, cpu_num=args.cpu_num, parallel=args.parallel,
+                                max_workers=args.max_workers, no_bandit=args.no_bandit, no_bc_check=args.no_bc,
+                                run_all_tests=args.run_all_tests)
+
+                return ans
 
             elif args.command == 'secrets':
                 # returns True is secrets were found
@@ -160,14 +168,17 @@ class DemistoSDK:
         return validator.is_valid_structure()
 
     def lint(self, project_dir: str, **kwargs):
+        """Run lint on python code in a provided directory.
+
+        Args:
+            project_dir: The directory containing the code.
+            **kwargs: Optional arguments.
+
+        Returns:
+            The lint result.
         """
-        Run lint on python code in a provided directory.
-        :param project_dir The directory containing the code.
-        :param kwargs Optional arguments.
-        :return: The lint result.
-        """
-        linter = Linter(configuration=self.configuration, project_dir=project_dir, **kwargs)
-        ans = linter.run_dev_packages()
+        lint_manager = LintManager(configuration=self.configuration, project_dir_list=project_dir, **kwargs)
+        ans = lint_manager.run_dev_packages()
         return ans
 
     def secrets(self, **kwargs):

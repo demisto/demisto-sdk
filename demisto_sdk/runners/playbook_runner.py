@@ -38,7 +38,8 @@ class PlaybookRunner:
         try:
             incident_id = self.create_incident_with_playbook(
                 incident_name=f'inc_{self.playbook_id}', playbook_id=self.playbook_id)
-        except ApiException:
+        except ApiException as a:
+            print_error(str(a))
             return 1
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
@@ -83,7 +84,7 @@ class PlaybookRunner:
             playbook_id (str): The id of the playbook
 
         Returns:
-            int. The new incident's ID. Returns 1 in a case of creation error.
+            int. The new incident's ID.
         """
 
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
@@ -93,13 +94,13 @@ class PlaybookRunner:
 
         try:
             response = self.demisto_client.create_incident(create_incident_request=create_incident_request)
-        except ApiException:
+        except ApiException as e:
             print_error(f'Failed to create incident with playbook id : "{playbook_id}", '
                         'possible reasons are:\n'
                         '1. This playbook name does not exist \n'
                         '2. Schema problems in the playbook \n'
                         '3. Unauthorized api key')
-            raise
+            raise e
 
         print_color(f'The playbook: {self.playbook_id} was triggered successfully.', LOG_COLORS.GREEN)
         return response.id

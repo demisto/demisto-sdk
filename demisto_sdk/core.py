@@ -135,7 +135,8 @@ class DemistoSDK:
                         "should contain either Integrations or Scripts directories")
 
         unifier = Unifier(package_path, directory_name, dest_path)
-        return unifier.merge_script_package_to_yml()
+        unifier.merge_script_package_to_yml()
+        return 0
 
     def migrate_file(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):

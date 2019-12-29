@@ -12,6 +12,7 @@
     * Scripts
     * Playbooks
     * Integrations
+* Improved user outputs for **secrets** command.
 
 ### 0.2.6
 

@@ -88,7 +88,7 @@ class Runner:
             'investigationId': playground_id,
             'data': query
         }
-        ans = self.client.investigation_add_entries_sync_handler(update_entry=update_entry)
+        ans = self.client.investigation_add_entries_sync(update_entry=update_entry)
 
         log_ids = []
 

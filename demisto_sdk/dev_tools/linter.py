@@ -1,4 +1,5 @@
 import os
+import io
 import sys
 import yaml
 import time
@@ -126,7 +127,7 @@ class Linter:
                 print_color("============ Starting process for: {} ============\n".format(self.project_dir),
                             LOG_COLORS.YELLOW)
                 self.lock.release()
-                self._setup_dev_files()
+                self._setup_dev_files(py_num)
                 try:
                     if self.run_args['flake8']:
                         result_val = self.run_flake8(py_num)
@@ -407,19 +408,45 @@ class Linter:
             else:
                 print("Test container [{}] was left available".format(container_id))
 
-    def _setup_dev_files(self):
+    def _setup_dev_files(self, py_num):
         # copy demistomock and common server
         try:
             shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
             open(self.project_dir + '/CommonServerUserPython.py', 'a').close()  # create empty file
             shutil.rmtree(self.project_dir + '/__pycache__', ignore_errors=True)
             shutil.copy(self.configuration.env_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
+            self.check_api_module_imports(py_num)
             if "/Scripts/CommonServerPython" not in self.project_dir:
                 # Otherwise we already have the CommonServerPython.py file
                 shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
                             self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)), self.log_verbose)
+
+    def check_api_module_imports(self, py_num):
+        """
+        Checks if the integration imports an API module and if so pastes the module in the package.
+        :param py_num: The python version - api modules are in python 3
+        """
+        if py_num > 3:
+            unifier = Unifier(self.project_dir)
+            code_file_path = unifier.get_code_file('.py')
+
+            try:
+                # Look for an import to an API module in the code. If there is such import, we need to copy the correct
+                # module file to the package directory.
+                with io.open(code_file_path, mode='r', encoding='utf-8') as script_file:
+                    _, module_name = unifier.check_api_module_imports(script_file.read())
+                if module_name:
+                    module_path = os.path.join(self.configuration.env_dir, 'Packs', 'ApiModules', 'Scripts',
+                                               module_name, module_name + '.py')
+                    print_v('Copying ' + os.path.join(self.configuration.env_dir, 'Scripts', module_path))
+                    if not os.path.exists(module_path):
+                        raise ValueError('API Module {} not found, you might be outside of the content repository'
+                                         ' or this API module does not exist'.format(module_name))
+                    shutil.copy(os.path.join(module_path), self.project_dir)
+            except Exception as e:
+                print_v('Unable to retrieve the module file {}: {}'.format(module_name, str(e)))
 
     def _get_lint_files(self):
         unifier = Unifier(self.project_dir)

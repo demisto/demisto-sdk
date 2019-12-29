@@ -12,18 +12,18 @@ class Runner(Client):
         Attributes:
             query (str): The query to execute.
             log_verbose (bool): Whether to output a detailed response.
-            debug_mode (str): Whether to activate the debug mode.
+            debug (str): Holds the path of the debug log file (or '-' if the logs will be printed in stdout).
         """
     SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
-    def __init__(self, query: str, url: str, insecure: bool = False, debug_mode: str = None, verbose: bool = False):
+    def __init__(self, query: str, url: str, insecure: bool = False, debug: str = None, verbose: bool = False):
         self.query = query
         self.log_verbose = verbose
-        self.debug_mode = debug_mode
-        if self.debug_mode is not None:
+        self.debug = debug
+        if self.debug is not None:
             self.query += ' debug-mode="true"'
-        Client.__init__(self, url, insecure)
+        super().__init__(url, insecure)
 
     def run(self):
         """Runs an integration command on Demisto and prints the result.
@@ -32,7 +32,7 @@ class Runner(Client):
 
         log_ids = self._run_query(playground_id)
 
-        if self.debug_mode:
+        if self.debug:
             if not log_ids:
                 print_warning('Entry with debug log not found')
             else:
@@ -97,7 +97,7 @@ class Runner(Client):
         Args:
             log_ids (list): artifact ids of the log files
         """
-        if self.debug_mode == '-':
+        if self.debug == '-':
             print_color('## Detailed Log', LOG_COLORS.YELLOW)
             for log_id in log_ids:
                 result = self.client.download_file(log_id)
@@ -110,13 +110,13 @@ class Runner(Client):
                         else:
                             print(line)
         else:
-            with open(self.debug_mode, 'w+b') as fout:
+            with open(self.debug, 'w+b') as fout:
                 for log_id in log_ids:
                     result = self.client.download_file(log_id)
                     with open(result, 'r+') as log_info:
                         for line in log_info:
                             fout.write(line.encode('utf-8'))
-            print_color(f'Debug Log successfully exported to {self.debug_mode}', LOG_COLORS.GREEN)
+            print_color(f'Debug Log successfully exported to {self.debug}', LOG_COLORS.GREEN)
 
     @staticmethod
     def add_sub_parser(subparsers):
@@ -129,7 +129,7 @@ class Runner(Client):
         parser.add_argument("-k", "--insecure", help="Skip certificate validation", action="store_true")
         parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true')
         parser.add_argument(
-            "-D", "--debug-mode", metavar="DEBUG_LOG",
+            "-D", "--debug", metavar="DEBUG_LOG",
             help="Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used",
             nargs='?', const='-', default=None
         )

@@ -7,4 +7,4 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 5) Update the **Tag version** and **Release title** - the form should be vX.X.X .
 6) In the **Describe the release** text box enter the CHANGELOG contents for this release.
 7) Press **Publish release** - congratulations! your release is now public.
-8) Finally, in Demisto's Content repository update the demisto-sdk version in the **dev-requirements-py3.txt** file.
+8) Finally, if you want to update the version of the SDK in Demisto's Content repository you need to update the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file.

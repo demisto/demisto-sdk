@@ -13,7 +13,7 @@ from pykwalify.core import Core
 from demisto_sdk.common.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBOOKS_REGEX, YML_SCRIPT_REGEXES, \
     JSON_ALL_WIDGETS_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_CONNECTIONS_REGEXES, JSON_ALL_CLASSIFIER_REGEXES, \
     JSON_ALL_LAYOUT_REGEXES, JSON_ALL_INCIDENT_FIELD_REGEXES, JSON_ALL_REPORTS_REGEXES, MISC_REPUTATIONS_REGEX, \
-    MISC_REGEX, Errors, ACCEPTED_FILE_EXTENSIONS
+    MISC_REGEX, Errors, ACCEPTED_FILE_EXTENSIONS, JSON_ALL_INDICATOR_FIELDS_REGEXES
 from demisto_sdk.common.tools import get_remote_file, get_matching_regex, print_error
 from demisto_sdk.common.configuration import Configuration
 
@@ -45,7 +45,7 @@ class StructureValidator:
         'canvas-context-connections': JSON_ALL_CONNECTIONS_REGEXES,
         'classifier': JSON_ALL_CLASSIFIER_REGEXES,
         'layout': JSON_ALL_LAYOUT_REGEXES,
-        'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES,
+        'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES
     }
 
     PATHS_TO_VALIDATE = {

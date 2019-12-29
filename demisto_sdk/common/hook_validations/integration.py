@@ -458,6 +458,7 @@ class IntegrationValidator(BaseValidator):
             if not hidden_value:
                 if not configuration_display:
                     print_error(Errors.empty_display_configuration(self.file_path))
+                    self.is_valid = False
                     return True
 
         return False

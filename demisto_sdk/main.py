@@ -12,7 +12,7 @@ from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-
+from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs as j_o
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -233,6 +233,38 @@ def secrets(config, **kwargs):
 def lint(config, dir, **kwargs):
     linter = Linter(configuration=config.configuration, project_dir=dir, **kwargs)
     return linter.run_dev_packages()
+
+
+@main.command(name="json-to-outputs",
+              short_help='''Demisto integrations/scripts have a YAML file that defines them.
+Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the 
+file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
+@click.option(
+    "-i", "--infile", help="Valid JSON file path. If not specified then script will wait for user input in the "
+                           "terminal", required=False)
+@click.option(
+    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP", required=True)
+@click.option(
+    "-o", "--outfile", help="Output file path, if not specified then will print to stdout", required=False)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+@click.option(
+    "-int", "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                                  "description. By default is interactive mode is disabled", is_flag=True)
+def json_to_outputs(command, infile, prefix, outfile, verbose, interactive):
+    j_o(
+        command=command,
+        infile=infile,
+        prefix=prefix,
+        outfile=outfile,
+        verbose=verbose,
+        interactive=interactive
+    )
 
 
 def demisto_sdk_cli():

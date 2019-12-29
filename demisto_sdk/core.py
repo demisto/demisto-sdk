@@ -20,6 +20,9 @@ from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
+from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
+from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.dev_tools.lint_manager import LintManager
 
 
@@ -47,6 +50,9 @@ class DemistoSDK:
         LintManager.add_sub_parser(self.subparsers)
         SecretsValidator.add_sub_parser(self.subparsers)
         ContentCreator.add_sub_parser(self.subparsers)
+        IntegrationYMLFormat.add_sub_parser(self.subparsers)
+        ScriptYMLFormat.add_sub_parser(self.subparsers)
+        PlaybookYMLFormat.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -101,6 +107,9 @@ class DemistoSDK:
             elif args.command == 'create':
                 self.create_content_artifacts(args.artifacts_path, args.preserve_bundles)
 
+            elif args.command == 'format':
+                self.format_yml_files(args.type, args.path, args.output_file)
+
             else:
                 print('Use demisto-sdk -h to see the available commands.')
 
@@ -126,7 +135,8 @@ class DemistoSDK:
                         "should contain either Integrations or Scripts directories")
 
         unifier = Unifier(package_path, directory_name, dest_path)
-        return unifier.merge_script_package_to_yml()
+        unifier.merge_script_package_to_yml()
+        return 0
 
     def migrate_file(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):
@@ -194,3 +204,20 @@ class DemistoSDK:
         if cc.long_file_names:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
                         f'{json.dumps(cc.long_file_names, indent=4)}')
+
+    def format_yml_files(self, file_type: str, path: str, output_file_name: str):
+        """Runs the appropriate formatter for the given file.
+        Args:
+            file_type (str): the type of the yml file to format.
+            path (str): The path to the checked file.
+            output_file_name (str): The name of the output file to include the changes.
+        """
+        file_type_and_linked_class = {
+            'integration': IntegrationYMLFormat,
+            'script': ScriptYMLFormat,
+            'playbook': PlaybookYMLFormat
+        }
+
+        if file_type in file_type_and_linked_class:
+            format_object = file_type_and_linked_class[file_type](path, output_file_name)
+            format_object.format_file()

@@ -204,7 +204,7 @@ class DemistoSDK:
             print_error(f'The following files exceeded to file name length limit of {cc.file_name_max_size}:\n'
                         f'{json.dumps(cc.long_file_names, indent=4)}')
 
-    def format_yml_files(self, file_type: str, path: str, output_file_name: str) -> bool:
+    def format_yml_files(self, file_type: str, path: str, output_file_name: str):
         """Runs the appropriate formatter for the given file.
         Args:
             file_type (str): the type of the yml file to format.

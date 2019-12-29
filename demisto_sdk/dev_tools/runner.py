@@ -26,7 +26,7 @@ class Runner(Client):
         Client.__init__(self, url, insecure)
 
     def run(self):
-        """Runs a integration command on Demisto prints the result.
+        """Runs an integration command on Demisto and prints the result.
         """
         playground_id = self._get_playground_id()
 

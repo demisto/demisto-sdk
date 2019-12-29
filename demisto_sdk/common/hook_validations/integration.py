@@ -9,6 +9,8 @@ class IntegrationValidator(BaseValidator):
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
+    EXPIRATION_FIELD_TYPE = 17
+
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
@@ -445,17 +447,25 @@ class IntegrationValidator(BaseValidator):
         return super(IntegrationValidator, self)._is_id_equals_name('integration')
 
     def is_not_valid_display_configuration(self):
-        """Validate that the display settings are not empty for non-hidden fields.
+        """Validate that the display settings are not empty for non-hidden fields and for type 17 params.
 
         Returns:
-            bool. Whether the dispaly is there for non-hidden fields.
+            bool. Whether the display is there for non-hidden fields.
         """
         configuration = self.current_file.get('configuration', [])
         for configuration_param in configuration:
+            field_type = configuration_param['type']
             is_field_hidden = configuration_param['hidden']
-            configuration_display = configuration_param['display']
+            configuration_display = configuration_param.get('display')
 
-            if not is_field_hidden and not configuration_display:
+            # This parameter type will not use the display value.
+            if field_type == self.EXPIRATION_FIELD_TYPE:
+                if configuration_display:
+                    print_error(Errors.not_used_display_name(self.file_path, configuration_param['name']))
+                    self.is_valid = False
+                    return True
+
+            elif not is_field_hidden and not configuration_display:
                 print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
                 self.is_valid = False
                 return True

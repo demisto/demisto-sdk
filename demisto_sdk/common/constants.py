@@ -6,6 +6,11 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def not_used_display_name(file_path, field_name):
+        return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
+            field_name, file_path)
+
+    @staticmethod
     def empty_display_configuration(file_path, field_name):
         return "No display details were entered for the field {} in the file {}.".format(field_name, file_path)
 

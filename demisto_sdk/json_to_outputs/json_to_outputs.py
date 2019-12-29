@@ -127,7 +127,7 @@ def is_date(val):
 
 def determine_type(val):
     if is_date(val):
-        return True
+        return 'Date'
 
     return 'Boolean' if isinstance(val, bool) else 'Number' if isinstance(
         val, (int, float)) else 'String' if isinstance(val, str) else 'Unknown'

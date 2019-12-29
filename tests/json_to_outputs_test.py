@@ -63,4 +63,26 @@ def test_json_to_outputs__invalid_json():
         assert str(ex) == 'Invalid input JSON'
 
 
+def test_json_to_outputs__detect_date():
+    """
+    Given
+        - valid json {"create_at": "2019-10-10T00:00:00"}
+    When
+        - passed to json_to_outputs
+    Then
+        - ensure the type of create_at is Date
 
+    """
+    yaml_output = parse_json(
+        data='{"created_at": "2019-10-10T00:00:00"}',
+        command_name='jira-ticket',
+        prefix='Jira.Ticket'
+    )
+
+    assert yaml_output == '''arguments: []
+name: jira-ticket
+outputs:
+- contextPath: Jira.Ticket.created_at
+  description: ''
+  type: Date
+'''

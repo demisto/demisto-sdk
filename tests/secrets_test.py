@@ -65,7 +65,7 @@ class TestSecrets:
             self.validator.get_packs_white_list(self.TEST_WHITELIST_FILE_PACKS)
         assert ioc_white_list == []
         assert files_while_list == []
-        assert final_white_list == ['boop', 'sade', 'sade.txt', 'sade@sade.sade']
+        assert final_white_list == ['boop', 'sade', 'sade.txt', 'sade@sade.sade', '']
 
     def test_get_generic_white_list(self):
         final_white_list, ioc_white_list, files_while_list = \

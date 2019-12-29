@@ -102,6 +102,12 @@ Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will r
   Do NOT test (skip pytest) (default: False)
 * *-r, --root*
   Run pytest container with root user (default: False)
+* *-p, --parallel*
+  Run tests in parallel (default: False)
+* *--no-bc*
+  Check diff with $DIFF_COMPARE env variable (default: False)
+* *-a, --run-all-tests*
+  Run lint on all directories in content repo (default: False)
 * *-k, --keep-container*
   Keep the test container (default: False)
 * *-v, --verbose*

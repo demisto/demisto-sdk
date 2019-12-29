@@ -604,5 +604,6 @@ script:
     description: Get the users notification rules
   runonce: false
 hidden: false
+feed: True
 tests:
   - PagerDuty Test

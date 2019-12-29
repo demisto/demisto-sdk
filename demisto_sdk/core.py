@@ -128,7 +128,7 @@ class DemistoSDK:
         unifier = Unifier(package_path, directory_name, dest_path)
         unifier_outputs = unifier.merge_script_package_to_yml()
         print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
-        return True
+        return 0
 
     def migrate_file(self, yml_path: str, dest_path: str, add_demisto_mock=True, add_common_server=True,
                      yml_type=''):

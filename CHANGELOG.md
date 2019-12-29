@@ -14,7 +14,6 @@
     * Integrations
 * Improved user outputs for **secrets** command.
 
-
 ### 0.2.6
 
 * Fixed an issue with locating release notes for beta integrations in **validate**.

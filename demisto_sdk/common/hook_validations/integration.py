@@ -30,6 +30,7 @@ class IntegrationValidator(BaseValidator):
             self.is_there_duplicate_args(),
             self.is_there_duplicate_params(),
             self.is_changed_subtype(),
+            self.is_not_valid_display_configuration(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
             not self.is_outputs_for_reputations_commands_valid()
         ]
@@ -438,7 +439,25 @@ class IntegrationValidator(BaseValidator):
     def is_id_equals_name(self):
         """Check whether the integration's ID is equal to its name
 
-            Returns:
-                bool. Whether the integration's id equals to its name
-            """
+        Returns:
+            bool. Whether the integration's id equals to its name
+        """
         return super(IntegrationValidator, self)._is_id_equals_name('integration')
+
+    def is_not_valid_display_configuration(self):
+        """Validate that the display settings are not empty for non-hidden fields.
+
+        Returns:
+            bool. Whether the dispaly is there for non-hidden fields.
+        """
+        configuration = self.current_file.get('configuration', [])
+        for configuration_param in configuration:
+            hidden_value = configuration_param['hidden']
+            configuration_display = configuration_param['display']
+
+            if not hidden_value:
+                if not configuration_display:
+                    print_error(Errors.empty_display_configuration(self.file_path))
+                    return True
+
+        return False

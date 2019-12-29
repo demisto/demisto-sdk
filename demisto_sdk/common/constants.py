@@ -6,6 +6,10 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def empty_display_configuration(file_path):
+        return "No display name were entered for {}.".format(file_path)
+
+    @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
 

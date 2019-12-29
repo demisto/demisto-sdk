@@ -13,7 +13,6 @@
     * Integrations
 * Added the **run-playbook** command
 
-
 ### 0.2.6
 
 * Fixed an issue with locating release notes for beta integrations in **validate**.

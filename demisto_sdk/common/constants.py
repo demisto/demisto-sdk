@@ -6,8 +6,8 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
-    def empty_display_configuration(file_path):
-        return "No display name were entered for {}.".format(file_path)
+    def empty_display_configuration(file_path, field_name):
+        return "No display details were entered for the field {} in the file {}.".format(field_name, file_path)
 
     @staticmethod
     def no_yml_file(file_path):

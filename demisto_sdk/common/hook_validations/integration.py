@@ -452,13 +452,12 @@ class IntegrationValidator(BaseValidator):
         """
         configuration = self.current_file.get('configuration', [])
         for configuration_param in configuration:
-            hidden_value = configuration_param['hidden']
+            is_field_hidden = configuration_param['hidden']
             configuration_display = configuration_param['display']
 
-            if not hidden_value:
-                if not configuration_display:
-                    print_error(Errors.empty_display_configuration(self.file_path))
-                    self.is_valid = False
-                    return True
+            if not is_field_hidden and not configuration_display:
+                print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
+                self.is_valid = False
+                return True
 
         return False

@@ -10,6 +10,8 @@ pytest-mock = "*"
 requests-mock = "*"
 pytest-asyncio = "*"
 pytest-xdist = "*"
+pytest-datadir-ng = "*"
+freezegun = "*"
 
 [packages]
 

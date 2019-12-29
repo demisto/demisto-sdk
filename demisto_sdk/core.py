@@ -15,7 +15,6 @@ from pkg_resources import get_distribution
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import DIR_TO_PREFIX
 from demisto_sdk.common.tools import print_color, print_error, LOG_COLORS
-from demisto_sdk.dev_tools.linter import Linter
 from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.validation.file_validator import FilesValidator

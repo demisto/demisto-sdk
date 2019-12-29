@@ -144,10 +144,11 @@ def test_check_api_module_imports():
     assert module_name == 'MicrosoftApiModule'
 
 
-def test_insert_module_code(mocker):
+@pytest.mark.parametrize('import_name', ['from MicrosoftApiModule import *  # noqa: E402',
+                                         'from MicrosoftApiModule import *'])
+def test_insert_module_code(mocker, import_name):
     from demisto_sdk.yaml_tools.unifier import Unifier
     mocker.patch.object(Unifier, '_get_api_module_code', return_value=DUMMY_MODULE)
-    import_name = 'from MicrosoftApiModule import *  # noqa: E402'
     module_name = 'MicrosoftApiModule'
     new_code = DUMMY_SCRIPT.replace(import_name, '\n### GENERATED CODE ###\n# This code was inserted in place of an API'
                                                  ' module.{}\n'.format(DUMMY_MODULE))

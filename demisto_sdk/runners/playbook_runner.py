@@ -17,9 +17,9 @@ class PlaybookRunner:
     """
     DEMISTO_API_KEY_ENV = 'DEMISTO_API_KEY'
 
-    def __init__(self, playbook_id: str, url: str, wait: bool, timeout: int):
+    def __init__(self, playbook_id: str, url: str, wait: str, timeout: int):
         self.playbook_id = playbook_id
-        self.should_wait = wait
+        self.should_wait = (wait == 'True')
         self.timeout = timeout
         self.base_link_to_workplan = f'{url}/#/WorkPlan/'
         self.demisto_client = demisto_client.configure(
@@ -35,13 +35,14 @@ class PlaybookRunner:
             int. 0 in success, 1 in a failure.
         """
         # create an incident with the given playbook
-        incident_id = self.create_incident_with_playbook(
-            incident_name=f'inc_{self.playbook_id}', playbook_id=self.playbook_id)
-        if incident_id == -1:
+        try:
+            incident_id = self.create_incident_with_playbook(
+                incident_name=f'inc_{self.playbook_id}', playbook_id=self.playbook_id)
+        except ApiException:
             return 1
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
-        if self.should_wait is True:
+        if self.should_wait:
             print(f'Waiting for the playbook to finish running.. \n'
                   f'To see the playbook run in real-time please go to : {work_plan_link}',
                   LOG_COLORS.GREEN)
@@ -65,7 +66,7 @@ class PlaybookRunner:
                 if playbook_results["state"] == "failed":
                     print_error("The playbook finished running with status: FAILED")
                 else:
-                    print_color("The playbook has completed it's run successfully", LOG_COLORS.GREEN)
+                    print_color("The playbook has completed its run successfully", LOG_COLORS.GREEN)
 
         # The command does not wait for the playbook to finish running
         else:
@@ -98,7 +99,7 @@ class PlaybookRunner:
                         '1. This playbook name does not exist \n'
                         '2. Schema problems in the playbook \n'
                         '3. Unauthorized api key')
-            return -1
+            raise
 
         print_color(f'The playbook: {self.playbook_id} was triggered successfully.', LOG_COLORS.GREEN)
         return response.id
@@ -116,7 +117,7 @@ class PlaybookRunner:
         Returns:
             str: API Key
         """
-        api_key = os.environ.get(self.DEMISTO_API_KEY_ENV, None)
+        api_key = os.environ.get(self.DEMISTO_API_KEY_ENV)
         if api_key is None:
             raise RuntimeError(f'Error: Environment variable {self.DEMISTO_API_KEY_ENV} not found')
 

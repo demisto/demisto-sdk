@@ -147,6 +147,24 @@ Create content artifacts.
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
 
+### Run-playbook
+
+Run a playbook in Demisto.
+**Arguments**:
+* **-u, --url**
+                        URL to a Demisto instance.
+* **-p, --playbook_id**
+                        The ID of the playbook to run.
+* **-w, --wait**
+                        Wait until the playbook run is finished and get a response.
+                        (default: True)
+* **-t, --timeout**
+                        Timeout for the command. The playbook will continue to run in Demisto.
+                        (default: 90)
+
+**Examples**:
+`DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'.`
+This will run the playbook `playbook_name` in demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
 
 ## In the code
 You can import the SDK core class in your python code as follows:

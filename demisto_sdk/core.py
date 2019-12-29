@@ -102,7 +102,7 @@ class DemistoSDK:
 
             elif args.command == 'run':
                 self.run(query=args.query, url=args.url, insecure=args.insecure, verbose=args.verbose,
-                         debug_mode=args.debug_mode)
+                         debug=args.debug)
 
             elif args.command == 'secrets':
                 # returns True is secrets were found

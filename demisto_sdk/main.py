@@ -12,6 +12,7 @@ from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
+from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -233,6 +234,39 @@ def secrets(config, **kwargs):
 def lint(config, dir, **kwargs):
     linter = Linter(configuration=config.configuration, project_dir=dir, **kwargs)
     return linter.run_dev_packages()
+
+
+@main.command(name="generate-test-playbook",
+              short_help="Generate test playbook from integration or script")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--infile',
+    required=True,
+    help='Specify integration/script yml path')
+@click.option(
+    '-o', '--outdir',
+    required=False,
+    help='Specify output directory')
+@click.option(
+    '-n', '--name',
+    required=True,
+    help='Specify test playbook name')
+@click.option(
+    '-t', '--ttype', default='integration',
+    type=click.Choice(["integration", "script"]),
+    required=False,
+    help='Specify integration or script. The default is integration')
+@click.option(
+    '-c', '--commands',
+    required=False,
+    help='Full path of file containing commands, if specified those commands will appear in the test playbook with the '
+         'specified arguments')
+@pass_config
+def generate_test_playbook(config, **kwargs):
+    generator = TestPlaybookGenerator(**kwargs)
+    generator.run()
 
 
 def demisto_sdk_cli():

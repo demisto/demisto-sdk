@@ -12,7 +12,7 @@ class Uploader(Client):
     def __init__(self, infile: str, url: str, insecure: bool = False, verbose: bool = False):
         self.infile = infile
         self.log_verbose = verbose
-        Client.__init__(self, url, insecure)
+        super().__init__(url, insecure)
 
     def upload(self):
         """Upload the integration specified in self.infile to the remote Demisto instance.

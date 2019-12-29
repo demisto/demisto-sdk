@@ -83,6 +83,9 @@ class PlaybookRunner:
             incident_name (str): The name of the incident
             playbook_id (str): The id of the playbook
 
+        Raises:
+            ApiException: if the client has failed to create an incident
+
         Returns:
             int. The new incident's ID.
         """

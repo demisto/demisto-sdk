@@ -138,7 +138,7 @@ class BaseUpdateYML:
         structure = StructureValidator(str(self.output_file_name))
         validator = validator_type(structure)
 
-        if validator.is_valid_file():
+        if structure.is_valid_file() and validator.is_valid_file():
             print_color('The files are valid', LOG_COLORS.GREEN)
 
         else:

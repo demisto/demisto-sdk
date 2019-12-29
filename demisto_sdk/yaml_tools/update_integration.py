@@ -43,6 +43,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
         for command in integration_commands:
             command_name = command.get('name', '')
+            current_command_default_argument_changed = False
 
             if command_name in BANG_COMMAND_NAMES:
                 for argument in command.get('arguments', []):
@@ -52,21 +53,23 @@ class IntegrationYMLFormat(BaseUpdateYML):
                             'isArray': True,
                             'required': True
                         })
-                        continue
+                        current_command_default_argument_changed = True
+                        break
 
-                argument_list = command.get('arguments', [])  # type: List
-                argument_list.append(
-                    {
-                        'default': True,
-                        'description': '',
-                        'isArray': True,
-                        'name': command_name,
-                        'required': True,
-                        'secret': False
-                    }
-                )
+                if not current_command_default_argument_changed:
+                    argument_list = command.get('arguments', [])  # type: List
+                    argument_list.append(
+                        {
+                            'default': True,
+                            'description': '',
+                            'isArray': True,
+                            'name': command_name,
+                            'required': True,
+                            'secret': False
+                        }
+                    )
 
-                command['arguments'] = argument_list
+                    command['arguments'] = argument_list
 
     def format_file(self):
         """Manager function for the integration YML updater."""

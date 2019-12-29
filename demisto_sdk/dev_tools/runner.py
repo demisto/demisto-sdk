@@ -1,53 +1,36 @@
 import re
+
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
-import demisto_client
-import os
+from demisto_sdk.common.demisto_client import Client
+
+ERROR_ENTRY_TYPE = 4
+DEBUG_FILE_ENTRY_TYPE = 16
 
 
-class Runner:
-    """Class for run command. Runs a command on a remote Demisto instance and pretty
-    prints the result.
-    """
+class Runner(Client):
+    """Used to run a command on Demisto and print the results.
+        Attributes:
+            query (str): The query to execute.
+            log_verbose (bool): Whether to output a detailed response.
+            debug_mode (str): Whether to activate the debug mode.
+        """
     SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
-    DEMISTO_API_KEY_ENV = 'DEMISTO_API_KEY'
-
-    def __init__(self, query: str, url: str, insecure: bool = False, debug_mode: bool = False, verbose: bool = False):
+    def __init__(self, query: str, url: str, insecure: bool = False, debug_mode: str = None, verbose: bool = False):
         self.query = query
-        self.base_url = url
         self.log_verbose = verbose
         self.debug_mode = debug_mode
-        self.client = demisto_client.configure(base_url=self.base_url,
-                                               api_key=self.get_api_key(),
-                                               verify_ssl=not insecure)
-
-    def get_api_key(self):
-        """Retrieve the API Key
-
-        Raises:
-            RuntimeError: if the API Key environment variable is not found
-
-        Returns:
-            str: API Key
-        """
-        ans = os.environ.get(self.DEMISTO_API_KEY_ENV, None)
-        if ans is None:
-            raise RuntimeError(f'Error: Environment variable {self.DEMISTO_API_KEY_ENV} not found')
-
-        return ans
+        if self.debug_mode is not None:
+            self.query += ' debug-mode="true"'
+        Client.__init__(self, url, insecure)
 
     def run(self):
-        """Run the integration command on the remote Demisto instance
-        and pretty prints the result.
+        """Runs a integration command on Demisto prints the result.
         """
         playground_id = self._get_playground_id()
 
-        query = self.query
-        if self.debug_mode:
-            query = self.query + ' debug-mode="true"'
-
-        log_ids = self._run_query(playground_id, query)
+        log_ids = self._run_query(playground_id)
 
         if self.debug_mode:
             if not log_ids:
@@ -56,23 +39,16 @@ class Runner:
                 self._export_debug_log(log_ids)
 
     def _get_playground_id(self):
-        """Retrieve Playground ID from the remote Demisto instance.
+        """Retrieves Playground ID from the remote Demisto instance.
         """
-        filter = {'filter': {'type': [9]}}
-        ans = self.client.search_investigations(filter=filter)
+        playground_filter = {'filter': {'type': [9]}}
+        ans = self.client.search_investigations(filter=playground_filter)
 
         if ans.total != 1:
-            print_error(
-                'Got unexpected amount of results. If you are using MT environment, '
-                'use the Tenant as Demisto\'s URL instead of the Master.'
-            )
             raise RuntimeError(
                 f'Got unexpected amount of results in getPlaygroundInvestigationID. '
                 f'Response was: {ans.total}'
             )
-
-        if ans.data is None:
-            raise RuntimeError(f'Missing data field in response')
 
         result = ans.data[0].id
 
@@ -80,13 +56,18 @@ class Runner:
 
         return result
 
-    def _run_query(self, playground_id: str, query: str):
-        """Run a query on the Playground of the remote Demisto instance.
-        Print the readable output and return the id of the debug log file.
+    def _run_query(self, playground_id: str):
+        """Runs a query on Demisto instance and prints the output.
+
+        Args:
+            playground_id: The investigation ID of the playground.
+
+        Returns:
+            list. A list of the log IDs if debug mode is on, otherwise an empty list.
         """
         update_entry = {
             'investigationId': playground_id,
-            'data': query
+            'data': self.query
         }
         ans = self.client.investigation_add_entries_sync(update_entry=update_entry)
 
@@ -99,15 +80,13 @@ class Runner:
                 print(entry.parent_content)
             if entry.contents:
                 print_color('## Readable Output', LOG_COLORS.YELLOW)
-                if entry.type == 4:  # entryType is 'error'
+                if entry.type == ERROR_ENTRY_TYPE:
                     print_error(entry.contents + '\n')
                 else:
                     print(entry.contents + '\n')
-            else:
-                print_warning('No readable output for query\n')
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
-            if self.debug_mode and entry.file_id:
+            if entry.type == DEBUG_FILE_ENTRY_TYPE:
                 log_ids.append(entry.id)
 
         return log_ids
@@ -143,7 +122,7 @@ class Runner:
     def add_sub_parser(subparsers):
         from argparse import ArgumentDefaultsHelpFormatter
         description = f"""Run integration command on remote Demisto instance in the playground.
-        {Runner.DEMISTO_API_KEY_ENV} environment variable should contain a valid Demisto API Key."""
+        {Client.DEMISTO_API_KEY_ENV} environment variable should contain a valid Demisto API Key."""
         parser = subparsers.add_parser('run', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument("-q", "--query", help="The query to run", required=True)
         parser.add_argument("-u", "--url", help="Base URL of the Demisto instance", required=True)
@@ -152,5 +131,5 @@ class Runner:
         parser.add_argument(
             "-D", "--debug-mode", metavar="DEBUG_LOG",
             help="Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used",
-            nargs='?', const='-', default=False
+            nargs='?', const='-', default=None
         )

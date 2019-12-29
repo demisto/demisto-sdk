@@ -442,8 +442,8 @@ class Linter:
                                                module_name, module_name + '.py')
                     print_v('Copying ' + os.path.join(self.configuration.env_dir, 'Scripts', module_path))
                     if not os.path.exists(module_path):
-                        print_v('API Module {} not found, you might be outside of the content repository or this API'
-                                ' module does not exist'.format(module_name))
+                        raise ValueError('API Module {} not found, you might be outside of the content repository'
+                                         ' or this API module does not exist'.format(module_name))
                     shutil.copy(os.path.join(module_path), self.project_dir)
             except Exception as e:
                 print_v('Unable to retrieve the module file {}: {}'.format(module_name, str(e)))

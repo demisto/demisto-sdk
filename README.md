@@ -142,6 +142,10 @@ Create content artifacts.
 * *-p, --preserve_bundles*
                         Flag for if you'd like to keep the bundles created in
                         the process of making the content artifacts
+             
+**Examples**:
+`demisto-sdk create -a .`
+This will create content artifacts in the current directory.
                         
 ### Format
 

@@ -222,13 +222,22 @@ class LintManager:
         Returns:
             bool. True if there is a difference and False otherwise.
         """
+        # get the current branch name.
         current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
+
+        # This will return a list of all files that changed up until the last commit (not including any changes
+        # which were made but not yet committed).
         changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch}")
+
+        # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
         changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")
 
+        # if the package is in the list of changed files or if any files within the package were changed
+        # but not yet committed, return True
         if pkg_dir in changes_from_last_commit_vs_master or len(changes_since_last_commit) > 0:
             return True
 
+        # if no changes were made to the package - return False.
         return False
 
     def _run_single_package_thread(self, package_dir: str) -> Tuple[int, str]:

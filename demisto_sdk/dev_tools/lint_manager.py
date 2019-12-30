@@ -39,7 +39,7 @@ class LintManager:
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
-                 no_bc_check: bool = False, run_all_tests: bool = False,
+                 git: bool = False, run_all_tests: bool = False,
                  configuration: Configuration = Configuration()):
 
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
@@ -59,16 +59,15 @@ class LintManager:
             'tests': not no_test,
             'bandit': not no_bandit
         }
-        self.no_bc_check = no_bc_check
 
         if run_all_tests:
             self.pkgs = self.get_all_directories()
-            self.no_bc_check = True
 
         else:
             self.pkgs = project_dir_list.split(',')
-            if not self.no_bc_check:
-                self.pkgs = self._get_packages_to_run()
+
+        if git:
+            self.pkgs = self._get_packages_to_run()
 
         self.configuration = configuration
         self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
@@ -223,17 +222,22 @@ class LintManager:
         Returns:
             bool. True if there is a difference and False otherwise.
         """
-        diff_compare = os.getenv("DIFF_COMPARE")
-        if not diff_compare:
-            return True
-        if os.getenv('CONTENT_PRECOMMIT_RUN_DEV_TASKS'):
-            # if running in precommit we check against staged
-            diff_compare = '--staged'
+        # get the current branch name.
+        current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
 
-        res = run_command(f"git diff --name-only {diff_compare} -- {pkg_dir}")
-        if res.stdout:
+        # This will return a list of all files that changed up until the last commit (not including any changes
+        # which were made but not yet committed).
+        changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch}")
+
+        # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
+        changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")
+
+        # if the package is in the list of changed files or if any files within the package were changed
+        # but not yet committed, return True
+        if pkg_dir in changes_from_last_commit_vs_master or len(changes_since_last_commit) > 0:
             return True
 
+        # if no changes were made to the package - return False.
         return False
 
     def _run_single_package_thread(self, package_dir: str) -> Tuple[int, str]:
@@ -311,6 +315,6 @@ class LintManager:
         )
         parser.add_argument("-p", "--parallel", help="Run tests in parallel", action='store_true')
         parser.add_argument("-m", "--max-workers", help="How many threads to run in parallel")
-        parser.add_argument("--no-bc", help="Check diff with $DIFF_COMPARE env variable", action='store_true')
+        parser.add_argument("-g", "--git", help="Will run only on changed packages", action='store_true')
         parser.add_argument("-a", "--run-all-tests", help="Run lint on all directories in content repo",
                             action='store_true')

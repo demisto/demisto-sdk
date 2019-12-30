@@ -359,7 +359,7 @@ class FilesValidator:
                     self._is_valid = False
 
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_file():
+                if not integration_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
@@ -369,7 +369,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
 
-                if not script_validator.is_valid_file():
+                if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \

@@ -1,5 +1,5 @@
 type: map
-allowempty: True
+#allowempty: True
 mapping:
   fromVersion:
     type: str

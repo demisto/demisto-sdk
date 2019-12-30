@@ -113,7 +113,8 @@ class DemistoSDK:
                 self.format_yml_files(args.type, args.path, args.output_file)
 
             elif args.command == 'init':
-                self.init(output_dir=args.outdir, name=args.name, integration=args.integration, script=args.script)
+                self.init(output_dir=args.outdir, name=args.name, integration=args.integration, script=args.script,
+                          auto_dir=args.auto_dir)
 
             else:
                 print('Use demisto-sdk -h to see the available commands.')
@@ -227,6 +228,6 @@ class DemistoSDK:
             format_object = file_type_and_linked_class[file_type](path, output_file_name)
             format_object.format_file()
 
-    def init(self, *kwargs):
-        initiator = Initiator(*kwargs)
+    def init(self, **kwargs):
+        initiator = Initiator(**kwargs)
         initiator.init()

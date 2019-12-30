@@ -1,5 +1,6 @@
 import os
 import shutil
+from distutils.dir_util import copy_tree
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
 INTEGRATIONS_DIR = '/Integrations'
@@ -12,7 +13,8 @@ TEST_PLAYBOOKS_DIR = '/TestPlaybooks'
 
 
 class Initiator:
-    def __init__(self, output_dir: str, name: str, integration: bool = False, script: bool = False):
+    def __init__(self, output_dir: str, name: str, integration: bool = False, script: bool = False,
+                 auto_dir: bool = False):
 
         if output_dir:
             self.output_dir = output_dir
@@ -22,6 +24,7 @@ class Initiator:
         self.name = name
         self.integration = integration
         self.script = script
+        self.auto_dir = auto_dir
 
     def init(self):
         self.check_name()
@@ -36,18 +39,21 @@ class Initiator:
 
     def check_name(self):
         if self.name is None:
-            print("Please input the name of the initialized object:\n")
+            print("Please input the name of the initialized object:")
             self.name = str(input())
 
     def pack_init(self):
-        full_path = self.output_dir + '/' + self.name
+        if len(self.output_dir) > 0:
+            full_path = self.output_dir + '/' + self.name
+
+        else:
+            full_path = self.name
         try:
             os.mkdir(full_path)
 
         except FileExistsError:
-            to_delete = ''
-            print_error(f"The directory {full_path} already exists.\nDo you want to delete it?\n")
-
+            print_error(f"The directory {full_path} already exists.\nDo you want to overwrite it? Y/N")
+            to_delete = str(input()).lower()
             while to_delete != 'y' and to_delete != 'n':
                 print_error(f"Your response was invalid.\nDo you want to delete it? Y/N")
                 to_delete = str(input()).lower()
@@ -87,6 +93,35 @@ class Initiator:
         return True
 
     def integration_init(self):
+        if len(self.output_dir) > 0:
+            full_path = self.output_dir + '/' + self.name
+
+        elif self.auto_dir:
+            full_path = 'Integrations/' + self.name
+
+        else:
+            full_path = self.name
+
+        try:
+            os.mkdir(full_path)
+
+        except FileExistsError:
+            print_error(f"The directory {full_path} already exists.\nDo you want to overwrite it? Y/N")
+            to_delete = str(input()).lower()
+            while to_delete != 'y' and to_delete != 'n':
+                print_error(f"Your response was invalid.\nDo you want to delete it? Y/N")
+                to_delete = str(input()).lower()
+
+            if to_delete == 'y':
+                shutil.rmtree(path=full_path, ignore_errors=True)
+                os.mkdir(full_path)
+
+            else:
+                print_error(f"Pack not created in {full_path}")
+                return False
+        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'schemas', 'HelloWorld'))
+        copy_tree(str(hello_world_path), full_path)
+
         return True
 
     def script_init(self):
@@ -100,3 +135,5 @@ class Initiator:
         parser.add_argument("-o", "--outdir", help="The output dir to write the object into")
         parser.add_argument("--integration", help="Create an Integration", action='store_true')
         parser.add_argument("--script", help="Create a script", action='store_true')
+        parser.add_argument("--auto-dir", help="In a pack's main directory this flag will create integrations and "
+                                               "scripts in the appropriate directorys", action='store_true')

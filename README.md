@@ -167,7 +167,7 @@ This will go through the integration file, format it, and override the original 
 Upload integration to Demisto instance. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
 
 **Arguments**:
-* *-i INTEGRATION_PATH, --infile INTEGRATION_PATH*
+* *-i INTEGRATION_PATH, --inpath INTEGRATION_PATH*
                         The yml file to with the integration to upload
 * *-k, --insecure*
                         Skip certificate validation

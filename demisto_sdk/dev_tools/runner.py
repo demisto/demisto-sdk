@@ -124,7 +124,7 @@ class Runner:
     def add_sub_parser(subparsers):
         from argparse import ArgumentDefaultsHelpFormatter
         description = f"""Run integration command on remote Demisto instance in the playground.
-        If 'url' argument is not specified, DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
+        DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
         DEMISTO_API_KEY environment variable should contain a valid Demisto API Key."""
         parser = subparsers.add_parser('run', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument("-q", "--query", help="The query to run", required=True)

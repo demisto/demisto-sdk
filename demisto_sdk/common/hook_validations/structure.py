@@ -10,10 +10,7 @@ from typing import Optional
 import yaml
 from pykwalify.core import Core
 
-from demisto_sdk.common.constants import YML_INTEGRATION_REGEXES, YML_ALL_PLAYBOOKS_REGEX, YML_SCRIPT_REGEXES, \
-    JSON_ALL_WIDGETS_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_CONNECTIONS_REGEXES, JSON_ALL_CLASSIFIER_REGEXES, \
-    JSON_ALL_LAYOUT_REGEXES, JSON_ALL_INCIDENT_FIELD_REGEXES, JSON_ALL_REPORTS_REGEXES, MISC_REPUTATIONS_REGEX, \
-    MISC_REGEX, Errors, ACCEPTED_FILE_EXTENSIONS, JSON_ALL_INDICATOR_FIELDS_REGEXES
+from demisto_sdk.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, SCHEMA_TO_REGEX
 from demisto_sdk.common.tools import get_remote_file, get_matching_regex, print_error
 from demisto_sdk.common.configuration import Configuration
 
@@ -36,26 +33,9 @@ class StructureValidator:
         '.yml': yaml.safe_load,
         '.json': json.load,
     }
-    SCHEMA_TO_REGEX = {
-        'integration': YML_INTEGRATION_REGEXES,
-        'playbook': YML_ALL_PLAYBOOKS_REGEX,
-        'script': YML_SCRIPT_REGEXES,
-        'widget': JSON_ALL_WIDGETS_REGEXES,
-        'dashboard': JSON_ALL_DASHBOARDS_REGEXES,
-        'canvas-context-connections': JSON_ALL_CONNECTIONS_REGEXES,
-        'classifier': JSON_ALL_CLASSIFIER_REGEXES,
-        'layout': JSON_ALL_LAYOUT_REGEXES,
-        'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES
-    }
-
-    PATHS_TO_VALIDATE = {
-        'reports': JSON_ALL_REPORTS_REGEXES,
-        'reputation': [MISC_REPUTATIONS_REGEX],
-        'reputations': [MISC_REGEX]
-    }
 
     def __init__(self, file_path, old_file_path=None, predefined_scheme=None, configuration=Configuration()):
-        # type: (str, Optional[str], Configuration) -> None
+        # type: (str, Optional[str], Optional[str], Configuration) -> None
         self.is_valid = None  # type: Optional[bool]
         self.file_path = file_path
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
@@ -89,11 +69,11 @@ class StructureValidator:
         Returns:
             (str): Type of file by scheme name
         """
-        for scheme_name, regex_list in self.SCHEMA_TO_REGEX.items():
+        for scheme_name, regex_list in SCHEMA_TO_REGEX.items():
             if get_matching_regex(self.file_path, regex_list):
                 return scheme_name
 
-        pretty_formated_string_of_regexes = json.dumps(self.SCHEMA_TO_REGEX, indent=4, sort_keys=True)
+        pretty_formated_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
         print_error(f"The file {self.file_path} does not match any scheme we have please, refer to the following list"
                     f" for the various file name options we have in our repo {pretty_formated_string_of_regexes}")
@@ -222,7 +202,7 @@ class StructureValidator:
         if self.scheme_name:
             return self.scheme_name
 
-        for file_type, regexes in self.PATHS_TO_VALIDATE.items():
+        for file_type, regexes in FILE_TYPES_PATHS_TO_VALIDATE.items():
             for regex in regexes:
                 if re.search(regex, self.file_path, re.IGNORECASE):
                     return file_type

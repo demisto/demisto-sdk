@@ -13,6 +13,8 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* **validate** now supports indicator fields.
+* Fixed an issue with layouts scheme validation.
 
 ### 0.2.6
 

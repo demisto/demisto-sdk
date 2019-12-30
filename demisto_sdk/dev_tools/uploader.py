@@ -44,7 +44,7 @@ class Uploader:
     @staticmethod
     def add_sub_parser(subparsers):
         from argparse import ArgumentDefaultsHelpFormatter
-        description = f"""Upload integration to Demisto instance. If 'url' argument is not specified, 
+        description = f"""Upload integration to Demisto instance.
         DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
         DEMISTO_API_KEY environment variable should contain a valid Demisto API Key."""
         parser = subparsers.add_parser('upload', help=description, formatter_class=ArgumentDefaultsHelpFormatter)

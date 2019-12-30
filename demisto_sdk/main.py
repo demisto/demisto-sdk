@@ -12,7 +12,7 @@ from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs as j_o
+from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -248,23 +248,17 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
     "-i", "--infile", help="Valid JSON file path. If not specified then script will wait for user input in the "
                            "terminal", required=False)
 @click.option(
-    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates", required=True)
+    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
+                           "script generates", required=True)
 @click.option(
     "-o", "--outfile", help="Output file path, if not specified then will print to stdout", required=False)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "-int", "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                                  "description. By default is interactive mode is disabled", is_flag=True)
-def json_to_outputs(command, infile, prefix, outfile, verbose, interactive):
-    j_o(
-        command=command,
-        infile=infile,
-        prefix=prefix,
-        outfile=outfile,
-        verbose=verbose,
-        interactive=interactive
-    )
+    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                          "description. By default is interactive mode is disabled", is_flag=True)
+def json_to_outputs_command(**kwargs):
+    json_to_outputs(**kwargs)
 
 
 def demisto_sdk_cli():

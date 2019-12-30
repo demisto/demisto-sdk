@@ -4,11 +4,38 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.0
+
+* Added support for multi-package **lint** both with parallel and without.
+* Added all parameter in **lint** to run on all packages and packs in content repository.
+* Added **format** for:
+    * Scripts
+    * Playbooks
+    * Integrations
+* Improved user outputs for **secrets** command.
+
+### 0.2.6
+
+* Fixed an issue with locating release notes for beta integrations in **validate**.
+
+### 0.2.5
+
+* Fixed an issue with locating release notes for beta integrations in **validate**.
+
+### 0.2.4
+
+* Adding image validation to Beta_Integration and Packs in **validate**.
+
+### 0.2.3
+
+* Adding Beta_Integration to the structure validation process.
+* Fixing bug where **validate** did checks on TestPlaybooks.
+* Added requirements parameter to **lint**.
+
 ### 0.2.2
 
 * Fixing bug where **lint** did not return exit code 1 on failure.
 * Fixing bug where **validate** did not print error message in case no release notes were give.
-* Adding Beta_Integration to the structure validation process.
 
 ### 0.2.1
 

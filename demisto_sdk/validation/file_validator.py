@@ -18,9 +18,9 @@ from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFile
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
-    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST, PACKAGE_SUPPORTING_DIRECTORIES, \
-    YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, PACKS_DIR, PACKS_DIRECTORIES, \
-    Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX
+    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
+    PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
+    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -262,13 +262,19 @@ class FilesValidator:
                 integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
+
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
             elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
+                image_validator = ImageValidator(file_path)
+                if not image_validator.is_valid():
+                    self._is_valid = False
+
                 description_validator = DescriptionValidator(file_path)
                 if not description_validator.is_valid_beta_description():
                     self._is_valid = False
+
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
@@ -453,11 +459,15 @@ class FilesValidator:
 
     def validate_all_files(self):
         """Validate all files in the repo are in the right format."""
+        # go over packs
         for root, dirs, _ in os.walk(PACKS_DIR):
             for dir_in_dirs in dirs:
                 for directory in PACKS_DIRECTORIES:
                     for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir_in_dirs, directory)):
                         for inner_dir in inner_dirs:
+                            if inner_dir.startswith('.'):
+                                continue
+
                             project_dir = os.path.join(inner_root, inner_dir)
                             _, file_path = get_yml_paths_in_dir(os.path.normpath(project_dir),
                                                                 Errors.no_yml_file(project_dir))
@@ -467,13 +477,14 @@ class FilesValidator:
                                 if not structure_validator.is_valid_scheme():
                                     self._is_valid = False
 
-        for directory in DIR_LIST:
+        # go over regular content entities
+        for directory in DIR_LIST_FOR_REGULAR_ENTETIES:
             print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
             for root, dirs, files in os.walk(directory):
                 for file_name in files:
                     file_path = os.path.join(root, file_name)
                     # skipping hidden files
-                    if file_name.startswith('.'):
+                    if not file_name.endswith('.yml'):
                         continue
 
                     print('Validating ' + file_name)
@@ -481,9 +492,13 @@ class FilesValidator:
                     if not structure_validator.is_valid_scheme():
                         self._is_valid = False
 
+        # go over regular PACKAGE_SUPPORTING_DIRECTORIES entities
         for directory in PACKAGE_SUPPORTING_DIRECTORIES:
             for root, dirs, files in os.walk(directory):
                 for inner_dir in dirs:
+                    if inner_dir.startswith('.'):
+                        continue
+
                     project_dir = os.path.join(root, inner_dir)
                     _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
                     if file_path:

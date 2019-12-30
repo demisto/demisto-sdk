@@ -15,7 +15,6 @@ class PlaybookRunner:
         base_link_to_workplan (str): the base link to see the full playbook run in Demisto.
         demisto_client (demisto_client): object for creating an incident in Demisto.
     """
-    DEMISTO_BASE_URL = 'DEMISTO_BASE_URL'
 
     def __init__(self, playbook_id: str, url: str, wait: str, timeout: int):
         self.playbook_id = playbook_id
@@ -128,5 +127,5 @@ class PlaybookRunner:
             return f'{url}/#/WorkPlan/'
 
         else:
-            base_url = os.environ.get(self.DEMISTO_BASE_URL)
+            base_url = os.environ.get('DEMISTO_BASE_URL')
             return f'{base_url}/#/WorkPlan/'

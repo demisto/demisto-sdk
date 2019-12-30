@@ -15,17 +15,19 @@ class PlaybookRunner:
         base_link_to_workplan (str): the base link to see the full playbook run in Demisto.
         demisto_client (demisto_client): object for creating an incident in Demisto.
     """
-    DEMISTO_API_KEY_ENV = 'DEMISTO_API_KEY'
+    DEMISTO_BASE_URL = 'DEMISTO_BASE_URL'
 
     def __init__(self, playbook_id: str, url: str, wait: str, timeout: int):
         self.playbook_id = playbook_id
         self.should_wait = (wait == 'True')
         self.timeout = timeout
-        self.base_link_to_workplan = f'{url}/#/WorkPlan/'
+
+        # if url parameter is not provided, demisto_client will search the DEMISTO_BASE_URL env variable
         self.demisto_client = demisto_client.configure(
             base_url=url,
-            api_key=self.get_api_key(),
             verify_ssl=False)
+
+        self.base_link_to_workplan = self.get_base_link_to_workplan(url)
 
     def run_playbook(self):
         # type: () -> int
@@ -112,17 +114,19 @@ class PlaybookRunner:
         playbook_results = self.demisto_client.generic_request(method='GET', path=f'/inv-playbook/{inc_id}')
         return eval(playbook_results[0])
 
-    def get_api_key(self):
-        """Retrieve the API Key
+    def get_base_link_to_workplan(self, url):
+        """Create a base link to the workplan in the specified demisto instance
 
-        Raises:
-            RuntimeError: if the API Key environment variable is not found
+        Args:
+            url(str): URL to a demisto instance. Could be None if not provided
 
         Returns:
-            str: API Key
+            str: The link to the workplan
         """
-        api_key = os.environ.get(self.DEMISTO_API_KEY_ENV)
-        if api_key is None:
-            raise RuntimeError(f'Error: Environment variable {self.DEMISTO_API_KEY_ENV} not found')
 
-        return api_key
+        if url:
+            return f'{url}/#/WorkPlan/'
+
+        else:
+            base_url = os.environ.get(self.DEMISTO_BASE_URL)
+            return f'{base_url}/#/WorkPlan/'

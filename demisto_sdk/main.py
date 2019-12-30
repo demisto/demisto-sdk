@@ -257,8 +257,7 @@ def lint(config, dir, **kwargs):
 )
 @click.option(
     '--url', '-u',
-    help='URL to a Demisto instance.',
-    required=True
+    help='URL to a Demisto instance. You can also specify the URL as an environment variable named: DEMISTO_BASE_URL'
 )
 @click.option(
     '--playbook_id', '-p',

@@ -7,7 +7,7 @@ import re
 from typing import Tuple
 
 from demisto_sdk.common.constants import Errors
-from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir
+from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_color, LOG_COLORS
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
@@ -81,9 +81,6 @@ class Unifier:
 
     def merge_script_package_to_yml(self):
         """Merge the various components to create an output yml file
-
-        Returns:
-            output path, script path, image path
         """
         print("Merging package: {}".format(self.package_path))
         if self.package_path.endswith('/'):
@@ -126,7 +123,8 @@ class Unifier:
             yml_text, desc_path = self.insert_description_to_yml(yml_data, yml_text)
 
         output_map = self.write_yaml_with_docker(yml_text, yml_data, script_obj)
-        return list(output_map.keys()), yml_path, script_path, image_path, desc_path
+        unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
+        print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
 
     def insert_image_to_yml(self, yml_data, yml_text):
         image_data, found_img_path = self.get_data("*png")

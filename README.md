@@ -164,31 +164,30 @@ This will go through the integration file, format it, and override the original 
 
 ## Upload
 
-Upload integration to Demisto instance. DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+Upload integration to Demisto instance. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
 
 **Arguments**:
 * *-i INTEGRATION_PATH, --infile INTEGRATION_PATH*
                         The yml file to with the integration to upload
-* *-u DEMISTO_URL, --url DEMISTO_URL*
-                        Base URL of the Demisto instance
 * *-k, --insecure*
                         Skip certificate validation
 * *-v, --verbose*
                         Verbose output
 
 **Examples**:
-`DEMISTO_API_KEY=<API KEY> demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml -u https://demisto.local`
-This will upload the integration YML generated with `unify` command on the Demisto instance at `https://demisto.local`
+`demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml`
+This will upload the integration YML generated with `unify` command on the Demisto instance.
+
+`demisto-sdk upload -i Integrations/GoogleCloudTranslate`
+This will create a temporary unified file of the intergration and upload it to the Demisto instance.
 
 ## Run
 
-Run integration command in the playground of a remote Demisto instance and retrieves the output. DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+Run integration command in the playground of a remote Demisto instance and retrieves the output. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
 
 **Arguments**:
 * *-q QUERY, --query QUERY*
                         The query to run
-* *-u DEMISTO_URL, --url DEMISTO_URL*
-                        Base URL of the Demisto instance
 * *-k, --insecure*
                         Skip certificate validation
 * *-v, --verbose*
@@ -197,8 +196,8 @@ Run integration command in the playground of a remote Demisto instance and retri
                         Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used
 
 **Examples**:
-`DEMISTO_API_KEY=<API KEY> demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -u https://demisto.local -D`
-This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of `https://demisto.local`, print the output, retrieve the debug log file and pretty print it.
+`demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D`
+This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
 
 
 ## In the code

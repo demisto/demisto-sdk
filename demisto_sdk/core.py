@@ -94,11 +94,10 @@ class DemistoSDK:
                 if args.dir is None and args.run_all_tests is False:
                     print_error("No directories given for lint command to run on.")
                     return 1
-
                 ans = self.lint(args.dir, no_pylint=args.no_pylint, no_flake8=args.no_flake8, no_mypy=args.no_mypy,
                                 no_test=args.no_test, root=args.root, keep_container=args.keep_container,
                                 verbose=args.verbose, cpu_num=args.cpu_num, parallel=args.parallel,
-                                max_workers=args.max_workers, no_bandit=args.no_bandit, no_bc_check=args.no_bc,
+                                max_workers=args.max_workers, no_bandit=args.no_bandit, git=args.git,
                                 run_all_tests=args.run_all_tests)
 
                 return ans

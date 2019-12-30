@@ -248,7 +248,7 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
     "-i", "--infile", help="Valid JSON file path. If not specified then script will wait for user input in the "
                            "terminal", required=False)
 @click.option(
-    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP", required=True)
+    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates", required=True)
 @click.option(
     "-o", "--outfile", help="Output file path, if not specified then will print to stdout", required=False)
 @click.option(

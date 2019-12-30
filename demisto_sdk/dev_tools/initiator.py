@@ -81,12 +81,16 @@ class Initiator:
         Returns:
             bool. Returns True if pack was created successfully and False otherwise
         """
+        # if an output directory given create the pack there
         if len(self.output_dir) > 0:
             self.full_path = self.output_dir + '/' + self.name
 
+        # content-descriptor file indicates we are in "content" repository
+        # thus we will create the pack under Packs directory
         elif os.path.isfile('content-descriptor.json'):
             self.full_path = "Packs/" + self.name
 
+        # if non of the above conditions apply - create the pack in current directory
         else:
             self.full_path = self.name
 
@@ -140,12 +144,16 @@ class Initiator:
         Returns:
             bool. True if the integration was created successfully, False otherwise.
         """
+        # if output directory given create the integration there
         if len(self.output_dir) > 0:
             self.full_path = self.output_dir + '/' + self.name
 
+        # the file pack-metadata indicates we are in a pack directory
+        # thus we will create the integration under the Integrations directory of the pack
         elif os.path.isfile("pack-metadata.json"):
             self.full_path = 'Integrations/' + self.name
 
+        # if non of the conditions above apply - create the integration in the local directory
         else:
             self.full_path = self.name
 
@@ -170,12 +178,16 @@ class Initiator:
         Returns:
             bool. True if the script was created successfully, False otherwise.
         """
+        # if output directory given create the script there
         if len(self.output_dir) > 0:
             full_path = self.output_dir + '/' + self.name
 
+        # the file pack-metadata indicates we are in a pack directory
+        # thus we will create the script under the Scripts directory of the pack
         elif os.path.isfile("pack-metadata.json"):
             full_path = 'Scripts/' + self.name
 
+        # if non of the conditions above apply - create the integration in the local directory
         else:
             full_path = self.name
 

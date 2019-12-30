@@ -130,6 +130,7 @@ def unify(**kwargs):
     return unifier.merge_script_package_to_yml()
 
 
+# TODO: add a configuration for conf.json and id_set.json
 @main.command(name="validate",
               short_help='Validate your content files.')
 @click.help_option(
@@ -175,7 +176,7 @@ def validate(config, **kwargs):
     help='Keep the bundles created in the process of making the content artifacts')
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
-    content_creator.run()
+    return content_creator.run()
 
 
 @main.command(name="secrets",

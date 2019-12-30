@@ -24,6 +24,7 @@ from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.dev_tools.lint_manager import LintManager
+from demisto_sdk.dev_tools.initiator import Initiator
 
 
 class DemistoSDK:
@@ -53,6 +54,7 @@ class DemistoSDK:
         IntegrationYMLFormat.add_sub_parser(self.subparsers)
         ScriptYMLFormat.add_sub_parser(self.subparsers)
         PlaybookYMLFormat.add_sub_parser(self.subparsers)
+        Initiator.add_sub_parser(self.subparsers)
 
     def parse_args(self):
         args = self.parser.parse_args()
@@ -109,6 +111,9 @@ class DemistoSDK:
 
             elif args.command == 'format':
                 self.format_yml_files(args.type, args.path, args.output_file)
+
+            elif args.command == 'init':
+                self.init(output_dir=args.outdir, name=args.name, integration=args.integration, script=args.script)
 
             else:
                 print('Use demisto-sdk -h to see the available commands.')
@@ -221,3 +226,7 @@ class DemistoSDK:
         if file_type in file_type_and_linked_class:
             format_object = file_type_and_linked_class[file_type](path, output_file_name)
             format_object.format_file()
+
+    def init(self, *kwargs):
+        initiator = Initiator(*kwargs)
+        initiator.init()

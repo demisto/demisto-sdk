@@ -143,3 +143,6 @@ class BaseUpdateYML:
 
         else:
             print_color('The files are invalid', LOG_COLORS.RED)
+
+    def format_file(self):
+        pass

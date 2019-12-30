@@ -5,12 +5,14 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.3.0
+
 * Added support for multi-package **lint** both with parallel and without.
 * Added all parameter in **lint** to run on all packages and packs in content repository.
 * Added **format** for:
     * Scripts
     * Playbooks
     * Integrations
+* Improved user outputs for **secrets** command.
 * Added the **run-playbook** command
 
 ### 0.2.6

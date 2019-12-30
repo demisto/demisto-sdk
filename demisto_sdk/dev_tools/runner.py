@@ -1,29 +1,31 @@
+import demisto_client
 import re
 
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
-from demisto_sdk.common.demisto_client import Client
 
 ERROR_ENTRY_TYPE = 4
 DEBUG_FILE_ENTRY_TYPE = 16
 
 
-class Runner(Client):
+class Runner:
     """Used to run a command on Demisto and print the results.
         Attributes:
             query (str): The query to execute.
             log_verbose (bool): Whether to output a detailed response.
             debug (str): Holds the path of the debug log file (or '-' if the logs will be printed in stdout).
+            client (DefaultApi): Demisto-SDK client object.
         """
     SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
-    def __init__(self, query: str, url: str, insecure: bool = False, debug: str = None, verbose: bool = False):
+    def __init__(self, query: str, insecure: bool = False, debug: str = None, verbose: bool = False):
         self.query = query
         self.log_verbose = verbose
         self.debug = debug
+        self.client = demisto_client.configure(verify_ssl=not insecure)
+
         if self.debug is not None:
             self.query += ' debug-mode="true"'
-        super().__init__(url, insecure)
 
     def run(self):
         """Runs an integration command on Demisto and prints the result.
@@ -122,10 +124,10 @@ class Runner(Client):
     def add_sub_parser(subparsers):
         from argparse import ArgumentDefaultsHelpFormatter
         description = f"""Run integration command on remote Demisto instance in the playground.
-        {Client.DEMISTO_API_KEY_ENV} environment variable should contain a valid Demisto API Key."""
+        If 'url' argument is not specified, DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
+        DEMISTO_API_KEY environment variable should contain a valid Demisto API Key."""
         parser = subparsers.add_parser('run', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument("-q", "--query", help="The query to run", required=True)
-        parser.add_argument("-u", "--url", help="Base URL of the Demisto instance", required=True)
         parser.add_argument("-k", "--insecure", help="Skip certificate validation", action="store_true")
         parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true')
         parser.add_argument(

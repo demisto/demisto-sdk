@@ -1,7 +1,8 @@
 import demistomock as demisto
 from CommonServerPython import *
+from CommonServerPython import BaseClient
 from CommonServerUserPython import *
-''' IMPORTS '''
+# IMPORTS
 
 import json
 import requests
@@ -10,7 +11,7 @@ import dateparser
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()
 
-''' CONSTANTS '''
+# CONSTANTS
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
@@ -81,10 +82,10 @@ def say_hello_command(client, args):
         Hello {someone}
 
         readable_output (str): This will be presented in the war room - should be in markdown syntax - human readable
-        outputs (dict): Dictionary/JSON - saved in the incident context in order to be used as inputs for other tasks in the
-                 playbook
-        raw_response (dict): Used for debugging/troubleshooting purposes - will be shown only if the command executed with
-                      raw-response=true
+        outputs (dict): Dictionary/JSON - saved in the incident context in order to be used as inputs
+                        for other tasks in the playbook
+        raw_response (dict): Used for debugging/troubleshooting purposes -
+                            will be shown only if the command executed with raw-response=true
     """
     name = args.get('name')
 

@@ -160,7 +160,7 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'schemas',
+        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'templates',
                                                          HELLO_WORLD_INTEGRATION))
 
         copy_tree(str(hello_world_path), self.full_path)
@@ -194,7 +194,7 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'schemas',
+        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'templates',
                                                          HELLO_WORLD_SCRIPT))
 
         copy_tree(str(hello_world_path), full_path)

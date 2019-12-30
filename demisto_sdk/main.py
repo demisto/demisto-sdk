@@ -17,7 +17,7 @@ from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500))
+@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500), )
 @click.help_option(
     '-h', '--help'
 )
@@ -194,9 +194,9 @@ def create(**kwargs):
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    validator = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
-                                 white_list_path=kwargs['whitelist'])
-    return validator.run()
+    secrets = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
+                               white_list_path=kwargs['whitelist'])
+    return secrets.run()
 
 
 @main.command(name="lint",
@@ -235,8 +235,13 @@ def lint(config, dir, **kwargs):
     return linter.run_dev_packages()
 
 
+@main.resultcallback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
+
+
 def demisto_sdk_cli():
-    sys.exit(main())
+    main()
 
 
 if __name__ == '__main__':

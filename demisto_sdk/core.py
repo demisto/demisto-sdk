@@ -104,7 +104,7 @@ class DemistoSDK:
                 return ans
 
             elif args.command == 'upload':
-                self.upload(path=args.inpath, verbose=args.verbose)
+                self.upload(path=args.inpath, insecure=args.insecure, verbose=args.verbose)
 
             elif args.command == 'run':
                 self.run(query=args.query, insecure=args.insecure, verbose=args.verbose,

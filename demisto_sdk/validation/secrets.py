@@ -8,7 +8,7 @@ import PyPDF2
 from bs4 import BeautifulSoup
 from demisto_sdk.common.constants import re, REQUIRED_YML_FILE_TYPES, PACKS_DIR, PACKS_WHITELIST_FILE_NAME, \
     INTEGRATION_README_REGEX, EXTERNAL_PR_REGEX
-from demisto_sdk.common.tools import run_command, print_error, str2bool, print_color, LOG_COLORS, checked_type, \
+from demisto_sdk.common.tools import run_command, print_error, print_color, LOG_COLORS, checked_type, \
     is_file_path_in_pack, get_pack_name
 
 # secrets settings
@@ -411,19 +411,8 @@ class SecretsValidator():
         branch_name = branch_name_reg.group(1)
         return branch_name
 
-    @staticmethod
-    def add_sub_parser(subparsers):
-        from argparse import ArgumentDefaultsHelpFormatter
-        description = """Run Secrets validator to catch sensitive data before exposing your code to public repository.
-         Attach full path to whitelist to allow manual whitelists. Default file path to secrets is
-          "./Tests/secrets_white_list.json"
-          """
-        parser = subparsers.add_parser('secrets', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument('-c', '--circle', type=str2bool, default=False, help='Is CircleCi or not')
-        parser.add_argument('-wl', '--whitelist', default='./Tests/secrets_white_list.json',
-                            help='Full path to whitelist file, file name should be "secrets_white_list.json"')
-
     def find_secrets(self):
+        print_color('Starting secrets detection', LOG_COLORS.GREEN)
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
         is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None
@@ -434,3 +423,10 @@ class SecretsValidator():
             else:
                 print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
                 return False
+
+    def run(self):
+        if self.find_secrets():
+            return 1
+
+        else:
+            return 0

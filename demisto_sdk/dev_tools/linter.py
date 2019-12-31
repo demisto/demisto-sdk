@@ -125,7 +125,8 @@ class Linter:
         self.lock.acquire()
         print_color("============ Starting process for: {} ============\n".format(self.project_dir),
                     LOG_COLORS.YELLOW)
-        self.lock.release()
+        if self.lock.locked():
+            self.lock.release()
         self._setup_dev_files(py_num)
         if self.run_args['flake8']:
             result_val = self.run_flake8(py_num)
@@ -143,7 +144,6 @@ class Linter:
                 return_code = result_val
 
         for docker in dockers:
-            print(docker)
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
                 py_num = get_python_version(docker, self.log_verbose)
@@ -156,6 +156,7 @@ class Linter:
 
                         docker_image_created = self._docker_image_create(docker, requirements)
                         output, status_code = self._docker_run(docker_image_created)
+
                         self.lock.acquire()
                         print_color("\n========== Running tests/pylint for: {} =========".format(self.project_dir),
                                     LOG_COLORS.YELLOW)
@@ -165,14 +166,16 @@ class Linter:
                         else:
                             print(output)
                             print_color("============ Finished process for: {}  "
-                                        "with docker: {}============\n".format(self.project_dir, docker),
+                                        "with docker: {} ============\n".format(self.project_dir, docker),
                                         LOG_COLORS.GREEN)
-                        self.lock.release()
+
+                        if self.lock.locked():
+                            self.lock.release()
 
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:
                     if ex.output:
-                        print_color("===========================ERROR IN {}==========================="
+                        print_color("=========================== ERROR IN {}==========================="
                                     "\n{}\n".format(self.project_dir, ex.output), LOG_COLORS.RED)
                     else:
                         print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
@@ -215,12 +218,14 @@ class Linter:
         print("\n========= Running flake8 on: {}===============".format(lint_files))
         if len(output) == 0:
             print_color("flake8 completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 0
 
         else:
             print_error(output)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 1
 
     def run_mypy(self, py_num) -> int:
@@ -243,13 +248,15 @@ class Linter:
             print(output)
             print_color("mypy completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
             self.remove_common_server_python()
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 0
 
         else:
             print_error(output)
             self.remove_common_server_python()
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 1
 
     def run_bandit(self, py_num) -> int:
@@ -270,12 +277,14 @@ class Linter:
         print_v('Using: {} to run bandit'.format(python_exe))
         if len(output) == 0:
             print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 0
 
         else:
             print_error(output)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 1
 
     def _docker_login(self):

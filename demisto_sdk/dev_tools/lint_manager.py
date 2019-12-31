@@ -8,7 +8,7 @@ from demisto_sdk.dev_tools.linter import Linter
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements,\
+from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, get_dev_requirements,\
     print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
 
 
@@ -196,7 +196,7 @@ class LintManager:
         if isinstance(script_obj.get('script'), dict):
             script_obj = script_obj.get('script')
 
-        dockers = get_docker_images(script_obj)
+        dockers = get_all_docker_images(script_obj)
         py_num = get_python_version(dockers[0], self.log_verbose, no_prints=True)
         return py_num
 

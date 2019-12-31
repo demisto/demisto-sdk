@@ -186,6 +186,7 @@ class DemistoSDK:
         """
         lint_manager = LintManager(configuration=self.configuration, project_dir_list=project_dir, **kwargs)
         ans = lint_manager.run_dev_packages()
+
         return ans
 
     def secrets(self, **kwargs):

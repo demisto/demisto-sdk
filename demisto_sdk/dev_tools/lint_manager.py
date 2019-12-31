@@ -1,15 +1,12 @@
 import os
-import yaml
 import threading
 import concurrent.futures
 from typing import Tuple, List
 
 from demisto_sdk.dev_tools.linter import Linter
-from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
-from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, get_dev_requirements,\
-    print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
+from demisto_sdk.common.tools import get_dev_requirements, print_color, LOG_COLORS, run_command
 
 
 LOCK = threading.Lock()
@@ -112,18 +109,14 @@ class LintManager:
         fail_pkgs = []
         if not self.parallel:
             for project_dir in self.pkgs:
-                py_num = self._get_package_python_number(project_dir)
-                if py_num == 2.7:
-                    requirements = self.requirements_for_python2
-                else:
-                    requirements = self.requirements_for_python3
 
                 linter = Linter(project_dir, no_test=not self.run_args['tests'],
                                 no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
                                 no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
                                 keep_container=self.keep_container, cpu_num=self.cpu_num,
                                 configuration=self.configuration, no_bandit=not self.run_args['bandit'],
-                                requirements=requirements)
+                                requirements_3=self.requirements_for_python3,
+                                requirements_2=self.requirements_for_python2)
 
                 run_status_code = linter.run_dev_packages()
                 if run_status_code > 0:
@@ -177,29 +170,6 @@ class LintManager:
 
             return self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
 
-    def _get_package_python_number(self, package: str) -> float:
-        """Gets the python version number of the package.
-
-        Args:
-            package: the package to check its python version number.
-
-        Returns:
-            float. The python version used by the package.
-        """
-        _, yml_path = get_yml_paths_in_dir(package, Errors.no_yml_file(package))
-        if not yml_path:
-            return 1
-        print_v('Using yaml file: {}'.format(yml_path))
-        with open(yml_path, 'r') as yml_file:
-            yml_data = yaml.safe_load(yml_file)
-        script_obj = yml_data
-        if isinstance(script_obj.get('script'), dict):
-            script_obj = script_obj.get('script')
-
-        dockers = get_all_docker_images(script_obj)
-        py_num = get_python_version(dockers[0], self.log_verbose, no_prints=True)
-        return py_num
-
     def _get_packages_to_run(self) -> List[str]:
         """Checks which packages had changes in them and should run on Lint.
 
@@ -249,17 +219,12 @@ class LintManager:
         Returns:
             Tuple[int, str]. The result code for the lint command and the package name.
         """
-        py_num = self._get_package_python_number(package_dir)
-        if py_num == 2.7:
-            requirements = self.requirements_for_python2
-        else:
-            requirements = self.requirements_for_python3
-
         linter = Linter(package_dir, no_test=not self.run_args['tests'],
                         no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
                         no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
                         keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
-                        lock=LOCK, no_bandit=not self.run_args['bandit'], requirements=requirements)
+                        lock=LOCK, no_bandit=not self.run_args['bandit'], requirements_3=self.requirements_for_python3,
+                        requirements_2=self.requirements_for_python2)
 
         return linter.run_dev_packages(), package_dir
 

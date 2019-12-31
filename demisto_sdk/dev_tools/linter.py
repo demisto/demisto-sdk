@@ -13,7 +13,7 @@ import requests
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, get_dev_requirements, \
+from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, \
     print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
 
 
@@ -40,7 +40,8 @@ class Linter:
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration(),
-                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False, requirements: str = ''):
+                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False, requirements_3: str = '',
+                 requirements_2: str = ''):
 
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
@@ -71,7 +72,8 @@ class Linter:
             'tests': not no_test
         }
         self.lock = lock
-        self.requirements = requirements
+        self.requirements_3 = requirements_3
+        self.requirements_2 = requirements_2
 
     def get_common_server_python(self) -> bool:
         """Getting common server python in not exists changes self.common_server_created to True if needed.
@@ -141,16 +143,16 @@ class Linter:
                 return_code = result_val
 
         for docker in dockers:
+            print(docker)
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
-                py_num = get_python_version(dockers[0], self.log_verbose)
+                py_num = get_python_version(docker, self.log_verbose)
                 try:
                     if self.run_args['tests'] or self.run_args['pylint']:
-                        if not self.requirements:
-                            requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base,
-                                                                self.log_verbose)
+                        if py_num == 2.7:
+                            requirements = self.requirements_2
                         else:
-                            requirements = self.requirements
+                            requirements = self.requirements_3
 
                         docker_image_created = self._docker_image_create(docker, requirements)
                         output, status_code = self._docker_run(docker_image_created)
@@ -162,7 +164,8 @@ class Linter:
 
                         else:
                             print(output)
-                            print_color("============ Finished process for: {} ============\n".format(self.project_dir),
+                            print_color("============ Finished process for: {}  "
+                                        "with docker: {}============\n".format(self.project_dir, docker),
                                         LOG_COLORS.GREEN)
                         self.lock.release()
 

@@ -173,7 +173,10 @@ This will go through the integration file, format it, and override the original 
 
 ### Run-playbook
 
-Run a playbook in Demisto.
+Run a playbook in a given Demisto instance.
+DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+You can either specify a URL as an environment variable named: DEMISTO_BASE_URL, or enter it as an argument.
+
 **Arguments**:
 * **-u, --url**
                         URL to a Demisto instance.
@@ -188,7 +191,7 @@ Run a playbook in Demisto.
 
 **Examples**:
 `DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'.`
-This will run the playbook `playbook_name` in demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
+This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
 
 ## In the code
 You can import the SDK core class in your python code as follows:

@@ -69,7 +69,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         print_color(F'========Finished updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-        self.initiate_file_validator(PlaybookValidator, 'playbook')
+        return self.initiate_file_validator(PlaybookValidator, 'playbook')
 
     @staticmethod
     def add_sub_parser(subparsers):

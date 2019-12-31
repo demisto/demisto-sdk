@@ -84,7 +84,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
         print_color(F'========Finished updates for integration: {self.output_file_name}=======',
                     LOG_COLORS.YELLOW)
 
-        self.initiate_file_validator(IntegrationValidator, 'integration')
+        return self.initiate_file_validator(IntegrationValidator, 'integration')
 
     @staticmethod
     def add_sub_parser(subparsers):

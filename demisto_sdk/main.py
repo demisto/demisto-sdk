@@ -10,7 +10,10 @@ from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
+from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
+from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
+from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
@@ -148,8 +151,8 @@ def unify(**kwargs):
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
 @click.option(
-    '--no-backward-comp', type=click.Choice(["True", "False"]), default='False',
-    help='Do NOT check backward compatibility.')
+    'b', '--backward-comp', type=click.Choice(["True", "False"]), default='False',
+    help='To check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
@@ -158,7 +161,7 @@ def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=not str2bool(kwargs['no-backward-comp']),
+                               is_backward_check=str2bool(kwargs['backward-comp']),
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
@@ -228,12 +231,45 @@ def secrets(config, **kwargs):
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
     "--cpu-num",
-    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.)",
+    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs)",
     default=0)
+@click.option(
+    "-p", "--parallel", is_flag=True, help="Run tests in parallel")
+@click.option(
+    "-m", "--max-workers", type=int, help="How many threads to run in parallel")
+@click.option(
+    "-g", "--git", is_flag=True, help="Will run only on changed packages")
+@click.option(
+    "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @pass_config
 def lint(config, dir, **kwargs):
     linter = Linter(configuration=config.configuration, project_dir=dir, **kwargs)
     return linter.run_dev_packages()
+
+
+@main.command(name="format",
+              short_help="Run formatter on a given script/playbook/integration yml file. ")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-t", "--file-type", type=click.Choice(["integration", "script", "playbook"]),
+    help="The type of yml file to be formatted.", required=True)
+@click.option(
+    "-s", "--source-file", help="The path of the script yml file", required=True)
+@click.option(
+    "-o", "--output-file-namw", help="The path where the formatted file will be saved to")
+def format(file_type, **kwargs):
+    file_type_and_linked_class = {
+        'integration': IntegrationYMLFormat,
+        'script': ScriptYMLFormat,
+        'playbook': PlaybookYMLFormat
+    }
+    if file_type in file_type_and_linked_class:
+        format_object = file_type_and_linked_class[file_type](**kwargs)
+        return format_object.format_file()
+
+    return 1
 
 
 @main.resultcallback()

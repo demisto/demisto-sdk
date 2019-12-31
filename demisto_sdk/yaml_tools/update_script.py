@@ -28,7 +28,7 @@ class ScriptYMLFormat(BaseUpdateYML):
 
         print_color(F'========Finished updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-        self.initiate_file_validator(ScriptValidator, 'script')
+        return self.initiate_file_validator(ScriptValidator, 'script')
 
     @staticmethod
     def add_sub_parser(subparsers):

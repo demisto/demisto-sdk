@@ -1,5 +1,4 @@
 from typing import List
-from argparse import ArgumentDefaultsHelpFormatter
 
 from demisto_sdk.common.constants import BANG_COMMAND_NAMES
 from demisto_sdk.common.tools import print_color, LOG_COLORS
@@ -84,12 +83,4 @@ class IntegrationYMLFormat(BaseUpdateYML):
         print_color(F'========Finished updates for integration: {self.output_file_name}=======',
                     LOG_COLORS.YELLOW)
 
-        self.initiate_file_validator(IntegrationValidator, 'integration')
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        description = """Run formatter on a given playbook yml file. """
-        parser = subparsers.add_parser('format', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-t", "--type", help="The type of yml file to be formatted.", required=True)
-        parser.add_argument("-p", "--path", help="The path of the playbook yml file", required=True)
-        parser.add_argument("-o", "--output-file", help="The path where the formatted file will be saved to")
+        return self.initiate_file_validator(IntegrationValidator, 'integration')

@@ -19,7 +19,7 @@ class Initiator:
            name (str): The name for the new pack/integration/script
            integration (bool): Indicates whether to create an integration.
            script (bool): Indicates whether to create a script.
-           full_path (str): The full path to the newly created pack/integration/script
+           full_output_path (str): The full path to the newly created pack/integration/script
     """
 
     def __init__(self, output_dir: str, name: str, integration: bool = False, script: bool = False):
@@ -186,19 +186,19 @@ class Initiator:
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
-        yml_dict = self.get_yml_data_as_dict(file_path=f"{self.full_output_path}/{current_suffix}.yml")
+        yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(self.full_output_path, f"{current_suffix}.yml"))
         yml_dict["commonfields"]["id"] = self.name
         yml_dict['name'] = self.name
         yml_dict["display"] = self.name
 
-        with open(f"{self.full_output_path}/{self.name}.yml", 'w') as f:
+        with open(os.path.join(self.full_output_path, f"{self.name}.yml"), 'w') as f:
             yaml.dump(
                 yml_dict,
                 f,
                 Dumper=yamlordereddictloader.SafeDumper,
                 default_flow_style=False)
 
-        os.remove(f"{self.full_output_path}/{current_suffix}.yml")
+        os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
 
     def rename(self, current_suffix: str):
         """Renames the python, description, test and image file in the path to fit the newly created integration/script
@@ -206,13 +206,15 @@ class Initiator:
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
-        os.rename(f"{self.full_output_path}/{current_suffix}.py", f"{self.full_output_path}/{self.name}.py")
-        os.rename(f"{self.full_output_path}/{current_suffix}_description.md",
-                  f"{self.full_output_path}/{self.name}_description.md")
-        os.rename(f"{self.full_output_path}/{current_suffix}_test.py", f"{self.full_output_path}/{self.name}_test.py")
+        os.rename(os.path.join(self.full_output_path, f"{current_suffix}.py"),
+                  os.path.join(self.full_output_path, f"{self.name}.py"))
+        os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
+                  os.path.join(self.full_output_path, f"{self.name}_description.md"))
+        os.rename(os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
+                  os.path.join(self.full_output_path, f"{self.name}_test.py"))
         if self.is_integration:
-            os.rename(f"{self.full_output_path}/{current_suffix}_image.png",
-                      f"{self.full_output_path}/{self.name}_image.png")
+            os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
+                      os.path.join(self.full_output_path, f"{self.name}_image.png"))
 
     def create_new_directory(self,) -> bool:
         """Creates a new directory for the integration/script/pack.
@@ -250,12 +252,3 @@ class Initiator:
         """
         with open(file_path) as f:
             return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        parser = subparsers.add_parser('init',
-                                       help='Initiate a new Pack, Integration or Script.')
-        parser.add_argument("-n", "--name", help="The name of the object you want to create")
-        parser.add_argument("-o", "--outdir", help="The output dir to write the object into")
-        parser.add_argument("--integration", help="Create an Integration", action='store_true')
-        parser.add_argument("--script", help="Create a script", action='store_true')

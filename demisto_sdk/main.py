@@ -370,7 +370,11 @@ def run_playbook(**kwargs):
 
 
 # ====================== init ====================== #
-@main.command(name="init", short_help="Initiate a new Pack, Integration or Script.")
+@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+                                      " If the script/integration flags are not present"
+                                      " then we will create a pack with the given name."
+                                      " Otherwise when using the flags we will generate"
+                                      " a script/integration based on your selection.")
 @click.help_option(
     '-h', '--help'
 )
@@ -379,9 +383,9 @@ def run_playbook(**kwargs):
 @click.option(
     "-o", "--outdir", help="The output dir to write the object into")
 @click.option(
-    '--integration', is_flag=True, help="Create an Integration")
+    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
-    '--script', is_flag=True, help="Create a script")
+    '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

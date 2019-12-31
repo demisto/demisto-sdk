@@ -13,6 +13,7 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Fixed and issue where **validate** checked if release notes exist for new integrations and scripts.
 
 ### 0.2.6
 

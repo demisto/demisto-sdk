@@ -26,9 +26,9 @@ You should call this method in the `initialize_parsers` method in the core SDK c
 All tests are run from the `tests` folder. They also run in the CircleCI build.
 Also make sure your methods work from the CLI by running `python demisto_sdk <your_method>` in your local environment.
 
-### How to run build using an unreleased deemisto-sdk version
+### How to run build using an unreleased demisto-sdk version
 Push your branch and create a PR in demisto-sdk repository.
-In your IDE go to content repository on a local branch. 
+In your IDE go to content repository on a local branch.
 Search for the file: **dev-requirements-py3.txt**.
 There swap the line `demisto-sdk==X.X.X` with: `git+https://github.com/demisto/demisto-sdk.git@{your_sdk_branch_name}`
 Go to the file **config.yml** there you can find all the build steps - you can change whichever steps you want to check using demisto-sdk.

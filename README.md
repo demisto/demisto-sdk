@@ -151,11 +151,11 @@ Create content artifacts.
 * *-p, --preserve_bundles*
                         Flag for if you'd like to keep the bundles created in
                         the process of making the content artifacts
-             
+
 **Examples**:
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
-                        
+
 ### Format
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
@@ -170,6 +170,29 @@ Format your integration/script/playbook yml file according to Demisto's standard
 **Examples**:
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
+
+### Run-playbook
+
+Run a playbook in a given Demisto instance.
+DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+You can either specify a URL as an environment variable named: DEMISTO_BASE_URL, or enter it as an argument.
+
+**Arguments**:
+* **-u, --url**
+                        URL to a Demisto instance.
+* **-p, --playbook_id**
+                        The ID of the playbook to run.
+* **-w, --wait**
+                        Wait until the playbook run is finished and get a response.
+                        (default: True)
+* **-t, --timeout**
+                        Timeout for the command. The playbook will continue to run in Demisto.
+                        (default: 90)
+
+**Examples**:
+`DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'.`
+This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
+
 
 ## Upload
 

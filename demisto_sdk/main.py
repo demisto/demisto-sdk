@@ -17,6 +17,7 @@ from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
+from demisto_sdk.runners.playbook_runner import PlaybookRunner
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -31,7 +32,7 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 )
 @click.option(
     '-v', '--version', help='Get the demisto-sdk version.',
-    is_flag=True, default=False
+    is_flag=True, default=False, show_default=True
 )
 @pass_config
 def main(config, version, env_dir):
@@ -44,6 +45,7 @@ def main(config, version, env_dir):
         config.configuration.env_dir = env_dir
 
 
+# ====================== extract ====================== #
 @main.command(name="extract",
               short_help="Extract code, image and description files from a Demisto integration or script yaml file.")
 @click.help_option(
@@ -68,14 +70,16 @@ def main(config, version, env_dir):
     '--demisto-mock', '-d',
     help="Add an import for demisto mock, true by default",
     type=click.Choice(["True", "False"]),
-    default=True
+    default=True,
+    show_default=True
 )
 @click.option(
     '--common-server', '-c',
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
     type=click.Choice(["True", "False"]),
-    default='True'
+    default='True',
+    show_default=True
 )
 @pass_config
 def extract(config, **kwargs):
@@ -83,6 +87,7 @@ def extract(config, **kwargs):
     return extractor.extract_to_package_format()
 
 
+# ====================== extract-code ====================== #
 @main.command(name="extract-code",
               short_help="Extract code from a Demisto integration or script yaml file.")
 @click.help_option(
@@ -107,14 +112,16 @@ def extract(config, **kwargs):
     '--demisto-mock', '-d',
     help="Add an import for demisto mock, true by default",
     type=click.Choice(["True", "False"]),
-    default=True
+    default=True,
+    show_default=True
 )
 @click.option(
     '--common-server', '-c',
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
     type=click.Choice(["True", "False"]),
-    default='True'
+    default='True',
+    show_default=True
 )
 @pass_config
 def extract_code(config, **kwargs):
@@ -122,6 +129,7 @@ def extract_code(config, **kwargs):
     return extractor.extract_code(kwargs['outfile'])
 
 
+# ====================== unify ====================== #
 @main.command(name="unify",
               short_help='Unify code, image, description and yml files to a single Demisto yml file.')
 @click.option(
@@ -135,6 +143,7 @@ def unify(**kwargs):
     return unifier.merge_script_package_to_yml()
 
 
+# ====================== validate ====================== #
 # TODO: add a configuration for conf.json and id_set.json
 @main.command(name="validate",
               short_help='Validate your content files.')
@@ -143,20 +152,20 @@ def unify(**kwargs):
 )
 @click.option(
     '-j', '--conf-json', is_flag=True,
-    default=False, help='Validate the conf.json file.')
+    default=False, show_default=True, help='Validate the conf.json file.')
 @click.option(
     '-i', '--id-set', is_flag=True,
-    default=False, help='Create the id_set.json file.')
+    default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
     '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
 @click.option(
-    'b', '--backward-comp', type=click.Choice(["True", "False"]), default='False',
+    'b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
     help='To check backward compatibility.')
 @click.option(
-    '-g', '--use-git', is_flag=True,
+    '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
 @pass_config
 def validate(config, **kwargs):
@@ -169,6 +178,7 @@ def validate(config, **kwargs):
     return validator.run()
 
 
+# ====================== create ====================== #
 @main.command(name="create",
               short_help='Create content artifacts.')
 @click.help_option(
@@ -177,13 +187,14 @@ def validate(config, **kwargs):
 @click.option(
     '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
 @click.option(
-    '-p', '--preserve_bundles', is_flag=True, default=False,
+    '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
     return content_creator.run()
 
 
+# ====================== secrets ====================== #
 @main.command(name="secrets",
               short_help="Run Secrets validator to catch sensitive data before exposing your code to public repository."
                          " Attach path to whitelist to allow manual whitelists. Default file path to secrets is "
@@ -192,10 +203,10 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
+    '-c', '--circle', type=click.Choice(["True", "False"]), default='False', show_default=True,
     help='Is CircleCi or not')
 @click.option(
-    '-wl', '--whitelist', default='./Tests/secrets_white_list.json',
+    '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 @pass_config
 def secrets(config, **kwargs):
@@ -205,6 +216,7 @@ def secrets(config, **kwargs):
     return secrets.run()
 
 
+# ====================== lint ====================== #
 @main.command(name="lint",
               short_help="Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the"
                          "docker image of an integration/script. Meant to be used with integrations/scripts that use "
@@ -248,7 +260,7 @@ def lint(config, dir, **kwargs):
     linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
 
-
+# ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration yml file. ")
 @click.help_option(
@@ -319,6 +331,42 @@ def run(**kwargs):
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
+
+# ====================== run-playbook ====================== #
+@main.command(name="run-playbook",
+              short_help="Run a playbook in Demisto. "
+                         "DEMISTO_API_KEY environment variable should contain a valid Demisto API Key. "
+                         "Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u "
+                         "'https://demisto.local'.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '--url', '-u',
+    help='URL to a Demisto instance. You can also specify the URL as an environment variable named: DEMISTO_BASE_URL'
+)
+@click.option(
+    '--playbook_id', '-p',
+    help="The playbook ID to run.",
+    required=True
+)
+@click.option(
+    '--wait', '-w',
+    type=click.Choice(["True", "False"]),
+    default="True",
+    show_default=True,
+    help="Wait until the playbook run is finished and get a response."
+)
+@click.option(
+    '--timeout', '-t',
+    default=90,
+    show_default=True,
+    help="Timeout for the command. The playbook will continue to run in Demisto"
+)
+def run_playbook(**kwargs):
+    playbook_runner = PlaybookRunner(**kwargs)
+    return playbook_runner.run_playbook()
 
 
 def demisto_sdk_cli():

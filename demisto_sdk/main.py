@@ -4,10 +4,10 @@ from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.common.tools import str2bool
-from demisto_sdk.dev_tools.linter import Linter
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
+from demisto_sdk.dev_tools.lint_manager import LintManager
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
@@ -243,7 +243,7 @@ def secrets(config, **kwargs):
     "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @pass_config
 def lint(config, dir, **kwargs):
-    linter = Linter(configuration=config.configuration, project_dir=dir, **kwargs)
+    linter = LintManager(configuration=config.configuration, project_dir=dir, **kwargs)
     return linter.run_dev_packages()
 
 

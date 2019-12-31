@@ -1,5 +1,5 @@
-import demisto_client
 import re
+import demisto_client
 
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
 
@@ -13,15 +13,18 @@ class Runner:
             query (str): The query to execute.
             log_verbose (bool): Whether to output a detailed response.
             debug (str): Holds the path of the debug log file (or '-' if the logs will be printed in stdout).
+            debug_path (str): The path in which you will save the debug file.
             client (DefaultApi): Demisto-SDK client object.
         """
     SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
-    def __init__(self, query: str, insecure: bool = False, debug: str = None, verbose: bool = False):
+    def __init__(self, query: str, insecure: bool = False, debug: str = None, debug_path: str = None,
+                 verbose: bool = False):
         self.query = query
         self.log_verbose = verbose
         self.debug = debug
+        self.debug_path = debug_path
         self.client = demisto_client.configure(verify_ssl=not insecure)
 
         if self.debug is not None:
@@ -99,7 +102,7 @@ class Runner:
         Args:
             log_ids (list): artifact ids of the log files
         """
-        if self.debug == '-':
+        if not self.debug_path:
             print_color('## Detailed Log', LOG_COLORS.YELLOW)
             for log_id in log_ids:
                 result = self.client.download_file(log_id)
@@ -112,26 +115,10 @@ class Runner:
                         else:
                             print(line)
         else:
-            with open(self.debug, 'w+b') as fout:
+            with open(self.debug_path, 'w+b') as fout:
                 for log_id in log_ids:
                     result = self.client.download_file(log_id)
                     with open(result, 'r+') as log_info:
                         for line in log_info:
                             fout.write(line.encode('utf-8'))
-            print_color(f'Debug Log successfully exported to {self.debug}', LOG_COLORS.GREEN)
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        from argparse import ArgumentDefaultsHelpFormatter
-        description = f"""Run integration command on remote Demisto instance in the playground.
-        DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
-        DEMISTO_API_KEY environment variable should contain a valid Demisto API Key."""
-        parser = subparsers.add_parser('run', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-q", "--query", help="The query to run", required=True)
-        parser.add_argument("-k", "--insecure", help="Skip certificate validation", action="store_true")
-        parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true')
-        parser.add_argument(
-            "-D", "--debug", metavar="DEBUG_LOG",
-            help="Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used",
-            nargs='?', const='-', default=None
-        )
+            print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)

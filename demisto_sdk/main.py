@@ -4,7 +4,9 @@ from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.common.tools import str2bool
+from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
@@ -243,7 +245,7 @@ def secrets(config, **kwargs):
     "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @pass_config
 def lint(config, dir, **kwargs):
-    linter = LintManager(configuration=config.configuration, project_dir=dir, **kwargs)
+    linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
 
 
@@ -259,7 +261,7 @@ def lint(config, dir, **kwargs):
     "-s", "--source-file", help="The path of the script yml file", required=True)
 @click.option(
     "-o", "--output-file-name", help="The path where the formatted file will be saved to")
-def format(file_type, **kwargs):
+def format_yml(file_type, **kwargs):
     file_type_and_linked_class = {
         'integration': IntegrationYMLFormat,
         'script': ScriptYMLFormat,
@@ -270,6 +272,48 @@ def format(file_type, **kwargs):
         return format_object.format_file()
 
     return 1
+
+
+@main.command(name="upload",
+              short_help="Upload integration to Demisto instance. DEMISTO_BASE_URL environment variable should contain"
+                         " the Demisto server base URL. DEMISTO_API_KEY environment variable should contain a valid "
+                         "Demisto API Key.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--path", help="The path of an integration file or a package directory to upload", required=True)
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
+def upload(**kwargs):
+    uploader = Uploader(**kwargs)
+    return uploader.upload()
+
+
+@main.command(name="run",
+              short_help="Run integration command on remote Demisto instance in the playground. DEMISTO_BASE_URL "
+                         "environment variable should contain the Demisto base URL. DEMISTO_API_KEY environment "
+                         "variable should contain a valid Demisto API Key.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-q", "--query", help="The query to run", required=True)
+@click.option(
+    "-k", "--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
+@click.option(
+    "-D", "--debug", help="Whether to enable the debug-mode feature or not, if you want to save the output file "
+                          "please use the --debug-path option", is_flag=True)
+@click.option(
+    "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
+                         "terminal", is_flag=True)
+def run(**kwargs):
+    runner = Runner(**kwargs)
+    return runner.run()
 
 
 @main.resultcallback()

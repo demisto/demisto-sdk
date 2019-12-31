@@ -29,7 +29,7 @@ class Uploader:
                 self.path = unifier.merge_script_package_to_yml()[0][0]
             except IndexError:
                 print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
-                return
+                return 1
 
         # Upload the file to Demisto
         result = self.client.integration_upload(file=self.path)
@@ -41,14 +41,4 @@ class Uploader:
         if self.unify:  # Remove the temporary file
             os.remove(self.path)
 
-    @staticmethod
-    def add_sub_parser(subparsers):
-        from argparse import ArgumentDefaultsHelpFormatter
-        description = f"""Upload integration to Demisto instance.
-        DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-        DEMISTO_API_KEY environment variable should contain a valid Demisto API Key."""
-        parser = subparsers.add_parser('upload', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-i", "--inpath", help="The path of an integration file or a package directory to upload",
-                            required=True)
-        parser.add_argument("-k", "--insecure", help="Skip certificate validation", action="store_true")
-        parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true')
+        return 0

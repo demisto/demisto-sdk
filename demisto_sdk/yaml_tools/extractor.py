@@ -123,7 +123,7 @@ class Extractor:
     def extract_code(self, code_file_path) -> int:
         yml_type = self.get_yml_type()
         common_server = self.common_server
-        if common_server is None:
+        if common_server:
             common_server = "CommonServerPython" not in self.yml_path
         with open(self.yml_path, 'rb') as yml_file:
             yml_data = yaml.safe_load(yml_file)
@@ -179,23 +179,3 @@ class Extractor:
                 raise ValueError('Could not auto determine yml type ({}/{}) based on path: {}'
                                  .format(SCRIPT, INTEGRATION, self.yml_path))
         return yml_type
-
-    # @staticmethod
-    # def add_sub_parser(subparsers):
-    #     parser = subparsers.add_parser('extract', help='Extract code, image and description files'
-    #                                                    ' from a demisto integration or script yaml file')
-    #     parser.add_argument("-i", "--infile", help="The yml file to extract from", required=True)
-    #     parser.add_argument("-o", "--outfile",
-    #                         help="The output file or dir (if doing migrate) to write the code to", required=True)
-    #     parser.add_argument("-m", "--migrate", action='store_true',
-    #                         help="Migrate an integration to package format."
-    #                              " Pass to -o option a directory in this case.")
-    #     parser.add_argument("-t", "--type",
-    #                         help="Yaml type. If not specified will try to determine type based upon path.",
-    #                         choices=[SCRIPT_PREFIX, INTEGRATION_PREFIX], default=None)
-    #     parser.add_argument("-d", "--demistomock", help="Add an import for demisto mock, true by default",
-    #                         choices=[True, False], type=str2bool, default=True)
-    #     parser.add_argument("-c", "--commonserver",
-    #                         help=("Add an import for CommonServerPython. "
-    #                               " If not specified will import unless this is CommonServerPython"),
-    #                         choices=[True, False], type=str2bool, default=None)

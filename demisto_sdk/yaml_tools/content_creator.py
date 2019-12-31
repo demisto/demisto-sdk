@@ -62,10 +62,18 @@ class ContentCreator:
         self.long_file_names = []  # type:List
 
     def run(self):
+        """Runs the content creator and returns the appropriate status code for the operation.
+
+        Returns:
+            int. 1 for failure, 0 for success.
+        """
         self.create_content()
         if self.long_file_names:
             print_error(f'The following files exceeded to file name length limit of {self.file_name_max_size}:\n'
                         f'{json.dumps(self.long_file_names, indent=4)}')
+            return 1
+
+        return 0
 
     def create_unifieds_and_copy(self, package_dir, dest_dir='', skip_dest_dir=''):
         '''

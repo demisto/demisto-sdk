@@ -10,7 +10,10 @@ from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
+from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
+from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
+from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 from demisto_sdk.runners.playbook_runner import PlaybookRunner
 
@@ -18,7 +21,7 @@ from demisto_sdk.runners.playbook_runner import PlaybookRunner
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500))
+@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500), )
 @click.help_option(
     '-h', '--help'
 )
@@ -73,7 +76,7 @@ def main(config, version, env_dir):
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
     type=click.Choice(["True", "False"]),
-    default='False',
+    default='True',
     show_default=True
 )
 @pass_config
@@ -115,7 +118,7 @@ def extract(config, **kwargs):
     help="Add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
     type=click.Choice(["True", "False"]),
-    default='False',
+    default='True',
     show_default=True
 )
 @pass_config
@@ -126,7 +129,7 @@ def extract_code(config, **kwargs):
 
 # ====================== unify ====================== #
 @main.command(name="unify",
-              short_help='Unify code, image and description files to a single Demisto yaml file.')
+              short_help='Unify code, image, description and yml files to a single Demisto yml file.')
 @click.option(
     "-i", "--indir", help="The path to the files to unify", required=True
 )
@@ -139,6 +142,7 @@ def unify(**kwargs):
 
 
 # ====================== validate ====================== #
+# TODO: add a configuration for conf.json and id_set.json
 @main.command(name="validate",
               short_help='Validate your content files.')
 @click.help_option(
@@ -156,7 +160,7 @@ def unify(**kwargs):
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
 @click.option(
-    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='True', show_default=True,
+    'b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
     help='To check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
@@ -165,7 +169,8 @@ def unify(**kwargs):
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    validator = FilesValidator(configuration=config.configuration, is_backward_check=str2bool(kwargs['backward_comp']),
+    validator = FilesValidator(configuration=config.configuration,
+                               is_backward_check=str2bool(kwargs['backward-comp']),
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
@@ -181,16 +186,16 @@ def validate(config, **kwargs):
     '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
 @click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
-    help='Flag for if you\'d like to keep the bundles created in the process of making the content artifacts')
+    help='Keep the bundles created in the process of making the content artifacts')
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
-    content_creator.run()
+    return content_creator.run()
 
 
 # ====================== secrets ====================== #
 @main.command(name="secrets",
               short_help="Run Secrets validator to catch sensitive data before exposing your code to public repository."
-                         " Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "
+                         " Attach path to whitelist to allow manual whitelists. Default file path to secrets is "
                          "'./Tests/secrets_white_list.json' ")
 @click.help_option(
     '-h', '--help'
@@ -204,9 +209,9 @@ def create(**kwargs):
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    validator = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
-                                 white_list_path=kwargs['whitelist'])
-    return validator.run()
+    secrets = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
+                               white_list_path=kwargs['whitelist'])
+    return secrets.run()
 
 
 # ====================== lint ====================== #
@@ -235,15 +240,53 @@ def secrets(config, **kwargs):
 @click.option(
     "-k", "--keep-container", is_flag=True, help="Keep the test container")
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output")
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
     "--cpu-num",
-    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.)",
+    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs)",
     default=0)
+@click.option(
+    "-p", "--parallel", is_flag=True, help="Run tests in parallel")
+@click.option(
+    "-m", "--max-workers", type=int, help="How many threads to run in parallel")
+@click.option(
+    "-g", "--git", is_flag=True, help="Will run only on changed packages")
+@click.option(
+    "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @pass_config
 def lint(config, dir, **kwargs):
     linter = Linter(configuration=config.configuration, project_dir=dir, **kwargs)
     return linter.run_dev_packages()
+
+
+@main.command(name="format",
+              short_help="Run formatter on a given script/playbook/integration yml file. ")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-t", "--file-type", type=click.Choice(["integration", "script", "playbook"]),
+    help="The type of yml file to be formatted.", required=True)
+@click.option(
+    "-s", "--source-file", help="The path of the script yml file", required=True)
+@click.option(
+    "-o", "--output-file-name", help="The path where the formatted file will be saved to")
+def format(file_type, **kwargs):
+    file_type_and_linked_class = {
+        'integration': IntegrationYMLFormat,
+        'script': ScriptYMLFormat,
+        'playbook': PlaybookYMLFormat
+    }
+    if file_type in file_type_and_linked_class:
+        format_object = file_type_and_linked_class[file_type](**kwargs)
+        return format_object.format_file()
+
+    return 1
+
+
+@main.resultcallback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
 
 
 # ====================== run-playbook ====================== #
@@ -283,7 +326,7 @@ def run_playbook(**kwargs):
 
 
 def demisto_sdk_cli():
-    print(main())
+    main()
 
 
 if __name__ == '__main__':

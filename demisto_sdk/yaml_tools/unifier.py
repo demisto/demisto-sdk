@@ -7,7 +7,8 @@ import re
 from typing import Tuple
 
 from demisto_sdk.common.constants import Errors
-from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error
+from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error, print_color, \
+    LOG_COLORS
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
@@ -18,7 +19,7 @@ class Unifier:
                  image_prefix=DEFAULT_IMAGE_PREFIX):
 
         directory_name = ""
-        for optional_dir_name in DIR_TO_PREFIX.keys():
+        for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in indir:
                 directory_name = optional_dir_name
 
@@ -82,19 +83,15 @@ class Unifier:
             }
         for file_path, file_text in output_map.items():
             if os.path.isfile(file_path):
-                # raise ValueError('Output file already exists: {}.'
-                #                  ' Make sure to remove this file from source control'
-                #                  ' or rename this package (for example if it is a v2).'.format(self.dest_path))
-                continue
+                raise ValueError('Output file already exists: {}.'
+                                 ' Make sure to remove this file from source control'
+                                 ' or rename this package (for example if it is a v2).'.format(self.dest_path))
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
                 file_.write(file_text)
         return output_map
 
     def merge_script_package_to_yml(self):
         """Merge the various components to create an output yml file
-
-        Returns:
-            output path, script path, image path
         """
         print("Merging package: {}".format(self.package_path))
         if self.package_path.endswith('/'):
@@ -124,7 +121,6 @@ class Unifier:
 
         if self.dir_name != SCRIPTS_DIR:
             script_obj = yml_data['script']
-
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
         with io.open(yml_path, mode='r', encoding='utf-8') as yml_file:
@@ -138,7 +134,8 @@ class Unifier:
             yml_text, desc_path = self.insert_description_to_yml(yml_data, yml_text)
 
         output_map = self.write_yaml_with_docker(yml_text, yml_data, script_obj)
-        return list(output_map.keys()), yml_path, script_path, image_path, desc_path
+        unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
+        print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
 
     def insert_image_to_yml(self, yml_data, yml_text):
         image_data, found_img_path = self.get_data("*png")

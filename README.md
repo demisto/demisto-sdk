@@ -20,6 +20,15 @@ You can use the SDK in the CLI as follows:
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
+Our CLI supports autocomplete for linux/MacOS machines, you can turn this feature on by running one of the following:
+for zsh users run in the terminal
+```
+eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
+```
+for regular bashrc users run in the terminal
+```
+eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
+```
 
 ## Commands
 

@@ -212,7 +212,7 @@ def secrets(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-d", "--dir", help="Specify directory of integration/script", required=True)
+    "-d", "--dir", help="Specify directory of integration/script")
 @click.option(
     "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option(
@@ -243,7 +243,7 @@ def secrets(config, **kwargs):
     "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @pass_config
 def lint(config, dir, **kwargs):
-    linter = LintManager(configuration=config.configuration, project_dir=dir, **kwargs)
+    linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
 
 

@@ -254,17 +254,15 @@ def lint(config, dir, **kwargs):
     required=True,
     help='Specify test playbook name')
 @click.option(
-    '-t', '--ttype', default='integration',
+    '-t', '--file-type', default='integration',
     type=click.Choice(["integration", "script"]),
     required=False,
     help='Specify integration or script. The default is integration')
 @click.option(
-    '-c', '--commands',
-    required=False,
-    help='Full path of file containing commands, if specified those commands will appear in the test playbook with the '
-         'specified arguments')
-@pass_config
-def generate_test_playbook(config, **kwargs):
+    '--no-outputs', is_flag=True,
+    help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
+         'outputs to verify and which not')
+def generate_test_playbook(**kwargs):
     generator = TestPlaybookGenerator(**kwargs)
     generator.run()
 

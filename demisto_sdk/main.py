@@ -8,6 +8,7 @@ from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
+from demisto_sdk.dev_tools.spell_checker import SpellCheck
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
@@ -270,6 +271,21 @@ def format(file_type, **kwargs):
         return format_object.format_file()
 
     return 1
+
+
+@main.command(name="spell-check",
+              short_help="Run spell check on a given yml/md file.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-p', '--path', help="Specify path of yml/md file", required=True)
+@click.option(
+    '--known-words', help="A file path to a txt file with known words")
+def spell_check(**kwargs):
+    spell_checker = SpellCheck(**kwargs)
+    spell_checker.run_spell_check()
+    return 0
 
 
 @main.resultcallback()

@@ -13,6 +13,8 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Added auto-complete functionality to demisto-sdk.
+* Added git parameter in **lint** to run only on changed packages.
 
 ### 0.2.6
 

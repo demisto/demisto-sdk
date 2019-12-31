@@ -3,9 +3,6 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
-### 0.1.7
-* Added spell check command.
-
 
 ### 0.3.0
 
@@ -16,6 +13,7 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Added **spell-check** command.
 
 ### 0.2.6
 

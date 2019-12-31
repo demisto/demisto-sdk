@@ -258,7 +258,7 @@ def lint(config, dir, **kwargs):
 @click.option(
     "-s", "--source-file", help="The path of the script yml file", required=True)
 @click.option(
-    "-o", "--output-file-namw", help="The path where the formatted file will be saved to")
+    "-o", "--output-file-name", help="The path where the formatted file will be saved to")
 def format(file_type, **kwargs):
     file_type_and_linked_class = {
         'integration': IntegrationYMLFormat,

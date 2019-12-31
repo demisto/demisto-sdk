@@ -13,6 +13,7 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Fixed an issue where **lint** would run pytest and pylint only on a single docker per integration.
 
 ### 0.2.6
 

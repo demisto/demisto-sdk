@@ -1,5 +1,3 @@
-from argparse import ArgumentDefaultsHelpFormatter
-
 from demisto_sdk.common.tools import print_color, LOG_COLORS
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
 from demisto_sdk.common.hook_validations.script import ScriptValidator
@@ -28,12 +26,4 @@ class ScriptYMLFormat(BaseUpdateYML):
 
         print_color(F'========Finished updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-        self.initiate_file_validator(ScriptValidator, 'script')
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        description = """Run formatter on a given script yml file. """
-        parser = subparsers.add_parser('format', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-t", "--type", help="The type of yml file to be formatted.", required=True)
-        parser.add_argument("-p", "--path", help="The path of the script yml file", required=True)
-        parser.add_argument("-o", "--output-file", help="The path where the formatted file will be saved to")
+        return self.initiate_file_validator(ScriptValidator, 'script')

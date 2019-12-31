@@ -7,22 +7,33 @@ import re
 from typing import Tuple
 
 from demisto_sdk.common.constants import Errors
-from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_color, LOG_COLORS
+from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error, print_color, \
+    LOG_COLORS
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 
 
 class Unifier:
 
-    def __init__(self, package_path: str, dir_name=INTEGRATIONS_DIR, dest_path='', image_prefix=DEFAULT_IMAGE_PREFIX):
+    def __init__(self, indir: str, dir_name=INTEGRATIONS_DIR, outdir='',
+                 image_prefix=DEFAULT_IMAGE_PREFIX):
+
+        directory_name = ""
+        for optional_dir_name in DIR_TO_PREFIX:
+            if optional_dir_name in indir:
+                directory_name = optional_dir_name
+
+        if not directory_name:
+            print_error("You have failed to provide a legal file path, a legal file path "
+                        "should contain either Integrations or Scripts directories")
 
         self.image_prefix = image_prefix
-        self.package_path = package_path
+        self.package_path = indir
         if self.package_path[-1] != os.sep:
             self.package_path = os.path.join(self.package_path, '')
 
         self.dir_name = dir_name
-        self.dest_path = dest_path
+        self.dest_path = outdir
 
         self.is_ci = os.getenv('CI', False)
 
@@ -313,10 +324,3 @@ class Unifier:
         if remove_print_future:  # docs generation requires to leave this
             script_code = script_code.replace("from __future__ import print_function", "")
         return script_code
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        parser = subparsers.add_parser('unify',
-                                       help='Unify code, image and description files to a single Demisto yaml file')
-        parser.add_argument("-i", "--indir", help="The path to the files to unify", required=True)
-        parser.add_argument("-o", "--outdir", help="The output dir to write the unified yml to", required=True)

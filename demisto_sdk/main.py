@@ -384,7 +384,8 @@ def run_playbook(**kwargs):
     '--script', is_flag=True, help="Create a script")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
-    return initiator.init()
+    initiator.init()
+    return 0
 
 
 def demisto_sdk_cli():

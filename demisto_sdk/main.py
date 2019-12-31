@@ -310,7 +310,7 @@ def upload(**kwargs):
                           "please use the --debug-path option", is_flag=True)
 @click.option(
     "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
-                         "terminal", is_flag=True)
+                         "terminal")
 def run(**kwargs):
     runner = Runner(**kwargs)
     return runner.run()

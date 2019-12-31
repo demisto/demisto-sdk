@@ -115,10 +115,10 @@ class Runner:
                         else:
                             print(line)
         else:
-            with open(self.debug_path, 'w+b') as fout:
+            with open(self.debug_path, 'w+b') as output_file:
                 for log_id in log_ids:
                     result = self.client.download_file(log_id)
                     with open(result, 'r+') as log_info:
                         for line in log_info:
-                            fout.write(line.encode('utf-8'))
+                            output_file.write(line.encode('utf-8'))
             print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)

@@ -69,12 +69,12 @@ class Initiator:
         """
         # if an output directory given create the pack there
         if len(self.output_dir) > 0:
-            self.full_output_path = self.output_dir + '/' + self.name
+            self.full_output_path = os.path.join(self.output_dir, self.name)
 
         # content-descriptor file indicates we are in "content" repository
         # thus we will create the pack under Packs directory
         elif os.path.isfile('content-descriptor.json'):
-            self.full_output_path = "Packs/" + self.name
+            self.full_output_path = os.path.join("Packs", self.name)
 
         # if non of the above conditions apply - create the pack in current directory
         else:
@@ -82,24 +82,24 @@ class Initiator:
 
         if not self.create_new_directory():
             return False
-        for dir in self.DIR_LIST:
-            path = os.path.join(self.full_output_path, dir)
+        for directory in self.DIR_LIST:
+            path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
 
-        with open(self.full_output_path + '/CHANGELOG.md', 'a') as fp:
+        with open(os.path.join(self.full_output_path, 'CHANGELOG.md'), 'a') as fp:
             fp.write("## [Unreleased]")
 
-        fp = open(self.full_output_path + '/README.md', 'a')
+        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 
-        with open(self.full_output_path + '/metadata.json', 'a') as fp:
+        with open(os.path.join(self.full_output_path, 'metadata.json'), 'a') as fp:
             # TODO fill this once metadata.json script is ready
             fp.write('[]')
 
-        fp = open(self.full_output_path + '/.secrets-ignore', 'a')
+        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
         fp.close()
 
-        fp = open(self.full_output_path + '/.pack-ignore', 'a')
+        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
 
         print_color(f"Successfully created the pack {self.name} in: {self.full_output_path}", LOG_COLORS.GREEN)
@@ -107,7 +107,7 @@ class Initiator:
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N")).lower()
         if create_integration == 'y':
             self.get_created_object_name(created_object="integration")
-            self.output_dir = self.full_output_path + "/" + INTEGRATIONS_DIR
+            self.output_dir = os.path.join(self.full_output_path, INTEGRATIONS_DIR)
             return self.integration_init()
 
         return True
@@ -120,11 +120,11 @@ class Initiator:
         """
         # if output directory given create the integration there
         if len(self.output_dir) > 0:
-            self.full_output_path = self.output_dir + '/' + self.name
+            self.full_output_path = os.path.join(self.output_dir, self.name)
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
-            self.full_output_path = 'Integrations/' + self.name
+            self.full_output_path = os.path.join('Integrations', self.name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:
@@ -153,11 +153,11 @@ class Initiator:
         """
         # if output directory given create the script there
         if len(self.output_dir) > 0:
-            self.full_output_path = self.output_dir + '/' + self.name
+            self.full_output_path = os.path.join(self.output_dir, self.name)
 
         # will create the script under the Scripts directory of the pack
         elif os.path.isdir(SCRIPTS_DIR):
-            self.full_output_path = 'Scripts/' + self.name
+            self.full_output_path = os.path.join('Scripts', self.name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:

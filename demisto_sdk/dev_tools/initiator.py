@@ -58,8 +58,8 @@ class Initiator:
         Args:
             created_object (str): the type of the created object (integration/script/pack)
         """
-        while self.name is None:
-            self.name = str(input(f"Please input the name of the initialized {created_object}:"))
+        while self.name is None or len(self.name):
+            self.name = str(input(f"Please input the name of the initialized {created_object}: "))
 
     def pack_init(self) -> bool:
         """Creates a pack directory tree.
@@ -104,10 +104,12 @@ class Initiator:
 
         print_color(f"Successfully created the pack {self.name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
-        create_integration = str(input("\nDo you want to create an integration in the pack? Y/N")).lower()
+        create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration == 'y':
+            self.name = ''
             self.get_created_object_name(created_object="integration")
             self.output_dir = os.path.join(self.full_output_path, INTEGRATIONS_DIR)
+            self.is_integration = True
             return self.integration_init()
 
         return True
@@ -223,9 +225,9 @@ class Initiator:
 
         except FileExistsError:
             to_delete = str(input(f"The directory {self.full_output_path} "
-                                  f"already exists.\nDo you want to overwrite it? Y/N")).lower()
+                                  f"already exists.\nDo you want to overwrite it? Y/N ")).lower()
             while to_delete != 'y' and to_delete != 'n':
-                to_delete = str(input(f"Your response was invalid.\nDo you want to delete it? Y/N").lower())
+                to_delete = str(input(f"Your response was invalid.\nDo you want to delete it? Y/N ").lower())
 
             if to_delete == 'y':
                 shutil.rmtree(path=self.full_output_path, ignore_errors=True)

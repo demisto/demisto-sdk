@@ -192,7 +192,8 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
 **Examples**:
 `DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'.`
 This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
-=======
+
+
 ## Upload
 
 Upload integration to Demisto instance. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.

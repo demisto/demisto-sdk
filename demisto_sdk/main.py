@@ -258,7 +258,7 @@ def lint(config, dir, **kwargs):
     linter = Linter(configuration=config.configuration, project_dir=dir, **kwargs)
     return linter.run_dev_packages()
 
-
+# ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration yml file. ")
 @click.help_option(

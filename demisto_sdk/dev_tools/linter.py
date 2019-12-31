@@ -13,7 +13,7 @@ import requests
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, \
+from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, get_dev_requirements, \
     print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
 
 
@@ -118,32 +118,33 @@ class Linter:
             print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_type))
             return 0
 
-        dockers = get_docker_images(script_obj)
+        dockers = get_all_docker_images(script_obj)
+        py_num = get_python_version(dockers[0], self.log_verbose)
+        self.lock.acquire()
+        print_color("============ Starting process for: {} ============\n".format(self.project_dir),
+                    LOG_COLORS.YELLOW)
+        self.lock.release()
+        self._setup_dev_files(py_num)
+        if self.run_args['flake8']:
+            result_val = self.run_flake8(py_num)
+            if result_val:
+                return_code = result_val
+
+        if self.run_args['mypy']:
+            result_val = self.run_mypy(py_num)
+            if result_val:
+                return_code = result_val
+
+        if self.run_args['bandit']:
+            result_val = self.run_bandit(py_num)
+            if result_val:
+                return_code = result_val
+
         for docker in dockers:
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
-                py_num = get_python_version(docker, self.log_verbose)
-                self.lock.acquire()
-                print_color("============ Starting process for: {} ============\n".format(self.project_dir),
-                            LOG_COLORS.YELLOW)
-                self.lock.release()
-                self._setup_dev_files(py_num)
+                py_num = get_python_version(dockers[0], self.log_verbose)
                 try:
-                    if self.run_args['flake8']:
-                        result_val = self.run_flake8(py_num)
-                        if result_val:
-                            return_code = result_val
-
-                    if self.run_args['mypy']:
-                        result_val = self.run_mypy(py_num)
-                        if result_val:
-                            return_code = result_val
-
-                    if self.run_args['bandit']:
-                        result_val = self.run_bandit(py_num)
-                        if result_val:
-                            return_code = result_val
-
                     if self.run_args['tests'] or self.run_args['pylint']:
                         if not self.requirements:
                             requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base,

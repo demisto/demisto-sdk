@@ -192,6 +192,44 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
 **Examples**:
 `DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'.`
 This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
+=======
+## Upload
+
+Upload integration to Demisto instance. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+
+**Arguments**:
+* *-i INTEGRATION_PATH, --inpath INTEGRATION_PATH*
+                        The yml file to with the integration to upload
+* *-k, --insecure*
+                        Skip certificate validation
+* *-v, --verbose*
+                        Verbose output
+
+**Examples**:
+`demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml`
+This will upload the integration YML generated with `unify` command on the Demisto instance.
+
+`demisto-sdk upload -i Integrations/GoogleCloudTranslate`
+This will create a temporary unified file of the intergration and upload it to the Demisto instance.
+
+## Run
+
+Run integration command in the playground of a remote Demisto instance and retrieves the output. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+
+**Arguments**:
+* *-q QUERY, --query QUERY*
+                        The query to run
+* *-k, --insecure*
+                        Skip certificate validation
+* *-v, --verbose*
+                        Verbose output
+* *-D [DEBUG_LOG], --debug [DEBUG_LOG]*
+                        Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used
+
+**Examples**:
+`demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D`
+This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
+
 
 ## In the code
 You can import the SDK core class in your python code as follows:

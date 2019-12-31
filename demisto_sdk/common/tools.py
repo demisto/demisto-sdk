@@ -418,7 +418,7 @@ def get_all_docker_images(script_obj):
         if 'dockerimage' in key and key != 'dockerimage':
             if type(script_obj.get(key)) == str:
                 imgs.append(script_obj.get(key))
-            else:
+            elif type(script_obj.get(key)) == list:
                 imgs.extend(script_obj.get(key))
 
     return imgs

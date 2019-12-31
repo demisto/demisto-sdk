@@ -13,6 +13,8 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Added **run** command which runs a command in the Demisto playground.
+* Added **upload** command which uploads an integration or a script to a Demisto instance.
 
 ### 0.2.6
 

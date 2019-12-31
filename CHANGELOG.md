@@ -13,6 +13,7 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Adding **init** command.
 
 ### 0.2.6
 

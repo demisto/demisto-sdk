@@ -11,24 +11,27 @@ from ruamel.yaml.scalarstring import SingleQuotedScalarString
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir, \
     str2bool
-from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 INTEGRATION = 'integration'
 SCRIPT = 'script'
 
 
 class Extractor:
-
-    def __init__(self, yml_path: str, dest_path: str, add_demisto_mock: bool, add_common_server: bool, yml_type: str,
+    def __init__(self, infile: str, outfile: str, demisto_mock: str, common_server: str, yml_type: str,
                  configuration: Configuration):
-        self.yml_path = yml_path
-        self.dest_path = dest_path
-        self.demisto_mock = add_demisto_mock
-        self.common_server = add_common_server
+        self.yml_path = infile
+        self.dest_path = outfile
+        self.demisto_mock = str2bool(demisto_mock)
+        self.common_server = str2bool(common_server)
         self.yml_type = yml_type
         self.config = configuration
 
-    def migrate(self) -> int:
+    def extract_to_package_format(self) -> int:
+        """Extracts the self.yml_path into several files according to the Demisto standard of the package format.
+
+        Returns:
+             int. status code for the operation.
+        """
         print("Starting migration of: {} to dir: {}".format(self.yml_path, self.dest_path))
         arg_path = self.dest_path
         output_path = os.path.abspath(self.dest_path)
@@ -80,7 +83,14 @@ class Extractor:
             fp = tempfile.NamedTemporaryFile(delete=False)
             fp.write(requirements.encode('utf-8'))
             fp.close()
-            subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+
+            try:
+                subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+
+            except Exception:
+                print_color("Failed installing requirements in pipenv.\n "
+                            "Please try installing manually after extract ends\n", LOG_COLORS.RED)
+
             os.unlink(fp.name)
             print("Installing flake8 for linting")
             subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
@@ -110,18 +120,19 @@ class Extractor:
               )
         return 0
 
-    def extract_code(self, output_file) -> int:
+    def extract_code(self, code_file_path) -> int:
         yml_type = self.get_yml_type()
-        print("Extracting code to: {} ...".format(self.dest_path))
         common_server = self.common_server
-        if common_server is None:
+        if common_server:
             common_server = "CommonServerPython" not in self.yml_path
         with open(self.yml_path, 'rb') as yml_file:
             yml_data = yaml.safe_load(yml_file)
             script = yml_data['script']
             if yml_type == INTEGRATION:  # in integration the script is stored at a second level
                 script = script['script']
-        with open(output_file, 'w', encoding='utf-8') as code_file:
+
+        print("Extracting code to: {} ...".format(code_file_path))
+        with open(code_file_path, 'wt') as code_file:
             if self.demisto_mock:
                 code_file.write("import demistomock as demisto\n")
             if common_server:
@@ -129,6 +140,7 @@ class Extractor:
             code_file.write(script)
             if script[-1] != '\n':  # make sure files end with a new line (pyml seems to strip the last newline)
                 code_file.write("\n")
+
         return 0
 
     def extract_image(self, output_path) -> int:
@@ -167,23 +179,3 @@ class Extractor:
                 raise ValueError('Could not auto determine yml type ({}/{}) based on path: {}'
                                  .format(SCRIPT, INTEGRATION, self.yml_path))
         return yml_type
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        parser = subparsers.add_parser('extract', help='Extract code, image and description files'
-                                                       ' from a demisto integration or script yaml file')
-        parser.add_argument("-i", "--infile", help="The yml file to extract from", required=True)
-        parser.add_argument("-o", "--outfile",
-                            help="The output file or dir (if doing migrate) to write the code to", required=True)
-        parser.add_argument("-m", "--migrate", action='store_true',
-                            help="Migrate an integration to package format."
-                                 " Pass to -o option a directory in this case.")
-        parser.add_argument("-t", "--type",
-                            help="Yaml type. If not specified will try to determine type based upon path.",
-                            choices=[SCRIPT_PREFIX, INTEGRATION_PREFIX], default=None)
-        parser.add_argument("-d", "--demistomock", help="Add an import for demisto mock, true by default",
-                            choices=[True, False], type=str2bool, default=True)
-        parser.add_argument("-c", "--commonserver",
-                            help=("Add an import for CommonServerPython. "
-                                  " If not specified will import unless this is CommonServerPython"),
-                            choices=[True, False], type=str2bool, default=None)

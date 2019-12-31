@@ -20,6 +20,15 @@ You can use the SDK in the CLI as follows:
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
+Our CLI supports autocomplete for linux/MacOS machines, you can turn this feature on by running one of the following:
+for zsh users run in the terminal
+```
+eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
+```
+for regular bashrc users run in the terminal
+```
+eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
+```
 
 ## Commands
 
@@ -102,6 +111,12 @@ Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will r
   Do NOT test (skip pytest) (default: False)
 * *-r, --root*
   Run pytest container with root user (default: False)
+* *-p, --parallel*
+  Run tests in parallel (default: False)
+* *--no-bc*
+  Check diff with $DIFF_COMPARE env variable (default: False)
+* *-a, --run-all-tests*
+  Run lint on all directories in content repo (default: False)
 * *-k, --keep-container*
   Keep the test container (default: False)
 * *-v, --verbose*
@@ -136,10 +151,25 @@ Create content artifacts.
 * *-p, --preserve_bundles*
                         Flag for if you'd like to keep the bundles created in
                         the process of making the content artifacts
-
+             
 **Examples**:
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
+                        
+### Format
+
+Format your integration/script/playbook yml file according to Demisto's standard automatically.
+**Arguments**:
+* *-t {integration, script, playbook}, --type {integration, script, playbook}*
+                        The type of yml file to be formatted.
+* *-p PATH_TO_YML, --path PATH_TO_YML*
+                        The path of the desired yml file to be formatted.
+* *-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH*
+                        The path where the formatted file will be saved to. (Default will be to override origin file)
+
+**Examples**:
+` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
+This will go through the integration file, format it, and override the original file with the necessary changes.
 
 
 ## In the code

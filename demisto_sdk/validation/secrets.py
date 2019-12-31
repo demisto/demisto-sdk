@@ -8,7 +8,7 @@ import PyPDF2
 from bs4 import BeautifulSoup
 from demisto_sdk.common.constants import re, REQUIRED_YML_FILE_TYPES, PACKS_DIR, PACKS_WHITELIST_FILE_NAME, \
     INTEGRATION_README_REGEX, EXTERNAL_PR_REGEX
-from demisto_sdk.common.tools import run_command, print_error, str2bool, print_color, LOG_COLORS, checked_type, \
+from demisto_sdk.common.tools import run_command, print_error, print_color, LOG_COLORS, checked_type, \
     is_file_path_in_pack, get_pack_name
 
 # secrets settings
@@ -68,15 +68,19 @@ class SecretsValidator():
             secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
             secrets_found = self.search_potential_secrets(secrets_file_paths)
             if secrets_found:
-                secrets_found_string = 'Secrets were found in the following files:\n'
+                secrets_found_string = 'Secrets were found in the following files:'
                 for file_name in secrets_found:
-                    secrets_found_string += ('\nFile Name: ' + file_name)
+                    secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
+                    secrets_found_string += '\nThe following expressions were marked as secrets: \n'
                     secrets_found_string += json.dumps(secrets_found[file_name], indent=4)
+
                 if not is_circle:
-                    secrets_found_string += '\nRemove or whitelist secrets in order to proceed, then re-commit\n'
+                    secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
+
                 else:
-                    secrets_found_string += 'The secrets were exposed in public repository,' \
+                    secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
                                             ' remove the files asap and report it.\n'
+
                 secrets_found_string += 'For more information about whitelisting visit: ' \
                                         'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
                 print_error(secrets_found_string)
@@ -407,19 +411,8 @@ class SecretsValidator():
         branch_name = branch_name_reg.group(1)
         return branch_name
 
-    @staticmethod
-    def add_sub_parser(subparsers):
-        from argparse import ArgumentDefaultsHelpFormatter
-        description = """Run Secrets validator to catch sensitive data before exposing your code to public repository.
-         Attach full path to whitelist to allow manual whitelists. Default file path to secrets is
-          "./Tests/secrets_white_list.json"
-          """
-        parser = subparsers.add_parser('secrets', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument('-c', '--circle', type=str2bool, default=False, help='Is CircleCi or not')
-        parser.add_argument('-wl', '--whitelist', default='./Tests/secrets_white_list.json',
-                            help='Full path to whitelist file, file name should be "secrets_white_list.json"')
-
     def find_secrets(self):
+        print_color('Starting secrets detection', LOG_COLORS.GREEN)
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
         is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None
@@ -430,3 +423,10 @@ class SecretsValidator():
             else:
                 print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
                 return False
+
+    def run(self):
+        if self.find_secrets():
+            return 1
+
+        else:
+            return 0

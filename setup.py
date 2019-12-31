@@ -36,7 +36,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     entry_points={
-        'console_scripts': ['demisto-sdk=demisto_sdk.__main__:console_entry']
+        'console_scripts': ['demisto-sdk=demisto_sdk.main:demisto_sdk_cli']
     },
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -45,7 +45,6 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython'

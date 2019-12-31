@@ -54,11 +54,11 @@ class StructureValidator:
         'reputations': [MISC_REGEX]
     }
 
-    def __init__(self, file_path, old_file_path=None, configuration=Configuration()):
+    def __init__(self, file_path, old_file_path=None, predefined_scheme=None, configuration=Configuration()):
         # type: (str, Optional[str], Configuration) -> None
         self.is_valid = None  # type: Optional[bool]
         self.file_path = file_path
-        self.scheme_name = self.scheme_of_file_by_path()
+        self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
         self.old_file = get_remote_file(old_file_path) if old_file_path else None

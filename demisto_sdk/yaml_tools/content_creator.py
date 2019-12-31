@@ -1,16 +1,19 @@
 import os
+import io
 import glob
+import yaml
+import json
 import shutil
 import zipfile
-import io
-import yaml
 from typing import List
+
+from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.common.tools import get_child_directories, get_child_files, print_warning, \
+    get_yml_paths_in_dir, print_error
 from demisto_sdk.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX, \
     TOOLS_DIR
-from demisto_sdk.common.tools import get_child_directories, get_child_files, print_warning, get_yml_paths_in_dir
-from demisto_sdk.yaml_tools.unifier import Unifier
 
 
 class ContentCreator:
@@ -47,6 +50,7 @@ class ContentCreator:
         ]
 
         self.packages_to_skip = ['HelloWorld', 'HelloWorldSimple', 'HelloWorldScript']
+        self.packs_to_skip = ['ApiModules']  # See the pack README
 
         # zip files names (the extension will be added later - shutil demands file name without extension)
         self.content_zip = os.path.join(self.artifacts_path, 'content_new')
@@ -56,6 +60,20 @@ class ContentCreator:
         # server can't handle long file names
         self.file_name_max_size = 85
         self.long_file_names = []  # type:List
+
+    def run(self):
+        """Runs the content creator and returns the appropriate status code for the operation.
+
+        Returns:
+            int. 1 for failure, 0 for success.
+        """
+        self.create_content()
+        if self.long_file_names:
+            print_error(f'The following files exceeded to file name length limit of {self.file_name_max_size}:\n'
+                        f'{json.dumps(self.long_file_names, indent=4)}')
+            return 1
+
+        return 0
 
     def create_unifieds_and_copy(self, package_dir, dest_dir='', skip_dest_dir=''):
         '''
@@ -207,6 +225,8 @@ class ContentCreator:
         'content_new.zip'. Adds file prefixes where necessary according to how server expects to ingest the files.
         '''
         for pack in packs:
+            if os.path.basename(pack) in self.packs_to_skip:
+                continue
             # each pack directory has it's own content subdirs, 'Integrations',
             # 'Scripts', 'TestPlaybooks', 'Layouts' etc.
             sub_dirs_paths = get_child_directories(pack)
@@ -231,6 +251,8 @@ class ContentCreator:
         '''
         for pack in packs:
             pack_name = os.path.basename(pack)
+            if pack_name in self.packs_to_skip:
+                continue
             pack_dst = os.path.join(self.packs_bundle, pack_name)
             os.mkdir(pack_dst)
             pack_dirs = get_child_directories(pack)
@@ -330,13 +352,3 @@ class ContentCreator:
                     shutil.rmtree(self.test_bundle)
                 if os.path.exists(self.packs_bundle):
                     shutil.rmtree(self.packs_bundle)
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        parser = subparsers.add_parser('create',
-                                       help='Create content artifacts')
-        parser.add_argument('-a', '--artifacts_path',
-                            help='The path of the directory in which you want to save the created content artifacts')
-        parser.add_argument('-p', '--preserve_bundles', action='store_true',
-                            help='Flag for if you\'d like to keep the bundles created in the process of making'
-                                 ' the content artifacts')

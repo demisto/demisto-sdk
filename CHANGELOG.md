@@ -7,6 +7,16 @@
 * Added spell check command.
 
 
+### 0.3.0
+
+* Added support for multi-package **lint** both with parallel and without.
+* Added all parameter in **lint** to run on all packages and packs in content repository.
+* Added **format** for:
+    * Scripts
+    * Playbooks
+    * Integrations
+* Improved user outputs for **secrets** command.
+
 ### 0.2.6
 
 * Fixed an issue with locating release notes for beta integrations in **validate**.

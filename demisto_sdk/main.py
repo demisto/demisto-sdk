@@ -5,6 +5,7 @@ from pkg_resources import get_distribution
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.common.tools import str2bool
 from demisto_sdk.yaml_tools.unifier import Unifier
+from demisto_sdk.dev_tools.initiator import Initiator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
@@ -270,6 +271,23 @@ def format(file_type, **kwargs):
         return format_object.format_file()
 
     return 1
+
+
+@main.command(name="init", short_help="Initiate a new Pack, Integration or Script.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-n", "--name", help="The name of the object you want to create")
+@click.option(
+    "-o", "--outdir", help="The output dir to write the object into")
+@click.option(
+    '--integration', is_flag=True, help="Create an Integration")
+@click.option(
+    '--script', is_flag=True, help="Create a script")
+def init(**kwargs):
+    initiator = Initiator(**kwargs)
+    return initiator.init()
 
 
 @main.resultcallback()

@@ -93,3 +93,4 @@ git_push.sh
 .swagger-codegen
 .vscode
 .pytest_cache
+.idea

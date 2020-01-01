@@ -24,6 +24,8 @@ class Initiator:
 
     def __init__(self, output_dir: str, name: str, integration: bool = False, script: bool = False):
         self.output_dir = output_dir if output_dir is not None else ''
+        while ' ' in name:
+            name = str(input("The name cannot have spaces in it, Enter a different name: "))
         self.name = name
         self.is_integration = integration
         self.is_script = script
@@ -60,6 +62,8 @@ class Initiator:
         """
         while self.name is None or len(self.name):
             self.name = str(input(f"Please input the name of the initialized {created_object}: "))
+            while ' ' in self.name:
+                self.name = str(input("The name cannot have spaces in it, Enter a different name: "))
 
     def pack_init(self) -> bool:
         """Creates a pack directory tree.
@@ -140,6 +144,7 @@ class Initiator:
 
         copy_tree(str(hello_world_path), self.full_output_path)
         if self.name != self.HELLO_WORLD_INTEGRATION:
+            # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION)
 
@@ -173,6 +178,7 @@ class Initiator:
 
         copy_tree(str(hello_world_path), self.full_output_path)
         if self.name != self.HELLO_WORLD_SCRIPT:
+            # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_SCRIPT)
 

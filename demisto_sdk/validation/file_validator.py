@@ -405,7 +405,7 @@ class FilesValidator:
 
             # incident fields and indicator fields are using the same scheme.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
-                incident_field_validator = IncidentFieldValidator(file_path)
+                incident_field_validator = IncidentFieldValidator(structure_validator)
                 if not incident_field_validator.is_valid_file():
                     self._is_valid = False
 

@@ -416,9 +416,10 @@ def get_all_docker_images(script_obj):
     # get additional docker images
     for key in script_obj.keys():
         if 'dockerimage' in key and key != 'dockerimage':
-            if type(script_obj.get(key)) == str:
+            if isinstance(script_obj.get(key), str):
                 imgs.append(script_obj.get(key))
-            elif type(script_obj.get(key)) == list:
+
+            elif isinstance(script_obj.get(key), list):
                 imgs.extend(script_obj.get(key))
 
     return imgs

@@ -42,10 +42,12 @@ demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"'
 This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance and print the output.
 
 
+
 ```
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -k
 ```
 This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance without a certificate validation, and print the output.
+
 
 
 ```
@@ -54,10 +56,12 @@ demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -v
 This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance, print the output and additional meta-data.
 
 
+
 ```
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D
 ```
 This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
+
 
 
 ```

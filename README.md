@@ -231,6 +231,14 @@ Run integration command in the playground of a remote Demisto instance and retri
 `demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D`
 This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
 
+## init
+Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
+
+* **-n, --name** The name given to the new pack/integration/script being created
+* **-o, --outdir** The directory to which the created object will be saved.
+* **--integration** Create an integration
+* **--script** Create a script
+
 
 ## In the code
 You can import the SDK core class in your python code as follows:

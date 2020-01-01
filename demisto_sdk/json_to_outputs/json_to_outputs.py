@@ -117,6 +117,9 @@ def jsonise(context_key, value, description=''):
 
 
 def is_date(val):
+    """
+    Determines if val is Date, if yes returns True otherwise False
+    """
     if isinstance(val, (int, float)) and val > 15737548065 and val < 2573754806500:
         # 15737548065 is the lowest timestamp that exist year - 1970
         # 2573754806500 is the year 2050 - I believe no json will contain date time over this time
@@ -188,6 +191,21 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
 
 
 def json_to_outputs(command, infile, prefix, outfile=None, verbose=False, interactive=False):
+    """
+    This script parses JSON to Demisto Outputs YAML format
+
+    Args:
+        command: the name of the command that this output is belong like xdr-get-incidents
+        infile: full path to valid JSON file - the JSON file should contain API response from the service
+        prefix: The prefix of the context, this prefix will appear for each output field - VirusTotal.IP,
+            CortexXDR.Incident
+        outfile: Full path to output file where to save the YAML
+        verbose: This used for debugging purposes - more logs
+        interactive: by default all the output descriptions are empty, but if user sets this to True then the script
+            will ask user input for each description
+
+    Returns:
+    """
     try:
         if infile:
             with open(infile, 'r') as json_file:

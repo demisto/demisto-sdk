@@ -34,15 +34,18 @@ demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudT
 ```
 This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance.
 
+
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate
 ```
 This will create a temporary unified file of the `GoogleCloudTranslate` integration which will be uploaded to the Demisto instance.
 
+
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml -k
 ```
 This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance, without a certificate validation.
+
 
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml -v

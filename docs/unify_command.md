@@ -3,7 +3,7 @@
 Unify the code, image and description files to a single Demisto yaml file.
 
 **Use Cases**:
-This command is used in order to create a unified yml file, able ot be uploaded to Demisto via the
+This command is used in order to create a unified yml file, able to be uploaded to Demisto via the
 "Upload Integration" or "Upload Script" buttons, in Demisto's Settings and Automation tabs respectively.
 
 **Arguments**:

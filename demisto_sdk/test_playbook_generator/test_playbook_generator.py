@@ -4,6 +4,12 @@ import os
 
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
+
+class ContentItemType:
+    INTEGRATION = 'integration'
+    SCRIPT = 'script'
+
+
 class Playbook:
     def __init__(self, name, fromversion='4.5.0'):
         self.name = name
@@ -11,7 +17,7 @@ class Playbook:
 
         self.tasks = {
             '0': create_start_task(),
-            '1': create_script_task(1, 'DeleteContext', {'all': 'yes'})
+            '1': create_automation_task(1, 'DeleteContext', ContentItemType.SCRIPT, {'all': 'yes'})
         }
         self.task_counter = len(self.tasks)
 
@@ -104,7 +110,7 @@ def create_end_task(id):
     }
 
 
-def create_script_task(id, script_name, args=None):
+def create_automation_task(_id, automation_name, item_type: ContentItemType, args=None):
     scriptargs = {}
     if args and len(args) > 0:
         scriptargs['all'] = {}
@@ -112,23 +118,28 @@ def create_script_task(id, script_name, args=None):
         for arg, val in args.items():
             scriptargs['all']['simple'] = val
 
+    if item_type == ContentItemType.INTEGRATION:
+        script_name = f"|||{automation_name}"
+    elif item_type == ContentItemType.SCRIPT:
+        script_name = automation_name
+
     return {
-        "id": id,
-        "taskid": str(id),
+        "id": _id,
+        "taskid": str(_id),
         "type": "regular",
         "task": {
-            "id": str(id),
+            "id": str(_id),
             "version": -1,
-            "name": script_name,
+            "name": automation_name,
             "description": "",
-            "script": f"{script_name}",
+            "script": script_name,
             "type": "regular",
             "iscommand": True,
             "brand": ""
         },
         "nexttasks": {
             "#none#": [
-                str(id + 1)
+                str(_id + 1)
             ]
         },
         "scriptarguments": scriptargs,
@@ -136,49 +147,7 @@ def create_script_task(id, script_name, args=None):
         "view": json.dumps({
             'position': {
                 'x': 50,
-                'y': id * 200
-            }
-        }),
-        "note": False,
-        "timertriggers": [],
-        "ignoreworker": False,
-        "skipunavailable": False
-    }
-
-
-def create_integration_command_task(id, command_name, args=None):
-    scriptargs = {}
-    if args and len(args) > 0:
-        scriptargs['all'] = {}
-
-        for arg, val in args.items():
-            scriptargs['all']['simple'] = val
-
-    return {
-        "id": id,
-        "taskid": str(id),
-        "type": "regular",
-        "task": {
-            "id": str(id),
-            "version": -1,
-            "name": command_name,
-            "description": "",
-            "script": f"|||{command_name}",
-            "type": "regular",
-            "iscommand": True,
-            "brand": ""
-        },
-        "nexttasks": {
-            "#none#": [
-                str(id + 1)
-            ]
-        },
-        "scriptarguments": scriptargs,
-        "separatecontext": False,
-        "view": json.dumps({
-            'position': {
-                'x': 50,
-                'y': id * 200
+                'y': _id * 200
             }
         }),
         "note": False,
@@ -252,6 +221,23 @@ def outputs_to_condition(outputs):
     return conditions, command_have_outputs
 
 
+def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs):
+    command_name = command.get('name')
+
+    conditions, command_have_outputs = outputs_to_condition(command.get('outputs', []))
+
+    task_command = create_automation_task(test_playbook.task_counter, command_name, item_type=item_type)
+    test_playbook.add_task(task_command)
+
+    if command_have_outputs:
+        if no_outputs:
+            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
+        else:
+            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
+
+        test_playbook.add_task(task_verify_outputs)
+
+
 class TestPlaybookGenerator:
     def __init__(self, infile, outdir, name, no_outputs=False, file_type='integration', verbose=False):
         self.integration_yml_path = infile
@@ -294,34 +280,22 @@ class TestPlaybookGenerator:
             fromversion='4.5.0'
         )
 
-        if self.file_type == 'integration':
+        if self.file_type == ContentItemType.INTEGRATION:
             for command in yaml_obj.get('script').get('commands'):
-                command_name = command.get('name')
-                task_command = create_integration_command_task(test_playbook.task_counter, command_name)
-                test_playbook.add_task(task_command)
+                create_automation_task_and_verify_outputs_task(
+                    test_playbook=test_playbook,
+                    command=command,
+                    item_type=ContentItemType.INTEGRATION,
+                    no_outputs=self.no_outputs
+                )
 
-                conditions, command_have_outputs = outputs_to_condition(command.get('outputs', []))
-                if command_have_outputs:
-                    if self.no_outputs:
-                        task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
-                    else:
-                        task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
-
-                    test_playbook.add_task(task_verify_outputs)
-
-        elif self.file_type == 'script':
-            script_name = yaml_obj.get('name')
-            task_command = create_script_task(test_playbook.task_counter, script_name)
-            test_playbook.add_task(task_command)
-
-            conditions, command_have_outputs = outputs_to_condition(yaml_obj.get('outputs', []))
-            if command_have_outputs:
-                if self.no_outputs:
-                    task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
-                else:
-                    task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
-
-                test_playbook.add_task(task_verify_outputs)
+        elif self.file_type == ContentItemType.SCRIPT:
+            create_automation_task_and_verify_outputs_task(
+                test_playbook=test_playbook,
+                command=yaml_obj,
+                item_type=ContentItemType.INTEGRATION,
+                no_outputs=self.no_outputs
+            )
 
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
 

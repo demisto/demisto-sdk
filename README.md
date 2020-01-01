@@ -231,7 +231,7 @@ Run integration command in the playground of a remote Demisto instance and retri
 `demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D`
 This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
 
-## init
+## [init](https://github.com/demisto/demisto-sdk/tree/master/docs/init_command.md)
 Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
 
 **Arguments**:

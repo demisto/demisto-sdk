@@ -1,9 +1,8 @@
 from ruamel.yaml import YAML
-import argparse
 import json
 import os
-import sys
 
+from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
 class Playbook:
     def __init__(self, name, fromversion='4.5.0'):
@@ -254,8 +253,9 @@ def outputs_to_condition(outputs):
 
 
 class TestPlaybookGenerator:
-    def __init__(self, infile, outdir, name, no_outputs, file_type='integration'):
+    def __init__(self, infile, outdir, name, no_outputs=False, file_type='integration', verbose=False):
         self.integration_yml_path = infile
+        self.outdir = outdir
         if outdir:
             self.test_playbook_yml_path = os.path.join(outdir, name + '.yml')
         else:
@@ -264,14 +264,32 @@ class TestPlaybookGenerator:
         self.file_type = file_type
         self.name = name
         self.no_outputs = no_outputs
+        self.verbose = verbose
 
     def run(self):
+        if self.outdir:
+            if not os.path.isdir(self.outdir):
+                print_error(f'Directory not exist: {self.outdir}')
+                return
+
         ryaml = YAML()
         ryaml.preserve_quotes = True
-        with open(self.integration_yml_path, 'r') as yf:
-            yaml_obj = ryaml.load(yf)
+        try:
+            with open(self.integration_yml_path, 'r') as yf:
+                yaml_obj = ryaml.load(yf)
 
-        test_playbook_v1 = Playbook(
+                yaml_obj.get('name')
+        except FileNotFoundError as ex:
+            if self.verbose:
+                raise
+
+            print_error(str(ex))
+            return
+        except AttributeError:
+            print_error(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file')
+            return
+
+        test_playbook = Playbook(
             name=self.name,
             fromversion='4.5.0'
         )
@@ -279,35 +297,35 @@ class TestPlaybookGenerator:
         if self.file_type == 'integration':
             for command in yaml_obj.get('script').get('commands'):
                 command_name = command.get('name')
-                task_command = create_integration_command_task(test_playbook_v1.task_counter, command_name)
-                test_playbook_v1.add_task(task_command)
+                task_command = create_integration_command_task(test_playbook.task_counter, command_name)
+                test_playbook.add_task(task_command)
 
                 conditions, command_have_outputs = outputs_to_condition(command.get('outputs', []))
                 if command_have_outputs:
                     if self.no_outputs:
-                        task_verify_outputs = create_verify_outputs_task(test_playbook_v1.task_counter, [])
+                        task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
                     else:
-                        task_verify_outputs = create_verify_outputs_task(test_playbook_v1.task_counter, conditions)
+                        task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
 
-                    test_playbook_v1.add_task(task_verify_outputs)
+                    test_playbook.add_task(task_verify_outputs)
 
         elif self.file_type == 'script':
             script_name = yaml_obj.get('name')
-            task_command = create_script_task(test_playbook_v1.task_counter, script_name)
-            test_playbook_v1.add_task(task_command)
+            task_command = create_script_task(test_playbook.task_counter, script_name)
+            test_playbook.add_task(task_command)
 
             conditions, command_have_outputs = outputs_to_condition(yaml_obj.get('outputs', []))
             if command_have_outputs:
                 if self.no_outputs:
-                    task_verify_outputs = create_verify_outputs_task(test_playbook_v1.task_counter, [])
+                    task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
                 else:
-                    task_verify_outputs = create_verify_outputs_task(test_playbook_v1.task_counter, conditions)
+                    task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
 
-                test_playbook_v1.add_task(task_verify_outputs)
+                test_playbook.add_task(task_verify_outputs)
 
-        test_playbook_v1.add_task(create_end_task(test_playbook_v1.task_counter))
+        test_playbook.add_task(create_end_task(test_playbook.task_counter))
 
         with open(self.test_playbook_yml_path, 'w') as yf:
-            ryaml.dump(test_playbook_v1.to_dict(), yf)
+            ryaml.dump(test_playbook.to_dict(), yf)
 
-            print(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}')
+            print_color(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}', LOG_COLORS.GREEN)

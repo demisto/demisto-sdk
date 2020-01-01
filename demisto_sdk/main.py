@@ -397,6 +397,8 @@ def run_playbook(**kwargs):
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
          'outputs to verify and which not')
+@click.option(
+    "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
     generator = TestPlaybookGenerator(**kwargs)
     generator.run()

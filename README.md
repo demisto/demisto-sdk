@@ -32,7 +32,7 @@ eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
 
 ## Commands
 
-### Unify
+### [Unify](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 
 Unify the code, image and description files to a single Demisto yaml file.
 **Arguments**:
@@ -41,9 +41,6 @@ Unify the code, image and description files to a single Demisto yaml file.
 * *-o OUTDIR, --outdir OUTDIR*
   The path to the directory into which to write the unified yml file
 
-**Examples**:
-`demisto-sdk unify -i Integrations/MyInt -o Integrations`
-This will grab the integration components and unify them to a single yaml file.
 
 ### Extract
 
@@ -93,7 +90,7 @@ Validate your content files.
 `demisto-sdk validate`
 This will validate your content files.
 
-### Lint
+### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 
 Run lintings (flake8, mypy, pylint, bandit) and pytest.
 pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
@@ -127,10 +124,6 @@ pylint and pytest will run within all the docker images of an integration/script
 * *--cpu-num CPU_NUM*
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
-
-**Examples**:
-`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p`
-This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories.
 
 ### Secrets
 

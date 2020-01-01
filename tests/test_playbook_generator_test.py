@@ -44,4 +44,3 @@ class TestGenerateTestPlaybook:
             actual_test_playbook_yml = f.read()
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
-

@@ -2,9 +2,9 @@
 
 Unify the code, image and description files to a single Demisto yaml file.
 **Arguments**:
-* *-i INDIR, --indir INDIR*
+* **-i INDIR, --indir INDIR**
   The path to the directory in which the files reside
-* *-o OUTDIR, --outdir OUTDIR*
+* **-o OUTDIR, --outdir OUTDIR**
   The path to the directory into which to write the unified yml file
 
 **Examples**:

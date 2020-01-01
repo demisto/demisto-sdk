@@ -241,11 +241,11 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
 
     Verbose output
 
-* *-D, --debug*
+* **-D, --debug**
 
     Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option
 
-* *--debug-path [DEBUG_LOG]*
+* **--debug-path [DEBUG_LOG]**
 
     The path to save the debug file at, if not specified the debug file will be printed to the terminal
 

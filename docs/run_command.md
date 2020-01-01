@@ -11,7 +11,7 @@ export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 
 
 ### Use Cases
-This command is used in order to run integrations and/or scripts commands of a remote Demisto instance. This is useful especially when developing new commands or fixing bugs, so that while working on the code you can debug it directly from the CLI and optimize the development process flow.
+This command is used in order to run integration or script commands of a remote Demisto instance. This is useful especially when developing new commands or fixing bugs, so that while working on the code the developer can debug it directly from the CLI and optimize the development process flow.
 
 
 ### Arguments
@@ -27,11 +27,11 @@ This command is used in order to run integrations and/or scripts commands of a r
 
     Verbose output
     
-* *-D, --debug*
+* **-D, --debug**
 
     Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option
     
-* *--debug-path [DEBUG_LOG]*
+* **--debug-path [DEBUG_LOG]**
 
     The path to save the debug file at, if not specified the debug file will be printed to the terminal
 

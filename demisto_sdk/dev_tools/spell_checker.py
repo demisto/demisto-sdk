@@ -86,6 +86,7 @@ class SpellCheck:
             ssl._create_default_https_context = _create_unverified_https_context
 
         # downloading "words" set from nltk.
+        print_color("Downloading dictionary, this may take a minute...", LOG_COLORS.YELLOW)
         nltk.download('words')
 
         # adding nltk's word set to spellchecker.

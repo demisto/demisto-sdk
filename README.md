@@ -151,11 +151,11 @@ Create content artifacts.
 * *-p, --preserve_bundles*
                         Flag for if you'd like to keep the bundles created in
                         the process of making the content artifacts
-             
+
 **Examples**:
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
-                        
+
 ### Format
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
@@ -170,6 +170,17 @@ Format your integration/script/playbook yml file according to Demisto's standard
 **Examples**:
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
+
+### Spell-check
+
+Checks spelling in a given .yml or .md file.
+**Arguments**:
+* **-p, --path** The path to the .yml or .md file to be checked.
+* **--known-words** The path to a file of known words that won't raise an error.
+
+**Example**:
+`demisto-sdk spell-check -p Integrations/HelloWorld/HelloWorld_description.md`
+This will check the spelling of words in the file "HelloWorld_description.md".
 
 
 ## In the code

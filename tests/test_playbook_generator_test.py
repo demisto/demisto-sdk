@@ -6,7 +6,7 @@ from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlay
 
 
 def load_file_from_test_dir(filename):
-    with io.open(os.path.join('test_files', filename), mode='r', encoding='utf-8') as f:
+    with io.open(os.path.join('tests', 'test_files', filename), mode='r', encoding='utf-8') as f:
         return f.read()
 
 
@@ -28,14 +28,14 @@ class TestGenerateTestPlaybook:
 
     def test_generate_test_playbook(self):
         generator = TestPlaybookGenerator(
-            infile='test_files/fake_integration.yml',
+            infile='tests/test_files/fake_integration.yml',
             outdir=TestGenerateTestPlaybook.TEMP_DIR,
             name='TestPlaybook'
         )
 
         generator.run()
 
-        with io.open(os.path.join('test_files', 'fake_integration_expected_test_playbook.yml'), mode='r',
+        with io.open(os.path.join('tests', 'test_files', 'fake_integration_expected_test_playbook.yml'), mode='r',
                      encoding='utf-8') as f:
             expected_test_playbook_yml = f.read()
 

@@ -2,7 +2,7 @@
 
 Checks spelling in a given .yml or .md file.
 
-**Use Cases**:
+**Use Cases**:  
 This command is used to check our user visible documents and descriptions for any misspelled words.
 
 **Arguments**:

@@ -34,7 +34,7 @@ eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
 
 ### Unify
 
-Unify code, image and description files to a single Demisto yaml file.
+Unify the code, image and description files to a single Demisto yaml file.
 **Arguments**:
 * *-i INDIR, --indir INDIR*
   The path to the directory in which the files reside
@@ -95,10 +95,11 @@ This will validate your content files.
 
 ### Lint
 
-Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the docker image of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
+Run lintings (flake8, mypy, pylint, bandit) and pytest.
+pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
 **Arguments**:
 * *-d DIR, --dir DIR*
-  Specify directory of integration/script (default: None)
+  Specify directory of integration/script. Also supports several direcories as a CSV (default: None)
 * *--no-pylint*
   Do NOT run pylint linter (default: False)
 * *--no-mypy*
@@ -113,8 +114,10 @@ Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will r
   Run pytest container with root user (default: False)
 * *-p, --parallel*
   Run tests in parallel (default: False)
-* *--no-bc*
-  Check diff with $DIFF_COMPARE env variable (default: False)
+* *-m, --max-workers*
+  The max workers to use in a parallel run (default: 10)
+* *-g, --git*
+  Run only on packages that changes between the current branch and content repo's origin/master branch (default: False)
 * *-a, --run-all-tests*
   Run lint on all directories in content repo (default: False)
 * *-k, --keep-container*
@@ -124,9 +127,10 @@ Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will r
 * *--cpu-num CPU_NUM*
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
+
 **Examples**:
-`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR --no-mypy`
-This will run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" directory.
+`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p`
+This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories.
 
 ### Secrets
 

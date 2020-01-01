@@ -401,6 +401,30 @@ def get_docker_images(script_obj):
     return imgs
 
 
+def get_all_docker_images(script_obj):
+    """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
+
+    Args:
+        script_obj (dict): A yml dict.
+
+    Returns:
+        List. A list of all docker images.
+    """
+    # this makes sure the first docker in the list is the main docker image.
+    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
+
+    # get additional docker images
+    for key in script_obj.keys():
+        if 'dockerimage' in key and key != 'dockerimage':
+            if isinstance(script_obj.get(key), str):
+                imgs.append(script_obj.get(key))
+
+            elif isinstance(script_obj.get(key), list):
+                imgs.extend(script_obj.get(key))
+
+    return imgs
+
+
 def get_python_version(docker_image, log_verbose, no_prints=False):
     """
     Get the python version of a docker image

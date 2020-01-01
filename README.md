@@ -41,6 +41,10 @@ Unify the code, image and description files to a single Demisto yaml file.
 * **-o OUTDIR, --outdir OUTDIR**
   The path to the directory into which to write the unified yml file
 
+**Example**:
+`demisto-sdk unify -i Integrations/MyInt -o Integrations`
+This will grab the integration components in "Integrations/MyInt" directory and unify them to a single yaml file
+that will be created in the "Integrations" directory.
 
 ### Extract
 
@@ -124,6 +128,9 @@ pylint and pytest will run within all the docker images of an integration/script
 * **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
+**Example**:
+`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
+This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
 
 ### Secrets
 

@@ -1,7 +1,15 @@
 ### Lint
 
 Run lintings (flake8, mypy, pylint, bandit) and pytest.
-pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
+pylint and pytest will run within all the docker images of an integration/script.
+Meant to be used with integrations/scripts that use the folder (package) structure.
+
+The appropriate docker images for the integration/script will be used to execute the pytest and pylint checks.
+
+**Use Cases**
+This command is used to make sure the code stands up to the python standards, prevents bugs and runs unit tests to
+make sure the code works as intended.
+
 **Arguments**:
 * **-d DIR, --dir DIR**
   Specify directory of integration/script. Also supports several direcories as a CSV (default: None)

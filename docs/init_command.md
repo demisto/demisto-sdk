@@ -1,6 +1,10 @@
 ## init
 Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
 
+**Use-Cases**
+This command is used to ease the initial creation of a pack, integration or a script.
+
+**Arguments**:
 * **-n, --name** The name given to the new pack/integration/script being created
 * **-o, --outdir** The directory to which the created object will be saved.
 * **--integration** Create an integration

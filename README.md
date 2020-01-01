@@ -234,11 +234,15 @@ This will run the query `!gct-translate-text text="ciao" target="iw"` in debug m
 ## init
 Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
 
+**Arguments**:
 * **-n, --name** The name given to the new pack/integration/script being created
 * **-o, --outdir** The directory to which the created object will be saved.
 * **--integration** Create an integration
 * **--script** Create a script
 
+**Example**:
+`demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
+This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
 
 ## In the code
 You can import the SDK core class in your python code as follows:

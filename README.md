@@ -171,7 +171,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
-### Spell-check
+### [Spell-check](https://github.com/demisto/demisto-sdk/tree/master/docs/spell_check_command.md)
 
 Checks spelling in a given .yml or .md file.
 **Arguments**:

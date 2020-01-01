@@ -222,6 +222,19 @@ def outputs_to_condition(outputs):
 
 
 def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs):
+    """
+    create automation task from command and verify outputs task from automation(script/integration command) outputs.
+    both tasks added to test playbook. both of this tasks linked to each other
+
+    Args:
+        test_playbook: Test playbook
+        command: command/script object - they are similar as they both contain name and outputs
+        item_type: content item type - either integration or script
+        no_outputs: if True then created empty verify outputs task without all the outputs
+
+    Returns:
+        test_playbook is updated
+    """
     command_name = command.get('name')
 
     conditions, command_have_outputs = outputs_to_condition(command.get('outputs', []))
@@ -253,6 +266,19 @@ class TestPlaybookGenerator:
         self.verbose = verbose
 
     def run(self):
+        """
+        This function will try to load integration/script yml file.
+        Creates test playbook, and converts each command to automation task in test playbook and generates verify
+        outputs task from command outputs.
+
+        All the tasks eventually will be linked to each other:
+        playbook_start_task => delete_context(all) => task1 => verify_outputs_task1 => task2 => verify_outputs_task2
+            => task_end
+
+        At the end the functions dumps the new test playbook to the outdir if set, otherwise file will be created in
+        local directory
+
+        """
         if self.outdir:
             if not os.path.isdir(self.outdir):
                 print_error(f'Directory not exist: {self.outdir}')

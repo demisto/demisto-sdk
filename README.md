@@ -20,6 +20,15 @@ You can use the SDK in the CLI as follows:
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
+Our CLI supports autocomplete for linux/MacOS machines, you can turn this feature on by running one of the following:
+for zsh users run in the terminal
+```
+eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
+```
+for regular bashrc users run in the terminal
+```
+eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
+```
 
 ## Commands
 
@@ -102,6 +111,12 @@ Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will r
   Do NOT test (skip pytest) (default: False)
 * *-r, --root*
   Run pytest container with root user (default: False)
+* *-p, --parallel*
+  Run tests in parallel (default: False)
+* *--no-bc*
+  Check diff with $DIFF_COMPARE env variable (default: False)
+* *-a, --run-all-tests*
+  Run lint on all directories in content repo (default: False)
 * *-k, --keep-container*
   Keep the test container (default: False)
 * *-v, --verbose*
@@ -140,6 +155,81 @@ Create content artifacts.
 **Examples**:
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
+
+### Format
+
+Format your integration/script/playbook yml file according to Demisto's standard automatically.
+**Arguments**:
+* *-t {integration, script, playbook}, --type {integration, script, playbook}*
+                        The type of yml file to be formatted.
+* *-p PATH_TO_YML, --path PATH_TO_YML*
+                        The path of the desired yml file to be formatted.
+* *-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH*
+                        The path where the formatted file will be saved to. (Default will be to override origin file)
+
+**Examples**:
+` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
+This will go through the integration file, format it, and override the original file with the necessary changes.
+
+### Run-playbook
+
+Run a playbook in a given Demisto instance.
+DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+You can either specify a URL as an environment variable named: DEMISTO_BASE_URL, or enter it as an argument.
+
+**Arguments**:
+* **-u, --url**
+                        URL to a Demisto instance.
+* **-p, --playbook_id**
+                        The ID of the playbook to run.
+* **-w, --wait**
+                        Wait until the playbook run is finished and get a response.
+                        (default: True)
+* **-t, --timeout**
+                        Timeout for the command. The playbook will continue to run in Demisto.
+                        (default: 90)
+
+**Examples**:
+`DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'.`
+This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
+
+
+## Upload
+
+Upload integration to Demisto instance. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+
+**Arguments**:
+* *-i INTEGRATION_PATH, --inpath INTEGRATION_PATH*
+                        The yml file to with the integration to upload
+* *-k, --insecure*
+                        Skip certificate validation
+* *-v, --verbose*
+                        Verbose output
+
+**Examples**:
+`demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml`
+This will upload the integration YML generated with `unify` command on the Demisto instance.
+
+`demisto-sdk upload -i Integrations/GoogleCloudTranslate`
+This will create a temporary unified file of the intergration and upload it to the Demisto instance.
+
+## Run
+
+Run integration command in the playground of a remote Demisto instance and retrieves the output. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+
+**Arguments**:
+* *-q QUERY, --query QUERY*
+                        The query to run
+* *-k, --insecure*
+                        Skip certificate validation
+* *-v, --verbose*
+                        Verbose output
+* *-D [DEBUG_LOG], --debug [DEBUG_LOG]*
+                        Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used
+
+**Examples**:
+`demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D`
+This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
 
 
 ### Generate Test Playbook

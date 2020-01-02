@@ -69,7 +69,7 @@ class TestStructureValidator:
     ]
 
     @pytest.mark.parametrize("path, scheme, answer", SCHEME_VALIDATION_INDICATORFIELDS)
-    def test_scheme_validation_indictorfield(self, path, scheme, answer, mocker):
+    def test_scheme_validation_indicatorfield(self, path, scheme, answer, mocker):
         validator = StructureValidator(file_path=path, predefined_scheme='incidentfield')
         assert validator.is_valid_scheme() is answer
 

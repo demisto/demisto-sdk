@@ -169,16 +169,16 @@ def unify(**kwargs):
 @click.option(
     '-p', '--path', help='Path of file to validate specifically.'
 )
-@click.option(
-    '-t', '--file-type', type=click.Choice(
-        ['integration', 'script', 'playbook', 'incidnet-field', 'indicator-field', 'image', 'release-notes', 'layout',
-         'description']), help='If you want to validate a specific file, you can specify it\'s type.')
+# @click.option(
+#    '-t', '--file-type', type=click.Choice(
+#        ['integration', 'script', 'playbook', 'incidnet-field', 'indicator-field', 'image', 'release-notes', 'layout',
+#         'description']), help='If you want to validate a specific file, you can specify it\'s type.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    if not kwargs.get('path') and kwargs.get('file_type'):
-        click.echo(click.style('Ignoring file-type argument since no specific file was determined', fg='yellow'))
+    # if not kwargs.get('path') and kwargs.get('file_type'):
+    #    click.echo(click.style('Ignoring file-type argument since no specific file was determined', fg='yellow'))
 
     validator = FilesValidator(configuration=config.configuration,
                                is_backward_check=str2bool(kwargs['backward_comp']),

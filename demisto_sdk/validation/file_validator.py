@@ -46,9 +46,15 @@ class FilesValidator:
     to make sure you did not bypass the hooks as a safety precaution.
 
     Attributes:
-        _is_valid (bool): saves the status of the whole validation(instead of mingling it between all the functions).
-        conf_json_validator (ConfJsonValidator): object for validating the conf.json file.
-        id_set_validator (IDSetValidator): object for validating the id_set.json file(Created in Circle only).
+        is_backward_check (bool): Whether to check for backwards compatibility.
+        prev_ver (str): If using git, holds the branch to compare the current one to. Default is origin/master.
+        use_git (bool): Whether to use git or not.
+        is_circle: (bool): Whether the validation was initiated by CircleCI or not.
+        print_ignored_files (bool): Whether to print the files that were ignored during the validation or not.
+        validate_conf_json (bool): Whether to validate conf.json or not.
+        validate_id_set (bool): Whether to validate id_set or not.
+        file_path (string): If validating a specific file, golds it's path.
+        configuration (Configuration): Configurations for IDSetValidator.
     """
 
     def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
@@ -544,16 +550,20 @@ class FilesValidator:
         if self.use_git:
             if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                                  not self.branch_name.startswith('20.')):
-                print("Validates only committed files")
+                print('Validates only committed files')
                 self.validate_committed_files()
                 self.validate_against_previous_version(no_error=True)
             else:
                 self.validate_against_previous_version(no_error=True)
-                print("Validates all of Content repo directories according to their schemas")
+                print('Validates all of Content repo directories according to their schemas')
                 self.validate_all_files()
         else:
-            print("No using git, validating all files")
-            self.validate_all_files()
+            if self.file_path:
+                self.validate_modified_files({self.file_path})
+                self.validate_added_files({self.file_path})
+            else:
+                print('No using git, validating all files')
+                self.validate_all_files()
 
         return self._is_valid
 

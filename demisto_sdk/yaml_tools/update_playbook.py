@@ -1,5 +1,4 @@
 import re
-from argparse import ArgumentDefaultsHelpFormatter
 
 from demisto_sdk.yaml_tools.update_generic_yml import BaseUpdateYML
 from demisto_sdk.common.tools import print_color, LOG_COLORS, print_error
@@ -69,12 +68,4 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         print_color(F'========Finished updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-        self.initiate_file_validator(PlaybookValidator, 'playbook')
-
-    @staticmethod
-    def add_sub_parser(subparsers):
-        description = """Run formatter on a given playbook yml file. """
-        parser = subparsers.add_parser('format', help=description, formatter_class=ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-t", "--type", help="The type of yml file to be formatted.", required=True)
-        parser.add_argument("-p", "--path", help="The path of the playbook yml file", required=True)
-        parser.add_argument("-o", "--output-file", help="The path where the formatted file will be saved to")
+        return self.initiate_file_validator(PlaybookValidator, 'playbook')

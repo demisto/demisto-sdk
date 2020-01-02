@@ -172,7 +172,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
-### Run-playbook
+### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)
 
 Run a playbook in a given Demisto instance.
 DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.

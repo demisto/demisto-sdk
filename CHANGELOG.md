@@ -13,6 +13,7 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Fixed an issue where **lint** would run pytest and pylint only on a single docker per integration.
 * Added auto-complete functionality to demisto-sdk.
 * Added git parameter in **lint** to run only on changed packages.
 * Added the **run-playbook** command

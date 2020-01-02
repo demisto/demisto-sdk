@@ -151,11 +151,11 @@ Create content artifacts.
 * *-p, --preserve_bundles*
                         Flag for if you'd like to keep the bundles created in
                         the process of making the content artifacts
-             
+
 **Examples**:
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
-                        
+
 ### Format
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
@@ -170,6 +170,91 @@ Format your integration/script/playbook yml file according to Demisto's standard
 **Examples**:
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
+
+### Run-playbook
+
+Run a playbook in a given Demisto instance.
+DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+You can either specify a URL as an environment variable named: DEMISTO_BASE_URL, or enter it as an argument.
+
+**Arguments**:
+* **-u, --url**
+                        URL to a Demisto instance.
+* **-p, --playbook_id**
+                        The ID of the playbook to run.
+* **-w, --wait**
+                        Wait until the playbook run is finished and get a response.
+                        (default: True)
+* **-t, --timeout**
+                        Timeout for the command. The playbook will continue to run in Demisto.
+                        (default: 90)
+
+**Examples**:
+`DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'.`
+This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
+
+
+### [Upload](https://github.com/demisto/demisto-sdk/tree/master/docs/upload_command.md)
+
+Upload an integration to Demisto instance.
+
+In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
+
+**Arguments**:
+* **-i INTEGRATION_PATH, --inpath INTEGRATION_PATH**
+
+    The path of an integration file or a package directory to upload
+
+* **-k, --insecure**
+
+    Skip certificate validation
+
+* **-v, --verbose**
+
+    Verbose output
+
+
+**Example**:
+
+```
+demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml
+```
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance.
+
+
+### [Run](https://github.com/demisto/demisto-sdk/tree/master/docs/run_command.md)
+
+Run an integration command in the playground of a remote Demisto instance and retrieves the output.
+
+In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
+
+**Arguments**:
+* **-q QUERY, --query QUERY**
+
+    The query to run
+
+* **-k, --insecure**
+
+    Skip certificate validation
+
+* **-v, --verbose**
+
+    Verbose output
+
+* **-D, --debug**
+
+    Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option
+
+* **--debug-path [DEBUG_LOG]**
+
+    The path to save the debug file at, if not specified the debug file will be printed to the terminal
+
+
+**Example**:
+```
+demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"'
+```
+This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance and print the output.
 
 
 ## In the code
@@ -299,3 +384,4 @@ If the `license/cla` status check remains on *Pending*, even though all contribu
 
 If you have a suggestion or an opportunity for improvement that you've identified, please open an issue in this repo.
 Enjoy and feel free to reach out to us on the [DFIR Community Slack channel](http://go.demisto.com/join-our-slack-community), or at [info@demisto.com](mailto:info@demisto.com).
+

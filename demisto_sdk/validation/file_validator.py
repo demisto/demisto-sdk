@@ -20,7 +20,8 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
-    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX
+    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
+    JSON_ALL_LAYOUT_REGEXES
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -30,6 +31,7 @@ from demisto_sdk.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.common.hook_validations.layout import LayoutValidator
 
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
@@ -316,13 +318,18 @@ class FilesValidator:
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
+            elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
+                layout_validator = LayoutValidator(structure_validator)
+                if not layout_validator.is_valid_layout():
+                    self._is_valid = False
+
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
 
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images, Release notes and Descriptions")
+                            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
 
     def validate_added_files(self, added_files):  # noqa: C901
@@ -398,8 +405,13 @@ class FilesValidator:
 
             # incident fields and indicator fields are using the same scheme.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
-                incident_field_validator = IncidentFieldValidator(file_path)
+                incident_field_validator = IncidentFieldValidator(structure_validator)
                 if not incident_field_validator.is_valid_file():
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
+                layout_validator = LayoutValidator(structure_validator)
+                if not layout_validator.is_valid_layout():
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
@@ -408,7 +420,7 @@ class FilesValidator:
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images, Release notes and Descriptions")
+                            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):

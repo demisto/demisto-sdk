@@ -52,7 +52,7 @@ class FilesValidator:
     """
 
     def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
-                 print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
+                 print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
                  configuration=Configuration()):
         self.branch_name = ''
         self.use_git = use_git
@@ -75,6 +75,7 @@ class FilesValidator:
         self.print_ignored_files = print_ignored_files
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
+        self.file_path = file_path
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -176,6 +177,7 @@ class FilesValidator:
             'git diff --name-status {tag}..{compare_type}refs/heads/{branch}'.format(tag=tag,
                                                                                      branch=self.branch_name,
                                                                                      compare_type=compare_type))
+
         modified_files, added_files, _, old_format_files = self.get_modified_files(
             all_changed_files_string,
             tag=tag,
@@ -190,6 +192,17 @@ class FilesValidator:
             modified_files_from_tag, added_files_from_tag, _, _ = \
                 self.get_modified_files(all_changed_files_string,
                                         print_ignored_files=self.print_ignored_files)
+
+            if self.file_path:
+                all_diffs = all_changed_files_string + files_string
+
+                if self.file_path not in all_diffs:
+                    print_color(F'File {self.file_path} was not changed.', LOG_COLORS.YELLOW)
+                    return set(), set(), set(), set()
+                else:
+                    modified_files = {self.file_path} if F'M\t{self.file_path}' in all_diffs else set()
+                    added_files = {self.file_path} if F'A\t{self.file_path}' in all_diffs else set()
+                    return modified_files, added_files, set(), set()
 
             old_format_files = old_format_files.union(nc_old_format_files)
             modified_files = modified_files.union(

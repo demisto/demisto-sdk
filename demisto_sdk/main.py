@@ -19,7 +19,6 @@ from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
-
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
@@ -157,7 +156,7 @@ def unify(**kwargs):
     '-i', '--id-set', is_flag=True,
     default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
-    '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+    '-pv', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
@@ -167,14 +166,25 @@ def unify(**kwargs):
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
+@click.option(
+    '-p', '--path', help='Path of file to validate specifically.'
+)
+@click.option(
+    '-t', '--file-type', type=click.Choice(
+        ['integration', 'script', 'playbook', 'incidnet-field', 'indicator-field', 'image', 'release-notes', 'layout',
+         'description']), help='If you want to validate a specific file, you can specify it\'s type.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
+    if not kwargs.get('path') and kwargs.get('file_type'):
+        click.echo(click.style('Ignoring file-type argument since no specific file was determined', fg='yellow'))
+
     validator = FilesValidator(configuration=config.configuration,
                                is_backward_check=str2bool(kwargs['backward_comp']),
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
-                               validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
+                               validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
+                               file_path=kwargs.get('path'))
     return validator.run()
 
 
@@ -259,6 +269,7 @@ def secrets(config, **kwargs):
 def lint(config, dir, **kwargs):
     linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
+
 
 # ====================== format ====================== #
 @main.command(name="format",

@@ -20,7 +20,8 @@ You can use the SDK in the CLI as follows:
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
-Our CLI supports autocomplete for linux/MacOS machines, you can turn this feature on by running one of the following:
+### Autocomplete
+Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
 for zsh users run in the terminal
 ```
 eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
@@ -171,7 +172,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
-### Run-playbook
+### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)
 
 Run a playbook in a given Demisto instance.
 DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -194,42 +195,67 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
 This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
 
 
-## Upload
+### [Upload](https://github.com/demisto/demisto-sdk/tree/master/docs/upload_command.md)
 
-Upload integration to Demisto instance. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+Upload an integration to Demisto instance.
 
-**Arguments**:
-* *-i INTEGRATION_PATH, --inpath INTEGRATION_PATH*
-                        The yml file to with the integration to upload
-* *-k, --insecure*
-                        Skip certificate validation
-* *-v, --verbose*
-                        Verbose output
-
-**Examples**:
-`demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml`
-This will upload the integration YML generated with `unify` command on the Demisto instance.
-
-`demisto-sdk upload -i Integrations/GoogleCloudTranslate`
-This will create a temporary unified file of the intergration and upload it to the Demisto instance.
-
-## Run
-
-Run integration command in the playground of a remote Demisto instance and retrieves the output. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
 
 **Arguments**:
-* *-q QUERY, --query QUERY*
-                        The query to run
-* *-k, --insecure*
-                        Skip certificate validation
-* *-v, --verbose*
-                        Verbose output
-* *-D [DEBUG_LOG], --debug [DEBUG_LOG]*
-                        Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used
+* **-i INTEGRATION_PATH, --inpath INTEGRATION_PATH**
 
-**Examples**:
-`demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D`
-This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
+    The path of an integration file or a package directory to upload
+
+* **-k, --insecure**
+
+    Skip certificate validation
+
+* **-v, --verbose**
+
+    Verbose output
+
+
+**Example**:
+
+```
+demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml
+```
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance.
+
+
+### [Run](https://github.com/demisto/demisto-sdk/tree/master/docs/run_command.md)
+
+Run an integration command in the playground of a remote Demisto instance and retrieves the output.
+
+In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
+
+**Arguments**:
+* **-q QUERY, --query QUERY**
+
+    The query to run
+
+* **-k, --insecure**
+
+    Skip certificate validation
+
+* **-v, --verbose**
+
+    Verbose output
+
+* **-D, --debug**
+
+    Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option
+
+* **--debug-path [DEBUG_LOG]**
+
+    The path to save the debug file at, if not specified the debug file will be printed to the terminal
+
+
+**Example**:
+```
+demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"'
+```
+This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance and print the output.
 
 
 ### Convert JSON to Demisto Outputs
@@ -403,3 +429,4 @@ If the `license/cla` status check remains on *Pending*, even though all contribu
 
 If you have a suggestion or an opportunity for improvement that you've identified, please open an issue in this repo.
 Enjoy and feel free to reach out to us on the [DFIR Community Slack channel](http://go.demisto.com/join-our-slack-community), or at [info@demisto.com](mailto:info@demisto.com).
+

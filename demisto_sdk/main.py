@@ -11,6 +11,7 @@ from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
 from demisto_sdk.validation.secrets import SecretsValidator
+from demisto_sdk.runners.playbook_runner import PlaybookRunner
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
@@ -19,7 +20,6 @@ from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.runners.playbook_runner import PlaybookRunner
-
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -163,7 +163,7 @@ def unify(**kwargs):
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
 @click.option(
-    'b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
+    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
     help='To check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
@@ -173,7 +173,7 @@ def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=str2bool(kwargs['backward-comp']),
+                               is_backward_check=str2bool(kwargs['backward_comp']),
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
@@ -227,7 +227,7 @@ def secrets(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-d", "--dir", help="Specify directory of integration/script", required=True)
+    "-d", "--dir", help="Specify directory of integration/script")
 @click.option(
     "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option(

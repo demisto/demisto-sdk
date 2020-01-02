@@ -19,7 +19,6 @@ from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
-from demisto_sdk.runners.playbook_runner import PlaybookRunner
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)

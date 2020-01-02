@@ -20,7 +20,8 @@ You can use the SDK in the CLI as follows:
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
-Our CLI supports autocomplete for linux/MacOS machines, you can turn this feature on by running one of the following:
+### Autocomplete
+Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
 for zsh users run in the terminal
 ```
 eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
@@ -175,7 +176,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
-### Run-playbook
+### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)
 
 Run a playbook in a given Demisto instance.
 DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -259,6 +260,25 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"'
 ```
 This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance and print the output.
+
+
+### Generate Test Playbook
+
+Generate Test Playbook from integration/script yml
+**Arguments**:
+* *-i, --infile*
+   Specify integration/script yml path (must be a valid yml file)
+* *-o, --outdir*
+   Specify output directory (Default: current directory)
+* *-n, --name*
+   Specify test playbook name
+* *-t, --type{integration,script}*
+   YAML type (default: integration)
+
+**Examples**:
+`demisto-sdk generate-test-playbook -i Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml -n TestXDRPlaybook -t integration -o TestPlaybooks`
+This will create a test playbook in TestPlaybook folder, with filename `TestXDRPlaybook.yml`.
+
 
 
 ## In the code

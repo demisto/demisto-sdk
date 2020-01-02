@@ -320,7 +320,7 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
                 layout_validator = LayoutValidator(structure_validator)
-                if not layout_validator.is_valid_version():
+                if not layout_validator.is_valid_layout():
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
@@ -411,7 +411,7 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
                 layout_validator = LayoutValidator(structure_validator)
-                if not layout_validator.is_valid_version():
+                if not layout_validator.is_valid_layout():
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:

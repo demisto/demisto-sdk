@@ -6,7 +6,7 @@ Meant to be used with integrations/scripts that use the folder (package) structu
 
 The appropriate docker images for the integration/script will be used to execute the pytest and pylint checks.
 
-**Use Cases**
+**Use Cases**  
 This command is used to make sure the code stands up to the python standards, prevents bugs and runs unit tests to
 make sure the code works as intended.
 
@@ -42,18 +42,22 @@ make sure the code works as intended.
 
 
 **Examples**:
-`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
+`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`  
 This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
+<br/><br/>
 
-`demisto-sdk lint -a -g`
+`demisto-sdk lint -a -g` 
 This will run on all content repo's packaged and packed integrations and scripts and will activate the linting and tests only on the directories which had their files changed in comparison with content origin/master branch.
+<br/><br/>
 
-`demisto-sdk lint -d Interagtions/HelloWorld -v --no-bandit --no-flake8 --cpu-num auto`
+`demisto-sdk lint -d Interagtions/HelloWorld -v --no-bandit --no-flake8 --cpu-num auto`  
 This will run the linters, excluding bandit and flake8, on "Integrations/HelloWorld" and give additional details on the run itself as well as any failures detected.
 Also this will check the amount of CPU's available to run pytest on and use them.
+<br/><br/>
 
-`demisto-sdk lint -d Scripts/HelloWorldScript --no-pytest --no-pylint`
+`demisto-sdk lint -d Scripts/HelloWorldScript --no-pytest --no-pylint`  
 This will run only the linters (flake8, mypy, bandit) on "Scripts/HelloWorldScript".
+<br/><br/>
 
-`demisto-sdk lint -d Integrations/HelloWorld --no-mypy --no-flake8 --no-pytest -k -r`
+`demisto-sdk lint -d Integrations/HelloWorld --no-mypy --no-flake8 --no-pytest -k -r`  
 This will run only pylint and pytest on "Integrations/HelloWorld" using the root user for the pytest and will also keep the test container with the docker image after the operation is over.

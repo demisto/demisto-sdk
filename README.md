@@ -33,18 +33,19 @@ eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
 
 ## Commands
 
-### Unify
+### [Unify](https://github.com/demisto/demisto-sdk/tree/master/docs/unify_command.md)
 
-Unify code, image and description files to a single Demisto yaml file.
+Unify the code, image and description files to a single Demisto yaml file.
 **Arguments**:
-* *-i INDIR, --indir INDIR*
+* **-i INDIR, --indir INDIR**
   The path to the directory in which the files reside
-* *-o OUTDIR, --outdir OUTDIR*
+* **-o OUTDIR, --outdir OUTDIR**
   The path to the directory into which to write the unified yml file
 
-**Examples**:
+**Example**:
 `demisto-sdk unify -i Integrations/MyInt -o Integrations`
-This will grab the integration components and unify them to a single yaml file.
+This will grab the integration components in "Integrations/MyInt" directory and unify them to a single yaml file
+that will be created in the "Integrations" directory.
 
 ### Extract
 
@@ -94,40 +95,43 @@ Validate your content files.
 `demisto-sdk validate`
 This will validate your content files.
 
-### Lint
+### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 
-Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the docker image of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
+Run lintings (flake8, mypy, pylint, bandit) and pytest.
+pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
 **Arguments**:
-* *-d DIR, --dir DIR*
-  Specify directory of integration/script (default: None)
-* *--no-pylint*
+* **-d DIR, --dir DIR**
+  Specify directory of integration/script. Also supports several direcories as a CSV (default: None)
+* **--no-pylint**
   Do NOT run pylint linter (default: False)
-* *--no-mypy*
+* **--no-mypy**
   Do NOT run mypy static type checking (default: False)
-* *--no-flake8*
+* **--no-flake8**
   Do NOT run flake8 linter (default: False)
-* *--no-bandit*
+* **--no-bandit**
   Do NOT run bandit linter (default: False)
-* *--no-test*
+* **--no-test**
   Do NOT test (skip pytest) (default: False)
-* *-r, --root*
+* **-r, --root**
   Run pytest container with root user (default: False)
-* *-p, --parallel*
+* **-p, --parallel**
   Run tests in parallel (default: False)
-* *--no-bc*
-  Check diff with $DIFF_COMPARE env variable (default: False)
-* *-a, --run-all-tests*
+* **-m, --max-workers**
+  The max workers to use in a parallel run (default: 10)
+* **-g, --git**
+  Run only on packages that changes between the current branch and content repo's origin/master branch (default: False)
+* **-a, --run-all-tests**
   Run lint on all directories in content repo (default: False)
-* *-k, --keep-container*
+* **-k, --keep-container**
   Keep the test container (default: False)
-* *-v, --verbose*
+* **-v, --verbose**
   Verbose output (default: False)
-* *--cpu-num CPU_NUM*
+* **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
-**Examples**:
-`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR --no-mypy`
-This will run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" directory.
+**Example**:
+`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
+This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
 
 ### Secrets
 

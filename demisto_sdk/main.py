@@ -18,6 +18,7 @@ from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
+from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -367,6 +368,40 @@ def exit_from_program(result=0, **kwargs):
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
+
+
+# ====================== generate-test-playbook ====================== #
+@main.command(name="generate-test-playbook",
+              short_help="Generate test playbook from integration or script")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--infile',
+    required=True,
+    help='Specify integration/script yml path')
+@click.option(
+    '-o', '--outdir',
+    required=False,
+    help='Specify output directory')
+@click.option(
+    '-n', '--name',
+    required=True,
+    help='Specify test playbook name')
+@click.option(
+    '-t', '--file-type', default='integration',
+    type=click.Choice(["integration", "script"]),
+    required=False,
+    help='Specify integration or script. The default is integration')
+@click.option(
+    '--no-outputs', is_flag=True,
+    help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
+         'outputs to verify and which not')
+@click.option(
+    "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+def generate_test_playbook(**kwargs):
+    generator = TestPlaybookGenerator(**kwargs)
+    generator.run()
 
 
 def demisto_sdk_cli():

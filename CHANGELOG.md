@@ -19,6 +19,7 @@
 * Added **run** command which runs a command in the Demisto playground.
 * Added **upload** command which uploads an integration or a script to a Demisto instance.
 * Fixed and issue where **validate** checked if release notes exist for new integrations and scripts.
+* Added **json-to-outputs** command which generates the yaml section for outputs from an API raw response.
 
 
 ### 0.2.6

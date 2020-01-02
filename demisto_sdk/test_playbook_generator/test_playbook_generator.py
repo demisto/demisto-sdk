@@ -192,14 +192,22 @@ def create_verify_outputs_task(id, conditions=[]):
 
 
 def outputs_to_condition(outputs):
+    """
+    Converts list of automation (script/integration) outputs to condition (for verify outputs task)
+
+    Args:
+        outputs: list of dict, contains contextPath for each output
+
+    Returns:
+        list of conditions generated from outputs
+    """
     conditions = []
     condition = {
         'label': 'yes',
         'condition': []
     }
-    command_have_outputs = False
+
     for output in outputs:
-        command_have_outputs = True
         context_output_path = output.get('contextPath')
 
         condition['condition'].append(
@@ -218,7 +226,7 @@ def outputs_to_condition(outputs):
 
     conditions.append(condition)
 
-    return conditions, command_have_outputs
+    return conditions
 
 
 def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs):
@@ -236,13 +244,14 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
         test_playbook is updated
     """
     command_name = command.get('name')
-
-    conditions, command_have_outputs = outputs_to_condition(command.get('outputs', []))
+    outputs = command.get('outputs', [])
+    conditions = outputs_to_condition(outputs)
 
     task_command = create_automation_task(test_playbook.task_counter, command_name, item_type=item_type)
     test_playbook.add_task(task_command)
 
-    if command_have_outputs:
+    if len(outputs) > 0:
+        # add verify output task only if automation have outputs
         if no_outputs:
             task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
         else:

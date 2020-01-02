@@ -33,7 +33,7 @@ eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
 
 ## Commands
 
-### [Unify](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
+### [Unify](https://github.com/demisto/demisto-sdk/tree/master/docs/unify_command.md)
 
 Unify the code, image and description files to a single Demisto yaml file.
 **Arguments**:

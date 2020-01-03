@@ -154,8 +154,8 @@ def unify(**kwargs):
 @click.option(
     '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
-    '-c', '--circle', is_flag=True,
-    help='Is CircleCi or not')
+    '--post-commit', is_flag=True, help='Whether the validation is done after you committed the files. Mostly for '
+                                        'build validations.')
 @click.option(
     '-b', '--backward-comp', is_flag=True, show_default=True,
     help='To check backward compatibility.')
@@ -168,7 +168,7 @@ def validate(config, **kwargs):
 
     validator = FilesValidator(configuration=config.configuration,
                                is_backward_check=kwargs['backward_comp'],
-                               is_circle=kwargs['circle'], prev_ver=kwargs['prev_ver'],
+                               is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
 

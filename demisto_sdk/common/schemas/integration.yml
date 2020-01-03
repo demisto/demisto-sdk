@@ -110,7 +110,6 @@ schema;configuration_schema:
   mapping:
     display:
       type: str
-      required: true
     defaultvalue:
       type: any
     name:

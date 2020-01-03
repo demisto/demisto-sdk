@@ -403,6 +403,7 @@ class Linter:
         if not self.run_args['pylint']:
             run_params.extend(['-e', 'PYLINT_SKIP=1'])
         run_params.extend(['-e', 'CPU_NUM={}'.format(self.cpu_num)])
+        run_params.extend(['-e', 'CI={}'.format(os.getenv("CI", "false"))])
         run_params.extend([docker_image, 'sh', './{}'.format(self.run_dev_tasks_script_name)])
         output = run_command(' '.join(run_params))
         container_id = output.strip()

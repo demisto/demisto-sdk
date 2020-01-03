@@ -13,7 +13,7 @@ import requests
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_v, get_docker_images, get_python_version, get_dev_requirements, \
+from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, \
     print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
 
 
@@ -40,7 +40,8 @@ class Linter:
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration(),
-                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False, requirements: str = ''):
+                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False, requirements_3: str = '',
+                 requirements_2: str = ''):
 
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
             raise ValueError("Nothing to run as all --no-* options specified.")
@@ -71,7 +72,8 @@ class Linter:
             'tests': not no_test
         }
         self.lock = lock
-        self.requirements = requirements
+        self.requirements_3 = requirements_3
+        self.requirements_2 = requirements_2
 
     def get_common_server_python(self) -> bool:
         """Getting common server python in not exists changes self.common_server_created to True if needed.
@@ -118,41 +120,43 @@ class Linter:
             print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_type))
             return 0
 
-        dockers = get_docker_images(script_obj)
+        dockers = get_all_docker_images(script_obj)
+        py_num = get_python_version(dockers[0], self.log_verbose)
+        self.lock.acquire()
+        print_color("============ Starting process for: {} ============\n".format(self.project_dir),
+                    LOG_COLORS.YELLOW)
+        if self.lock.locked():
+            self.lock.release()
+        self._setup_dev_files(py_num)
+        if self.run_args['flake8']:
+            result_val = self.run_flake8(py_num)
+            if result_val:
+                return_code = result_val
+
+        if self.run_args['mypy']:
+            result_val = self.run_mypy(py_num)
+            if result_val:
+                return_code = result_val
+
+        if self.run_args['bandit']:
+            result_val = self.run_bandit(py_num)
+            if result_val:
+                return_code = result_val
+
         for docker in dockers:
             for try_num in (1, 2):
                 print_v("Using docker image: {}".format(docker))
                 py_num = get_python_version(docker, self.log_verbose)
-                self.lock.acquire()
-                print_color("============ Starting process for: {} ============\n".format(self.project_dir),
-                            LOG_COLORS.YELLOW)
-                self.lock.release()
-                self._setup_dev_files(py_num)
                 try:
-                    if self.run_args['flake8']:
-                        result_val = self.run_flake8(py_num)
-                        if result_val:
-                            return_code = result_val
-
-                    if self.run_args['mypy']:
-                        result_val = self.run_mypy(py_num)
-                        if result_val:
-                            return_code = result_val
-
-                    if self.run_args['bandit']:
-                        result_val = self.run_bandit(py_num)
-                        if result_val:
-                            return_code = result_val
-
                     if self.run_args['tests'] or self.run_args['pylint']:
-                        if not self.requirements:
-                            requirements = get_dev_requirements(py_num, self.configuration.envs_dirs_base,
-                                                                self.log_verbose)
+                        if py_num == 2.7:
+                            requirements = self.requirements_2
                         else:
-                            requirements = self.requirements
+                            requirements = self.requirements_3
 
                         docker_image_created = self._docker_image_create(docker, requirements)
                         output, status_code = self._docker_run(docker_image_created)
+
                         self.lock.acquire()
                         print_color("\n========== Running tests/pylint for: {} =========".format(self.project_dir),
                                     LOG_COLORS.YELLOW)
@@ -161,14 +165,17 @@ class Linter:
 
                         else:
                             print(output)
-                            print_color("============ Finished process for: {} ============\n".format(self.project_dir),
+                            print_color("============ Finished process for: {}  "
+                                        "with docker: {} ============\n".format(self.project_dir, docker),
                                         LOG_COLORS.GREEN)
-                        self.lock.release()
+
+                        if self.lock.locked():
+                            self.lock.release()
 
                     break  # all is good no need to retry
                 except subprocess.CalledProcessError as ex:
                     if ex.output:
-                        print_color("===========================ERROR IN {}==========================="
+                        print_color("=========================== ERROR IN {}==========================="
                                     "\n{}\n".format(self.project_dir, ex.output), LOG_COLORS.RED)
                     else:
                         print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
@@ -211,12 +218,14 @@ class Linter:
         print("\n========= Running flake8 on: {}===============".format(lint_files))
         if len(output) == 0:
             print_color("flake8 completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 0
 
         else:
             print_error(output)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 1
 
     def run_mypy(self, py_num) -> int:
@@ -239,13 +248,15 @@ class Linter:
             print(output)
             print_color("mypy completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
             self.remove_common_server_python()
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 0
 
         else:
             print_error(output)
             self.remove_common_server_python()
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 1
 
     def run_bandit(self, py_num) -> int:
@@ -266,12 +277,14 @@ class Linter:
         print_v('Using: {} to run bandit'.format(python_exe))
         if len(output) == 0:
             print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 0
 
         else:
             print_error(output)
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
             return 1
 
     def _docker_login(self):
@@ -390,6 +403,7 @@ class Linter:
         if not self.run_args['pylint']:
             run_params.extend(['-e', 'PYLINT_SKIP=1'])
         run_params.extend(['-e', 'CPU_NUM={}'.format(self.cpu_num)])
+        run_params.extend(['-e', 'CI={}'.format(os.getenv("CI", "false"))])
         run_params.extend([docker_image, 'sh', './{}'.format(self.run_dev_tasks_script_name)])
         output = run_command(' '.join(run_params))
         container_id = output.strip()

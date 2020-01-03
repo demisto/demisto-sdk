@@ -13,12 +13,17 @@
     * Playbooks
     * Integrations
 * Improved user outputs for **secrets** command.
+* Fixed an issue where **lint** would run pytest and pylint only on a single docker per integration.
 * Added auto-complete functionality to demisto-sdk.
 * Added git parameter in **lint** to run only on changed packages.
 * Added the **run-playbook** command
 * Added **run** command which runs a command in the Demisto playground.
 * Added **upload** command which uploads an integration or a script to a Demisto instance.
 * Fixed and issue where **validate** checked if release notes exist for new integrations and scripts.
+* Added **generate-test-playbook** command which generates a basic test playbook for an integration or a script.
+* **validate** now supports indicator fields.
+* Fixed an issue with layouts scheme validation.
+* Adding **init** command.
 
 
 ### 0.2.6

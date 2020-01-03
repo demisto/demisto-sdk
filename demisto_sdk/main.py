@@ -3,7 +3,7 @@ import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
-from demisto_sdk.dev_tools.runner import Runner
+from demisto_sdk.runners.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.yaml_tools.extractor import Extractor
@@ -22,7 +22,7 @@ from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500), )
+@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=100), )
 @click.help_option(
     '-h', '--help'
 )
@@ -174,8 +174,10 @@ def validate(config, **kwargs):
 
 
 # ====================== create ====================== #
-@main.command(name="create",  # todo: add explanation
-              short_help='Create content artifacts.')
+@main.command(name="create",
+              short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
+                         'upload to your server in order to upload a whole new content version to your Demisto '
+                         'instance.')
 @click.help_option(
     '-h', '--help'
 )

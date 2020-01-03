@@ -419,7 +419,8 @@ def generate_test_playbook(**kwargs):
     "--id", help="The id used in the yml file of the integration or script"
 )
 @click.option(
-    "-o", "--outdir", help="The output dir to write the object into")
+    "-o", "--output-dir", help="The output dir to write the object into. The default one is the current working "
+                               "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(

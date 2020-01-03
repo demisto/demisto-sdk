@@ -23,16 +23,19 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    def __init__(self, output_dir: str, name: str, id: str, integration: bool = False, script: bool = False):
-        self.output_dir = output_dir if output_dir is not None else ''
+    def __init__(self, output_dir: str, name: str = '', id: str = '', integration: bool = False, script: bool = False):
+        self.output_dir = output_dir if output_dir else ''
+        self.id = id
+
+        self.is_integration = integration
+        self.is_script = script
+
+        self.full_output_path = ''
+
         while ' ' in name:
             name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
         self.dir_name = name
-        self.is_integration = integration
-        self.is_script = script
-        self.id = id
-
-        self.full_output_path = ''
+        self.is_pack_creation = not all([self.is_script, self.is_integration])
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
@@ -47,16 +50,16 @@ class Initiator:
         if self.is_integration:
             self.get_created_dir_name(created_object="integration")
             self.get_object_id(created_object="integration")
-            self.integration_init()
+            return self.integration_init()
 
         elif self.is_script:
             self.get_created_dir_name(created_object="script")
             self.get_object_id(created_object="script")
-            self.script_init()
+            return self.script_init()
 
         else:
             self.get_created_dir_name(created_object="pack")
-            self.pack_init()
+            return self.pack_init()
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -64,16 +67,20 @@ class Initiator:
         Args:
             created_object (str): the type of the created object (integration/script/pack)
         """
-        while self.dir_name is None or len(self.dir_name):
+        while not self.dir_name or len(self.dir_name) == 0:
             self.dir_name = str(input(f"Please input the name of the initialized {created_object}: "))
             while ' ' in self.dir_name:
                 self.dir_name = str(input("The directory name cannot have spaces in it, Enter a different name: "))
 
     def get_object_id(self, created_object: str):
         if not self.id:
-            use_dir_name = str(input(f"No ID given for the {created_object}'s yml file. "
-                                     f"Do you want to use the directory name? Y/N "))
-            if use_dir_name is None or use_dir_name.lower() == 'y':
+            if self.is_pack_creation:  # There was no option to enter the ID in this process.
+                use_dir_name = str(input(f"Do you want to use the directory name as an ID for the integration? Y/N "))
+            else:
+                use_dir_name = str(input(f"No ID given for the {created_object}'s yml file. "
+                                         f"Do you want to use the directory name? Y/N "))
+
+            if use_dir_name and use_dir_name.lower() in ['y', 'yes']:
                 self.id = self.dir_name
             else:
                 while not self.id:
@@ -123,14 +130,10 @@ class Initiator:
         print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
-        if create_integration == 'y':
-            self.dir_name = ''
-            self.id = ''
-            self.get_created_dir_name(created_object="integration")
-            self.get_object_id(created_object="integration")
-            self.output_dir = os.path.join(self.full_output_path, INTEGRATIONS_DIR)
-            self.is_integration = True
-            return self.integration_init()
+        if create_integration in ['y', 'yes']:
+            integration_init = Initiator(output_dir=os.path.join(self.full_output_path, 'Integrations'),
+                                         integration=True)
+            return integration_init.init()
 
         return True
 
@@ -253,7 +256,7 @@ class Initiator:
             while to_delete != 'y' and to_delete != 'n':
                 to_delete = str(input(f"Your response was invalid.\nDo you want to delete it? Y/N ").lower())
 
-            if to_delete == 'y':
+            if to_delete in ['y', 'yes']:
                 shutil.rmtree(path=self.full_output_path, ignore_errors=True)
                 os.mkdir(self.full_output_path)
 

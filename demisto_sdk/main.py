@@ -7,18 +7,19 @@ from demisto_sdk.common.tools import str2bool
 from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
+from demisto_sdk.dev_tools.initiator import Initiator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
 from demisto_sdk.validation.secrets import SecretsValidator
+from demisto_sdk.runners.playbook_runner import PlaybookRunner
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-from demisto_sdk.runners.playbook_runner import PlaybookRunner
-from demisto_sdk.dev_tools.initiator import Initiator
+from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -162,7 +163,7 @@ def unify(**kwargs):
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
 @click.option(
-    'b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
+    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
     help='To check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
@@ -172,7 +173,7 @@ def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=str2bool(kwargs['backward-comp']),
+                               is_backward_check=str2bool(kwargs['backward_comp']),
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
@@ -226,7 +227,7 @@ def secrets(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-d", "--dir", help="Specify directory of integration/script", required=True)
+    "-d", "--dir", help="Specify directory of integration/script")
 @click.option(
     "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option(
@@ -367,6 +368,40 @@ def exit_from_program(result=0, **kwargs):
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
+
+
+# ====================== generate-test-playbook ====================== #
+@main.command(name="generate-test-playbook",
+              short_help="Generate test playbook from integration or script")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--infile',
+    required=True,
+    help='Specify integration/script yml path')
+@click.option(
+    '-o', '--outdir',
+    required=False,
+    help='Specify output directory')
+@click.option(
+    '-n', '--name',
+    required=True,
+    help='Specify test playbook name')
+@click.option(
+    '-t', '--file-type', default='integration',
+    type=click.Choice(["integration", "script"]),
+    required=False,
+    help='Specify integration or script. The default is integration')
+@click.option(
+    '--no-outputs', is_flag=True,
+    help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
+         'outputs to verify and which not')
+@click.option(
+    "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+def generate_test_playbook(**kwargs):
+    generator = TestPlaybookGenerator(**kwargs)
+    generator.run()
 
 
 # ====================== init ====================== #

@@ -94,3 +94,4 @@ git_push.sh
 .vscode
 .pytest_cache
 .idea
+.mypy_cache

@@ -7,6 +7,7 @@ from demisto_sdk.common.tools import str2bool
 from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
+from demisto_sdk.dev_tools.initiator import Initiator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
@@ -16,10 +17,10 @@ from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
+from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
-from demisto_sdk.runners.playbook_runner import PlaybookRunner
+from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -372,7 +373,7 @@ def run_playbook(**kwargs):
 
 @main.command(name="json-to-outputs",
               short_help='''Demisto integrations/scripts have a YAML file that defines them.
-Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the 
+Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
 file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call.''')
 @click.help_option(
     '-h', '--help'
@@ -394,6 +395,67 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
                           "description. By default is interactive mode is disabled", is_flag=True)
 def json_to_outputs_command(**kwargs):
     json_to_outputs(**kwargs)
+
+
+# ====================== generate-test-playbook ====================== #
+@main.command(name="generate-test-playbook",
+              short_help="Generate test playbook from integration or script")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--infile',
+    required=True,
+    help='Specify integration/script yml path')
+@click.option(
+    '-o', '--outdir',
+    required=False,
+    help='Specify output directory')
+@click.option(
+    '-n', '--name',
+    required=True,
+    help='Specify test playbook name')
+@click.option(
+    '-t', '--file-type', default='integration',
+    type=click.Choice(["integration", "script"]),
+    required=False,
+    help='Specify integration or script. The default is integration')
+@click.option(
+    '--no-outputs', is_flag=True,
+    help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
+         'outputs to verify and which not')
+@click.option(
+    "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+def generate_test_playbook(**kwargs):
+    generator = TestPlaybookGenerator(**kwargs)
+    generator.run()
+
+
+# ====================== init ====================== #
+@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+                                      " If the script/integration flags are not present"
+                                      " then we will create a pack with the given name."
+                                      " Otherwise when using the flags we will generate"
+                                      " a script/integration based on your selection.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-n", "--name", help="The name of the directory and file you want to create")
+@click.option(
+    "--id", help="The id used in the yml file of the integration or script"
+)
+@click.option(
+    "-o", "--output-dir", help="The output dir to write the object into. The default one is the current working "
+                               "directory.")
+@click.option(
+    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
+@click.option(
+    '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+def init(**kwargs):
+    initiator = Initiator(**kwargs)
+    initiator.init()
+    return 0
 
 
 def demisto_sdk_cli():

@@ -34,8 +34,6 @@ class TestScriptValidator:
         'dockerimage': '1.0.1'
     }
 
-    NO_SCRIPT = {}
-
     INPUTS_DOCKER_IMAGES = [
         (BASE_DOCKER_IMAGE, NO_DOCKER_IMAGE, True),
         (BASE_DOCKER_IMAGE, CHANGED_DOCKER_IMAGE, True),

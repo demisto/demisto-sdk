@@ -33,18 +33,19 @@ eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
 
 ## Commands
 
-### Unify
+### [Unify](https://github.com/demisto/demisto-sdk/tree/master/docs/unify_command.md)
 
-Unify code, image and description files to a single Demisto yaml file.
+Unify the code, image and description files to a single Demisto yaml file.
 **Arguments**:
-* *-i INDIR, --indir INDIR*
+* **-i INDIR, --indir INDIR**
   The path to the directory in which the files reside
-* *-o OUTDIR, --outdir OUTDIR*
+* **-o OUTDIR, --outdir OUTDIR**
   The path to the directory into which to write the unified yml file
 
-**Examples**:
+**Example**:
 `demisto-sdk unify -i Integrations/MyInt -o Integrations`
-This will grab the integration components and unify them to a single yaml file.
+This will grab the integration components in "Integrations/MyInt" directory and unify them to a single yaml file
+that will be created in the "Integrations" directory.
 
 ### Extract
 
@@ -94,40 +95,43 @@ Validate your content files.
 `demisto-sdk validate`
 This will validate your content files.
 
-### Lint
+### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 
-Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the docker image of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
+Run lintings (flake8, mypy, pylint, bandit) and pytest.
+pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
 **Arguments**:
-* *-d DIR, --dir DIR*
-  Specify directory of integration/script (default: None)
-* *--no-pylint*
+* **-d DIR, --dir DIR**
+  Specify directory of integration/script. Also supports several direcories as a CSV (default: None)
+* **--no-pylint**
   Do NOT run pylint linter (default: False)
-* *--no-mypy*
+* **--no-mypy**
   Do NOT run mypy static type checking (default: False)
-* *--no-flake8*
+* **--no-flake8**
   Do NOT run flake8 linter (default: False)
-* *--no-bandit*
+* **--no-bandit**
   Do NOT run bandit linter (default: False)
-* *--no-test*
+* **--no-test**
   Do NOT test (skip pytest) (default: False)
-* *-r, --root*
+* **-r, --root**
   Run pytest container with root user (default: False)
-* *-p, --parallel*
+* **-p, --parallel**
   Run tests in parallel (default: False)
-* *--no-bc*
-  Check diff with $DIFF_COMPARE env variable (default: False)
-* *-a, --run-all-tests*
+* **-m, --max-workers**
+  The max workers to use in a parallel run (default: 10)
+* **-g, --git**
+  Run only on packages that changes between the current branch and content repo's origin/master branch (default: False)
+* **-a, --run-all-tests**
   Run lint on all directories in content repo (default: False)
-* *-k, --keep-container*
+* **-k, --keep-container**
   Keep the test container (default: False)
-* *-v, --verbose*
+* **-v, --verbose**
   Verbose output (default: False)
-* *--cpu-num CPU_NUM*
+* **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
-**Examples**:
-`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR --no-mypy`
-This will run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" directory.
+**Example**:
+`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
+This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
 
 ### Secrets
 
@@ -258,6 +262,39 @@ demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"'
 This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance and print the output.
 
 
+### Generate Test Playbook
+
+Generate Test Playbook from integration/script yml
+**Arguments**:
+* *-i, --infile*
+   Specify integration/script yml path (must be a valid yml file)
+* *-o, --outdir*
+   Specify output directory (Default: current directory)
+* *-n, --name*
+   Specify test playbook name
+* *-t, --type{integration,script}*
+   YAML type (default: integration)
+
+**Examples**:
+`demisto-sdk generate-test-playbook -i Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml -n TestXDRPlaybook -t integration -o TestPlaybooks`
+This will create a test playbook in TestPlaybook folder, with filename `TestXDRPlaybook.yml`.
+
+
+## [init](https://github.com/demisto/demisto-sdk/tree/master/docs/init_command.md)
+Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
+
+**Arguments**:
+* **-n, --name** The name given to the files and directories of new pack/integration/script being created
+* **--id** The id used for the yml file of the integration/script
+* **-o, --outdir** The directory to which the created object will be saved
+* **--integration** Create an integration
+* **--script** Create a script
+
+**Example**:
+`demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
+This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
+
+
 ### Convert JSON to Demisto Outputs
 
 **Arguments**:
@@ -276,7 +313,7 @@ This will run the query `!gct-translate-text text="ciao" target="iw"` on the pla
 
 **Examples**:
 <br/>`demisto-sdk json-to-outputs -c jira-get-ticket -p Jira.Ticket -i path/to/valid.json`
-<br/>if valid.json looks like 
+<br/>if valid.json looks like
 ```json
 {
     "id": 100,
@@ -301,7 +338,7 @@ outputs:
 ```
 
 
-                                  
+
 ## In the code
 You can import the SDK core class in your python code as follows:
 
@@ -429,4 +466,3 @@ If the `license/cla` status check remains on *Pending*, even though all contribu
 
 If you have a suggestion or an opportunity for improvement that you've identified, please open an issue in this repo.
 Enjoy and feel free to reach out to us on the [DFIR Community Slack channel](http://go.demisto.com/join-our-slack-community), or at [info@demisto.com](mailto:info@demisto.com).
-

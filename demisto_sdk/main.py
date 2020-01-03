@@ -3,7 +3,6 @@ import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
-from demisto_sdk.common.tools import str2bool
 from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
@@ -67,18 +66,16 @@ def main(config, version, env_dir):
     type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
-    '--demisto-mock', '-d',
-    help="Add an import for demisto mock, true by default",
-    type=click.Choice(["True", "False"]),
-    default=True,
+    '--no-demisto-mock',
+    help="Don't add an import for demisto mock, false by default",
+    is_flag=True,
     show_default=True
 )
 @click.option(
-    '--common-server', '-c',
-    help="Add an import for CommonServerPython."
+    '--no-common-server',
+    help="Don't add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
-    type=click.Choice(["True", "False"]),
-    default='True',
+    is_flag=True,
     show_default=True
 )
 @pass_config
@@ -109,18 +106,16 @@ def extract(config, **kwargs):
     type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
-    '--demisto-mock', '-d',
-    help="Add an import for demisto mock, true by default",
-    type=click.Choice(["True", "False"]),
-    default=True,
+    '--no-demisto-mock',
+    help="Don't add an import for demisto mock, false by default",
+    is_flag=True,
     show_default=True
 )
 @click.option(
-    '--common-server', '-c',
-    help="Add an import for CommonServerPython."
+    '--no-common-server',
+    help="Don't add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
-    type=click.Choice(["True", "False"]),
-    default='True',
+    is_flag=True,
     show_default=True
 )
 @pass_config
@@ -159,10 +154,10 @@ def unify(**kwargs):
 @click.option(
     '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
-    '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
+    '-c', '--circle', is_flag=True,
     help='Is CircleCi or not')
 @click.option(
-    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
+    '-b', '--backward-comp', is_flag=True, show_default=True,
     help='To check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
@@ -172,8 +167,8 @@ def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=str2bool(kwargs['backward_comp']),
-                               is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
+                               is_backward_check=kwargs['backward_comp'],
+                               is_circle=kwargs['circle'], prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
 
@@ -203,7 +198,7 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-c', '--circle', type=click.Choice(["True", "False"]), default='False', show_default=True,
+    '-c', '--circle', is_flag=True, show_default=True,
     help='Is CircleCi or not')
 @click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
@@ -211,7 +206,7 @@ def create(**kwargs):
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
+    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['circle'],
                                white_list_path=kwargs['whitelist'])
     return secrets.run()
 
@@ -367,6 +362,7 @@ def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 # todo: add download from demisto command
+
 
 def demisto_sdk_cli():
     main()

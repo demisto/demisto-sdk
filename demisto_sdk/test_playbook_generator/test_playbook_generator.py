@@ -2,6 +2,7 @@ from ruamel.yaml import YAML
 import json
 import os
 from typing import Dict
+
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
 

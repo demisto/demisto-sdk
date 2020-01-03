@@ -223,7 +223,7 @@ def secrets(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-d", "--dir", help="Specify directory of integration/script", required=True)
+    "-d", "--dir", help="Specify directory of integration/script")
 @click.option(
     "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option(

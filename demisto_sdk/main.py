@@ -7,6 +7,7 @@ from demisto_sdk.common.tools import str2bool
 from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
+from demisto_sdk.dev_tools.initiator import Initiator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
@@ -19,7 +20,6 @@ from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
-
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -402,6 +402,33 @@ def run_playbook(**kwargs):
 def generate_test_playbook(**kwargs):
     generator = TestPlaybookGenerator(**kwargs)
     generator.run()
+
+
+# ====================== init ====================== #
+@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+                                      " If the script/integration flags are not present"
+                                      " then we will create a pack with the given name."
+                                      " Otherwise when using the flags we will generate"
+                                      " a script/integration based on your selection.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-n", "--name", help="The name of the directory and file you want to create")
+@click.option(
+    "--id", help="The id used in the yml file of the integration or script"
+)
+@click.option(
+    "-o", "--output-dir", help="The output dir to write the object into. The default one is the current working "
+                               "directory.")
+@click.option(
+    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
+@click.option(
+    '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+def init(**kwargs):
+    initiator = Initiator(**kwargs)
+    initiator.init()
+    return 0
 
 
 def demisto_sdk_cli():

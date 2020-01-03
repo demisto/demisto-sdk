@@ -280,6 +280,19 @@ Generate Test Playbook from integration/script yml
 This will create a test playbook in TestPlaybook folder, with filename `TestXDRPlaybook.yml`.
 
 
+## [init](https://github.com/demisto/demisto-sdk/tree/master/docs/init_command.md)
+Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
+
+**Arguments**:
+* **-n, --name** The name given to the files and directories of new pack/integration/script being created
+* **--id** The id used for the yml file of the integration/script
+* **-o, --outdir** The directory to which the created object will be saved
+* **--integration** Create an integration
+* **--script** Create a script
+
+**Example**:
+`demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
+This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
 
 ## In the code
 You can import the SDK core class in your python code as follows:
@@ -408,4 +421,3 @@ If the `license/cla` status check remains on *Pending*, even though all contribu
 
 If you have a suggestion or an opportunity for improvement that you've identified, please open an issue in this repo.
 Enjoy and feel free to reach out to us on the [DFIR Community Slack channel](http://go.demisto.com/join-our-slack-community), or at [info@demisto.com](mailto:info@demisto.com).
-

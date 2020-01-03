@@ -16,19 +16,21 @@ class Initiator:
 
        Attributes:
            output_dir (str): The directory in which init will create the new pack/integration/script
-           name (str): The name for the new pack/integration/script
+           name (str): The name for the new pack/integration/script directory.
+           id (str): The id for the created script/integration.
            integration (bool): Indicates whether to create an integration.
            script (bool): Indicates whether to create a script.
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    def __init__(self, output_dir: str, name: str, integration: bool = False, script: bool = False):
+    def __init__(self, output_dir: str, name: str, id: str, integration: bool = False, script: bool = False):
         self.output_dir = output_dir if output_dir is not None else ''
         while ' ' in name:
-            name = str(input("The name cannot have spaces in it, Enter a different name: "))
-        self.name = name
+            name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        self.dir_name = name
         self.is_integration = integration
         self.is_script = script
+        self.id = id
 
         self.full_output_path = ''
 
@@ -43,27 +45,39 @@ class Initiator:
 
         """
         if self.is_integration:
-            self.get_created_object_name(created_object="integration")
+            self.get_created_dir_name(created_object="integration")
+            self.get_object_id(created_object="integration")
             self.integration_init()
 
         elif self.is_script:
-            self.get_created_object_name(created_object="script")
+            self.get_created_dir_name(created_object="script")
+            self.get_object_id(created_object="script")
             self.script_init()
 
         else:
-            self.get_created_object_name(created_object="pack")
+            self.get_created_dir_name(created_object="pack")
             self.pack_init()
 
-    def get_created_object_name(self, created_object: str):
+    def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
 
         Args:
             created_object (str): the type of the created object (integration/script/pack)
         """
-        while self.name is None or len(self.name):
-            self.name = str(input(f"Please input the name of the initialized {created_object}: "))
-            while ' ' in self.name:
-                self.name = str(input("The name cannot have spaces in it, Enter a different name: "))
+        while self.dir_name is None or len(self.dir_name):
+            self.dir_name = str(input(f"Please input the name of the initialized {created_object}: "))
+            while ' ' in self.dir_name:
+                self.dir_name = str(input("The directory name cannot have spaces in it, Enter a different name: "))
+
+    def get_object_id(self, created_object: str):
+        if not self.id:
+            use_dir_name = str(input(f"No ID given for the {created_object}'s yml file. "
+                                     f"Do you want to use the directory name? Y/N "))
+            if use_dir_name is None or use_dir_name.lower() == 'y':
+                self.id = self.dir_name
+            else:
+                while not self.id:
+                    self.id = str(input(f"Please enter the id name for the {created_object}: "))
 
     def pack_init(self) -> bool:
         """Creates a pack directory tree.
@@ -73,16 +87,16 @@ class Initiator:
         """
         # if an output directory given create the pack there
         if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.name)
+            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
 
         # content-descriptor file indicates we are in "content" repository
         # thus we will create the pack under Packs directory
         elif os.path.isfile('content-descriptor.json'):
-            self.full_output_path = os.path.join("Packs", self.name)
+            self.full_output_path = os.path.join("Packs", self.dir_name)
 
         # if non of the above conditions apply - create the pack in current directory
         else:
-            self.full_output_path = self.name
+            self.full_output_path = self.dir_name
 
         if not self.create_new_directory():
             return False
@@ -106,12 +120,14 @@ class Initiator:
         fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
 
-        print_color(f"Successfully created the pack {self.name} in: {self.full_output_path}", LOG_COLORS.GREEN)
+        print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration == 'y':
-            self.name = ''
-            self.get_created_object_name(created_object="integration")
+            self.dir_name = ''
+            self.id = ''
+            self.get_created_dir_name(created_object="integration")
+            self.get_object_id(created_object="integration")
             self.output_dir = os.path.join(self.full_output_path, INTEGRATIONS_DIR)
             self.is_integration = True
             return self.integration_init()
@@ -126,15 +142,15 @@ class Initiator:
         """
         # if output directory given create the integration there
         if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.name)
+            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
-            self.full_output_path = os.path.join('Integrations', self.name)
+            self.full_output_path = os.path.join('Integrations', self.dir_name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:
-            self.full_output_path = self.name
+            self.full_output_path = self.dir_name
 
         if not self.create_new_directory():
             return False
@@ -143,7 +159,7 @@ class Initiator:
                                                          self.HELLO_WORLD_INTEGRATION))
 
         copy_tree(str(hello_world_path), self.full_output_path)
-        if self.name != self.HELLO_WORLD_INTEGRATION:
+        if self.id != self.HELLO_WORLD_INTEGRATION:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION)
@@ -160,15 +176,15 @@ class Initiator:
         """
         # if output directory given create the script there
         if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.name)
+            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
 
         # will create the script under the Scripts directory of the pack
         elif os.path.isdir(SCRIPTS_DIR):
-            self.full_output_path = os.path.join('Scripts', self.name)
+            self.full_output_path = os.path.join('Scripts', self.dir_name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:
-            self.full_output_path = self.name
+            self.full_output_path = self.dir_name
 
         if not self.create_new_directory():
             return False
@@ -177,7 +193,7 @@ class Initiator:
                                                          self.HELLO_WORLD_SCRIPT))
 
         copy_tree(str(hello_world_path), self.full_output_path)
-        if self.name != self.HELLO_WORLD_SCRIPT:
+        if self.id != self.HELLO_WORLD_SCRIPT:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_SCRIPT)
@@ -193,11 +209,11 @@ class Initiator:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
         yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(self.full_output_path, f"{current_suffix}.yml"))
-        yml_dict["commonfields"]["id"] = self.name
-        yml_dict['name'] = self.name
-        yml_dict["display"] = self.name
+        yml_dict["commonfields"]["id"] = self.id
+        yml_dict['name'] = self.id
+        yml_dict["display"] = self.id
 
-        with open(os.path.join(self.full_output_path, f"{self.name}.yml"), 'w') as f:
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(
                 yml_dict,
                 f,
@@ -213,14 +229,14 @@ class Initiator:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}.py"),
-                  os.path.join(self.full_output_path, f"{self.name}.py"))
+                  os.path.join(self.full_output_path, f"{self.dir_name}.py"))
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
-                  os.path.join(self.full_output_path, f"{self.name}_description.md"))
+                  os.path.join(self.full_output_path, f"{self.dir_name}_description.md"))
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
-                  os.path.join(self.full_output_path, f"{self.name}_test.py"))
+                  os.path.join(self.full_output_path, f"{self.dir_name}_test.py"))
         if self.is_integration:
             os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
-                      os.path.join(self.full_output_path, f"{self.name}_image.png"))
+                      os.path.join(self.full_output_path, f"{self.dir_name}_image.png"))
 
     def create_new_directory(self,) -> bool:
         """Creates a new directory for the integration/script/pack.

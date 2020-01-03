@@ -379,7 +379,10 @@ def run_playbook(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-n", "--name", help="The name of the object you want to create")
+    "-n", "--name", help="The name of the directory and file you want to create")
+@click.option(
+    "--id", help="The id used in the yml file of the integration or script"
+)
 @click.option(
     "-o", "--outdir", help="The output dir to write the object into")
 @click.option(

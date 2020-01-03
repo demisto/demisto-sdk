@@ -235,8 +235,9 @@ This will run the query `!gct-translate-text text="ciao" target="iw"` in debug m
 Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
 
 **Arguments**:
-* **-n, --name** The name given to the new pack/integration/script being created
-* **-o, --outdir** The directory to which the created object will be saved.
+* **-n, --name** The name given to the files and directories of new pack/integration/script being created
+* **--id** The id used for the yml file of the integration/script
+* **-o, --outdir** The directory to which the created object will be saved
 * **--integration** Create an integration
 * **--script** Create a script
 

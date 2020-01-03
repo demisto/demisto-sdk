@@ -11,13 +11,13 @@ from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
 from demisto_sdk.validation.secrets import SecretsValidator
+from demisto_sdk.runners.playbook_runner import PlaybookRunner
 from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-from demisto_sdk.runners.playbook_runner import PlaybookRunner
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -162,7 +162,7 @@ def unify(**kwargs):
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
 @click.option(
-    'b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
+    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
     help='To check backward compatibility.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
@@ -172,14 +172,14 @@ def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=str2bool(kwargs['backward-comp']),
+                               is_backward_check=str2bool(kwargs['backward_comp']),
                                is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
 
 
 # ====================== create ====================== #
-@main.command(name="create",
+@main.command(name="create",  # todo: add explanation
               short_help='Create content artifacts.')
 @click.help_option(
     '-h', '--help'
@@ -260,6 +260,7 @@ def lint(config, dir, **kwargs):
     linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
 
+
 # ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration yml file. ")
@@ -328,11 +329,6 @@ def run(**kwargs):
     return runner.run()
 
 
-@main.resultcallback()
-def exit_from_program(result=0, **kwargs):
-    sys.exit(result)
-
-
 # ====================== run-playbook ====================== #
 @main.command(name="run-playbook",
               short_help="Run a playbook in Demisto. "
@@ -352,10 +348,7 @@ def exit_from_program(result=0, **kwargs):
     required=True
 )
 @click.option(
-    '--wait', '-w',
-    type=click.Choice(["True", "False"]),
-    default="True",
-    show_default=True,
+    '--wait', '-w', is_flag=True,
     help="Wait until the playbook run is finished and get a response."
 )
 @click.option(
@@ -368,6 +361,12 @@ def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
 
+
+@main.resultcallback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
+
+# todo: add download from demisto command
 
 def demisto_sdk_cli():
     main()

@@ -136,7 +136,6 @@ class Unifier:
         output_map = self.write_yaml_with_docker(yml_text, yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
         print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
-        # todo: add more prints here
         return unifier_outputs
 
     def insert_image_to_yml(self, yml_data, yml_text):

@@ -67,7 +67,7 @@ def main(config, version, env_dir):
 )
 @click.option(
     '--no-demisto-mock',
-    help="Don't add an import for demisto mock, false by default",
+    help="Don't add an import for demisto mock.",
     is_flag=True,
     show_default=True
 )
@@ -154,11 +154,13 @@ def unify(**kwargs):
 @click.option(
     '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
-    '--post-commit', is_flag=True, help='Whether the validation is done after you committed the files. Mostly for '
-                                        'build validations.')
+    '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
+                                        'this will help the command to determine which files it should check in its '
+                                        'run. Before you commit the files it should not be used. Mostly for build '
+                                        'validations.')
 @click.option(
-    '-b', '--backward-comp', is_flag=True, show_default=True,
-    help='To check backward compatibility.')
+    '--no-backward-comp', is_flag=True, show_default=True,
+    help='Whether to check backward compatibility or not.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
@@ -167,14 +169,14 @@ def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=kwargs['backward_comp'],
+                               is_backward_check=not kwargs['no_backward_comp'],
                                is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
 
 
 # ====================== create ====================== #
-@main.command(name="create",
+@main.command(name="create-content-artifacts",
               short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
                          'upload to your server in order to upload a whole new content version to your Demisto '
                          'instance.')

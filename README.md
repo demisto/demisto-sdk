@@ -47,7 +47,7 @@ Unify the code, image and description files to a single Demisto yaml file.
 This will grab the integration components in "Integrations/MyInt" directory and unify them to a single yaml file
 that will be created in the "Integrations" directory.
 
-### Extract
+### [Split-yml](https://github.com/demisto/demisto-sdk/tree/master/docs/split_yml_command.md)
 
 Extract code, image and description files from a demisto integration or script yml file.
 **Arguments**:
@@ -69,7 +69,7 @@ Extract code, image and description files from a demisto integration or script y
                         will import unless this is CommonServerPython
 
 **Examples**:
-`demisto-sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`
+`demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`
 This will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
 
 ### Validate

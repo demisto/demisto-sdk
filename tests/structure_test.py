@@ -12,7 +12,9 @@ from tests.tests_constants import VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PAT
     VALID_INTEGRATION_TEST_PATH, VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH, VALID_PLAYBOOK_ID_PATH, \
     INVALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, INVALID_WIDGET_PATH, \
     VALID_WIDGET_PATH, VALID_DASHBOARD_PATH, INVALID_DASHBOARD_PATH, LAYOUT_TARGET, \
-    DASHBOARD_TARGET, WIDGET_TARGET, PLAYBOOK_TARGET, INTEGRATION_TARGET, INCIDENT_FIELD_TARGET, PLAYBOOK_PACK_TARGET
+    DASHBOARD_TARGET, WIDGET_TARGET, PLAYBOOK_TARGET, INTEGRATION_TARGET, INCIDENT_FIELD_TARGET, PLAYBOOK_PACK_TARGET, \
+    INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS, INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, \
+    INDICATORFIELD_MISSING_FIELD
 
 
 class TestStructureValidator:
@@ -25,7 +27,7 @@ class TestStructureValidator:
         INCIDENT_FIELD_TARGET,
         PLAYBOOK_PACK_TARGET,
     ]
-    CREATED_DIRS = list()
+    CREATED_DIRS = list()  # type: List
 
     @classmethod
     def setup_class(cls):
@@ -50,7 +52,7 @@ class TestStructureValidator:
 
     SCHEME_VALIDATION_INPUTS = [
         (VALID_TEST_PLAYBOOK_PATH, 'playbook', True, "Found a problem in the scheme although there is no problem"),
-        (INVALID_PLAYBOOK_PATH, 'playbook', False, "Found no problem in the scheme although there is a problem")
+        (INVALID_PLAYBOOK_PATH, 'playbook', False, "Found no problem in the scheme although there is a problem"),
     ]
 
     @pytest.mark.parametrize("path, scheme, answer, error", SCHEME_VALIDATION_INPUTS)
@@ -58,6 +60,18 @@ class TestStructureValidator:
         mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value=scheme)
         validator = StructureValidator(file_path=path)
         assert validator.is_valid_scheme() is answer, error
+
+    SCHEME_VALIDATION_INDICATORFIELDS = [
+        (INDICATORFIELD_EXACT_SCHEME, INCIDENT_FIELD_TARGET, True),
+        (INDICATORFIELD_EXTRA_FIELDS, INCIDENT_FIELD_TARGET, True),
+        (INDICATORFIELD_MISSING_FIELD, INCIDENT_FIELD_TARGET, False),
+        (INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INCIDENT_FIELD_TARGET, False)
+    ]
+
+    @pytest.mark.parametrize("path, scheme, answer", SCHEME_VALIDATION_INDICATORFIELDS)
+    def test_scheme_validation_indicatorfield(self, path, scheme, answer, mocker):
+        validator = StructureValidator(file_path=path, predefined_scheme='incidentfield')
+        assert validator.is_valid_scheme() is answer
 
     INPUTS_VALID_FROM_VERSION_MODIFIED = [
         (VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, False),

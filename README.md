@@ -20,7 +20,8 @@ You can use the SDK in the CLI as follows:
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
-Our CLI supports autocomplete for linux/MacOS machines, you can turn this feature on by running one of the following:
+### Autocomplete
+Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
 for zsh users run in the terminal
 ```
 eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
@@ -32,18 +33,19 @@ eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
 
 ## Commands
 
-### Unify
+### [Unify](https://github.com/demisto/demisto-sdk/tree/master/docs/unify_command.md)
 
-Unify code, image and description files to a single Demisto yaml file.
+Unify the code, image and description files to a single Demisto yaml file.
 **Arguments**:
-* *-i INDIR, --indir INDIR*
+* **-i INDIR, --indir INDIR**
   The path to the directory in which the files reside
-* *-o OUTDIR, --outdir OUTDIR*
+* **-o OUTDIR, --outdir OUTDIR**
   The path to the directory into which to write the unified yml file
 
-**Examples**:
+**Example**:
 `demisto-sdk unify -i Integrations/MyInt -o Integrations`
-This will grab the integration components and unify them to a single yaml file.
+This will grab the integration components in "Integrations/MyInt" directory and unify them to a single yaml file
+that will be created in the "Integrations" directory.
 
 ### Extract
 
@@ -93,40 +95,43 @@ Validate your content files.
 `demisto-sdk validate`
 This will validate your content files.
 
-### Lint
+### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 
-Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the docker image of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
+Run lintings (flake8, mypy, pylint, bandit) and pytest.
+pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
 **Arguments**:
-* *-d DIR, --dir DIR*
-  Specify directory of integration/script (default: None)
-* *--no-pylint*
+* **-d DIR, --dir DIR**
+  Specify directory of integration/script. Also supports several direcories as a CSV (default: None)
+* **--no-pylint**
   Do NOT run pylint linter (default: False)
-* *--no-mypy*
+* **--no-mypy**
   Do NOT run mypy static type checking (default: False)
-* *--no-flake8*
+* **--no-flake8**
   Do NOT run flake8 linter (default: False)
-* *--no-bandit*
+* **--no-bandit**
   Do NOT run bandit linter (default: False)
-* *--no-test*
+* **--no-test**
   Do NOT test (skip pytest) (default: False)
-* *-r, --root*
+* **-r, --root**
   Run pytest container with root user (default: False)
-* *-p, --parallel*
+* **-p, --parallel**
   Run tests in parallel (default: False)
-* *--no-bc*
-  Check diff with $DIFF_COMPARE env variable (default: False)
-* *-a, --run-all-tests*
+* **-m, --max-workers**
+  The max workers to use in a parallel run (default: 10)
+* **-g, --git**
+  Run only on packages that changes between the current branch and content repo's origin/master branch (default: False)
+* **-a, --run-all-tests**
   Run lint on all directories in content repo (default: False)
-* *-k, --keep-container*
+* **-k, --keep-container**
   Keep the test container (default: False)
-* *-v, --verbose*
+* **-v, --verbose**
   Verbose output (default: False)
-* *--cpu-num CPU_NUM*
+* **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
-**Examples**:
-`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR --no-mypy`
-This will run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" directory.
+**Example**:
+`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
+This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
 
 ### Secrets
 
@@ -171,7 +176,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
 ` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
-### Run-playbook
+### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)
 
 Run a playbook in a given Demisto instance.
 DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -194,43 +199,100 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
 This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
 
 
-## Upload
+### [Upload](https://github.com/demisto/demisto-sdk/tree/master/docs/upload_command.md)
 
-Upload integration to Demisto instance. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+Upload an integration to Demisto instance.
 
-**Arguments**:
-* *-i INTEGRATION_PATH, --inpath INTEGRATION_PATH*
-                        The yml file to with the integration to upload
-* *-k, --insecure*
-                        Skip certificate validation
-* *-v, --verbose*
-                        Verbose output
-
-**Examples**:
-`demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml`
-This will upload the integration YML generated with `unify` command on the Demisto instance.
-
-`demisto-sdk upload -i Integrations/GoogleCloudTranslate`
-This will create a temporary unified file of the intergration and upload it to the Demisto instance.
-
-## Run
-
-Run integration command in the playground of a remote Demisto instance and retrieves the output. DEMISTO_BASE_URL and DEMISTO_API_KEY environment variables should contain a Demisto server base URL and a valid Demisto API Key, respectively.
+In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
 
 **Arguments**:
-* *-q QUERY, --query QUERY*
-                        The query to run
-* *-k, --insecure*
-                        Skip certificate validation
-* *-v, --verbose*
-                        Verbose output
-* *-D [DEBUG_LOG], --debug [DEBUG_LOG]*
-                        Enable debug mode and write it to DEBUG_LOG. If DEBUG_LOG is not specified stdout is used
+* **-i INTEGRATION_PATH, --inpath INTEGRATION_PATH**
+
+    The path of an integration file or a package directory to upload
+
+* **-k, --insecure**
+
+    Skip certificate validation
+
+* **-v, --verbose**
+
+    Verbose output
+
+
+**Example**:
+
+```
+demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml
+```
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance.
+
+
+### [Run](https://github.com/demisto/demisto-sdk/tree/master/docs/run_command.md)
+
+Run an integration command in the playground of a remote Demisto instance and retrieves the output.
+
+In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
+
+**Arguments**:
+* **-q QUERY, --query QUERY**
+
+    The query to run
+
+* **-k, --insecure**
+
+    Skip certificate validation
+
+* **-v, --verbose**
+
+    Verbose output
+
+* **-D, --debug**
+
+    Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option
+
+* **--debug-path [DEBUG_LOG]**
+
+    The path to save the debug file at, if not specified the debug file will be printed to the terminal
+
+
+**Example**:
+```
+demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"'
+```
+This will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance and print the output.
+
+
+### Generate Test Playbook
+
+Generate Test Playbook from integration/script yml
+**Arguments**:
+* *-i, --infile*
+   Specify integration/script yml path (must be a valid yml file)
+* *-o, --outdir*
+   Specify output directory (Default: current directory)
+* *-n, --name*
+   Specify test playbook name
+* *-t, --type{integration,script}*
+   YAML type (default: integration)
 
 **Examples**:
-`demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D`
-This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output, retrieve the debug log file and pretty print it.
+`demisto-sdk generate-test-playbook -i Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml -n TestXDRPlaybook -t integration -o TestPlaybooks`
+This will create a test playbook in TestPlaybook folder, with filename `TestXDRPlaybook.yml`.
 
+
+## [init](https://github.com/demisto/demisto-sdk/tree/master/docs/init_command.md)
+Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
+
+**Arguments**:
+* **-n, --name** The name given to the files and directories of new pack/integration/script being created
+* **--id** The id used for the yml file of the integration/script
+* **-o, --outdir** The directory to which the created object will be saved
+* **--integration** Create an integration
+* **--script** Create a script
+
+**Example**:
+`demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
+This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
 
 ## In the code
 You can import the SDK core class in your python code as follows:

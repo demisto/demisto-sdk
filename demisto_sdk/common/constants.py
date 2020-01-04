@@ -439,7 +439,6 @@ YML_TEST_PLAYBOOKS_REGEXES: List[str] = [
 YML_ALL_PLAYBOOKS_REGEX: List[str] = sum(
     [
         YML_PLAYBOOKS_NO_TESTS_REGEXES,
-        YML_TEST_PLAYBOOKS_REGEXES,
     ], []
 )
 
@@ -698,6 +697,7 @@ EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
+    'test-playbook': YML_TEST_PLAYBOOKS_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,
     'script': YML_SCRIPT_REGEXES,
     'widget': JSON_ALL_WIDGETS_REGEXES,

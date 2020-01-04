@@ -68,4 +68,6 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         print_color(F'========Finished updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
+        if 'TestPlaybook' in self.source_file:
+            return self.initiate_file_validator(PlaybookValidator, 'test-playbook')
         return self.initiate_file_validator(PlaybookValidator, 'playbook')

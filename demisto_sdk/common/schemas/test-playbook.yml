@@ -13,9 +13,6 @@ mapping:
   name:
     type: str
     required: true
-  description:
-    type: str
-    required: true
   starttaskid:
     type: str
     required: true

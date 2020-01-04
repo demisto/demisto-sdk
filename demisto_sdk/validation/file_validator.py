@@ -465,9 +465,7 @@ class FilesValidator:
             self._is_valid = False
 
     def validate_committed_files(self):
-        """Validate that all the committed files in your branch are valid
-
-        """
+        """Validate that all the committed files in your branch are valid"""
         modified_files, added_files, old_format_files, packs = self.get_modified_and_added_files()
         schema_changed = False
         for f in modified_files:
@@ -564,8 +562,10 @@ class FilesValidator:
                 self.validate_all_files()
         else:
             if self.file_path:
-                self.validate_modified_files({self.file_path})
-                self.validate_added_files({self.file_path})
+                branches = run_command('git branch')
+                branch_name_reg = re.search(r'\* (.*)', branches)
+                self.branch_name = branch_name_reg.group(1)
+                self.validate_committed_files()
             else:
                 print('No using git, validating all files')
                 self.validate_all_files()

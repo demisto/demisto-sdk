@@ -1,9 +1,10 @@
+import os
 import sys
 import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
-from demisto_sdk.common.tools import str2bool
+from demisto_sdk.common.tools import str2bool, print_error
 from demisto_sdk.dev_tools.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
@@ -181,12 +182,18 @@ def validate(config, **kwargs):
     # if not kwargs.get('path') and kwargs.get('file_type'):
     #    click.echo(click.style('Ignoring file-type argument since no specific file was determined', fg='yellow'))
 
-    validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=str2bool(kwargs['backward_comp']),
-                               is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
-                               validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
-                               file_path=kwargs.get('path'))
-    return validator.run()
+    file_path = kwargs['path']
+
+    if not (file_path or os.path.isfile(file_path)):
+        print_error(F'File {file_path} was not found')
+        return 1
+    else:
+        validator = FilesValidator(configuration=config.configuration,
+                                   is_backward_check=str2bool(kwargs['backward_comp']),
+                                   is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
+                                   validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
+                                   file_path=kwargs.get('path'))
+        return validator.run()
 
 
 # ====================== create ====================== #

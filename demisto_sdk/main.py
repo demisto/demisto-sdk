@@ -47,8 +47,10 @@ def main(config, version, env_dir):
 
 
 # ====================== extract ====================== #
-@main.command(name="extract",
-              short_help="Extract code, image and description files from a Demisto integration or script yaml file.")
+@main.command(name="split-yml",
+              short_help="Split the code, image and description files from a Demisto integration or script yaml file "
+                         " to multiple files(To a package format - "
+                         "https://demisto.pan.dev/docs/package-dir).")
 @click.help_option(
     '-h', '--help'
 )

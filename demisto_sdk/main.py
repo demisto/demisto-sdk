@@ -16,6 +16,7 @@ from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
+from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
@@ -363,6 +364,32 @@ def run(**kwargs):
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
+
+
+@main.command(name="json-to-outputs",
+              short_help='''Demisto integrations/scripts have a YAML file that defines them.
+Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
+file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
+@click.option(
+    "-i", "--infile", help="Valid JSON file path. If not specified then script will wait for user input in the "
+                           "terminal", required=False)
+@click.option(
+    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
+                           "script generates", required=True)
+@click.option(
+    "-o", "--outfile", help="Output file path, if not specified then will print to stdout", required=False)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+@click.option(
+    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                          "description. By default is interactive mode is disabled", is_flag=True)
+def json_to_outputs_command(**kwargs):
+    json_to_outputs(**kwargs)
 
 
 # ====================== generate-test-playbook ====================== #

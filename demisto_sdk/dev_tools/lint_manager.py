@@ -60,7 +60,7 @@ class LintManager:
             'bandit': not no_bandit
         }
 
-        if run_all_tests:
+        if run_all_tests or (not project_dir_list and git):
             self.pkgs = self.get_all_directories()
 
         else:
@@ -80,6 +80,7 @@ class LintManager:
         Returns:
             List. A list of integration, script and beta_integration names.
         """
+        print("Getting all directory names")
         all_directories = []
         # get all integrations, scripts and beta_integrations from packs
         for root, _, _ in os.walk(PACKS_DIR):
@@ -222,6 +223,7 @@ class LintManager:
         Returns:
             bool. True if there is a difference and False otherwise.
         """
+        print("Filtering out directories that did not change")
         # get the current branch name.
         current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
 

@@ -207,6 +207,7 @@ class LintManager:
         Returns:
             list[str]. A list of names of packages that should run.
         """
+        print("Filtering out directories that did not change")
         pkgs_to_run = []
         for directory in self.pkgs:
             if self._check_should_run_pkg(pkg_dir=directory):
@@ -223,7 +224,6 @@ class LintManager:
         Returns:
             bool. True if there is a difference and False otherwise.
         """
-        print("Filtering out directories that did not change")
         # get the current branch name.
         current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
 

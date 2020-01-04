@@ -1,6 +1,6 @@
-from ruamel.yaml import YAML
-import json
 import os
+import json
+from ruamel.yaml import YAML
 from typing import Dict, Any
 
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS

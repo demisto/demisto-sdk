@@ -13,6 +13,6 @@ This command is primarily intended for internal use. During our CI/CD build proc
                         Flag for if you'd like to keep the bundles created in
                         the process of making the content artifacts
 
-**Examples**:
+**Examples**:  
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.

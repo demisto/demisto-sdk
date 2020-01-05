@@ -167,13 +167,13 @@ Format your integration/script/playbook yml file according to Demisto's standard
 **Arguments**:
 * *-t {integration, script, playbook}, --type {integration, script, playbook}*
                         The type of yml file to be formatted.
-* *-p PATH_TO_YML, --path PATH_TO_YML*
+* *-s PATH_TO_YML, --source-file PATH_TO_YML*
                         The path of the desired yml file to be formatted.
 * *-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH*
                         The path where the formatted file will be saved to. (Default will be to override origin file)
 
 **Examples**:
-` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
+` demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
 ### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)

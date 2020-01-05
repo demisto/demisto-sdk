@@ -9,20 +9,19 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir, \
-    str2bool
+from demisto_sdk.common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir
 
 INTEGRATION = 'integration'
 SCRIPT = 'script'
 
 
 class Extractor:
-    def __init__(self, infile: str, outfile: str, demisto_mock: str, common_server: str, yml_type: str,
+    def __init__(self, infile: str, outfile: str, no_demisto_mock: bool, no_common_server: bool, yml_type: str,
                  configuration: Configuration):
         self.yml_path = infile
         self.dest_path = outfile
-        self.demisto_mock = str2bool(demisto_mock)
-        self.common_server = str2bool(common_server)
+        self.demisto_mock = not no_demisto_mock
+        self.common_server = not no_common_server
         self.yml_type = yml_type
         self.config = configuration
 

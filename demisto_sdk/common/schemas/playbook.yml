@@ -21,6 +21,13 @@ mapping:
   view:
     type: str
     required: true
+  contentitemfields:
+    type: map
+    required: false
+    mapping:
+      propagationLabels:
+        type: any
+        required: false
   outputs:
       type: seq
       sequence:
@@ -70,6 +77,9 @@ mapping:
             - include: timertriggers_schema
           ignoreworker:
             type: bool
+          skipunavailable:
+            type: bool
+            required: false
           task:
             type: map
             required: true

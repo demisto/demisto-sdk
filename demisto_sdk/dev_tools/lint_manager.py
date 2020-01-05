@@ -57,7 +57,7 @@ class LintManager:
             'bandit': not no_bandit
         }
 
-        if run_all_tests:
+        if run_all_tests or (not project_dir_list and git):
             self.pkgs = self.get_all_directories()
 
         else:
@@ -77,6 +77,7 @@ class LintManager:
         Returns:
             List. A list of integration, script and beta_integration names.
         """
+        print("Getting all directory names")
         all_directories = []
         # get all integrations, scripts and beta_integrations from packs
         for root, _, _ in os.walk(PACKS_DIR):
@@ -176,6 +177,7 @@ class LintManager:
         Returns:
             list[str]. A list of names of packages that should run.
         """
+        print("Filtering out directories that did not change")
         pkgs_to_run = []
         for directory in self.pkgs:
             if self._check_should_run_pkg(pkg_dir=directory):

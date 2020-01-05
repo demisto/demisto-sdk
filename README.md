@@ -77,19 +77,19 @@ This will split the yml file to a directory with the integration components (cod
 Makes sure your content repository files are in order and have valid yml file scheme.
 
 **Arguments**:
-* **-c CIRCLE, --circle CIRCLE**
-                        Does this command run in CircleCi or not.
-* **-b BACKWARD_COMP, --backward-comp BACKWARD_COMP**
+* **--no-backward-comp**
                         Whether to check backward compatibility or not.
 * **-j, --conf-json**
                         Validate the conf.json file.
 * **-i, --id-set**
                         Create the id_set.json file.
-* **-p PREV_VER, --prev-ver PREV_VER**
+* **-p, --prev-ver**
                         Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**
-                        Validate only changed files from content repo's origin/master branch.
-
+                        Validate changes using git - this will check your branch changes and will run only on them.
+* **--post-commit** Whether the validation is done after you committed your files,
+                    this will help the command to determine which files it should check in its
+                    run. Before you commit the files it should not be used. Mostly for build validations.
 **Example**:
 `demisto-sdk validate`
 This will validate all the files in content repo.

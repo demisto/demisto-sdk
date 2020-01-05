@@ -206,15 +206,18 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-c', '--circle', is_flag=True, show_default=True,
-    help='Is CircleCi or not')
+    '--post-commit', is_flag=True, show_default=True,
+    help='Whether the secretes is done after you committed your files, '
+         'this will help the command to determine which files it should check in its '
+         'run. Before you commit the files it should not be used. Mostly for build '
+         'validations.')
 @click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['circle'],
+    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
                                white_list_path=kwargs['whitelist'])
     return secrets.run()
 

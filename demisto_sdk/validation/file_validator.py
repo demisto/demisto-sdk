@@ -567,7 +567,7 @@ class FilesValidator:
                 self.branch_name = self.get_current_working_branch()
                 self.validate_committed_files()
             else:
-                print('No using git, validating all files')
+                print('Not using git, validating all files')
                 self.validate_all_files()
 
         return self._is_valid

@@ -72,28 +72,27 @@ Extract code, image and description files from a demisto integration or script y
 `demisto-sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`
 This will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
 
-### Validate
+### [Validate](https://github.com/demisto/demisto-sdk/tree/master/docs/validate_command.md)
 
-Validate your content files.
+Makes sure your content repository files are in order and have valid yml file scheme.
+
 **Arguments**:
-* *-c CIRCLE, --circle CIRCLE*
-                        Is CircleCi or not
-* *-b BACKWARD_COMP, --backward-comp BACKWARD_COMP*
-                        To check backward compatibility.
-* *-t TEST_FILTER, --test-filter TEST_FILTER*
-                        Check that tests are valid.
-* *-j, --conf-json*
+* **-c CIRCLE, --circle CIRCLE**
+                        Does this command run in CircleCi or not.
+* **-b BACKWARD_COMP, --backward-comp BACKWARD_COMP**
+                        Whether to check backward compatibility or not.
+* **-j, --conf-json**
                         Validate the conf.json file.
-* *-i, --id-set*
+* **-i, --id-set**
                         Create the id_set.json file.
-* *-p PREV_VER, --prev-ver PREV_VER*
+* **-p PREV_VER, --prev-ver PREV_VER**
                         Previous branch or SHA1 commit to run checks against.
-* *-g, --use-git*
-                        Validate changes using git.
+* **-g, --use-git**
+                        Validate only changed files from content repo's origin/master branch.
 
-**Examples**:
+**Example**:
 `demisto-sdk validate`
-This will validate your content files.
+This will validate all the files in content repo.
 
 ### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 

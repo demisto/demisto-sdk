@@ -1,6 +1,8 @@
 bandit>=1.6.2
 bs4>=0.0.1
 click>=7.0
+dateparser>=0.7.2
+demisto-py>=2.0.7
 flake8>=3.7.9
 mypy>=0.761
 pykwalify>=1.7.0
@@ -9,4 +11,3 @@ PyYAML>=5.1.2
 requests>=2.22.0
 ruamel.yaml>=0.16.5
 yamlordereddictloader>=0.4.0
-demisto-py>=2.0.7

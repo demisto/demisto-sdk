@@ -86,14 +86,19 @@ Validate your content files.
                         Validate the conf.json file.
 * *-i, --id-set*
                         Create the id_set.json file.
-* *-p PREV_VER, --prev-ver PREV_VER*
+* *--prev-ver PREV_VER*
                         Previous branch or SHA1 commit to run checks against.
 * *-g, --use-git*
                         Validate changes using git.
+ * *-p PATH_TO_FILE, --path PATH_TO_FILE*
+                        Path of file to validate specifically.
 
 **Examples**:
 `demisto-sdk validate`
 This will validate your content files.
+<br>
+`demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml`
+This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
 
 ### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 

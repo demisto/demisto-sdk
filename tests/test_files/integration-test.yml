@@ -18,6 +18,7 @@ configuration:
   type: 0
   required: false
 script:
+  feed: True
   script: |
     ''' IMPORTS '''
     import os
@@ -604,6 +605,5 @@ script:
     description: Get the users notification rules
   runonce: false
 hidden: false
-feed: True
 tests:
   - PagerDuty Test

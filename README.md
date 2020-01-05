@@ -161,19 +161,19 @@ Create content artifacts.
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
 
-### Format
+### [Format](https://github.com/demisto/demisto-sdk/tree/master/docs/format_command.md)
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
 **Arguments**:
 * *-t {integration, script, playbook}, --type {integration, script, playbook}*
                         The type of yml file to be formatted.
-* *-p PATH_TO_YML, --path PATH_TO_YML*
+* *-s PATH_TO_YML, --source-file PATH_TO_YML*
                         The path of the desired yml file to be formatted.
 * *-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH*
                         The path where the formatted file will be saved to. (Default will be to override origin file)
 
 **Examples**:
-` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
+` demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
 ### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)
@@ -293,6 +293,51 @@ Create a pack, integration or script template. If `--integration` and `--script`
 **Example**:
 `demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
 This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
+
+
+### Convert JSON to Demisto Outputs
+
+**Arguments**:
+* *-c, --command*
+    Command name (e.g. xdr-get-incidents)
+* *-i, --infile*
+    Valid JSON file path. If not specified then script will wait for user input in the terminal
+* *-p, --prefix*
+    Output prefix like Jira.Ticket, VirusTotal.IP
+* *-o, --outfile*
+    Output file path, if not specified then will print to stdout
+* *-v, --verbose*
+    Verbose output - mainly for debugging purposes
+* *-int, --interactive*
+    If passed, then for each output field will ask user interactively to enter the description. By default is interactive mode is disabled
+
+**Examples**:
+<br/>`demisto-sdk json-to-outputs -c jira-get-ticket -p Jira.Ticket -i path/to/valid.json`
+<br/>if valid.json looks like
+```json
+{
+    "id": 100,
+    "title": "do something title",
+    "created_at": "2019-01-01T00:00:00"
+}
+```
+This command will print to the stdout the following:
+```yaml
+arguments: []
+name: jira-get-ticket
+outputs:
+- contextPath: Jira.Ticket.id
+  description: ''
+  type: Number
+- contextPath: Jira.Ticket.title
+  description: ''
+  type: String
+- contextPath: Jira.Ticket.created_at
+  description: ''
+  type: Date
+```
+
+
 
 ## In the code
 You can import the SDK core class in your python code as follows:

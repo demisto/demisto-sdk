@@ -27,7 +27,7 @@ class Runner:
         self.debug_path = debug_path
         self.client = demisto_client.configure(verify_ssl=not insecure)
 
-        if self.debug is not None:
+        if self.debug:
             self.query += ' debug-mode="true"'
 
     def run(self):

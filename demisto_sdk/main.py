@@ -3,8 +3,7 @@ import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
-from demisto_sdk.common.tools import str2bool
-from demisto_sdk.dev_tools.runner import Runner
+from demisto_sdk.runners.runner import Runner
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.dev_tools.initiator import Initiator
@@ -20,12 +19,13 @@ from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
+
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500), )
+@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=100), )
 @click.help_option(
     '-h', '--help'
 )
@@ -48,8 +48,10 @@ def main(config, version, env_dir):
 
 
 # ====================== extract ====================== #
-@main.command(name="extract",
-              short_help="Extract code, image and description files from a Demisto integration or script yaml file.")
+@main.command(name="split-yml",
+              short_help="Split the code, image and description files from a Demisto integration or script yaml file "
+                         " to multiple files(To a package format - "
+                         "https://demisto.pan.dev/docs/package-dir).")
 @click.help_option(
     '-h', '--help'
 )
@@ -69,18 +71,16 @@ def main(config, version, env_dir):
     type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
-    '--demisto-mock', '-d',
-    help="Add an import for demisto mock, true by default",
-    type=click.Choice(["True", "False"]),
-    default=True,
+    '--no-demisto-mock',
+    help="Don't add an import for demisto mock.",
+    is_flag=True,
     show_default=True
 )
 @click.option(
-    '--common-server', '-c',
-    help="Add an import for CommonServerPython."
+    '--no-common-server',
+    help="Don't add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
-    type=click.Choice(["True", "False"]),
-    default='True',
+    is_flag=True,
     show_default=True
 )
 @pass_config
@@ -111,18 +111,16 @@ def extract(config, **kwargs):
     type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
-    '--demisto-mock', '-d',
-    help="Add an import for demisto mock, true by default",
-    type=click.Choice(["True", "False"]),
-    default=True,
+    '--no-demisto-mock',
+    help="Don't add an import for demisto mock, false by default",
+    is_flag=True,
     show_default=True
 )
 @click.option(
-    '--common-server', '-c',
-    help="Add an import for CommonServerPython."
+    '--no-common-server',
+    help="Don't add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
-    type=click.Choice(["True", "False"]),
-    default='True',
+    is_flag=True,
     show_default=True
 )
 @pass_config
@@ -161,11 +159,13 @@ def unify(**kwargs):
 @click.option(
     '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
-    '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
-    help='Is CircleCi or not')
+    '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
+                                        'this will help the command to determine which files it should check in its '
+                                        'run. Before you commit the files it should not be used. Mostly for build '
+                                        'validations.')
 @click.option(
-    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
-    help='To check backward compatibility.')
+    '--no-backward-comp', is_flag=True, show_default=True,
+    help='Whether to check backward compatibility or not.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
@@ -174,15 +174,17 @@ def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=str2bool(kwargs['backward_comp']),
-                               is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
+                               is_backward_check=not kwargs['no_backward_comp'],
+                               is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
     return validator.run()
 
 
 # ====================== create ====================== #
-@main.command(name="create",
-              short_help='Create content artifacts.')
+@main.command(name="create-content-artifacts",
+              short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
+                         'upload to your server in order to upload a whole new content version to your Demisto '
+                         'instance.')
 @click.help_option(
     '-h', '--help'
 )
@@ -205,15 +207,18 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-c', '--circle', type=click.Choice(["True", "False"]), default='False', show_default=True,
-    help='Is CircleCi or not')
+    '--post-commit', is_flag=True, show_default=True,
+    help='Whether the secretes is done after you committed your files, '
+         'this will help the command to determine which files it should check in its '
+         'run. Before you commit the files it should not be used. Mostly for build '
+         'validations.')
 @click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
+    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
                                white_list_path=kwargs['whitelist'])
     return secrets.run()
 
@@ -261,6 +266,7 @@ def secrets(config, **kwargs):
 def lint(config, dir, **kwargs):
     linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
+
 
 # ====================== format ====================== #
 @main.command(name="format",
@@ -330,11 +336,6 @@ def run(**kwargs):
     return runner.run()
 
 
-@main.resultcallback()
-def exit_from_program(result=0, **kwargs):
-    sys.exit(result)
-
-
 # ====================== run-playbook ====================== #
 @main.command(name="run-playbook",
               short_help="Run a playbook in Demisto. "
@@ -354,10 +355,7 @@ def exit_from_program(result=0, **kwargs):
     required=True
 )
 @click.option(
-    '--wait', '-w',
-    type=click.Choice(["True", "False"]),
-    default="True",
-    show_default=True,
+    '--wait', '-w', is_flag=True,
     help="Wait until the playbook run is finished and get a response."
 )
 @click.option(
@@ -456,6 +454,13 @@ def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
     return 0
+
+
+@main.resultcallback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
+
+# todo: add download from demisto command
 
 
 def demisto_sdk_cli():

@@ -26,7 +26,7 @@ class LOG_COLORS:
     YELLOW = '\033[0;33m'
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str, ) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -466,7 +466,7 @@ def print_v(msg, log_verbose=False):
         print(msg)
 
 
-def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
+def get_dev_requirements(envs_dirs_base, py_version, integration_pip=False, log_verbose=False):
     """
     Get the requirements for the specified py version.
 
@@ -479,9 +479,22 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
     Returns:
         string -- requirement required for the project
     """
-    env_dir = get_pipenv_dir(py_version, envs_dirs_base)
     stderr_out = None if log_verbose else DEVNULL
-    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
-                                stderr=stderr_out)
-    print_v("dev requirements:\n{}".format(requirements))
-    return requirements
+    if not integration_pip:
+        envs_dirs_base = get_pipenv_dir(py_version, envs_dirs_base)
+        requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=envs_dirs_base, universal_newlines=True,
+                                    stderr=stderr_out)
+        print_v("dev base requirements for python {}: \n{}".format(py_version, requirements))
+        return requirements
+    else:
+        if os.path.exists(envs_dirs_base + 'Pipfile'):
+            with open(envs_dirs_base + 'Pipfile') as pipfile:
+                pipfile_version = 3 if re.search(r"python_version = \"3", pipfile.readlines()[-1]) else 2
+            if pipfile_version == py_version:
+                requirements = "\n".join(check_output(['pipenv', 'lock', '-r', '-d'], cwd=envs_dirs_base,
+                                                      universal_newlines=True,
+                                                      stderr=stderr_out).split('\n')[1:])
+                print_v("dev base requirements for python {}: \n{}".format(py_version, requirements))
+                return requirements
+            else:
+                return ""

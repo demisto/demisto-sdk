@@ -14,7 +14,7 @@ from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, \
-    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
+    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command, get_dev_requirements
 
 
 class Linter:
@@ -72,8 +72,12 @@ class Linter:
             'tests': not no_test
         }
         self.lock = lock
-        self.requirements_3 = requirements_3
-        self.requirements_2 = requirements_2
+        self.requirements_3 = requirements_3 + get_dev_requirements(envs_dirs_base=self.project_dir,
+                                                                    py_version=3,
+                                                                    integration_pip=True),
+        self.requirements_2 = requirements_2 + get_dev_requirements(envs_dirs_base=self.project_dir,
+                                                                    py_version=2,
+                                                                    integration_pip=True)
 
     def get_common_server_python(self) -> bool:
         """Getting common server python in not exists changes self.common_server_created to True if needed.

@@ -67,8 +67,12 @@ class LintManager:
             self.pkgs = self._get_packages_to_run()
 
         self.configuration = configuration
-        self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
-        self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
+        self.requirements_for_python3 = get_dev_requirements(envs_dirs_base=self.configuration.envs_dirs_base,
+                                                             py_version=3,
+                                                             log_verbose=self.log_verbose)
+        self.requirements_for_python2 = get_dev_requirements(envs_dirs_base=self.configuration.envs_dirs_base,
+                                                             py_version=2,
+                                                             log_verbose=self.log_verbose)
 
     @staticmethod
     def get_all_directories() -> List[str]:

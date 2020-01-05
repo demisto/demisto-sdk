@@ -161,7 +161,7 @@ Create content artifacts.
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
 
-### Format
+### [Format](https://github.com/demisto/demisto-sdk/tree/master/docs/format_command.md)
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
 **Arguments**:

@@ -9,6 +9,8 @@ class IntegrationValidator(BaseValidator):
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
+    EXPIRATION_FIELD_TYPE = 17
+
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
@@ -30,6 +32,7 @@ class IntegrationValidator(BaseValidator):
             self.is_there_duplicate_args(),
             self.is_there_duplicate_params(),
             self.is_changed_subtype(),
+            self.is_not_valid_display_configuration(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
             not self.is_outputs_for_reputations_commands_valid()
         ]
@@ -438,7 +441,33 @@ class IntegrationValidator(BaseValidator):
     def is_id_equals_name(self):
         """Check whether the integration's ID is equal to its name
 
-            Returns:
-                bool. Whether the integration's id equals to its name
-            """
+        Returns:
+            bool. Whether the integration's id equals to its name
+        """
         return super(IntegrationValidator, self)._is_id_equals_name('integration')
+
+    def is_not_valid_display_configuration(self):
+        """Validate that the display settings are not empty for non-hidden fields and for type 17 params.
+
+        Returns:
+            bool. Whether the display is there for non-hidden fields.
+        """
+        configuration = self.current_file.get('configuration', [])
+        for configuration_param in configuration:
+            field_type = configuration_param['type']
+            is_field_hidden = configuration_param['hidden']
+            configuration_display = configuration_param.get('display')
+
+            # This parameter type will not use the display value.
+            if field_type == self.EXPIRATION_FIELD_TYPE:
+                if configuration_display:
+                    print_error(Errors.not_used_display_name(self.file_path, configuration_param['name']))
+                    self.is_valid = False
+                    return True
+
+            elif not is_field_hidden and not configuration_display:
+                print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
+                self.is_valid = False
+                return True
+
+        return False

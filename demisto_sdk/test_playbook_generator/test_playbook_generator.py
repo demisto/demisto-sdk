@@ -1,7 +1,7 @@
-import os
-import json
 from ruamel.yaml import YAML
-from typing import Dict, Any
+import json
+import os
+from typing import Dict
 
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
@@ -112,7 +112,7 @@ def create_end_task(id):
 
 
 def create_automation_task(_id, automation_name, item_type: ContentItemType, args=None):
-    scriptargs = {}  # type: Dict[Any, Any]
+    scriptargs = {}  # type:Dict
     if args and len(args) > 0:
         scriptargs['all'] = {}
 

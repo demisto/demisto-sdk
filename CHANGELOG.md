@@ -23,6 +23,8 @@
 * Added **generate-test-playbook** command which generates a basic test playbook for an integration or a script.
 * **validate** now supports indicator fields.
 * Fixed an issue with layouts scheme validation.
+* Adding **init** command.
+* Added **json-to-outputs** command which generates the yaml section for outputs from an API raw response.
 
 ### 0.2.6
 

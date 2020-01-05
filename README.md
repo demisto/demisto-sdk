@@ -280,6 +280,64 @@ Generate Test Playbook from integration/script yml
 This will create a test playbook in TestPlaybook folder, with filename `TestXDRPlaybook.yml`.
 
 
+## [init](https://github.com/demisto/demisto-sdk/tree/master/docs/init_command.md)
+Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
+
+**Arguments**:
+* **-n, --name** The name given to the files and directories of new pack/integration/script being created
+* **--id** The id used for the yml file of the integration/script
+* **-o, --outdir** The directory to which the created object will be saved
+* **--integration** Create an integration
+* **--script** Create a script
+
+**Example**:
+`demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
+This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
+
+
+### Convert JSON to Demisto Outputs
+
+**Arguments**:
+* *-c, --command*
+    Command name (e.g. xdr-get-incidents)
+* *-i, --infile*
+    Valid JSON file path. If not specified then script will wait for user input in the terminal
+* *-p, --prefix*
+    Output prefix like Jira.Ticket, VirusTotal.IP
+* *-o, --outfile*
+    Output file path, if not specified then will print to stdout
+* *-v, --verbose*
+    Verbose output - mainly for debugging purposes
+* *-int, --interactive*
+    If passed, then for each output field will ask user interactively to enter the description. By default is interactive mode is disabled
+
+**Examples**:
+<br/>`demisto-sdk json-to-outputs -c jira-get-ticket -p Jira.Ticket -i path/to/valid.json`
+<br/>if valid.json looks like
+```json
+{
+    "id": 100,
+    "title": "do something title",
+    "created_at": "2019-01-01T00:00:00"
+}
+```
+This command will print to the stdout the following:
+```yaml
+arguments: []
+name: jira-get-ticket
+outputs:
+- contextPath: Jira.Ticket.id
+  description: ''
+  type: Number
+- contextPath: Jira.Ticket.title
+  description: ''
+  type: String
+- contextPath: Jira.Ticket.created_at
+  description: ''
+  type: Date
+```
+
+
 
 ## In the code
 You can import the SDK core class in your python code as follows:
@@ -408,4 +466,3 @@ If the `license/cla` status check remains on *Pending*, even though all contribu
 
 If you have a suggestion or an opportunity for improvement that you've identified, please open an issue in this repo.
 Enjoy and feel free to reach out to us on the [DFIR Community Slack channel](http://go.demisto.com/join-our-slack-community), or at [info@demisto.com](mailto:info@demisto.com).
-

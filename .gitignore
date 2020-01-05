@@ -44,6 +44,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.idea
 
 # Translations
 *.mo
@@ -93,3 +94,4 @@ git_push.sh
 .vscode
 .pytest_cache
 .idea
+.mypy_cache

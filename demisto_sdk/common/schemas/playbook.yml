@@ -1,5 +1,4 @@
 type: map
-allowempty: True
 mapping:
   id:
     type: str
@@ -13,12 +12,22 @@ mapping:
   name:
     type: str
     required: true
+  description:
+    type: str
+    required: true
   starttaskid:
     type: str
     required: true
   view:
     type: str
     required: true
+  contentitemfields:
+    type: map
+    required: false
+    mapping:
+      propagationLabels:
+        type: any
+        required: false
   outputs:
       type: seq
       sequence:
@@ -33,13 +42,11 @@ mapping:
       - type: str
   tasks:
     type: map
-    allowempty: True
     required: true
     matching-rule: 'all'
     mapping:
       regex;(^[0-9]+$):
         type: map
-        allowempty: True
         mapping:
           id:
             type: text
@@ -70,9 +77,11 @@ mapping:
             - include: timertriggers_schema
           ignoreworker:
             type: bool
+          skipunavailable:
+            type: bool
+            required: false
           task:
             type: map
-            allowempty: True
             required: true
             mapping:
               id:
@@ -113,7 +122,6 @@ mapping:
             type: bool
           nexttasks:
             type: map
-            allowempty: True
             mapping:
               regex;(.+):
                 type: seq
@@ -121,7 +129,6 @@ mapping:
                   - type: str
           loop:
             type: map
-            allowempty: True
             mapping:
               iscommand:
                 type: bool
@@ -180,7 +187,6 @@ schema;task_schema:
 # playbook->inputs
 schema;input_schema:
   type: map
-  allowempty: True
   mapping:
     key:
       type: str
@@ -196,7 +202,6 @@ schema;input_schema:
 # playbook->outputs
 schema;output_schema:
   type: map
-  allowempty: True
   mapping:
     contextPath:
       type: str
@@ -210,7 +215,6 @@ schema;output_schema:
 # playbook->tasks->conditions
 schema;condition_schema:
   type: map
-  allowempty: True
   mapping:
     label:
       type: str
@@ -228,7 +232,6 @@ schema;arg_filters_schema:
 
 schema;arg_filter_schema:
   type: map
-  allowempty: True
   mapping:
     operator:
       type: str
@@ -237,7 +240,6 @@ schema;arg_filter_schema:
       type: bool
     left:
       type: map
-      allowempty: True
       required: true
       mapping:
         value:
@@ -248,7 +250,6 @@ schema;arg_filter_schema:
           required: true
     right:
       type: map
-      allowempty: True
       mapping:
         value:
           type: any
@@ -258,7 +259,6 @@ schema;arg_filter_schema:
 
 schema;timertriggers_schema:
   type: map
-  allowempty: True
   mapping:
     fieldname:
       type: str

@@ -202,13 +202,13 @@ class FilesValidator:
             if self.file_path:
                 all_diffs = all_changed_files_string + files_string
 
-                if self.file_path not in all_diffs:
-                    print_color(F'File {self.file_path} was not changed.', LOG_COLORS.YELLOW)
-                    return set(), set(), set(), set()
+                if F'M\t{self.file_path}' in all_diffs:
+                    modified_files = {self.file_path}
+                    added_files = set()
                 else:
-                    modified_files = {self.file_path} if F'M\t{self.file_path}' in all_diffs else set()
-                    added_files = {self.file_path} if F'A\t{self.file_path}' in all_diffs else set()
-                    return modified_files, added_files, set(), set()
+                    modified_files = set()
+                    added_files = {self.file_path}
+                return modified_files, added_files, set(), set()
 
             old_format_files = old_format_files.union(nc_old_format_files)
             modified_files = modified_files.union(

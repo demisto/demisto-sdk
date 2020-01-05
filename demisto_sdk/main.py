@@ -1,9 +1,11 @@
+import os
 import sys
 import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.runners.runner import Runner
+from demisto_sdk.common.tools import print_error
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.dev_tools.initiator import Initiator
@@ -157,7 +159,7 @@ def unify(**kwargs):
     '-i', '--id-set', is_flag=True,
     default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
-    '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
                                         'this will help the command to determine which files it should check in its '
@@ -169,15 +171,25 @@ def unify(**kwargs):
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
+@click.option(
+    '-p', '--path', help='Path of file to validate specifically.'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=not kwargs['no_backward_comp'],
-                               is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                               validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
-    return validator.run()
+    file_path = kwargs['path']
+
+    if file_path and not os.path.isfile(file_path):
+        print_error(F'File {file_path} was not found')
+        return 1
+    else:
+        validator = FilesValidator(configuration=config.configuration,
+                                   is_backward_check=not kwargs['no_backward_comp'],
+                                   is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                   validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
+                                   file_path=kwargs.get('path'))
+        return validator.run()
 
 
 # ====================== create ====================== #

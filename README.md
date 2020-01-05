@@ -47,7 +47,7 @@ Unify the code, image and description files to a single Demisto yaml file.
 This will grab the integration components in "Integrations/MyInt" directory and unify them to a single yaml file
 that will be created in the "Integrations" directory.
 
-### Extract
+### [Split-yml](https://github.com/demisto/demisto-sdk/tree/master/docs/split_yml_command.md)
 
 Extract code, image and description files from a demisto integration or script yml file.
 **Arguments**:
@@ -69,7 +69,7 @@ Extract code, image and description files from a demisto integration or script y
                         will import unless this is CommonServerPython
 
 **Examples**:
-`demisto-sdk extract -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`
+`demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`
 This will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
 
 ### [Validate](https://github.com/demisto/demisto-sdk/tree/master/docs/validate_command.md)
@@ -160,19 +160,19 @@ Create content artifacts.
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
 
-### Format
+### [Format](https://github.com/demisto/demisto-sdk/tree/master/docs/format_command.md)
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
 **Arguments**:
 * *-t {integration, script, playbook}, --type {integration, script, playbook}*
                         The type of yml file to be formatted.
-* *-p PATH_TO_YML, --path PATH_TO_YML*
+* *-s PATH_TO_YML, --source-file PATH_TO_YML*
                         The path of the desired yml file to be formatted.
 * *-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH*
                         The path where the formatted file will be saved to. (Default will be to override origin file)
 
 **Examples**:
-` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
+` demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
 ### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)

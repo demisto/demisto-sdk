@@ -204,9 +204,7 @@ class FilesValidator:
                                         print_ignored_files=self.print_ignored_files)
 
             if self.file_path:
-                all_diffs = all_changed_files_string + files_string
-
-                if F'M\t{self.file_path}' in all_diffs:
+                if F'M\t{self.file_path}' in files_string:
                     modified_files = {self.file_path}
                     added_files = set()
                 else:

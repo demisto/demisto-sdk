@@ -4,6 +4,11 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.1
+* Fixed the handling of newly created reputation files in **validate**.
+* Added an option to perform **validate** on a specific file.
+
+
 ### 0.3.0
 
 * Added support for multi-package **lint** both with parallel and without.

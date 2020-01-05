@@ -443,6 +443,11 @@ class FilesValidator:
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
 
+            elif checked_type(file_path, [REPUTATION_REGEX]):
+                print_color(
+                    F'Skipping validation for file {file_path} since no validation is currently defined.',
+                    LOG_COLORS.YELLOW)
+
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "

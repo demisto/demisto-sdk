@@ -64,9 +64,7 @@ class FilesValidator:
         self.use_git = use_git
         if self.use_git:
             print('Using git')
-            branches = run_command('git branch')
-            branch_name_reg = re.search(r'\* (.*)', branches)
-            self.branch_name = branch_name_reg.group(1)
+            self.branch_name = self.get_current_working_branch()
             print(f'Running validation on branch {self.branch_name}')
 
         self.prev_ver = prev_ver
@@ -96,6 +94,12 @@ class FilesValidator:
         else:
             print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
             return 1
+
+    @staticmethod
+    def get_current_working_branch():
+        branches = run_command('git branch')
+        branch_name_reg = re.search(r'\* (.*)', branches)
+        return branch_name_reg.group(1)
 
     @staticmethod
     def get_modified_files(files_string, tag='master', print_ignored_files=False):
@@ -562,9 +566,7 @@ class FilesValidator:
                 self.validate_all_files()
         else:
             if self.file_path:
-                branches = run_command('git branch')
-                branch_name_reg = re.search(r'\* (.*)', branches)
-                self.branch_name = branch_name_reg.group(1)
+                self.branch_name = self.get_current_working_branch()
                 self.validate_committed_files()
             else:
                 print('No using git, validating all files')

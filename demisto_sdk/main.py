@@ -160,7 +160,7 @@ def unify(**kwargs):
     '-i', '--id-set', is_flag=True,
     default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
-    '-pv', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
     help='Is CircleCi or not')
@@ -173,20 +173,13 @@ def unify(**kwargs):
 @click.option(
     '-p', '--path', help='Path of file to validate specifically.'
 )
-# @click.option(
-#    '-t', '--file-type', type=click.Choice(
-#        ['integration', 'script', 'playbook', 'incidnet-field', 'indicator-field', 'image', 'release-notes', 'layout',
-#         'description']), help='If you want to validate a specific file, you can specify it\'s type.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    # if not kwargs.get('path') and kwargs.get('file_type'):
-    #    click.echo(click.style('Ignoring file-type argument since no specific file was determined', fg='yellow'))
-
     file_path = kwargs['path']
 
-    if not (file_path or os.path.isfile(file_path)):
+    if file_path and not os.path.isfile(file_path):
         print_error(F'File {file_path} was not found')
         return 1
     else:

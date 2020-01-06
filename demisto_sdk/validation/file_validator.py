@@ -21,7 +21,7 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -351,6 +351,9 @@ class FilesValidator:
                 print_color(
                     F'Skipping validation for file {file_path} since no validation is currently defined.',
                     LOG_COLORS.YELLOW)
+
+            elif checked_type(file_path, CHECKED_TYPES_REGEXES):
+                pass
 
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))

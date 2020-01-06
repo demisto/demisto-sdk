@@ -21,7 +21,7 @@ from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, 
     IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, INCIDENT_TYPE_REGEX
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -265,6 +265,10 @@ class FilesValidator:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
+            if re.match(INCIDENT_TYPE_REGEX, file_path, re.IGNORECASE):
+                print_warning(f"There is no validation done on {file_path}")
+                continue
+
             structure_validator = StructureValidator(file_path, old_file_path)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
@@ -375,6 +379,10 @@ class FilesValidator:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
+            if re.match(INCIDENT_TYPE_REGEX, file_path, re.IGNORECASE):
+                print_warning(f"There is no validation done on {file_path}")
+                continue
+
             structure_validator = StructureValidator(file_path)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
@@ -447,6 +455,9 @@ class FilesValidator:
                 print_color(
                     F'Skipping validation for file {file_path} since no validation is currently defined.',
                     LOG_COLORS.YELLOW)
+
+            elif checked_type(file_path, CHECKED_TYPES_REGEXES):
+                pass
 
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))

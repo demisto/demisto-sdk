@@ -6,7 +6,7 @@
 
 ### 0.3.3
 * Added backwards compatibility break error message.
-
+* Added incidenttype to the ignore list in the validation, until a validator will be created.
 
 ### 0.3.2
 * Fixed the handling of classifier files in **validate**.

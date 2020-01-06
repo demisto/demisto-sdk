@@ -4,6 +4,15 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.2
+* Fixed the handling of classifier files in **validate**.
+
+
+### 0.3.1
+* Fixed the handling of newly created reputation files in **validate**.
+* Added an option to perform **validate** on a specific file.
+
+
 ### 0.3.0
 
 * Added support for multi-package **lint** both with parallel and without.
@@ -20,6 +29,11 @@
 * Added **run** command which runs a command in the Demisto playground.
 * Added **upload** command which uploads an integration or a script to a Demisto instance.
 * Fixed and issue where **validate** checked if release notes exist for new integrations and scripts.
+* Added **generate-test-playbook** command which generates a basic test playbook for an integration or a script.
+* **validate** now supports indicator fields.
+* Fixed an issue with layouts scheme validation.
+* Adding **init** command.
+* Added **json-to-outputs** command which generates the yaml section for outputs from an API raw response.
 
 ### 0.2.6
 

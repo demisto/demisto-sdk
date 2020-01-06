@@ -16,9 +16,9 @@ class PlaybookRunner:
         demisto_client (demisto_client): object for creating an incident in Demisto.
     """
 
-    def __init__(self, playbook_id: str, url: str, wait: str, timeout: int):
+    def __init__(self, playbook_id: str, url: str, wait: bool, timeout: int):
         self.playbook_id = playbook_id
-        self.should_wait = (wait == 'True')
+        self.should_wait = wait
         self.timeout = timeout
 
         # if url parameter is not provided, demisto_client will search the DEMISTO_BASE_URL env variable

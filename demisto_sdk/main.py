@@ -1,12 +1,14 @@
+import os
 import sys
 import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
-from demisto_sdk.common.tools import str2bool
-from demisto_sdk.dev_tools.runner import Runner
+from demisto_sdk.runners.runner import Runner
+from demisto_sdk.common.tools import print_error
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
+from demisto_sdk.dev_tools.initiator import Initiator
 from demisto_sdk.yaml_tools.extractor import Extractor
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.dev_tools.lint_manager import LintManager
@@ -16,14 +18,16 @@ from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
+from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
+from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=500), )
+@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=100), )
 @click.help_option(
     '-h', '--help'
 )
@@ -46,8 +50,10 @@ def main(config, version, env_dir):
 
 
 # ====================== extract ====================== #
-@main.command(name="extract",
-              short_help="Extract code, image and description files from a Demisto integration or script yaml file.")
+@main.command(name="split-yml",
+              short_help="Split the code, image and description files from a Demisto integration or script yaml file "
+                         " to multiple files(To a package format - "
+                         "https://demisto.pan.dev/docs/package-dir).")
 @click.help_option(
     '-h', '--help'
 )
@@ -67,18 +73,16 @@ def main(config, version, env_dir):
     type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
-    '--demisto-mock', '-d',
-    help="Add an import for demisto mock, true by default",
-    type=click.Choice(["True", "False"]),
-    default=True,
+    '--no-demisto-mock',
+    help="Don't add an import for demisto mock.",
+    is_flag=True,
     show_default=True
 )
 @click.option(
-    '--common-server', '-c',
-    help="Add an import for CommonServerPython."
+    '--no-common-server',
+    help="Don't add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
-    type=click.Choice(["True", "False"]),
-    default='True',
+    is_flag=True,
     show_default=True
 )
 @pass_config
@@ -109,18 +113,16 @@ def extract(config, **kwargs):
     type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
-    '--demisto-mock', '-d',
-    help="Add an import for demisto mock, true by default",
-    type=click.Choice(["True", "False"]),
-    default=True,
+    '--no-demisto-mock',
+    help="Don't add an import for demisto mock, false by default",
+    is_flag=True,
     show_default=True
 )
 @click.option(
-    '--common-server', '-c',
-    help="Add an import for CommonServerPython."
+    '--no-common-server',
+    help="Don't add an import for CommonServerPython."
          "If not specified will import unless this is CommonServerPython",
-    type=click.Choice(["True", "False"]),
-    default='True',
+    is_flag=True,
     show_default=True
 )
 @pass_config
@@ -157,30 +159,44 @@ def unify(**kwargs):
     '-i', '--id-set', is_flag=True,
     default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
-    '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
-    '-c', '--circle', type=click.Choice(["True", "False"]), default='False',
-    help='Is CircleCi or not')
+    '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
+                                        'this will help the command to determine which files it should check in its '
+                                        'run. Before you commit the files it should not be used. Mostly for build '
+                                        'validations.')
 @click.option(
-    '-b', '--backward-comp', type=click.Choice(["True", "False"]), default='False', show_default=True,
-    help='To check backward compatibility.')
+    '--no-backward-comp', is_flag=True, show_default=True,
+    help='Whether to check backward compatibility or not.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
+@click.option(
+    '-p', '--path', help='Path of file to validate specifically.'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=str2bool(kwargs['backward_comp']),
-                               is_circle=str2bool(kwargs['circle']), prev_ver=kwargs['prev_ver'],
-                               validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
-    return validator.run()
+    file_path = kwargs['path']
+
+    if file_path and not os.path.isfile(file_path):
+        print_error(F'File {file_path} was not found')
+        return 1
+    else:
+        validator = FilesValidator(configuration=config.configuration,
+                                   is_backward_check=not kwargs['no_backward_comp'],
+                                   is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                   validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
+                                   file_path=kwargs.get('path'))
+        return validator.run()
 
 
 # ====================== create ====================== #
-@main.command(name="create",
-              short_help='Create content artifacts.')
+@main.command(name="create-content-artifacts",
+              short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
+                         'upload to your server in order to upload a whole new content version to your Demisto '
+                         'instance.')
 @click.help_option(
     '-h', '--help'
 )
@@ -203,15 +219,18 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-c', '--circle', type=click.Choice(["True", "False"]), default='False', show_default=True,
-    help='Is CircleCi or not')
+    '--post-commit', is_flag=True, show_default=True,
+    help='Whether the secretes is done after you committed your files, '
+         'this will help the command to determine which files it should check in its '
+         'run. Before you commit the files it should not be used. Mostly for build '
+         'validations.')
 @click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=str2bool(kwargs['circle']),
+    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
                                white_list_path=kwargs['whitelist'])
     return secrets.run()
 
@@ -259,6 +278,7 @@ def secrets(config, **kwargs):
 def lint(config, dir, **kwargs):
     linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
+
 
 # ====================== format ====================== #
 @main.command(name="format",
@@ -328,11 +348,6 @@ def run(**kwargs):
     return runner.run()
 
 
-@main.resultcallback()
-def exit_from_program(result=0, **kwargs):
-    sys.exit(result)
-
-
 # ====================== run-playbook ====================== #
 @main.command(name="run-playbook",
               short_help="Run a playbook in Demisto. "
@@ -352,10 +367,7 @@ def exit_from_program(result=0, **kwargs):
     required=True
 )
 @click.option(
-    '--wait', '-w',
-    type=click.Choice(["True", "False"]),
-    default="True",
-    show_default=True,
+    '--wait', '-w', is_flag=True,
     help="Wait until the playbook run is finished and get a response."
 )
 @click.option(
@@ -367,6 +379,100 @@ def exit_from_program(result=0, **kwargs):
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
+
+
+@main.command(name="json-to-outputs",
+              short_help='''Demisto integrations/scripts have a YAML file that defines them.
+Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
+file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
+@click.option(
+    "-i", "--infile", help="Valid JSON file path. If not specified then script will wait for user input in the "
+                           "terminal", required=False)
+@click.option(
+    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
+                           "script generates", required=True)
+@click.option(
+    "-o", "--outfile", help="Output file path, if not specified then will print to stdout", required=False)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+@click.option(
+    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                          "description. By default is interactive mode is disabled", is_flag=True)
+def json_to_outputs_command(**kwargs):
+    json_to_outputs(**kwargs)
+
+
+# ====================== generate-test-playbook ====================== #
+@main.command(name="generate-test-playbook",
+              short_help="Generate test playbook from integration or script")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--infile',
+    required=True,
+    help='Specify integration/script yml path')
+@click.option(
+    '-o', '--outdir',
+    required=False,
+    help='Specify output directory')
+@click.option(
+    '-n', '--name',
+    required=True,
+    help='Specify test playbook name')
+@click.option(
+    '-t', '--file-type', default='integration',
+    type=click.Choice(["integration", "script"]),
+    required=False,
+    help='Specify integration or script. The default is integration')
+@click.option(
+    '--no-outputs', is_flag=True,
+    help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
+         'outputs to verify and which not')
+@click.option(
+    "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+def generate_test_playbook(**kwargs):
+    generator = TestPlaybookGenerator(**kwargs)
+    generator.run()
+
+
+# ====================== init ====================== #
+@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+                                      " If the script/integration flags are not present"
+                                      " then we will create a pack with the given name."
+                                      " Otherwise when using the flags we will generate"
+                                      " a script/integration based on your selection.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-n", "--name", help="The name of the directory and file you want to create")
+@click.option(
+    "--id", help="The id used in the yml file of the integration or script"
+)
+@click.option(
+    "-o", "--output-dir", help="The output dir to write the object into. The default one is the current working "
+                               "directory.")
+@click.option(
+    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
+@click.option(
+    '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+def init(**kwargs):
+    initiator = Initiator(**kwargs)
+    initiator.init()
+    return 0
+
+
+@main.resultcallback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
+
+# todo: add download from demisto command
 
 
 def demisto_sdk_cli():

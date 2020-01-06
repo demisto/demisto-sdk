@@ -49,4 +49,5 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython'
     ],
+    python_requires=">=3.7"
 )

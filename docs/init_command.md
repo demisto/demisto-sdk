@@ -25,7 +25,7 @@ An integration will be created in the "Integrations" directory and a script will
 The pack/integration/script will be created in your current working directory.
 * The templates are based on "Integrations/HelloWorld" and "Scripts/HelloWorldScript" found in content repo.
 
-**Examples**
+**Examples**  
 *Note: the bellow example explanations are given as though this command is activated from content repo directory.*
 
 `demisto-sdk init`

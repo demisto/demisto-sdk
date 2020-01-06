@@ -455,7 +455,7 @@ class IntegrationValidator(BaseValidator):
         configuration = self.current_file.get('configuration', [])
         for configuration_param in configuration:
             field_type = configuration_param['type']
-            is_field_hidden = configuration_param['hidden']
+            is_field_hidden = configuration_param.get('hidden', False)
             configuration_display = configuration_param.get('display')
 
             # This parameter type will not use the display value.

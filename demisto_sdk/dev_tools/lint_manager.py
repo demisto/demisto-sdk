@@ -230,6 +230,15 @@ class LintManager:
 
         return linter.run_dev_packages(), package_dir
 
+    def create_failed_unittests_file(self, failed_unittests):
+        """
+        Creates a file with failed unittests.
+        The file will be read in slack_notifier script - which will send the failed unittests to the content-team
+        channel.
+        """
+        with open('./Tests/failed_unittests.txt', "w") as failed_unittests_file:
+            failed_unittests_file.write('\n'.join(failed_unittests))
+
     def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]) -> int:
         """Print the results of parallel lint command.
 
@@ -240,6 +249,7 @@ class LintManager:
         Returns:
             int. 0 on success and 1 if any package failed
         """
+        self.create_failed_unittests_file(fail_pkgs)
         if fail_pkgs:
             print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)
             print_color("\n\t{}\n".format("\n\t".join(fail_pkgs)), LOG_COLORS.RED)

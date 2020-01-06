@@ -18,10 +18,10 @@ from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFile
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
-    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
+    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -352,6 +352,9 @@ class FilesValidator:
                     F'Skipping validation for file {file_path} since no validation is currently defined.',
                     LOG_COLORS.YELLOW)
 
+            elif checked_type(file_path, CHECKED_TYPES_REGEXES):
+                pass
+
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
@@ -388,10 +391,7 @@ class FilesValidator:
                 if not playbook_validator.is_valid_playbook():
                     self._is_valid = False
 
-            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
-
+            elif checked_type(file_path, YML_INTEGRATION_REGEXES):
                 image_validator = ImageValidator(file_path)
                 if not image_validator.is_valid():
                     self._is_valid = False

@@ -138,13 +138,17 @@ pylint and pytest will run within all the docker images of an integration/script
 `demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
 This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
 
-### Secrets
+### [Secrets](https://github.com/demisto/demisto-sdk/tree/master/docs/secrets.md)
 
 Run Secrets validator to catch sensitive data before exposing your code to public repository. Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "./Tests/secrets_white_list.json".
 **Arguments**:
-* *-c CIRCLE, --circle CIRCLE*
-                        Is CircleCi or not (default: False)
-* *-wl WHITELIST, --whitelist WHITELIST*
+* **--post-commit**
+                       Whether the secretes validation is done after you committed your files.
+                       This will help the command to determine which files it should check in its
+                       run. Before you commit the files it should not be used. Mostly for build
+                       validations. (default: False)
+                       
+* **-wl WHITELIST, --whitelist WHITELIST*
                         Full path to whitelist file, file name should be "secrets_white_list.json" (default: ./Tests/secrets_white_list.json)
 
 **Examples**:

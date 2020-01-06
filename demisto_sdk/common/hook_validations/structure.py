@@ -61,6 +61,7 @@ class StructureValidator:
         if self.old_file:  # In case the file is modified
             answers.append(not self.is_id_modified())
             answers.append(self.is_valid_fromversion_on_modified())
+
         return all(answers)
 
     def scheme_of_file_by_path(self):
@@ -156,7 +157,12 @@ class StructureValidator:
 
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
-        return not (new_file_id == old_version_id)
+        if not (new_file_id == old_version_id):
+            print_error(f"The file id for {self.file_path} has changed from {old_version_id} to {new_file_id}")
+            return True
+
+        # False - the id has not changed.
+        return False
 
     def is_valid_fromversion_on_modified(self):
         # type: () -> bool

@@ -4,6 +4,14 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.3
+* Added backwards compatibility break error message.
+
+
+### 0.3.2
+* Fixed the handling of classifier files in **validate**.
+
+
 ### 0.3.1
 * Fixed the handling of newly created reputation files in **validate**.
 * Added an option to perform **validate** on a specific file.

@@ -233,7 +233,8 @@ class LintManager:
     def create_failed_unittests_file(self, failed_unittests):
         """
         Creates a file with failed unittests.
-        The file will be read in slack_notifier script - which will send the failed unittests to the content-team channel.
+        The file will be read in slack_notifier script - which will send the failed unittests to the content-team
+        channel.
         """
         with open('./Tests/failed_unittests.txt', "w") as failed_unittests_file:
             failed_unittests_file.write('\n'.join(failed_unittests))

@@ -10,8 +10,10 @@ This command is used to ease the initial creation of a pack, integration or a sc
 * **-o, --outdir** The directory to which the created object will be saved.
 * **--integration** Create an integration
 * **--script** Create a script
+* **--pack** Create a pack
 
 **Notes**
+* If `integration` or `script` not set - the command will automatically create a pack, even if `pack` was not set.
 * If a `name` will not be given, a prompt will show asking for an input -
 A pack, integration or script can not be created without a given `name`.
 * The `name` parameter *can not* have spaces (' ') in it.
@@ -25,7 +27,7 @@ An integration will be created in the "Integrations" directory and a script will
 The pack/integration/script will be created in your current working directory.
 * The templates are based on "Integrations/HelloWorld" and "Scripts/HelloWorldScript" found in content repo.
 
-**Examples**  
+**Examples**
 *Note: the bellow example explanations are given as though this command is activated from content repo directory.*
 
 `demisto-sdk init`
@@ -37,3 +39,6 @@ This will create a new integration template named MyNewIntegration within "path/
 `demisto-sdk init --script --id "My Script ID"`
 This will prompt a message asking for a name for the script's directory and file name,
 once given a script will be created under "Scripts" directory and the yml file will have the id "My Script ID".
+
+`demisto-sdk init --pack -n My_Pack`
+This will create a new pack named "My_Pack" under the "Packs" directory in content repo.

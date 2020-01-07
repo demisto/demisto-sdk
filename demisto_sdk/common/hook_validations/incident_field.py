@@ -39,7 +39,7 @@ class IncidentFieldValidator(BaseValidator):
         name = self.current_file.get('name', '')
         cli_name = self.current_file.get('cliName', '')
         bad_words = {'incident', 'case', 'alert', 'event', 'playbook', 'ticket', 'issue',
-                     'incidents', 'cases', 'alert', 'events', 'playbooks', 'tickets', 'issues'}
+                     'incidents', 'cases', 'alerts', 'events', 'playbooks', 'tickets', 'issues'}
         whitelisted_field_names = {
             'XDR Alert Count',
             'XDR High Severity Alert Count',

@@ -23,17 +23,25 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    def __init__(self, output_dir: str, name: str = '', id: str = '', integration: bool = False, script: bool = False):
+    def __init__(self, output_dir: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
+                 pack: bool = False):
         self.output_dir = output_dir if output_dir else ''
         self.id = id
 
         self.is_integration = integration
         self.is_script = script
+        self.is_pack = pack
+
+        # if no flag given automatically create a pack.
+        if not integration and not script and not pack:
+            self.is_pack = True
 
         self.full_output_path = ''
 
-        while ' ' in name:
-            name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if len(name) != 0:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+
         self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
 
@@ -57,7 +65,7 @@ class Initiator:
             self.get_object_id(created_object="script")
             return self.script_init()
 
-        else:
+        elif self.is_pack:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
 

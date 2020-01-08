@@ -71,6 +71,7 @@ class StructureValidator:
         Returns:
             (str): Type of file by scheme name
         """
+
         for scheme_name, regex_list in SCHEMA_TO_REGEX.items():
             if get_matching_regex(self.file_path, regex_list):
                 return scheme_name

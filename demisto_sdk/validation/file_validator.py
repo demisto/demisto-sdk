@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import os
 import re
+import glob
 
 from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.common.configuration import Configuration
@@ -204,6 +205,9 @@ class FilesValidator:
                                         print_ignored_files=self.print_ignored_files)
 
             if self.file_path:
+                if os.path.isdir(self.file_path):
+                    self.file_path = glob.glob(os.path.join(self.file_path, '*.yml'))[0]
+
                 if F'M\t{self.file_path}' in files_string:
                     modified_files = {self.file_path}
                     added_files = set()
@@ -273,7 +277,7 @@ class FilesValidator:
             self.validate_id_set_data(file_path, is_added)
             structure_validator = self.validate_structure(file_path)
             for key in REGEX_TO_VALIDATOR.keys():
-                if matched_regex in key or matched_regex == key:
+                if matched_regex in key:
                     REGEX_TO_VALIDATOR[key](file_path=file_path,
                                             structure_validator=structure_validator,
                                             is_added=is_added)

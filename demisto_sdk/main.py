@@ -176,7 +176,7 @@ def unify(**kwargs):
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
 @click.option(
-    '-p', '--path', help='Path of file to validate specifically.'
+    '-p', '--path', help='Path of file/package to validate specifically.'
 )
 @pass_config
 def validate(config, **kwargs):

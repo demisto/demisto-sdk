@@ -54,3 +54,7 @@ mapping:
     type: bool
   reputationCalc:
     type: float
+  fromVersion:
+    type: str
+  toVersion:
+    type: str

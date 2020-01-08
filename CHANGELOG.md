@@ -7,6 +7,7 @@
 ### 0.3.3
 * Added backwards compatibility break error message.
 * Added schema for incident types.
+* Added **additionalinfo** field to as an available field for integration configuration.
 
 ### 0.3.2
 * Fixed the handling of classifier files in **validate**.

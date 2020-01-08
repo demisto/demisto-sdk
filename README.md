@@ -147,7 +147,7 @@ Run Secrets validator to catch sensitive data before exposing your code to publi
                        This will help the command to determine which files it should check in its
                        run. Before you commit the files it should not be used. Mostly for build
                        validations. (default: False)
-                       
+
 * **-wl WHITELIST, --whitelist WHITELIST*
                         Full path to whitelist file, file name should be "secrets_white_list.json" (default: ./Tests/secrets_white_list.json)
 
@@ -296,8 +296,9 @@ Create a pack, integration or script template. If `--integration` and `--script`
 * **-n, --name** The name given to the files and directories of new pack/integration/script being created
 * **--id** The id used for the yml file of the integration/script
 * **-o, --outdir** The directory to which the created object will be saved
-* **--integration** Create an integration
-* **--script** Create a script
+* **--integration** Create an integration.
+* **--script** Create a script.
+* **--pack** Create a pack.
 
 **Example**:
 `demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`

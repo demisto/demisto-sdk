@@ -206,7 +206,13 @@ class FilesValidator:
 
             if self.file_path:
                 if os.path.isdir(self.file_path):
-                    self.file_path = glob.glob(os.path.join(self.file_path, '*.yml'))[0]
+                    yml_files_in_package = glob.glob(os.path.join(self.file_path, '*.yml'))
+                    if yml_files_in_package:
+                        self.file_path = yml_files_in_package[0]
+
+                    else:
+                        raise Exception(f"The path provided {self.file_path} is not an integration/script package, "
+                                        f"nor a specific file.")
 
                 if F'M\t{self.file_path}' in files_string:
                     modified_files = {self.file_path}

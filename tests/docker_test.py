@@ -1,3 +1,4 @@
+import os
 from mock import patch
 import pytest
 from demisto_sdk.common.tools import get_yaml
@@ -49,6 +50,10 @@ MOCK_TAG_LIST = [{
     u'id': 72714981
 }]
 
+FILES_PATH = os.path.normpath(os.path.join(__file__, '..', 'test_files'))
+TEST_INTEGRATION_FILE = os.path.join(FILES_PATH, 'fake_integration.yml')
+TEST_SCRIPT_FILE = os.path.join(FILES_PATH, 'fake-script.yml')
+
 # demisto/python-deb doesn't contain a latest tag
 @pytest.mark.parametrize('image', ['python', 'python-deb', 'python3', 'python3-deb'])
 def test_get_docker_image_latest_tag(image):
@@ -62,12 +67,12 @@ def test_get_docker_image_from_yml():
     with patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         # Test integration case
         docker_validator = DockerImageValidator(None, None, None)
-        docker_validator.yml_file = get_yaml("test_files/fake_integration.yml")
+        docker_validator.yml_file = get_yaml(TEST_INTEGRATION_FILE)
         docker_validator.is_integration = True
         docker_image = docker_validator.get_docker_image_from_yml()
         assert docker_image == "demisto/pyjwt:1.0"
         # Test script case
-        docker_validator.yml_file = get_yaml("test_files/fake-script.yml")
+        docker_validator.yml_file = get_yaml(TEST_SCRIPT_FILE)
         docker_validator.is_integration = False
         docker_image = docker_validator.get_docker_image_from_yml()
         assert docker_image == "demisto/stix2:1.0.0.204"

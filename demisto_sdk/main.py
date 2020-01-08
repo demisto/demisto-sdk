@@ -87,6 +87,8 @@ def main(config, version, env_dir):
 )
 @pass_config
 def extract(config, **kwargs):
+    """Split the code, image and description files from a Demisto integration or script yaml file
+    to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir)."""
     extractor = Extractor(configuration=config.configuration, **kwargs)
     return extractor.extract_to_package_format()
 
@@ -127,6 +129,7 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
+    """Extract code from a Demisto integration or script yaml file."""
     extractor = Extractor(configuration=config.configuration, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
 
@@ -141,6 +144,7 @@ def extract_code(config, **kwargs):
     "-o", "--outdir", help="The output dir to write the unified yml to", required=True
 )
 def unify(**kwargs):
+    """Unify code, image, description and yml files to a single Demisto yml file."""
     unifier = Unifier(**kwargs)
     return unifier.merge_script_package_to_yml()
 
@@ -176,6 +180,7 @@ def unify(**kwargs):
 )
 @pass_config
 def validate(config, **kwargs):
+    """Validate your content files."""
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs['path']
@@ -206,6 +211,10 @@ def validate(config, **kwargs):
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
 def create(**kwargs):
+    """
+    Create content artifacts. This will generate content_new.zip file which can be used to
+    upload to your server in order to upload a whole new content version to your Demisto instance.
+    """
     content_creator = ContentCreator(**kwargs)
     return content_creator.run()
 
@@ -229,6 +238,11 @@ def create(**kwargs):
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 @pass_config
 def secrets(config, **kwargs):
+    """
+    Run Secrets validator to catch sensitive data before exposing your code to public repository.
+    Attach path to whitelist to allow manual whitelists. Default file path to secrets is
+    './Tests/secrets_white_list.json'
+    """
     sys.path.append(config.configuration.env_dir)
     secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
                                white_list_path=kwargs['whitelist'])
@@ -276,13 +290,17 @@ def secrets(config, **kwargs):
     "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @pass_config
 def lint(config, dir, **kwargs):
+    """Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the
+    docker image of an integration/script. Meant to be used with integrations/scripts that use
+    the folder (package) structure. Will lookup up what docker image to use and will setup the
+    dev dependencies and file in the target folder. """
     linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
 
 
 # ====================== format ====================== #
 @main.command(name="format",
-              short_help="Run formatter on a given script/playbook/integration yml file. ")
+              short_help="Run formatter on a given script/playbook/integration yml file.")
 @click.help_option(
     '-h', '--help'
 )
@@ -294,6 +312,7 @@ def lint(config, dir, **kwargs):
 @click.option(
     "-o", "--output-file-name", help="The path where the formatted file will be saved to")
 def format_yml(file_type, **kwargs):
+    """Run formatter on a given script/playbook/integration yml file."""
     file_type_and_linked_class = {
         'integration': IntegrationYMLFormat,
         'script': ScriptYMLFormat,
@@ -320,6 +339,9 @@ def format_yml(file_type, **kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 def upload(**kwargs):
+    """Upload integration to Demisto instance. DEMISTO_BASE_URL environment variable should contain
+    the Demisto server base URL. DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """
     uploader = Uploader(**kwargs)
     return uploader.upload()
 
@@ -344,6 +366,10 @@ def upload(**kwargs):
     "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
                          "terminal")
 def run(**kwargs):
+    """Run integration command on remote Demisto instance in the playground. DEMISTO_BASE_URL
+    environment variable should contain the Demisto base URL. DEMISTO_API_KEY environment
+    variable should contain a valid Demisto API Key.
+    """
     runner = Runner(**kwargs)
     return runner.run()
 
@@ -377,6 +403,11 @@ def run(**kwargs):
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
 def run_playbook(**kwargs):
+    """
+    Run a playbook in Demisto.
+    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u 'https://demisto.local'.
+    """
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
 
@@ -404,12 +435,17 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
     "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
                           "description. By default is interactive mode is disabled", is_flag=True)
 def json_to_outputs_command(**kwargs):
+    """
+    Demisto integrations/scripts have a YAML file that defines them.
+    Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
+    file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call.
+    """
     json_to_outputs(**kwargs)
 
 
 # ====================== generate-test-playbook ====================== #
 @main.command(name="generate-test-playbook",
-              short_help="Generate test playbook from integration or script")
+              short_help="Generate test playbook from integration or script.")
 @click.help_option(
     '-h', '--help'
 )
@@ -437,6 +473,7 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
+    """Generate test playbook from integration or script."""
     generator = TestPlaybookGenerator(**kwargs)
     generator.run()
 
@@ -463,6 +500,12 @@ def generate_test_playbook(**kwargs):
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
 def init(**kwargs):
+    """
+    Initiate a new Pack, Integration or Script.
+    If the script/integration flags are not present"
+    then we will create a pack with the given name.
+    Otherwise when using the flags we will generate a script/integration based on your selection.
+    """
     initiator = Initiator(**kwargs)
     initiator.init()
     return 0

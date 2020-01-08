@@ -6,6 +6,7 @@
 
 ### 0.3.3
 * Added backwards compatibility break error message.
+* Added schema for incident types.
 * Added **additionalinfo** field to as an available field for integration configuration.
 * Added pack parameter for **init**.
 * Fixed an issue where error would appear if name parameter is not set in **init**.

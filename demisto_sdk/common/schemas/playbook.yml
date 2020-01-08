@@ -162,6 +162,12 @@ mapping:
             type: int
           separatecontext:
             type: bool
+          fieldMapping:
+            type: seq
+            sequence:
+              - type: map
+                allowempty: True
+
   system:
     type: bool
   fromversion:

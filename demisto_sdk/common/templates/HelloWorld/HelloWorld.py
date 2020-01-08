@@ -1,6 +1,5 @@
 import demistomock as demisto
 from CommonServerPython import *
-from CommonServerPython import BaseClient
 from CommonServerUserPython import *
 # IMPORTS
 

@@ -10,6 +10,7 @@
 * Added **additionalinfo** field to as an available field for integration configuration.
 * Added pack parameter for **init**.
 * Fixed an issue where error would appear if name parameter is not set in **init**.
+* Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
 
 ### 0.3.2
 * Fixed the handling of classifier files in **validate**.

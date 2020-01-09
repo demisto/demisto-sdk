@@ -14,17 +14,17 @@ from __future__ import print_function
 import os
 import re
 import glob
+from inspect import signature
 
 from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
-    IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
+    IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, SCRIPT_REGEX, \
     IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
-    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES
+    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, \
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
-from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
 from demisto_sdk.common.hook_validations.image import ImageValidator
 from demisto_sdk.common.hook_validations.incident_field import IncidentFieldValidator
@@ -37,7 +37,6 @@ from demisto_sdk.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
     get_yml_paths_in_dir
-from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 
 
@@ -281,12 +280,14 @@ class FilesValidator:
                 continue
 
             self.validate_id_set_data(file_path, is_added)
-            structure_validator = self.validate_structure(file_path)
             for key in REGEX_TO_VALIDATOR.keys():
                 if matched_regex in key:
-                    REGEX_TO_VALIDATOR[key](file_path=file_path,
-                                            structure_validator=structure_validator,
-                                            is_added=is_added)
+                    if 'is_added' in signature(REGEX_TO_VALIDATOR[key]).parameters.keys():
+                        REGEX_TO_VALIDATOR[key](file_path=file_path,
+                                                is_added=is_added)
+                    else:
+                        REGEX_TO_VALIDATOR[key](file_path=file_path)
+
                     break
 
             else:
@@ -446,78 +447,54 @@ class FilesValidator:
 
         return False
 
-    def validate_integration_yml(self, file_path, structure_validator, is_added=False):
-        self.validate_image(file_path, structure_validator, is_added)
-
-        description_validator = DescriptionValidator(file_path)
-        if not description_validator.is_valid():
-            self._is_valid = False
-
-        integration_validator = IntegrationValidator(structure_validator)
+    def validate_integration_yml(self, file_path, is_added=False):
+        integration_validator = IntegrationValidator(file_path)
         if not is_added and self.is_backward_check and not integration_validator.is_backward_compatible():
             self._is_valid = False
 
         if not integration_validator.is_valid_file(validate_rn=not is_added):
             self._is_valid = False
 
-    def validate_beta_integration(self, file_path, structure_validator, is_added=False):
-        self.validate_image(file_path, structure_validator, is_added)
-
-        description_validator = DescriptionValidator(file_path)
-        if not description_validator.is_valid_beta_description():
-            self._is_valid = False
-
-        integration_validator = IntegrationValidator(structure_validator)
+    def validate_beta_integration(self, file_path):
+        integration_validator = IntegrationValidator(file_path)
         if not integration_validator.is_valid_beta_integration():
             self._is_valid = False
 
-    def validate_image(self, file_path, structure_validator, is_added=False):
+    def validate_image(self, file_path):
         image_validator = ImageValidator(file_path)
         if not image_validator.is_valid():
             self._is_valid = False
 
-    def validate_reputation_file(self, file_path, structure_validator, is_added=False):
+    def validate_reputation_file(self, file_path):
         print_color(
             F'Skipping validation for file {file_path} since no validation is currently defined.',
             LOG_COLORS.YELLOW)
 
-    def validate_structure(self, file_path):
-        # In case this is a renamed file.
-        old_file_path = None
-        if isinstance(file_path, tuple):
-            old_file_path, file_path = file_path
-
-        structure_validator = StructureValidator(file_path, old_file_path)
-        if not structure_validator.is_valid_file():
-            self._is_valid = False
-
-        return structure_validator
-
-    def validate_script(self, file_path, structure_validator, is_added=False):
-        script_validator = ScriptValidator(structure_validator)
+    def validate_script(self, file_path, is_added=False):
+        script_validator = ScriptValidator(file_path)
         if self.is_backward_check and not script_validator.is_backward_compatible():
             self._is_valid = False
         if not script_validator.is_valid_file(validate_rn=not is_added):
             self._is_valid = False
 
-    def validate_playbook(self, file_path, structure_validator, is_added=False):
-        playbook_validator = PlaybookValidator(structure_validator)
+    def validate_playbook(self, file_path, is_added=False):
+        playbook_validator = PlaybookValidator(file_path)
         if not playbook_validator.is_valid_playbook(is_new_playbook=is_added):
             self._is_valid = False
 
-    def validate_indicator_and_incident_fields(self, file_path, structure_validator, is_added=False):
-        incident_field_validator = IncidentFieldValidator(structure_validator)
+    def validate_indicator_and_incident_fields(self, file_path):
+        incident_field_validator = IncidentFieldValidator(file_path)
         if not incident_field_validator.is_valid_file():
             self._is_valid = False
         if self.is_backward_check and not incident_field_validator.is_backward_compatible():
             self._is_valid = False
 
-    def validate_layout(self, file_path, structure_validator, is_added=False):
-        layout_validator = LayoutValidator(structure_validator)
+    def validate_layout(self, file_path,):
+        layout_validator = LayoutValidator(file_path)
         if not layout_validator.is_valid_layout():
             self._is_valid = False
 
-    def validate_id_set_data(self, file_path, structure_validator, is_added=False):
+    def validate_id_set_data(self, file_path, is_added=False):
         if self.validate_id_set:
             if not self.id_set_validator.is_file_valid_in_set(file_path):
                 self._is_valid = False

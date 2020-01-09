@@ -12,16 +12,26 @@ from demisto_sdk.common.constants import ID_IN_COMMONFIELDS, ID_IN_ROOT
 class BaseValidator:
     DEFAULT_VERSION = -1
 
-    def __init__(self, structure_validator):
-        # type: (StructureValidator) -> None
-        self.structure_validator = structure_validator
-        self.current_file = structure_validator.current_file
-        self.old_file = structure_validator.old_file
-        self.file_path = structure_validator.file_path
-        self.is_valid = structure_validator.is_valid
+    def __init__(self, file_path):
+        # type: (str) -> None
+
+        self.structure_validator = self.initialize_structure_validator(file_path)
+        self.current_file = self.structure_validator.current_file
+        self.old_file = self.structure_validator.old_file
+        self.file_path = self.structure_validator.file_path
+        self.is_valid = True
+
+    @staticmethod
+    def initialize_structure_validator(file_path):
+        old_file_path = None
+        if isinstance(file_path, tuple):  # If the file was renamed the file_path is a tuple of the old and new path
+            old_file_path, file_path = file_path
+
+        return StructureValidator(file_path=file_path, old_file_path=old_file_path)
 
     def is_valid_file(self, validate_rn=True):
         tests = [
+            self.structure_validator.is_valid_file(),
             self.is_valid_version()
         ]
         # In case of release branch we allow to remove release notes

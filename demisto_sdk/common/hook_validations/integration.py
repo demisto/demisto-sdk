@@ -1,5 +1,7 @@
 from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
+from demisto_sdk.common.hook_validations.image import ImageValidator
+from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
 
@@ -10,6 +12,11 @@ class IntegrationValidator(BaseValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
+
+    def __init__(self, file_path):
+        super(IntegrationValidator, self).__init__(file_path)
+        self.image_validator = ImageValidator(self.file_path)
+        self.description_validator = DescriptionValidator(self.file_path)
 
     def is_valid_version(self):
         # type: () -> bool
@@ -48,7 +55,9 @@ class IntegrationValidator(BaseValidator):
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
-            self.is_id_equals_name()
+            self.is_id_equals_name(),
+            self.image_validator.is_valid(),
+            self.description_validator.is_valid()
         ]
         return all(answers)
 

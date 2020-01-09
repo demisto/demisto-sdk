@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.4
+* Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
+
 ### 0.3.3
 * Added backwards compatibility break error message.
 * Added schema for incident types.

@@ -38,7 +38,7 @@ class Initiator:
 
         self.full_output_path = ''
 
-        if len(name) != 0:
+        if name is not None and len(name) != 0:
             while ' ' in name:
                 name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
@@ -174,6 +174,7 @@ class Initiator:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION)
+            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_INTEGRATION)
 
         print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
 
@@ -208,6 +209,7 @@ class Initiator:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_SCRIPT)
+            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_SCRIPT)
 
         print_color(f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
 
@@ -285,3 +287,16 @@ class Initiator:
         """
         with open(file_path) as f:
             return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+
+    def fix_test_file_import(self, name_to_change: str):
+        """Fixes the import statement in the _test.py file in the newly created initegration/script
+
+        Args:
+            name_to_change (str): The name of the former integration/script to replace in the import.
+        """
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
+            file_contents = fp.read()
+            file_contents = file_contents.replace(name_to_change, self.dir_name)
+
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
+            fp.write(file_contents)

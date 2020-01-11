@@ -5,7 +5,7 @@ import shutil
 import json
 
 
-def create_secrets_file(file_path, urls=[], ips=[], files=[], generic_strings=[]):
+def create_whitelist_secrets_file(file_path, urls=[], ips=[], files=[], generic_strings=[]):
     with io.open(file_path, 'w') as f:
         secrets_content = dict(
             files=files,
@@ -16,6 +16,10 @@ def create_secrets_file(file_path, urls=[], ips=[], files=[], generic_strings=[]
             generic_strings=generic_strings
         )
         f.write(json.dumps(secrets_content, indent=4))
+
+
+def create_empty_whitelist_secrets_file(file_path):
+    create_whitelist_secrets_file(file_path)
 
 
 class TestSecrets:
@@ -62,7 +66,7 @@ class TestSecrets:
         assert not secrets_found
 
     def test_search_potential_secrets__secrets_found(self):
-        create_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
+        create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
 
         validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
                                                                                   TestSecrets.WHITE_LIST_FILE_NAME))

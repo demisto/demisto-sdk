@@ -316,3 +316,33 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_valid_category() is answer
+
+    VALID_DISPLAY_NON_HIDDEN = [
+        {"name": "unsecure", "type": 8, "display": "Trust any certificate (not secure)", "required": False,
+         "hidden": False}]
+    VALID_DISPLAY_HIDDEN = [
+        {"name": "insecure", "type": 8, "display": "Use system proxy settings", "required": False, "hidden": True}]
+    INVALID_DISPLAY_NON_HIDDEN = [
+        {"name": "unsecure", "type": 8, "display": "", "required": False, "hidden": False}]
+    INVALID_NO_DISPLAY_NON_HIDDEN = [
+        {"name": "unsecure", "type": 8, "required": False, "hidden": False}]
+    VALID_NO_DISPLAY_TYPE_EXPIRATION = [
+        {"name": "unsecure", "type": 17, "required": False, "hidden": False}]
+    INVALID_DISPLAY_TYPE_EXPIRATION = [
+        {"name": "unsecure", "type": 17, "display": "some display", "required": False, "hidden": False}]
+    IS_VALID_DISPLAY_INPUTS = [
+        (VALID_DISPLAY_NON_HIDDEN, True),
+        (VALID_DISPLAY_HIDDEN, True),
+        (INVALID_DISPLAY_NON_HIDDEN, False),
+        (INVALID_DISPLAY_NON_HIDDEN, False),
+        (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
+        (INVALID_DISPLAY_TYPE_EXPIRATION, False)
+    ]
+
+    @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)
+    def test_is_valid_display_configuration(self, configuration_setting, answer):
+        current = {"configuration": configuration_setting}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_not_valid_display_configuration() is not answer

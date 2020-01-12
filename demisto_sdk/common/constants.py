@@ -6,6 +6,15 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def not_used_display_name(file_path, field_name):
+        return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
+            field_name, file_path)
+
+    @staticmethod
+    def empty_display_configuration(file_path, field_name):
+        return "No display details were entered for the field {} in the file {}.".format(field_name, file_path)
+
+    @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
 
@@ -567,7 +576,6 @@ IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_R
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+/)?(?:Integrations|Scripts|Beta_Integrations)/([^\\/]+)/([^\\/]+).yml'
 PACKS_YML_FILE_REGEX = r'{}/([^/]+)/(?:{}|{})/([^/]+)/\2\.yml'.format(PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR)
 
-
 OLD_YML_FORMAT_FILE = [INTEGRATION_REGEX, SCRIPT_REGEX]
 
 DIR_LIST = [
@@ -688,8 +696,8 @@ INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoin
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 
-SCHEMA_TO_VALIDATOR = {
-    'integration': REPORT_REGEX,
+SCHEMA_TO_REGEX = {
+    'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,
     'script': YML_SCRIPT_REGEXES,
     'widget': JSON_ALL_WIDGETS_REGEXES,
@@ -697,7 +705,12 @@ SCHEMA_TO_VALIDATOR = {
     'canvas-context-connections': JSON_ALL_CONNECTIONS_REGEXES,
     'classifier': JSON_ALL_CLASSIFIER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
-    'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES,
+    'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
+    'incidenttype': [INCIDENT_TYPE_REGEX],
+    'image': [IMAGE_REGEX]
+}
+
+FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES,
     'reputation': [MISC_REPUTATIONS_REGEX],
     'reputations': [MISC_REGEX]

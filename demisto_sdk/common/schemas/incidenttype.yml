@@ -1,0 +1,60 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  version:
+    type: int
+    required: true
+  vcShouldIgnore:
+    type: bool
+  sortValues:
+    type: any
+  locked:
+    type: bool
+  name:
+    type: str
+    required: true
+  prevName:
+    type: str
+  color:
+    type: str
+    required: true
+  sla:
+    type: int
+  slaReminder:
+    type: int
+  playbookId:
+    type: str
+  hours:
+    type: int
+  days:
+    type: int
+  weeks:
+    type: int
+  hoursR:
+    type: int
+  daysR:
+    type: int
+  weeksR:
+    type: int
+  system:
+    type: bool
+  readonly:
+    type: bool
+  default:
+    type: bool
+  autorun:
+    type: bool
+  preProcessingScript:
+    type: str
+  closureScript:
+    type: str
+  disabled:
+    type: bool
+  reputationCalc:
+    type: float
+  fromVersion:
+    type: str
+  toVersion:
+    type: str

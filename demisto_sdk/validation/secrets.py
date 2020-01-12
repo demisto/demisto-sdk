@@ -155,7 +155,7 @@ class SecretsValidator():
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
                 file_contents = self.remove_white_list_regex(file_contents, secrets_white_list)
-                secrets_white_list = set()
+
             yml_file_contents = self.get_related_yml_contents(file_path)
             # Add all context output paths keywords to whitelist temporary
             if file_extension == YML_FILE_EXTENSION or yml_file_contents:
@@ -174,7 +174,9 @@ class SecretsValidator():
                     if not any(ioc.lower() in regex_secret.lower() for ioc in ioc_white_list):
                         secrets_found_with_regex.append(regex_secret)
                 # added false positives into white list array before testing the strings in line
+
                 secrets_white_list = secrets_white_list.union(false_positives)
+
                 # due to nature of eml files, skip string by string secret detection - only regex
                 if file_extension in SKIP_FILE_TYPE_ENTROPY_CHECKS or \
                         any(demisto_type in file_name for demisto_type in SKIP_DEMISTO_TYPE_ENTROPY_CHECKS):
@@ -299,7 +301,14 @@ class SecretsValidator():
             else self.white_list_path
         final_white_list, ioc_white_list, files_while_list = self.get_packs_white_list(whitelist_path) if is_pack else \
             self.get_generic_white_list(whitelist_path)
-        return set(final_white_list), set(ioc_white_list), set(files_while_list)
+
+        final_white_list = set(final_white_list)
+        if '' in final_white_list:
+            # remove('') is ignoring empty lines in whitelists - users can accidentally add empty lines and those will
+            # cause whitelisting of every string
+            final_white_list.remove('')
+
+        return final_white_list, set(ioc_white_list), set(files_while_list)
 
     @staticmethod
     def get_generic_white_list(whitelist_path):

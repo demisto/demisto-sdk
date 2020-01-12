@@ -21,6 +21,8 @@ class PlaybookYMLFormat(BaseUpdateYML):
     def add_description(self):
         """Add empty description to playbook and tasks."""
         print(F'Adding empty descriptions to relevant tasks')
+        if 'description' not in self.yml_data:
+            self.yml_data['description'] = ''
 
         for task_id, task in self.yml_data.get('tasks', {}).items():
             task['task'].update({'description': ''})

@@ -18,9 +18,10 @@ from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFile
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
     IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, SCRIPT_REGEX, \
-    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, INTEGRATION_YML_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
+    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
-    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX
+    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
@@ -30,6 +31,7 @@ from demisto_sdk.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.common.hook_validations.script import ScriptValidator
 from demisto_sdk.common.hook_validations.structure import StructureValidator
 from demisto_sdk.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.common.hook_validations.layout import LayoutValidator
 
 from demisto_sdk.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
@@ -44,21 +46,25 @@ class FilesValidator:
     to make sure you did not bypass the hooks as a safety precaution.
 
     Attributes:
-        _is_valid (bool): saves the status of the whole validation(instead of mingling it between all the functions).
-        conf_json_validator (ConfJsonValidator): object for validating the conf.json file.
-        id_set_validator (IDSetValidator): object for validating the id_set.json file(Created in Circle only).
+        is_backward_check (bool): Whether to check for backwards compatibility.
+        prev_ver (str): If using git, holds the branch to compare the current one to. Default is origin/master.
+        use_git (bool): Whether to use git or not.
+        is_circle: (bool): Whether the validation was initiated by CircleCI or not.
+        print_ignored_files (bool): Whether to print the files that were ignored during the validation or not.
+        validate_conf_json (bool): Whether to validate conf.json or not.
+        validate_id_set (bool): Whether to validate id_set or not.
+        file_path (string): If validating a specific file, golds it's path.
+        configuration (Configuration): Configurations for IDSetValidator.
     """
 
     def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
-                 print_ignored_files=False, validate_conf_json=True, validate_id_set=False,
+                 print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
                  configuration=Configuration()):
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
             print('Using git')
-            branches = run_command('git branch')
-            branch_name_reg = re.search(r'\* (.*)', branches)
-            self.branch_name = branch_name_reg.group(1)
+            self.branch_name = self.get_current_working_branch()
             print(f'Running validation on branch {self.branch_name}')
 
         self.prev_ver = prev_ver
@@ -73,6 +79,7 @@ class FilesValidator:
         self.print_ignored_files = print_ignored_files
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
+        self.file_path = file_path
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -87,6 +94,12 @@ class FilesValidator:
         else:
             print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
             return 1
+
+    @staticmethod
+    def get_current_working_branch():
+        branches = run_command('git branch')
+        branch_name_reg = re.search(r'\* (.*)', branches)
+        return branch_name_reg.group(1)
 
     @staticmethod
     def get_modified_files(files_string, tag='master', print_ignored_files=False):
@@ -174,6 +187,7 @@ class FilesValidator:
             'git diff --name-status {tag}..{compare_type}refs/heads/{branch}'.format(tag=tag,
                                                                                      branch=self.branch_name,
                                                                                      compare_type=compare_type))
+
         modified_files, added_files, _, old_format_files = self.get_modified_files(
             all_changed_files_string,
             tag=tag,
@@ -188,6 +202,15 @@ class FilesValidator:
             modified_files_from_tag, added_files_from_tag, _, _ = \
                 self.get_modified_files(all_changed_files_string,
                                         print_ignored_files=self.print_ignored_files)
+
+            if self.file_path:
+                if F'M\t{self.file_path}' in files_string:
+                    modified_files = {self.file_path}
+                    added_files = set()
+                else:
+                    modified_files = set()
+                    added_files = {self.file_path}
+                return modified_files, added_files, set(), set()
 
             old_format_files = old_format_files.union(nc_old_format_files)
             modified_files = modified_files.union(
@@ -316,13 +339,26 @@ class FilesValidator:
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
+            elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
+                layout_validator = LayoutValidator(structure_validator)
+                if not layout_validator.is_valid_layout():
+                    self._is_valid = False
+
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
+
+            elif checked_type(file_path, [REPUTATION_REGEX]):
+                print_color(
+                    F'Skipping validation for file {file_path} since no validation is currently defined.',
+                    LOG_COLORS.YELLOW)
+
+            elif checked_type(file_path, CHECKED_TYPES_REGEXES):
+                pass
 
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images, Release notes and Descriptions")
+                            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
 
     def validate_added_files(self, added_files):  # noqa: C901
@@ -355,10 +391,7 @@ class FilesValidator:
                 if not playbook_validator.is_valid_playbook():
                     self._is_valid = False
 
-            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
-
+            elif checked_type(file_path, YML_INTEGRATION_REGEXES):
                 image_validator = ImageValidator(file_path)
                 if not image_validator.is_valid():
                     self._is_valid = False
@@ -368,7 +401,7 @@ class FilesValidator:
                     self._is_valid = False
 
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_file():
+                if not integration_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
@@ -378,7 +411,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
 
-                if not script_validator.is_valid_file():
+                if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
@@ -398,17 +431,30 @@ class FilesValidator:
 
             # incident fields and indicator fields are using the same scheme.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
-                incident_field_validator = IncidentFieldValidator(file_path)
+                incident_field_validator = IncidentFieldValidator(structure_validator)
                 if not incident_field_validator.is_valid_file():
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
+                layout_validator = LayoutValidator(structure_validator)
+                if not layout_validator.is_valid_layout():
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
 
+            elif checked_type(file_path, [REPUTATION_REGEX]):
+                print_color(
+                    F'Skipping validation for file {file_path} since no validation is currently defined.',
+                    LOG_COLORS.YELLOW)
+
+            elif checked_type(file_path, CHECKED_TYPES_REGEXES):
+                pass
+
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images, Release notes and Descriptions")
+                            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):
@@ -429,9 +475,7 @@ class FilesValidator:
             self._is_valid = False
 
     def validate_committed_files(self):
-        """Validate that all the committed files in your branch are valid
-
-        """
+        """Validate that all the committed files in your branch are valid"""
         modified_files, added_files, old_format_files, packs = self.get_modified_and_added_files()
         schema_changed = False
         for f in modified_files:
@@ -519,16 +563,20 @@ class FilesValidator:
         if self.use_git:
             if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                                  not self.branch_name.startswith('20.')):
-                print("Validates only committed files")
+                print('Validates only committed files')
                 self.validate_committed_files()
                 self.validate_against_previous_version(no_error=True)
             else:
                 self.validate_against_previous_version(no_error=True)
-                print("Validates all of Content repo directories according to their schemas")
+                print('Validates all of Content repo directories according to their schemas')
                 self.validate_all_files()
         else:
-            print("No using git, validating all files")
-            self.validate_all_files()
+            if self.file_path:
+                self.branch_name = self.get_current_working_branch()
+                self.validate_committed_files()
+            else:
+                print('Not using git, validating all files')
+                self.validate_all_files()
 
         return self._is_valid
 

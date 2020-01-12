@@ -2,12 +2,15 @@ from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.common.hook_validations.docker import DockerImageValidator
 
 
 class IntegrationValidator(BaseValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
+
+    EXPIRATION_FIELD_TYPE = 17
 
     def is_valid_version(self):
         # type: () -> bool
@@ -22,6 +25,7 @@ class IntegrationValidator(BaseValidator):
         """Check whether the Integration is backward compatible or not, update the _is_valid field to determine that"""
         if not self.old_file:
             return True
+
         answers = [
             self.is_changed_context_path(),
             self.is_docker_image_changed(),
@@ -30,6 +34,7 @@ class IntegrationValidator(BaseValidator):
             self.is_there_duplicate_args(),
             self.is_there_duplicate_params(),
             self.is_changed_subtype(),
+            self.is_not_valid_display_configuration(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
             not self.is_outputs_for_reputations_commands_valid()
         ]
@@ -45,7 +50,8 @@ class IntegrationValidator(BaseValidator):
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
-            self.is_id_equals_name()
+            self.is_id_equals_name(),
+            self.is_docker_image_valid()
         ]
         return all(answers)
 
@@ -290,17 +296,19 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. True if there are duplicates, False otherwise.
         """
+        is_valid = True
         configurations = self.current_file.get('configuration', [])
         param_list = []  # type: list
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
-                self.is_valid = False
+                is_valid = False
                 print_error(Errors.duplicate_param(self.file_path, param_name))
             else:
                 param_list.append(param_name)
 
-        return not self.is_valid
+        self.is_valid = is_valid
+        return not is_valid
 
     @staticmethod
     def _get_command_to_args(integration_json):
@@ -433,12 +441,47 @@ class IntegrationValidator(BaseValidator):
                 print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
                 self.is_valid = False
                 return True
+
         return False
 
     def is_id_equals_name(self):
         """Check whether the integration's ID is equal to its name
 
-            Returns:
-                bool. Whether the integration's id equals to its name
-            """
+        Returns:
+            bool. Whether the integration's id equals to its name
+        """
         return super(IntegrationValidator, self)._is_id_equals_name('integration')
+
+    def is_not_valid_display_configuration(self):
+        """Validate that the display settings are not empty for non-hidden fields and for type 17 params.
+
+        Returns:
+            bool. Whether the display is there for non-hidden fields.
+        """
+        configuration = self.current_file.get('configuration', [])
+        for configuration_param in configuration:
+            field_type = configuration_param['type']
+            is_field_hidden = configuration_param.get('hidden', False)
+            configuration_display = configuration_param.get('display')
+
+            # This parameter type will not use the display value.
+            if field_type == self.EXPIRATION_FIELD_TYPE:
+                if configuration_display:
+                    print_error(Errors.not_used_display_name(self.file_path, configuration_param['name']))
+                    self.is_valid = False
+                    return True
+
+            elif not is_field_hidden and not configuration_display:
+                print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
+                self.is_valid = False
+                return True
+
+        return False
+
+    def is_docker_image_valid(self):
+        # type: () -> bool
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True)
+        if not docker_image_validator.is_docker_image_valid():
+            return True
+        self.is_valid = False
+        return False

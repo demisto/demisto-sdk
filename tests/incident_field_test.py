@@ -31,7 +31,7 @@ class TestIncidentFieldsValidator:
         'content': True,
     }
 
-    BAD_CLI_4 = {
+    GOOD_CLI_4 = {
         'cliName': 'Alerting feature',
         'name': 'sanity name',
         'content': True,
@@ -61,7 +61,7 @@ class TestIncidentFieldsValidator:
         'content': True,
     }
 
-    BAD_NAME_4 = {
+    GOOD_NAME_4 = {
         'cliName': 'sanity name',
         'name': 'Alerting feature',
         'content': True,
@@ -78,12 +78,12 @@ class TestIncidentFieldsValidator:
         (BAD_CLI_1, False),
         (BAD_CLI_2, False),
         (BAD_CLI_3, False),
-        (BAD_CLI_4, False),
+        (GOOD_CLI_4, True),
         (BAD_CLI_5, False),
         (BAD_NAME_1, False),
         (BAD_NAME_2, False),
         (BAD_NAME_3, False),
-        (BAD_NAME_4, False),
+        (GOOD_NAME_4, True),
         (BAD_NAME_5, False)
     ]
 
@@ -98,7 +98,7 @@ class TestIncidentFieldsValidator:
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_name() is answer
-            assert validator.is_valid_file() is answer
+            assert validator.is_valid_file() == answer
 
     CONTENT_1 = {
         'content': True

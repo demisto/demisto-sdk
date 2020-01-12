@@ -18,7 +18,7 @@ class ImageValidator:
     def __init__(self, file_path):
         self._is_valid = True
 
-        if checked_type(file_path, INTEGRATION_REGXES):
+        if checked_type(file_path, INTEGRATION_REGXES) or re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
             self.file_path = file_path
         else:
             if checked_type(file_path, YML_INTEGRATION_REGEXES):

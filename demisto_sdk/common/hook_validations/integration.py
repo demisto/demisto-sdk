@@ -24,6 +24,7 @@ class IntegrationValidator(BaseValidator):
         """Check whether the Integration is backward compatible or not, update the _is_valid field to determine that"""
         if not self.old_file:
             return True
+
         answers = [
             self.is_changed_context_path(),
             self.is_docker_image_changed(),
@@ -293,17 +294,19 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. True if there are duplicates, False otherwise.
         """
+        is_valid = True
         configurations = self.current_file.get('configuration', [])
         param_list = []  # type: list
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
-                self.is_valid = False
+                is_valid = False
                 print_error(Errors.duplicate_param(self.file_path, param_name))
             else:
                 param_list.append(param_name)
 
-        return not self.is_valid
+        self.is_valid = is_valid
+        return not is_valid
 
     @staticmethod
     def _get_command_to_args(integration_json):
@@ -436,6 +439,7 @@ class IntegrationValidator(BaseValidator):
                 print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
                 self.is_valid = False
                 return True
+
         return False
 
     def is_id_equals_name(self):

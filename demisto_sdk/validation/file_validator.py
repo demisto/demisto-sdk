@@ -19,11 +19,10 @@ from inspect import signature
 from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, KNOWN_FILE_STATUSES, \
-    IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, SCRIPT_REGEX, \
-    IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
-    PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
+    IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
+    PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, SCRIPT_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, SCRIPT_REGEX
 from demisto_sdk.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.common.hook_validations.id import IDSetValidator
 from demisto_sdk.common.hook_validations.image import ImageValidator
@@ -256,15 +255,18 @@ class FilesValidator:
     def validate_files(self, affected_files, is_added=False):
         REGEX_TO_VALIDATOR = {
             TEST_PLAYBOOK_REGEX: lambda x: print('Not validating Test playbook'),
-            YML_INTEGRATION_REGEXES: self.validate_integration_yml,
-            YML_BETA_INTEGRATIONS_REGEXES: self.validate_beta_integration,
+            tuple(YML_INTEGRATION_REGEXES): self.validate_integration_yml,
+            tuple(YML_BETA_INTEGRATIONS_REGEXES): self.validate_beta_integration,
             IMAGE_REGEX: self.validate_image,
             REPUTATION_REGEX: self.validate_reputation_file,
-            SCRIPT_REGEX: self.validate_script,
-            PACKAGE_SCRIPTS_REGEXES: self.validate_script,  # todo: check this out
-            PLAYBOOKS_REGEXES_LIST: self.validate_playbook,
-            JSON_INDICATOR_AND_INCIDENT_FIELDS: self.validate_indicator_and_incident_fields,
-            JSON_ALL_LAYOUT_REGEXES: self.validate_layout
+            tuple(SCRIPT_REGEXES): self.validate_script,
+            tuple(PLAYBOOKS_REGEXES_LIST): self.validate_playbook,
+            tuple(JSON_INDICATOR_AND_INCIDENT_FIELDS): self.validate_indicator_and_incident_fields,
+            tuple(JSON_ALL_LAYOUT_REGEXES): self.validate_layout,
+            # Classifiers
+            # Dashboards
+            # Incident types
+            # reports
         }
 
         for file_path in affected_files:
@@ -274,13 +276,14 @@ class FilesValidator:
                 self.is_valid_release_notes(file_path)
                 continue
 
-            matched_regex = checked_type(file_path, return_regex=True)
+            matched_regex = checked_type(file_path if not isinstance(file_path, tuple) else file_path[1],
+                                         return_regex=True)
             if not matched_regex:
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 
             self.validate_id_set_data(file_path, is_added)
-            for key in REGEX_TO_VALIDATOR.keys():
+            for key in REGEX_TO_VALIDATOR:
                 if matched_regex in key:
                     if 'is_added' in signature(REGEX_TO_VALIDATOR[key]).parameters.keys():
                         REGEX_TO_VALIDATOR[key](file_path=file_path,
@@ -448,7 +451,8 @@ class FilesValidator:
         return False
 
     def validate_integration_yml(self, file_path, is_added=False):
-        integration_validator = IntegrationValidator(file_path)
+        structure_validator = StructureValidator(file_path)
+        integration_validator = IntegrationValidator(structure_validator)
         if not is_added and self.is_backward_check and not integration_validator.is_backward_compatible():
             self._is_valid = False
 
@@ -456,7 +460,8 @@ class FilesValidator:
             self._is_valid = False
 
     def validate_beta_integration(self, file_path):
-        integration_validator = IntegrationValidator(file_path)
+        structure_validator = StructureValidator(file_path)
+        integration_validator = IntegrationValidator(structure_validator)
         if not integration_validator.is_valid_beta_integration():
             self._is_valid = False
 
@@ -471,26 +476,30 @@ class FilesValidator:
             LOG_COLORS.YELLOW)
 
     def validate_script(self, file_path, is_added=False):
-        script_validator = ScriptValidator(file_path)
+        structure_validator = StructureValidator(file_path)
+        script_validator = ScriptValidator(structure_validator)
         if self.is_backward_check and not script_validator.is_backward_compatible():
             self._is_valid = False
         if not script_validator.is_valid_file(validate_rn=not is_added):
             self._is_valid = False
 
     def validate_playbook(self, file_path, is_added=False):
-        playbook_validator = PlaybookValidator(file_path)
+        structure_validator = StructureValidator(file_path)
+        playbook_validator = PlaybookValidator(structure_validator)
         if not playbook_validator.is_valid_playbook(is_new_playbook=is_added):
             self._is_valid = False
 
     def validate_indicator_and_incident_fields(self, file_path):
-        incident_field_validator = IncidentFieldValidator(file_path)
+        structure_validator = StructureValidator(file_path)
+        incident_field_validator = IncidentFieldValidator(structure_validator)
         if not incident_field_validator.is_valid_file():
             self._is_valid = False
         if self.is_backward_check and not incident_field_validator.is_backward_compatible():
             self._is_valid = False
 
-    def validate_layout(self, file_path,):
-        layout_validator = LayoutValidator(file_path)
+    def validate_layout(self, file_path):
+        structure_validator = StructureValidator(file_path)
+        layout_validator = LayoutValidator(structure_validator)
         if not layout_validator.is_valid_layout():
             self._is_valid = False
 

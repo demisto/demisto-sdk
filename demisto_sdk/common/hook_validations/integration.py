@@ -13,11 +13,6 @@ class IntegrationValidator(BaseValidator):
 
     EXPIRATION_FIELD_TYPE = 17
 
-    def __init__(self, file_path):
-        super(IntegrationValidator, self).__init__(file_path)
-        self.image_validator = ImageValidator(self.file_path)
-        self.description_validator = DescriptionValidator(self.file_path)
-
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
@@ -31,6 +26,7 @@ class IntegrationValidator(BaseValidator):
         """Check whether the Integration is backward compatible or not, update the _is_valid field to determine that"""
         if not self.old_file:
             return True
+
         answers = [
             self.is_changed_context_path(),
             self.is_docker_image_changed(),
@@ -48,6 +44,9 @@ class IntegrationValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
         """Check whether the Integration is valid or not"""
+        image_validator = ImageValidator(self.file_path)
+        description_validator = DescriptionValidator(self.file_path)
+
         answers = [
             super(IntegrationValidator, self).is_valid_file(validate_rn),
             self.is_valid_subtype(),
@@ -56,8 +55,8 @@ class IntegrationValidator(BaseValidator):
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
             self.is_id_equals_name(),
-            self.image_validator.is_valid(),
-            self.description_validator.is_valid()
+            image_validator.is_valid(),
+            description_validator.is_valid()
         ]
         return all(answers)
 
@@ -302,17 +301,19 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. True if there are duplicates, False otherwise.
         """
+        is_valid = True
         configurations = self.current_file.get('configuration', [])
         param_list = []  # type: list
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
-                self.is_valid = False
+                is_valid = False
                 print_error(Errors.duplicate_param(self.file_path, param_name))
             else:
                 param_list.append(param_name)
 
-        return not self.is_valid
+        self.is_valid = is_valid
+        return not is_valid
 
     @staticmethod
     def _get_command_to_args(integration_json):
@@ -445,6 +446,7 @@ class IntegrationValidator(BaseValidator):
                 print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
                 self.is_valid = False
                 return True
+
         return False
 
     def is_id_equals_name(self):

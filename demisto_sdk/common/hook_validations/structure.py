@@ -5,7 +5,7 @@ Module contains validation of schemas, ids and paths.
 import json
 import os
 import re
-from typing import Optional
+from typing import Optional, Any
 
 import yaml
 from pykwalify.core import Core
@@ -36,9 +36,12 @@ class StructureValidator:
     }
 
     def __init__(self, file_path, old_file_path=None, predefined_scheme=None, configuration=Configuration()):
-        # type: (str, Optional[str], Optional[str], Configuration) -> None
+        # type: (Any, Optional[str], Optional[str], Configuration) -> None
         self.is_valid = None  # type: Optional[bool]
-        self.file_path = file_path
+        self.file_path = file_path  # type: ignore
+        if isinstance(file_path, tuple):
+            self.file_path, old_file_path = file_path[1], file_path[0]
+
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()

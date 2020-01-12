@@ -482,7 +482,6 @@ class IntegrationValidator(BaseValidator):
         # type: () -> bool
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True)
         if not docker_image_validator.is_docker_image_valid():
-            self.is_valid = True
             return True
         self.is_valid = False
         return False

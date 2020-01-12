@@ -8,6 +8,7 @@
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
 * Added an option to validate an integration/script package.
 
+
 ### 0.3.3
 * Added backwards compatibility break error message.
 * Added schema for incident types.

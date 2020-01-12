@@ -71,6 +71,7 @@ class StructureValidator:
         Returns:
             (str): Type of file by scheme name
         """
+
         for scheme_name, regex_list in SCHEMA_TO_REGEX.items():
             if get_matching_regex(self.file_path, regex_list):
                 return scheme_name
@@ -91,7 +92,7 @@ class StructureValidator:
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, 'reputation']:
+        if self.scheme_name in [None, 'reputation', 'image']:
             return True
         try:
             path = os.path.normpath(
@@ -197,6 +198,10 @@ class StructureValidator:
                 with open(self.file_path, 'r') as file_obj:
                     loaded_file_data = load_function(file_obj)  # type: ignore
                     return loaded_file_data
+
+            # Ignore loading image
+            elif file_extension == '.png':
+                return {}
 
         print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
         return {}

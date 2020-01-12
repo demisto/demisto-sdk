@@ -1,5 +1,25 @@
 import os
 from demisto_sdk.validation.secrets import SecretsValidator
+import io
+import shutil
+import json
+
+
+def create_whitelist_secrets_file(file_path, urls=[], ips=[], files=[], generic_strings=[]):
+    with io.open(file_path, 'w') as f:
+        secrets_content = dict(
+            files=files,
+            iocs=dict(
+                ips=ips,
+                urls=urls
+            ),
+            generic_strings=generic_strings
+        )
+        f.write(json.dumps(secrets_content, indent=4))
+
+
+def create_empty_whitelist_secrets_file(file_path):
+    create_whitelist_secrets_file(file_path)
 
 
 class TestSecrets:
@@ -11,7 +31,23 @@ class TestSecrets:
     TEST_WHITELIST_FILE = TEST_BASE_PATH + 'fake_secrets_white_list.json'
     TEST_BASE_64_STRING = 'OCSn7JGqKehoyIyMCm7gPFjKXpawXvh2M32' * 20 + ' sade'
     WHITE_LIST_FILE_NAME = 'secrets_white_list.json'
+
+    TEMP_DIR = os.path.join(FILES_PATH, 'temp')
+    TEST_FILE_WITH_SECRETS = os.path.join(TEMP_DIR, 'file_with_secrets_in_it.yml')
+
     validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(FILES_PATH, WHITE_LIST_FILE_NAME))
+
+    @classmethod
+    def setup_class(cls):
+        print("Setups TestSecrets class")
+        if not os.path.exists(TestSecrets.TEMP_DIR):
+            os.mkdir(TestSecrets.TEMP_DIR)
+
+    @classmethod
+    def teardown_class(cls):
+        print("Tearing down TestSecrets class")
+        if os.path.exists(TestSecrets.TEMP_DIR):
+            shutil.rmtree(TestSecrets.TEMP_DIR, ignore_errors=False, onerror=None)
 
     def test_get_diff_text_files(self):
         changed_files = '''
@@ -25,9 +61,34 @@ class TestSecrets:
         is_txt = self.validator.is_text_file(changed_files)
         assert is_txt is True
 
-    def test_search_potential_secrets(self):
+    def test_search_potential_secrets__no_secrets_found(self):
         secrets_found = self.validator.search_potential_secrets([self.TEST_YML_FILE])
         assert not secrets_found
+
+    def test_search_potential_secrets__secrets_found(self):
+        create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
+
+        validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
+                                                                                  TestSecrets.WHITE_LIST_FILE_NAME))
+
+        with io.open(self.TEST_FILE_WITH_SECRETS, 'w') as f:
+            f.write('''
+print('This is our dummy code')
+a = 100
+b = 300
+c = a + b
+
+API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret
+
+some_dict = {
+    'some_foo': 100
+}
+
+print(some_dict.some_foo)
+            ''')
+
+        secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS])
+        assert secrets_found['file_with_secrets_in_it.yml'] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
 
     def test_remove_white_list_regex(self):
         white_list = '155.165.45.232'

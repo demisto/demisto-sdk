@@ -499,6 +499,7 @@ def generate_test_playbook(**kwargs):
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+@click.option("--pack", is_flag=True, help="Create pack and its sub directories")
 def init(**kwargs):
     """
     Initiate a new Pack, Integration or Script.

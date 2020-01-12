@@ -236,7 +236,7 @@ class LintManager:
         The file will be read in slack_notifier script - which will send the failed unittests to the content-team
         channel.
         """
-        with open('./Tests/failed_unittests.txt', "w") as failed_unittests_file:
+        with open('./artifacts/failed_unittests.txt', "w") as failed_unittests_file:
             failed_unittests_file.write('\n'.join(failed_unittests))
 
     def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]) -> int:

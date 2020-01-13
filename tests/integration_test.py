@@ -146,13 +146,13 @@ class TestIntegrationValidator:
         }
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
-        
 
         assert validator.is_there_duplicate_params() is True
         assert validator.is_valid is False
 
         error_message = print_error.call_args[0][0]
-        assert error_message == ': The parameter \'test\' of the file is duplicated, please remove one of its appearances.'
+        assert error_message == ': The parameter \'test\' of the file is duplicated, please remove one of its ' \
+                                'appearances.'
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]

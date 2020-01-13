@@ -8,6 +8,8 @@
 * Saved failing unit tests as a file.
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
 * Add validation for docker image inside integrations and scripts.
+* Fixed an issue in demisto-sdk validate - was failing on backward compatiblity check
+* Fixed an issue in demisto-sdk secrets - empty line in .secrets-ignore always made the secrets check to pass
 
 ### 0.3.3
 * Added backwards compatibility break error message.

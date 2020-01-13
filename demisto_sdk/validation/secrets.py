@@ -17,7 +17,7 @@ from demisto_sdk.common.configuration import Configuration
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']
-SKIPPED_FILES = {'secrets_white_list', 'id_set.json', 'conf.json', 'Pipfile', '.secrets-ignore', 'ami_builds.json',
+SKIPPED_FILES = {'secrets_white_list', 'id_set.json', 'conf.json', 'Pipfile', 'secrets-ignore', 'ami_builds.json',
                  'secrets_test.py', 'secrets.py', 'constants.py', 'core.py'}
 TEXT_FILE_TYPES = {'.yml', '.py', '.json', '.md', '.txt', '.sh', '.ini', '.eml', '', '.csv', '.js', '.pdf', '.html',
                    '.ps1'}

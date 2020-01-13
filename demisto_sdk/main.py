@@ -6,6 +6,7 @@ from pkg_resources import get_distribution
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.runners.runner import Runner
 from demisto_sdk.common.tools import print_error
+from demisto_sdk.yaml_tools.format_module import format_command
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.dev_tools.initiator import Initiator
@@ -15,18 +16,12 @@ from demisto_sdk.dev_tools.lint_manager import LintManager
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.runners.playbook_runner import PlaybookRunner
 from demisto_sdk.validation.file_validator import FilesValidator
-from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
-from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
-from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
-from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX, YML_ALL_INTEGRATION_REGEXES, \
-    YML_ALL_SCRIPTS_REGEXES, YML_ALL_PLAYBOOKS_REGEX
+from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
-from demisto_sdk.git_tools import Git
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
-from demisto_sdk.common.tools import checked_type
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
@@ -300,29 +295,7 @@ def lint(config, dir, **kwargs):
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Format changed files using git - this will format your branch changes and will run only on them.')
 def format_yml(**kwargs):
-    file_type_and_linked_class = {
-        'integration': IntegrationYMLFormat,
-        'script': ScriptYMLFormat,
-        'playbook': PlaybookYMLFormat
-    }
-    if kwargs.get('file_type') in file_type_and_linked_class:
-        format_object = file_type_and_linked_class[kwargs['file_type']](**kwargs)
-        return format_object.format_file()
-
-    elif kwargs.get('use_git'):
-        files = Git.get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')
-        for _file in files:
-            _file = _file['name']
-            file_type = 'integration' if checked_type(_file, YML_ALL_INTEGRATION_REGEXES)\
-                else 'script' if checked_type(_file, YML_ALL_SCRIPTS_REGEXES)\
-                else 'playbook' if checked_type(_file, YML_ALL_PLAYBOOKS_REGEX)\
-                else None
-            if file_type:
-                res = file_type_and_linked_class[file_type](source_file=_file).format_file()
-                if res:
-                    return res
-
-    return 1
+    return format_command(kwargs)
 
 
 @main.command(name="upload",

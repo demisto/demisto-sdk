@@ -134,6 +134,9 @@ def extract_code(config, **kwargs):
 # ====================== unify ====================== #
 @main.command(name="unify",
               short_help='Unify code, image, description and yml files to a single Demisto yml file.')
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     "-i", "--indir", help="The path to the files to unify", required=True
 )

@@ -1,5 +1,5 @@
 from demisto_sdk.common.constants import YML_ALL_INTEGRATION_REGEXES, YML_ALL_SCRIPTS_REGEXES, YML_ALL_PLAYBOOKS_REGEX
-from demisto_sdk.git_tools import get_changed_files
+from demisto_sdk.common.git_tools import get_changed_files
 from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat

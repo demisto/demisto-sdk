@@ -332,10 +332,17 @@ class SecretsValidator():
     @staticmethod
     def get_packs_white_list(whitelist_path):
         final_white_list = []
+        files_white_list = []
+
         if os.path.isfile(whitelist_path):
             with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
-                final_white_list = secrets_white_list_file.read().split('\n')
-        return final_white_list, [], []
+                temp_white_list = secrets_white_list_file.read().split('\n')
+            for i in range(len(temp_white_list)):
+                if '/' in temp_white_list[i]:
+                    files_white_list.append(temp_white_list[i])
+                else:
+                    final_white_list.append(temp_white_list[i])
+        return final_white_list, [], files_white_list
 
     def get_file_contents(self, file_path, file_extension):
         try:

@@ -296,7 +296,8 @@ def lint(config, dir, **kwargs):
     "-o", "--output-file-name", help="The path where the formatted file will be saved to")
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
-    default=False, help='Format changed files using git - this will format your branch changes and will run only on them.')
+    default=False, help='Format changed files using git' 
+                        '- this will format your branch changes and will run only on them.')
 def format_yml(use_git=False, file_type=None, **kwargs):
     return format_manager(use_git, file_type, **kwargs)
 

@@ -15,10 +15,15 @@ def get_changed_files(from_branch: str = 'master', filter_results: Callable = No
     files: List = []
     for file in temp_files:
         if file:
-            files.append({
-                'name': file[2:],
+            temp_file_data = {
                 'status': file[0]
-            })
+            }
+            if file.lower().startswith('r'):
+                file = file.split('\t')
+                temp_file_data['name'] = file[2]
+            else:
+                temp_file_data['name'] = file[2:]
+            files.append(temp_file_data)
 
     if filter_results:
         filter(filter_results, files)

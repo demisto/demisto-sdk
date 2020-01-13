@@ -2,6 +2,7 @@ from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.common.hook_validations.docker import DockerImageValidator
 
 
 class IntegrationValidator(BaseValidator):
@@ -49,7 +50,8 @@ class IntegrationValidator(BaseValidator):
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
-            self.is_id_equals_name()
+            self.is_id_equals_name(),
+            self.is_docker_image_valid()
         ]
         return all(answers)
 
@@ -474,4 +476,12 @@ class IntegrationValidator(BaseValidator):
                 self.is_valid = False
                 return True
 
+        return False
+
+    def is_docker_image_valid(self):
+        # type: () -> bool
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True)
+        if not docker_image_validator.is_docker_image_valid():
+            return True
+        self.is_valid = False
         return False

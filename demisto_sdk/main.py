@@ -23,6 +23,7 @@ from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
+from demisto_sdk.generate_playbook_doc.generate_playbook_doc import generate_playbook_doc
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -467,6 +468,20 @@ def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
     return 0
+
+
+# ====================== generate-playbook-doc ====================== #
+@main.command(name="generate-playbook-doc",
+              short_help="Generate playbook documentation from playbook yaml file.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--path", help="path of the playbook yml file.", required=True)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+def generate_playbook_doc_command(**kwargs):
+    generate_playbook_doc(**kwargs)
 
 
 @main.resultcallback()

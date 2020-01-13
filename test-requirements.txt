@@ -3,4 +3,3 @@ pre-commit
 pytest
 pytest-mock
 urllib3
-dateparser

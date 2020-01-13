@@ -24,8 +24,6 @@ mapping:
     type: bool
   beta:
     type: bool
-  feed:
-    type: bool
   category:
     type: str
     enum: [
@@ -84,6 +82,8 @@ mapping:
       subtype:
         type: str
         enum: ['python2', 'python3']
+      feed:
+        type: bool
   system:
     type: bool
   hidden:
@@ -126,6 +126,8 @@ schema;configuration_schema:
       type: seq
       sequence:
       - type: str
+    additionalinfo:
+      type: str
 
 # integration->script->command
 schema;command_schema:

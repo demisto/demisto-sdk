@@ -72,28 +72,33 @@ Extract code, image and description files from a demisto integration or script y
 `demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`
 This will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
 
-### Validate
+### [Validate](https://github.com/demisto/demisto-sdk/tree/master/docs/validate_command.md)
 
-Validate your content files.
+Makes sure your content repository files are in order and have valid yml file scheme.
+
 **Arguments**:
-* *-c CIRCLE, --circle CIRCLE*
-                        Is CircleCi or not
-* *-b BACKWARD_COMP, --backward-comp BACKWARD_COMP*
-                        To check backward compatibility.
-* *-t TEST_FILTER, --test-filter TEST_FILTER*
-                        Check that tests are valid.
-* *-j, --conf-json*
+* **--no-backward-comp**
+                        Whether to check backward compatibility or not.
+* **-j, --conf-json**
                         Validate the conf.json file.
-* *-i, --id-set*
+* **-i, --id-set**
                         Create the id_set.json file.
-* *-p PREV_VER, --prev-ver PREV_VER*
+* **--prev-ver**
                         Previous branch or SHA1 commit to run checks against.
-* *-g, --use-git*
-                        Validate changes using git.
+* **-g, --use-git**
+                        Validate changes using git - this will check your branch changes and will run only on them.
+* **--post-commit** Whether the validation is done after you committed your files,
+                    this will help the command to determine which files it should check in its
+                    run. Before you commit the files it should not be used. Mostly for build validations.
+* **-p, --path**
+                        Path of file to validate specifically.
 
 **Examples**:
 `demisto-sdk validate`
-This will validate your content files.
+This will validate all the files in content repo.
+<br>
+`demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml`
+This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
 
 ### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 
@@ -133,13 +138,17 @@ pylint and pytest will run within all the docker images of an integration/script
 `demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
 This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
 
-### Secrets
+### [Secrets](https://github.com/demisto/demisto-sdk/tree/master/docs/secrets.md)
 
 Run Secrets validator to catch sensitive data before exposing your code to public repository. Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "./Tests/secrets_white_list.json".
 **Arguments**:
-* *-c CIRCLE, --circle CIRCLE*
-                        Is CircleCi or not (default: False)
-* *-wl WHITELIST, --whitelist WHITELIST*
+* **--post-commit**
+                       Whether the secretes validation is done after you committed your files.
+                       This will help the command to determine which files it should check in its
+                       run. Before you commit the files it should not be used. Mostly for build
+                       validations. (default: False)
+
+* **-wl WHITELIST, --whitelist WHITELIST*
                         Full path to whitelist file, file name should be "secrets_white_list.json" (default: ./Tests/secrets_white_list.json)
 
 **Examples**:
@@ -161,19 +170,19 @@ Create content artifacts.
 `demisto-sdk create -a .`
 This will create content artifacts in the current directory.
 
-### Format
+### [Format](https://github.com/demisto/demisto-sdk/tree/master/docs/format_command.md)
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
 **Arguments**:
 * *-t {integration, script, playbook}, --type {integration, script, playbook}*
                         The type of yml file to be formatted.
-* *-p PATH_TO_YML, --path PATH_TO_YML*
+* *-s PATH_TO_YML, --source-file PATH_TO_YML*
                         The path of the desired yml file to be formatted.
 * *-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH*
                         The path where the formatted file will be saved to. (Default will be to override origin file)
 
 **Examples**:
-` demisto-sdk format -t integration -p Integrations/Pwned-V2/Pwned-V2.yml`.
+` demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml`.
 This will go through the integration file, format it, and override the original file with the necessary changes.
 
 ### [Run-playbook](https://github.com/demisto/demisto-sdk/tree/master/docs/run_playbook_command.md)
@@ -287,8 +296,9 @@ Create a pack, integration or script template. If `--integration` and `--script`
 * **-n, --name** The name given to the files and directories of new pack/integration/script being created
 * **--id** The id used for the yml file of the integration/script
 * **-o, --outdir** The directory to which the created object will be saved
-* **--integration** Create an integration
-* **--script** Create a script
+* **--integration** Create an integration.
+* **--script** Create a script.
+* **--pack** Create a pack.
 
 **Example**:
 `demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`

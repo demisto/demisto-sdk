@@ -1,9 +1,12 @@
+import os
 import sys
 import click
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.runners.runner import Runner
+from demisto_sdk.common.tools import print_error
+from demisto_sdk.yaml_tools.format_module import format_manager
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.dev_tools.initiator import Initiator
@@ -13,14 +16,11 @@ from demisto_sdk.dev_tools.lint_manager import LintManager
 from demisto_sdk.validation.secrets import SecretsValidator
 from demisto_sdk.runners.playbook_runner import PlaybookRunner
 from demisto_sdk.validation.file_validator import FilesValidator
-from demisto_sdk.yaml_tools.update_script import ScriptYMLFormat
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
-from demisto_sdk.yaml_tools.update_playbook import PlaybookYMLFormat
 from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
-from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
+
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -132,6 +132,9 @@ def extract_code(config, **kwargs):
 # ====================== unify ====================== #
 @main.command(name="unify",
               short_help='Unify code, image, description and yml files to a single Demisto yml file.')
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     "-i", "--indir", help="The path to the files to unify", required=True
 )
@@ -157,7 +160,7 @@ def unify(**kwargs):
     '-i', '--id-set', is_flag=True,
     default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
-    '-p', '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
                                         'this will help the command to determine which files it should check in its '
@@ -169,15 +172,25 @@ def unify(**kwargs):
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
+@click.option(
+    '-p', '--path', help='Path of file to validate specifically.'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    validator = FilesValidator(configuration=config.configuration,
-                               is_backward_check=not kwargs['no_backward_comp'],
-                               is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                               validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'])
-    return validator.run()
+    file_path = kwargs['path']
+
+    if file_path and not os.path.isfile(file_path):
+        print_error(F'File {file_path} was not found')
+        return 1
+    else:
+        validator = FilesValidator(configuration=config.configuration,
+                                   is_backward_check=not kwargs['no_backward_comp'],
+                                   is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                   validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
+                                   file_path=kwargs.get('path'))
+        return validator.run()
 
 
 # ====================== create ====================== #
@@ -207,15 +220,18 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-c', '--circle', is_flag=True, show_default=True,
-    help='Is CircleCi or not')
+    '--post-commit', is_flag=True, show_default=True,
+    help='Whether the secretes is done after you committed your files, '
+         'this will help the command to determine which files it should check in its '
+         'run. Before you commit the files it should not be used. Mostly for build '
+         'validations.')
 @click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['circle'],
+    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
                                white_list_path=kwargs['whitelist'])
     return secrets.run()
 
@@ -273,22 +289,17 @@ def lint(config, dir, **kwargs):
 )
 @click.option(
     "-t", "--file-type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file to be formatted.", required=True)
+    help="The type of yml file to be formatted.")
 @click.option(
-    "-s", "--source-file", help="The path of the script yml file", required=True)
+    "-s", "--source-file", help="The path of the script yml file")
 @click.option(
     "-o", "--output-file-name", help="The path where the formatted file will be saved to")
-def format_yml(file_type, **kwargs):
-    file_type_and_linked_class = {
-        'integration': IntegrationYMLFormat,
-        'script': ScriptYMLFormat,
-        'playbook': PlaybookYMLFormat
-    }
-    if file_type in file_type_and_linked_class:
-        format_object = file_type_and_linked_class[file_type](**kwargs)
-        return format_object.format_file()
-
-    return 1
+@click.option(
+    '-g', '--use-git', is_flag=True, show_default=True,
+    default=False, help='Format changed files using git' 
+                        '- this will format your branch changes and will run only on them.')
+def format_yml(use_git=False, file_type=None, **kwargs):
+    return format_manager(use_git, file_type, **kwargs)
 
 
 @main.command(name="upload",
@@ -447,6 +458,7 @@ def generate_test_playbook(**kwargs):
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+@click.option("--pack", is_flag=True, help="Create pack and its sub directories")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

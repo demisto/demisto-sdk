@@ -38,7 +38,8 @@ class IncidentFieldValidator(BaseValidator):
         """Validate that the name and cliName does not contain any potential incident synonyms."""
         name = self.current_file.get('name', '')
         cli_name = self.current_file.get('cliName', '')
-        bad_words = {'incident', 'case', 'alert', 'event', 'play', 'ticket', 'issue'}
+        bad_words = {'incident', 'case', 'alert', 'event', 'playbook', 'ticket', 'issue',
+                     'incidents', 'cases', 'alerts', 'events', 'playbooks', 'tickets', 'issues'}
         whitelisted_field_names = {
             'XDR Alert Count',
             'XDR High Severity Alert Count',
@@ -47,9 +48,9 @@ class IncidentFieldValidator(BaseValidator):
             'XDR Incident ID',
             'Detection Ticketed'
         }
-        for word in bad_words:
-            if name not in whitelisted_field_names:
-                if word in name.lower() or word in cli_name.lower():
+        if name not in whitelisted_field_names:
+            for word in cli_name.split() + name.split():
+                if word.lower() in bad_words:
                     print_error("The word {} cannot be used as a name/cliName, "
                                 "please update the file {}.".format(word, self.file_path))
                     return False

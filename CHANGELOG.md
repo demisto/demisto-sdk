@@ -4,6 +4,28 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.4
+* Saved failing unit tests as a file.
+* Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
+* Add validation for docker image inside integrations and scripts.
+* Add --use-git flag to format command to format all changed files.
+
+### 0.3.3
+* Added backwards compatibility break error message.
+* Added schema for incident types.
+* Added **additionalinfo** field to as an available field for integration configuration.
+* Added pack parameter for **init**.
+* Fixed an issue where error would appear if name parameter is not set in **init**.
+
+### 0.3.2
+* Fixed the handling of classifier files in **validate**.
+
+
+### 0.3.1
+* Fixed the handling of newly created reputation files in **validate**.
+* Added an option to perform **validate** on a specific file.
+
+
 ### 0.3.0
 
 * Added support for multi-package **lint** both with parallel and without.

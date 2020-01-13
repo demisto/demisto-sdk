@@ -1,7 +1,6 @@
 import os
 import sys
 import click
-import re
 from pkg_resources import get_distribution
 
 from demisto_sdk.core import DemistoSDK
@@ -27,7 +26,6 @@ from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX, YML_
 
 from demisto_sdk.git_tools import Git
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
-from demisto_sdk.common.tools import run_command
 from demisto_sdk.common.tools import checked_type
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 

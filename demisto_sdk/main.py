@@ -6,7 +6,7 @@ from pkg_resources import get_distribution
 from demisto_sdk.core import DemistoSDK
 from demisto_sdk.runners.runner import Runner
 from demisto_sdk.common.tools import print_error
-from demisto_sdk.yaml_tools.format_module import format_command
+from demisto_sdk.yaml_tools.format_module import format_manager
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.dev_tools.uploader import Uploader
 from demisto_sdk.dev_tools.initiator import Initiator
@@ -19,9 +19,9 @@ from demisto_sdk.validation.file_validator import FilesValidator
 from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
-
-
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
+
+
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
@@ -294,8 +294,8 @@ def lint(config, dir, **kwargs):
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Format changed files using git - this will format your branch changes and will run only on them.')
-def format_yml(**kwargs):
-    return format_command(kwargs)
+def format_yml(use_git=False, file_type=None, **kwargs):
+    return format_manager(use_git, file_type, **kwargs)
 
 
 @main.command(name="upload",

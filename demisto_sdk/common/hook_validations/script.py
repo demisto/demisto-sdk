@@ -1,6 +1,7 @@
 from demisto_sdk.common.constants import PYTHON_SUBTYPES, Errors
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.common.tools import print_error, server_version_compare, get_dockerimage45
+from demisto_sdk.common.hook_validations.docker import DockerImageValidator
 
 
 class ScriptValidator(BaseValidator):
@@ -36,7 +37,8 @@ class ScriptValidator(BaseValidator):
             self.is_added_required_args(),
             self.is_arg_changed(),
             self.is_there_duplicates_args(),
-            self.is_changed_subtype()
+            self.is_changed_subtype(),
+            self.is_docker_image_valid()
         ]
 
         # Add sane-doc-report exception
@@ -159,3 +161,10 @@ class ScriptValidator(BaseValidator):
                 bool. Whether the script's id equals to its name
             """
         return super(ScriptValidator, self)._is_id_equals_name('script')
+
+    def is_docker_image_valid(self):
+        # type: () -> bool
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False)
+        if not docker_image_validator.is_docker_image_valid():
+            return True
+        return False

@@ -69,6 +69,7 @@ class Unifier:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['fromversion'], '5.0.0') >= 0:
                     raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
+
                 yml_text = re.sub(r'^fromversion:.*$', 'fromversion: 5.0.0', yml_text, flags=re.MULTILINE)
             else:
                 yml_text = 'fromversion: 5.0.0\n' + yml_text
@@ -76,24 +77,29 @@ class Unifier:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['toversion'], '5.0.0') < 0:
                     raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
+
                 yml_text45 = re.sub(r'^toversion:.*$', 'toversion: 4.5.9', yml_text45, flags=re.MULTILINE)
             else:
                 yml_text45 = 'toversion: 4.5.9\n' + yml_text45
+
             if script_obj.get('dockerimage45'):  # we have a value for dockerimage45 set it as dockerimage
                 yml_text45 = re.sub(r'(^\s*dockerimage:).*$', r'\1 ' + script_obj.get('dockerimage45'),
                                     yml_text45, flags=re.MULTILINE)
             else:  # no value for dockerimage45 remove the dockerimage entry
                 yml_text45 = re.sub(r'^\s*dockerimage:.*\n?', '', yml_text45, flags=re.MULTILINE)
+
             output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
             output_map = {
                 self.dest_path: yml_text,
                 output_path45: yml_text45
             }
+
         for file_path, file_text in output_map.items():
             if os.path.isfile(file_path):
                 raise ValueError('Output file already exists: {}.'
                                  ' Make sure to remove this file from source control'
                                  ' or rename this package (for example if it is a v2).'.format(self.dest_path))
+
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
                 file_.write(file_text)
 
@@ -146,6 +152,8 @@ class Unifier:
 
         output_map = self.write_yaml_with_docker(yaml.dump(yml_unified, Dumper=yamlordereddictloader.SafeDumper),
                                                  yml_data, script_obj)
+        # output_map = self.write_yaml_with_docker(yml_unified, # yaml.dump(yml_unified, Dumper=yamlordereddictloader.SafeDumper),
+        #                                          yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
         print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
 

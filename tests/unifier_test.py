@@ -1,7 +1,9 @@
+import copy
 import pytest
 from mock import patch
-import yaml
 import base64
+import yaml
+import yamlordereddictloader
 
 DUMMY_SCRIPT = '''
     def main():
@@ -111,9 +113,10 @@ def test_insert_description_to_yml():
         with open("tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
             desc_data = desc_file.read().decode("utf-8")
             desc_data = '|\n  ' + desc_data.replace('\n', '\n  ')
-        yml_text, found_data_path = unifier.insert_description_to_yml({}, "")
+        yml_unified, found_data_path = unifier.insert_description_to_yml({}, {})
+
         assert found_data_path == "tests/test_files/VulnDB/VulnDB_description.md"
-        assert desc_data in yml_text
+        assert desc_data == yml_unified['detaildescriptions']
 
 
 def test_insert_image_to_yml():
@@ -127,13 +130,13 @@ def test_insert_image_to_yml():
             image_data = image_file.read()
             image_data = unifier.image_prefix + base64.b64encode(image_data).decode('utf-8')
         with open("tests/test_files/VulnDB/VulnDB.yml", mode="r", encoding="utf-8") as yml_file:
-            yml_text_test = yml_file.read()
+            yml_unified_test = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
         with open("tests/test_files/VulnDB/VulnDB.yml", "r") as yml:
             yml_data = yaml.safe_load(yml)
-        yml_text, found_img_path = unifier.insert_image_to_yml(yml_data, yml_text_test)
-        yml_text_test = 'image: ' + image_data + '\n' + yml_text_test
+        yml_unified, found_img_path = unifier.insert_image_to_yml(yml_data, yml_unified_test)
+        yml_unified_test['image'] = image_data
         assert found_img_path == "tests/test_files/VulnDB/VulnDB_image.png"
-        assert yml_text == yml_text_test
+        assert yml_unified == yml_unified_test
 
 
 def test_check_api_module_imports():
@@ -168,23 +171,23 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
         unifier = Unifier("", None, None, None)
         unifier.package_path = package_path
         unifier.dir_name = dir_name
-        with open(file_path + ".yml", mode="r", encoding="utf-8") as yml_file:
-            test_yml_text = yml_file.read()
         with open(file_path + ".yml", "r") as yml:
             test_yml_data = yaml.safe_load(yml)
 
-        yml_text, script_path = unifier.insert_script_to_yml(".py", test_yml_text, test_yml_data)
+        test_yml_unified = copy.deepcopy(test_yml_data)
+
+        yml_unified, script_path = unifier.insert_script_to_yml(".py", test_yml_unified, test_yml_data)
 
         with open(file_path + ".py", mode="r", encoding="utf-8") as script_file:
             script_code = script_file.read()
         clean_code = unifier.clean_python_code(script_code)
-        lines = ['|-']
-        lines.extend(u'    {}'.format(line) for line in clean_code.split('\n'))
-        script_code = u'\n'.join(lines)
-        test_yml_text = test_yml_text.replace("script: ''", "script: " + script_code)
-        test_yml_text = test_yml_text.replace("script: '-'", "script: " + script_code)
 
-        assert yml_text == test_yml_text
+        if test_yml_unified.get('script', {}).get('script'):
+            test_yml_unified['script']['script'] = clean_code
+        else:
+            test_yml_unified['script'] = clean_code
+
+        assert yml_unified == test_yml_unified
         assert script_path == file_path + ".py"
 
 
@@ -207,4 +210,4 @@ def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
             test_yml_data['script']['script'] = 'blah'
 
         with pytest.raises(ValueError):
-            unifier.insert_script_to_yml(".py", "", test_yml_data)
+            unifier.insert_script_to_yml(".py", {}, test_yml_data)

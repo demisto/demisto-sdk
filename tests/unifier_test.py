@@ -116,7 +116,7 @@ def test_insert_description_to_yml():
         yml_unified, found_data_path = unifier.insert_description_to_yml({}, {})
 
         assert found_data_path == "tests/test_files/VulnDB/VulnDB_description.md"
-        assert desc_data == yml_unified['detaildescriptions']
+        assert desc_data == yml_unified['detaileddescription']
 
 
 def test_insert_image_to_yml():
@@ -182,10 +182,10 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
             script_code = script_file.read()
         clean_code = unifier.clean_python_code(script_code)
 
-        if test_yml_unified.get('script', {}).get('script'):
-            test_yml_unified['script']['script'] = clean_code
-        else:
+        if isinstance(test_yml_unified.get('script', {}), str):
             test_yml_unified['script'] = clean_code
+        else:
+            test_yml_unified['script']['script'] = clean_code
 
         assert yml_unified == test_yml_unified
         assert script_path == file_path + ".py"

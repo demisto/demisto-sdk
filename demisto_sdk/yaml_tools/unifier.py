@@ -23,6 +23,10 @@ def repr_str(dumper, data):
     return dumper.org_represent_str(data)
 
 
+yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
+yaml.add_representer(str, repr_str, Dumper=yaml.SafeDumper)
+
+
 class Unifier:
 
     def __init__(self, indir: str, dir_name=INTEGRATIONS_DIR, outdir='',
@@ -45,63 +49,63 @@ class Unifier:
         self.dir_name = dir_name
         self.dest_path = outdir
 
-    def write_yaml_with_docker(self, yml_text, yml_data, script_obj):
+    def write_yaml_with_docker(self, yml_unified, yml_data, script_obj):
         """Write out the yaml file taking into account the dockerimage45 tag.
         If it is present will create 2 integration files
         One for 4.5 and below and one for 5.0.
 
         Arguments:
             output_path {str} -- output path
-            yml_text {str} -- yml text
+            yml_unified {dict} -- unified yml dict
             yml_data {dict} -- yml object
             script_obj {dict} -- script object
 
         Returns:
-            dict -- dictionary mapping output path to text data
+            dict -- dictionary mapping output path to unified data
         """
-        output_map = {self.dest_path: yml_text}
+        output_map = {self.dest_path: yml_unified}
         if 'dockerimage45' in script_obj:
             # we need to split into two files 45 and 50. Current one will be from version 5.0
-            yml_text = re.sub(r'^\s*dockerimage45:.*\n?', '', yml_text,
-                              flags=re.MULTILINE)  # remove the dockerimage45 line
-            yml_text45 = yml_text
+            del yml_unified['dockerimage45']
+            yml_unified45 = copy.deepcopy(yml_unified)
+
             if 'fromversion' in yml_data:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['fromversion'], '5.0.0') >= 0:
                     raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
 
-                yml_text = re.sub(r'^fromversion:.*$', 'fromversion: 5.0.0', yml_text, flags=re.MULTILINE)
-            else:
-                yml_text = 'fromversion: 5.0.0\n' + yml_text
+            yml_unified['fromversion'] = '5.0.0'
+
             if 'toversion' in yml_data:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['toversion'], '5.0.0') < 0:
                     raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
 
-                yml_text45 = re.sub(r'^toversion:.*$', 'toversion: 4.5.9', yml_text45, flags=re.MULTILINE)
-            else:
-                yml_text45 = 'toversion: 4.5.9\n' + yml_text45
+            yml_unified45['toversion'] = '4.5.9'
 
             if script_obj.get('dockerimage45'):  # we have a value for dockerimage45 set it as dockerimage
-                yml_text45 = re.sub(r'(^\s*dockerimage:).*$', r'\1 ' + script_obj.get('dockerimage45'),
-                                    yml_text45, flags=re.MULTILINE)
+                if isinstance(yml_unified45['script'], str):
+                    yml_unified45['dockerimage'] = script_obj.get('dockerimage45')
+                else:
+                    yml_unified45['script']['dockerimage'] = script_obj.get('dockerimage45')
+
             else:  # no value for dockerimage45 remove the dockerimage entry
-                yml_text45 = re.sub(r'^\s*dockerimage:.*\n?', '', yml_text45, flags=re.MULTILINE)
+                del yml_unified45['dockerimage']
 
             output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
             output_map = {
-                self.dest_path: yml_text,
-                output_path45: yml_text45
+                self.dest_path: yml_unified,
+                output_path45: yml_unified45,
             }
 
-        for file_path, file_text in output_map.items():
+        for file_path, file_data in output_map.items():
             if os.path.isfile(file_path):
                 raise ValueError('Output file already exists: {}.'
                                  ' Make sure to remove this file from source control'
                                  ' or rename this package (for example if it is a v2).'.format(self.dest_path))
 
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
-                file_.write(file_text)
+                yaml.dump(file_data, stream=file_, Dumper=yamlordereddictloader.SafeDumper)
 
         return output_map
 
@@ -147,12 +151,9 @@ class Unifier:
             yml_unified, image_path = self.insert_image_to_yml(yml_data, yml_unified)
             yml_unified, desc_path = self.insert_description_to_yml(yml_data, yml_unified)
 
-        yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
-        yaml.add_representer(str, repr_str, Dumper=yaml.SafeDumper)
-
-        output_map = self.write_yaml_with_docker(yaml.dump(yml_unified, Dumper=yamlordereddictloader.SafeDumper),
-                                                 yml_data, script_obj)
-        # output_map = self.write_yaml_with_docker(yml_unified, yml_data, script_obj)
+        # output_map = self.write_yaml_with_docker(yaml.dump(yml_unified, Dumper=yamlordereddictloader.SafeDumper),
+        #                                          yml_data, script_obj)
+        output_map = self.write_yaml_with_docker(yml_unified, yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
         print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
 

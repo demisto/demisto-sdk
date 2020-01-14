@@ -66,27 +66,29 @@ class Unifier:
         output_map = {self.dest_path: yml_unified}
         if 'dockerimage45' in script_obj:
             # we need to split into two files 45 and 50. Current one will be from version 5.0
-            del yml_unified['dockerimage45']
+            if isinstance(yml_unified['script'], str):  # scripts
+                del yml_unified['dockerimage45']
+            else:  # integrations
+                del yml_unified['script']['dockerimage45']
+
             yml_unified45 = copy.deepcopy(yml_unified)
 
-            if 'fromversion' in yml_data:
-                # validate that this is a script/integration which targets both 4.5 and 5.0+.
-                if server_version_compare(yml_data['fromversion'], '5.0.0') >= 0:
-                    raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
+            # validate that this is a script/integration which targets both 4.5 and 5.0+.
+            if server_version_compare(yml_data.get('fromversion', '0.0.0'), '5.0.0') >= 0:
+                raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
 
             yml_unified['fromversion'] = '5.0.0'
 
-            if 'toversion' in yml_data:
-                # validate that this is a script/integration which targets both 4.5 and 5.0+.
-                if server_version_compare(yml_data['toversion'], '5.0.0') < 0:
-                    raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
+            # validate that this is a script/integration which targets both 4.5 and 5.0+.
+            if server_version_compare(yml_data.get('toversion', '99.99.99'), '5.0.0') < 0:
+                raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
 
             yml_unified45['toversion'] = '4.5.9'
 
             if script_obj.get('dockerimage45'):  # we have a value for dockerimage45 set it as dockerimage
-                if isinstance(yml_unified45['script'], str):
+                if isinstance(yml_unified45['script'], str):  # scripts
                     yml_unified45['dockerimage'] = script_obj.get('dockerimage45')
-                else:
+                else:  # integrations
                     yml_unified45['script']['dockerimage'] = script_obj.get('dockerimage45')
 
             else:  # no value for dockerimage45 remove the dockerimage entry

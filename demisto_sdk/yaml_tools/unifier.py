@@ -151,8 +151,6 @@ class Unifier:
             yml_unified, image_path = self.insert_image_to_yml(yml_data, yml_unified)
             yml_unified, desc_path = self.insert_description_to_yml(yml_data, yml_unified)
 
-        # output_map = self.write_yaml_with_docker(yaml.dump(yml_unified, Dumper=yamlordereddictloader.SafeDumper),
-        #                                          yml_data, script_obj)
         output_map = self.write_yaml_with_docker(yml_unified, yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
         print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)

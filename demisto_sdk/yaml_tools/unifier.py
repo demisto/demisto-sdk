@@ -1,16 +1,26 @@
 import os
 import io
 import glob
-import yaml
 import base64
 import re
+import copy
 from typing import Tuple
+
+import yaml
+import yamlordereddictloader
 
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error, print_color, \
     LOG_COLORS
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
+
+
+def repr_str(dumper, data):
+    if '\n' in data:
+        return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
+
+    return dumper.org_represent_str(data)
 
 
 class Unifier:
@@ -34,8 +44,6 @@ class Unifier:
 
         self.dir_name = dir_name
         self.dest_path = outdir
-
-        self.is_ci = os.getenv('CI', False)
 
     def write_yaml_with_docker(self, yml_text, yml_data, script_obj):
         """Write out the yaml file taking into account the dockerimage45 tag.
@@ -61,6 +69,7 @@ class Unifier:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['fromversion'], '5.0.0') >= 0:
                     raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
+
                 yml_text = re.sub(r'^fromversion:.*$', 'fromversion: 5.0.0', yml_text, flags=re.MULTILINE)
             else:
                 yml_text = 'fromversion: 5.0.0\n' + yml_text
@@ -68,26 +77,32 @@ class Unifier:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['toversion'], '5.0.0') < 0:
                     raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
+
                 yml_text45 = re.sub(r'^toversion:.*$', 'toversion: 4.5.9', yml_text45, flags=re.MULTILINE)
             else:
                 yml_text45 = 'toversion: 4.5.9\n' + yml_text45
+
             if script_obj.get('dockerimage45'):  # we have a value for dockerimage45 set it as dockerimage
                 yml_text45 = re.sub(r'(^\s*dockerimage:).*$', r'\1 ' + script_obj.get('dockerimage45'),
                                     yml_text45, flags=re.MULTILINE)
             else:  # no value for dockerimage45 remove the dockerimage entry
                 yml_text45 = re.sub(r'^\s*dockerimage:.*\n?', '', yml_text45, flags=re.MULTILINE)
+
             output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
             output_map = {
                 self.dest_path: yml_text,
                 output_path45: yml_text45
             }
+
         for file_path, file_text in output_map.items():
             if os.path.isfile(file_path):
                 raise ValueError('Output file already exists: {}.'
                                  ' Make sure to remove this file from source control'
                                  ' or rename this package (for example if it is a v2).'.format(self.dest_path))
+
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
                 file_.write(file_text)
+
         return output_map
 
     def merge_script_package_to_yml(self):
@@ -115,7 +130,7 @@ class Unifier:
                 break
 
         with open(yml_path, 'r') as yml_file:
-            yml_data = yaml.safe_load(yml_file)
+            yml_data = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
 
         script_obj = yml_data
 
@@ -123,57 +138,49 @@ class Unifier:
             script_obj = yml_data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
-        with io.open(yml_path, mode='r', encoding='utf-8') as yml_file:
-            yml_text = yml_file.read()
+        yml_unified = copy.deepcopy(yml_data)
 
-        yml_text, script_path = self.insert_script_to_yml(script_type, yml_text, yml_data)
+        yml_unified, script_path = self.insert_script_to_yml(script_type, yml_unified, yml_data)
         image_path = None
         desc_path = None
         if self.dir_name in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR):
-            yml_text, image_path = self.insert_image_to_yml(yml_data, yml_text)
-            yml_text, desc_path = self.insert_description_to_yml(yml_data, yml_text)
+            yml_unified, image_path = self.insert_image_to_yml(yml_data, yml_unified)
+            yml_unified, desc_path = self.insert_description_to_yml(yml_data, yml_unified)
 
-        output_map = self.write_yaml_with_docker(yml_text, yml_data, script_obj)
+        yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
+        yaml.add_representer(str, repr_str, Dumper=yaml.SafeDumper)
+
+        output_map = self.write_yaml_with_docker(yaml.dump(yml_unified, Dumper=yamlordereddictloader.SafeDumper),
+                                                 yml_data, script_obj)
+        # output_map = self.write_yaml_with_docker(yml_unified, # yaml.dump(yml_unified, Dumper=yamlordereddictloader.SafeDumper),
+        #                                          yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
         print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
+
         return unifier_outputs
 
-    def insert_image_to_yml(self, yml_data, yml_text):
+    def insert_image_to_yml(self, yml_data, yml_unified):
         image_data, found_img_path = self.get_data("*png")
         image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
         if yml_data.get('image'):
-            yml_text = yml_text.replace(yml_data['image'], image_data)
+            raise ValueError('Please move the image from the yml to an image file (.png)'
+                             ' in the package: {}'.format(self.package_path))
 
-        else:
-            yml_text = 'image: ' + image_data + '\n' + yml_text
-        # verify that our yml is good (loads and returns the image)
-        mod_yml_data = yaml.safe_load(yml_text)
-        yml_image = mod_yml_data.get('image')
-        assert yml_image.strip() == image_data.strip()
+        yml_unified['image'] = image_data
 
-        return yml_text, found_img_path
+        return yml_unified, found_img_path
 
-    def insert_description_to_yml(self, yml_data, yml_text):
+    def insert_description_to_yml(self, yml_data, yml_unified):
         desc_data, found_desc_path = self.get_data('*_description.md')
 
         if yml_data.get('detaileddescription'):
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
                              ' in the package: {}'.format(self.package_path))
         if desc_data:
-            desc_data = desc_data.decode('utf-8')
-            if not desc_data.startswith('"'):
-                # for multiline detailed-description, if it's not wrapped in quotation marks
-                # add | to the beginning of the description, and shift everything to the right
-                desc_data = '|\n  ' + desc_data.replace('\n', '\n  ')
-            temp_yml_text = u"detaileddescription: "
-            temp_yml_text += desc_data
-            temp_yml_text += u"\n"
-            temp_yml_text += yml_text
+            yml_unified['detaileddescription'] = desc_data.decode('utf-8')
 
-            yml_text = temp_yml_text
-
-        return yml_text, found_desc_path
+        return yml_unified, found_desc_path
 
     def get_data(self, extension):
         data_path = glob.glob(os.path.join(self.package_path, extension))
@@ -198,16 +205,19 @@ class Unifier:
                         r'|conftest\.py|__init__\.py|ApiModule\.py')
         if not self.package_path.endswith('/'):
             self.package_path += '/'
+
         if self.package_path.endswith('Scripts/CommonServerPython/'):
             return self.package_path + 'CommonServerPython.py'
+
         if self.package_path.endswith('ApiModule/'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
         script_path = list(filter(lambda x: not re.search(ignore_regex, x),
                                   glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
+
         return script_path
 
-    def insert_script_to_yml(self, script_type, yml_text, yml_data):
+    def insert_script_to_yml(self, script_type, yml_unified, yml_data):
         script_path = self.get_code_file(script_type)
         with io.open(script_path, mode='r', encoding='utf-8') as script_file:
             script_code = script_file.read()
@@ -220,43 +230,32 @@ class Unifier:
 
         clean_code = self.clean_python_code(script_code)
 
-        lines = ['|-']
-        lines.extend(u'    {}'.format(line) for line in clean_code.split('\n'))
-        script_code = u'\n'.join(lines)
-
         if self.dir_name == 'Scripts':
             if yml_data.get('script'):
-                if yml_data['script'] != '-' and yml_data['script'] != '':
+                if yml_data['script'] not in ('', '-'):
                     raise ValueError("Please change the script to be blank or a dash(-) for package {}"
                                      .format(self.package_path))
+
+                yml_unified['script'] = clean_code
 
         elif self.dir_name == 'Integrations' or self.dir_name == 'Beta_Integrations':
             if yml_data.get('script', {}).get('script'):
-                if yml_data['script']['script'] != '-' and yml_data['script']['script'] != '':
+                if yml_data['script']['script'] not in ('', '-'):
                     raise ValueError("Please change the script to be blank or a dash(-) for package {}"
                                      .format(self.package_path))
+
+                yml_unified['script']['script'] = clean_code
         else:
             raise ValueError('Unknown yml type for dir: {}. Expecting: Scripts/Integrations'.format(self.package_path))
 
-        yml_text = yml_text.replace("script: ''", "script: " + script_code)
-        yml_text = yml_text.replace("script: '-'", "script: " + script_code)
-
-        # verify that our yml is good (loads and returns the code)
-        mod_yml_data = yaml.safe_load(yml_text)
-        if self.dir_name == 'Scripts':
-            yml_script = mod_yml_data.get('script')
-        else:
-            yml_script = mod_yml_data.get('script', {}).get('script')
-
-        assert yml_script.strip() == clean_code.strip()
-
-        return yml_text, script_path
+        return yml_unified, script_path
 
     def get_script_package_data(self):
         _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
         if not yml_path:
             raise Exception("No yml files found in package path: {}. "
                             "Is this really a package dir? If not remove it.".format(self.package_path))
+
         code_type = get_yaml(yml_path).get('type')
         unifier = Unifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
@@ -279,8 +278,8 @@ class Unifier:
         module_match = re.search(module_regex, script_code)
         if module_match:
             return module_match.group(), module_match.group(1)
-        else:
-            return '', ''
+
+        return '', ''
 
     @staticmethod
     def insert_module_code(script_code: str, module_import: str, module_name: str) -> str:
@@ -311,8 +310,8 @@ class Unifier:
         try:
             with io.open(module_path, mode='r', encoding='utf-8') as script_file:
                 module_code = script_file.read()
-        except Exception as e:
-            raise ValueError('Could not retrieve the module [{}] code: {}'.format(module_name, str(e)))
+        except Exception as exc:
+            raise ValueError('Could not retrieve the module [{}] code: {}'.format(module_name, str(exc)))
 
         return module_code
 

@@ -74,7 +74,7 @@ class Linter:
         self.lock = lock
         self.requirements_3 = requirements_3 + get_dev_requirements(envs_dirs_base=self.project_dir,
                                                                     py_version=3,
-                                                                    integration_pip=True),
+                                                                    integration_pip=True)
         self.requirements_2 = requirements_2 + get_dev_requirements(envs_dirs_base=self.project_dir,
                                                                     py_version=2,
                                                                     integration_pip=True)
@@ -157,7 +157,6 @@ class Linter:
                             requirements = self.requirements_2
                         else:
                             requirements = self.requirements_3
-
                         docker_image_created = self._docker_image_create(docker, requirements)
                         output, status_code = self._docker_run(docker_image_created)
 

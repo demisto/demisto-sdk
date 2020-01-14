@@ -450,7 +450,7 @@ def get_python_version(docker_image, log_verbose, no_prints=False):
     return py_num
 
 
-def get_pipenv_dir(py_version, envs_dirs_base):
+def get_pipenv_dir(py_version: Union[str, int], envs_dirs_base: str) -> str:
     """
     Get the direcotry holding pipenv files for the specified python version
     Arguments:
@@ -466,19 +466,22 @@ def print_v(msg, log_verbose=False):
         print(msg)
 
 
-def get_dev_requirements(envs_dirs_base, py_version, integration_pip=False, log_verbose=False):
+def get_dev_requirements(envs_dirs_base: str, py_version: Union[float, int], integration_pip: bool = False,
+                         log_verbose: bool = False) -> str:
     """
-    Get the requirements for the specified py version.
-
-    Arguments:
-        py_version {float} -- python version as float (2.7, 3.7)
-
-    Raises:
-        ValueError -- If can't detect python version
+        Get requirements package for python2 or python3 from:
+            1. Package python path.
+            2. Demisto-sdk - demisto_sdk/common/dev_envs
+    Args:
+        envs_dirs_base: package path or demisto-sdk path
+        py_version: version of requested pipfile
+        integration_pip:  True if it is integration pipfile
+        log_verbose: True if log verbose declared
 
     Returns:
-        string -- requirement required for the project
+        requirement as string
     """
+
     stderr_out = None if log_verbose else DEVNULL
     if not integration_pip:
         envs_dirs_base = get_pipenv_dir(py_version, envs_dirs_base)
@@ -487,14 +490,21 @@ def get_dev_requirements(envs_dirs_base, py_version, integration_pip=False, log_
         print_v("dev base requirements for python {}: \n{}".format(py_version, requirements))
         return requirements
     else:
-        if os.path.exists(envs_dirs_base + 'Pipfile'):
+        # Check if pipfile exsits
+        integration_pipfile = os.path.exists(envs_dirs_base + 'Pipfile')
+        # Check pipfile version
+        pipfile_version = 2
+        if integration_pipfile:
             with open(envs_dirs_base + 'Pipfile') as pipfile:
-                pipfile_version = 3 if re.search(r"python_version = \"3", pipfile.readlines()[-1]) else 2
-            if pipfile_version == py_version:
-                requirements = "\n".join(check_output(['pipenv', 'lock', '-r', '-d'], cwd=envs_dirs_base,
-                                                      universal_newlines=True,
-                                                      stderr=stderr_out).split('\n')[1:])
-                print_v("dev base requirements for python {}: \n{}".format(py_version, requirements))
-                return requirements
-            else:
-                return ""
+                if re.search(r"python_version = \"3", pipfile.readlines()[-1]):
+                    pipfile_version = 3
+        # Check pipfile match requested python version
+        if integration_pipfile and py_version == pipfile_version:
+            requirements = "\n".join(check_output(['pipenv', 'lock', '-r', '-d'], cwd=envs_dirs_base,
+                                                  universal_newlines=True,
+                                                  stderr=stderr_out).split('\n')[1:])
+            print_v(
+                "dev base requirements for python {} in pkg {}: \n{}".format(py_version, requirements, envs_dirs_base))
+            return requirements
+
+    return ""

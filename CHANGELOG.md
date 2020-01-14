@@ -7,8 +7,9 @@
 ### 0.3.4
 * Saved failing unit tests as a file.
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
-* Add validation for docker image inside integrations and scripts.
-* Add --use-git flag to format command to format all changed files.
+* Added validation for docker image inside integrations and scripts.
+* Added --use-git flag to **format** command to format all changed files.
+* Fixed an issue where **validate** did not fail on dockerimage changes with bc check.
 
 ### 0.3.3
 * Added backwards compatibility break error message.

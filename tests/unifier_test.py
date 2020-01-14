@@ -112,7 +112,6 @@ def test_insert_description_to_yml():
         unifier.dir_name = "Integrations"
         with open("tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
             desc_data = desc_file.read().decode("utf-8")
-            desc_data = '|\n  ' + desc_data.replace('\n', '\n  ')
         yml_unified, found_data_path = unifier.insert_description_to_yml({}, {})
 
         assert found_data_path == "tests/test_files/VulnDB/VulnDB_description.md"

@@ -338,7 +338,7 @@ class SecretsValidator():
             with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
                 temp_white_list = secrets_white_list_file.read().split('\n')
             for i in range(len(temp_white_list)):
-                if os.path.isfile(os.path.join(PACKS_DIR, temp_white_list[i], PACKS_WHITELIST_FILE_NAME)):
+                if os.path.isfile(os.path.join(PACKS_DIR, temp_white_list[i])):
                     files_white_list.append(temp_white_list[i])
                 else:
                     final_white_list.append(temp_white_list[i])

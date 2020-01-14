@@ -9,6 +9,7 @@
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
 * Add validation for docker image inside integrations and scripts.
 * Add --use-git flag to format command to format all changed files.
+* Fixed an issue where *unify* created a malformed integration yml.  
 
 ### 0.3.3
 * Added backwards compatibility break error message.

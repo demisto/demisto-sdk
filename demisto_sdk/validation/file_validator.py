@@ -572,8 +572,9 @@ class FilesValidator:
                 self.validate_all_files()
         else:
             if self.file_path:
-                self.branch_name = self.get_current_working_branch()
-                self.validate_committed_files()
+                structure_validator = StructureValidator(self.file_path)
+                if not structure_validator.is_valid_file():
+                    self._is_valid = False
             else:
                 print('Not using git, validating all files')
                 self.validate_all_files()

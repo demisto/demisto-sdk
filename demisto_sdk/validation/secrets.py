@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from demisto_sdk.common.constants import re, REQUIRED_YML_FILE_TYPES, PACKS_DIR, PACKS_WHITELIST_FILE_NAME, \
     INTEGRATION_README_REGEX, EXTERNAL_PR_REGEX
 from demisto_sdk.common.tools import run_command, print_error, print_color, LOG_COLORS, checked_type, \
-    is_file_path_in_pack, get_pack_name
+    is_file_path_in_pack, get_pack_name, print_warning
 
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
@@ -144,6 +144,7 @@ class SecretsValidator(object):
             # Get generic/ioc/files white list sets based on if pack or not
             secrets_white_list, ioc_white_list, files_white_list = self.get_white_listed_items(is_pack, pack_name)
             # Skip white listed files
+
             if file_path in files_white_list:
                 print("Skipping secrets detection for file: {} as it is white listed".format(file_path))
                 continue
@@ -305,7 +306,7 @@ class SecretsValidator(object):
     def get_white_listed_items(self, is_pack, pack_name):
         whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME) if is_pack \
             else self.white_list_path
-        final_white_list, ioc_white_list, files_while_list = self.get_packs_white_list(whitelist_path) if is_pack else \
+        final_white_list, ioc_white_list, files_while_list = self.get_packs_white_list(whitelist_path, pack_name) if is_pack else \
             self.get_generic_white_list(whitelist_path)
 
         final_white_list = set(final_white_list)
@@ -336,7 +337,7 @@ class SecretsValidator(object):
             return final_white_list, ioc_white_list, files_while_list
 
     @staticmethod
-    def get_packs_white_list(whitelist_path):
+    def get_packs_white_list(whitelist_path, pack_name=None):
         final_white_list = []
         files_white_list = []
 
@@ -344,7 +345,13 @@ class SecretsValidator(object):
             with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
                 temp_white_list = secrets_white_list_file.read().split('\n')
             for i in range(len(temp_white_list)):
-                if os.path.isfile(os.path.join(PACKS_DIR, temp_white_list[i])):
+                if temp_white_list[i].startswith('file:'):
+                    temp_white_list[i] = os.path.join(PACKS_DIR, pack_name, temp_white_list[i][5:])
+                    if not os.path.isfile(os.path.join(temp_white_list[i])):
+                        print_warning(f'{temp_white_list[i]} not found.\n'
+                                      'please add the file name in the following format\n'
+                                      'file:[Scripts|Integrations|Playbooks]/name/file.example\n'
+                                      'e.g. file:Scripts/HelloWorldScript/HelloWorldScript.py')
                     files_white_list.append(temp_white_list[i])
                 else:
                     final_white_list.append(temp_white_list[i])

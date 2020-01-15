@@ -1,3 +1,4 @@
+from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import get_yaml, print_error
 from distutils.version import LooseVersion
 from pkg_resources import parse_version
@@ -25,6 +26,7 @@ class DockerImageValidator(object):
     def __init__(self, yml_file_path, is_modified_file, is_integration):
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
+        self.file_path = yml_file_path
         self.yml_file = get_yaml(yml_file_path)
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get('fromversion', '0')
@@ -36,6 +38,7 @@ class DockerImageValidator(object):
 
     def is_docker_image_valid(self):
         if not self.is_docker_image_latest_tag():
+            print_error(Errors.not_latest_docker(self.file_path, self.docker_image_tag, self.docker_image_latest_tag))
             self.is_valid = False
         return self.is_valid
 

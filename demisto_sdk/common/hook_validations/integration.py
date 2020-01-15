@@ -53,6 +53,7 @@ class IntegrationValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid()
         ]
+        print(answers)
         return all(answers)
 
     def is_valid_beta_integration(self):
@@ -481,7 +482,8 @@ class IntegrationValidator(BaseValidator):
     def is_docker_image_valid(self):
         # type: () -> bool
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True)
-        if not docker_image_validator.is_docker_image_valid():
+        if docker_image_validator.is_docker_image_valid():
             return True
+
         self.is_valid = False
         return False

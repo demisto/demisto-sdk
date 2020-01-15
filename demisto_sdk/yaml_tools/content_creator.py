@@ -1,11 +1,12 @@
 import os
 import io
 import glob
-import yaml
 import json
 import shutil
 import zipfile
 from typing import List
+import yaml
+import yamlordereddictloader
 
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.tools import get_child_directories, get_child_files, print_warning, \
@@ -140,9 +141,9 @@ class ContentCreator:
             if parent_dir_name != SCRIPTS_DIR:
                 script_obj = yml_info['script']
             with io.open(path, mode='r', encoding='utf-8') as file_:
-                yml_text = file_.read()
+                yml_data = yaml.load(file_, Loader=yamlordereddictloader.SafeLoader)
             unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
-            out_map = unifier.write_yaml_with_docker(yml_text, yml_info, script_obj)
+            out_map = unifier.write_yaml_with_docker(yml_data, yml_info, script_obj)
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))
             return

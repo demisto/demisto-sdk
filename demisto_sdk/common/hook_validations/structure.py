@@ -37,7 +37,7 @@ class StructureValidator:
 
     def __init__(self, file_path, old_file_path=None, predefined_scheme=None, configuration=Configuration()):
         # type: (str, Optional[str], Optional[str], Configuration) -> None
-        self.is_valid = None  # type: Optional[bool]
+        self.is_valid = True
         self.file_path = file_path
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()

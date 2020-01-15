@@ -10,6 +10,9 @@
 * Add validation for docker image inside integrations and scripts.
 * Add --use-git flag to format command to format all changed files.
 * Added an option to validate an integration/script package.
+* Fixed an issue in demisto-sdk **validate** - was failing on backward compatiblity check
+* Fixed an issue in demisto-sdk **secrets** - empty line in .secrets-ignore always made the secrets check to pass
+* Fixed an issue where **validate** did not fail on dockerimage changes with bc check.
 
 
 ### 0.3.3

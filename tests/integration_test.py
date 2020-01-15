@@ -14,7 +14,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
-        return structure
+        return structure    
 
 
 class TestIntegrationValidator:
@@ -109,10 +109,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_command_name_or_arg() is answer
 
-    WITH_DUP = [{"name": "test"}, {"name": "test"}]
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
-        (WITH_DUP, True),
         (WITHOUT_DUP, False)
     ]
 
@@ -122,6 +120,39 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_there_duplicate_params() is answer
+
+    @patch('demisto_sdk.common.hook_validations.integration.print_error')
+    def test_with_duplicate_params(self, print_error):
+        """
+        Given
+        - integration configuratiton contains duplicate parameter (called test)
+
+        When
+        - running the validation is_there_duplicate_params()
+
+        Then
+        - it should set is_valid to False
+        - it should return True (there are duplicate params)
+        - it should print an error message that contains the duplicated param name
+        """
+        # from demisto_sdk.common.tools import print_error
+        # mocker.patch(tools, 'print_error')
+        
+        current = {
+            'configuration': [
+                {'name': 'test'}, 
+                {'name': 'test'}
+            ]
+        }
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+
+        assert validator.is_there_duplicate_params() is True
+        assert validator.is_valid is False
+
+        error_message = print_error.call_args[0][0]
+        assert error_message == ': The parameter \'test\' of the file is duplicated, please remove one of its ' \
+                                'appearances.'
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]

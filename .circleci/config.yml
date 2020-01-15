@@ -16,7 +16,7 @@ jobs:
             name: tox build
             command: |
               pip install tox
-              tox -q
+              tox -q tests
         - run:
             name: deploy
             command: |

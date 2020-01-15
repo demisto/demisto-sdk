@@ -53,7 +53,6 @@ class IntegrationValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid()
         ]
-        print(answers)
         return all(answers)
 
     def is_valid_beta_integration(self):

@@ -306,7 +306,8 @@ class SecretsValidator(object):
     def get_white_listed_items(self, is_pack, pack_name):
         whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME) if is_pack \
             else self.white_list_path
-        final_white_list, ioc_white_list, files_while_list = self.get_packs_white_list(whitelist_path, pack_name) if is_pack else \
+        final_white_list, ioc_white_list, files_while_list = \
+            self.get_packs_white_list(whitelist_path, pack_name) if is_pack else \
             self.get_generic_white_list(whitelist_path)
 
         final_white_list = set(final_white_list)

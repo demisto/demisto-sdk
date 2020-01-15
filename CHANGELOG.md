@@ -5,7 +5,10 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.3.4
+* Saved failing unit tests as a file.
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
+* Add validation for docker image inside integrations and scripts.
+* Add --use-git flag to format command to format all changed files.
 * Added an option to validate an integration/script package.
 
 

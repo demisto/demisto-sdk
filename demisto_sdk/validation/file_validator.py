@@ -293,9 +293,6 @@ class FilesValidator:
 
                     break
 
-            elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-                pass
-
             else:
                 print(f"The file {file_path} doesn't have a validation.")
                 self._is_valid = False

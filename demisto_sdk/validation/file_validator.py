@@ -13,6 +13,10 @@ from __future__ import print_function
 
 import os
 import re
+import logging
+
+from pykwalify.core import Core
+from pykwalify.errors import SchemaError
 
 from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.common.configuration import Configuration
@@ -572,10 +576,16 @@ class FilesValidator:
                 self.validate_all_files()
         else:
             if self.file_path:
-                self.branch_name = self.get_current_working_branch()
-                self.validate_committed_files()
+                print("Validating {}".format(self.file_path))
+                structure_validator = StructureValidator(self.file_path)
+                if not structure_validator.is_valid_file():
+                    self._is_valid = False
             else:
-                print('Not using git, validating all files')
+                not_using = [
+                    'Not using git, ' if self.use_git else '',
+                    'all ' if self.use_git else ''
+                ]
+                print(f'{not_using[0]}validating {not_using[1]}files')
                 self.validate_all_files()
 
         return self._is_valid

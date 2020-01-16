@@ -23,7 +23,9 @@ from demisto_sdk.yaml_tools.update_integration import IntegrationYMLFormat
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
-from demisto_sdk.generate_playbook_doc.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.generate_docs.generate_integration_doc import generate_integration_doc
+from demisto_sdk.generate_docs.generate_script_doc import generate_script_doc
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
@@ -473,18 +475,32 @@ def init(**kwargs):
     return 0
 
 
-# ====================== generate-playbook-doc ====================== #
-@main.command(name="generate-playbook-doc",
-              short_help="Generate playbook documentation from playbook yaml file.")
+# ====================== generate-docs ====================== #
+@main.command(name="generate-docs",
+              short_help="Generate documentation for integration, playbook or script from yaml file.")
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-p", "--path", help="path of the playbook yml file.", required=True)
+    "-i", "--input", help="path of the yml file.", required=True)
+@click.option(
+    "-o", "--output", help="The output dir to write the documentation file into.", required=True)
+@click.option(
+    "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
+    help="The type of yml file.", required=True)
+@click.option(
+    "-c", "--commands", help="Path of file containing command examples. Each Command should be in a separate line. For example: !fidelis-list-alerts time_frame=Last 7 Days", required=False)
+@click.option(
+    "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
-def generate_playbook_doc_command(**kwargs):
-    generate_playbook_doc(**kwargs)
+def format_yml(file_type, **kwargs):
+        if file_type == 'integration':
+             return generate_integration_doc(**kwargs)
+        elif file_type == 'script':
+            return generate_script_doc(**kwargs)
+        elif file_type == 'playbook':
+            return generate_playbook_doc(**kwargs)
 
 
 @main.resultcallback()

@@ -122,3 +122,29 @@ class Runner:
                         for line in log_info:
                             output_file.write(line.encode('utf-8'))
             print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
+
+    def execute_command(self, command: str):
+        playground_id = self._get_playground_id()
+
+        # delete context
+        update_entry = {
+            'investigationId': playground_id,
+            'data': '!DeleteContext all=yes'
+        }
+
+        self.client.investigation_add_entries_sync(update_entry=update_entry)
+
+        # execute the command in playground
+        update_entry = {
+            'investigationId': playground_id,
+            'data': command
+        }
+        res = self.client.investigation_add_entries_sync(update_entry=update_entry)
+
+        body = {'query': '${.}'}
+        context = self.client.generic_request(f'investigation/{playground_id}/context', 'POST', body)[0]
+
+        import ast
+        context = ast.literal_eval(context)
+
+        return res, context

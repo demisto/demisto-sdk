@@ -1,9 +1,34 @@
+import os
 import copy
 import pytest
 from mock import patch
 import base64
+import shutil
 import yaml
 import yamlordereddictloader
+
+from demisto_sdk.common.tools import get_yaml
+
+TEST_DIR_PATH = os.path.join('tests', 'tests_files', 'Unifier')
+
+TEST_VALID_CODE = '''import demistomock as demisto
+from CommonServerPython import *
+
+def main():
+    return_error('Not implemented.')
+​
+if __name__ in ('builtins', '__builtin__', '__main__'):
+    main()
+'''
+
+TEST_VALID_DETAILED_DESCRIPTION = '''first line
+second line
+
+## header1
+do the following:
+1. say hello
+2. say goodbye
+'''
 
 DUMMY_SCRIPT = '''
     def main():
@@ -210,3 +235,87 @@ def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
 
         with pytest.raises(ValueError):
             unifier.insert_script_to_yml(".py", {}, test_yml_data)
+
+
+def create_test_package(package_name, base_yml, script_code, detailed_description='', image_file=''):
+    package_path = os.path.join(TEST_DIR_PATH, package_name)
+
+    os.makedirs(package_path)
+    shutil.copy(base_yml, os.path.join(package_path, f'{package_name}.yml'))
+
+    with open(os.path.join(TEST_DIR_PATH, f'{package_name}.py')) as file_:
+        file_.write(script_code)
+
+    if detailed_description:
+        with open(os.path.join(TEST_DIR_PATH, f'{package_name}_description.md')) as file_:
+            file_.write(detailed_description)
+
+    if image_file:
+        shutil.copy(image_file, os.path.join(package_path, f'{package_name}_image.png'))
+
+    pass
+
+
+def test_unify_integration():
+    """
+    sanity test of merge_script_package_to_yml of integration
+    """
+    from demisto_sdk.yaml_tools.unifier import Unifier
+
+    package_name = 'TestIntegPackage'
+    export_dir_path = os.path.join(TEST_DIR_PATH, package_name)
+    expected_yml_path = os.path.join(TEST_DIR_PATH, 'TestIntegPackage_unified.yml')
+
+    create_test_package(
+        package_name=package_name,
+        base_yml='TestIntegPackage.yml',
+        script_code=TEST_VALID_CODE,
+        detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+        image_file='/test_data',
+    )
+
+    unifier = Unifier(indir=export_dir_path)
+    results = unifier.merge_script_package_to_yml()
+    export_yml_path = results.keys()[0]
+
+    assert export_yml_path == f'{export_dir_path}/integration-{package_name}.yml'
+    actual_yml = get_yaml(export_yml_path)
+
+    expected_yml = get_yaml(expected_yml_path)
+
+    assert expected_yml == actual_yml
+
+
+def test_unify_integration__detailed_description_with_special_char():
+    """
+    -
+    """
+    from demisto_sdk.yaml_tools.unifier import Unifier
+
+    package_name = 'TestIntegPackage'
+    export_dir_path = os.path.join(TEST_DIR_PATH, package_name)
+    expected_yml_path = os.path.join(TEST_DIR_PATH, 'TestIntegPackage_unified.yml')
+
+    create_test_package(
+        package_name=package_name,
+        base_yml='TestIntegPackage.yml',
+        script_code=TEST_VALID_CODE,
+        image_file='/test_data',
+        detailed_description='''
+    some test with special chars
+    שלום
+    hello
+    你好
+    ''',
+    )
+
+    unifier = Unifier(export_dir_path)
+    results = unifier.merge_script_package_to_yml()
+    export_yml_path = results.keys()[0]
+
+    assert export_yml_path == f'{export_dir_path}/script-Test.yml'
+    actual_yml = get_yaml(export_yml_path)
+
+    expected_yml = get_yaml(expected_yml_path)
+
+    assert expected_yml == actual_yml

@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import glob
 import yaml
 import json
@@ -10,6 +11,7 @@ from typing import List
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.tools import get_child_directories, get_child_files, print_warning, \
     get_yml_paths_in_dir, print_error
+from demisto_sdk.common.git_tools import get_current_working_branch
 from demisto_sdk.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR, DASHBOARDS_DIR, \
     WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
     BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX, \
@@ -18,9 +20,10 @@ from demisto_sdk.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_D
 
 class ContentCreator:
 
-    def __init__(self, artifacts_path: str, content_bundle_path='',
+    def __init__(self, artifacts_path: str, content_version='', content_bundle_path='',
                  test_bundle_path='', packs_bundle_path='', preserve_bundles=False):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
+        self.content_version = content_version
         self.preserve_bundles = preserve_bundles
 
         # temp folder names
@@ -76,7 +79,7 @@ class ContentCreator:
         return 0
 
     def create_unifieds_and_copy(self, package_dir, dest_dir='', skip_dest_dir=''):
-        '''
+        """
         For directories that have packages, aka subdirectories for each integration/script
         e.g. "Integrations", "Beta_Integrations", "Scripts". Creates a unified yml and writes
         it to the dest_dir
@@ -90,7 +93,7 @@ class ContentCreator:
             skip_dest_dir: (str)
                 Path to the directory to which the unified yml for a package should be written in the
                 case the package is part of the skipped list
-        '''
+        """
         dest_dir = dest_dir if dest_dir else self.content_bundle
         skip_dest_dir = skip_dest_dir if skip_dest_dir else self.test_bundle
 
@@ -113,7 +116,8 @@ class ContentCreator:
                 print('skipping {}'.format(package))
             unification_tool.merge_script_package_to_yml()
 
-    def add_tools_to_bundle(self, bundle):
+    @staticmethod
+    def add_tools_to_bundle(bundle):
         for directory in glob.glob(os.path.join(TOOLS_DIR, '*')):
             zipf = zipfile.ZipFile(os.path.join(bundle, f'tools-{os.path.basename(directory)}.zip'), 'w',
                                    zipfile.ZIP_DEFLATED)
@@ -124,7 +128,9 @@ class ContentCreator:
             zipf.close()
 
     def copy_playbook_yml(self, path, out_path, *args):
-        '''Add "playbook-" prefix to playbook file's copy destination filename if it wasn't already present'''
+        """
+        Add "playbook-" prefix to playbook file's copy destination filename if it wasn't already present
+        """
         dest_dir_path = os.path.dirname(out_path)
         dest_file_name = os.path.basename(out_path)
         if not dest_file_name.startswith('playbook-'):
@@ -133,7 +139,9 @@ class ContentCreator:
         shutil.copyfile(path, out_path)
 
     def copy_content_yml(self, path, out_path, yml_info):
-        '''Copy content ymls (except for playbooks) to the out_path (presumably a bundle)'''
+        """
+        Copy content ymls (except for playbooks) to the out_path (presumably a bundle)
+        """
         parent_dir_name = os.path.basename(os.path.dirname(path))
         if parent_dir_name in DIR_TO_PREFIX and not os.path.basename(path).startswith('playbook-'):
             script_obj = yml_info
@@ -150,7 +158,13 @@ class ContentCreator:
         shutil.copyfile(path, out_path)
 
     def copy_dir_yml(self, dir_path, bundle):
-        '''Copy the yml files inside a directory to a bundle'''
+        """
+        Copy the yml files inside a directory to a bundle.
+
+        :param dir_path: source directory
+        :param bundle: destination bundle
+        :return: None
+        """
         scan_files, _ = get_yml_paths_in_dir(dir_path, error_msg='')
         content_files = 0
         dir_name = os.path.basename(dir_path)
@@ -169,7 +183,13 @@ class ContentCreator:
         print(f' - total files: {content_files}')
 
     def copy_dir_json(self, dir_path, bundle):
-        '''Copy the json files inside a directory to a bundle'''
+        """
+        Copy the json files inside a directory to a bundle.
+
+        :param dir_path: source directory
+        :param bundle: destination bundle
+        :return: None
+        """
         # handle *.json files
         dir_name = os.path.basename(dir_path)
         scan_files = glob.glob(os.path.join(dir_path, '*.json'))
@@ -197,14 +217,24 @@ class ContentCreator:
             shutil.copyfile(path, os.path.join(bundle, dpath))
 
     def copy_dir_files(self, *args):
-        '''Copy the yml and json files from inside a directory to a bundle'''
+        """
+        Copy the yml and json files from inside a directory to a bundle.
+
+        :param args: (source directory, destination bundle)
+        :return: None
+        """
         # handle *.json files
         self.copy_dir_json(*args)
         # handle *.yml files
         self.copy_dir_yml(*args)
 
     def copy_test_files(self, test_playbooks_dir=TEST_PLAYBOOKS_DIR):
-        '''Copy test playbook ymls to the test bundle'''
+        """
+        Copy test playbook ymls to the test bundle.
+
+        :param test_playbooks_dir:
+        :return: None
+        """
         print('Copying test files to test bundle')
         scan_files = glob.glob(os.path.join(test_playbooks_dir, '*'))
         for path in scan_files:
@@ -219,11 +249,11 @@ class ContentCreator:
                 shutil.copyfile(path, os.path.join(self.test_bundle, os.path.basename(path)))
 
     def copy_packs_content_to_old_bundles(self, packs):
-        '''
+        """
         Copy relevant content (yml and json files) from packs to the appropriate bundle. Test playbooks to the
         bundle that gets zipped to 'content_test.zip' and the rest of the content to the bundle that gets zipped to
         'content_new.zip'. Adds file prefixes where necessary according to how server expects to ingest the files.
-        '''
+        """
         for pack in packs:
             if os.path.basename(pack) in self.packs_to_skip:
                 continue
@@ -243,12 +273,12 @@ class ContentCreator:
                         self.create_unifieds_and_copy(sub_dir_path)
 
     def copy_packs_content_to_packs_bundle(self, packs):
-        '''
+        """
         Copy content in packs to the bundle that gets zipped to 'content_packs.zip'. Preserves directory structure
         except that packages inside the "Integrations" or "Scripts" directory inside a pack are flattened. Adds file
         prefixes according to how server expects to ingest the files, e.g. 'integration-' is prepended to integration
         yml filenames and 'script-' is prepended to script yml filenames and so on and so forth.
-        '''
+        """
         for pack in packs:
             pack_name = os.path.basename(pack)
             if pack_name in self.packs_to_skip:
@@ -292,8 +322,51 @@ class ContentCreator:
                 else:
                     self.copy_dir_files(content_dir, dest_dir)
 
+    @staticmethod
+    def update_content_version(content_ver: str = '', path: str = './Scripts/CommonServerPython/CommonServerPython.py'):
+        regex = r'CONTENT_RELEASE_VERSION = .*'
+        if not content_ver:
+            try:
+                with open('content-descriptor.json') as file_:
+                    descriptor = json.load(file_)
+                content_ver = descriptor['release']
+            except (json.JSONDecodeError, KeyError):
+                print_error('Invalid descriptor file. make sure file content is a valid json with "release" key.')
+                return
+
+        try:
+            with open(path, 'r+') as file_:
+                content = file_.read()
+                content = re.sub(regex, f"CONTENT_RELEASE_VERSION = '{content_ver}'", content, re.M)
+                file_.seek(0)
+                file_.write(content)
+        except Exception as ex:
+            print_warning(f'Could not open CommonServerPython File - {ex}')
+
+    @staticmethod
+    def update_branch(path: str = './Scripts/CommonServerPython/CommonServerPython.py'):
+
+        regex = r'CONTENT_BRANCH_NAME = .*'
+        branch_name = get_current_working_branch()
+        try:
+            with open(path, 'r+') as file_:
+                content = file_.read()
+                content = re.sub(regex, f"CONTENT_BRANCH_NAME = '{branch_name}'", content, re.M)
+                file_.seek(0)
+                file_.write(content)
+        except Exception as ex:
+            print_warning(f'Could not open CommonServerPython File - {ex}')
+
+        return branch_name
+
     def create_content(self):
-        '''Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"'''
+        """
+        Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"
+        """
+        # update content_version in commonServerPython
+        self.update_content_version(self.content_version)
+        branch_name = self.update_branch()
+        print(f'Updated CommonServerPython with branch {branch_name} and content version {self.content_version}')
         print('Starting to create content artifact...')
 
         try:

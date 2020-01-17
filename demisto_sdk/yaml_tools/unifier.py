@@ -43,8 +43,8 @@ class Unifier:
 
         self.image_prefix = image_prefix
         self.package_path = indir
-        if self.package_path[-1] != os.sep:
-            self.package_path = os.path.join(self.package_path, '')
+        if self.package_path.endswith(os.sep):
+            self.package_path = self.package_path.rstrip(os.sep)
 
         self.dir_name = dir_name
         self.dest_path = outdir
@@ -115,10 +115,9 @@ class Unifier:
         """Merge the various components to create an output yml file
         """
         print("Merging package: {}".format(self.package_path))
-        if self.package_path.endswith('/'):
-            self.package_path = self.package_path.rstrip('/')
         package_dir_name = os.path.basename(self.package_path)
         output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
         else:
@@ -203,13 +202,11 @@ class Unifier:
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
                         r'|conftest\.py|__init__\.py|ApiModule\.py')
-        if not self.package_path.endswith('/'):
-            self.package_path += '/'
 
-        if self.package_path.endswith('Scripts/CommonServerPython/'):
-            return self.package_path + 'CommonServerPython.py'
+        if self.package_path.endswith('Scripts/CommonServerPython'):
+            return os.path.join(self.package_path, 'CommonServerPython.py')
 
-        if self.package_path.endswith('ApiModule/'):
+        if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
         script_path = list(filter(lambda x: not re.search(ignore_regex, x),

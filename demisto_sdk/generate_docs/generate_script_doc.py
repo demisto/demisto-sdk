@@ -79,17 +79,15 @@ def generate_script_doc(input, output, commands, id_set, verbose=False):
 
         doc.extend(generate_table_section(secript_info, 'Script Data', text='This is the metadata of the script.'))
 
-        doc.extend(generate_list_with_text_section('Dependencies', dependencies,
-                                                   'No dependencies found.',
-                                                   'This script uses the following commands and scripts.'))
+        doc.extend(generate_list_section('Dependencies', dependencies, True, 'No dependencies found.',
+                                         'This script uses the following commands and scripts.'))
+
+        doc.extend(generate_list_section('Used In', used_in, True, 'This script not used anywhere.',
+                                         'This script is used in the following playbooks and scripts.'))
 
         doc.extend(generate_table_section(inputs, 'Inputs', 'There are no inputs for this script.'))
 
         doc.extend(generate_table_section(outputs, 'Outputs', 'There are no outputs for this script.'))
-
-        doc.extend(generate_list_with_text_section('Used In', used_in,
-                                                   'This script not used anywhere.',
-                                                   'This script is used in the following playbooks and scripts.'))
 
         doc_text = '\n'.join(doc)
 
@@ -109,6 +107,11 @@ def generate_script_doc(input, output, commands, id_set, verbose=False):
 
 
 def get_script_info(script_path):
+    """
+    Gets script information(type, tags, docker image and demisto version).
+    :param script_path: the script yml file path.
+    :return: list of dicts contains the script information.
+    """
     script = get_yaml(script_path)
     script_type = script.get('subtype')
     if not script_type:
@@ -128,6 +131,11 @@ def get_script_info(script_path):
 
 
 def get_inputs(script):
+    """
+    Gets script inputs.
+    :param script: the script object.
+    :return: list of inputs and list of errors.
+    """
     errors = []
     inputs = []
 
@@ -148,6 +156,11 @@ def get_inputs(script):
 
 
 def get_outputs(script):
+    """
+    Gets script outputs.
+    :param script: the script object.
+    :return: list of outputs and list of errors.
+    """
     errors = []
     outputs = []
 
@@ -169,6 +182,12 @@ def get_outputs(script):
 
 
 def get_used_in(id_set_path, script_id):
+    """
+    Gets the integrations, scripts and playbooks that used the input script, without test playbooks.
+    :param id_set_path: updated id_set.json file path.
+    :param script_id: the script id.
+    :return: list of integrations, scripts and playbooks that used the input script
+    """
     id_set = get_json(id_set_path)
     used_in_list = []
 

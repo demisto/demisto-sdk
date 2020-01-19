@@ -38,6 +38,7 @@ from demisto_sdk.common.tools import checked_type, run_command, print_error, pri
     get_yml_paths_in_dir
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.validation.type_file.find_type import find_type
 
 
 class FilesValidator:
@@ -572,7 +573,7 @@ class FilesValidator:
                 self.validate_all_files()
         else:
             if self.file_path:
-                structure_validator = StructureValidator(self.file_path)
+                structure_validator = StructureValidator(self.file_path, predefined_scheme=find_type(self.file_path))
                 if not structure_validator.is_valid_file():
                     self._is_valid = False
             else:

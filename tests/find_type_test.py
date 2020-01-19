@@ -3,25 +3,25 @@ from demisto_sdk.validation.type_file.find_type import *
 
 
 data_test_get_dict_from_file = [
-    ('test_files/classifier.json', 'json'),
-    ('test_files/integration.yml', 'yml'),
+    ('tests/test_files/classifier.json', 'json'),
+    ('tests/test_files/integration.yml', 'yml'),
     ('test', None),
     (None, None)
 ]
 data_test_find_type = [
-    ('test_files/classifier.json', 'classifier'),
-    ('test_files/dashboard.json', 'dashboard'),
-    ('test_files/incidentfield.json', 'incidentfield'),
-    ('test_files/incidenttype.json', 'incidenttype'),
-    ('test_files/indicatorfield.json', 'indicatorfield'),
-    ('test_files/integration.yml', 'integration'),
-    ('test_files/layout.json', 'layout'),
-    ('test_files/playbook.yml', 'playbook'),
-    ('test_files/report.json', 'report'),
-    ('test_files/reputation.json', 'reputation'),
-    ('test_files/script.yml', 'script'),
-    ('test_files/widget.json', 'widget'),
-    ('test_files/test', None),
+    ('tests/test_files/classifier.json', 'classifier'),
+    ('tests/test_files/dashboard.json', 'dashboard'),
+    ('tests/test_files/incidentfield.json', 'incidentfield'),
+    ('tests/test_files/incidenttype.json', 'incidenttype'),
+    ('tests/test_files/indicatorfield.json', 'indicatorfield'),
+    ('tests/test_files/integration.yml', 'integration'),
+    ('tests/test_files/layout.json', 'layout'),
+    ('tests/test_files/playbook.yml', 'playbook'),
+    ('tests/test_files/report.json', 'report'),
+    ('tests/test_files/reputation.json', 'reputation'),
+    ('tests/test_files/script.yml', 'script'),
+    ('tests/test_files/widget.json', 'widget'),
+    ('tests/test_files/test', None),
     ('', None)
 ]
 

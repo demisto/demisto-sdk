@@ -7,7 +7,10 @@ from demisto_sdk.common.tools import run_command
 def get_current_working_branch() -> str:
     branches = run_command('git branch')
     branch_name_reg = re.search(r'\* (.*)', branches)
-    return branch_name_reg.group(1)
+    if branch_name_reg:
+        return branch_name_reg.group(1)
+
+    return ''
 
 
 def get_changed_files(from_branch: str = 'master', filter_results: Callable = None):

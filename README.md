@@ -131,6 +131,7 @@ pylint and pytest will run within all the docker images of an integration/script
   Keep the test container (default: False)
 * **-v, --verbose**
   Verbose output (default: False)
+* **--circle** Indicates that the command runs in CircleCI (default: False)
 * **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 

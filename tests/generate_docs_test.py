@@ -75,8 +75,10 @@ def test_get_inputs():
 
     inputs, errors = get_inputs(playbook)
 
-    expected_inputs = [{'Name': 'InputA', 'Description': '', 'Default Value': 'Name', 'Source': 'File', 'Required': 'Optional'},
-                       {'Name': 'InputB', 'Description': 'This is input b', 'Default Value': 'johnnydepp@gmail.com', 'Source': '', 'Required': 'Required'}]
+    expected_inputs = [{'Name': 'InputA', 'Description': '', 'Default Value': 'Name',
+                        'Source': 'File', 'Required': 'Optional'},
+                       {'Name': 'InputB', 'Description': 'This is input b', 'Default Value': 'johnnydepp@gmail.com',
+                        'Source': '', 'Required': 'Required'}]
 
     assert inputs == expected_inputs
     assert errors[0] == 'Error! You are missing description in playbook input InputA'

@@ -1,19 +1,29 @@
 from demisto_sdk.common.tools import *
-import subprocess
 
 
 def save_output(path, file_name, content):
+    """
+    Creates the output file in path.
+    :param path: the output path for saving the file.
+    :param file_name: the name of the file.
+    :param content: the content of the file.
+    """
     output = os.path.join(path, file_name)
 
     doc_file = open(output, "w")
     doc_file.write(content)
     doc_file.close()
 
-    subprocess.run(['open', output], check=True)
     print_color(f'Output file was saved to :\n{output}', LOG_COLORS.GREEN)
 
 
 def generate_section(title, data):
+    """
+    Generate simple section in markdown format.
+    :param title: The section title.
+    :param data: The section text.
+    :return: array of strings contains the section lines in markdown format.
+    """
     section = [
         '## {}'.format(title),
         '---',
@@ -24,33 +34,29 @@ def generate_section(title, data):
     return section
 
 
-def generate_list_section(title, data, empty_message=''):
+def generate_list_section(title, data, horizontal_rule=False, empty_message='', text=''):
+    """
+     Generate list section in markdown format.
+     :param data: list of strings.
+     :param title: The list header.
+     :param horizontal_rule: add horizontal rule after title.
+     :param empty_message: message to print when the list is empty.
+     :param text: message to print after the header.
+     :return: array of strings contains the list section in markdown format.
+     """
     section = []
     if title:
         section.append(f'## {title}')
 
-    if not data:
-        section.extend([empty_message, ''])
-        return section
-
-    data.sort()
-    for item in data:
-        section.append(f'* {item}')
-    section.append('')
-    return section
-
-
-def generate_list_with_text_section(title, data, empty_message='', text=''):
-    section = []
-    if title:
-        section.extend([f'## {title}', '---'])
+    if horizontal_rule:
+        section.append('---')
 
     if not data:
         section.extend([empty_message, ''])
         return section
 
-    section.append(text)
-    data.sort()
+    if text:
+        section.append(text)
     for item in data:
         section.append(f'* {item}')
     section.append('')
@@ -58,6 +64,14 @@ def generate_list_with_text_section(title, data, empty_message='', text=''):
 
 
 def generate_table_section(data, title, empty_message='', text=''):
+    """
+    Generate table in markdown format.
+    :param data: list of dicts contains the table data.
+    :param title: The table header.
+    :param empty_message: message to print when there is no data.
+    :param text: message to print after table header.
+    :return: array of strings contains the table in markdown format.
+    """
     section = [f'## {title}', '---']
 
     if not data:

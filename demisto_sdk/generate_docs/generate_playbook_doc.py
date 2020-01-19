@@ -21,13 +21,16 @@ def generate_playbook_doc(input, output, commands, id_set, verbose=False):
         errors.extend(inputs_errors)
         errors.extend(outputs_errors)
 
-        doc.extend(generate_list_section('Sub-playbooks', playbooks, 'This playbook does not use any sub-playbooks.'))
+        doc.extend(generate_list_section('Sub-playbooks', playbooks,
+                                         empty_message='This playbook does not use any sub-playbooks.'))
 
-        doc.extend(generate_list_section('Integrations', integrations, 'This playbook does not use any integrations.'))
+        doc.extend(generate_list_section('Integrations', integrations,
+                                         empty_message='This playbook does not use any integrations.'))
 
-        doc.extend(generate_list_section('Scripts', scripts, 'This playbook does not use any scripts.'))
+        doc.extend(generate_list_section('Scripts', scripts, empty_message='This playbook does not use any scripts.'))
 
-        doc.extend(generate_list_section('Commands', commands, 'This playbook does not use any commands.'))
+        doc.extend(generate_list_section('Commands', commands,
+                                         empty_message='This playbook does not use any commands.'))
 
         doc.extend(generate_table_section(inputs, 'Playbook Inputs', 'There are no inputs for this playbook.'))
 
@@ -53,6 +56,11 @@ def generate_playbook_doc(input, output, commands, id_set, verbose=False):
 
 
 def get_playbook_dependencies(playbook):
+    """
+    Gets playbook dependencies(integrations, playbooks, scripts and commands) from playbook object.
+    :param playbook: the playbook object.
+    :return: the method returns 4 lists - integrations, playbooks, scripts and commands.
+    """
     integrations = []
     scripts = []
     commands = []
@@ -83,6 +91,11 @@ def get_playbook_dependencies(playbook):
 
 
 def get_inputs(playbook):
+    """
+    Gets playbook inputs.
+    :param playbook: the playbook object.
+    :return: list of inputs and list of errors.
+    """
     errors = []
     inputs = []
 
@@ -109,6 +122,11 @@ def get_inputs(playbook):
 
 
 def get_outputs(playbook):
+    """
+    Gets playbook outputs.
+    :param playbook: the playbook object.
+    :return: list of outputs and list of errors.
+    """
     errors = []
     outputs = []
 
@@ -134,6 +152,11 @@ def get_outputs(playbook):
 
 
 def get_input_data(input_section):
+    """
+    Gets playbook single input item - support simple and complex input.
+    :param input_section: playbook input item.
+    :return: The input default value(accessor) and the input source(root).
+    """
     default_value = input_section.get('value')
 
     if default_value:

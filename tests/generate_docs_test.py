@@ -12,7 +12,7 @@ TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 def test_generate_list_section_empty():
     from demisto_sdk.generate_docs.common import generate_list_section
 
-    section = generate_list_section('Inputs', [], 'No inputs found.')
+    section = generate_list_section('Inputs', [], empty_message='No inputs found.')
 
     expected_section = [
         '## Inputs', 'No inputs found.', '']
@@ -23,7 +23,7 @@ def test_generate_list_section_empty():
 def test_generate_list_section():
     from demisto_sdk.generate_docs.common import generate_list_section
 
-    section = generate_list_section('Inputs', ['item1', 'item2'], 'No inputs found.')
+    section = generate_list_section('Inputs', ['item1', 'item2'], False, 'No inputs found.')
 
     expected_section = [
         '## Inputs', '* item1', '* item2', '']
@@ -32,9 +32,9 @@ def test_generate_list_section():
 
 
 def test_generate_list_with_text_section():
-    from demisto_sdk.generate_docs.common import generate_list_with_text_section
+    from demisto_sdk.generate_docs.common import generate_list_section
 
-    section = generate_list_with_text_section('Inputs', ['item1', 'item2'], 'No inputs found.', 'some text')
+    section = generate_list_section('Inputs', ['item1', 'item2'], True, 'No inputs found.', 'some text')
 
     expected_section = [
         '## Inputs', '---', 'some text', '* item1', '* item2', '']

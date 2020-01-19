@@ -69,48 +69,6 @@ def generate_setup_section(yaml_data):
     return section
 
 
-def addErrorLines(scriptToScan, scriptType):
-    res = ''
-    if 'python' in scriptType:
-        errorKeys = ['return_error', 'raise ']
-    elif 'javascript' in scriptType:
-        errorKeys = ['throw ']
-    # Unsupported script type
-    else:
-        return res
-    linesToSkip = 0
-    scriptLines = scriptToScan.splitlines()
-    for idx in range(len(scriptLines)):
-        # Skip lines that were already scanned
-        if linesToSkip > 0:
-            linesToSkip -= 1
-            continue
-        line = scriptLines[idx]
-        if any(key in line for key in errorKeys):
-            if '(' in line:
-                bracketOpenIdx = line.index('(') + 1
-                if ')' in line:
-                    bracketCloseIdx = line.index(')')
-                    res += '* ' + line[bracketOpenIdx:bracketCloseIdx] + '\n'
-                # Handle multi line error
-                else:
-                    res += '*' + ('' if len(line[bracketOpenIdx:].lstrip()) < 1 else ' ' + line[bracketOpenIdx:] + '\n')
-                    while ')' not in scriptLines[idx + linesToSkip + 1]:
-                        linesToSkip += 1
-                        line = scriptLines[idx + linesToSkip]
-                        res += ' ' + line.lstrip() + '\n'
-                    # Adding last line of error
-                    linesToSkip += 1
-                    line = scriptLines[idx + linesToSkip]
-                    bracketCloseIdx = line.index(')')
-                    res += line[:bracketCloseIdx].lstrip() + '\n'
-            else:
-                firstMatchingErrorKey = next((key for key in errorKeys if key in line), False)
-                afterErrorKeyIdx = line.index(firstMatchingErrorKey) + len(firstMatchingErrorKey)  # type: ignore
-                res += '* ' + line[afterErrorKeyIdx:] + '\n'
-    return res
-
-
 # Commands
 def generate_commands_section(yaml_data, example_dict):
     errors = []  # type: list

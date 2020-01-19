@@ -58,13 +58,13 @@ def generate_list_with_text_section(title, data, empty_message='', text=''):
 
 
 def generate_table_section(data, title, empty_message='', text=''):
-    section = [f'## {title}', '---', text]
+    section = [f'## {title}', '---']
 
     if not data:
         section.extend([empty_message, ''])
         return section
 
-    section.extend(['|', '|'])
+    section.extend([text, '|', '|'])
     for key in data[0]:
         section[3] += f' **{key}** |'
         section[4] += ' --- |'

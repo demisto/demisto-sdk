@@ -141,8 +141,7 @@ def get_inputs(script):
 
         inputs.append({
             'Argument Name': arg.get('name'),
-            'Description': stringEscapeMD(arg.get('description', '')),
-            'Type': ''
+            'Description': stringEscapeMD(arg.get('description', ''))
         })
 
     return inputs, errors
@@ -163,7 +162,7 @@ def get_outputs(script):
         outputs.append({
             'Path': arg.get('contextPath'),
             'Description': stringEscapeMD(arg.get('description', '')),
-            'Type': arg.get('type')
+            'Type': arg.get('type', 'Unknown')
         })
 
     return outputs, errors
@@ -173,14 +172,16 @@ def get_used_in(id_set_path, script_id):
     id_set = get_json(id_set_path)
     used_in_list = []
 
-    for key in list(id_set.keys()):
+    id_set_sections = list(id_set.keys())
+    id_set_sections.remove('TestPlaybooks')
+
+    for key in id_set_sections:
         items = id_set[key]
         for item in items:
             key = list(item.keys())[0]
-            if not item[key].get('file_path', '').startswith('TestPlaybooks'):
-                scripts = item[key].get('implementing_scripts', [])
-                if scripts and script_id in scripts:
-                    used_in_list.append(item[key].get('name', []))
+            scripts = item[key].get('implementing_scripts', [])
+            if scripts and script_id in scripts:
+                used_in_list.append(item[key].get('name', []))
     return list(filter(None, dict.fromkeys(used_in_list)))
 
 

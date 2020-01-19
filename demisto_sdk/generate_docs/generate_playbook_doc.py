@@ -11,7 +11,8 @@ def generate_playbook_doc(input, output, commands, id_set, verbose=False):
         if not description:
             errors.append('Error! You are missing description for the playbook')
 
-        doc = [description, '', '## Dependencies', 'This playbook uses the following sub-playbooks, integrations, and scripts.', '']
+        doc = [description, '', '## Dependencies',
+               'This playbook uses the following sub-playbooks, integrations, and scripts.', '']
 
         playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook)
         inputs, inputs_errors = get_inputs(playbook)
@@ -142,4 +143,3 @@ def get_input_data(input_section):
         return default_value.get('simple'), ''
 
     return '', ''
-

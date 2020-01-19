@@ -1,6 +1,8 @@
 from demisto_sdk.runners.runner import Runner
 from demisto_sdk.generate_docs.common import *
 
+STRING_TYPES = (str, bytes)  # type: ignore
+
 
 def generate_integration_doc(input, output, commands, id_set, verbose=False):
     try:
@@ -124,8 +126,8 @@ def generate_single_command_section(index, cmd, example_dict):
                 errors.append(
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
             required_status = 'Required' if arg.get('required') else 'Optional'
-            section.append('| {} | {} | {} | '.format(arg['name'], stringEscapeMD(arg.get('description', ''), True, True),
-                                                      required_status))
+            section.append('| {} | {} | {} | '.format(arg['name'], stringEscapeMD(arg.get('description', ''),
+                                                                                  True, True), required_status))
         section.append('')
 
     # Context output
@@ -234,8 +236,6 @@ def build_example_dict(command_examples):
                 examples[cmd] = (example, md_example, context_example)
     return examples, errors
 
-STRING_TYPES = (str, bytes)  # type: ignore
-
 
 def run_command(command_example):
     errors = []
@@ -266,8 +266,8 @@ def run_command(command_example):
 
     except Exception as e:
         errors.append(
-            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e))
-            + '. Please check your command inputs and outputs')
+            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e)) +
+            '. Please check your command inputs and outputs')
 
     cmd = cmd.split(' ')[0][1:]
     return cmd, md_example, context_example, errors

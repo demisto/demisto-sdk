@@ -183,6 +183,3 @@ def get_used_in(id_set_path, script_id):
             if scripts and script_id in scripts:
                 used_in_list.append(item[key].get('name', []))
     return list(filter(None, dict.fromkeys(used_in_list)))
-
-
-

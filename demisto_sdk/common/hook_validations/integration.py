@@ -296,19 +296,19 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. True if there are duplicates, False otherwise.
         """
-        is_valid = True
+        has_duplicate_params = False
         configurations = self.current_file.get('configuration', [])
         param_list = []  # type: list
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
-                is_valid = False
-                print_error(Errors.duplicate_param(self.file_path, param_name))
+                self.is_valid = False
+                has_duplicate_params = True
+                print_error(Errors.duplicate_param(param_name, self.file_path))
             else:
                 param_list.append(param_name)
 
-        self.is_valid = is_valid
-        return not is_valid
+        return has_duplicate_params
 
     @staticmethod
     def _get_command_to_args(integration_json):

@@ -330,7 +330,7 @@ class ContentCreator:
                 with open('content-descriptor.json') as file_:
                     descriptor = json.load(file_)
                 content_ver = descriptor['release']
-            except (json.JSONDecodeError, KeyError):
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
                 print_error('Invalid descriptor file. make sure file content is a valid json with "release" key.')
                 return
 

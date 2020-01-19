@@ -1,4 +1,8 @@
 from typing import List
+<<<<<<< HEAD
+=======
+import yaml
+>>>>>>> 80bb5c1... validate fetch params
 from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
@@ -53,8 +57,12 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_category(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
+<<<<<<< HEAD
             self.is_valid_feed(),
             self.is_fetch_params_exist(),
+=======
+            self.is_fetch_params_exist()
+>>>>>>> 80bb5c1... validate fetch params
         ]
         return all(answers)
 
@@ -512,6 +520,10 @@ class IntegrationValidator(BaseValidator):
                 if param_name not in params:
                     print_error(f"You've missed required param in the"
                                 f" file '{self.file_path}', the param is '{param_name}'")
+                    return_value = False
+
+        return return_value
+                    print_error(Errors.added_required_fields(self.file_path, param_name))
                     return_value = False
 
         return return_value

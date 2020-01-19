@@ -485,18 +485,19 @@ def init(**kwargs):
     "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
     help="The type of yml file.", required=True)
 @click.option(
-    "-c", "--commands", help="Path of file containing command examples. Each Command should be in a separate line. For example: !fidelis-list-alerts time_frame=Last 7 Days", required=False)
+    "-c", "--commands", help="Path for file containing command examples. Each Command should be in a separate line."
+                             " For example: !fidelis-list-alerts time_frame=Last 7 Days, required=False")
 @click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
-def format_yml(file_type, **kwargs):
-        if file_type == 'integration':
-             return generate_integration_doc(**kwargs)
-        elif file_type == 'script':
-            return generate_script_doc(**kwargs)
-        elif file_type == 'playbook':
-            return generate_playbook_doc(**kwargs)
+def generate_doc(file_type, **kwargs):
+    if file_type == 'integration':
+        return generate_integration_doc(**kwargs)
+    elif file_type == 'script':
+        return generate_script_doc(**kwargs)
+    elif file_type == 'playbook':
+        return generate_playbook_doc(**kwargs)
 
 
 @main.resultcallback()

@@ -1,3 +1,5 @@
+from typing import List
+import yaml
 from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
@@ -53,6 +55,7 @@ class IntegrationValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_feed(),
+            self.is_fetch_params_exist(),
         ]
         return all(answers)
 
@@ -495,3 +498,20 @@ class IntegrationValidator(BaseValidator):
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
                 return False
         return True
+
+    def is_fetch_params_exist(self) -> bool:
+        """
+        validate that all required fields in integration that have fetch incidents are in the yml file.
+        Returns:
+            bool. True if the integration is defined as well False otherwise.
+        """
+        return_value = True
+        if self.current_file.get('script', {}).get('isfetch') is True:
+            params = [_key.get('name') for _key in self.current_file.get('configuration', [])]
+            fetch_params: List = ['incidentType', 'isFetch']
+            for param_name in fetch_params:
+                if param_name not in params:
+                    print_error(Errors.added_required_fields(self.file_path, param_name))
+                    return_value = False
+
+        return return_value

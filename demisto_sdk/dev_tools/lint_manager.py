@@ -30,13 +30,14 @@ class LintManager:
         parallel (bool): Whether to run command on multiple threads.
         max_workers (int): How many workers to run for multi-thread run.
         run_all_tests (bool): Whether to run all tests.
+        circle (bool): Indicates lint command runs in CircleCI.
         configuration (Configuration): The system configuration.
     """
 
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
-                 git: bool = False, run_all_tests: bool = False,
+                 git: bool = False, run_all_tests: bool = False, circle: bool = False,
                  configuration: Configuration = Configuration()):
 
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
@@ -69,6 +70,7 @@ class LintManager:
         self.configuration = configuration
         self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
+        self.circle = circle
 
     @staticmethod
     def get_all_directories() -> List[str]:
@@ -249,7 +251,9 @@ class LintManager:
         Returns:
             int. 0 on success and 1 if any package failed
         """
-        self.create_failed_unittests_file(fail_pkgs)
+        if self.circle:
+            self.create_failed_unittests_file(fail_pkgs)
+
         if fail_pkgs:
             print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)
             print_color("\n\t{}\n".format("\n\t".join(fail_pkgs)), LOG_COLORS.RED)

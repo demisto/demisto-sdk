@@ -190,7 +190,9 @@ class SecretsValidator(object):
                     for string_ in line.split():
                         # compare the lower case of the string against both generic whitelist & temp white list
                         if not any(
-                                white_list_string.lower() in string_.lower() for white_list_string in secrets_white_list):
+                                white_list_string.lower() in string_.lower()
+                                for white_list_string in secrets_white_list):
+                            
                             entropy = self.calculate_shannon_entropy(string_)
                             if entropy >= ENTROPY_THRESHOLD:
                                 high_entropy_strings.append(string_)

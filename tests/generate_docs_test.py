@@ -1,8 +1,10 @@
 from demisto_sdk.common.tools import *
 
-TEST_PLAYBOOK_PATH = './test_files/playbook-Test_playbook.yml'
-TEST_SCRIPT_PATH = './test_files/script-test_script.yml'
-FAKE_ID_SET = './test_files/fake_id_set.json'
+FILES_PATH = os.path.normpath(os.path.join(__file__, '..', 'test_files'))
+FAKE_ID_SET = os.path.join(FILES_PATH, 'fake_id_set.json')
+TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
+TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
+
 
 # common tests
 

@@ -9,8 +9,6 @@ import yamlordereddictloader
 
 from demisto_sdk.common.tools import get_yaml
 
-TEST_DIR_PATH = os.path.join('tests', 'tests_files', 'Unifier')
-
 TEST_VALID_CODE = '''import demistomock as demisto
 from CommonServerPython import *
 
@@ -75,7 +73,7 @@ class MicrosoftClient(BaseClient):
 
 def test_clean_python_code():
     from demisto_sdk.yaml_tools.unifier import Unifier
-    unifier = Unifier("path")
+    unifier = Unifier("tests/test_files/VulnDB")
     script_code = "import demistomock as demistofrom CommonServerPython import *" \
                   "from CommonServerUserPython import *from __future__ import print_function"
     # Test remove_print_future is False
@@ -91,7 +89,7 @@ def test_get_code_file():
     # Test integration case
     unifier = Unifier("tests/test_files/VulnDB/")
     assert unifier.get_code_file(".py") == "tests/test_files/VulnDB/VulnDB.py"
-    unifier = Unifier("tests/test_files")
+    unifier = Unifier("tests/test_files/Unifier")
     with pytest.raises(Exception):
         unifier.get_code_file(".py")
     # Test script case
@@ -101,7 +99,7 @@ def test_get_code_file():
 
 def test_get_script_package_data():
     from demisto_sdk.yaml_tools.unifier import Unifier
-    unifier = Unifier("tests/")
+    unifier = Unifier("tests/test_files/Unifier")
     with pytest.raises(Exception):
         unifier.get_script_package_data()
     unifier = Unifier("tests/test_files/CalculateGeoDistance")
@@ -117,13 +115,13 @@ def test_get_data():
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
         unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
-        unifier.dir_name = "Integrations"
+        unifier.is_script_package = False
         with open("tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
             image = image_file.read()
         data, found_data_path = unifier.get_data("*png")
         assert data == image
         assert found_data_path == "tests/test_files/VulnDB/VulnDB_image.png"
-        unifier.dir_name = "Scripts"
+        unifier.is_script_package = True
         data, found_data_path = unifier.get_data("*png")
         assert data is None
         assert found_data_path is None
@@ -135,6 +133,7 @@ def test_insert_description_to_yml():
         unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
+        unifier.is_script_package = False
         with open("tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
             desc_data = desc_file.read().decode("utf-8")
         yml_unified, found_data_path = unifier.insert_description_to_yml({}, {})
@@ -149,6 +148,7 @@ def test_insert_image_to_yml():
         unifier = Unifier('', None, None, None)
         unifier.package_path = "tests/test_files/VulnDB/"
         unifier.dir_name = "Integrations"
+        unifier.is_script_package = False
         unifier.image_prefix = "data:image/png;base64,"
         with open("tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
             image_data = image_file.read()
@@ -195,6 +195,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
         unifier = Unifier("", None, None, None)
         unifier.package_path = package_path
         unifier.dir_name = dir_name
+        unifier.is_script_package = dir_name == 'Scripts'
         with open(file_path + ".yml", "r") as yml:
             test_yml_data = yaml.safe_load(yml)
 
@@ -226,96 +227,193 @@ def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
         unifier = Unifier("", None, None, None)
         unifier.package_path = package_path
         unifier.dir_name = dir_name
+        unifier.is_script_package = dir_name == 'Scripts'
         with open(file_path + ".yml", "r") as yml:
             test_yml_data = yaml.safe_load(yml)
         if dir_name == "Scripts":
             test_yml_data['script'] = 'blah'
-        elif dir_name == "Integrations":
+        else:
             test_yml_data['script']['script'] = 'blah'
 
         with pytest.raises(ValueError):
-            unifier.insert_script_to_yml(".py", {}, test_yml_data)
+            unifier.insert_script_to_yml(".py", {'script': {}}, test_yml_data)
 
 
-def create_test_package(package_name, base_yml, script_code, detailed_description='', image_file=''):
-    package_path = os.path.join(TEST_DIR_PATH, package_name)
+def create_test_package(test_dir, package_name, base_yml, script_code, detailed_description='', image_file=''):
+    package_path = os.path.join(test_dir, package_name)
 
     os.makedirs(package_path)
     shutil.copy(base_yml, os.path.join(package_path, f'{package_name}.yml'))
 
-    with open(os.path.join(TEST_DIR_PATH, f'{package_name}.py')) as file_:
+    with open(os.path.join(package_path, f'{package_name}.py'), 'w') as file_:
         file_.write(script_code)
 
     if detailed_description:
-        with open(os.path.join(TEST_DIR_PATH, f'{package_name}_description.md')) as file_:
+        with open(os.path.join(package_path, f'{package_name}_description.md'), 'w') as file_:
             file_.write(detailed_description)
 
     if image_file:
         shutil.copy(image_file, os.path.join(package_path, f'{package_name}_image.png'))
 
-    pass
+
+class TestMergeScriptPackageToYMLIntegration:
+    def setup(self):
+        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+        os.makedirs(self.test_dir_path)
+        self.package_name = 'TestIntegPackage'
+        self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
+        self.expected_yml_path = os.path.join(self.test_dir_path, 'integration-TestIntegPackage.yml')
+
+    def teardown(self):
+        if self.test_dir_path:
+            shutil.rmtree(self.test_dir_path)
+
+    def test_unify_integration(self):
+        """
+        sanity test of merge_script_package_to_yml of integration
+        """
+        from demisto_sdk.yaml_tools.unifier import Unifier
+
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+        )
+
+        unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
+        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        export_yml_path = yml_files[0]
+
+        assert export_yml_path == self.expected_yml_path
+        assert orig_yml == f'{self.export_dir_path}/TestIntegPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/TestIntegPackage.py'
+        assert orig_image == f'{self.export_dir_path}/TestIntegPackage_image.png'
+        assert orig_description == f'{self.export_dir_path}/TestIntegPackage_description.md'
+
+        actual_yml = get_yaml(export_yml_path)
+
+        expected_yml = get_yaml(self.expected_yml_path)
+
+        assert expected_yml == actual_yml
+
+    def test_unify_integration__detailed_description_with_special_char(self):
+        """
+        -
+        """
+        from demisto_sdk.yaml_tools.unifier import Unifier
+
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            script_code=TEST_VALID_CODE,
+            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            detailed_description='''
+        some test with special chars
+        שלום
+        hello
+        你好
+        ''',
+        )
+
+        unifier = Unifier(self.export_dir_path, outdir=self.test_dir_path)
+        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        export_yml_path = yml_files[0]
+
+        assert export_yml_path == self.expected_yml_path
+        assert orig_yml == f'{self.export_dir_path}/TestIntegPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/TestIntegPackage.py'
+        assert orig_image == f'{self.export_dir_path}/TestIntegPackage_image.png'
+        assert orig_description == f'{self.export_dir_path}/TestIntegPackage_description.md'
+        actual_yml = get_yaml(export_yml_path)
+
+        expected_yml = get_yaml(self.expected_yml_path)
+
+        assert expected_yml == actual_yml
+
+    def test_unify_integration__detailed_description_with_yml_structure(self):
+        """
+        -
+        """
+        from demisto_sdk.yaml_tools.unifier import Unifier
+        description = ''' this is a regular line
+  some test with special chars
+        hello
+        key:
+          - subkey: hello
+            subkey2: hi
+        keys: "some more values"
+         asd - hello
+         hi: 'dsfsd'
+final test: hi
+'''
+
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            script_code=TEST_VALID_CODE,
+            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            detailed_description=description,
+        )
+
+        unifier = Unifier(self.export_dir_path, outdir=self.test_dir_path)
+        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        export_yml_path = yml_files[0]
+
+        assert export_yml_path == self.expected_yml_path
+        assert orig_yml == f'{self.export_dir_path}/TestIntegPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/TestIntegPackage.py'
+        assert orig_image == f'{self.export_dir_path}/TestIntegPackage_image.png'
+        assert orig_description == f'{self.export_dir_path}/TestIntegPackage_description.md'
+        actual_yml = get_yaml(export_yml_path)
+
+        expected_yml = get_yaml(self.expected_yml_path)
+
+        assert expected_yml == actual_yml
+        assert actual_yml['detaileddescription'] == description
 
 
-def test_unify_integration():
-    """
-    sanity test of merge_script_package_to_yml of integration
-    """
-    from demisto_sdk.yaml_tools.unifier import Unifier
+class TestMergeScriptPackageToYMLScript:
+    def setup(self):
+        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+        os.makedirs(self.test_dir_path)
+        self.package_name = 'TestScriptPackage'
+        self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
+        self.expected_yml_path = os.path.join(self.test_dir_path, 'script-TestScriptPackage.yml')
 
-    package_name = 'TestIntegPackage'
-    export_dir_path = os.path.join(TEST_DIR_PATH, package_name)
-    expected_yml_path = os.path.join(TEST_DIR_PATH, 'TestIntegPackage_unified.yml')
+    def teardown(self):
+        if self.test_dir_path:
+            shutil.rmtree(self.test_dir_path)
 
-    create_test_package(
-        package_name=package_name,
-        base_yml='TestIntegPackage.yml',
-        script_code=TEST_VALID_CODE,
-        detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
-        image_file='/test_data',
-    )
+    def test_unify_script(self):
+        """
+        sanity test of merge_script_package_to_yml of script
+        """
+        from demisto_sdk.yaml_tools.unifier import Unifier
 
-    unifier = Unifier(indir=export_dir_path)
-    results = unifier.merge_script_package_to_yml()
-    export_yml_path = results.keys()[0]
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml='tests/test_files/Unifier/TestScriptPackage/TestScriptPackage.yml',
+            script_code=TEST_VALID_CODE,
+        )
 
-    assert export_yml_path == f'{export_dir_path}/integration-{package_name}.yml'
-    actual_yml = get_yaml(export_yml_path)
+        unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
+        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        export_yml_path = yml_files[0]
 
-    expected_yml = get_yaml(expected_yml_path)
+        assert export_yml_path == self.expected_yml_path
+        assert orig_yml == f'{self.export_dir_path}/TestScriptPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/TestScriptPackage.py'
+        assert orig_image is None
+        assert orig_description is None
 
-    assert expected_yml == actual_yml
+        actual_yml = get_yaml(export_yml_path)
 
+        expected_yml = get_yaml(self.expected_yml_path)
 
-def test_unify_integration__detailed_description_with_special_char():
-    """
-    -
-    """
-    from demisto_sdk.yaml_tools.unifier import Unifier
-
-    package_name = 'TestIntegPackage'
-    export_dir_path = os.path.join(TEST_DIR_PATH, package_name)
-    expected_yml_path = os.path.join(TEST_DIR_PATH, 'TestIntegPackage_unified.yml')
-
-    create_test_package(
-        package_name=package_name,
-        base_yml='TestIntegPackage.yml',
-        script_code=TEST_VALID_CODE,
-        image_file='/test_data',
-        detailed_description='''
-    some test with special chars
-    שלום
-    hello
-    你好
-    ''',
-    )
-
-    unifier = Unifier(export_dir_path)
-    results = unifier.merge_script_package_to_yml()
-    export_yml_path = results.keys()[0]
-
-    assert export_yml_path == f'{export_dir_path}/script-Test.yml'
-    actual_yml = get_yaml(export_yml_path)
-
-    expected_yml = get_yaml(expected_yml_path)
-
-    assert expected_yml == actual_yml
+        assert expected_yml == actual_yml

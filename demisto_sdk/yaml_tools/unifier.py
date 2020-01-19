@@ -13,7 +13,7 @@ from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error, print_color, \
     LOG_COLORS
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
-    SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
+    SCRIPTS_DIR
 
 
 def repr_str(dumper, data):
@@ -46,8 +46,26 @@ class Unifier:
         if self.package_path.endswith(os.sep):
             self.package_path = self.package_path.rstrip(os.sep)
 
-        self.dir_name = dir_name
         self.dest_path = outdir
+
+        yml_paths, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
+        for path in yml_paths:
+            # The plugin creates a unified YML file for the package.
+            # In case this script runs locally and there is a unified YML file in the package we need to ignore it.
+            # Also,
+            # we don't take the unified file by default because
+            # there might be packages that were not created by the plugin.
+            if 'unified' not in path:
+                self.yml_path = path
+                break
+
+        with open(self.yml_path, 'r') as yml_file:
+            self.yml_data = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
+
+        # script key for scripts is a string.
+        # script key for integrations is a dictionary.
+        self.is_script_package = isinstance(self.yml_data['script'], str)
+        self.dir_name = SCRIPTS_DIR if self.is_script_package else INTEGRATIONS_DIR
 
     def write_yaml_with_docker(self, yml_unified, yml_data, script_obj):
         """Write out the yaml file taking into account the dockerimage45 tag.
@@ -66,7 +84,7 @@ class Unifier:
         output_map = {self.dest_path: yml_unified}
         if 'dockerimage45' in script_obj:
             # we need to split into two files 45 and 50. Current one will be from version 5.0
-            if isinstance(yml_unified['script'], str):  # scripts
+            if self.is_script_package:  # scripts
                 del yml_unified['dockerimage45']
             else:  # integrations
                 del yml_unified['script']['dockerimage45']
@@ -86,7 +104,7 @@ class Unifier:
             yml_unified45['toversion'] = '4.5.9'
 
             if script_obj.get('dockerimage45'):  # we have a value for dockerimage45 set it as dockerimage
-                if isinstance(yml_unified45['script'], str):  # scripts
+                if self.is_script_package:  # scripts
                     yml_unified45['dockerimage'] = script_obj.get('dockerimage45')
                 else:  # integrations
                     yml_unified45['script']['dockerimage'] = script_obj.get('dockerimage45')
@@ -123,37 +141,23 @@ class Unifier:
         else:
             self.dest_path = os.path.join(self.dir_name, output_filename)
 
-        yml_paths, yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
-        for path in yml_paths:
-            # The plugin creates a unified YML file for the package.
-            # In case this script runs locally and there is a unified YML file in the package we need to ignore it.
-            # Also,
-            # we don't take the unified file by default because
-            # there might be packages that were not created by the plugin.
-            if 'unified' not in path:
-                yml_path = path
-                break
+        script_obj = self.yml_data
 
-        with open(yml_path, 'r') as yml_file:
-            yml_data = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
-
-        script_obj = yml_data
-
-        if self.dir_name != SCRIPTS_DIR:
-            script_obj = yml_data['script']
+        if not self.is_script_package:
+            script_obj = self.yml_data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
-        yml_unified = copy.deepcopy(yml_data)
+        yml_unified = copy.deepcopy(self.yml_data)
 
-        yml_unified, script_path = self.insert_script_to_yml(script_type, yml_unified, yml_data)
+        yml_unified, script_path = self.insert_script_to_yml(script_type, yml_unified, self.yml_data)
         image_path = None
         desc_path = None
-        if self.dir_name in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR):
-            yml_unified, image_path = self.insert_image_to_yml(yml_data, yml_unified)
-            yml_unified, desc_path = self.insert_description_to_yml(yml_data, yml_unified)
+        if not self.is_script_package:
+            yml_unified, image_path = self.insert_image_to_yml(self.yml_data, yml_unified)
+            yml_unified, desc_path = self.insert_description_to_yml(self.yml_data, yml_unified)
 
-        output_map = self.write_yaml_with_docker(yml_unified, yml_data, script_obj)
-        unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
+        output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
+        unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
         print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
 
         return unifier_outputs
@@ -185,7 +189,7 @@ class Unifier:
         data_path = glob.glob(os.path.join(self.package_path, extension))
         data = None
         found_data_path = None
-        if self.dir_name in ('Integrations', 'Beta_Integrations') and data_path:
+        if not self.is_script_package and data_path:
             found_data_path = data_path[0]
             with open(found_data_path, 'rb') as data_file:
                 data = data_file.read()
@@ -227,27 +231,24 @@ class Unifier:
 
         clean_code = self.clean_python_code(script_code)
 
-        if self.dir_name == 'Scripts':
-            if yml_data.get('script'):
-                if yml_data['script'] not in ('', '-'):
-                    raise ValueError("Please change the script to be blank or a dash(-) for package {}"
-                                     .format(self.package_path))
+        if self.is_script_package:
+            if yml_data.get('script') not in ('', '-'):
+                raise ValueError("Please change the script to be blank or a dash(-) for package {}"
+                                 .format(self.package_path))
 
-                yml_unified['script'] = clean_code
+            yml_unified['script'] = clean_code
 
-        elif self.dir_name == 'Integrations' or self.dir_name == 'Beta_Integrations':
-            if yml_data.get('script', {}).get('script'):
-                if yml_data['script']['script'] not in ('', '-'):
-                    raise ValueError("Please change the script to be blank or a dash(-) for package {}"
-                                     .format(self.package_path))
-
-                yml_unified['script']['script'] = clean_code
         else:
-            raise ValueError('Unknown yml type for dir: {}. Expecting: Scripts/Integrations'.format(self.package_path))
+            if yml_data['script'].get('script', '') not in ('', '-'):
+                raise ValueError("Please change the script to be blank or a dash(-) for package {}"
+                                 .format(self.package_path))
+
+            yml_unified['script']['script'] = clean_code
 
         return yml_unified, script_path
 
     def get_script_package_data(self):
+        # should be static method
         _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
         if not yml_path:
             raise Exception("No yml files found in package path: {}. "

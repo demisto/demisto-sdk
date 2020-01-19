@@ -1,5 +1,4 @@
 from typing import List
-import yaml
 from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator

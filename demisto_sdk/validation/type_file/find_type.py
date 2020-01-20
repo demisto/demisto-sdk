@@ -1,16 +1,13 @@
-import json
-import yaml
+from demisto_sdk.common.tools import get_yaml, get_json
 from typing import Dict, Tuple, Union
 
 
 def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     if path:
         if path.endswith('.yml'):
-            with open(path, 'rb') as f:
-                return yaml.safe_load(f), 'yml'
+            return get_yaml(path), 'yml'
         elif path.endswith('.json'):
-            with open(path, 'r') as f:
-                return json.loads(f.read()), 'json'
+            return get_json(path), 'json'
     return {}, None
 
 
@@ -25,16 +22,16 @@ def find_type(path: str):
             return 'playbook'
 
     elif file_type == 'json':
-        if 'preProcessingScript' in _dict:
+        if 'widgetType' in _dict:
+            return 'widget'
+        elif 'reportType' in _dict:
+            return 'report'
+        elif 'preProcessingScript' in _dict:
             return 'incidenttype'
         elif 'regex' in _dict:
             return 'reputation'
-        elif 'widgetType' in _dict:
-            return 'widget'
         elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
             return 'classifier'
-        elif 'reportType' in _dict:
-            return 'report'
         elif 'layout' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'
@@ -48,4 +45,4 @@ def find_type(path: str):
             elif _id.startswith('indicator'):
                 return 'indicatorfield'
 
-    return None
+    return ''

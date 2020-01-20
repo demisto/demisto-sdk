@@ -120,7 +120,6 @@ class LintManager:
                                 configuration=self.configuration, no_bandit=not self.run_args['bandit'],
                                 requirements_3=self.requirements_for_python3,
                                 requirements_2=self.requirements_for_python2)
-
                 run_status_code = linter.run_dev_packages()
                 if run_status_code > 0:
                     fail_pkgs.append(project_dir)

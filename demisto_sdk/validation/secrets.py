@@ -54,19 +54,20 @@ UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 # disable-secrets-detection-end
 
 
-class SecretsValidator():
+class SecretsValidator(object):
 
-    def __init__(self, configuration=Configuration(), is_circle=False, white_list_path=''):
+    def __init__(self, configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path=''):
         self.configuration = configuration
         self.is_circle = is_circle
         self.white_list_path = white_list_path
+        self.ignore_entropy = ignore_entropy
 
     def get_secrets(self, branch_name, is_circle):
         secrets_found = {}
         # make sure not in middle of merge
         if not run_command('git rev-parse -q --verify MERGE_HEAD'):
             secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
-            secrets_found = self.search_potential_secrets(secrets_file_paths)
+            secrets_found = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
             if secrets_found:
                 secrets_found_string = 'Secrets were found in the following files:'
                 for file_name in secrets_found:
@@ -128,9 +129,11 @@ class SecretsValidator():
             return True
         return False
 
-    def search_potential_secrets(self, secrets_file_paths: list):
+    def search_potential_secrets(self, secrets_file_paths: list, ignore_entropy: bool = False):
         """Returns potential secrets(sensitive data) found in committed and added files
         :param secrets_file_paths: paths of files that are being commited to git repo
+        :param ignore_entropy: If True then will ignore running entropy algorithm for finding potential secrets
+
         :return: dictionary(filename: (list)secrets) of strings sorted by file name for secrets found in files
         """
         secrets_found = {}
@@ -177,19 +180,22 @@ class SecretsValidator():
 
                 secrets_white_list = secrets_white_list.union(false_positives)
 
-                # due to nature of eml files, skip string by string secret detection - only regex
-                if file_extension in SKIP_FILE_TYPE_ENTROPY_CHECKS or \
-                        any(demisto_type in file_name for demisto_type in SKIP_DEMISTO_TYPE_ENTROPY_CHECKS):
-                    continue
-                line = self.remove_false_positives(line)
-                # calculate entropy for each string in the file
-                for string_ in line.split():
-                    # compare the lower case of the string against both generic whitelist & temp white list
-                    if not any(
-                            white_list_string.lower() in string_.lower() for white_list_string in secrets_white_list):
-                        entropy = self.calculate_shannon_entropy(string_)
-                        if entropy >= ENTROPY_THRESHOLD:
-                            high_entropy_strings.append(string_)
+                if not ignore_entropy:
+                    # due to nature of eml files, skip string by string secret detection - only regex
+                    if file_extension in SKIP_FILE_TYPE_ENTROPY_CHECKS or \
+                            any(demisto_type in file_name for demisto_type in SKIP_DEMISTO_TYPE_ENTROPY_CHECKS):
+                        continue
+                    line = self.remove_false_positives(line)
+                    # calculate entropy for each string in the file
+                    for string_ in line.split():
+                        # compare the lower case of the string against both generic whitelist & temp white list
+                        if not any(
+                                white_list_string.lower() in string_.lower()
+                                for white_list_string in secrets_white_list):
+                            
+                            entropy = self.calculate_shannon_entropy(string_)
+                            if entropy >= ENTROPY_THRESHOLD:
+                                high_entropy_strings.append(string_)
 
             if high_entropy_strings or secrets_found_with_regex:
                 # uniquify identical matches between lists

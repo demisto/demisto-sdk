@@ -12,7 +12,7 @@
 * Added validation for docker image inside integrations and scripts.
 * Added --use-git flag to **format** command to format all changed files.
 * Fixed an issue where **validate** did not fail on dockerimage changes with bc check.
-* Added --circle flag to **lint**.
+* Added --outfile to **lint** to allow saving failed packages to a file.
 
 
 ### 0.3.3

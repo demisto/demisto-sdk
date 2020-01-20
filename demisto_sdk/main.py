@@ -278,7 +278,7 @@ def secrets(config, **kwargs):
 @click.option(
     "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @click.option(
-    "--circle", is_flag=True, help="Indicates the command runs in circle"
+    "--outfile", help="Save failing packages to a file"
 )
 @pass_config
 def lint(config, dir, **kwargs):

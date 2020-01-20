@@ -204,6 +204,8 @@ def validate(config, **kwargs):
 @click.option(
     '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
 @click.option(
+    '-v', '--content_version', default='', help='The content version which you want to appear in CommonServerPython.')
+@click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
 def create(**kwargs):

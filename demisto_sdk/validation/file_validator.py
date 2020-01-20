@@ -245,7 +245,7 @@ class FilesValidator:
         if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
-    def validate_modified_files(self, modified_files, file_type: str = ''):  # noqa: C901
+    def validate_modified_files(self, modified_files, file_type: str = None):  # noqa: C901
         """Validate the modified files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
@@ -267,7 +267,8 @@ class FilesValidator:
             if not file_type and re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
-            structure_validator = StructureValidator(file_path, old_file_path)
+            structure_validator = StructureValidator(file_path, old_file_path, predefined_scheme=file_type)
+            structure_validator.file_type = file_type if file_type else structure_validator.file_type
             if not structure_validator.is_valid_file():
                 self._is_valid = False
 
@@ -277,6 +278,7 @@ class FilesValidator:
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 image_validator = ImageValidator(file_path)
+                image_validator.file_path = file_path if file_type else image_validator.file_path
                 if not image_validator.is_valid():
                     self._is_valid = False
 
@@ -288,11 +290,12 @@ class FilesValidator:
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
 
-                if not integration_validator.is_valid_file():
+                if not integration_validator.is_valid_file(validate_rn=False if file_type else True):
                     self._is_valid = False
 
             elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
                 image_validator = ImageValidator(file_path)
+                image_validator.file_path = file_path if file_type else image_validator.file_path
                 if not image_validator.is_valid():
                     self._is_valid = False
 
@@ -308,7 +311,7 @@ class FilesValidator:
                 script_validator = ScriptValidator(structure_validator)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
-                if not script_validator.is_valid_file():
+                if not script_validator.is_valid_file(validate_rn=False if file_type else True):
                     self._is_valid = False
 
             elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST) or file_type == 'playbook':
@@ -325,7 +328,7 @@ class FilesValidator:
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
-                if not script_validator.is_valid_file():
+                if not script_validator.is_valid_file(validate_rn=False if file_type else True):
                     self._is_valid = False
 
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
@@ -337,7 +340,7 @@ class FilesValidator:
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
-                if not incident_field_validator.is_valid_file():
+                if not incident_field_validator.is_valid_file(validate_rn=False if file_type else True):
                     self._is_valid = False
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
@@ -404,7 +407,7 @@ class FilesValidator:
                     self._is_valid = False
 
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_file(validate_rn=False):
+                if not integration_validator.is_valid_file():
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
@@ -414,7 +417,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
 
-                if not script_validator.is_valid_file(validate_rn=False):
+                if not script_validator.is_valid_file():
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
@@ -575,7 +578,9 @@ class FilesValidator:
                 self.validate_all_files()
         else:
             if self.file_path:
+                self.is_backward_check = False
                 predefined_scheme = find_type(self.file_path)
+                print(predefined_scheme)
                 self.validate_modified_files({self.file_path}, predefined_scheme)
             else:
                 print('Not using git, validating all files')

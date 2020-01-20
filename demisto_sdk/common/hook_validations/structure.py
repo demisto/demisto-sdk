@@ -39,10 +39,13 @@ class StructureValidator:
         # type: (str, Optional[str], Optional[str], Configuration) -> None
         self.is_valid = True
         self.file_path = file_path
+        if not predefined_scheme:
+            self.old_file = get_remote_file(old_file_path) if old_file_path else get_remote_file(file_path)
+        else:
+            self.old_file = None
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
-        self.old_file = get_remote_file(old_file_path) if old_file_path else get_remote_file(file_path)
         self.configuration = configuration
 
     def is_valid_file(self):
@@ -57,7 +60,6 @@ class StructureValidator:
             self.is_valid_scheme(),
             self.is_file_id_without_slashes(),
         ]
-
         if self.old_file:  # In case the file is modified
             answers.append(not self.is_id_modified())
             answers.append(self.is_valid_fromversion_on_modified())

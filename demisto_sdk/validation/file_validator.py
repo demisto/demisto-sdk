@@ -260,7 +260,7 @@ class FilesValidator:
                 old_file_path, file_path = file_path
 
             print('Validating {}'.format(file_path))
-            if not checked_type(file_path):
+            if not checked_type(file_path) and not file_type:
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 

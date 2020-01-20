@@ -13,7 +13,6 @@ from __future__ import print_function
 
 import os
 import re
-from typing import Dict
 
 from demisto_sdk.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.common.configuration import Configuration

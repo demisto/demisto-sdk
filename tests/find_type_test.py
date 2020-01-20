@@ -21,18 +21,18 @@ data_test_find_type = [
     ('tests/test_files/reputation.json', 'reputation'),
     ('tests/test_files/script.yml', 'script'),
     ('tests/test_files/widget.json', 'widget'),
-    ('tests/test_files/test', None),
-    ('', None)
+    ('tests/test_files/test', ''),
+    ('', '')
 ]
 
 
 @pytest.mark.parametrize('path, _type', data_test_get_dict_from_file)
 def test_get_dict_from_file(path, _type):
     output = get_dict_from_file(str(path))[1]
-    assert output == _type, f'get_dict_from_file({_input}) returns: {output} instead {expected}'
+    assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
 
 @pytest.mark.parametrize('path, _type', data_test_find_type)
 def test_find_type(path, _type):
     output = find_type(str(path))
-    assert output == _type, f'find_type({_input}) returns: {output} instead {expected}'
+    assert output == _type, f'find_type({path}) returns: {output} instead {_type}'

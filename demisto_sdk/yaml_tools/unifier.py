@@ -68,7 +68,7 @@ class Unifier:
 
         # script key for scripts is a string.
         # script key for integrations is a dictionary.
-        self.is_script_package = isinstance(self.yml_data('script'), str)
+        self.is_script_package = isinstance(self.yml_data.get('script'), str)
         self.dir_name = SCRIPTS_DIR if self.is_script_package else INTEGRATIONS_DIR
 
     def write_yaml_with_docker(self, yml_unified, yml_data, script_obj):

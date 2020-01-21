@@ -38,8 +38,8 @@ class Unifier:
                 directory_name = optional_dir_name
 
         if not directory_name:
-            print_error("You have failed to provide a legal file path, a legal file path "
-                        "should contain either Integrations or Scripts directories")
+            print_error('You have failed to provide a legal file path, a legal file path '
+                        'should contain either Integrations or Scripts directories')
 
         self.image_prefix = image_prefix
         self.package_path = indir
@@ -64,12 +64,12 @@ class Unifier:
                 self.yml_data = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
         else:
             self.yml_data = {}
-            print_error('No yml found in path: {}'.format(self.package_path))
+            print_error(f'No yml found in path: {self.package_path}')
 
         # script key for scripts is a string.
         # script key for integrations is a dictionary.
         self.is_script_package = isinstance(self.yml_data.get('script'), str)
-        self.dir_name = SCRIPTS_DIR if self.is_script_package else INTEGRATIONS_DIR
+        self.dir_name = SCRIPTS_DIR if self.is_script_package else dir_name
 
     def write_yaml_with_docker(self, yml_unified, yml_data, script_obj):
         """Write out the yaml file taking into account the dockerimage45 tag.
@@ -97,13 +97,13 @@ class Unifier:
 
             # validate that this is a script/integration which targets both 4.5 and 5.0+.
             if server_version_compare(yml_data.get('fromversion', '0.0.0'), '5.0.0') >= 0:
-                raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
+                raise ValueError(f'Failed: {self.dest_path}. dockerimage45 set for 5.0 and later only')
 
             yml_unified['fromversion'] = '5.0.0'
 
             # validate that this is a script/integration which targets both 4.5 and 5.0+.
             if server_version_compare(yml_data.get('toversion', '99.99.99'), '5.0.0') < 0:
-                raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
+                raise ValueError(f'Failed: {self.dest_path}. dockerimage45 set for 4.5 and earlier only')
 
             yml_unified45['toversion'] = '4.5.9'
 
@@ -124,9 +124,9 @@ class Unifier:
 
         for file_path, file_data in output_map.items():
             if os.path.isfile(file_path):
-                raise ValueError('Output file already exists: {}.'
+                raise ValueError(f'Output file already exists: {self.dest_path}.'
                                  ' Make sure to remove this file from source control'
-                                 ' or rename this package (for example if it is a v2).'.format(self.dest_path))
+                                 ' or rename this package (for example if it is a v2).')
 
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
                 yaml.dump(file_data, stream=file_, Dumper=yamlordereddictloader.SafeDumper)
@@ -172,7 +172,7 @@ class Unifier:
 
         if yml_data.get('image'):
             raise ValueError('Please move the image from the yml to an image file (.png)'
-                             ' in the package: {}'.format(self.package_path))
+                             f' in the package: {self.package_path}')
 
         yml_unified['image'] = image_data
 
@@ -183,7 +183,7 @@ class Unifier:
 
         if yml_data.get('detaileddescription'):
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
-                             ' in the package: {}'.format(self.package_path))
+                             f' in the package: {self.package_path}')
         if desc_data:
             yml_unified['detaileddescription'] = desc_data.decode('utf-8')
 
@@ -237,15 +237,13 @@ class Unifier:
 
         if self.is_script_package:
             if yml_data.get('script') not in ('', '-'):
-                raise ValueError("Please change the script to be blank or a dash(-) for package {}"
-                                 .format(self.package_path))
+                raise ValueError(f'Please change the script to be blank or a dash(-) for package {self.package_path}')
 
             yml_unified['script'] = clean_code
 
         else:
             if yml_data['script'].get('script', '') not in ('', '-'):
-                raise ValueError("Please change the script to be blank or a dash(-) for package {}"
-                                 .format(self.package_path))
+                raise ValueError(f'Please change the script to be blank or a dash(-) for package {self.package_path}')
 
             yml_unified['script']['script'] = clean_code
 
@@ -255,8 +253,8 @@ class Unifier:
         # should be static method
         _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
         if not yml_path:
-            raise Exception("No yml files found in package path: {}. "
-                            "Is this really a package dir? If not remove it.".format(self.package_path))
+            raise Exception(f'No yml files found in package path: {self.package_path}. '
+                            'Is this really a package dir? If not remove it.')
 
         code_type = get_yaml(yml_path).get('type')
         unifier = Unifier(self.package_path)

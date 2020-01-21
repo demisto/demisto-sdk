@@ -295,7 +295,8 @@ class TestMergeScriptPackageToYMLIntegration:
 
         actual_yml = get_yaml(export_yml_path)
 
-        expected_yml = get_yaml(self.expected_yml_path)
+        expected_yml = get_yaml('tests/test_files/Unifier/SampleIntegPackage/'
+                                'integration-SampleIntegPackageSanity.yml')
 
         assert expected_yml == actual_yml
 
@@ -304,6 +305,12 @@ class TestMergeScriptPackageToYMLIntegration:
         -
         """
         from demisto_sdk.yaml_tools.unifier import Unifier
+        description = '''
+        some test with special chars
+        שלום
+        hello
+        你好
+        '''
 
         create_test_package(
             test_dir=self.test_dir_path,
@@ -311,12 +318,7 @@ class TestMergeScriptPackageToYMLIntegration:
             base_yml='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
             script_code=TEST_VALID_CODE,
             image_file='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
-            detailed_description='''
-        some test with special chars
-        שלום
-        hello
-        你好
-        ''',
+            detailed_description=description,
         )
 
         unifier = Unifier(self.export_dir_path, outdir=self.test_dir_path)
@@ -330,9 +332,11 @@ class TestMergeScriptPackageToYMLIntegration:
         assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
         actual_yml = get_yaml(export_yml_path)
 
-        expected_yml = get_yaml(self.expected_yml_path)
+        expected_yml = get_yaml('tests/test_files/Unifier/SampleIntegPackage/'
+                                'integration-SampleIntegPackageDescSpecialChars.yml')
 
         assert expected_yml == actual_yml
+        assert actual_yml['detaileddescription'] == description
 
     def test_unify_integration__detailed_description_with_yml_structure(self):
         """
@@ -369,9 +373,10 @@ final test: hi
         assert orig_script == f'{self.export_dir_path}/SampleIntegPackage.py'
         assert orig_image == f'{self.export_dir_path}/SampleIntegPackage_image.png'
         assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
-        actual_yml = get_yaml(export_yml_path)
 
-        expected_yml = get_yaml(self.expected_yml_path)
+        actual_yml = get_yaml(export_yml_path)
+        expected_yml = get_yaml('tests/test_files/Unifier/SampleIntegPackage/'
+                                'integration-SampleIntegPackageDescAsYML.yml')
 
         assert expected_yml == actual_yml
         assert actual_yml['detaileddescription'] == description
@@ -414,6 +419,6 @@ class TestMergeScriptPackageToYMLScript:
 
         actual_yml = get_yaml(export_yml_path)
 
-        expected_yml = get_yaml(self.expected_yml_path)
+        expected_yml = get_yaml('tests/test_files/Unifier/SampleScriptPackage/script-SampleScriptPackageSanity.yml')
 
         assert expected_yml == actual_yml

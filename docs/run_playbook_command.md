@@ -52,13 +52,6 @@ The playbook will keep running in Demisto.
 ```
 demisto-sdk run-playbook -p 'playbook_name' -t 300
 ```
-This will run the playbook 'playbook_name' in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run. 
+This will run the playbook 'playbook_name' in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
 If the playbook is running for more than 5 minutes (300 seconds), the command will stop while the playbook will keep running in Demisto.
 If you have a long running playbook, consider increasing the timeout argument respectively.
-
-
-
-
-
-
-

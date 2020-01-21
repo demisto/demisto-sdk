@@ -14,7 +14,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
-        return structure    
+        return structure
 
 
 class TestIntegrationValidator:
@@ -137,10 +137,10 @@ class TestIntegrationValidator:
         """
         # from demisto_sdk.common.tools import print_error
         # mocker.patch(tools, 'print_error')
-        
+
         current = {
             'configuration': [
-                {'name': 'test'}, 
+                {'name': 'test'},
                 {'name': 'test'}
             ]
         }

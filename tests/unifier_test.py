@@ -11,7 +11,7 @@ DUMMY_SCRIPT = '''
         LOG(f'Command being called is {command}')
 
         params = demisto.params()
-    
+
 
     try:
         if command == 'test-module':
@@ -42,7 +42,7 @@ class MicrosoftClient(BaseClient):
                  token_retrieval_url: str = '', app_name: str = '', refresh_token: str = '',
                  client_id: str = '', client_secret: str = '', scope: str = '', resource: str = '', app_url: str = '',
                  verify: bool = True, auth_type: str = OPROXY_AUTH_TYPE, *args, **kwargs):
- 
+
 '''
 
 

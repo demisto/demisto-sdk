@@ -192,7 +192,7 @@ class SecretsValidator(object):
                         if not any(
                                 white_list_string.lower() in string_.lower()
                                 for white_list_string in secrets_white_list):
-                            
+
                             entropy = self.calculate_shannon_entropy(string_)
                             if entropy >= ENTROPY_THRESHOLD:
                                 high_entropy_strings.append(string_)

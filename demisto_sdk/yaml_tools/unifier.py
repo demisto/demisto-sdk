@@ -59,12 +59,16 @@ class Unifier:
                 self.yml_path = path
                 break
 
-        with open(self.yml_path, 'r') as yml_file:
-            self.yml_data = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
+        if self.yml_path:
+            with open(self.yml_path, 'r') as yml_file:
+                self.yml_data = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
+        else:
+            self.yml_data = {}
+            print_error('No yml found in path: {}'.format(self.package_path))
 
         # script key for scripts is a string.
         # script key for integrations is a dictionary.
-        self.is_script_package = isinstance(self.yml_data['script'], str)
+        self.is_script_package = isinstance(self.yml_data('script'), str)
         self.dir_name = SCRIPTS_DIR if self.is_script_package else INTEGRATIONS_DIR
 
     def write_yaml_with_docker(self, yml_unified, yml_data, script_obj):

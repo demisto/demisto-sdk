@@ -188,18 +188,21 @@ class Unifier:
 
     def get_code_file(self, script_type):
         """Return the first code file in the specified directory path
-        :param script_type: script type: .py or .js
+        :param script_type: script type: .py, .js, .ps1
         :type script_type: str
         :return: path to found code file
         :rtype: str
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|ApiModule\.py')
+                        r'|conftest\.py|__init__\.py|ApiModule\.py'
+                        r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|\.Tests\.ps1')
         if not self.package_path.endswith('/'):
             self.package_path += '/'
         if self.package_path.endswith('Scripts/CommonServerPython/'):
             return self.package_path + 'CommonServerPython.py'
+        if self.package_path.endswith('Scripts/CommonServerPowerShell/'):
+            return self.package_path + 'CommonServerPowerShell.ps1'
         if self.package_path.endswith('ApiModule/'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 

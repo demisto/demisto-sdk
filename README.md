@@ -131,6 +131,7 @@ pylint and pytest will run within all the docker images of an integration/script
   Keep the test container (default: False)
 * **-v, --verbose**
   Verbose output (default: False)
+* **--circle** Indicates that the command runs in CircleCI (default: False)
 * **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
@@ -143,13 +144,16 @@ This will parallel run the linters, excluding mypy, on the python files inside t
 Run Secrets validator to catch sensitive data before exposing your code to public repository. Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "./Tests/secrets_white_list.json".
 **Arguments**:
 * **--post-commit**
-                       Whether the secretes validation is done after you committed your files.
-                       This will help the command to determine which files it should check in its
-                       run. Before you commit the files it should not be used. Mostly for build
-                       validations. (default: False)
+   Whether the secretes validation is done after you committed your files.
+   This will help the command to determine which files it should check in its
+   run. Before you commit the files it should not be used. Mostly for build
+   validations. (default: False)
 
-* **-wl WHITELIST, --whitelist WHITELIST*
-                        Full path to whitelist file, file name should be "secrets_white_list.json" (default: ./Tests/secrets_white_list.json)
+* **-wl WHITELIST, --whitelist WHITELIST**
+    Full path to whitelist file, file name should be "secrets_white_list.json" (default: ./Tests/secrets_white_list.json)
+
+* **-ie, --ignore-entropy**
+    Ignore entropy algorithm that finds secret strings (passwords/api keys)
 
 **Examples**:
 `demisto-sdk secrets`

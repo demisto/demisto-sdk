@@ -90,6 +90,42 @@ print(some_dict.some_foo)
         secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS])
         assert secrets_found['file_with_secrets_in_it.yml'] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
 
+    def test_ignore_entropy(self):
+        """
+        - no items in the whitelist
+        - file contains 2 secrets:
+            - email
+            - password
+
+        - run validate secrets with --ignore-entropy=True
+
+        - ensure email found
+        - ensure entropy code was not executed - no secrets have found
+        """
+        create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
+
+        validator = SecretsValidator(is_circle=True,
+                                     ignore_entropy=True,
+                                     white_list_path=os.path.join(TestSecrets.TEMP_DIR,
+                                                                  TestSecrets.WHITE_LIST_FILE_NAME))
+
+        with io.open(self.TEST_FILE_WITH_SECRETS, 'w') as f:
+            f.write('''
+print('This is our dummy code')
+
+my_email = "fooo@someorg.com"
+
+API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret
+
+some_dict = {
+    'some_foo': 100
+}
+
+            ''')
+
+        secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS], True)
+        assert secrets_found['file_with_secrets_in_it.yml'] == ['fooo@someorg.com']
+
     def test_remove_white_list_regex(self):
         white_list = '155.165.45.232'
         file_contents = '''

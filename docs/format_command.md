@@ -20,6 +20,9 @@ When done formatting, the **validate** command will run, to let you know of thin
 
     The path where the formatted file will be saved to. (Default will be to override origin file)
 
+* **-g, --use-git**
+
+    Formatting changes using git - this will check your branch changes and will run only on them.
 
 ### Examples
 ```
@@ -37,3 +40,8 @@ This will go through the integration file, format it, and save it to a new file
 demisto-sdk format -t script -s Scripts/FilterByList/FilterByList.yml
 ```
 This will go through the script file, format it, and override the original file with the necessary changes.
+<br/><br/>
+```
+demisto-sdk format -g
+```
+this will check your branch changes and will run only on them.

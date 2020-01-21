@@ -1,10 +1,3 @@
-import yaml
-import json
-import sys
-import dateparser
-
-from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
-
 """
 This script parses a raw response from an API(JSON) into yml formatted file with the context path of each field.
 For example:
@@ -78,6 +71,12 @@ outputs:
   description: ''
   type: String
 """
+import yaml
+import json
+import sys
+import dateparser
+
+from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
 
 
 def input_multiline():

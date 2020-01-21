@@ -93,13 +93,13 @@ def test_get_code_file():
     with pytest.raises(Exception):
         unifier.get_code_file(".py")
     # Test script case
-    unifier = Unifier("test_files/CalculateGeoDistance/")
+    unifier = Unifier("tests/test_files/CalculateGeoDistance/")
     assert unifier.get_code_file(".py") == "tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py"
 
 
 def test_get_script_package_data():
     from demisto_sdk.yaml_tools.unifier import Unifier
-    unifier = Unifier("test_files/Unifier/TestNoPyFile")
+    unifier = Unifier("tests/test_files/Unifier/TestNoPyFile")
     with pytest.raises(Exception):
         unifier.get_script_package_data()
     unifier = Unifier("tests/test_files/CalculateGeoDistance")

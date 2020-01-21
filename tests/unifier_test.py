@@ -258,7 +258,7 @@ def create_test_package(test_dir, package_name, base_yml, script_code, detailed_
 
 class TestMergeScriptPackageToYMLIntegration:
     def setup(self):
-        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+        self.test_dir_path = os.path.join('test_files', 'Unifier', 'Testing')
         os.makedirs(self.test_dir_path)
         self.package_name = 'TestIntegPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
@@ -277,10 +277,10 @@ class TestMergeScriptPackageToYMLIntegration:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            base_yml='test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
             script_code=TEST_VALID_CODE,
             detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
-            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            image_file='test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
         )
 
         unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
@@ -308,9 +308,9 @@ class TestMergeScriptPackageToYMLIntegration:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            base_yml='test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
             script_code=TEST_VALID_CODE,
-            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            image_file='test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
             detailed_description='''
         some test with special chars
         שלום
@@ -354,9 +354,9 @@ final test: hi
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            base_yml='test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
             script_code=TEST_VALID_CODE,
-            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            image_file='test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
             detailed_description=description,
         )
 
@@ -379,7 +379,7 @@ final test: hi
 
 class TestMergeScriptPackageToYMLScript:
     def setup(self):
-        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+        self.test_dir_path = os.path.join('test_files', 'Unifier', 'Testing')
         os.makedirs(self.test_dir_path)
         self.package_name = 'TestScriptPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
@@ -398,7 +398,7 @@ class TestMergeScriptPackageToYMLScript:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestScriptPackage/TestScriptPackage.yml',
+            base_yml='test_files/Unifier/TestScriptPackage/TestScriptPackage.yml',
             script_code=TEST_VALID_CODE,
         )
 

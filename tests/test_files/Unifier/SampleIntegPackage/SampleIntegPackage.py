@@ -1,37 +1,28 @@
 import demistomock as demisto
-from CommonServerPython import *
-from CommonServerUserPython import *
-# IMPORTS
-
-import json
-import requests
-import dateparser
-
-# Disable insecure warnings
-requests.packages.urllib3.disable_warnings()
+from CommonServerPython import *  # noqa: E402
 
 # CONSTANTS
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
-class Client(BaseClient):
+class Client:
     """
     Client will implement the service API, and should not contain any Demisto logic.
     Should only do requests and return data.
     """
 
-    def say_hello(self, name):
+    @staticmethod
+    def say_hello(name):
         return f'Hello {name}'
 
     def say_hello_http_request(self, name):
         """
         initiates a http request to a test url
         """
-        data = self._http_request(
-            method='GET',
-            url_suffix='/hello/' + name
+        data = self.say_hello(
+            name=name
         )
-        return data.get('result')
+        return data
 
 
 def test_module(client):
@@ -108,26 +99,9 @@ def main():
     """
         PARSE AND VALIDATE INTEGRATION PARAMS
     """
-    username = demisto.params().get('credentials').get('identifier')
-    password = demisto.params().get('credentials').get('password')
 
-    # get the service API url
-    base_url = urljoin(demisto.params()['url'], '/api/v1/suffix')
-
-    verify_certificate = not demisto.params().get('insecure', False)
-
-    # How much time before the first fetch to retrieve incidents
-    first_fetch_time = demisto.params().get('fetch_time', '3 days').strip()
-
-    proxy = demisto.params().get('proxy', False)
-
-    LOG(f'Command being called is {demisto.command()}')
     try:
-        client = Client(
-            base_url=base_url,
-            verify=verify_certificate,
-            auth=(username, password),
-            proxy=proxy)
+        client = Client()
 
         if demisto.command() == 'test-module':
             # This is the call made when pressing the integration Test button.
@@ -135,11 +109,11 @@ def main():
             demisto.results(result)
 
         elif demisto.command() == 'helloworld-say-hello':
-            return_outputs(*say_hello_command(client, demisto.args()))
+            return say_hello_over_http_command(client, demisto.args())
 
     # Log exceptions
     except Exception as e:
-        return_error(f'Failed to execute {demisto.command()} command. Error: {str(e)}')
+        return f'Failed to execute {demisto.command()} command. Error: {str(e)}'
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):

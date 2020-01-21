@@ -36,7 +36,7 @@ DUMMY_SCRIPT = '''
         LOG(f'Command being called is {command}')
 
         params = demisto.params()
-    
+
 
     try:
         if command == 'test-module':
@@ -67,7 +67,7 @@ class MicrosoftClient(BaseClient):
                  token_retrieval_url: str = '', app_name: str = '', refresh_token: str = '',
                  client_id: str = '', client_secret: str = '', scope: str = '', resource: str = '', app_url: str = '',
                  verify: bool = True, auth_type: str = OPROXY_AUTH_TYPE, *args, **kwargs):
- 
+
 '''
 
 
@@ -89,7 +89,7 @@ def test_get_code_file():
     # Test integration case
     unifier = Unifier("tests/test_files/VulnDB/")
     assert unifier.get_code_file(".py") == "tests/test_files/VulnDB/VulnDB.py"
-    unifier = Unifier("tests/test_files/Unifier/TestNoPyFile")
+    unifier = Unifier("tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):
         unifier.get_code_file(".py")
     # Test script case
@@ -99,7 +99,7 @@ def test_get_code_file():
 
 def test_get_script_package_data():
     from demisto_sdk.yaml_tools.unifier import Unifier
-    unifier = Unifier("tests/test_files/Unifier/TestNoPyFile")
+    unifier = Unifier("tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):
         unifier.get_script_package_data()
     unifier = Unifier("tests/test_files/CalculateGeoDistance")
@@ -260,9 +260,9 @@ class TestMergeScriptPackageToYMLIntegration:
     def setup(self):
         self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
         os.makedirs(self.test_dir_path)
-        self.package_name = 'TestIntegPackage'
+        self.package_name = 'SampleIntegPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
-        self.expected_yml_path = os.path.join(self.test_dir_path, 'integration-TestIntegPackage.yml')
+        self.expected_yml_path = os.path.join(self.test_dir_path, 'integration-SampleIntegPackage.yml')
 
     def teardown(self):
         if self.test_dir_path:
@@ -277,10 +277,10 @@ class TestMergeScriptPackageToYMLIntegration:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            base_yml='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
             script_code=TEST_VALID_CODE,
             detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
-            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            image_file='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
         )
 
         unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
@@ -288,10 +288,10 @@ class TestMergeScriptPackageToYMLIntegration:
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/TestIntegPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/TestIntegPackage.py'
-        assert orig_image == f'{self.export_dir_path}/TestIntegPackage_image.png'
-        assert orig_description == f'{self.export_dir_path}/TestIntegPackage_description.md'
+        assert orig_yml == f'{self.export_dir_path}/SampleIntegPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/SampleIntegPackage.py'
+        assert orig_image == f'{self.export_dir_path}/SampleIntegPackage_image.png'
+        assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
 
         actual_yml = get_yaml(export_yml_path)
 
@@ -308,9 +308,9 @@ class TestMergeScriptPackageToYMLIntegration:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            base_yml='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
             script_code=TEST_VALID_CODE,
-            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            image_file='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
             detailed_description='''
         some test with special chars
         שלום
@@ -324,10 +324,10 @@ class TestMergeScriptPackageToYMLIntegration:
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/TestIntegPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/TestIntegPackage.py'
-        assert orig_image == f'{self.export_dir_path}/TestIntegPackage_image.png'
-        assert orig_description == f'{self.export_dir_path}/TestIntegPackage_description.md'
+        assert orig_yml == f'{self.export_dir_path}/SampleIntegPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/SampleIntegPackage.py'
+        assert orig_image == f'{self.export_dir_path}/SampleIntegPackage_image.png'
+        assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
         actual_yml = get_yaml(export_yml_path)
 
         expected_yml = get_yaml(self.expected_yml_path)
@@ -354,9 +354,9 @@ final test: hi
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage.yml',
+            base_yml='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
             script_code=TEST_VALID_CODE,
-            image_file='tests/test_files/Unifier/TestIntegPackage/TestIntegPackage_image.png',
+            image_file='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
             detailed_description=description,
         )
 
@@ -365,10 +365,10 @@ final test: hi
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/TestIntegPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/TestIntegPackage.py'
-        assert orig_image == f'{self.export_dir_path}/TestIntegPackage_image.png'
-        assert orig_description == f'{self.export_dir_path}/TestIntegPackage_description.md'
+        assert orig_yml == f'{self.export_dir_path}/SampleIntegPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/SampleIntegPackage.py'
+        assert orig_image == f'{self.export_dir_path}/SampleIntegPackage_image.png'
+        assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
         actual_yml = get_yaml(export_yml_path)
 
         expected_yml = get_yaml(self.expected_yml_path)
@@ -381,9 +381,9 @@ class TestMergeScriptPackageToYMLScript:
     def setup(self):
         self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
         os.makedirs(self.test_dir_path)
-        self.package_name = 'TestScriptPackage'
+        self.package_name = 'SampleScriptPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
-        self.expected_yml_path = os.path.join(self.test_dir_path, 'script-TestScriptPackage.yml')
+        self.expected_yml_path = os.path.join(self.test_dir_path, 'script-SampleScriptPackage.yml')
 
     def teardown(self):
         if self.test_dir_path:
@@ -398,7 +398,7 @@ class TestMergeScriptPackageToYMLScript:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/TestScriptPackage/TestScriptPackage.yml',
+            base_yml='tests/test_files/Unifier/SampleScriptPackage/SampleScriptPackage.yml',
             script_code=TEST_VALID_CODE,
         )
 
@@ -407,8 +407,8 @@ class TestMergeScriptPackageToYMLScript:
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/TestScriptPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/TestScriptPackage.py'
+        assert orig_yml == f'{self.export_dir_path}/SampleScriptPackage.yml'
+        assert orig_script == f'{self.export_dir_path}/SampleScriptPackage.py'
         assert orig_image is None
         assert orig_description is None
 

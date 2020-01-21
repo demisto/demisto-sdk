@@ -10,8 +10,10 @@ repos:
     -   id: debug-statements
         language_version: python3
     -   id: name-tests-test
+        exclude: tests/test_files/.*
     -   id: requirements-txt-fixer
     -   id: flake8
+        exclude: tests/test_files/.*
     -   id: no-commit-to-branch
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.750

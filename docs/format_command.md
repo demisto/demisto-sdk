@@ -19,9 +19,9 @@ When done formatting, the **validate** command will run, to let you know of thin
 * **-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH**
 
     The path where the formatted file will be saved to. (Default will be to override origin file)
-   
+
 * **-g, --use-git**
-    
+
     Formatting changes using git - this will check your branch changes and will run only on them.
 
 ### Examples

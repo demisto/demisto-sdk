@@ -52,7 +52,7 @@ class ContentCreator:
             WIDGETS_DIR,
         ]
 
-        self.packages_to_skip = ['HelloWorld', 'HelloWorldSimple', 'HelloWorldScript']
+        self.packages_to_skip = []
         self.packs_to_skip = ['ApiModules']  # See the pack README
 
         # zip files names (the extension will be added later - shutil demands file name without extension)

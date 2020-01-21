@@ -232,13 +232,14 @@ class LintManager:
 
         return linter.run_dev_packages(), package_dir
 
-    def create_failed_unittests_file(self, failed_unittests):
+    @staticmethod
+    def create_failed_unittests_file(failed_unittests, outfile):
         """
         Creates a file with failed unittests.
         The file will be read in slack_notifier script - which will send the failed unittests to the content-team
         channel.
         """
-        with open(self.outfile, "w") as failed_unittests_file:
+        with open(outfile, "w") as failed_unittests_file:
             failed_unittests_file.write('\n'.join(failed_unittests))
 
     def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]) -> int:
@@ -252,7 +253,7 @@ class LintManager:
             int. 0 on success and 1 if any package failed
         """
         if self.outfile:
-            self.create_failed_unittests_file(fail_pkgs)
+            self.create_failed_unittests_file(fail_pkgs, self.outfile)
 
         if fail_pkgs:
             print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)

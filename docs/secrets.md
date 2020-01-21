@@ -11,7 +11,7 @@
                        validations. (default: False)
 
 * **-wl WHITELIST, --whitelist WHITELIST**
-                        Full path to whitelist file, file name should be "secrets_white_list.json". 
+                        Full path to whitelist file, file name should be "secrets_white_list.json".
                         (default: ./Tests/secrets_white_list.json)
 
 ### Examples
@@ -117,12 +117,9 @@ an example would be IPV4 which can have a lot of repeating characters, reducing 
 - Base64 strings of very big length will be ignored automatically
 - If PDF file parsing fails, a warning will be issued under the commit message and file will be skipped.
 
-  
+
 **White Listing**
 
 - If a python file is detected, a related yml file will automatically be pulled and it's context paths will be used as temporary white list.
 - Currently regex is being used also in order to identify strings that have high risk of being high entropy strings,
 such as dates and UUID, and are regarded as false positives. Also regex is being used to catch and remove patterns that have extremely high probability of being false positives.
-
-
-

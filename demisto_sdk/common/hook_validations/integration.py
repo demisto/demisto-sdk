@@ -500,7 +500,8 @@ class IntegrationValidator(BaseValidator):
             fetch_params: List = ['incidentType', 'isFetch']
             for param_name in fetch_params:
                 if param_name not in params:
-                    print_error(Errors.added_required_fields(self.file_path, param_name))
+                    print_error(f"You've missed required param in the"
+                                f" file '{self.file_path}', the param is '{param_name}'")
                     return_value = False
 
         return return_value

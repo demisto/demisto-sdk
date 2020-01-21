@@ -18,11 +18,11 @@ This command is used in order to upload integration files to a remote Demisto in
 * **-i INTEGRATION_PATH, --inpath INTEGRATION_PATH**
 
     The path of an integration file or a package directory to upload
-                        
+
 * **-k, --insecure**
 
     Skip certificate validation
-    
+
 * **-v, --verbose**
 
     Verbose output
@@ -48,4 +48,3 @@ This will upload the integration YML file `integration-GoogleCloudTranslate.yml`
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml -v
 ```
 This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance and print a JSON representation of the integration.
-

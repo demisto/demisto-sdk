@@ -1,8 +1,11 @@
 from typing import List
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import yaml
 >>>>>>> 80bb5c1... validate fetch params
+=======
+>>>>>>> a257e55fd9c473b7af9457b0ac6d1366915a0872
 from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
@@ -60,9 +63,12 @@ class IntegrationValidator(BaseValidator):
 <<<<<<< HEAD
             self.is_valid_feed(),
             self.is_fetch_params_exist(),
+<<<<<<< HEAD
 =======
             self.is_fetch_params_exist()
 >>>>>>> 80bb5c1... validate fetch params
+=======
+>>>>>>> a257e55fd9c473b7af9457b0ac6d1366915a0872
         ]
         return all(answers)
 
@@ -514,16 +520,26 @@ class IntegrationValidator(BaseValidator):
         """
         return_value = True
         if self.current_file.get('script', {}).get('isfetch') is True:
-            params = [_key.get('name') for _key in self.current_file.get('configuration', [])]
-            fetch_params: List = ['incidentType', 'isFetch']
-            for param_name in fetch_params:
-                if param_name not in params:
+            params = [_key for _key in self.current_file.get('configuration', [])]
+            fetch_params: List = [
+                {
+                    'display': 'Incident type',
+                    'name': 'incidentType',
+                    'required': False,
+                    'type': 13
+                },
+                {
+                    'display': 'Fetch incidents',
+                    'name': 'isFetch',
+                    'required': False,
+                    'type': 8
+                }
+            ]
+            for param in fetch_params:
+                if param not in params:
+                    param['required'] = 'false'
                     print_error(f"You've missed required param in the"
-                                f" file '{self.file_path}', the param is '{param_name}'")
-                    return_value = False
-
-        return return_value
-                    print_error(Errors.added_required_fields(self.file_path, param_name))
+                                f" file '{self.file_path}', the param is '{param}'")
                     return_value = False
 
         return return_value

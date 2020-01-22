@@ -46,8 +46,8 @@ class TestCreateFailedUnitTestsFile:
 
         assert file_content == ''
 
+    @patch('demisto_sdk.dev_tools.lint_manager.get_dev_requirements')
     @patch('demisto_sdk.dev_tools.lint_manager.LintManager.create_failed_unittests_file')
-    @patch('demisto_sdk.common.tools.get_dev_requirements')
     def test_no_outfile_set(self, create_failed_unittests_file, get_dev_requirements):
         _ = get_dev_requirements  # unused
         from demisto_sdk.dev_tools.lint_manager import LintManager

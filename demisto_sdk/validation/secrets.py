@@ -345,17 +345,17 @@ class SecretsValidator(object):
         if os.path.isfile(whitelist_path):
             with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
                 temp_white_list = secrets_white_list_file.read().split('\n')
-            for i in range(len(temp_white_list)):
-                if temp_white_list[i].startswith('file:'):
-                    temp_white_list[i] = os.path.join(PACKS_DIR, pack_name, temp_white_list[i][5:])
-                    if not os.path.isfile(os.path.join(temp_white_list[i])):
-                        print_warning(f'{temp_white_list[i]} not found.\n'
+            for white_list_line in temp_white_list:
+                if white_list_line.startswith('file:'):
+                    white_list_line = os.path.join(PACKS_DIR, pack_name, white_list_line[5:])
+                    if not os.path.isfile(os.path.join(white_list_line)):
+                        print_warning(f'{white_list_line} not found.\n'
                                       'please add the file name in the following format\n'
                                       'file:[Scripts|Integrations|Playbooks]/name/file.example\n'
                                       'e.g. file:Scripts/HelloWorldScript/HelloWorldScript.py')
-                    files_white_list.append(temp_white_list[i])
+                    files_white_list.append(white_list_line)
                 else:
-                    final_white_list.append(temp_white_list[i])
+                    final_white_list.append(white_list_line)
         return final_white_list, [], files_white_list
 
     def get_file_contents(self, file_path, file_extension):

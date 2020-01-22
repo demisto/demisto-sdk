@@ -6,7 +6,7 @@ import glob
 import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple
+from typing import Union, Optional, Tuple, List
 
 import urllib3
 import yaml
@@ -393,7 +393,7 @@ def get_matching_regex(string_to_match, regexes):
     return checked_type(string_to_match, regexes, return_regex=True)
 
 
-def get_docker_images(script_obj):
+def get_docker_images(script_obj) -> List[str]:
     imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
     alt_imgs = script_obj.get('alt_dockerimages')
     if alt_imgs:
@@ -401,7 +401,7 @@ def get_docker_images(script_obj):
     return imgs
 
 
-def get_all_docker_images(script_obj):
+def get_all_docker_images(script_obj) -> List[str]:
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
     Args:

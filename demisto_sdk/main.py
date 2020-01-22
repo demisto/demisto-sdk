@@ -204,6 +204,8 @@ def validate(config, **kwargs):
 @click.option(
     '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
 @click.option(
+    '-v', '--content_version', default='', help='The content version which you want to appear in CommonServerPython.')
+@click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
 def create(**kwargs):
@@ -226,13 +228,17 @@ def create(**kwargs):
          'run. Before you commit the files it should not be used. Mostly for build '
          'validations.')
 @click.option(
+    '-ie', '--ignore-entropy', is_flag=True,
+    help='Ignore entropy algorithm that finds secret strings (passwords/api keys)'
+)
+@click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
     secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
-                               white_list_path=kwargs['whitelist'])
+                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'])
     return secrets.run()
 
 
@@ -276,7 +282,7 @@ def secrets(config, **kwargs):
 @click.option(
     "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
 @click.option(
-    "--circle", is_flag=True, help="Indicates the command runs in circle"
+    "--outfile", help="Save failing packages to a file"
 )
 @pass_config
 def lint(config, dir, **kwargs):

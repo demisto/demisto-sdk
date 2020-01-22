@@ -207,6 +207,9 @@ def unify(**kwargs):
     "-m", "--max-workers", type=int, help="How many threads to run in parallel")
 @click.option(
     "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
+@click.option(
+    "--outfile", help="Save failing packages to a file"
+)
 
 @pass_config
 def validate(config, **kwargs):

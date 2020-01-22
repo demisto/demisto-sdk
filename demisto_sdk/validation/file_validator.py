@@ -62,7 +62,7 @@ class FilesValidator:
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
                  configuration=Configuration(), no_pylint: bool = False, no_flake8: bool = False, no_mypy: bool = False,
                  no_test: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False, cpu_num: int = 0,
-                 parallel: bool = False, max_workers: int = 10, no_bandit: bool = False, run_all_tests: bool = False):
+                 parallel: bool = False, max_workers: int = 10, no_bandit: bool = False, run_all_tests: bool = False, outfile: str = ''):
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
@@ -102,8 +102,8 @@ class FilesValidator:
         self.lint_args['max_workers'] = max_workers
         self.lint_args['no_bandit'] = no_bandit
         self.lint_args['run_all_tests'] = run_all_tests
+        self.lint_args['outfile'] = outfile
         self.lint_args['git'] = use_git
-        self.lint_args['circle'] = is_circle
 
     def run(self, run_validate, run_lint):
         print(f'run lint: {run_lint}')

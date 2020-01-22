@@ -15,6 +15,6 @@ repos:
     -   id: requirements-txt-fixer
     -   id: flake8
 -   repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v1.4.4
+    rev: v1.5
     hooks:
     -   id: autopep8

@@ -3,7 +3,7 @@ import shutil
 import yaml
 import yamlordereddictloader
 import json
-
+from datetime import datetime
 from typing import Dict
 from distutils.dir_util import copy_tree
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS
@@ -50,6 +50,8 @@ class Initiator:
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
     PACK_TEMPLATE_FOLDER = 'PackData'
     PACK_METADATA_TEMPLATE = 'metadata_template.json'
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+    PACK_INITIAL_VERSION = "1.0.0"
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
@@ -140,7 +142,7 @@ class Initiator:
 
         with open(os.path.join(self.full_output_path, 'metadata.json'), 'a') as fp:
             user_response = input("\nDo you want to fill pack's metadata file? Y/N ").lower()
-            fill_manually = True if user_response in ['y', 'yes'] else False
+            fill_manually = user_response in ['y', 'yes']
 
             template_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'templates',
                                                           self.PACK_TEMPLATE_FOLDER, self.PACK_METADATA_TEMPLATE))
@@ -160,10 +162,20 @@ class Initiator:
         with open(template_path, 'r') as metadata_template_json:
             metadata_template = json.load(metadata_template_json)
 
+            metadata_template['created'] = datetime.utcnow().strftime(Initiator.DATE_FORMAT)
+            metadata_template['updated'] = datetime.utcnow().strftime(Initiator.DATE_FORMAT)
+            metadata_template['beta'] = False
+            metadata_template['deprecated'] = False
+            metadata_template['currentVersion'] = Initiator.PACK_INITIAL_VERSION
+            metadata_template['dependencies'] = []
+
             if not fill_manually:
                 return metadata_template
 
             for key, value in metadata_template.items():
+                if key in ['created', 'updated', 'beta', 'deprecated', 'currentVersion', 'dependencies']:
+                    continue
+
                 value_from_user = input(f'\n{value} ')
 
                 if 'comma separated values' in value:
@@ -171,8 +183,7 @@ class Initiator:
 
                 metadata_template[key] = value_from_user
 
-            if fill_manually:
-                print_color(f"Finished creating pack metadata: {template_path}.", LOG_COLORS.GREEN)
+            print_color(f"Finished creating pack metadata: {template_path}.", LOG_COLORS.GREEN)
 
             return metadata_template
 
@@ -282,7 +293,7 @@ class Initiator:
             os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
                       os.path.join(self.full_output_path, f"{self.dir_name}_image.png"))
 
-    def create_new_directory(self,) -> bool:
+    def create_new_directory(self, ) -> bool:
         """Creates a new directory for the integration/script/pack.
 
         Returns:

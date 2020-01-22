@@ -2,18 +2,13 @@
   "name": "Display name of the pack:",
   "description": "Description of the pack:",
   "support": "Support of the pack, options are demisto / partner / developer / community :",
-  "beta": "Whether is beta version, options are True or False :",
-  "deprecated": "Whether pack is deprecated, options are True or False:",
   "certification": "Certification of the pack, options are certified or verified :",
   "serverMinVersion": "Server min version:",
-  "serverLicense": "Server license, options are standard or premium :",
   "currentVersion": "Current version of the pack:",
   "author": "Author of the pack:",
   "url": "The url of support, should represent your GitHub account:",
   "email": "The email in which you can be contacted in:",
-  "general": "General section - comma separated values:",
   "categories": "Categories - comma separated values:",
   "useCases": "Use cases - comma separated values:",
-  "keywords": "Keywords - comma separated values:",
-  "dependencies": "Additional dependencies of the pack - comma separated values:"
+  "keywords": "Keywords - comma separated values:"
 }

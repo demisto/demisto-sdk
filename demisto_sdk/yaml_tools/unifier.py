@@ -7,6 +7,7 @@ import copy
 from typing import Tuple
 
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error, print_color, \
@@ -175,7 +176,7 @@ class Unifier:
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
                              f' in the package: {self.package_path}')
         if desc_data:
-            yml_unified['detaileddescription'] = desc_data.decode('utf-8')
+            yml_unified['detaileddescription'] = FoldedScalarString(desc_data.decode('utf-8'))
 
         return yml_unified, found_desc_path
 
@@ -229,13 +230,13 @@ class Unifier:
             if yml_data.get('script') not in ('', '-'):
                 raise ValueError(f'Please change the script to be blank or a dash(-) for package {self.package_path}')
 
-            yml_unified['script'] = clean_code
+            yml_unified['script'] = FoldedScalarString(clean_code)
 
         else:
             if yml_data['script'].get('script', '') not in ('', '-'):
                 raise ValueError(f'Please change the script to be blank or a dash(-) for package {self.package_path}')
 
-            yml_unified['script']['script'] = clean_code
+            yml_unified['script']['script'] = FoldedScalarString(clean_code)
 
         return yml_unified, script_path
 

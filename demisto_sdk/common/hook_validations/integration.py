@@ -1,11 +1,4 @@
 from typing import List
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import yaml
->>>>>>> 80bb5c1... validate fetch params
-=======
->>>>>>> a257e55fd9c473b7af9457b0ac6d1366915a0872
 from demisto_sdk.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.common.hook_validations.base_validator import BaseValidator
@@ -60,15 +53,8 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_category(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
-<<<<<<< HEAD
             self.is_valid_feed(),
             self.is_fetch_params_exist(),
-<<<<<<< HEAD
-=======
-            self.is_fetch_params_exist()
->>>>>>> 80bb5c1... validate fetch params
-=======
->>>>>>> a257e55fd9c473b7af9457b0ac6d1366915a0872
         ]
         return all(answers)
 

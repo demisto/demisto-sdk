@@ -2,6 +2,7 @@ import os
 import shutil
 import yaml
 import yamlordereddictloader
+import json
 
 from typing import Dict
 from distutils.dir_util import copy_tree
@@ -47,6 +48,9 @@ class Initiator:
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+    PACK_TEMPLATE_FOLDER = 'PackData'
+    PACK_METADATA_TEMPLATE = 'metadata_template.json'
+
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
                 MISC_DIR, REPORTS_DIR, WIDGETS_DIR]
@@ -126,10 +130,6 @@ class Initiator:
         fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 
-        with open(os.path.join(self.full_output_path, 'metadata.json'), 'a') as fp:
-            # TODO fill this once metadata.json script is ready
-            fp.write('[]')
-
         fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
         fp.close()
 
@@ -138,6 +138,15 @@ class Initiator:
 
         print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
+        with open(os.path.join(self.full_output_path, 'metadata.json'), 'a') as fp:
+            user_response = input("\nDo you want to fill pack's metadata file? Y/N ").lower()
+            fill_manually = True if user_response in ['y', 'yes'] else False
+
+            template_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'templates',
+                                                          self.PACK_TEMPLATE_FOLDER, self.PACK_METADATA_TEMPLATE))
+            pack_metadata = Initiator.create_metadata(fill_manually, template_path)
+            json.dump(pack_metadata, fp, indent=4)
+
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
             integration_init = Initiator(output_dir=os.path.join(self.full_output_path, 'Integrations'),
@@ -145,6 +154,27 @@ class Initiator:
             return integration_init.init()
 
         return True
+
+    @staticmethod
+    def create_metadata(fill_manually, template_path):
+        with open(template_path, 'r') as metadata_template_json:
+            metadata_template = json.load(metadata_template_json)
+
+            if not fill_manually:
+                return metadata_template
+
+            for key, value in metadata_template.items():
+                value_from_user = input(f'\n{value} ')
+
+                if 'comma separated values' in value:
+                    value_from_user = [v.strip() for v in value_from_user.split(',')]
+
+                metadata_template[key] = value_from_user
+
+            if fill_manually:
+                print_color(f"Finished creating pack metadata: {template_path}.", LOG_COLORS.GREEN)
+
+            return metadata_template
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.

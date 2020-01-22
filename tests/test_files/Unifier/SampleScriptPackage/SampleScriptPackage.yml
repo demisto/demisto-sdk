@@ -5,7 +5,7 @@ args:
   name: name
   required: false
   secret: false
-comment: Hello World Script
+comment: Hello World Script  # this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6
 commonfields:
   id: TestScriptPackage
   version: -1

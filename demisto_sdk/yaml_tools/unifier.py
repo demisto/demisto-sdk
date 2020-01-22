@@ -6,25 +6,13 @@ import re
 import copy
 from typing import Tuple
 
-import yaml
-import yamlordereddictloader
+from ruamel.yaml import YAML
 
 from demisto_sdk.common.constants import Errors
 from demisto_sdk.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error, print_color, \
     LOG_COLORS
 from demisto_sdk.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, DEFAULT_IMAGE_PREFIX, \
     SCRIPTS_DIR
-
-
-def repr_str(dumper, data):
-    if '\n' in data:
-        return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
-
-    return dumper.org_represent_str(data)
-
-
-yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
-yaml.add_representer(str, repr_str, Dumper=yaml.SafeDumper)
 
 
 class Unifier:
@@ -59,9 +47,11 @@ class Unifier:
                 self.yml_path = path
                 break
 
+        self.ryaml = YAML()
+        self.ryaml.preserve_quotes = True
         if self.yml_path:
             with open(self.yml_path, 'r') as yml_file:
-                self.yml_data = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
+                self.yml_data = self.ryaml.load(yml_file)
         else:
             self.yml_data = {}
             print_error(f'No yml found in path: {self.package_path}')
@@ -129,7 +119,7 @@ class Unifier:
                                  ' or rename this package (for example if it is a v2).')
 
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
-                yaml.dump(file_data, stream=file_, Dumper=yamlordereddictloader.SafeDumper)
+                self.ryaml.dump(file_data, file_)
 
         return output_map
 

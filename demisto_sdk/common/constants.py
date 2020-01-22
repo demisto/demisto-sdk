@@ -7,7 +7,7 @@ class Errors:
 
     @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "{} is a feed and have wrong fromversion. got `{}` expected `{}`"\
+        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`"\
             .format(file_path, given_fromversion, needed_from_version)
 
     @staticmethod

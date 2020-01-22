@@ -356,8 +356,7 @@ def run(**kwargs):
 # ====================== run-playbook ====================== #
 @main.command(name="run-playbook",
               short_help="Run a playbook in Demisto. "
-                         "DEMISTO_API_KEY environment variable "
-                         "should contain a valid Demisto API Key. "
+                         "DEMISTO_API_KEY environment variable should contain a valid Demisto API Key. "
                          "Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u "
                          "'https://demisto.local'.")
 @click.help_option(

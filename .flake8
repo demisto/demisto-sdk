@@ -7,5 +7,5 @@
 # W605 invalid escape sequence
 # E999 Invalid Syntax
 ignore = W293, W504, W291, W605, F405, F403, E999
-max-line-length = 120
+max-line-length = 160
 max-complexity = 25

@@ -116,11 +116,9 @@ class FilesValidator:
                 print(modified_files)
                 print(added_files)
                 print(old_format_files)
-                print(packs)
                 print('=======')
 
-                all_files = ['demisto_sdk/Tanium_v2/Tanium_v2_test.py', 'demisto_sdk/Tanium_v2/Tanium_v2_test.py',
-                             'demisto_sdk/GetDuplicatesMlv2/GetDuplicatesMlv2.yml']
+                all_files = modified_files + added_files + old_format_files
             else:
                 if self.file_path:
                     all_files = [self.file_path]

@@ -20,7 +20,7 @@ from demisto_sdk.yaml_tools.content_creator import ContentCreator
 from demisto_sdk.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 from demisto_sdk.test_playbook_generator.test_playbook_generator import TestPlaybookGenerator
-
+import re
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 

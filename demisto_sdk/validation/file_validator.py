@@ -39,7 +39,7 @@ from demisto_sdk.common.tools import checked_type, run_command, print_error, pri
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.hook_validations.release_notes import ReleaseNotesValidator
 from demisto_sdk.validation.type_file.find_type import find_type
-
+from demisto_sdk.dev_tools.lint_manager import LintManager
 
 class FilesValidator:
     """FilesValidator is a class that's designed to validate all the changed files on your branch, and all files in case
@@ -60,7 +60,9 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 configuration=Configuration()):
+                 configuration=Configuration(), no_pylint: bool = False, no_flake8: bool = False, no_mypy: bool = False,
+                 no_test: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False, cpu_num: int = 0,
+                 parallel: bool = False, max_workers: int = 10, no_bandit: bool = False, run_all_tests: bool = False):
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
@@ -87,14 +89,60 @@ class FilesValidator:
         if self.validate_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=self.configuration)
 
-    def run(self):
-        print_color('Starting validating files structure', LOG_COLORS.GREEN)
-        if self.is_valid_structure():
-            print_color('The files are valid', LOG_COLORS.GREEN)
-            return 0
-        else:
-            print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
-            return 1
+        self.lint_args = {}
+        self.lint_args['no_test'] = no_test
+        self.lint_args['no_pylint'] = no_pylint
+        self.lint_args['no_mypy'] = no_mypy
+        self.lint_args['no_flake8'] = no_flake8
+        self.lint_args['verbose'] = verbose
+        self.lint_args['root'] = root
+        self.lint_args['keep_container'] = keep_container
+        self.lint_args['cpu_num'] = cpu_num
+        self.lint_args['parallel'] = parallel
+        self.lint_args['max_workers'] = max_workers
+        self.lint_args['no_bandit'] = no_bandit
+        self.lint_args['run_all_tests'] = run_all_tests
+        self.lint_args['git'] = use_git
+        self.lint_args['circle'] = is_circle
+
+    def run(self, run_validate, run_lint):
+        print(f'run lint: {run_lint}')
+        print(f'run validate: {run_validate}')
+
+        if run_lint:
+            if self.use_git:
+                modified_files, added_files, old_format_files, packs = self.get_modified_and_added_files()
+                print('=======')
+                print(modified_files)
+                print(added_files)
+                print(old_format_files)
+                print(packs)
+                print('=======')
+
+                all_files = ['demisto_sdk/Tanium_v2/Tanium_v2_test.py', 'demisto_sdk/Tanium_v2/Tanium_v2_test.py',
+                             'demisto_sdk/GetDuplicatesMlv2/GetDuplicatesMlv2.yml']
+            else:
+                if self.file_path:
+                    all_files = [self.file_path]
+                else:
+                    print('Not path found')
+                    return 0
+
+            dir_list = get_dir_list_from_files(all_files)
+            project_dir_list = ','.join(dir_list)
+            print_color('Running lints on the directories:\n* ' + '\n* '.join(dir_list), LOG_COLORS.GREEN)
+
+            linter = LintManager(configuration=self.configuration, project_dir_list=project_dir_list, **self.lint_args)
+            linter.run_dev_packages()
+
+        if run_validate:
+            print_color('Starting validating files structure', LOG_COLORS.GREEN)
+            if self.is_valid_structure():
+                print_color('The files are valid', LOG_COLORS.GREEN)
+                return 0
+            else:
+                print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
+                return 1
 
     @staticmethod
     def get_current_working_branch():
@@ -126,7 +174,6 @@ class FilesValidator:
 
             file_status = file_data[0]
             file_path = file_data[1]
-
             if file_status.lower().startswith('r'):
                 file_status = 'r'
                 file_path = file_data[2]
@@ -138,6 +185,8 @@ class FilesValidator:
             elif file_path.endswith('.js') or file_path.endswith('.py'):
                 continue
 
+            print_color(f, LOG_COLORS.YELLOW)
+            print_color(f, LOG_COLORS.YELLOW)
             if file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     FilesValidator._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
@@ -188,7 +237,6 @@ class FilesValidator:
             'git diff --name-status {tag}..{compare_type}refs/heads/{branch}'.format(tag=tag,
                                                                                      branch=self.branch_name,
                                                                                      compare_type=compare_type))
-
         modified_files, added_files, _, old_format_files = self.get_modified_files(
             all_changed_files_string,
             tag=tag,
@@ -198,7 +246,6 @@ class FilesValidator:
             files_string = run_command('git diff --name-status --no-merges HEAD')
             nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.get_modified_files(
                 files_string, print_ignored_files=self.print_ignored_files)
-
             all_changed_files_string = run_command('git diff --name-status {}'.format(tag))
             modified_files_from_tag, added_files_from_tag, _, _ = \
                 self.get_modified_files(all_changed_files_string,
@@ -622,3 +669,14 @@ class FilesValidator:
             return True
 
         return False
+
+
+def get_dir_list_from_files(files):
+    dir_list = []
+    for f in files:
+        path = os.path.join(os.getcwd(), f)
+        path = os.path.dirname(os.path.abspath(path))
+        dir_list.append(path)
+
+    return list(dict.fromkeys(dir_list))
+

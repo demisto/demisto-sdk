@@ -398,13 +398,14 @@ class ContentCreator:
             for bundle_dir in [self.content_bundle, self.test_bundle]:
                 shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
 
-            if os.path.exists('./Documentation/doc-CommonServer.json'):
-                print('copying common server doc to content bundle')
-                shutil.copyfile('./Documentation/doc-CommonServer.json',
-                                os.path.join(self.content_bundle, 'doc-CommonServer.json'))
-            else:
-                print_warning('./Documentation/doc-CommonServer.json was not found and '
-                              'therefore was not added to the content bundle')
+            for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
+                if os.path.exists(doc_file):
+                    print(f'copying {doc_file} doc to content bundle')
+                    shutil.copyfile(doc_file,
+                                    os.path.join(self.content_bundle, os.path.basename(doc_file)))
+                else:
+                    print_warning(f'{doc_file} was not found and '
+                                  'therefore was not added to the content bundle')
 
             print('Compressing bundles...')
             shutil.make_archive(self.content_zip, 'zip', self.content_bundle)

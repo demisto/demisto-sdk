@@ -1,4 +1,5 @@
 import pytest
+from yaml import safe_load
 from mock import patch
 from typing import Optional
 from demisto_sdk.common.hook_validations.structure import StructureValidator
@@ -409,3 +410,14 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert not validator.is_valid_feed()
+
+    def test_is_fetch_params_exist(self):
+        structure = mock_structure("")
+        validator = IntegrationValidator(structure)
+        validator.file_path = 'tests/test_files/Akamai_SIEM.yml'
+        with open(validator.file_path, 'r') as f:
+            validator.current_file = safe_load(f)
+        assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
+        validator.current_file['configuration'] = [t for t in validator.current_file['configuration']
+                                                   if not t['name'] == 'incidentType']
+        assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'

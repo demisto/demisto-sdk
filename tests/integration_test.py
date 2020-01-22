@@ -384,7 +384,9 @@ class TestIntegrationValidator:
         # No feed, including from version
         (False, "4.5.0"),
         # No feed, no from version
-        (False, None)
+        (False, None),
+        # No feed, fromversion 5.5
+        (False, "5.5.0"),
     ]
 
     @pytest.mark.parametrize("feed, fromversion", VALID_FEED)
@@ -398,7 +400,7 @@ class TestIntegrationValidator:
         # invalid from version
         (True, "5.0.0"),
         # Feed missing fromversion
-        (True, None)
+        (True, None),
     ]
 
     @pytest.mark.parametrize("feed, fromversion", INVALID_FEED)

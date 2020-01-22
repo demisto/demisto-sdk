@@ -506,12 +506,26 @@ class IntegrationValidator(BaseValidator):
         """
         return_value = True
         if self.current_file.get('script', {}).get('isfetch') is True:
-            params = [_key.get('name') for _key in self.current_file.get('configuration', [])]
-            fetch_params: List = ['incidentType', 'isFetch']
-            for param_name in fetch_params:
-                if param_name not in params:
+            params = [_key for _key in self.current_file.get('configuration', [])]
+            fetch_params: List = [
+                {
+                    'display': 'Incident type',
+                    'name': 'incidentType',
+                    'required': False,
+                    'type': 13
+                },
+                {
+                    'display': 'Fetch incidents',
+                    'name': 'isFetch',
+                    'required': False,
+                    'type': 8
+                }
+            ]
+            for param in fetch_params:
+                if param not in params:
+                    param['required'] = 'false'
                     print_error(f"You've missed required param in the"
-                                f" file '{self.file_path}', the param is '{param_name}'")
+                                f" file '{self.file_path}', the param is '{param}'")
                     return_value = False
 
         return return_value

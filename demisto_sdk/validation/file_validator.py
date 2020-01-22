@@ -118,7 +118,7 @@ class FilesValidator:
                 print(old_format_files)
                 print('=======')
 
-                all_files = modified_files + added_files + old_format_files
+                all_files = list(modified_files) + list(added_files) + list(old_format_files)
             else:
                 if self.file_path:
                     all_files = [self.file_path]

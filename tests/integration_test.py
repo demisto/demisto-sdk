@@ -391,7 +391,7 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("feed, fromversion", VALID_FEED)
     def test_valid_feed(self, feed, fromversion):
-        current = {"feed": feed, "fromversion": fromversion}
+        current = {"script": {"feed": feed}, "fromversion": fromversion}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_feed()
@@ -405,7 +405,7 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("feed, fromversion", INVALID_FEED)
     def test_invalid_feed(self, feed, fromversion):
-        current = {"feed": feed, "fromversion": fromversion}
+        current = {"script": {"feed": feed}, "fromversion": fromversion}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert not validator.is_valid_feed()

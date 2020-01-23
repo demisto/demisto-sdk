@@ -6,6 +6,11 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
+        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`"\
+            .format(file_path, given_fromversion, needed_from_version)
+
+    @staticmethod
     def not_used_display_name(file_path, field_name):
         return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
             field_name, file_path)
@@ -350,7 +355,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
-PACKS_PACK_META_FILE_NAME = 'pack-metadata.json'
+PACKS_PACK_META_FILE_NAME = 'metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
 
 PYTHON_TEST_REGEXES = [

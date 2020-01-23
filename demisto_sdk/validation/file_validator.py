@@ -65,6 +65,7 @@ class FilesValidator:
                  parallel: bool = False, max_workers: int = 10, no_bandit: bool = False, run_all_tests: bool = False, outfile: str = ''):
         self.branch_name = ''
         self.use_git = use_git
+
         if self.use_git:
             print('Using git')
             self.branch_name = self.get_current_working_branch()
@@ -108,17 +109,15 @@ class FilesValidator:
     def run(self, run_validate, run_lint):
         print(f'run lint: {run_lint}')
         print(f'run validate: {run_validate}')
-
         if run_lint:
             if self.use_git:
                 modified_files, added_files, old_format_files, packs = self.get_modified_and_added_files()
                 print('=======')
                 print(modified_files)
                 print(added_files)
-                print(old_format_files)
                 print('=======')
 
-                all_files = list(modified_files) + list(added_files) + list(old_format_files)
+                all_files = list(modified_files) + list(added_files)
             else:
                 if self.file_path:
                     all_files = [self.file_path]
@@ -183,8 +182,6 @@ class FilesValidator:
             elif file_path.endswith('.js') or file_path.endswith('.py'):
                 continue
 
-            print_color(f, LOG_COLORS.YELLOW)
-            print_color(f, LOG_COLORS.YELLOW)
             if file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     FilesValidator._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)

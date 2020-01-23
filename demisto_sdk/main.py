@@ -225,7 +225,13 @@ def validate(config, **kwargs):
                                    is_backward_check=not kwargs['no_backward_comp'],
                                    is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
-                                   file_path=kwargs.get('path'))
+                                   file_path=kwargs.get('path'), no_pylint=kwargs.get('no_pylint'),
+                                   no_flake8=kwargs.get('no_flake8'), no_mypy=kwargs.get('no_mypy'),
+                                   no_test=kwargs.get('no_test'), verbose=kwargs.get('verbose'),
+                                   root=kwargs.get('root'), keep_container=kwargs.get('keep_container'),
+                                   cpu_num=kwargs.get('cpu_num'), parallel=kwargs.get('parallel'),
+                                   max_workers=kwargs.get('max_workers'), no_bandit=kwargs.get('no_bandit'),
+                                   run_all_tests=kwargs.get('run_all_tests'), outfile=kwargs.get('outfile'))
         return validator.run(kwargs.get('run_lint'), kwargs.get('run_validate'))
 
 

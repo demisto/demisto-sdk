@@ -9,7 +9,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
 from demisto_sdk.common.configuration import Configuration
-from demisto_sdk.common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version, get_pipenv_dir
+from demisto_sdk.common.tools import print_color, LOG_COLORS, get_python_version, get_pipenv_dir, get_all_docker_images
 
 INTEGRATION = 'integration'
 SCRIPT = 'script'
@@ -67,7 +67,7 @@ class Extractor:
                         "Make sure to install it with: pip install autopep8.\n"
                         "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
         print("Detecting python version and setting up pipenv files ...")
-        docker = get_docker_images(script_obj)[0]
+        docker = get_all_docker_images(script_obj)[0]
         py_ver = get_python_version(docker, self.config.log_verbose)
         pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
         print("Copying pipenv files from: {}".format(pip_env_dir))

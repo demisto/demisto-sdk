@@ -47,14 +47,14 @@ def generate_script_doc(input, output, commands, id_set, verbose=False):
         errors = []
         script = get_yaml(script_yml)
 
-        # get script dependencies
-        script_data = get_script_data(script_yml, script_py)
-        script_data = script_data[list(script_data.keys())[0]]
-        dependencies = script_data.get('script_executions', [])
-
         # get script data
         secript_info = get_script_info(script_yml)
         script_id = script.get('commonfields')['id']
+
+        # get script dependencies
+        script_data = get_script_data(script_yml, script_py)
+        script_data = script_data[script_id]
+        dependencies = script_data.get('script_executions', [])
 
         used_in = get_used_in(id_set, script_id)
 
@@ -189,7 +189,7 @@ def get_used_in(id_set_path, script_id):
     :return: list of integrations, scripts and playbooks that used the input script
     """
     id_set = get_json(id_set_path)
-    used_in_list = []
+    used_in_list = set()
 
     id_set_sections = list(id_set.keys())
     id_set_sections.remove('TestPlaybooks')
@@ -200,5 +200,7 @@ def get_used_in(id_set_path, script_id):
             key = list(item.keys())[0]
             scripts = item[key].get('implementing_scripts', [])
             if scripts and script_id in scripts:
-                used_in_list.append(item[key].get('name', []))
-    return list(filter(None, dict.fromkeys(used_in_list)))
+                used_in_list.add(item[key].get('name', []))
+    used_in_list = list(used_in_list)
+    used_in_list.sort()
+    return used_in_list

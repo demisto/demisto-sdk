@@ -175,7 +175,7 @@ def test_get_used_in():
     script = get_yaml(TEST_SCRIPT_PATH)
     script_id = script.get('commonfields')['id']
     used_in = get_used_in(FAKE_ID_SET, script_id)
-    assert used_in == ['Fake script', 'Fake playbook']
+    assert used_in == ['Fake playbook', 'Fake script']
 
 
 # integration tests

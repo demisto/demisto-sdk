@@ -61,10 +61,10 @@ def get_playbook_dependencies(playbook):
     :param playbook: the playbook object.
     :return: the method returns 4 lists - integrations, playbooks, scripts and commands.
     """
-    integrations = []
-    scripts = []
-    commands = []
-    playbooks = []
+    integrations = set()
+    scripts = set()
+    commands = set()
+    playbooks = set()
 
     playbook_tasks = playbook.get('tasks')
     for task in playbook_tasks:
@@ -72,22 +72,16 @@ def get_playbook_dependencies(playbook):
         if task['iscommand']:
             integration = task['script']
             integration = integration.split('|||')
-            integrations.append(integration[0])
-            commands.append(integration[1])
+            integrations.add(integration[0])
+            commands.add(integration[1])
         else:
             script_name = task.get('scriptName')
             if script_name:
-                scripts.append(script_name)
+                scripts.add(script_name)
             elif task.get('type') == 'playbook':
-                playbooks.append(task.get('name'))
+                playbooks.add(task.get('name'))
 
-    # delete duplicates from list
-    integrations = list(filter(None, dict.fromkeys(integrations)))
-    playbooks = list(filter(None, dict.fromkeys(playbooks)))
-    commands = list(filter(None, dict.fromkeys(commands)))
-    scripts = list(filter(None, dict.fromkeys(scripts)))
-
-    return playbooks, integrations, scripts, commands
+    return list(playbooks), list(integrations), list(scripts), list(commands)
 
 
 def get_inputs(playbook):

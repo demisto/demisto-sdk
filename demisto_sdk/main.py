@@ -504,6 +504,9 @@ def generate_doc(file_type, **kwargs):
         return generate_script_doc(**kwargs)
     elif file_type == 'playbook':
         return generate_playbook_doc(**kwargs)
+    else:
+        print_error(f'File type {file_type} is not supported.')
+        return 1
 
 
 @main.resultcallback()

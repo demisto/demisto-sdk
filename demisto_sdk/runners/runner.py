@@ -1,6 +1,6 @@
 import re
 import demisto_client
-
+import ast
 from demisto_sdk.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
 
 ERROR_ENTRY_TYPE = 4
@@ -144,7 +144,6 @@ class Runner:
         body = {'query': '${.}'}
         context = self.client.generic_request(f'investigation/{playground_id}/context', 'POST', body)[0]
 
-        import ast
         context = ast.literal_eval(context)
 
         return res, context

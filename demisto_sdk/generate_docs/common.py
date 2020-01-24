@@ -10,9 +10,8 @@ def save_output(path, file_name, content):
     """
     output = os.path.join(path, file_name)
 
-    doc_file = open(output, "w")
-    doc_file.write(content)
-    doc_file.close()
+    with open(output, "w") as doc_file:
+        doc_file.write(content)
 
     print_color(f'Output file was saved to :\n{output}', LOG_COLORS.GREEN)
 
@@ -29,7 +28,7 @@ def generate_section(title, data):
         '---',
         '',
     ]
-    if data is not None:
+    if data:
         section.extend(add_lines(data))
     return section
 
@@ -86,7 +85,7 @@ def generate_table_section(data, title, empty_message='', text=''):
     for item in data:
         tmp_item = '|'
         for key in item:
-            tmp_item += f' {item.get(key)} |'
+            tmp_item += f" {item.get(key,'')} |"
         section.append(tmp_item)
 
     section.append('')

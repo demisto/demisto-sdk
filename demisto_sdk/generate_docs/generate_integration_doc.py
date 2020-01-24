@@ -8,7 +8,8 @@ def generate_integration_doc(input, output, commands, id_set, verbose=False):
     try:
         yml_data = get_yaml(input)
 
-        command_examples, errors = get_command_examples(commands)
+        errors = []
+        command_examples = get_command_examples(commands)
         example_dict, build_errors = build_example_dict(command_examples)
         errors.extend(build_errors)
 
@@ -204,19 +205,19 @@ def get_command_examples(commands_file_path):
     @return: a list of command examples
     """
     commands = []  # type: list
-    errors = []  # type: list
+
     if commands_file_path is None:
-        return commands, errors
+        return commands
 
     if os.path.isfile(commands_file_path):
         with open(commands_file_path, 'r') as examples_file:
-            commands = examples_file.read().split('\n')
+            commands = examples_file.read().splitlines()
     else:
         print('failed to open command file, tried parsing as free text')
         commands = commands_file_path.split('\n')
 
     print('found the following commands:\n{}'.format('\n '.join(commands)))
-    return commands, errors
+    return commands
 
 
 def build_example_dict(command_examples):
@@ -250,11 +251,11 @@ def run_command(command_example):
             if is_error(entry):
                 raise RuntimeError('something went wrong with your command: {}'.format(command_example))
 
-            if raw_context is not None:
+            if raw_context:
                 context = {k.split('(')[0]: v for k, v in raw_context.items()}
                 context_example += json.dumps(context, indent=4)
 
-            if entry.contents is not None:
+            if entry.contents:
                 content = entry.contents
                 if isinstance(content, STRING_TYPES):
                     md_example += content
@@ -283,7 +284,7 @@ def is_error(execute_command_result):
         :return: True if the execute_command_result has an error entry, false otherwise
         :rtype: ``bool``
     """
-    if execute_command_result is None:
+    if not execute_command_result:
         return False
 
     if isinstance(execute_command_result, list):

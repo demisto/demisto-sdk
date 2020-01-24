@@ -30,14 +30,14 @@ class LintManager:
         parallel (bool): Whether to run command on multiple threads.
         max_workers (int): How many workers to run for multi-thread run.
         run_all_tests (bool): Whether to run all tests.
-        circle (bool): Indicates lint command runs in CircleCI.
+        outfile (str): file path to save failed package list.
         configuration (Configuration): The system configuration.
     """
 
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
-                 git: bool = False, run_all_tests: bool = False, circle: bool = False,
+                 git: bool = False, run_all_tests: bool = False, outfile: str = '',
                  configuration: Configuration = Configuration()):
 
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
@@ -70,7 +70,7 @@ class LintManager:
         self.configuration = configuration
         self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
-        self.circle = circle
+        self.outfile = outfile
 
     @staticmethod
     def get_all_directories() -> List[str]:
@@ -231,13 +231,14 @@ class LintManager:
 
         return linter.run_dev_packages(), package_dir
 
-    def create_failed_unittests_file(self, failed_unittests):
+    @staticmethod
+    def create_failed_unittests_file(failed_unittests, outfile):
         """
         Creates a file with failed unittests.
         The file will be read in slack_notifier script - which will send the failed unittests to the content-team
         channel.
         """
-        with open('./artifacts/failed_unittests.txt', "w") as failed_unittests_file:
+        with open(outfile, "w") as failed_unittests_file:
             failed_unittests_file.write('\n'.join(failed_unittests))
 
     def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]) -> int:
@@ -250,8 +251,8 @@ class LintManager:
         Returns:
             int. 0 on success and 1 if any package failed
         """
-        if self.circle:
-            self.create_failed_unittests_file(fail_pkgs)
+        if self.outfile:
+            self.create_failed_unittests_file(fail_pkgs, self.outfile)
 
         if fail_pkgs:
             print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)

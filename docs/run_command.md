@@ -18,19 +18,19 @@ This command is used in order to run integration or script commands of a remote 
 * **-q QUERY, --query QUERY**
 
     The query to run
-    
+
 * **-k, --insecure**
 
     Skip certificate validation
-    
+
 * **-v, --verbose**
 
     Verbose output
-    
+
 * **-D, --debug**
 
     Whether to enable the debug-mode feature or not, if you want to save the output file, please use the --debug-path option
-    
+
 * **--debug-path [DEBUG_LOG]**
 
     The path to save the debug file at, if not specified the debug file will be printed to the terminal
@@ -60,4 +60,3 @@ This will run the query `!gct-translate-text text="ciao" target="iw"` in debug m
 demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"' -D --debug-path output.log
 ```
 This will run the query `!gct-translate-text text="ciao" target="iw"` in debug mode (with `debug-mode="true"`) on the playground of the Demisto instance, print the output and creates `output.log` file that contains the command debug logs.
-

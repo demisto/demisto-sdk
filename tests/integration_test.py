@@ -14,7 +14,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
-        return structure    
+        return structure
 
 
 class TestIntegrationValidator:
@@ -137,10 +137,10 @@ class TestIntegrationValidator:
         """
         # from demisto_sdk.common.tools import print_error
         # mocker.patch(tools, 'print_error')
-        
+
         current = {
             'configuration': [
-                {'name': 'test'}, 
+                {'name': 'test'},
                 {'name': 'test'}
             ]
         }
@@ -377,3 +377,35 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_not_valid_display_configuration() is not answer
+
+    VALID_FEED = [
+        # Valid feed
+        (True, "5.5.0"),
+        # No feed, including from version
+        (False, "4.5.0"),
+        # No feed, no from version
+        (False, None),
+        # No feed, fromversion 5.5
+        (False, "5.5.0"),
+    ]
+
+    @pytest.mark.parametrize("feed, fromversion", VALID_FEED)
+    def test_valid_feed(self, feed, fromversion):
+        current = {"feed": feed, "fromversion": fromversion}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_feed()
+
+    INVALID_FEED = [
+        # invalid from version
+        (True, "5.0.0"),
+        # Feed missing fromversion
+        (True, None),
+    ]
+
+    @pytest.mark.parametrize("feed, fromversion", INVALID_FEED)
+    def test_invalid_feed(self, feed, fromversion):
+        current = {"feed": feed, "fromversion": fromversion}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        assert not validator.is_valid_feed()

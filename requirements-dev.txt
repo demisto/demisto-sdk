@@ -1,7 +1,0 @@
-mock
-pre-commit
-pytest
-pytest-mock
-requests_mock
-tox-pyenv
-urllib3

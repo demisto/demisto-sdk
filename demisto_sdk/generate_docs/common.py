@@ -1,6 +1,12 @@
 from demisto_sdk.common.tools import *
 
 
+class HEADER_TYPE:
+    H1 = '#'
+    H2 = '##'
+    H3 = '###'
+
+
 def save_output(path, file_name, content):
     """
     Creates the output file in path.
@@ -33,7 +39,7 @@ def generate_section(title, data):
     return section
 
 
-def generate_list_section(title, data, horizontal_rule=False, empty_message='', text=''):
+def generate_list_section(title, data, horizontal_rule=False, empty_message='', text='', header_type=HEADER_TYPE.H2):
     """
      Generate list section in markdown format.
      :param data: list of strings.
@@ -41,11 +47,12 @@ def generate_list_section(title, data, horizontal_rule=False, empty_message='', 
      :param horizontal_rule: add horizontal rule after title.
      :param empty_message: message to print when the list is empty.
      :param text: message to print after the header.
+     :param header_type: markdown header type - H1, H2 or H3, the default is H2.
      :return: array of strings contains the list section in markdown format.
      """
     section = []
     if title:
-        section.append(f'## {title}')
+        section.append(f'{header_type} {title}')
 
     if horizontal_rule:
         section.append('---')

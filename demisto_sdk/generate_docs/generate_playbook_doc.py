@@ -21,15 +21,16 @@ def generate_playbook_doc(input, output, commands, id_set, verbose=False):
         errors.extend(inputs_errors)
         errors.extend(outputs_errors)
 
-        doc.extend(generate_list_section('Sub-playbooks', playbooks,
+        doc.extend(generate_list_section('Sub-playbooks', playbooks, header_type=HEADER_TYPE.H3,
                                          empty_message='This playbook does not use any sub-playbooks.'))
 
-        doc.extend(generate_list_section('Integrations', integrations,
+        doc.extend(generate_list_section('Integrations', integrations, header_type=HEADER_TYPE.H3,
                                          empty_message='This playbook does not use any integrations.'))
 
-        doc.extend(generate_list_section('Scripts', scripts, empty_message='This playbook does not use any scripts.'))
+        doc.extend(generate_list_section('Scripts', scripts, header_type=HEADER_TYPE.H3,
+                                         empty_message='This playbook does not use any scripts.'))
 
-        doc.extend(generate_list_section('Commands', commands,
+        doc.extend(generate_list_section('Commands', commands, header_type=HEADER_TYPE.H3,
                                          empty_message='This playbook does not use any commands.'))
 
         doc.extend(generate_table_section(inputs, 'Playbook Inputs', 'There are no inputs for this playbook.'))
@@ -72,7 +73,8 @@ def get_playbook_dependencies(playbook):
         if task['iscommand']:
             integration = task['script']
             integration = integration.split('|||')
-            integrations.add(integration[0])
+            if integration[0]:
+                integrations.add(integration[0])
             commands.add(integration[1])
         else:
             script_name = task.get('scriptName')

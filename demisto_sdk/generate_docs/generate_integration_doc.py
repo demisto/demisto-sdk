@@ -14,7 +14,7 @@ def generate_integration_doc(input, output, commands, id_set, verbose=False):
         errors.extend(build_errors)
 
         docs = []  # type: list
-        docs.extend(generate_section('Overview', yml_data.get('description')))
+        docs.extend(add_lines(yml_data.get('description')))
         docs.append('This integration was integrated and tested with version xx of {}'.format(yml_data['name']))
         # Playbooks
         docs.extend(generate_section('{} Playbook'.format(yml_data['name']), None))
@@ -188,7 +188,7 @@ def generate_command_example(cmd, cmd_example=None):
             '',
         ])
     example.extend([
-        '##### Human Readable Output',
+        '### Human Readable Output',
         '{}'.format(md_example),
         '',
     ])

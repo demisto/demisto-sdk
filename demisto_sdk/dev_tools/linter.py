@@ -410,7 +410,6 @@ class Linter:
         if not self.run_args['pylint']:
             run_params.extend(['-e', 'PYLINT_SKIP=1'])
         if not self.run_args['pslint']:
-            run_params.extend(['-e', 'PYLINT_SKIP=1'])
             run_params.extend(['-e', 'PS_LINT_SKIP=1'])
         run_params.extend(['-e', 'CPU_NUM={}'.format(self.cpu_num)])
         run_params.extend(['-e', 'CI={}'.format(os.getenv("CI", "false"))])

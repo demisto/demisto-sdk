@@ -154,24 +154,22 @@ def unify(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-j', '--conf-json', is_flag=True,
-    default=False, show_default=True, help='Validate the conf.json file.')
+    '-a', '--all', is_flag=True,
+    help='Validate all the files in the content repository. Must be executed from the content root directory')
+@click.option(
+    '-j', '--no-conf-json', is_flag=True,
+    default=False, show_default=True, help='Skip conf.json validation.')
 @click.option(
     '-i', '--id-set', is_flag=True,
     default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
-    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against. By default compared to origin/master '
+                       'branch')
 @click.option(
-    '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
-                                        'this will help the command to determine which files it should check in its '
-                                        'run. Before you commit the files it should not be used. Mostly for build '
-                                        'validations.')
+    '--post-commit', is_flag=True, help='Validate only committed files.')
 @click.option(
     '--no-backward-comp', is_flag=True, show_default=True,
     help='Whether to check backward compatibility or not.')
-@click.option(
-    '-g', '--use-git', is_flag=True, show_default=True,
-    default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
 @click.option(
     '-p', '--path', help='Path of file to validate specifically.'
 )
@@ -187,8 +185,8 @@ def validate(config, **kwargs):
     else:
         validator = FilesValidator(configuration=config.configuration,
                                    is_backward_check=not kwargs['no_backward_comp'],
-                                   is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                                   validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
+                                   only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                   validate_conf_json=not kwargs['no_conf_json'], validate_all=kwargs['all'],
                                    file_path=kwargs.get('path'))
         return validator.run()
 

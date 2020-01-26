@@ -48,8 +48,8 @@ class FilesValidator:
     Attributes:
         is_backward_check (bool): Whether to check for backwards compatibility.
         prev_ver (str): If using git, holds the branch to compare the current one to. Default is origin/master.
-        use_git (bool): Whether to use git or not.
-        is_circle: (bool): Whether the validation was initiated by CircleCI or not.
+        validate_all (bool): Validate all files.
+        only_committed_files: (bool): Whether the validation was initiated by CircleCI or not.
         print_ignored_files (bool): Whether to print the files that were ignored during the validation or not.
         validate_conf_json (bool): Whether to validate conf.json or not.
         validate_id_set (bool): Whether to validate id_set or not.
@@ -57,12 +57,13 @@ class FilesValidator:
         configuration (Configuration): Configurations for IDSetValidator.
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
+    def __init__(self, is_backward_check=True, prev_ver='origin/master', validate_all=False, only_committed_files=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
                  configuration=Configuration()):
+
         self.branch_name = ''
-        self.use_git = use_git
-        if self.use_git:
+        self.validate_all = validate_all
+        if not self.validate_all:
             print('Using git')
             self.branch_name = self.get_current_working_branch()
             print(f'Running validation on branch {self.branch_name}')
@@ -75,7 +76,7 @@ class FilesValidator:
         self._is_valid = True
         self.configuration = configuration
         self.is_backward_check = is_backward_check
-        self.is_circle = is_circle
+        self.only_committed_files = only_committed_files
         self.print_ignored_files = print_ignored_files
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
@@ -84,7 +85,8 @@ class FilesValidator:
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
         if self.validate_id_set:
-            self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=self.configuration)
+            self.id_set_validator = IDSetValidator(validate_only_committed_files=self.only_committed_files,
+                                                   configuration=self.configuration)
 
     def run(self):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
@@ -193,7 +195,7 @@ class FilesValidator:
             tag=tag,
             print_ignored_files=self.print_ignored_files)
 
-        if not self.is_circle:
+        if not self.only_committed_files:
             files_string = run_command('git diff --name-status --no-merges HEAD')
             nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.get_modified_files(
                 files_string, print_ignored_files=self.print_ignored_files)
@@ -560,7 +562,16 @@ class FilesValidator:
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False
-        if self.use_git:
+
+        if self.file_path:
+            self.branch_name = self.get_current_working_branch()
+            self.validate_committed_files()
+
+        elif self.validate_all:
+            print('Validating all files')
+            self.validate_all_files()
+
+        else:
             if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                                  not self.branch_name.startswith('20.')):
                 print('Validates only committed files')
@@ -569,13 +580,6 @@ class FilesValidator:
             else:
                 self.validate_against_previous_version(no_error=True)
                 print('Validates all of Content repo directories according to their schemas')
-                self.validate_all_files()
-        else:
-            if self.file_path:
-                self.branch_name = self.get_current_working_branch()
-                self.validate_committed_files()
-            else:
-                print('Not using git, validating all files')
                 self.validate_all_files()
 
         return self._is_valid

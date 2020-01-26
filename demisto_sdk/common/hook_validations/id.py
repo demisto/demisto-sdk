@@ -20,7 +20,7 @@ class IDSetValidator:
     script names so we will later on will be able to use it in the test filtering we have in our build system.
 
     Attributes:
-        is_circle (bool): whether we are running on circle or local env.
+        validate_only_committed_files (bool): whether we are running validation on only committed files.
         id_set (dict): Dictionary that hold all the data from the id_set.json file.
         script_set (set): Set of all the data regarding scripts in our system.
         playbook_set (set): Set of all the data regarding playbooks in our system.
@@ -34,10 +34,10 @@ class IDSetValidator:
 
     ID_SET_PATH = "./Tests/id_set.json"
 
-    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration()):
-        self.is_circle = is_circle
+    def __init__(self, is_test_run=False, validate_only_committed_files=False, configuration=Configuration()):
+        self.validate_only_committed_files = validate_only_committed_files
         self.configuration = configuration
-        if not is_test_run and self.is_circle:
+        if not is_test_run and self.validate_only_committed_files:
             self.id_set = self.load_id_set()
             self.id_set_path = os.path.join(self.configuration.env_dir, 'configs', 'id_set.json')
             self.script_set = self.id_set[self.SCRIPTS_SECTION]
@@ -103,7 +103,7 @@ class IDSetValidator:
             bool. Whether the file is represented correctly in the id_set or not.
         """
         is_valid = True
-        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+        if self.validate_only_committed_files:  # No need to check on local env because the id_set will contain this info after the commit
             if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = get_playbook_data(file_path)
                 is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
@@ -190,7 +190,7 @@ class IDSetValidator:
         """
         is_used = False
         is_json_file = False
-        if self.is_circle:
+        if self.validate_only_committed_files:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 obj_type = self.TEST_PLAYBOOK_SECTION
                 obj_id = collect_ids(file_path)

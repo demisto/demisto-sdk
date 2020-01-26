@@ -4,7 +4,7 @@ CONFIG = Configuration()
 
 
 def test_validness_in_set():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidator(validate_only_committed_files=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -20,7 +20,7 @@ def test_validness_in_set():
 
 
 def test_obj_not_found_in_set():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidator(validate_only_committed_files=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -42,7 +42,7 @@ def test_obj_not_found_in_set():
 
 
 def test_obj_data_mismatch_in_set():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidator(validate_only_committed_files=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -87,7 +87,7 @@ def test_duplicated_id_same_set():
 
 
 def test_duplicated_id_different_set():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidator(validate_only_committed_files=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -111,7 +111,7 @@ def test_duplicated_id_different_set():
 
 
 def test_duplicated_id_with_same_versioning_diff_data():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidator(validate_only_committed_files=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {
@@ -135,7 +135,7 @@ def test_duplicated_id_with_same_versioning_diff_data():
 
 
 def test_duplicated_id_with_diff_versioning():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidator(validate_only_committed_files=False, is_test_run=True, configuration=CONFIG)
 
     obj_data = {
         "test": {

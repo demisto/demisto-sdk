@@ -11,4 +11,4 @@ class Configuration:
             self.env_dir = os.getcwd()
         else:
             self.env_dir = env_dir
-        self.envs_dirs_base = os.path.join(self.sdk_env_dir, 'commands', 'lint', 'dev_envs', 'default_python')
+        self.envs_dirs_base = os.path.join(self.sdk_env_dir, 'lint', 'dev_envs', 'default_python')

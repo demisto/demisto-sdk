@@ -18,7 +18,7 @@ from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.validate.file_validator import FilesValidator
-from commands.create_artifact import ContentCreator
+from demisto_sdk.commands.create_artifacts.content_creator import ContentCreator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
 

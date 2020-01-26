@@ -84,7 +84,8 @@ class ScriptValidator(BaseValidator):
             if self.old_file:
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    print_error(Errors.breaking_backwards_subtype(self.file_path))
+                    print_error(
+                        Errors.breaking_backwards_subtype(self.file_path))
                     return True
         return False
 
@@ -101,14 +102,16 @@ class ScriptValidator(BaseValidator):
 
     def is_added_required_args(self):
         """Check if required arg were added."""
-        current_args_to_required = self._get_arg_to_required_dict(self.current_file)
+        current_args_to_required = self._get_arg_to_required_dict(
+            self.current_file)
         old_args_to_required = self._get_arg_to_required_dict(self.old_file)
 
         for arg, required in current_args_to_required.items():
             if required:
                 if (arg not in old_args_to_required) or \
                         (arg in old_args_to_required and required != old_args_to_required[arg]):
-                    print_error(Errors.added_required_fields(self.file_path, arg))
+                    print_error(Errors.added_required_fields(
+                        self.file_path, arg))
                     return True
         return False
 
@@ -123,7 +126,8 @@ class ScriptValidator(BaseValidator):
     def is_arg_changed(self):
         # type: () -> bool
         """Check if the argument has been changed."""
-        current_args = [arg['name'] for arg in self.current_file.get('args', [])]
+        current_args = [arg['name']
+                        for arg in self.current_file.get('args', [])]
         old_args = [arg['name'] for arg in self.old_file.get('args', [])]
 
         if not self._is_sub_set(current_args, old_args):
@@ -134,8 +138,10 @@ class ScriptValidator(BaseValidator):
     def is_context_path_changed(self):
         # type: () -> bool
         """Check if the context path as been changed."""
-        current_context = [output['contextPath'] for output in self.current_file.get('outputs', [])]
-        old_context = [output['contextPath'] for output in self.old_file.get('outputs', [])]
+        current_context = [output['contextPath']
+                           for output in self.current_file.get('outputs', [])]
+        old_context = [output['contextPath']
+                       for output in self.old_file.get('outputs', [])]
 
         if not self._is_sub_set(current_context, old_context):
             print_error(Errors.breaking_backwards_context(self.file_path))
@@ -150,7 +156,8 @@ class ScriptValidator(BaseValidator):
             old_docker = get_dockerimage45(self.old_file)
             new_docker = get_dockerimage45(self.current_file)
             if old_docker != new_docker:
-                print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
+                print_error(Errors.breaking_backwards_docker(
+                    self.file_path, old_docker, new_docker))
                 return True
         return False
 
@@ -164,7 +171,8 @@ class ScriptValidator(BaseValidator):
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False)
+        docker_image_validator = DockerImageValidator(
+            self.file_path, is_modified_file=True, is_integration=False)
         if docker_image_validator.is_docker_image_valid():
             return True
         return False

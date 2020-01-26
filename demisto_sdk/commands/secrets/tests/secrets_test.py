@@ -24,7 +24,8 @@ def create_empty_whitelist_secrets_file(file_path):
 
 
 class TestSecrets:
-    FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    FILES_PATH = os.path.normpath(os.path.join(
+        __file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     TEST_BASE_PATH = os.path.join(FILES_PATH, 'fake_integration/')
     TEST_YML_FILE = TEST_BASE_PATH + 'fake_integration.yml'
     TEST_PY_FILE = TEST_BASE_PATH + 'fake_integration.py'
@@ -34,9 +35,11 @@ class TestSecrets:
     WHITE_LIST_FILE_NAME = 'secrets_white_list.json'
 
     TEMP_DIR = os.path.join(FILES_PATH, 'temp')
-    TEST_FILE_WITH_SECRETS = os.path.join(TEMP_DIR, 'file_with_secrets_in_it.yml')
+    TEST_FILE_WITH_SECRETS = os.path.join(
+        TEMP_DIR, 'file_with_secrets_in_it.yml')
 
-    validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(FILES_PATH, WHITE_LIST_FILE_NAME))
+    validator = SecretsValidator(
+        is_circle=True, white_list_path=os.path.join(FILES_PATH, WHITE_LIST_FILE_NAME))
 
     @classmethod
     def setup_class(cls):
@@ -48,7 +51,8 @@ class TestSecrets:
     def teardown_class(cls):
         print("Tearing down TestSecrets class")
         if os.path.exists(TestSecrets.TEMP_DIR):
-            shutil.rmtree(TestSecrets.TEMP_DIR, ignore_errors=False, onerror=None)
+            shutil.rmtree(TestSecrets.TEMP_DIR,
+                          ignore_errors=False, onerror=None)
 
     def test_get_diff_text_files(self):
         changed_files = '''
@@ -63,11 +67,13 @@ class TestSecrets:
         assert is_txt is True
 
     def test_search_potential_secrets__no_secrets_found(self):
-        secrets_found = self.validator.search_potential_secrets([self.TEST_YML_FILE])
+        secrets_found = self.validator.search_potential_secrets(
+            [self.TEST_YML_FILE])
         assert not secrets_found
 
     def test_search_potential_secrets__secrets_found(self):
-        create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
+        create_empty_whitelist_secrets_file(os.path.join(
+            TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
 
         validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
                                                                                   TestSecrets.WHITE_LIST_FILE_NAME))
@@ -88,8 +94,10 @@ some_dict = {
 print(some_dict.some_foo)
             ''')
 
-        secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS])
-        assert secrets_found['file_with_secrets_in_it.yml'] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
+        secrets_found = validator.search_potential_secrets(
+            [self.TEST_FILE_WITH_SECRETS])
+        assert secrets_found['file_with_secrets_in_it.yml'] == [
+            'OIifdsnsjkgnj3254nkdfsjKNJD0345']
 
     def test_ignore_entropy(self):
         """
@@ -103,7 +111,8 @@ print(some_dict.some_foo)
         - ensure email found
         - ensure entropy code was not executed - no secrets have found
         """
-        create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
+        create_empty_whitelist_secrets_file(os.path.join(
+            TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
 
         validator = SecretsValidator(is_circle=True,
                                      ignore_entropy=True,
@@ -124,8 +133,10 @@ some_dict = {
 
             ''')
 
-        secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS], True)
-        assert secrets_found['file_with_secrets_in_it.yml'] == ['fooo@someorg.com']
+        secrets_found = validator.search_potential_secrets(
+            [self.TEST_FILE_WITH_SECRETS], True)
+        assert secrets_found['file_with_secrets_in_it.yml'] == [
+            'fooo@someorg.com']
 
     def test_remove_white_list_regex(self):
         white_list = '155.165.45.232'
@@ -134,16 +145,19 @@ some_dict = {
         shmoop
         155.165.45.232
         '''
-        file_contents = self.validator.remove_white_list_regex(white_list, file_contents)
+        file_contents = self.validator.remove_white_list_regex(
+            white_list, file_contents)
         assert white_list not in file_contents
 
     def test_temp_white_list(self):
-        file_contents = self.validator.get_file_contents(self.TEST_YML_FILE, '.yml')
+        file_contents = self.validator.get_file_contents(
+            self.TEST_YML_FILE, '.yml')
         temp_white_list = self.validator.create_temp_white_list(file_contents)
         assert 'sha256' in temp_white_list
 
     def test_get_related_yml_contents(self):
-        yml_file_contents = self.validator.retrieve_related_yml(os.path.dirname(self.TEST_PY_FILE))
+        yml_file_contents = self.validator.retrieve_related_yml(
+            os.path.dirname(self.TEST_PY_FILE))
         assert 'Use the Zoom integration manage your Zoom users and meetings' in yml_file_contents
 
     def test_regex_for_secrets(self):
@@ -163,7 +177,8 @@ some_dict = {
             self.validator.get_packs_white_list(self.TEST_WHITELIST_FILE_PACKS)
         assert ioc_white_list == []
         assert files_while_list == []
-        assert final_white_list == ['boop', 'sade', 'sade.txt', 'sade@sade.sade', '']
+        assert final_white_list == [
+            'boop', 'sade', 'sade.txt', 'sade@sade.sade', '']
 
     def test_get_generic_white_list(self):
         final_white_list, ioc_white_list, files_while_list = \

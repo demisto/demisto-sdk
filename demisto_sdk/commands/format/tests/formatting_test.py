@@ -10,9 +10,12 @@ from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 
 BASIC_YML_TEST_PACKS = [
-    (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy'),
-    (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, ScriptYMLFormat, 'New_script_copy'),
-    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy')
+    (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY,
+     IntegrationYMLFormat, 'New Integration_copy'),
+    (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY,
+     ScriptYMLFormat, 'New_script_copy'),
+    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
+     PlaybookYMLFormat, 'File Enrichment-GenericV2_copy')
 ]
 
 
@@ -28,14 +31,17 @@ def test_basic_yml_updates(source_path, destination_path, formatter, yml_title):
 def test_save_output_file(source_path, destination_path, formatter, yml_title):
     base_yml = formatter(source_path, destination_path)
     base_yml.save_yml_to_destination_file()
-    saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
+    saved_file_path = os.path.join(os.path.dirname(
+        source_path), os.path.basename(destination_path))
     assert os.path.isfile(saved_file_path)
     os.remove(saved_file_path)
 
 
 INTEGRATION_PROXY_SSL_PACK = [
-    (SOURCE_FORMAT_INTEGRATION_COPY, 'insecure', 'Trust any certificate (not secure)', 1),
-    (SOURCE_FORMAT_INTEGRATION_COPY, 'unsecure', 'Trust any certificate (not secure)', 1),
+    (SOURCE_FORMAT_INTEGRATION_COPY, 'insecure',
+     'Trust any certificate (not secure)', 1),
+    (SOURCE_FORMAT_INTEGRATION_COPY, 'unsecure',
+     'Trust any certificate (not secure)', 1),
     (SOURCE_FORMAT_INTEGRATION_COPY, 'proxy', 'Use system proxy settings', 1)
 ]
 

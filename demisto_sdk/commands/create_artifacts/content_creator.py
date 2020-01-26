@@ -104,15 +104,18 @@ class ContentCreator:
             if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
                 msg = 'Skipping package: {} -'.format(package)
                 if not ymls:
-                    print_warning('{} No yml files found in the package directory'.format(msg))
+                    print_warning(
+                        '{} No yml files found in the package directory'.format(msg))
                 else:
-                    print_warning('{} Only unified yml found in the package directory'.format(msg))
+                    print_warning(
+                        '{} Only unified yml found in the package directory'.format(msg))
                 continue
             unification_tool = Unifier(package, package_dir_name, dest_dir)
             if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
                 # there are some packages that we don't want to include in the content zip
                 # for example HelloWorld integration
-                unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
+                unification_tool = Unifier(
+                    package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
             unification_tool.merge_script_package_to_yml()
 
@@ -150,7 +153,8 @@ class ContentCreator:
             with io.open(path, mode='r', encoding='utf-8') as file_:
                 yml_text = file_.read()
             unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
-            out_map = unifier.write_yaml_with_docker(yml_text, yml_info, script_obj)
+            out_map = unifier.write_yaml_with_docker(
+                yml_text, yml_info, script_obj)
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))
             return
@@ -168,7 +172,8 @@ class ContentCreator:
         scan_files, _ = get_yml_paths_in_dir(dir_path, error_msg='')
         content_files = 0
         dir_name = os.path.basename(dir_path)
-        copy_func = self.copy_playbook_yml if dir_name in ['Playbooks', 'TestPlaybooks'] else self.copy_content_yml
+        copy_func = self.copy_playbook_yml if dir_name in [
+            'Playbooks', 'TestPlaybooks'] else self.copy_content_yml
         for path in scan_files:
             if len(os.path.basename(path)) >= self.file_name_max_size:
                 self.long_file_names.append(path)
@@ -178,7 +183,8 @@ class ContentCreator:
 
             ver = yml_info.get('fromversion', '0')
             print(f' - processing: {ver} ({path})')
-            copy_func(path, os.path.join(bundle, os.path.basename(path)), yml_info)
+            copy_func(path, os.path.join(
+                bundle, os.path.basename(path)), yml_info)
             content_files += 1
         print(f' - total files: {content_files}')
 
@@ -204,7 +210,8 @@ class ContentCreator:
                     dpath = f'incidentfield-{dpath}'
             new_path = dpath
             if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
-                new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
+                new_path = dpath.replace(
+                    'incidentfield-', 'incidentfield-indicatorfield-')
             if os.path.isfile(os.path.join(bundle, new_path)):
                 raise NameError(
                     f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
@@ -242,11 +249,13 @@ class ContentCreator:
                 non_circle_tests = glob.glob(os.path.join(path, '*'))
                 for new_path in non_circle_tests:
                     print(f'copying path {new_path}')
-                    shutil.copyfile(new_path, os.path.join(self.test_bundle, os.path.basename(new_path)))
+                    shutil.copyfile(new_path, os.path.join(
+                        self.test_bundle, os.path.basename(new_path)))
 
             else:
                 print(f'Copying path {path}')
-                shutil.copyfile(path, os.path.join(self.test_bundle, os.path.basename(path)))
+                shutil.copyfile(path, os.path.join(
+                    self.test_bundle, os.path.basename(path)))
 
     def copy_packs_content_to_old_bundles(self, packs):
         """
@@ -289,7 +298,8 @@ class ContentCreator:
             pack_files = get_child_files(pack)
             # copy first level pack files over
             for file_path in pack_files:
-                shutil.copy(file_path, os.path.join(pack_dst, os.path.basename(file_path)))
+                shutil.copy(file_path, os.path.join(
+                    pack_dst, os.path.basename(file_path)))
             # handle content directories in the pack
             for content_dir in pack_dirs:
                 dir_name = os.path.basename(content_dir)
@@ -298,13 +308,16 @@ class ContentCreator:
                 if dir_name in DIR_TO_PREFIX:
                     packages_dirs = get_child_directories(content_dir)
                     for package_dir in packages_dirs:
-                        ymls, _ = get_yml_paths_in_dir(package_dir, error_msg='')
+                        ymls, _ = get_yml_paths_in_dir(
+                            package_dir, error_msg='')
                         if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
                             msg = 'Skipping package: {} -'.format(package_dir)
                             if not ymls:
-                                print_warning('{} No yml files found in the package directory'.format(msg))
+                                print_warning(
+                                    '{} No yml files found in the package directory'.format(msg))
                             else:
-                                print_warning('{} Only unified yml found in the package directory'.format(msg))
+                                print_warning(
+                                    '{} Only unified yml found in the package directory'.format(msg))
                             continue
                         package_dir_name = os.path.basename(package_dir)
                         unifier = Unifier(package_dir, dir_name, dest_dir)
@@ -317,8 +330,10 @@ class ContentCreator:
                             for file_path in package_files if 'CHANGELOG.md' in file_path
                         ]
                         for md_file_path in changelog_files:
-                            md_out_name = '{}-{}_CHANGELOG.md'.format(DIR_TO_PREFIX.get(dir_name), package_dir_name)
-                            shutil.copyfile(md_file_path, os.path.join(dest_dir, md_out_name))
+                            md_out_name = '{}-{}_CHANGELOG.md'.format(
+                                DIR_TO_PREFIX.get(dir_name), package_dir_name)
+                            shutil.copyfile(md_file_path, os.path.join(
+                                dest_dir, md_out_name))
                 else:
                     self.copy_dir_files(content_dir, dest_dir)
 
@@ -331,13 +346,15 @@ class ContentCreator:
                     descriptor = json.load(file_)
                 content_ver = descriptor['release']
             except (FileNotFoundError, json.JSONDecodeError, KeyError):
-                print_error('Invalid descriptor file. make sure file content is a valid json with "release" key.')
+                print_error(
+                    'Invalid descriptor file. make sure file content is a valid json with "release" key.')
                 return
 
         try:
             with open(path, 'r+') as file_:
                 content = file_.read()
-                content = re.sub(regex, f"CONTENT_RELEASE_VERSION = '{content_ver}'", content, re.M)
+                content = re.sub(
+                    regex, f"CONTENT_RELEASE_VERSION = '{content_ver}'", content, re.M)
                 file_.seek(0)
                 file_.write(content)
         except Exception as ex:
@@ -351,7 +368,8 @@ class ContentCreator:
         try:
             with open(path, 'r+') as file_:
                 content = file_.read()
-                content = re.sub(regex, f"CONTENT_BRANCH_NAME = '{branch_name}'", content, re.M)
+                content = re.sub(
+                    regex, f"CONTENT_BRANCH_NAME = '{branch_name}'", content, re.M)
                 file_.seek(0)
                 file_.write(content)
         except Exception as ex:
@@ -366,7 +384,8 @@ class ContentCreator:
         # update content_version in commonServerPython
         self.update_content_version(self.content_version)
         branch_name = self.update_branch()
-        print(f'Updated CommonServerPython with branch {branch_name} and content version {self.content_version}')
+        print(
+            f'Updated CommonServerPython with branch {branch_name} and content version {self.content_version}')
         print('Starting to create content artifact...')
 
         try:
@@ -395,7 +414,8 @@ class ContentCreator:
 
             print('Copying content descriptor to content and test bundles')
             for bundle_dir in [self.content_bundle, self.test_bundle]:
-                shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
+                shutil.copyfile('content-descriptor.json',
+                                os.path.join(bundle_dir, 'content-descriptor.json'))
 
             for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
                 if os.path.exists(doc_file):
@@ -410,14 +430,18 @@ class ContentCreator:
             shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
             shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
             shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
-            shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
+            shutil.copyfile("./Tests/id_set.json",
+                            os.path.join(self.artifacts_path, "id_set.json"))
             if os.path.exists('release-notes.md'):
-                print('copying release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
-                shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+                print(
+                    'copying release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
+                shutil.copyfile(
+                    'release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
             else:
                 print_warning('release-notes.md was not found in the content directory and therefore not '
                               'copied over to the artifacts directory')
-            print(f'finished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
+            print(
+                f'finished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
         finally:
             if not self.preserve_bundles:
                 if os.path.exists(self.content_bundle):

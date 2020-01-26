@@ -25,7 +25,8 @@ class ReleaseNotesValidator:
     def __init__(self, file_path):
         self.file_path = file_path
         self.release_notes_path = get_release_notes_file_path(self.file_path)
-        self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
+        self.latest_release_notes = get_latest_release_notes_text(
+            self.release_notes_path)
         self.master_diff = self.get_master_diff()
 
     def get_master_diff(self):
@@ -66,7 +67,8 @@ class ReleaseNotesValidator:
             if adds_in_diff - removes_in_diff > 0:
                 return True
 
-        print_error(F'No new comment has been added in the release notes file: {self.release_notes_path}')
+        print_error(
+            F'No new comment has been added in the release notes file: {self.release_notes_path}')
         return False
 
     def is_valid_one_line_comment(self, release_notes_comments):

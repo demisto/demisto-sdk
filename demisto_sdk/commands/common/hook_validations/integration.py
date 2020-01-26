@@ -74,7 +74,8 @@ class IntegrationValidator(BaseValidator):
             configuration_param_name = configuration_param['name']
             if configuration_param_name == param_name:
                 if configuration_param['display'] != param_display:
-                    err_msgs.append(Errors.wrong_display_name(param_name, param_display))
+                    err_msgs.append(Errors.wrong_display_name(
+                        param_name, param_display))
                 elif configuration_param.get('defaultvalue', '') not in ('false', ''):
                     err_msgs.append(Errors.wrong_default_parameter(param_name))
                 elif configuration_param.get('required', False):
@@ -136,9 +137,11 @@ class IntegrationValidator(BaseValidator):
                         if arg.get('default') is False:
                             self.is_valid = False
                             flag = False
-                            print_error(Errors.wrong_default_argument(self.file_path, arg_name, command_name))
+                            print_error(Errors.wrong_default_argument(
+                                self.file_path, arg_name, command_name))
                 if not flag_found_arg:
-                    print_error(Errors.no_default_arg(self.file_path, command_name))
+                    print_error(Errors.no_default_arg(
+                        self.file_path, command_name))
                     flag = False
         return flag
 
@@ -213,9 +216,11 @@ class IntegrationValidator(BaseValidator):
         if type_ == 'python':
             subtype = self.current_file.get('script', {}).get('subtype')
             if self.old_file:
-                old_subtype = self.old_file.get('script', {}).get('subtype', "")
+                old_subtype = self.old_file.get(
+                    'script', {}).get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    print_error(Errors.breaking_backwards_subtype(self.file_path))
+                    print_error(
+                        Errors.breaking_backwards_subtype(self.file_path))
                     self.is_valid = False
                     return True
         return False
@@ -285,7 +290,8 @@ class IntegrationValidator(BaseValidator):
                 if arg in arg_list:
                     self.is_valid = False
                     is_there_duplicates = True
-                    print_error(Errors.duplicate_arg_in_file(self.file_path, arg['name'], command['name']))
+                    print_error(Errors.duplicate_arg_in_file(
+                        self.file_path, arg['name'], command['name']))
                 else:
                     arg_list.append(arg)
         return is_there_duplicates
@@ -327,7 +333,8 @@ class IntegrationValidator(BaseValidator):
         for command in commands:
             command_to_args[command['name']] = {}
             for arg in command.get('arguments', []):
-                command_to_args[command['name']][arg['name']] = arg.get('required', False)
+                command_to_args[command['name']][arg['name']
+                                                 ] = arg.get('required', False)
         return command_to_args
 
     def is_changed_command_name_or_arg(self):
@@ -343,7 +350,8 @@ class IntegrationValidator(BaseValidator):
         for command, args_dict in old_command_to_args.items():
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
-                print_error(Errors.breaking_backwards_command_arg_changed(self.file_path, command))
+                print_error(Errors.breaking_backwards_command_arg_changed(
+                    self.file_path, command))
                 self.is_valid = False
                 return True
         return False
@@ -373,7 +381,8 @@ class IntegrationValidator(BaseValidator):
                 try:
                     context_list.append(output['contextPath'])
                 except KeyError:
-                    print_error('Invalid context output for command {}. Output is {}'.format(command_name, output))
+                    print_error('Invalid context output for command {}. Output is {}'.format(
+                        command_name, output))
                     self.is_valid = False
             command_to_context_dict[command['name']] = sorted(context_list)
         return command_to_context_dict
@@ -385,13 +394,16 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. Whether a context path as been changed.
         """
-        current_command_to_context_paths = self._get_command_to_context_paths(self.current_file)
-        old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
+        current_command_to_context_paths = self._get_command_to_context_paths(
+            self.current_file)
+        old_command_to_context_paths = self._get_command_to_context_paths(
+            self.old_file)
 
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
-                    print_error(Errors.breaking_backwards_command(self.file_path, old_command))
+                    print_error(Errors.breaking_backwards_command(
+                        self.file_path, old_command))
                     self.is_valid = False
                     return True
         return False
@@ -415,19 +427,22 @@ class IntegrationValidator(BaseValidator):
     def is_added_required_fields(self):
         # type: () -> bool
         """Check if required field were added."""
-        current_field_to_required = self._get_field_to_required_dict(self.current_file)
+        current_field_to_required = self._get_field_to_required_dict(
+            self.current_file)
         old_field_to_required = self._get_field_to_required_dict(self.old_file)
         is_added_required = False
         for field, required in current_field_to_required.items():
             if field in old_field_to_required.keys():
                 # if required is True and old_field is False.
                 if required and required != old_field_to_required[field]:
-                    print_error(Errors.added_required_fields(self.file_path, field))
+                    print_error(Errors.added_required_fields(
+                        self.file_path, field))
                     self.is_valid = False
                     is_added_required = True
             # if required is True but no old field.
             elif required:
-                print_error(Errors.added_required_fields(self.file_path, field))
+                print_error(Errors.added_required_fields(
+                    self.file_path, field))
                 self.is_valid = False
                 is_added_required = True
         return is_added_required
@@ -439,7 +454,8 @@ class IntegrationValidator(BaseValidator):
             old_docker = get_dockerimage45(self.old_file.get('script', {}))
             new_docker = get_dockerimage45(self.current_file.get('script', {}))
             if old_docker != new_docker:
-                print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
+                print_error(Errors.breaking_backwards_docker(
+                    self.file_path, old_docker, new_docker))
                 self.is_valid = False
                 return True
 
@@ -468,12 +484,14 @@ class IntegrationValidator(BaseValidator):
             # This parameter type will not use the display value.
             if field_type == self.EXPIRATION_FIELD_TYPE:
                 if configuration_display:
-                    print_error(Errors.not_used_display_name(self.file_path, configuration_param['name']))
+                    print_error(Errors.not_used_display_name(
+                        self.file_path, configuration_param['name']))
                     self.is_valid = False
                     return True
 
             elif not is_field_hidden and not configuration_display:
-                print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
+                print_error(Errors.empty_display_configuration(
+                    self.file_path, configuration_param['name']))
                 self.is_valid = False
                 return True
 
@@ -481,7 +499,8 @@ class IntegrationValidator(BaseValidator):
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True)
+        docker_image_validator = DockerImageValidator(
+            self.file_path, is_modified_file=True, is_integration=True)
         if docker_image_validator.is_docker_image_valid():
             return True
         self.is_valid = False
@@ -492,6 +511,7 @@ class IntegrationValidator(BaseValidator):
         if self.current_file.get("feed"):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
-                print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
+                print_error(Errors.feed_wrong_from_version(
+                    self.file_path, from_version))
                 return False
         return True

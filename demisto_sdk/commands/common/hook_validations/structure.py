@@ -42,7 +42,8 @@ class StructureValidator:
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
-        self.old_file = get_remote_file(old_file_path) if old_file_path else get_remote_file(file_path)
+        self.old_file = get_remote_file(
+            old_file_path) if old_file_path else get_remote_file(file_path)
         self.configuration = configuration
 
     def is_valid_file(self):
@@ -79,7 +80,8 @@ class StructureValidator:
         if get_matching_regex(self.file_path, [REPUTATION_REGEX]):
             return 'reputation'
 
-        pretty_formated_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
+        pretty_formated_string_of_regexes = json.dumps(
+            SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
         print_error(f"The file {self.file_path} does not match any scheme we have please, refer to the following list"
                     f" for the various file name options we have in our repo {pretty_formated_string_of_regexes}")
@@ -101,7 +103,8 @@ class StructureValidator:
                         schema_files=[path])
             core.validate(raise_exception=True)
         except Exception as err:
-            print_error('Failed: {} failed.\n{}'.format(self.file_path, str(err)))
+            print_error('Failed: {} failed.\n{}'.format(
+                self.file_path, str(err)))
             self.is_valid = False
             return False
         return True
@@ -121,7 +124,8 @@ class StructureValidator:
             file_id = loaded_file_data.get('id')
             if not file_id:
                 # In integrations/scripts, the id is under 'commonfields'.
-                file_id = loaded_file_data.get('commonfields', {}).get('id', '')
+                file_id = loaded_file_data.get(
+                    'commonfields', {}).get('id', '')
             if not file_id:
                 # In layout, the id is under 'layout'.
                 file_id = loaded_file_data.get('layout', {}).get('id', '')
@@ -159,7 +163,8 @@ class StructureValidator:
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            print_error(f"The file id for {self.file_path} has changed from {old_version_id} to {new_file_id}")
+            print_error(
+                f"The file id for {self.file_path} has changed from {old_version_id} to {new_file_id}")
             return True
 
         # False - the id has not changed.
@@ -175,8 +180,10 @@ class StructureValidator:
         if not self.old_file:
             return True
 
-        from_version_new = self.current_file.get("fromversion") or self.current_file.get("fromVersion")
-        from_version_old = self.old_file.get("fromversion") or self.old_file.get("fromVersion")
+        from_version_new = self.current_file.get(
+            "fromversion") or self.current_file.get("fromVersion")
+        from_version_old = self.old_file.get(
+            "fromversion") or self.old_file.get("fromVersion")
 
         if from_version_old != from_version_new:
             print_error(Errors.from_version_modified(self.file_path))
@@ -203,7 +210,8 @@ class StructureValidator:
             elif file_extension == '.png':
                 return {}
 
-        print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
+        print_error(Errors.wrong_file_extension(file_extension,
+                                                self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
         return {}
 
     def get_file_type(self):

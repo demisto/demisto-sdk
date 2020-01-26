@@ -21,7 +21,8 @@ class TestGenericFunctions:
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
-        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
+        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(
+            dir_path, error_msg='')
         yml_paths_test = glob.glob(os.path.join(dir_path, '*yml'))
         assert sorted(yml_paths) == sorted(yml_paths_test)
         if yml_paths_test:
@@ -37,30 +38,36 @@ class TestGetRemoteFile:
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_origin(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'master')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml', 'master')
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', '19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml', '19.10.0')
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_origin_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml', 'origin/19.10.0')
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_invalid(self):
-        invalid_yml = tools.get_remote_file('Integrations/File/File.yml', '19.10.0')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/File/File.yml', '19.10.0')
         assert not invalid_yml
 
     def test_get_remote_file_invalid_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml', 'NoSuchBranch')
         assert not invalid_yml
 
     def test_get_remote_file_invalid_origin_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
         assert not invalid_yml
 
 
@@ -68,7 +75,8 @@ class TestGetMatchingRegex:
     INPUTS = [
         ('Packs/XDR/Playbooks/XDR.yml', [PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX],
          PACKS_PLAYBOOK_YML_REGEX),
-        ('Packs/XDR/NoMatch/XDR.yml', [PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX], False)
+        ('Packs/XDR/NoMatch/XDR.yml',
+         [PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX], False)
     ]
 
     @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)

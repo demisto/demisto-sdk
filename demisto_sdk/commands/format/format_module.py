@@ -30,7 +30,8 @@ def format_manager(use_git=False, file_type=None, **kwargs):
 
     elif use_git:
         error_list = []
-        files = get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')
+        files = get_changed_files(
+            filter_results=lambda _file: not _file.pop('status') == 'D')
         for _file in files:
             _file = _file['name']
             file_type = 'integration' if checked_type(_file, YML_ALL_INTEGRATION_REGEXES) \
@@ -38,7 +39,8 @@ def format_manager(use_git=False, file_type=None, **kwargs):
                 else 'playbook' if checked_type(_file, YML_ALL_PLAYBOOKS_REGEX) \
                 else None
             if file_type:
-                res = file_type_and_linked_class[file_type](source_file=_file).format_file()
+                res = file_type_and_linked_class[file_type](
+                    source_file=_file).format_file()
                 if res:
                     error_list.append(f'Failed to format {_file}.' + file_type)
 

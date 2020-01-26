@@ -66,9 +66,11 @@ class PlaybookRunner:
                             f'To keep tracking the playbook please go to : {work_plan_link}')
             else:
                 if playbook_results["state"] == "failed":
-                    print_error("The playbook finished running with status: FAILED")
+                    print_error(
+                        "The playbook finished running with status: FAILED")
                 else:
-                    print_color("The playbook has completed its run successfully", LOG_COLORS.GREEN)
+                    print_color(
+                        "The playbook has completed its run successfully", LOG_COLORS.GREEN)
 
         # The command does not wait for the playbook to finish running
         else:
@@ -97,7 +99,8 @@ class PlaybookRunner:
         create_incident_request.name = incident_name
 
         try:
-            response = self.demisto_client.create_incident(create_incident_request=create_incident_request)
+            response = self.demisto_client.create_incident(
+                create_incident_request=create_incident_request)
         except ApiException as e:
             print_error(f'Failed to create incident with playbook id : "{playbook_id}", '
                         'possible reasons are:\n'
@@ -106,11 +109,13 @@ class PlaybookRunner:
                         '3. Unauthorized api key')
             raise e
 
-        print_color(f'The playbook: {self.playbook_id} was triggered successfully.', LOG_COLORS.GREEN)
+        print_color(
+            f'The playbook: {self.playbook_id} was triggered successfully.', LOG_COLORS.GREEN)
         return response.id
 
     def get_playbook_results_dict(self, inc_id):
-        playbook_results = self.demisto_client.generic_request(method='GET', path=f'/inv-playbook/{inc_id}')
+        playbook_results = self.demisto_client.generic_request(
+            method='GET', path=f'/inv-playbook/{inc_id}')
         return eval(playbook_results[0])
 
     def get_base_link_to_workplan(self, url):

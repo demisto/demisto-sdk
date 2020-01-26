@@ -6,7 +6,8 @@ from demisto_sdk.commands.common.git_tools import git_path
 
 
 class TestPackUniqueFilesValidator:
-    FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    FILES_PATH = os.path.normpath(os.path.join(
+        __file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     FAKE_PACK_PATH = os.path.join(FILES_PATH, 'fake_pack')
     FAKE_PATH_NAME = 'fake_pack'
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
@@ -24,7 +25,8 @@ class TestPackUniqueFilesValidator:
         self.validator._errors = []
 
     def test_parse_file_into_list(self):
-        assert ['boop', 'sade', ''] == self.validator._parse_file_into_list(PACKS_README_FILE_NAME)
+        assert ['boop', 'sade', ''] == self.validator._parse_file_into_list(
+            PACKS_README_FILE_NAME)
         assert not self.validator._parse_file_into_list('boop')
         self.validator._errors = []
 

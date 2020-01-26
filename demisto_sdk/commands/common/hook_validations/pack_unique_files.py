@@ -40,7 +40,8 @@ class PackUniqueFilesValidator():
         if raw:
             errors = self._errors
         elif self._errors:
-            errors = '@@@Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
+            errors = '@@@Issues with unique files in pack: {}\n  {}'.format(
+                self.pack, '\n  '.join(self._errors))
 
         return errors
 
@@ -52,7 +53,8 @@ class PackUniqueFilesValidator():
     def _is_pack_file_exists(self, file_name):
         """Check if .secrets-ignore exists"""
         if not os.path.isfile(self._get_pack_file_path(file_name)):
-            self._add_error('"{}" file does not exist, create one in the root of the pack'.format(file_name))
+            self._add_error(
+                '"{}" file does not exist, create one in the root of the pack'.format(file_name))
             return False
 
         return True
@@ -65,7 +67,8 @@ class PackUniqueFilesValidator():
         except IOError:
             self._add_error('Could not open "{}" file'.format(file_name))
         except ValueError:
-            self._add_error('Could not read the contents of "{}" file'.format(file_name))
+            self._add_error(
+                'Could not read the contents of "{}" file'.format(file_name))
 
         return False
 
@@ -76,7 +79,8 @@ class PackUniqueFilesValidator():
             if file_content:
                 return file_content.split(delimiter)
         except ValueError:
-            self._add_error('Could not parse the contents of "{}" file into a list'.format(file_name))
+            self._add_error(
+                'Could not parse the contents of "{}" file into a list'.format(file_name))
 
         return False
 
@@ -106,11 +110,13 @@ class PackUniqueFilesValidator():
     def _is_pack_ignore_file_structure_valid(self):
         """Check if .pack-ignore structure is parse-able & has valid regex"""
         try:
-            pack_ignore_regex_list = self._parse_file_into_list(self.pack_ignore_file)
+            pack_ignore_regex_list = self._parse_file_into_list(
+                self.pack_ignore_file)
             if pack_ignore_regex_list and all(re.compile(regex) for regex in pack_ignore_regex_list):
                 return True
         except re.error:
-            self._add_error('Detected none valid regex in {} file'.format(self.pack_ignore_file))
+            self._add_error('Detected none valid regex in {} file'.format(
+                self.pack_ignore_file))
 
         return False
 
@@ -125,11 +131,13 @@ class PackUniqueFilesValidator():
     def _is_pack_meta_file_structure_valid(self):
         """Check if metadata.json structure is json parse-able"""
         try:
-            pack_meta_file_content = self._read_file_content(self.pack_meta_file)
+            pack_meta_file_content = self._read_file_content(
+                self.pack_meta_file)
             if pack_meta_file_content and json.loads(pack_meta_file_content):
                 return True
         except (ValueError, TypeError):
-            self._add_error('Could not parse {} file contents to json format'.format(self.pack_meta_file))
+            self._add_error(
+                'Could not parse {} file contents to json format'.format(self.pack_meta_file))
 
         return False
 

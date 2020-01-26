@@ -44,7 +44,8 @@ def test_extract_long_description():
         assert extractor.extract_long_description('output_path') == 0
         # Test opening the file and writing to it
         extractor.yml_path = f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml'
-        extractor.extract_long_description(f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt')
+        extractor.extract_long_description(
+            f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt')
         with open(f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt', 'rb') as temp_file:
             file_data = temp_file.read().decode('utf-8')
             assert file_data == 'detaileddescription'
@@ -62,7 +63,8 @@ def test_extract_image():
         assert extractor.extract_image('output_path') == 0
         # Test opening the file and writing to it
         extractor.yml_path = f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml'
-        extractor.extract_image(f'{git_path()}/demisto_sdk/tests/test_files/temp_image.png')
+        extractor.extract_image(
+            f'{git_path()}/demisto_sdk/tests/test_files/temp_image.png')
         with open(f'{git_path()}/demisto_sdk/tests/test_files/temp_image.png', 'rb') as temp_image:
             image_data = temp_image.read()
             image = base64.b64encode(image_data).decode('utf-8')
@@ -79,7 +81,8 @@ def test_extract_code():
         extractor.common_server = True
         extractor.demisto_mock = True
         extractor.yml_path = f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml'
-        extractor.extract_code(f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt')
+        extractor.extract_code(
+            f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt')
         with open(f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt', 'rb') as temp_file:
             file_data = temp_file.read().decode('utf-8')
             assert 'import demistomock as demisto\n' in file_data
@@ -88,7 +91,8 @@ def test_extract_code():
         os.remove(f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt')
         extractor.common_server = False
         extractor.demisto_mock = False
-        extractor.extract_code(f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt')
+        extractor.extract_code(
+            f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt')
         with open(f'{git_path()}/demisto_sdk/tests/test_files/temp_file.txt', 'rb') as temp_file:
             file_data = temp_file.read().decode('utf-8')
             assert 'import demistomock as demisto\n' not in file_data

@@ -164,7 +164,8 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
 
     flattened_data = flatten_json(data)
     if prefix:
-        flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
+        flattened_data = {f'{prefix}.{key}': value for key,
+                          value in flattened_data.items()}
 
     arg_json = []
     for key, value in flattened_data.items():
@@ -213,13 +214,15 @@ def json_to_outputs(command, infile, prefix, outfile=None, verbose=False, intera
             print("Dump your JSON here:")
             input_json = input_multiline()
 
-        yaml_output = parse_json(input_json, command, prefix, verbose, interactive)
+        yaml_output = parse_json(
+            input_json, command, prefix, verbose, interactive)
 
         if outfile:
             with open(outfile, 'w') as yf:
                 yf.write(yaml_output)
 
-                print_color(f'Outputs file was saved to :\n{outfile}', LOG_COLORS.GREEN)
+                print_color(
+                    f'Outputs file was saved to :\n{outfile}', LOG_COLORS.GREEN)
         else:
             print_color("YAML Outputs\n\n", LOG_COLORS.GREEN)
             print(yaml_output)

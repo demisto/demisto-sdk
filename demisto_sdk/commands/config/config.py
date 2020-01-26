@@ -27,4 +27,6 @@ class Config:
         while self.api_key is None or self.api_key == '':
             self.api_key = str(input(f"Please insert Demisto's API KEY: "))
 
+        run_command(f"export DEMISTO_API_KEY={self.api_key}")
+
         print_color("Configuration Done", LOG_COLORS.GREEN)

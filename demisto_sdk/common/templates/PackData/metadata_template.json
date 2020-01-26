@@ -1,5 +1,5 @@
 {
-  "name": "Display name of the pack:",
+  "displayName": "Display name of the pack:",
   "description": "Description of the pack:",
   "support": "Support of the pack, options are demisto / partner / developer / community :",
   "certification": "Certification of the pack, options are certified or verified :",

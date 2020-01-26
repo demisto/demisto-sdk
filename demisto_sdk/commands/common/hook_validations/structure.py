@@ -231,4 +231,7 @@ class StructureValidator:
         Returns:
             True if valid file path else False
         """
-        return bool(self.scheme_name or self.file_type)
+        is_valid_path = bool(self.scheme_name or self.file_type)
+        if not is_valid_path:
+            print_error(Errors.invalid_file_path(self.file_path))
+        return is_valid_path

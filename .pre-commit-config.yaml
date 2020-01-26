@@ -10,7 +10,9 @@ repos:
         types: ["python"]
         args:
           - --ignore
-          - "D203, W293, W504, W291, W605, F405, F403, E501"
+          - "D203, W293, W504, W291, W605, F405, F403"
+          - --max-line-length
+          - "127"
 
 
 #  - repo: https://github.com/pre-commit/mirrors-mypy.git

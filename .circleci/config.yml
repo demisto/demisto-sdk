@@ -27,7 +27,7 @@ jobs:
         - run:
             name: deploy
             command: |
-              ./deploy.sh
+              ./demisto_sdk/utils/deploy.sh
 workflows:
   version: 2
   build_and_release:

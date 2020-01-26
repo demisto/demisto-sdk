@@ -16,7 +16,7 @@ jobs:
             name: tox build
             command: |
               pip install tox
-              tox -q tests
+              tox -v demisto_sdk
         - run:
             name: pre-commit
             command: |

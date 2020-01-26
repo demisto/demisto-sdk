@@ -3,6 +3,8 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.3.6
+* Added **config** command.
 
 ### 0.3.4
 * Saved failing unit tests as a file.

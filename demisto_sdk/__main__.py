@@ -21,6 +21,7 @@ from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.create_artifacts.content_creator import ContentCreator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
+from demisto_sdk.commands.config.config import Config
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error
@@ -485,6 +486,21 @@ def generate_test_playbook(**kwargs):
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
+    return 0
+
+
+# ====================== config ====================== #
+@main.command(name="config", short_help="Configure the environment variables DEMISTO_BASE_URL and DEMISTO_API_KEY. "
+                                        "To be used in **upload** and **run** commands")
+@click.option(
+    "--api-key", "-a", help="The API key for Demisto."
+)
+@click.option(
+    "--base-url", "-b", help="Demisto's base URL."
+)
+def config(**kwargs):
+    configure = Config(**kwargs)
+    configure.configure()
     return 0
 
 

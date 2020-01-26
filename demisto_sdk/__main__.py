@@ -11,7 +11,7 @@ from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.init_pkg.initiator import Initiator
+from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.lint.lint_manager import LintManager

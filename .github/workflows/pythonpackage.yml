@@ -20,8 +20,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r resources/utils/requirements-dev.txt
-        pip install -e .
+        pip install -r /home/runner/work/demisto-sdk/demisto-sdk/requirements-dev.txt
+        pip install -r /home/runner/work/demisto-sdk/demisto-sdk/requirements.txt
     - name: Lint with flake8
       run: |
         pip install flake8
@@ -31,4 +31,4 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest
-        pytest -v demisto_sdk
+        pytest -v --ignore=/home/runner/work/demisto-sdk/demisto-sdk/demisto_sdk/tests/test_files --ignore=/home/runner/work/demisto-sdk/demisto-sdk/demisto_sdk/commands/init/templates /home/runner/work/demisto-sdk/demisto-sdk/demisto_sdk

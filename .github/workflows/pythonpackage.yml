@@ -1,0 +1,34 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ./resources/utils/requirements-dev.txt
+        pip install -e .
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --ignore="D203, W293, W504, W291, W605, F405, F403, E501" --show-source --statistics --max-line-length=127
+
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pytest -v demisto_sdk

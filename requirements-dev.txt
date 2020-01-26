@@ -2,6 +2,6 @@ mock
 pre-commit
 pytest
 pytest-mock
-urllib3
 requests_mock
 tox-pyenv
+urllib3

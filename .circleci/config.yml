@@ -22,7 +22,7 @@ jobs:
             command: |
               . .tox/py37/bin/activate
               pre-commit --version
-              pre-commit run --color never -a
+              pre-commit run -a
               deactivate
         - run:
             name: deploy

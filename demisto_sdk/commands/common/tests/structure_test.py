@@ -8,7 +8,7 @@ import yaml
 
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.tests.tests_constants import VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, \
+from demisto_sdk.tests.constants_test import VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, \
     VALID_INTEGRATION_TEST_PATH, VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH, VALID_PLAYBOOK_ID_PATH, \
     INVALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, INVALID_WIDGET_PATH, \
     VALID_WIDGET_PATH, VALID_DASHBOARD_PATH, INVALID_DASHBOARD_PATH, LAYOUT_TARGET, \

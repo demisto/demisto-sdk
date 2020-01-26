@@ -10,10 +10,10 @@ from typing import Optional
 import yaml
 from pykwalify.core import Core
 
-from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
+from demisto_sdk.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
     SCHEMA_TO_REGEX, REPUTATION_REGEX
-from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
-from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.common.tools import get_remote_file, get_matching_regex, print_error
+from demisto_sdk.common.configuration import Configuration
 
 
 class StructureValidator:

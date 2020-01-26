@@ -346,3 +346,4 @@ class Initiator:
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
             fp.write(file_contents)
+

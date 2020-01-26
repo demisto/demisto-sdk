@@ -28,7 +28,7 @@ eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
 ```
 for regular bashrc users run in the terminal
 ```
-eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
+eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
 ```
 
 ## Commands
@@ -131,7 +131,7 @@ pylint and pytest will run within all the docker images of an integration/script
   Keep the test container (default: False)
 * **-v, --verbose**
   Verbose output (default: False)
-* **--circle** Indicates that the command runs in CircleCI (default: False)
+* **--outfile** Specify a file path to save failing package list. (default: None)
 * **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 

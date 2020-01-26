@@ -4,6 +4,10 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.6
+* Fixed an issue where *unify* created a malformed integration yml.
+
+
 ### 0.3.4
 * Saved failing unit tests as a file.
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
@@ -13,8 +17,7 @@
 * Added --use-git flag to **format** command to format all changed files.
 * Fixed an issue where **validate** did not fail on dockerimage changes with bc check.
 * Added new flag **--ignore-entropy** to demisto-sdk **secrets**, this will allow skip entropy secrets check.
-* Added --circle flag to **lint**.
-* Fixed an issue where *unify* created a malformed integration yml.
+* Added --outfile to **lint** to allow saving failed packages to a file.
 
 
 ### 0.3.3
@@ -23,6 +26,7 @@
 * Added **additionalinfo** field to as an available field for integration configuration.
 * Added pack parameter for **init**.
 * Fixed an issue where error would appear if name parameter is not set in **init**.
+
 
 ### 0.3.2
 * Fixed the handling of classifier files in **validate**.
@@ -34,7 +38,6 @@
 
 
 ### 0.3.0
-
 * Added support for multi-package **lint** both with parallel and without.
 * Added all parameter in **lint** to run on all packages and packs in content repository.
 * Added **format** for:

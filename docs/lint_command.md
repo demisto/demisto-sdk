@@ -37,7 +37,7 @@ make sure the code works as intended.
   Keep the test container (default: False)
 * **-v, --verbose**
   Verbose output (default: False)
-* **--circle** Indicates that the command runs in CircleCI (default: False)
+* **--outfile** Specify a file path to save failing package list. (default: None)
 * **--cpu-num CPU_NUM**
   Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
 
@@ -63,5 +63,5 @@ This will run only the linters (flake8, mypy, bandit) on "Scripts/HelloWorldScri
 `demisto-sdk lint -d Integrations/HelloWorld --no-mypy --no-flake8 --no-pytest -k -r`
 This will run only pylint and pytest on "Integrations/HelloWorld" using the root user for the pytest and will also keep the test container with the docker image after the operation is over.
 
-`demisto-sdk lint -g --circle`
-This indicates lint runs in CircleCI and only on changed packages from content repo's 'origin/master' branch.
+`demisto-sdk lint -g --outfile ~/failures.txt`
+This indicates lint runs only on changed packages from content repo's 'origin/master' branch and saves the failed packages to failures.txt file.

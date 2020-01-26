@@ -1,4 +1,4 @@
-from demisto_sdk.commands.init_pkg.templates.HelloWorldScript.HelloWorldScript import say_hello, say_hello_command
+from demisto_sdk.commands.init.templates.HelloWorldScript.HelloWorldScript import say_hello, say_hello_command
 
 
 def test_say_hello():

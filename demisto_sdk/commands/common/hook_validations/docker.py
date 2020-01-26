@@ -1,4 +1,4 @@
-from demisto_sdk.common.constants import Errors
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import get_yaml, print_error
 from distutils.version import LooseVersion
 from pkg_resources import parse_version

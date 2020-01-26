@@ -6,7 +6,7 @@ from typing import Tuple, List
 from demisto_sdk.dev_tools.linter import Linter
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
-from demisto_sdk.common.tools import get_dev_requirements, print_color, LOG_COLORS, run_command, set_log_verbose
+from demisto_sdk.common.tools import get_dev_requirements, print_color, print_error, LOG_COLORS, run_command, set_log_verbose
 
 
 LOCK = threading.Lock()
@@ -226,16 +226,19 @@ class LintManager:
         Returns:
             Tuple[int, str]. The result code for the lint command and the package name.
         """
-        linter = Linter(package_dir, no_test=not self.run_args['tests'],
-                        no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
-                        no_mypy=not self.run_args['mypy'], root=self.root,
-                        keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
-                        lock=LOCK, no_bandit=not self.run_args['bandit'],
-                        no_pslint=not self.run_args['pslint'],
-                        requirements_3=self.requirements_for_python3,
-                        requirements_2=self.requirements_for_python2)
-
-        return linter.run_dev_packages(), package_dir
+        try:
+            linter = Linter(package_dir, no_test=not self.run_args['tests'],
+                            no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
+                            no_mypy=not self.run_args['mypy'], root=self.root,
+                            keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
+                            lock=LOCK, no_bandit=not self.run_args['bandit'],
+                            no_pslint=not self.run_args['pslint'],
+                            requirements_3=self.requirements_for_python3,
+                            requirements_2=self.requirements_for_python2)
+            return linter.run_dev_packages(), package_dir
+        except Exception as ex:
+            print_error(f'Failed running lint for: {package_dir}. Exception: {ex}')
+            return 1, package_dir
 
     @staticmethod
     def create_failed_unittests_file(failed_unittests, outfile):

@@ -377,3 +377,35 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_not_valid_display_configuration() is not answer
+
+    VALID_FEED = [
+        # Valid feed
+        (True, "5.5.0"),
+        # No feed, including from version
+        (False, "4.5.0"),
+        # No feed, no from version
+        (False, None),
+        # No feed, fromversion 5.5
+        (False, "5.5.0"),
+    ]
+
+    @pytest.mark.parametrize("feed, fromversion", VALID_FEED)
+    def test_valid_feed(self, feed, fromversion):
+        current = {"feed": feed, "fromversion": fromversion}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_feed()
+
+    INVALID_FEED = [
+        # invalid from version
+        (True, "5.0.0"),
+        # Feed missing fromversion
+        (True, None),
+    ]
+
+    @pytest.mark.parametrize("feed, fromversion", INVALID_FEED)
+    def test_invalid_feed(self, feed, fromversion):
+        current = {"feed": feed, "fromversion": fromversion}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        assert not validator.is_valid_feed()

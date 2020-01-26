@@ -6,6 +6,11 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
+        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`"\
+            .format(file_path, given_fromversion, needed_from_version)
+
+    @staticmethod
     def not_used_display_name(file_path, field_name):
         return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
             field_name, file_path)
@@ -177,7 +182,11 @@ class Errors:
 
     @staticmethod
     def wrong_default_parameter(param_name):
-        return 'The default value of the {} parameter should be \'\''.format(param_name)
+        return Errors.wrong_default_parameter_not_empty(param_name, "''")
+
+    @staticmethod
+    def wrong_default_parameter_not_empty(param_name, default_value):
+        return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
 
     @staticmethod
     def wrong_required_value(param_name):
@@ -205,6 +214,10 @@ class Errors:
     def no_common_server_python(path):
         return "Could not get CommonServerPythonScript.py file. Please download it manually from {} and " \
                "add it to the root of the repository.".format(path)
+
+    @staticmethod
+    def invalid_file_path(file_path):
+        return f"Found incompatible file path: {file_path}."
 
 
 # dirs

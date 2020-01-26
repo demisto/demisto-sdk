@@ -51,7 +51,8 @@ class IntegrationValidator(BaseValidator):
             self.is_insecure_configured_correctly(),
             self.is_valid_category(),
             self.is_id_equals_name(),
-            self.is_docker_image_valid()
+            self.is_docker_image_valid(),
+            self.is_valid_feed(),
         ]
         return all(answers)
 
@@ -481,7 +482,16 @@ class IntegrationValidator(BaseValidator):
     def is_docker_image_valid(self):
         # type: () -> bool
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True)
-        if not docker_image_validator.is_docker_image_valid():
+        if docker_image_validator.is_docker_image_valid():
             return True
         self.is_valid = False
         return False
+
+    def is_valid_feed(self):
+        # type: () -> bool
+        if self.current_file.get("feed"):
+            from_version = self.current_file.get("fromversion", "0.0.0")
+            if not from_version or server_version_compare("5.5.0", from_version) == 1:
+                print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
+                return False
+        return True

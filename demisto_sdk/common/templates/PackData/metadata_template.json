@@ -2,13 +2,11 @@
   "displayName": "Display name of the pack:",
   "description": "Description of the pack:",
   "support": "Support of the pack, options are demisto / partner / developer / community :",
-  "certification": "Certification of the pack, options are certified or verified :",
   "serverMinVersion": "Server min version:",
   "currentVersion": "Current version of the pack:",
   "author": "Author of the pack:",
   "url": "The url of support, should represent your GitHub account:",
   "email": "The email in which you can be contacted in:",
   "categories": "Categories - comma separated values:",
-  "useCases": "Use cases - comma separated values:",
-  "keywords": "Keywords - comma separated values:"
+  "tags": "Tags - comma separated values:"
 }

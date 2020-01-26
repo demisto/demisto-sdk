@@ -168,12 +168,16 @@ class Initiator:
             metadata_template['deprecated'] = False
             metadata_template['currentVersion'] = Initiator.PACK_INITIAL_VERSION
             metadata_template['dependencies'] = []
+            metadata_template['certification'] = "certified"
+            metadata_template['useCases'] = []
+            metadata_template['keywords'] = []
 
             if not fill_manually:
                 return metadata_template
 
             for key, value in metadata_template.items():
-                if key in ['created', 'updated', 'beta', 'deprecated', 'currentVersion', 'dependencies']:
+                if key in ['created', 'updated', 'beta', 'deprecated', 'currentVersion', 'dependencies',
+                           'certification', 'useCases', 'keywords']:
                     continue
 
                 value_from_user = input(f'\n{value} ')

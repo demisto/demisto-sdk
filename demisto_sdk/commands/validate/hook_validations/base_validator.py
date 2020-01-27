@@ -3,7 +3,7 @@ import re
 from abc import abstractmethod
 
 from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.validate.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.tools import print_error, get_release_notes_file_path, \
     get_latest_release_notes_text, run_command
 from demisto_sdk.commands.common.constants import ID_IN_COMMONFIELDS, ID_IN_ROOT

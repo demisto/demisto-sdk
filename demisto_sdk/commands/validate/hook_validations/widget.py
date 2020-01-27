@@ -1,7 +1,7 @@
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.validate.hook_validations.base_validator import BaseValidator
 
 
-class ClassifierValidator(BaseValidator):
+class WidgetValidator(BaseValidator):
     def is_valid_version(self):
         """Return if version is valid. uses default method.
 

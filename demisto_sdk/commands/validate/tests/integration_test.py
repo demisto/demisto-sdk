@@ -1,8 +1,8 @@
 import pytest
 from mock import patch
 from typing import Optional
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.validate.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.validate.hook_validations.integration import IntegrationValidator
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -133,7 +133,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_there_duplicate_params() is answer
 
-    @patch('demisto_sdk.commands.common.hook_validations.integration.print_error')
+    @patch('demisto_sdk.commands.validate.hook_validations.integration.print_error')
     def test_with_duplicate_params(self, print_error):
         """
         Given

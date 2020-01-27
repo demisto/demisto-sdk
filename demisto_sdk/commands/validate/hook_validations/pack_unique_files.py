@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME, PAC
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME
 
 
-class PackUniqueFilesValidator():
+class PackUniqueFilesValidator:
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 

@@ -1,6 +1,6 @@
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.validate.hook_validations.script import ScriptValidator
 
 
 class ScriptYMLFormat(BaseUpdateYML):

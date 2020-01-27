@@ -4,7 +4,7 @@ import yaml
 import yamlordereddictloader
 
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.validate.hook_validations.structure import StructureValidator
 
 
 class BaseUpdateYML:

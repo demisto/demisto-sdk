@@ -3,7 +3,7 @@ from typing import List
 from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.validate.hook_validations.integration import IntegrationValidator
 
 
 class IntegrationYMLFormat(BaseUpdateYML):

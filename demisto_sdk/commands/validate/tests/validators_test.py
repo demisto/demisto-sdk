@@ -5,16 +5,16 @@ from typing import Any, Type
 import pytest
 
 from demisto_sdk.commands.common.constants import DIR_LIST
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
-from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.validate.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.validate.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.validate.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.validate.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.validate.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.validate.hook_validations.reputation import ReputationValidator
+from demisto_sdk.commands.validate.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.validate.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.validate.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.validate.hook_validations.integration import IntegrationValidator
 
 from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
@@ -28,7 +28,7 @@ from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_P
     VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_ID_PATH, \
     VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH
 
-from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.validate.hook_validations.widget import WidgetValidator
 
 
 class TestValidators:

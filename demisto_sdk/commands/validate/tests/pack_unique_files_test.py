@@ -1,7 +1,7 @@
 import os
 
 from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.validate.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.git_tools import git_path
 
 

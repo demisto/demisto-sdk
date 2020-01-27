@@ -2,7 +2,7 @@ import re
 
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_error
-from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.validate.hook_validations.playbook import PlaybookValidator
 
 
 class PlaybookYMLFormat(BaseUpdateYML):

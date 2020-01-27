@@ -18,14 +18,10 @@ def generate_integration_doc(input, output, commands, id_set, verbose=False):
         docs.append('This integration was integrated and tested with version xx of {}'.format(yml_data['name']))
         # Playbooks
         docs.extend(generate_section('{} Playbook'.format(yml_data['name']), None))
-        # Use-cases
-        docs.extend(generate_section('Use Cases', ''))
         # Setup integration to work with Demisto
         docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
         # Setup integration on Demisto
         docs.extend(generate_setup_section(yml_data))
-        # Fetched incidents data
-        docs.extend(generate_section('Fetched Incidents Data', ''))
         # Commands
         command_section, command_errors = generate_commands_section(yml_data, example_dict)
         docs.extend(command_section)
@@ -34,8 +30,6 @@ def generate_integration_doc(input, output, commands, id_set, verbose=False):
         docs.extend(generate_section('Additional Information', ''))
         # Known limitations
         docs.extend(generate_section('Known Limitations', ''))
-        # Troubleshooting
-        docs.extend(generate_section('Troubleshooting', ''))
 
         doc_text = '\n'.join(docs)
 
@@ -57,17 +51,20 @@ def generate_integration_doc(input, output, commands, id_set, verbose=False):
 # Setup integration on Demisto
 def generate_setup_section(yaml_data):
     section = [
-        '1. Navigate to __Settings__ > __Integrations__ > __Servers & Services__.',
+        '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
         '2. Search for {}.'.format(yaml_data['name']),
-        '3. Click __Add instance__ to create and configure a new integration instance.',
-        '    * __Name__: a textual name for the integration instance.',
+        '3. Click **Add instance** to create and configure a new integration instance.'
     ]
+    access_data = []
+
     for conf in yaml_data['configuration']:
-        if conf.get('display', ''):
-            section.append('    * __{}__'.format(conf['display']))
-        else:
-            section.append('    * __{}__'.format(conf['name']))
-    section.append('4. Click __Test__ to validate the URLs, token, and connection.')
+        access_data.append(
+            {'Parameter': conf.get('name', ''),
+             'Description': conf.get('display', ''),
+             'Required': conf.get('required', '')})
+
+    section.extend(generate_table_section(access_data, '', horizontal_rule=False))
+    section.append('4. Click **Test** to validate the URLs, token, and connection.')
 
     return section
 
@@ -77,22 +74,18 @@ def generate_commands_section(yaml_data, example_dict):
     errors = []  # type: list
     section = [
         '## Commands',
-        '---',
         'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.'
     ]
     commands = filter(lambda cmd: not cmd.get('deprecated', False), yaml_data['script']['commands'])
 
-    command_list = []
     command_sections = []
 
     for i, cmd in enumerate(commands):
-        command_list.append('{}. {}'.format(i + 1, cmd['name']))
         cmd_section, cmd_errors = generate_single_command_section(i, cmd, example_dict)
         command_sections.extend(cmd_section)
         errors.extend(cmd_errors)
 
-    section.extend(command_list)
     section.extend(command_sections)
     return section, errors
 
@@ -101,8 +94,8 @@ def generate_single_command_section(index, cmd, example_dict):
     cmd_example = example_dict.get(cmd['name'])
     errors = []
     section = [
-        '### {}. {}'.format(index + 1, cmd['name']),
-        '---',
+        '### {}'.format(cmd['name']),
+        '***',
         cmd.get('description', ' '),
         '##### Required Permissions',
         '**FILL IN REQUIRED PERMISSIONS HERE**',
@@ -188,7 +181,7 @@ def generate_command_example(cmd, cmd_example=None):
             '',
         ])
     example.extend([
-        '### Human Readable Output',
+        '##### Human Readable Output',
         '{}'.format(md_example),
         '',
     ])

@@ -31,8 +31,7 @@ def generate_section(title, data):
     """
     section = [
         '## {}'.format(title),
-        '---',
-        '',
+        ''
     ]
     if data:
         section.extend(add_lines(data))
@@ -69,25 +68,32 @@ def generate_list_section(title, data, horizontal_rule=False, empty_message='', 
     return section
 
 
-def generate_table_section(data, title, empty_message='', text=''):
+def generate_table_section(data, title, empty_message='', text='', horizontal_rule=True):
     """
     Generate table in markdown format.
     :param data: list of dicts contains the table data.
     :param title: The table header.
     :param empty_message: message to print when there is no data.
     :param text: message to print after table header.
+    :param horizontal_rule: add horizontal rule after title.
     :return: array of strings contains the table in markdown format.
     """
-    section = [f'## {title}', '---']
+    section = []
+    if title:
+        section.append(f'## {title}')
+
+    if horizontal_rule:
+        section.append('---')
 
     if not data:
         section.extend([empty_message, ''])
         return section
 
     section.extend([text, '|', '|'])
+    header_index = len(section) - 2
     for key in data[0]:
-        section[3] += f' **{key}** |'
-        section[4] += ' --- |'
+        section[header_index] += f' **{key}** |'
+        section[header_index + 1] += ' --- |'
 
     for item in data:
         tmp_item = '|'

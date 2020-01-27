@@ -30,9 +30,6 @@ from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
-os.environ["DEMISTO_API_KEY"] = "EBA90F6CD33924DC7007E2E997C182ED"
-os.environ["DEMISTO_BASE_URL"] = "http://localhost:8080/"
-
 class DemistoSDK:
     """
     The core class for the SDK.

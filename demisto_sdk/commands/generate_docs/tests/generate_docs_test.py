@@ -200,13 +200,13 @@ def test_generate_commands_section():
     section, errors = generate_commands_section(yml_data, {})
 
     expected_section = [
-        '## Commands', '---',
+        '## Commands',
         'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '1. non-deprecated-cmd', '### 1. non-deprecated-cmd', '---', ' ', '##### Required Permissions',
+        '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
         '**FILL IN REQUIRED PERMISSIONS HERE**', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
         'There are no input arguments for this command.', '', '##### Context Output', '',
         'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
-        '### Human Readable Output', '', '']
+        '##### Human Readable Output', '', '']
 
-    assert section == expected_section
+    assert '\n'.join(section) == '\n'.join(expected_section)

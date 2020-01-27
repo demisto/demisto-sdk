@@ -1,5 +1,5 @@
-from demisto_sdk.runners.runner import Runner
-from demisto_sdk.generate_docs.common import *
+from demisto_sdk.commands.run_cmd.runner import Runner
+from demisto_sdk.commands.generate_docs.common import *
 
 STRING_TYPES = (str, bytes)  # type: ignore
 
@@ -229,12 +229,16 @@ def build_example_dict(command_examples):
     examples = {}  # type: dict
     errors = []  # type: list
     for example in command_examples:
-        if example.startswith('!'):
-            cmd, md_example, context_example, cmd_errors = run_command(example)
-            errors.extend(cmd_errors)
+        # ignore comment lines
+        if example.startswith('#'):
+            continue
+        if not example.startswith('!'):
+            example = f'!{example}'
+        cmd, md_example, context_example, cmd_errors = run_command(example)
+        errors.extend(cmd_errors)
 
-            if cmd not in examples:
-                examples[cmd] = (example, md_example, context_example)
+        if cmd not in examples:
+            examples[cmd] = (example, md_example, context_example)
     return examples, errors
 
 

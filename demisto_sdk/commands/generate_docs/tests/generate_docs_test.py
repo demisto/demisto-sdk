@@ -1,6 +1,8 @@
-from demisto_sdk.common.tools import *
+import os
+from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.git_tools import git_path
 
-FILES_PATH = os.path.normpath(os.path.join(__file__, '..', 'test_files'))
+FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 FAKE_ID_SET = os.path.join(FILES_PATH, 'fake_id_set.json')
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
@@ -10,7 +12,7 @@ TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 
 
 def test_generate_list_section_empty():
-    from demisto_sdk.generate_docs.common import generate_list_section
+    from demisto_sdk.commands.generate_docs.common import generate_list_section
 
     section = generate_list_section('Inputs', [], empty_message='No inputs found.')
 
@@ -21,7 +23,7 @@ def test_generate_list_section_empty():
 
 
 def test_generate_list_section():
-    from demisto_sdk.generate_docs.common import generate_list_section
+    from demisto_sdk.commands.generate_docs.common import generate_list_section
 
     section = generate_list_section('Inputs', ['item1', 'item2'], False, 'No inputs found.')
 
@@ -32,7 +34,7 @@ def test_generate_list_section():
 
 
 def test_generate_list_with_text_section():
-    from demisto_sdk.generate_docs.common import generate_list_section
+    from demisto_sdk.commands.generate_docs.common import generate_list_section
 
     section = generate_list_section('Inputs', ['item1', 'item2'], True, 'No inputs found.', 'some text')
 
@@ -43,7 +45,7 @@ def test_generate_list_with_text_section():
 
 
 def test_generate_table_section_empty():
-    from demisto_sdk.generate_docs.common import generate_table_section
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     section = generate_table_section([], 'Script Data', 'No data found.', 'This is the metadata of the script.')
 
@@ -54,7 +56,7 @@ def test_generate_table_section_empty():
 
 
 def test_generate_table_section():
-    from demisto_sdk.generate_docs.common import generate_table_section
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     section = generate_table_section([{'Type': 'python2', 'Docker Image': 'demisto/python2'}],
                                      'Script Data', 'No data found.', 'This is the metadata of the script.')
@@ -70,7 +72,7 @@ def test_generate_table_section():
 
 
 def test_get_inputs():
-    from demisto_sdk.generate_docs.generate_playbook_doc import get_inputs
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_inputs
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     inputs, errors = get_inputs(playbook)
@@ -85,7 +87,7 @@ def test_get_inputs():
 
 
 def test_get_outputs():
-    from demisto_sdk.generate_docs.generate_playbook_doc import get_outputs
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_outputs
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     outputs, errors = get_outputs(playbook)
@@ -98,7 +100,7 @@ def test_get_outputs():
 
 
 def test_get_playbook_dependencies():
-    from demisto_sdk.generate_docs.generate_playbook_doc import get_playbook_dependencies
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_playbook_dependencies
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook)
@@ -110,7 +112,7 @@ def test_get_playbook_dependencies():
 
 
 def test_get_input_data_simple():
-    from demisto_sdk.generate_docs.generate_playbook_doc import get_input_data
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     input = playbook.get('inputs')[1]
@@ -122,7 +124,7 @@ def test_get_input_data_simple():
 
 
 def test_get_input_data_complex():
-    from demisto_sdk.generate_docs.generate_playbook_doc import get_input_data
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     input = playbook.get('inputs')[0]
@@ -137,7 +139,7 @@ def test_get_input_data_complex():
 
 
 def test_get_script_info():
-    from demisto_sdk.generate_docs.generate_script_doc import get_script_info
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_script_info
     info = get_script_info(TEST_SCRIPT_PATH)
 
     assert info[0]['Description'] == 'python3'
@@ -147,7 +149,7 @@ def test_get_script_info():
 
 
 def test_get_script_inputs():
-    from demisto_sdk.generate_docs.generate_script_doc import get_inputs
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_inputs
     script = get_yaml(TEST_SCRIPT_PATH)
     inputs, errors = get_inputs(script)
 
@@ -159,7 +161,7 @@ def test_get_script_inputs():
 
 
 def test_get_script_outputs():
-    from demisto_sdk.generate_docs.generate_script_doc import get_outputs
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_outputs
     script = get_yaml(TEST_SCRIPT_PATH)
     outputs, errors = get_outputs(script)
 
@@ -171,7 +173,7 @@ def test_get_script_outputs():
 
 
 def test_get_used_in():
-    from demisto_sdk.generate_docs.generate_script_doc import get_used_in
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_used_in
     script = get_yaml(TEST_SCRIPT_PATH)
     script_id = script.get('commonfields')['id']
     used_in = get_used_in(FAKE_ID_SET, script_id)
@@ -182,7 +184,7 @@ def test_get_used_in():
 
 
 def test_generate_commands_section():
-    from demisto_sdk.generate_docs.generate_integration_doc import generate_commands_section
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
 
     yml_data = {
         'script': {
@@ -205,6 +207,6 @@ def test_generate_commands_section():
         '**FILL IN REQUIRED PERMISSIONS HERE**', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
         'There are no input arguments for this command.', '', '##### Context Output', '',
         'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
-        '##### Human Readable Output', '', '']
+        '### Human Readable Output', '', '']
 
     assert section == expected_section

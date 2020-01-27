@@ -1,4 +1,4 @@
-from demisto_sdk.common.tools import *
+from demisto_sdk.commands.common.tools import *
 
 
 class HEADER_TYPE:

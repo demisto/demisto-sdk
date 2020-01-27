@@ -1,4 +1,4 @@
-from demisto_sdk.generate_docs.common import *
+from demisto_sdk.commands.generate_docs.common import *
 
 
 def generate_playbook_doc(input, output, commands, id_set, verbose=False):

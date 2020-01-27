@@ -1,5 +1,6 @@
 import re
 import demisto_client
+import ast
 
 from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
 

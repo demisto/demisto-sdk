@@ -1,7 +1,6 @@
 from os import path
-
-from demisto_sdk.generate_docs.common import *
-from demisto_sdk.common.scripts.update_id_set import get_script_data
+from demisto_sdk.commands.generate_docs.common import *
+from demisto_sdk.commands.common.update_id_set import get_script_data
 
 
 def generate_script_doc(input, output, commands, id_set, verbose=False):

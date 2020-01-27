@@ -21,11 +21,17 @@ from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.create_artifacts.content_creator import ContentCreator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
+from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
+
+os.environ["DEMISTO_API_KEY"] = "EBA90F6CD33924DC7007E2E997C182ED"
+os.environ["DEMISTO_BASE_URL"] = "http://localhost:8080/"
 
 class DemistoSDK:
     """

@@ -28,7 +28,7 @@ eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
 ```
 for regular bashrc users run in the terminal
 ```
-eval "$(_DEMISTO_SDK_COMPLETE=source demisto_sdk)"
+eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
 ```
 
 ## Commands

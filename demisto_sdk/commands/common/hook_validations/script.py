@@ -38,7 +38,6 @@ class ScriptValidator(BaseValidator):
             self.is_arg_changed(),
             self.is_there_duplicates_args(),
             self.is_changed_subtype(),
-            self.is_docker_image_valid()
         ]
 
         # Add sane-doc-report exception
@@ -55,7 +54,8 @@ class ScriptValidator(BaseValidator):
         is_script_valid = all([
             super(ScriptValidator, self).is_valid_file(validate_rn),
             self.is_valid_subtype(),
-            self.is_id_equals_name()
+            self.is_id_equals_name(),
+            self.is_docker_image_valid(),
         ])
 
         return is_script_valid

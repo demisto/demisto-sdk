@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.6
+* Fixed an issue where demisto-sdk **validate** failed on modified scripts without error message.
+
+### 0.3.5
+* Fixed an issue with docker tag validation for integrations.
+* Restructured repo source code.
+
 ### 0.3.4
 * Saved failing unit tests as a file.
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.

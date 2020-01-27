@@ -76,7 +76,7 @@ Supported commands:
 9. [Run](###Run)
 10. [Run-playbook](###Run-playbook)
 11. [Upload](###Upload)
-12. [Generate-test-playbook](###Generate test playbook)
+12. [Generate-test-playbook](###Generate Test Playbook)
 13. [Json-to-outputs](###Json-to-outputs)
 
 

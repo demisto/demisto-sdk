@@ -65,21 +65,21 @@ For more information on a specific command execute `demisto-sdk <command> -h`.
 
 Supported commands:
 
-1. [init](###Init)
-2. [Validate](###Validate)
-3. [Lint](###Lint)
-4. [Secrets](###Secrets)
-5. [Unify](###Unify)
-6. [Split-yml](###Split-yml)
-7. [Create](###Create)
-8. [Format](###Format)
-9. [Run](###Run)
-10. [Run-playbook](###Run-playbook)
-11. [Upload](###Upload)
-12. [Generate-test-playbook](###Generate-test-playbook)
-13. [Json-to-outputs](###Json-to-outputs)
+1. [init](#Init)
+2. [Validate](#validate)
+3. [Lint](#lint)
+4. [Secrets](#secrets)
+5. [Unify](#unify)
+6. [Split-yml](#split-yml)
+7. [Create](#create)
+8. [Format](#format)
+9. [Run](#run)
+10. [Run-playbook](#run-playbook)
+11. [Upload](#upload)
+12. [Generate-test-playbook](#generate-test-playbook)
+13. [Json-to-outputs](#json-to-outputs)
 
-
+---
 
 ### Init
 
@@ -95,7 +95,7 @@ Create a pack, integration or script template. If `--integration` and `--script`
 
 For detalied command usage press [here](demisto_sdk/commands/init/init_command.md)
 
-
+---
 
 ### Validate
 
@@ -117,7 +117,7 @@ Makes sure your content repository files are in order and have valid yml file sc
 
 For detalied command usage press [here](demisto_sdk/commands/validate/validate_command.md)
 
-
+---
 
 ### Lint
 
@@ -134,7 +134,7 @@ pylint and pytest will run within all the docker images of an integration/script
 
 For detalied command usage press [here](demisto_sdk/commands/lint/lint_command.md)
 
-
+---
 
 ### Secrets
 
@@ -150,7 +150,7 @@ Run Secrets validator to catch sensitive data before exposing your code to publi
 
 For detalied command usage press [here](demisto_sdk/commands/secrets/secrets.md)
 
-
+---
 
 ### Unify
 
@@ -167,7 +167,7 @@ Unify the code, image and description files to a single Demisto yaml file.
 
 For detalied command usage press [here](demisto_sdk/commands/unify/unify_command.md)
 
-
+---
 
 ### Split-yml
 
@@ -189,7 +189,7 @@ Extract code, image and description files from a demisto integration or script y
 
 For detalied command usage press [here](demisto_sdk/commands/split_yml/split_yml_command.md)
 
-
+---
 
 ### Create
 
@@ -205,7 +205,7 @@ Create content artifacts.
 
 For detalied command usage press [here](demisto_sdk/commands/create_artifacts/create_command.md)
 
-
+---
 
 ### Format
 
@@ -221,7 +221,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
 
 For detalied command usage press [here](demisto_sdk/commands/format/format_command.md)
 
-
+---
 
 ### Run
 
@@ -239,6 +239,8 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
 
 For detalied command usage press [here](demisto_sdk/commands/run_cmd/run_command.md)
 
+---
+
 ### Run-playbook
 
 Run a playbook in a given Demisto instance.
@@ -254,6 +256,8 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
    ```
 
 For detalied command usage press [here](demisto_sdk/commands/run_playbook/run_playbook_command.md)
+
+---
 
 ### Upload
 
@@ -271,7 +275,7 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
 
 For detalied command usage press [here](demisto_sdk/commands/upload/upload_command.md)
 
-
+---
 
 ### Generate-test-playbook
 
@@ -287,7 +291,7 @@ Generate Test Playbook from integration/script yml
 
 For detalied command usage press [here](demisto_sdk/commands/generate_test_playbook/generate_test_playbook_command.md)
 
-
+---
 
 
 ### Convert JSON to Demisto Outputs
@@ -329,6 +333,8 @@ Convert JSON format to demisto entry context yaml format.
    ````
 
 For detalied command usage press [here](demisto_sdk/commands/json_to_outputs/json_to_outputs_command.md)
+
+---
 
 ## Contributions
 For information regarding contributing, press [here](resources/contribution/CONTRIBUTION.md).

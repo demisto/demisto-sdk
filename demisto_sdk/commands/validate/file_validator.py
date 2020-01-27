@@ -64,9 +64,9 @@ class FilesValidator:
         self.branch_name = ''
         self.validate_all = validate_all
         if not self.validate_all:
-            print('Using git')
+            print('Validate only committed files')
             self.branch_name = self.get_current_working_branch()
-            print(f'Running validation on branch {self.branch_name}')
+            print(f'Running validation on branch ')
 
         self.prev_ver = prev_ver
         if not self.prev_ver:

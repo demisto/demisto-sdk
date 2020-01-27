@@ -59,48 +59,18 @@ class LintManager:
         }
 
         if run_all_tests or (not project_dir_list and git):
-            self.pkgs = self.get_all_directories()
+            self.pkgs = get_all_directories()
 
         else:
             self.pkgs = project_dir_list.split(',')
 
         if git:
-            self.pkgs = self._get_packages_to_run()
+            self.pkgs = _get_packages_to_run(self.pkgs)
 
         self.configuration = configuration
         self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.outfile = outfile
-
-    @staticmethod
-    def get_all_directories() -> List[str]:
-        """Gets all integration, script and beta_integrations in packages and packs in content repo.
-
-        Returns:
-            List. A list of integration, script and beta_integration names.
-        """
-        print("Getting all directory names")
-        all_directories = []
-        # get all integrations, scripts and beta_integrations from packs
-        for root, _, _ in os.walk(PACKS_DIR):
-            if 'Packs/' in root:
-                if ('Integrations/' in root or 'Scripts/' in root or 'Beta_Integrations/' in root) \
-                        and len(root.split('/')) == 4:
-                    all_directories.append(root)
-
-        for root, _, _ in os.walk(INTEGRATIONS_DIR):
-            if 'Integrations/' in root and len(root.split('/')) == 2:
-                all_directories.append(root)
-
-        for root, _, _ in os.walk(SCRIPTS_DIR):
-            if 'Scripts/' in root and len(root.split('/')) == 2:
-                all_directories.append(root)
-
-        for root, _, _ in os.walk(BETA_INTEGRATIONS_DIR):
-            if 'Beta_Integrations/' in root and len(root.split('/')) == 2:
-                all_directories.append(root)
-
-        return all_directories
 
     def run_dev_packages(self) -> int:
         """Runs the Lint command on all given packages.
@@ -126,7 +96,7 @@ class LintManager:
                 else:
                     good_pkgs.append(project_dir)
 
-            self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
+            _print_final_results(self.outfile, good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
 
             return 1 if fail_pkgs else 0
 
@@ -170,48 +140,7 @@ class LintManager:
                 else:
                     fail_pkgs.append(package_ran)
 
-            return self._print_final_results(good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
-
-    def _get_packages_to_run(self) -> List[str]:
-        """Checks which packages had changes in them and should run on Lint.
-
-        Returns:
-            list[str]. A list of names of packages that should run.
-        """
-        print("Filtering out directories that did not change")
-        pkgs_to_run = []
-        for directory in self.pkgs:
-            if self._check_should_run_pkg(pkg_dir=directory):
-                pkgs_to_run.append(directory)
-
-        return pkgs_to_run
-
-    def _check_should_run_pkg(self, pkg_dir: str) -> bool:
-        """Checks if there is a difference in the package before this Lint run and after it.
-
-        Args:
-            pkg_dir: The package directory to check.
-
-        Returns:
-            bool. True if there is a difference and False otherwise.
-        """
-        # get the current branch name.
-        current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
-
-        # This will return a list of all files that changed up until the last commit (not including any changes
-        # which were made but not yet committed).
-        changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch}")
-
-        # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
-        changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")
-
-        # if the package is in the list of changed files or if any files within the package were changed
-        # but not yet committed, return True
-        if pkg_dir in changes_from_last_commit_vs_master or len(changes_since_last_commit) > 0:
-            return True
-
-        # if no changes were made to the package - return False.
-        return False
+            return _print_final_results(self.outfile, good_pkgs=good_pkgs, fail_pkgs=fail_pkgs)
 
     def _run_single_package_thread(self, package_dir: str) -> Tuple[int, str]:
         """Run a thread of lint command.
@@ -231,42 +160,118 @@ class LintManager:
 
         return linter.run_dev_packages(), package_dir
 
-    @staticmethod
-    def create_failed_unittests_file(failed_unittests, outfile):
-        """
-        Creates a file with failed unittests.
-        The file will be read in slack_notifier script - which will send the failed unittests to the content-team
-        channel.
-        """
-        with open(outfile, "w") as failed_unittests_file:
-            failed_unittests_file.write('\n'.join(failed_unittests))
 
-    def _print_final_results(self, good_pkgs: List[str], fail_pkgs: List[str]) -> int:
-        """Print the results of parallel lint command.
+def get_all_directories() -> List[str]:
+    """Gets all integration, script and beta_integrations in packages and packs in content repo.
 
-        Args:
-            good_pkgs (list): A list of packages that passed lint.
-            fail_pkgs (list): A list of packages that failed lint
+    Returns:
+        List. A list of integration, script and beta_integration names.
+    """
+    print("Getting all directory names")
+    all_directories = []
+    # get all integrations, scripts and beta_integrations from packs
+    for root, _, _ in os.walk(PACKS_DIR):
+        if 'Packs/' in root:
+            if ('Integrations/' in root or 'Scripts/' in root or 'Beta_Integrations/' in root) \
+                    and len(root.split('/')) == 4:
+                all_directories.append(root)
 
-        Returns:
-            int. 0 on success and 1 if any package failed
-        """
-        if self.outfile:
-            self.create_failed_unittests_file(fail_pkgs, self.outfile)
+    for root, _, _ in os.walk(INTEGRATIONS_DIR):
+        if 'Integrations/' in root and len(root.split('/')) == 2:
+            all_directories.append(root)
 
-        if fail_pkgs:
-            print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)
-            print_color("\n\t{}\n".format("\n\t".join(fail_pkgs)), LOG_COLORS.RED)
+    for root, _, _ in os.walk(SCRIPTS_DIR):
+        if 'Scripts/' in root and len(root.split('/')) == 2:
+            all_directories.append(root)
 
-        if good_pkgs:
-            print_color("\n******* SUCCESS PKGS: *******", LOG_COLORS.GREEN)
-            print_color("\n\t{}\n".format("\n\t".join(good_pkgs)), LOG_COLORS.GREEN)
+    for root, _, _ in os.walk(BETA_INTEGRATIONS_DIR):
+        if 'Beta_Integrations/' in root and len(root.split('/')) == 2:
+            all_directories.append(root)
 
-        if not good_pkgs and not fail_pkgs:
-            print_color("\n******* No changed packages found *******\n", LOG_COLORS.YELLOW)
+    return all_directories
 
-        if fail_pkgs:
-            return 1
 
-        else:
-            return 0
+def _print_final_results(outfile, good_pkgs: List[str], fail_pkgs: List[str]) -> int:
+    """Print the results of parallel lint command.
+
+    Args:
+        good_pkgs (list): A list of packages that passed lint.
+        fail_pkgs (list): A list of packages that failed lint
+
+    Returns:
+        int. 0 on success and 1 if any package failed
+    """
+    if outfile:
+        create_failed_unittests_file(fail_pkgs, outfile)
+
+    if fail_pkgs:
+        print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)
+        print_color("\n\t{}\n".format("\n\t".join(fail_pkgs)), LOG_COLORS.RED)
+
+    if good_pkgs:
+        print_color("\n******* SUCCESS PKGS: *******", LOG_COLORS.GREEN)
+        print_color("\n\t{}\n".format("\n\t".join(good_pkgs)), LOG_COLORS.GREEN)
+
+    if not good_pkgs and not fail_pkgs:
+        print_color("\n******* No changed packages found *******\n", LOG_COLORS.YELLOW)
+
+    if fail_pkgs:
+        return 1
+
+    else:
+        return 0
+
+
+def create_failed_unittests_file(failed_unittests, outfile):
+    """
+    Creates a file with failed unittests.
+    The file will be read in slack_notifier script - which will send the failed unittests to the content-team
+    channel.
+    """
+    with open(outfile, "w") as failed_unittests_file:
+        failed_unittests_file.write('\n'.join(failed_unittests))
+
+
+def _get_packages_to_run(pkgs) -> List[str]:
+    """Checks which packages had changes in them and should run on Lint.
+
+    Returns:
+        list[str]. A list of names of packages that should run.
+    """
+    print("Filtering out directories that did not change")
+    pkgs_to_run = []
+    for directory in pkgs:
+        if _check_should_run_pkg(pkg_dir=directory):
+            pkgs_to_run.append(directory)
+
+    return pkgs_to_run
+
+
+def _check_should_run_pkg(pkg_dir: str) -> bool:
+    """Checks if there is a difference in the package before this Lint run and after it.
+
+    Args:
+        pkg_dir: The package directory to check.
+
+    Returns:
+        bool. True if there is a difference and False otherwise.
+    """
+    # get the current branch name.
+    current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
+
+    # This will return a list of all files that changed up until the last commit (not including any changes
+    # which were made but not yet committed).
+    changes_from_last_commit_vs_master = run_command(f"git diff --name-only -- origin/master...{current_branch}")
+
+    # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
+    changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")
+
+    # if the package is in the list of changed files or if any files within the package were changed
+    # but not yet committed, return True
+    if pkg_dir in changes_from_last_commit_vs_master or len(changes_since_last_commit) > 0:
+        print(changes_from_last_commit_vs_master)
+        return True
+
+    # if no changes were made to the package - return False.
+    return False
+

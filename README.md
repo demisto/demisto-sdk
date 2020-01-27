@@ -35,18 +35,7 @@ The library uses python 3.7+.
 
    3. Reload your terminal before continue.
 
-### Autocomplete
-Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
-for zsh users run in the terminal
-```shell
-eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
-```
-for regular bashrc users run in the terminal
-```shell
-eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
-```
-
-
+---
 
 ### CLI usage
 
@@ -59,7 +48,7 @@ demisto-sdk <command> <args>
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
-
+----
 
 ## Commands
 
@@ -333,6 +322,25 @@ Convert JSON format to demisto entry context yaml format.
    ````
 
 For detalied command usage press [here](demisto_sdk/commands/json_to_outputs/json_to_outputs_command.md)
+
+---
+
+### Autocomplete
+
+Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
+for zsh users run in the terminal
+
+```shell
+eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
+```
+
+for regular bashrc users run in the terminal
+
+```shell
+eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
+```
+
+
 
 ---
 

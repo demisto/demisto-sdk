@@ -65,23 +65,23 @@ For more information on a specific command execute `demisto-sdk <command> -h`.
 
 Supported commands:
 
-1. [init](### Init)
-2. [Validate](### Validate)
-3. [Lint](### Lint)
-4. [Secrets](### Secrets)
-5. [Unify](### Unify)
-6. [Split-yml](### Split-yml)
-7. [Create](### Create)
-8. [Format](### Format)
-9. [Run](### Run)
-10. [Run-playbook](### Run-playbook)
-11. [Upload](### Upload)
-12. [Generate-test-playbook](### Generate test playbook)
-13. [Json-to-outputs](### Json-to-outputs)
+1. [init](###Init)
+2. [Validate](###Validate)
+3. [Lint](###Lint)
+4. [Secrets](###Secrets)
+5. [Unify](###Unify)
+6. [Split-yml](###Split-yml)
+7. [Create](###Create)
+8. [Format](###Format)
+9. [Run](###Run)
+10. [Run-playbook](###Run-playbook)
+11. [Upload](###Upload)
+12. [Generate-test-playbook](###Generate test playbook)
+13. [Json-to-outputs](###Json-to-outputs)
 
 
 
-### [init](demisto_sdk/commands/init/init_command.md)
+### [Init](demisto_sdk/commands/init/init_command.md)
 
 Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
 

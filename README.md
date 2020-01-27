@@ -76,12 +76,12 @@ Supported commands:
 9. [Run](###Run)
 10. [Run-playbook](###Run-playbook)
 11. [Upload](###Upload)
-12. [Generate-test-playbook](###Generate Test Playbook)
+12. [Generate-test-playbook](###Generate-test-playbook)
 13. [Json-to-outputs](###Json-to-outputs)
 
 
 
-### [Init](demisto_sdk/commands/init/init_command.md)
+### Init
 
 Create a pack, integration or script template. If `--integration` and `--script` flags are not given the command will create a pack.
 
@@ -93,9 +93,11 @@ Create a pack, integration or script template. If `--integration` and `--script`
    demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/init/init_command.md)
 
 
-### [Validate](demisto_sdk/commands/validate/validate_command.md)
+
+### Validate
 
 Makes sure your content repository files are in order and have valid yml file scheme.
 
@@ -113,9 +115,11 @@ Makes sure your content repository files are in order and have valid yml file sc
    demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/validate/validate_command.md)
 
 
-### [Lint](demisto_sdk/commands/lint/lint_command.md)
+
+### Lint
 
 Run lintings (flake8, mypy, pylint, bandit) and pytest.
 pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
@@ -128,9 +132,11 @@ pylint and pytest will run within all the docker images of an integration/script
    demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/lint/lint_command.md)
 
 
-### [Secrets](demisto_sdk/commands/secrets/secrets.md)
+
+### Secrets
 
 Run Secrets validator to catch sensitive data before exposing your code to public repository. Attach full path to whitelist to allow manual whitelists. Default file path to secrets is "./Tests/secrets_white_list.json".
 
@@ -142,9 +148,11 @@ Run Secrets validator to catch sensitive data before exposing your code to publi
    demisto-sdk secrets
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/secrets/secrets.md)
 
 
-### [Unify](demisto_sdk/commands/unify/unify_command.md)
+
+### Unify
 
 Unify the code, image and description files to a single Demisto yaml file.
 
@@ -157,9 +165,11 @@ Unify the code, image and description files to a single Demisto yaml file.
    demisto-sdk unify -i Integrations/MyInt -o Integrations
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/unify/unify_command.md)
 
 
-### [Split-yml](demisto_sdk/commands/split_yml/split_yml_command.md)
+
+### Split-yml
 
 Extract code, image and description files from a demisto integration or script yml file.
 
@@ -177,9 +187,11 @@ Extract code, image and description files from a demisto integration or script y
    demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt -m
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/split_yml/split_yml_command.md)
 
 
-### [Create](demisto_sdk/commands/create_artifacts/create_command.md)
+
+### Create
 
 Create content artifacts.
 
@@ -191,9 +203,11 @@ Create content artifacts.
    demisto-sdk create -a .
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/create_artifacts/create_command.md)
 
 
-### [Format](demisto_sdk/commands/format/format_command.md)
+
+### Format
 
 Format your integration/script/playbook yml file according to Demisto's standard automatically.
 
@@ -205,15 +219,17 @@ Format your integration/script/playbook yml file according to Demisto's standard
    demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/format/format_command.md)
 
 
-### [Run](demisto_sdk/commands/run_cmd/run_command.md)
+
+### Run
 
 Run an integration command in the playground of a remote Demisto instance and retrieves the output.
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
 
-**Example**:
+**Examples**:
 
 1. This command will run the query `!gct-translate-text text="ciao" target="iw"` on the playground of the Demisto instance and print the output:
 
@@ -221,9 +237,9 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
    demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/run_cmd/run_command.md)
 
-
-### [Run-playbook](demisto_sdk/commands/run_playbook/run_playbook_command.md)
+### Run-playbook
 
 Run a playbook in a given Demisto instance.
 DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -237,9 +253,9 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
    DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/run_playbook/run_playbook_command.md)
 
-
-### [Upload](demisto_sdk/commands/upload/upload_command.md)
+### Upload
 
 Upload an integration to Demisto instance.
 
@@ -253,9 +269,11 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
    demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/upload/upload_command.md)
 
 
-### [Generate Test Playbook](demisto_sdk/commands/generate_test_playbook/generate_test_playbook_command.md)
+
+### Generate-test-playbook
 
 Generate Test Playbook from integration/script yml
 
@@ -267,10 +285,12 @@ Generate Test Playbook from integration/script yml
    demisto-sdk generate-test-playbook -i Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml -n TestXDRPlaybook -t integration -o TestPlaybooks`
    ```
 
+For detalied command usage press [here](demisto_sdk/commands/generate_test_playbook/generate_test_playbook_command.md)
 
 
 
-### [Convert JSON to Demisto Outputs](demisto_sdk/commands/json_to_outputs/json_to_outputs_command.md)
+
+### Convert JSON to Demisto Outputs
 Convert JSON format to demisto entry context yaml format.
 
 **Examples**:
@@ -308,7 +328,7 @@ Convert JSON format to demisto entry context yaml format.
      type: Date
    ````
 
-
+For detalied command usage press [here](demisto_sdk/commands/json_to_outputs/json_to_outputs_command.md)
 
 ## Contributions
 For information regarding contributing, press [here](resources/contribution/CONTRIBUTION.md).

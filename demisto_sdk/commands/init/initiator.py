@@ -8,8 +8,9 @@ from typing import Dict
 from distutils.dir_util import copy_tree
 from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, \
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR,\
-    CONNECTIONS_DIR, DASHBOARDS_DIR, MISC_DIR, REPORTS_DIR, WIDGETS_DIR
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, \
+    CONNECTIONS_DIR, DASHBOARDS_DIR, MISC_DIR, REPORTS_DIR, WIDGETS_DIR, PACK_INITIAL_VERSION, INTEGRATION_CATEGORIES, \
+    PACK_SUPPORT_OPTIONS
 
 
 class Initiator:
@@ -140,14 +141,15 @@ class Initiator:
 
         print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
-        with open(os.path.join(self.full_output_path, 'metadata.json'), 'a') as fp:
+        metadata_path = os.path.join(self.full_output_path, 'metadata.json')
+        with open(metadata_path, 'a') as fp:
             user_response = input("\nDo you want to fill pack's metadata file? Y/N ").lower()
             fill_manually = user_response in ['y', 'yes']
 
-            template_path = os.path.normpath(os.path.join(__file__, "..", "..", 'common', 'templates',
-                                                          self.PACK_TEMPLATE_FOLDER, self.PACK_METADATA_TEMPLATE))
-            pack_metadata = Initiator.create_metadata(fill_manually, template_path)
+            pack_metadata = Initiator.create_metadata(fill_manually)
             json.dump(pack_metadata, fp, indent=4)
+
+            print_color(f"Created pack metadata at path : {metadata_path}", LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
@@ -158,38 +160,75 @@ class Initiator:
         return True
 
     @staticmethod
-    def create_metadata(fill_manually, template_path):
-        with open(template_path, 'r') as metadata_template_json:
-            metadata_template = json.load(metadata_template_json)
+    def create_metadata(fill_manually):
+        metadata = {
+            'displayName': '',
+            'description': '',
+            'support': '',
+            'serverMinVersion': '',
+            'currentVersion': PACK_INITIAL_VERSION,
+            'author': '',
+            'url': '',
+            'email': '',
+            'categories': [],
+            'tags': [],
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'beta': False,
+            'deprecated': False,
+            'certification': '',
+            'useCases': [],
+            'keywords': [],
+            'dependencies': {},
+        }
 
-            metadata_template['created'] = datetime.utcnow().strftime(Initiator.DATE_FORMAT)
-            metadata_template['updated'] = datetime.utcnow().strftime(Initiator.DATE_FORMAT)
-            metadata_template['beta'] = False
-            metadata_template['deprecated'] = False
-            metadata_template['currentVersion'] = Initiator.PACK_INITIAL_VERSION
-            metadata_template['dependencies'] = []
-            metadata_template['certification'] = "certified"
-            metadata_template['useCases'] = []
-            metadata_template['keywords'] = []
+        if not fill_manually:
+            return metadata
 
-            if not fill_manually:
-                return metadata_template
+        metadata['displayName'] = input("\nDisplay name of the pack: ")
+        metadata['description'] = input("\nDescription of the pack: ")
+        metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
+                                                             option_message="\nSupport type of the pack: \n")
+        metadata['serverMinVersion'] = input("\nServer min version: ")
+        metadata['author'] = input("\nAuthor of the pack: ")
 
-            for key, value in metadata_template.items():
-                if key in ['created', 'updated', 'beta', 'deprecated', 'currentVersion', 'dependencies',
-                           'certification', 'useCases', 'keywords']:
-                    continue
+        support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
+        while support_url and "http" not in support_url:
+            support_url = input("\nIncorrect input. Please enter full valid url: ")
+        metadata['url'] = support_url
 
-                value_from_user = input(f'\n{value} ')
+        metadata['email'] = input("\nThe email in which you can be contacted in: ")
+        metadata['categories'] = [Initiator.get_valid_user_input(options_list=INTEGRATION_CATEGORIES,
+                                                                 option_message="\nPack category options: \n")]
+        tags = input("\nTags of the pack, comma separated values: ")
+        tags_list = [t.strip() for t in tags.split(',')]
+        metadata['tags'] = tags_list
 
-                if 'comma separated values' in value:
-                    value_from_user = [v.strip() for v in value_from_user.split(',')]
+        return metadata
 
-                metadata_template[key] = value_from_user
+    @staticmethod
+    def get_valid_user_input(options_list, option_message):
+        # category_options = "\nPack category options: \n"
 
-            print_color(f"Finished creating pack metadata: {template_path}.", LOG_COLORS.GREEN)
+        for index, option in enumerate(options_list, start=1):
+            option_message += f"[{index}] {option}\n"
+        option_message += "\nEnter option: "
 
-            return metadata_template
+        user_choice = input(option_message)
+
+        invalid_input = True
+        while invalid_input:
+            try:
+                user_choice = int(user_choice)
+
+                if user_choice not in range(1, len(options_list) + 1):
+                    user_choice = input(f"\nInvalid option {user_choice}, please enter valid choice: ")
+                else:
+                    invalid_input = False
+            except ValueError:
+                user_choice = input("\nThe option must be integer, please enter valid choice: ")
+
+        return options_list[user_choice - 1]
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.

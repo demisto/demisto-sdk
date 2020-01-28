@@ -27,10 +27,27 @@ git clone https://github.com/demisto/demisto-sdk.git
 
 ### 2. Install demisto sdk as editable version
 1. If you are using virtualenv for this proccess you can skeep this step, uninstall current installed version of
-   `demisto-sdk` - `pip3 uninstall demisto-sdk`
-2. Inside root directory of `demisto-sdk` repository - install PyPi package as editable package: `pip3 install -e .`
-3. Validate that `demisto-sdk` installed path is correct by: `pip3 show demisto-sdk  | grep Location` -> Location
+   `demisto-sdk`:
+
+   ```shell
+   pip3 uninstall demisto-sdk
+   ```
+
+2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/):
+
+   ```shell
+   pip3 install -e .
+   ```
+
+3. Validate that `demisto-sdk` installed path is correct by
+
+   ```shell
+   pip3 show demisto-sdk  | grep Location` -> Location
+   ```
+
+
    should be `demisto-sdk` repository in your local enviorment.
+
 4. Install dev-requirements - `pip3 install <repo>/resources/utils/requirements-dev.txt`
 
 ---
@@ -46,24 +63,25 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
 ### 4. Develop new command
 1. Create package for your command in the following path: `<repo>/demisto_sdk/commands/<your_new_command>`.
 2. Create the following in the above path:
-    a. **CLI arguments parsing** - Add CLI parsing in `<repo>/demisto_sdk/__main__` using [click](https://click.palletsprojects.com/en/7.x/) package.
-    b. **commands_module** - The modules suppose to return `0` if **succeed** else `1`, prints can used also by importing from `<repo>/demisto_sdk/commands/common/tools.py`
-    c. **unit-tests** -
-        i. Unit-tests should be located for each command in the following path-`<repo>/demisto_sdk/commands/<your_new_command>/tests`
-        ii. **data files tests** - Usally its shared data files for all commands which located in `<repo>/demisto_sdk/tests/test_files` (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
-    d. **check build influence on CircleCI** -
-        1. Test your functionality on CircleCI build of `Content` repository by changing requirements in `Content` repository:
-            a. Perform the following in `<content_repo>/dev-requirements-py3.txt`:
-                 1. Delete `demisto-sdk` requirement.
-                      2. Add the following requirement in new line - `git+https://github.com/demisto/demisto-sdk@<branch>`
-            b. Remove cache using in CircleCI build config, perform the following in file `<repo>/.circleci/config.yml`
+    1.  **CLI arguments parsing** - Add CLI parsing in `<repo>/demisto_sdk/__main__` using [click](https://click.palletsprojects.com/en/7.x/) package.
+    2. **commands_module** - The modules suppose to return `0` if **succeed** else `1`, prints can used also by importing from `<repo>/demisto_sdk/commands/common/tools.py`
+    3. **unit-tests** -
+        1. Unit-tests should be located for each command in the following path-`<repo>/demisto_sdk/commands/<your_new_command>/tests`
+        2.  **data files tests** - Usally its shared data files for all commands which located in `<repo>/demisto_sdk/tests/test_files` (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
+        3. **check build influence on CircleCI** -
+            1. Test your functionality on CircleCI build of `Content` repository by changing requirements in `Content` repository:
+                1.  Perform the following in `<content_repo>/dev-requirements-py3.txt`:
+                    1. Delete `demisto-sdk` requirement.
+                    2. Add the following requirement in new line - `git+https://github.com/demisto/demisto-sdk@<branch>`
+                2. Remove cache using in CircleCI build config, perform the following in file `<repo>/.circleci/config.yml`
                     1. Remove the following string form the following key `restore_cache:`: `-{{ checksum "dev-requirements-py3.txt" }}`
 
 ---
 
 ### 5. Running unit-tests using tox
 [tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
-**If you have one interperter it will skip the missing interperter and not failed - the 2 versions test will be performed in the CircleCI build.**
+
+If you have one interperter it will skip the missing interperter and not failed - the 2 versions test will be performed in the CircleCI build.**
 
 1. To run all our unit tests we use: `tox` on all envs, optional args:
     * For additional verbosity use: `tox -vv`
@@ -101,7 +119,6 @@ Before merging any PRs, we need all contributors to sign a contributor license a
 When you contribute a new pull request, a bot will evaluate whether you have signed the CLA. If required, the bot will comment on the pull request, including a link to accept the agreement. The CLA document is available for review as a [PDF](docs/cla.pdf).
 
 If the `license/cla` status check remains on *Pending*, even though all contributors have accepted the CLA, you can recheck the CLA status by visiting the following link (replace **[PRID]** with the ID of your PR): https://cla-assistant.io/check/demisto/demisto-sdk?pullRequest=[PRID] .
-
 
 If you have a suggestion or an opportunity for improvement that you've identified, please open an issue in this repo.
 Enjoy and feel free to reach out to us on the [DFIR Community Slack channel](http://go.demisto.com/join-our-slack-community), or at [info@demisto.com](mailto:info@demisto.com).

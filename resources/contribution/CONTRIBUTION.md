@@ -1,7 +1,7 @@
 # Contribution guide
 
 ## Description
-We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
+We build `demisto-sdk` to support python 3.7 and 3.8.
 
 ## Getting started
 
@@ -42,13 +42,17 @@ git clone https://github.com/demisto/demisto-sdk.git
 3. Validate that `demisto-sdk` installed path is correct by
 
    ```shell
-   pip3 show demisto-sdk  | grep Location` -> Location
+   pip3 show demisto-sdk  | grep Location -> Location
    ```
 
 
    should be `demisto-sdk` repository in your local enviorment.
 
-4. Install dev-requirements - `pip3 install <repo>/resources/utils/requirements-dev.txt`
+4. Install dev-requirements -
+
+  ```shell
+  pip3 install <repo>/resources/utils/requirements-dev.txt
+  ```
 
 ---
 
@@ -64,24 +68,51 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
 1. Create package for your command in the following path: `<repo>/demisto_sdk/commands/<your_new_command>`.
 2. Create the following in the above path:
     1.  **CLI arguments parsing** - Add CLI parsing in `<repo>/demisto_sdk/__main__` using [click](https://click.palletsprojects.com/en/7.x/) package.
-    2. **commands_module** - The modules suppose to return `0` if **succeed** else `1`, prints can used also by importing from `<repo>/demisto_sdk/commands/common/tools.py`
+    2. **commands_module** - The modules suppose to return `0` if **succeed** else `1`, common `print` function can  import from `<repo>/demisto_sdk/commands/common/tools.py`
     3. **unit-tests** -
-        1. Unit-tests should be located for each command in the following path-`<repo>/demisto_sdk/commands/<your_new_command>/tests`
-        2.  **data files tests** - Usally its shared data files for all commands which located in `<repo>/demisto_sdk/tests/test_files` (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
-        3. **check build influence on CircleCI** -
+
+        1. Unit-tests should be located for each command in the following path-
+
+            ```shell
+            <repo>/demisto_sdk/commands/<your_new_command>/tests
+            ```
+
+        2. data files tests - Usally its shared data files for all commands which located in:
+
+            ```shell
+            <repo>/demisto_sdk/tests/test_files
+            ```
+
+            >  (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
+
+
+
+        3. check build influence on CircleCI** -
+
             1. Test your functionality on CircleCI build of `Content` repository by changing requirements in `Content` repository:
                 1.  Perform the following in `<content_repo>/dev-requirements-py3.txt`:
                     1. Delete `demisto-sdk` requirement.
-                    2. Add the following requirement in new line - `git+https://github.com/demisto/demisto-sdk@<branch>`
-                2. Remove cache using in CircleCI build config, perform the following in file `<repo>/.circleci/config.yml`
+
+                    2. Add the following requirement in new line -
+
+                       ```
+                        git+https://github.com/demisto/demisto-sdk@<branch>
+                       ```
+
+                2. Remove cache using in CircleCI build config, perform the following in file
+
+                    ```shell
+                    <content_repo>/.circleci/config.yml
+                    ```
+
                     1. Remove the following string form the following key `restore_cache:`: `-{{ checksum "dev-requirements-py3.txt" }}`
 
 ---
 
 ### 5. Running unit-tests using tox
-[tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
+[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, We use it inorder to check unit-tests on python versions 3.7 and 3.8.
 
-If you have one interperter it will skip the missing interperter and not failed - the 2 versions test will be performed in the CircleCI build.**
+> If you have one interperter in your local environment it will skip the missing interperter and not failed - the 2 versions test will be performed in the CircleCI build.
 
 1. To run all our unit tests we use: `tox` on all envs, optional args:
     * For additional verbosity use: `tox -vv`

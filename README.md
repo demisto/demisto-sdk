@@ -340,9 +340,13 @@ for regular bashrc users run in the terminal
 eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
 ```
 
+---
 
+## License
+MIT - See [LICENSE](LICENSE) for more information.
 
 ---
 
 ## Contributions
+Contributions are welcome and appreciated.\
 For information regarding contributing, press [here](resources/contribution/CONTRIBUTION.md).

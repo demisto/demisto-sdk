@@ -1,146 +1,75 @@
 # Contribution guide
-1. Install `demisto-sdk` as editable versions.
-2. Repository manifest.
-3. Develop new command.
-4. Running `unit-tests`.
-5. Release guide.
 
----
-
-1. ## Install `demisto sdk` as editable version
-    1. If you are using virtualenv for this proccess you can skeep this step, uninstall current installed version of
-       `demisto-sdk` - `pip3 uninstall demisto-sdk`
-    2. Inside root directory of `demisto-sdk` repository - install PyPi package as editable package:
-        `pip3 install -e .`
-    3. Validate that `demisto-sdk` installed path is correct by: `pip3 show demisto-sdk  | grep Location` -> Location
-       should be `demisto-sdk` repository in your local enviorment.
-
----
-
-2. ## Pre-commit hooks setup
-We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:
-```shell
-pre-commit install
-```
-It is recommended to run `pre-commit autoupdate` to keep hooks updated.
-
----
-
-4. ## Develop new command
-    1. Create package for your command in the following path: `<repo>/demisto_sdk/commands/<your_new_command>`.
-    2. Create the following in the above path:
-        a. **CLI arguments parsing** - Add CLI parsing in `<repo>/demisto_sdk/__main__` using [click](https://click.palletsprojects.com/en/7.x/) package.
-        b. **commands_module** - The modules suppose to return `0` if **succeed** else `1`, prints can used also by importing from `<repo>/demisto_sdk/commands/common/tools.py`
-        c. **unit-tests** -
-            i. Unit-tests should be located for each command in the following path - `<repo>/demisto_sdk/commands/<your_new_command>/tests`
-            ii. **data files tests** - Usally its shared data files for all commands which located in `<repo>/demisto_sdk/tests/test_files` (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
-        d. **check build influence on CircleCI** - Test your functionality on CircleCI build of `Content` repository by changing requirements in `Content` repository, Perform the following in
-
-
----
-
-4. ## Running `unit-tests`
-
----
-
-5. ## Release guide
-
-
-
-
+## Description
 We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
 
-1) Clone the Demisto-SDK repository (Make sure that you have GitHub account):\
-`git clone https://github.com/demisto/demisto-sdk`
+## Getting started
 
-2) **If you are using a default python version 3.7 or 3.8 you can skip this part.**
+1. [Clone `demisto-sdk` repository](#1.-Clone-`demisto-sdk`-repository)
+2. [Install `demisto-sdk` as editable versions]()
+3. [Repository manifest]()
+4. [Develop new command]()
+5. [Running unit-tests using tox]()
+6. [Push changes to GitHub (Relevant only for Exernal PRs)]()
+7. [Review Process]()
+8. [Contributor License Agreement (Relevant only for Exernal PRs)]()
 
-    [pyenv](https://github.com/pyenv/pyenv) is an easy tool to control the versions of python on your environment.
-[Install pyenv](https://github.com/pyenv/pyenv#installation) and then run:
-    ```
-    pyenv install 3.7.5
-    pyenv install 3.8.0
-    ```
-    After installing run in `{path_to_demisto-sdk}/demisto-sdk`:
-    ```
-    cd {path_to_demisto-sdk}/demisto-sdk
-    pyenv versions
-    ```
-    And you should see marked with asterisks:
-    ```
-    * 3.7.5 (set by /{path_to_demisto-sdk}/demisto-sdk/.python-version)
-    * 3.8.0 (set by /{path_to_demisto-sdk}/demisto-sdk/.python-version)
-    ```
+---
 
-    If not, simply run the following command from the Demisto-SDK repository:
-    ```
-    pyenv local 3.7.5 3.8.0
-    ```
+### 1. Clone `demisto-sdk` repository
+Perform the following command in the path you want the repository to be cloned `git clone https://github.com/demisto/demisto-sdk.git`.
 
-3) Using the terminal go to the Demisto-SDK repository - we will set up the development environment there.
+---
 
-4) Install `tox`:
-    ```
-    pip install tox
-    ```
-    Then setup dev virtual envs for python 3 (will also install all necessary requirements):
-    ```
-    tox
-    ```
-5) Set your IDE to use the virtual environment you created using the following path:
-`/{path_to_demisto-sdk}/demisto-sdk/.tox/py37/bin/python`
+### 2. Install `demisto sdk` as editable version
+1. If you are using virtualenv for this proccess you can skeep this step, uninstall current installed version of
+   `demisto-sdk` - `pip3 uninstall demisto-sdk`
+2. Inside root directory of `demisto-sdk` repository - install PyPi package as editable package: `pip3 install -e .`
+3. Validate that `demisto-sdk` installed path is correct by: `pip3 show demisto-sdk  | grep Location` -> Location
+   should be `demisto-sdk` repository in your local enviorment.
+4. Install dev-requirements - `pip3 install <repo>/resources/utils/requirements-dev.txt`
 
-### How to run commands in your development environment
-In the Demisto-SDK repository while on the git branch you want to activate and run this command to use python 3.7:
- ```
- source .tox/py37/bin/activate
-  ```
-  or this command to use python 3.8:
-   ```
- source .tox/py38/bin/activate
- ```
-While in the virtual environment, you can use the ```demisto-sdk``` commands with all the changes made in your local environment.
+---
 
-In case your local changes to `demisto-sdk` are not updated, you need to update your `tox` environment
-by running this command from the Demisto-SDK repository:
-```angular2
-tox -e {your_env}
-```
-where {your_env} is py37 or py38.
-
-## Running git hooks
+### 3. Pre-commit hooks setup
 We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:
-```bash
-pre-commit install
-```
-It is recommended to run ```pre-commit autoupdate``` to keep hooks updated.
+1. Install hook to be performed as a hook before commiting changes - `pre-commit install`
+2. Enable auto update of pre-commit hooks - `pre-commit autoupdate`
+3. In order to run pre-commit without commiting - `pre-commit run -a` (on all files), `pre-commit run` (on staged files)
 
-## Running Unit Tests
-To run all our unit tests we use: `tox` on all envs.
+---
 
-For additional verbosity use: `tox -vv`
+### 4. Develop new command
+1. Create package for your command in the following path: `<repo>/demisto_sdk/commands/<your_new_command>`.
+2. Create the following in the above path:
+    a. **CLI arguments parsing** - Add CLI parsing in `<repo>/demisto_sdk/__main__` using [click](https://click.palletsprojects.com/en/7.x/) package.
+    b. **commands_module** - The modules suppose to return `0` if **succeed** else `1`, prints can used also by importing from `<repo>/demisto_sdk/commands/common/tools.py`
+    c. **unit-tests** -
+        i. Unit-tests should be located for each command in the following path - `<repo>/demisto_sdk/commands/<your_new_command>/tests`
+        ii. **data files tests** - Usally its shared data files for all commands which located in `<repo>/demisto_sdk/tests/test_files` (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
+    d. **check build influence on CircleCI** -
+        1. Test your functionality on CircleCI build of `Content` repository by changing requirements in `Content` repository:
+            a. Perform the following in `<content_repo>/dev-requirements-py3.txt`:
+                 1. Delete `demisto-sdk` requirement.
+                 2. Add the following requirement in new line - `git+https://github.com/demisto/demisto-sdk@<branch>`
+            b. Remove cache using in CircleCI build config, perform the following in file `<repo>/.circleci/config.yml`
+                1. Remove the following string form the following key `restore_cache:`: `-{{ checksum "dev-requirements-py3.txt" }}`
 
-To run `tox` without verbosity run: `tox -q`
+---
 
-To run on a specific environment, you can use: `tox -q -e py37`
+### 5. Running unit-tests using tox
+[tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software.
+**If you have one interperter it will skip the missing interperter and not failed - the 2 versions test will be performed in the CircleCI build.**
 
-To run a specific test run: `pytest -vv tests/{test_file}.py::{TestClass}::{test_function}`
+1. To run all our unit tests we use: `tox` on all envs, optional args:
+    * For additional verbosity use: `tox -vv`
+    * Run `tox` without verbosity run: `tox -q`
+    * Run on a specific environment, you can use: `tox -q -e py37`
+2. To run a specific test using pytest run: `pytest -vv tests/{test_file}.py::{TestClass}::{test_function}`
 
-## License
-MIT - See [LICENSE](LICENSE) for more information.
+---
 
-## Contributing
-Contributions are welcome and appreciated.
-
-## Development
-
-You can read the following docs to get started:
-
-[Development Guide](docs/development_guide.md)
-
-[Validation Testing](docs/validation_testing.md)
-
-## Push changes to GitHub
+### 6. Push changes to GitHub (Relevant only for Exernal PRs)
 
 The Demisto SDK is MIT Licensed and accepts contributions via GitHub pull requests.
 If you are a first time GitHub contributor, please look at these links explaining on how to create a Pull Request to a GitHub repo:
@@ -149,7 +78,9 @@ If you are a first time GitHub contributor, please look at these links explainin
 
 **Working on your first Pull Request?** You can learn how from this *free* series [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github)
 
-## Review Process
+---
+
+### 7. Review Process
 A member of the team will be assigned to review the pull request. Comments will be provided by the team member as the review process progresses.
 
 You will see a few [GitHub Status Checks](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-status-checks) that help validate that your pull request is according to our standards:
@@ -158,8 +89,9 @@ You will see a few [GitHub Status Checks](https://help.github.com/en/github/coll
 * **LGTM analysis: Python**: We use [LGTM](https://lgtm.com) for continues code analysis. If your PR introduces new LGTM alerts, the LGTM bot will add a comment with links for more details. Usually, these alerts are valid and you should try to fix them. If the alert is a false positive, specify this in a comment of the PR.
 * **license/cla**: Status check that all contributors have signed our contributor license agreement (see below).
 
+---
 
-## Contributor License Agreement
+### 8. Contributor License Agreement (Relevant only for Exernal PRs)
 Before merging any PRs, we need all contributors to sign a contributor license agreement. By signing a contributor license agreement, we ensure that the community is free to use your contributions.
 
 When you contribute a new pull request, a bot will evaluate whether you have signed the CLA. If required, the bot will comment on the pull request, including a link to accept the agreement. The CLA document is available for review as a [PDF](docs/cla.pdf).

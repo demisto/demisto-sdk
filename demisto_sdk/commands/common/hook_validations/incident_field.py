@@ -302,7 +302,7 @@ class IncidentFieldValidator(BaseValidator):
         if re.fullmatch(INCIDENT_FIELD_CLINAME_VALIDATION_REGEX, cliname):
             return True
         print_error(
-            f"{self.file_path}: Field `cliname` contains non-alphanumeric letters. must match regex:"
+            f"{self.file_path}: Field `cliName` contains non-alphanumeric letters. must match regex:"
             f" {INCIDENT_FIELD_CLINAME_VALIDATION_REGEX}"
         )
         return False

@@ -5,8 +5,8 @@ We build `demisto-sdk` to support python 3.7 and 3.8.
 
 ## Getting started
 
-1. [Clone `demisto-sdk` repository](#1-Clone-demisto-sdk-repository)
-2. [Install `demisto-sdk` as editable versions](#2-Install-demisto-sdk-as-editable-version)
+1. [Clone demisto-sdk repository](#1-Clone-demisto-sdk-repository)
+2. [Install demisto-sdk as editable versions](#2-Install-demisto-sdk-as-editable-version)
 3. [Pre-commit hooks setup](3-Pre-commit-hooks-setup)
 4. [Develop new command](4-Develop-new-command)
 5. [Running unit-tests using tox](#5-running-unit-tests-using-tox)
@@ -50,9 +50,9 @@ git clone https://github.com/demisto/demisto-sdk.git
 
 4. Install dev-requirements -
 
-  ```shell
-  pip3 install <repo>/resources/utils/requirements-dev.txt
-  ```
+   ```shell
+   pip3 install <repo>/resources/utils/requirements-dev.txt
+   ```
 
 ---
 
@@ -85,9 +85,7 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
 
             >  (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
 
-
-
-        3. check build influence on CircleCI** -
+        3. check build influence on CircleCI -
 
             1. Test your functionality on CircleCI build of `Content` repository by changing requirements in `Content` repository:
                 1.  Perform the following in `<content_repo>/dev-requirements-py3.txt`:
@@ -115,9 +113,9 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
 > If you have one interperter in your local environment it will skip the missing interperter and not failed - the 2 versions test will be performed in the CircleCI build.
 
 1. To run all our unit tests we use: `tox` on all envs, optional args:
-    * For additional verbosity use: `tox -vv`
-    * Run `tox` without verbosity run: `tox -q`
-    * Run on a specific environment, you can use: `tox -q -e py37`
+   * For additional verbosity use: `tox -vv`
+   * Run `tox` without verbosity run: `tox -q`
+   * Run on a specific environment, you can use: `tox -q -e py37`
 2. To run a specific test using pytest run: `pytest -vv tests/{test_file}.py::{TestClass}::{test_function}`
 
 ---

@@ -6,12 +6,6 @@ from demisto_sdk.commands.common.tools import print_error
 from enum import Enum, IntEnum
 import re
 
-# Those file's mapping: system = true, content = false
-BUILTIN_CONTENT_FLAGS = [
-    "incidentfield-modified.json",
-    "incidentfield-name.json"
-]
-
 
 class TypeFields(Enum):
     IncidentFieldTypeShortText = "shortText"
@@ -34,24 +28,25 @@ class TypeFields(Enum):
 
     @classmethod
     def is_valid_incident_field(cls, _type):
-        return _type in (cls.IncidentFieldTypeShortText,
-                         cls.IncidentFieldTypeLongText,
-                         cls.IncidentFieldTypeBoolean,
-                         cls.IncidentFieldTypeSingleSelect,
-                         cls.IncidentFieldTypeMultiSelect,
-                         cls.IncidentFieldTypeDate,
-                         cls.IncidentFieldTypeUser,
-                         cls.IncidentFieldTypeRole,
-                         cls.IncidentFieldTypeNumeric,
-                         cls.IncidentFieldTypeAttachments,
-                         cls.IncidentFieldTypeTags,
-                         cls.IncidentFieldTypeInternal,
-                         cls.IncidentFieldTypeURL,
-                         cls.IncidentFieldTypeMD,
-                         cls.IncidentFieldTypeGrid,
-                         cls.IncidentFieldTypeTimer,
-                         cls.IncidentFieldTypeHTML
-                         )
+        return _type in (
+            cls.IncidentFieldTypeShortText,
+            cls.IncidentFieldTypeLongText,
+            cls.IncidentFieldTypeBoolean,
+            cls.IncidentFieldTypeSingleSelect,
+            cls.IncidentFieldTypeMultiSelect,
+            cls.IncidentFieldTypeDate,
+            cls.IncidentFieldTypeUser,
+            cls.IncidentFieldTypeRole,
+            cls.IncidentFieldTypeNumeric,
+            cls.IncidentFieldTypeAttachments,
+            cls.IncidentFieldTypeTags,
+            cls.IncidentFieldTypeInternal,
+            cls.IncidentFieldTypeURL,
+            cls.IncidentFieldTypeMD,
+            cls.IncidentFieldTypeGrid,
+            cls.IncidentFieldTypeTimer,
+            cls.IncidentFieldTypeHTML,
+        )
 
 
 class GroupFieldTypes(IntEnum):
@@ -61,10 +56,11 @@ class GroupFieldTypes(IntEnum):
 
     @classmethod
     def is_valid_group(cls, group):
-        return group in (cls.INCIDENT_FIELD.value,
-                         cls.EVIDENCE_FIELD.value,
-                         cls.INDICATOR_FIELD.value,
-                         )
+        return group in (
+            cls.INCIDENT_FIELD.value,
+            cls.EVIDENCE_FIELD.value,
+            cls.INDICATOR_FIELD.value,
+        )
 
 
 # Demisto is using a Bleve DB, those keys can be the cliName
@@ -138,7 +134,7 @@ BleveMapping = {
         "roles",
         "previousroles",
         "hasrole",
-        "dbotcreatedBy"
+        "dbotcreatedBy",
     ],
     2: [
         "id",
@@ -190,72 +186,86 @@ class IncidentFieldValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        is_bc_broke = any([
-            # in the future, add BC checks here
-        ])
+        is_bc_broke = any(
+            [
+                # in the future, add BC checks here
+            ]
+        )
 
         return not is_bc_broke
 
     def is_valid_file(self, validate_rn=True):
         """Check whether the Incident Field is valid or not
         """
-        is_incident_field_valid = [
-            self.is_valid_name(),
-            self.is_valid_type(),
-            self.is_valid_group(),
-        ]
-        if any(path in self.file_path for path in BUILTIN_CONTENT_FLAGS):
-            is_incident_field_valid.extend(
-                [self.is_valid_content_flag(False),
-                 self.is_valid_system_flag(True)
-                 ]
-            )
-        else:
-            is_incident_field_valid.extend(
-                [self.is_valid_content_flag(),
-                 self.is_valid_system_flag(),
-                 self.is_valid_cliname()
-                 ]
-            )
-
-        return all(is_incident_field_valid)
+        return all(
+            [
+                self.is_valid_name(),
+                self.is_valid_type(),
+                self.is_valid_group(),
+                self.is_valid_content_flag(),
+                self.is_valid_system_flag(),
+                self.is_valid_cliname(),
+            ]
+        )
 
     def is_valid_name(self):
         """Validate that the name and cliName does not contain any potential incident synonyms."""
-        name = self.current_file.get('name', '')
-        bad_words = {'incident', 'case', 'alert', 'event', 'playbook', 'ticket', 'issue',
-                     'incidents', 'cases', 'alerts', 'events', 'playbooks', 'tickets', 'issues'}
+        name = self.current_file.get("name", "")
+        bad_words = {
+            "incident",
+            "case",
+            "alert",
+            "event",
+            "playbook",
+            "ticket",
+            "issue",
+            "incidents",
+            "cases",
+            "alerts",
+            "events",
+            "playbooks",
+            "tickets",
+            "issues",
+        }
         whitelisted_field_names = {
-            'XDR Alert Count',
-            'XDR High Severity Alert Count',
-            'XDR Medium Severity Alert Count',
-            'XDR Low Severity Alert Count',
-            'XDR Incident ID',
-            'Detection Ticketed'
+            "XDR Alert Count",
+            "XDR High Severity Alert Count",
+            "XDR Medium Severity Alert Count",
+            "XDR Low Severity Alert Count",
+            "XDR Incident ID",
+            "Detection Ticketed",
         }
         if name not in whitelisted_field_names:
             for word in name.split():
                 if word.lower() in bad_words:
-                    print_error("The word {} cannot be used as a name/cliName, "
-                                "please update the file {}.".format(word, self.file_path))
+                    print_error(
+                        "The word {} cannot be used as a name/cliName, "
+                        "please update the file {}.".format(word, self.file_path)
+                    )
                     return False
         return True
 
     def is_valid_content_flag(self, content_value=True):
         """Validate that field is marked as content."""
-        is_valid_flag = self.current_file.get('content') is content_value
+        is_valid_flag = self.current_file.get("content") is content_value
         if not is_valid_flag:
-            print_error("The content key must be set to {}, please update the file '{}'".format(
-                content_value, self.file_path))
+            print_error(
+                "The content key must be set to {}, please update the file '{}'".format(
+                    content_value, self.file_path
+                )
+            )
 
         return is_valid_flag
 
     def is_valid_system_flag(self, system_value=False):
         """Validate that field is not marked as system."""
-        is_valid_flag = self.current_file.get('system', False) is system_value
+        is_valid_flag = self.current_file.get("system", False) is system_value
         if not is_valid_flag:
-            print_error("The system key must be set to {}, please update the file '{}'".format(
-                system_value, self.file_path))
+            print_error(
+                "The system key must be set to {}, please update the file '{}'".format(
+                    system_value, self.file_path
+                )
+            )
 
         return is_valid_flag
 
@@ -268,8 +278,10 @@ class IncidentFieldValidator(BaseValidator):
         is_valid = TypeFields.is_valid_incident_field(self.current_file.get("type"))
         if is_valid:
             return True
-        print_error(f"{self.file_path}: type: `{self.current_file.get('type')}` is not one of available type.\n"
-                    f"available types: {[value for value in TypeFields]}")
+        print_error(
+            f"{self.file_path}: type: `{self.current_file.get('type')}` is not one of available type.\n"
+            f"available types: {[value for value in TypeFields]}"
+        )
         return False
 
     def is_valid_group(self):
@@ -291,7 +303,8 @@ class IncidentFieldValidator(BaseValidator):
             return True
         print_error(
             f"{self.file_path}: Field `cliname` contains non-alphanumeric letters. must match regex:"
-            f" {INCIDENT_FIELD_CLINAME_VALIDATION_REGEX}")
+            f" {INCIDENT_FIELD_CLINAME_VALIDATION_REGEX}"
+        )
         return False
 
     def is_cliname_is_builtin_key(self):
@@ -306,5 +319,7 @@ class IncidentFieldValidator(BaseValidator):
         elif group == GroupFieldTypes.INCIDENT_FIELD:
             is_valid = cliname not in BleveMapping[GroupFieldTypes.INCIDENT_FIELD]
         if not is_valid:
-            print_error(f"{self.file_path}: cliName field can not be {cliname} as it's a builtin key.")
+            print_error(
+                f"{self.file_path}: cliName field can not be {cliname} as it's a builtin key."
+            )
         return is_valid

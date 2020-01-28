@@ -29,23 +29,23 @@ class TypeFields(Enum):
     @classmethod
     def is_valid_incident_field(cls, _type):
         return _type in (
-            cls.IncidentFieldTypeShortText,
-            cls.IncidentFieldTypeLongText,
-            cls.IncidentFieldTypeBoolean,
-            cls.IncidentFieldTypeSingleSelect,
-            cls.IncidentFieldTypeMultiSelect,
-            cls.IncidentFieldTypeDate,
-            cls.IncidentFieldTypeUser,
-            cls.IncidentFieldTypeRole,
-            cls.IncidentFieldTypeNumeric,
-            cls.IncidentFieldTypeAttachments,
-            cls.IncidentFieldTypeTags,
-            cls.IncidentFieldTypeInternal,
-            cls.IncidentFieldTypeURL,
-            cls.IncidentFieldTypeMD,
-            cls.IncidentFieldTypeGrid,
-            cls.IncidentFieldTypeTimer,
-            cls.IncidentFieldTypeHTML,
+            cls.IncidentFieldTypeShortText.value,
+            cls.IncidentFieldTypeLongText.value,
+            cls.IncidentFieldTypeBoolean.value,
+            cls.IncidentFieldTypeSingleSelect.value,
+            cls.IncidentFieldTypeMultiSelect.value,
+            cls.IncidentFieldTypeDate.value,
+            cls.IncidentFieldTypeUser.value,
+            cls.IncidentFieldTypeRole.value,
+            cls.IncidentFieldTypeNumeric.value,
+            cls.IncidentFieldTypeAttachments.value,
+            cls.IncidentFieldTypeTags.value,
+            cls.IncidentFieldTypeInternal.value,
+            cls.IncidentFieldTypeURL.value,
+            cls.IncidentFieldTypeMD.value,
+            cls.IncidentFieldTypeGrid.value,
+            cls.IncidentFieldTypeTimer.value,
+            cls.IncidentFieldTypeHTML.value,
         )
 
 
@@ -280,7 +280,7 @@ class IncidentFieldValidator(BaseValidator):
             return True
         print_error(
             f"{self.file_path}: type: `{self.current_file.get('type')}` is not one of available type.\n"
-            f"available types: {[value for value in TypeFields]}"
+            f"available types: {[value.value for value in TypeFields]}"
         )
         return False
 

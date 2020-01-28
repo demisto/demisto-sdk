@@ -26,7 +26,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 ---
 
 ### 2. Install demisto sdk as editable version
-1. If you are using virtualenv for this proccess you can skeep this step, uninstall current installed version of
+1. If you are using virtualenv for this proccess you can skip this step, uninstall current installed version of
    `demisto-sdk`:
 
    ```shell
@@ -42,7 +42,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 3. Validate that `demisto-sdk` installed path is correct by
 
    ```shell
-   pip3 show demisto-sdk  | grep Location -> Location
+   pip3 show demisto-sdk  | grep Location
    ```
 
 

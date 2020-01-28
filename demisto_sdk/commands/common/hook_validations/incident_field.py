@@ -28,25 +28,7 @@ class TypeFields(Enum):
 
     @classmethod
     def is_valid_incident_field(cls, _type):
-        return _type in (
-            cls.IncidentFieldTypeShortText.value,
-            cls.IncidentFieldTypeLongText.value,
-            cls.IncidentFieldTypeBoolean.value,
-            cls.IncidentFieldTypeSingleSelect.value,
-            cls.IncidentFieldTypeMultiSelect.value,
-            cls.IncidentFieldTypeDate.value,
-            cls.IncidentFieldTypeUser.value,
-            cls.IncidentFieldTypeRole.value,
-            cls.IncidentFieldTypeNumeric.value,
-            cls.IncidentFieldTypeAttachments.value,
-            cls.IncidentFieldTypeTags.value,
-            cls.IncidentFieldTypeInternal.value,
-            cls.IncidentFieldTypeURL.value,
-            cls.IncidentFieldTypeMD.value,
-            cls.IncidentFieldTypeGrid.value,
-            cls.IncidentFieldTypeTimer.value,
-            cls.IncidentFieldTypeHTML.value,
-        )
+        return _type in [field.value for field in cls]
 
 
 class GroupFieldTypes(IntEnum):

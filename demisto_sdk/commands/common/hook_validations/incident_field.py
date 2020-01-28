@@ -3,6 +3,178 @@ This module is designed to validate the correctness of incident field entities i
 """
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error
+from enum import Enum, IntEnum
+import re
+
+# Those file's mapping: system = true, content = false
+BUILTIN_CONTENT_FLAGS = [
+    "incidentfield-modified.json",
+    "incidentfield-name.json"
+]
+
+
+class TypeFields(Enum):
+    IncidentFieldTypeShortText = "shortText"
+    IncidentFieldTypeLongText = "longText"
+    IncidentFieldTypeBoolean = "boolean"
+    IncidentFieldTypeSingleSelect = "singleSelect"
+    IncidentFieldTypeMultiSelect = "multiSelect"
+    IncidentFieldTypeDate = "date"
+    IncidentFieldTypeUser = "user"
+    IncidentFieldTypeRole = "role"
+    IncidentFieldTypeNumeric = "number"
+    IncidentFieldTypeAttachments = "attachments"
+    IncidentFieldTypeTags = "tagsSelect"
+    IncidentFieldTypeInternal = "internal"
+    IncidentFieldTypeURL = "url"
+    IncidentFieldTypeMD = "markdown"
+    IncidentFieldTypeGrid = "grid"
+    IncidentFieldTypeTimer = "timer"
+    IncidentFieldTypeHTML = "html"
+
+    @classmethod
+    def is_valid_incident_field(cls, _type):
+        return _type in (cls.IncidentFieldTypeShortText,
+                         cls.IncidentFieldTypeLongText,
+                         cls.IncidentFieldTypeBoolean,
+                         cls.IncidentFieldTypeSingleSelect,
+                         cls.IncidentFieldTypeMultiSelect,
+                         cls.IncidentFieldTypeDate,
+                         cls.IncidentFieldTypeUser,
+                         cls.IncidentFieldTypeRole,
+                         cls.IncidentFieldTypeNumeric,
+                         cls.IncidentFieldTypeAttachments,
+                         cls.IncidentFieldTypeTags,
+                         cls.IncidentFieldTypeInternal,
+                         cls.IncidentFieldTypeURL,
+                         cls.IncidentFieldTypeMD,
+                         cls.IncidentFieldTypeGrid,
+                         cls.IncidentFieldTypeTimer,
+                         cls.IncidentFieldTypeHTML
+                         )
+
+
+class GroupFieldTypes(IntEnum):
+    INCIDENT_FIELD = 0
+    EVIDENCE_FIELD = 1
+    INDICATOR_FIELD = 2
+
+    @classmethod
+    def is_valid_group(cls, group):
+        return group in (cls.INCIDENT_FIELD.value,
+                         cls.EVIDENCE_FIELD.value,
+                         cls.INDICATOR_FIELD.value,
+                         )
+
+
+BleveMapping = {
+    0: [
+        "id",
+        "shardID",
+        "modified",
+        "autime",
+        "account",
+        "type",
+        "rawType",
+        "phase",
+        "rawPhase",
+        "name",
+        "rawName",
+        "status",
+        "reason",
+        "created",
+        "parent",
+        "occurred",
+        "dueDate",
+        "reminder",
+        "closed",
+        "sla",
+        "level",
+        "investigationId",
+        "details",
+        "openDuration",
+        "droppedCount",
+        "linkedCount",
+        "closingUserId",
+        "activatingUserId",
+        "owner",
+        "roles",
+        "previousRoles",
+        "hasRole",
+        "dbotCreatedBy",
+        "activated",
+        "closeReason",
+        "rawCloseReason",
+        "playbookId",
+        "isPlayground",
+        "category",
+        "rawCategory",
+        "runStatus",
+        "rawJSON",
+        "sourceBrand",
+        "sourceInstance",
+        "LastOpen",
+        "canvases",
+        "notifyTime",
+        "todoTaskIds",
+        "scheduled",
+        "labels",
+    ],
+    1: [
+        "id",
+        "shardID",
+        "modified",
+        "incidentId",
+        "entryId",
+        "description",
+        "tags",
+        "tagsRaw",
+        "occurred",
+        "markedDate",
+        "fetched",
+        "taskId",
+        "markedBy",
+        "roles",
+        "previousRoles",
+        "hasRole",
+        "dbotCreatedBy"
+    ],
+    2: [
+        "id",
+        "modified",
+        "type",
+        "rawName",
+        "name",
+        "createdTime",
+        "name",
+        "createdTime",
+        "investigationIDs",
+        "investigationsCount",
+        "isIoc",
+        "score",
+        "lastSeen",
+        "lastReputationRun",
+        "firstSeen",
+        "calculatedTime",
+        "source",
+        "rawSource",
+        "manualScore",
+        "setBy",
+        "manualSetTime",
+        "comment",
+        "modifiedTime",
+        "sourceInstances",
+        "sourceBrands",
+        "context",
+        "expiration",
+        "expirationStatus",
+        "manuallyEditedFields",
+        "moduleToFeedMap",
+        "isShared",
+    ],
+}
+
+INCIDENT_FIELD_CLINAME_VALIDATION_REGEX = r"[0-9A-Za-z]+$"
 
 
 class IncidentFieldValidator(BaseValidator):
@@ -26,18 +198,30 @@ class IncidentFieldValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         """Check whether the Incident Field is valid or not
         """
-        is_incident_field_valid = all([
+        is_incident_field_valid = [
             self.is_valid_name(),
-            self.is_valid_content_flag(),
-            self.is_valid_system_flag(),
-        ])
+            self.is_valid_type(),
+            self.is_valid_group()
+        ]
+        if any(path in self.file_path for path in BUILTIN_CONTENT_FLAGS):
+            is_incident_field_valid.extend(
+                [self.is_valid_content_flag(False),
+                 self.is_valid_system_flag(True)
+                 ]
+            )
+        else:
+            is_incident_field_valid.extend(
+                [self.is_valid_content_flag(),
+                 self.is_valid_system_flag(),
+                 self.is_valid_cliname()
+                 ]
+            )
 
-        return is_incident_field_valid
+        return all(is_incident_field_valid)
 
     def is_valid_name(self):
         """Validate that the name and cliName does not contain any potential incident synonyms."""
         name = self.current_file.get('name', '')
-        cli_name = self.current_file.get('cliName', '')
         bad_words = {'incident', 'case', 'alert', 'event', 'playbook', 'ticket', 'issue',
                      'incidents', 'cases', 'alerts', 'events', 'playbooks', 'tickets', 'issues'}
         whitelisted_field_names = {
@@ -49,29 +233,72 @@ class IncidentFieldValidator(BaseValidator):
             'Detection Ticketed'
         }
         if name not in whitelisted_field_names:
-            for word in cli_name.split() + name.split():
+            for word in name.split():
                 if word.lower() in bad_words:
                     print_error("The word {} cannot be used as a name/cliName, "
                                 "please update the file {}.".format(word, self.file_path))
                     return False
         return True
 
-    def is_valid_content_flag(self):
+    def is_valid_content_flag(self, content_value=True):
         """Validate that field is marked as content."""
-        is_valid_flag = self.current_file.get('content') is True
+        is_valid_flag = self.current_file.get('content') is content_value
         if not is_valid_flag:
-            print_error("The content key must be set to true, please update the file '{}'".format(self.file_path))
+            print_error("The content key must be set to {}, please update the file '{}'".format(
+                content_value, self.file_path))
 
         return is_valid_flag
 
-    def is_valid_system_flag(self):
+    def is_valid_system_flag(self, system_value=False):
         """Validate that field is not marked as system."""
-        is_valid_flag = self.current_file.get('system', False) is False
+        is_valid_flag = self.current_file.get('system', False) is system_value
         if not is_valid_flag:
-            print_error("The system key must be set to false, please update the file '{}'".format(self.file_path))
+            print_error("The system key must be set to {}, please update the file '{}'".format(
+                system_value, self.file_path))
 
         return is_valid_flag
 
     def is_valid_version(self):
         # type: () -> bool
         return super(IncidentFieldValidator, self)._is_valid_version()
+
+    def is_valid_type(self):
+        # type: () -> bool
+        return TypeFields.is_valid_incident_field(self.current_file.get("type"))
+
+    def is_valid_group(self):
+        # type: () -> bool
+        group = self.current_file.get("group")
+        if GroupFieldTypes.is_valid_group(group):
+            return True
+        print_error(f"{self.file_path}: group {group} is not a group field.")
+        return False
+
+    def is_valid_cliname(self):
+        # type: () -> bool
+        return self.is_cliname_is_builtin_key() and self.is_matching_cliname_regex()
+
+    def is_matching_cliname_regex(self):
+        # type: () -> bool
+        cliname = self.current_file.get("cliName")
+        if re.fullmatch(INCIDENT_FIELD_CLINAME_VALIDATION_REGEX, cliname):
+            return True
+        print_error(
+            f"{self.file_path}: Field `cliname` contains non-english letters. must match regex:"
+            f" {INCIDENT_FIELD_CLINAME_VALIDATION_REGEX}")
+        return False
+
+    def is_cliname_is_builtin_key(self):
+        # type: () -> bool
+        cliname = self.current_file.get("cliName")
+        group = self.current_file.get("group")
+        is_valid = True
+        if group == GroupFieldTypes.INDICATOR_FIELD:
+            is_valid = cliname not in BleveMapping[GroupFieldTypes.INDICATOR_FIELD]
+        elif group == GroupFieldTypes.EVIDENCE_FIELD:
+            is_valid = cliname not in BleveMapping[GroupFieldTypes.EVIDENCE_FIELD]
+        elif group == GroupFieldTypes.INCIDENT_FIELD:
+            is_valid = cliname not in BleveMapping[GroupFieldTypes.INCIDENT_FIELD]
+        if not is_valid:
+            print_error(f"{self.file_path}: cliName field can not be {cliname} as it's a builtin key.")
+        return is_valid

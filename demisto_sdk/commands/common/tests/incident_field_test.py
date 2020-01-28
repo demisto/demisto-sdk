@@ -1,68 +1,38 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator, GroupFieldTypes
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from mock import patch
 
 
 class TestIncidentFieldsValidator:
     NAME_SANITY_FILE = {
-        'cliName': 'sanity name',
+        'cliName': 'sanityname',
         'name': 'sanity name',
         'id': 'incident',
         'content': True,
     }
 
-    BAD_CLI_1 = {
-        'cliName': 'Incident',
-        'name': 'sanity name',
-        'content': True,
-    }
-
-    BAD_CLI_2 = {
-        'cliName': 'case',
-        'name': 'sanity name',
-        'content': True,
-    }
-
-    BAD_CLI_3 = {
-        'cliName': 'Playbook',
-        'name': 'sanity name',
-        'content': True,
-    }
-
-    GOOD_CLI_4 = {
-        'cliName': 'Alerting feature',
-        'name': 'sanity name',
-        'content': True,
-    }
-
-    BAD_CLI_5 = {
-        'cliName': 'INciDeNts',
-        'name': 'sanity name',
-        'content': True,
-    }
-
     BAD_NAME_1 = {
-        'cliName': 'sanity name',
+        'cliName': 'sanityname',
         'name': 'Incident',
         'content': True,
     }
 
     BAD_NAME_2 = {
-        'cliName': 'sanity name',
+        'cliName': 'sanityname',
         'name': 'case',
         'content': True,
     }
 
     BAD_NAME_3 = {
-        'cliName': 'sanity name',
+        'cliName': 'sanityname',
         'name': 'Playbook',
         'content': True,
     }
 
     GOOD_NAME_4 = {
-        'cliName': 'sanity name',
+        'cliName': 'sanityname',
         'name': 'Alerting feature',
         'content': True,
     }
@@ -75,11 +45,6 @@ class TestIncidentFieldsValidator:
 
     INPUTS_NAMES = [
         (NAME_SANITY_FILE, True),
-        (BAD_CLI_1, False),
-        (BAD_CLI_2, False),
-        (BAD_CLI_3, False),
-        (GOOD_CLI_4, True),
-        (BAD_CLI_5, False),
         (BAD_NAME_1, False),
         (BAD_NAME_2, False),
         (BAD_NAME_3, False),
@@ -98,7 +63,6 @@ class TestIncidentFieldsValidator:
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_name() is answer
-            assert validator.is_valid_file() == answer
 
     CONTENT_1 = {
         'content': True
@@ -129,7 +93,6 @@ class TestIncidentFieldsValidator:
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_content_flag() is answer
-            assert validator.is_valid_file() is answer
 
     SYSTEM_FLAG_1 = {
         'system': False,
@@ -157,4 +120,79 @@ class TestIncidentFieldsValidator:
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_system_flag() is answer
-            assert validator.is_valid_file() is answer
+
+    VALID_CLINAMES_AND_GROUPS = [
+        ("validind", GroupFieldTypes.INCIDENT_FIELD),
+        ("validind", GroupFieldTypes.EVIDENCE_FIELD),
+        ("validind", GroupFieldTypes.INDICATOR_FIELD)
+    ]
+
+    @pytest.mark.parametrize("cliname, group", VALID_CLINAMES_AND_GROUPS)
+    def test_is_cliname_is_builtin_key(self, cliname, group):
+        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+            current_file = {"cliName": cliname, "group": group}
+            structure = StructureValidator("")
+            structure.current_file = current_file
+            structure.old_file = None
+            structure.file_path = "random_path"
+            structure.is_valid = True
+            validator = IncidentFieldValidator(structure)
+            validator.current_file = current_file
+            assert validator.is_cliname_is_builtin_key()
+
+    INVALID_CLINAMES_AND_GROUPS = [
+        ("id", GroupFieldTypes.INCIDENT_FIELD),
+        ("id", GroupFieldTypes.EVIDENCE_FIELD),
+        ("id", GroupFieldTypes.INDICATOR_FIELD)
+    ]
+
+    @pytest.mark.parametrize("cliname, group", INVALID_CLINAMES_AND_GROUPS)
+    def test_is_cliname_is_builtin_key_invalid(self, cliname, group):
+        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+            current_file = {"cliName": cliname, "group": group}
+            structure = StructureValidator("")
+            structure.current_file = current_file
+            structure.old_file = None
+            structure.file_path = "random_path"
+            structure.is_valid = True
+            validator = IncidentFieldValidator(structure)
+            validator.current_file = current_file
+            assert not validator.is_cliname_is_builtin_key()
+
+    VALID_CLINAMES = [
+        "agoodid",
+        "AnoT3erG00dId",
+    ]
+
+    @pytest.mark.parametrize("cliname", VALID_CLINAMES)
+    def test_matching_cliname_regex(self, cliname):
+        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+            current_file = {"cliName": cliname}
+            structure = StructureValidator("")
+            structure.current_file = current_file
+            structure.old_file = None
+            structure.file_path = "random_path"
+            structure.is_valid = True
+            validator = IncidentFieldValidator(structure)
+            validator.current_file = current_file
+            assert validator.is_matching_cliname_regex()
+
+    INVALID_CLINAMES = [
+        "invalid cli",
+        "invalid_cli",
+        "invalid$$cli",
+        "לאסליטוב",
+    ]
+
+    @pytest.mark.parametrize("cliname", INVALID_CLINAMES)
+    def test_matching_cliname_regex_invalid(self, cliname):
+        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+            current_file = {"cliName": cliname}
+            structure = StructureValidator("")
+            structure.current_file = current_file
+            structure.old_file = None
+            structure.file_path = "random_path"
+            structure.is_valid = True
+            validator = IncidentFieldValidator(structure)
+            validator.current_file = current_file
+            assert not validator.is_matching_cliname_regex()

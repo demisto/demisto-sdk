@@ -161,7 +161,7 @@ class TestIncidentFieldsValidator:
 
     VALID_CLINAMES = [
         "agoodid",
-        "AnoT3erG00dId",
+        "anot3erg00did",
     ]
 
     @pytest.mark.parametrize("cliname", VALID_CLINAMES)

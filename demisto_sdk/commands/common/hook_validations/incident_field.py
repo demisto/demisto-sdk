@@ -174,7 +174,7 @@ BleveMapping = {
     ],
 }
 
-INCIDENT_FIELD_CLINAME_VALIDATION_REGEX = r"[0-9A-Za-z]+$"
+INCIDENT_FIELD_CLINAME_VALIDATION_REGEX = r"[0-9a-z]+$"
 
 
 class IncidentFieldValidator(BaseValidator):
@@ -201,7 +201,7 @@ class IncidentFieldValidator(BaseValidator):
         is_incident_field_valid = [
             self.is_valid_name(),
             self.is_valid_type(),
-            self.is_valid_group()
+            self.is_valid_group(),
         ]
         if any(path in self.file_path for path in BUILTIN_CONTENT_FLAGS):
             is_incident_field_valid.extend(

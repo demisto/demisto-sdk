@@ -5,23 +5,27 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
 
 ## Getting started
 
-1. [Clone `demisto-sdk` repository](#1.-Clone-`demisto-sdk`-repository)
-2. [Install `demisto-sdk` as editable versions]()
-3. [Repository manifest]()
-4. [Develop new command]()
-5. [Running unit-tests using tox]()
-6. [Push changes to GitHub (Relevant only for Exernal PRs)]()
-7. [Review Process]()
-8. [Contributor License Agreement (Relevant only for Exernal PRs)]()
+1. [Clone `demisto-sdk` repository](#1-Clone-demisto-sdk-repository)
+2. [Install `demisto-sdk` as editable versions](#2-Install-demisto-sdk-as-editable-version)
+3. [Pre-commit hooks setup](3-Pre-commit-hooks-setup)
+4. [Develop new command](4-Develop-new-command)
+5. [Running unit-tests using tox](#5-running-unit-tests-using-tox)
+6. [Push changes to GitHub (Relevant only for Exernal PRs)](6-push-changes-to-gitHu- (relevant-only-for-Exernal-PRs))
+7. [Review Process](7-review-process)
+8. [Contributor License Agreement (Relevant only for Exernal PRs)](8-contributor-license-agreement-relevant-only-for-exernal-prs)
 
 ---
 
-### 1. Clone `demisto-sdk` repository
-Perform the following command in the path you want the repository to be cloned `git clone https://github.com/demisto/demisto-sdk.git`.
+### 1. Clone demisto-sdk repository
+Perform the following command in the path you want the repository to be cloned:
+
+```shell
+git clone https://github.com/demisto/demisto-sdk.git
+```
 
 ---
 
-### 2. Install `demisto sdk` as editable version
+### 2. Install demisto sdk as editable version
 1. If you are using virtualenv for this proccess you can skeep this step, uninstall current installed version of
    `demisto-sdk` - `pip3 uninstall demisto-sdk`
 2. Inside root directory of `demisto-sdk` repository - install PyPi package as editable package: `pip3 install -e .`
@@ -45,15 +49,15 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
     a. **CLI arguments parsing** - Add CLI parsing in `<repo>/demisto_sdk/__main__` using [click](https://click.palletsprojects.com/en/7.x/) package.
     b. **commands_module** - The modules suppose to return `0` if **succeed** else `1`, prints can used also by importing from `<repo>/demisto_sdk/commands/common/tools.py`
     c. **unit-tests** -
-        i. Unit-tests should be located for each command in the following path - `<repo>/demisto_sdk/commands/<your_new_command>/tests`
+        i. Unit-tests should be located for each command in the following path-`<repo>/demisto_sdk/commands/<your_new_command>/tests`
         ii. **data files tests** - Usally its shared data files for all commands which located in `<repo>/demisto_sdk/tests/test_files` (you can use constants for right path in `<repo>/demisto_sdk/tests/constants_test.py`)
     d. **check build influence on CircleCI** -
         1. Test your functionality on CircleCI build of `Content` repository by changing requirements in `Content` repository:
             a. Perform the following in `<content_repo>/dev-requirements-py3.txt`:
                  1. Delete `demisto-sdk` requirement.
-                 2. Add the following requirement in new line - `git+https://github.com/demisto/demisto-sdk@<branch>`
+                      2. Add the following requirement in new line - `git+https://github.com/demisto/demisto-sdk@<branch>`
             b. Remove cache using in CircleCI build config, perform the following in file `<repo>/.circleci/config.yml`
-                1. Remove the following string form the following key `restore_cache:`: `-{{ checksum "dev-requirements-py3.txt" }}`
+                    1. Remove the following string form the following key `restore_cache:`: `-{{ checksum "dev-requirements-py3.txt" }}`
 
 ---
 

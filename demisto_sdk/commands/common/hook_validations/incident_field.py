@@ -221,7 +221,7 @@ class IncidentFieldValidator(BaseValidator):
             for word in name.split():
                 if word.lower() in bad_words:
                     print_error(
-                        "The word {} cannot be used as a name/cliName, "
+                        "The word {} cannot be used as a name, "
                         "please update the file {}.".format(word, self.file_path)
                     )
                     return False

@@ -67,6 +67,7 @@ class GroupFieldTypes(IntEnum):
                          )
 
 
+# Demisto is using a Bleve DB, those keys can be the cliName
 BleveMapping = {
     0: [
         "id",

@@ -197,7 +197,7 @@ def is_error(execute_command_result):
     if isinstance(execute_command_result, list):
         if len(execute_command_result) > 0:
             for entry in execute_command_result:
-                if type(entry) == dict and entry['Type'] == entryTypes['error']:
+                if entry.type == entryTypes['error']:
                     return True
 
     # return type(execute_command_result) == dict and execute_command_result.type == entryTypes['error']

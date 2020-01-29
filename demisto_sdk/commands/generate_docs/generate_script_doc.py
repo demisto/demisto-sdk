@@ -8,6 +8,17 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
         doc = []
         errors = []
         used_in = []
+        example_section = []
+
+        if examples:
+            example_dict, build_errors = build_example_dict([examples])
+            script_name = examples.split(' ')[0][1:]
+            example_section, example_errors = generate_script_example(script_name, example_dict)
+            errors.extend(build_errors)
+            errors.extend(example_errors)
+        else:
+            errors.append(f'Script example is missing.')
+
         script = get_yaml(input)
 
         # get script data
@@ -20,6 +31,8 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
         if not id_set:
             errors.append(f'id_set.json file is missing')
         elif not path.exists(id_set):
+            errors.append(f'id_set.json file {id_set} was not found')
+        else:
             used_in = get_used_in(id_set, script_id)
 
 
@@ -55,6 +68,9 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
         doc.extend(generate_table_section(inputs, 'Inputs', 'There are no inputs for this script.'))
 
         doc.extend(generate_table_section(outputs, 'Outputs', 'There are no outputs for this script.'))
+
+        if example_section:
+            doc.extend(example_section)
 
         doc_text = '\n'.join(doc)
 
@@ -171,3 +187,39 @@ def get_used_in(id_set_path, script_id):
     used_in_list = list(used_in_list)
     used_in_list.sort()
     return used_in_list
+
+
+def generate_script_example(script_name, example=None):
+    errors = []
+    context_example = None
+    md_example = ''
+    if example is not None:
+        script_example = example[script_name][0]
+        md_example = example[script_name][1]
+        context_example = example[script_name][2]
+    else:
+        errors.append(f'did not get any example for {script_name}. please add it manually.')
+
+    example = [
+        '',
+        '## Script Example',
+        '```{}```'.format(script_example),
+        '',
+    ]
+    if context_example:
+        example.extend([
+            '## Context Example',
+            '```',
+            '{}'.format(context_example),
+            '```',
+            '',
+        ])
+
+        if md_example:
+            example.extend([
+                '## Human Readable Output',
+                '{}'.format(md_example),
+                '',
+            ])
+
+    return example, errors

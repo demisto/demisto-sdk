@@ -143,7 +143,7 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
     return st
 
 
-def run_command(command_example):
+def execute_command(command_example):
     errors = []
     context_example = ''
     md_example = ''
@@ -213,7 +213,7 @@ def build_example_dict(command_examples):
     examples = {}  # type: dict
     errors = []  # type: list
     for example in command_examples:
-        cmd, md_example, context_example, cmd_errors = run_command(example)
+        cmd, md_example, context_example, cmd_errors = execute_command(example)
         errors.extend(cmd_errors)
 
         if not cmd_errors and cmd not in examples:

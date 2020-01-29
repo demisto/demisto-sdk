@@ -506,8 +506,9 @@ def init(**kwargs):
     "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
     help="The type of yml file.", required=False)
 @click.option(
-    "-e", "--examples", help="Used for script or integration - Path for file containing command or script examples."
-                             " Each Command should be in a separate line.")
+    "-e", "--examples", help="For integration - Path for file containing command or script examples."
+                             " Each Command should be in a separate line."
+                             " For script - the script example surrounded by double quotes")
 @click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
@@ -516,6 +517,7 @@ def generate_doc(file_type, **kwargs):
     input_path = kwargs['input']
     output_path = kwargs['output']
 
+    # validate inputs
     if input_path and not os.path.isfile(input_path):
         print_error(F'Input file {input_path} was not found.')
         return 1
@@ -531,7 +533,7 @@ def generate_doc(file_type, **kwargs):
     if not file_type:
         file_type = find_type(kwargs.get('input', ''))
 
-    print(f'start generate {file_type} documentation...')
+    print(f'Start generate {file_type} documentation...')
     if file_type == 'integration':
         return generate_integration_doc(**kwargs)
     elif file_type == 'script':

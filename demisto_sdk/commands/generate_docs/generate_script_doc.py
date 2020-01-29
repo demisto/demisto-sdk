@@ -35,7 +35,6 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
         else:
             used_in = get_used_in(id_set, script_id)
 
-
         description = script.get('comment', '')
         deprecated = script.get('deprecated', False)
         # get inputs/outputs

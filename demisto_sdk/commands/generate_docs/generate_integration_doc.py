@@ -1,23 +1,22 @@
-from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.generate_docs.common import *
 
-STRING_TYPES = (str, bytes)  # type: ignore
 
-
-def generate_integration_doc(input, output, commands, id_set, verbose=False):
+def generate_integration_doc(input, output, examples, id_set, verbose=False):
     try:
         yml_data = get_yaml(input)
 
         errors = []
-        command_examples = get_command_examples(commands)
-        example_dict, build_errors = build_example_dict(command_examples)
-        errors.extend(build_errors)
+        example_dict = {}
+        if examples and os.path.isfile(examples):
+            command_examples = get_command_examples(examples)
+            example_dict, build_errors = build_example_dict(command_examples)
+            errors.extend(build_errors)
+        else:
+            errors.append(f'Command examples was not found {examples}.')
 
         docs = []  # type: list
         docs.extend(add_lines(yml_data.get('description')))
         docs.append('This integration was integrated and tested with version xx of {}'.format(yml_data['name']))
-        # Playbooks
-        docs.extend(generate_section('{} Playbook'.format(yml_data['name']), None))
         # Setup integration to work with Demisto
         docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
         # Setup integration on Demisto
@@ -36,9 +35,9 @@ def generate_integration_doc(input, output, commands, id_set, verbose=False):
         save_output(output, 'README.md', doc_text)
 
         if errors:
-            print_error('Possible Errors:')
+            print_warning('Possible Errors:')
             for error in errors:
-                print_error(error)
+                print_warning(error)
 
     except Exception as ex:
         if verbose:
@@ -206,105 +205,19 @@ def get_command_examples(commands_file_path):
         with open(commands_file_path, 'r') as examples_file:
             commands = examples_file.read().splitlines()
     else:
-        print('failed to open command file, tried parsing as free text')
+        print('failed to open command file')
         commands = commands_file_path.split('\n')
+
+    commands = map(command_example_filter, commands)
+    commands = list(filter(None, commands))
 
     print('found the following commands:\n{}'.format('\n '.join(commands)))
     return commands
 
 
-def build_example_dict(command_examples):
-    """
-    gets an array of command examples, run them one by one and return a map of
-        {base command -> (example command, markdown, outputs)}
-    Note: if a command appears more then once, run all occurrences but stores only the first.
-    """
-    examples = {}  # type: dict
-    errors = []  # type: list
-    for example in command_examples:
-        # ignore comment lines
-        if example.startswith('#'):
-            continue
-        if not example.startswith('!'):
-            example = f'!{example}'
-        cmd, md_example, context_example, cmd_errors = run_command(example)
-        errors.extend(cmd_errors)
-
-        if cmd not in examples:
-            examples[cmd] = (example, md_example, context_example)
-    return examples, errors
-
-
-def run_command(command_example):
-    errors = []
-    context_example = ''
-    md_example = ''
-    cmd = command_example
-    try:
-        runner = Runner('')
-        res, raw_context = runner.execute_command(command_example)
-
-        for entry in res:
-            if is_error(entry):
-                raise RuntimeError('something went wrong with your command: {}'.format(command_example))
-
-            if raw_context:
-                context = {k.split('(')[0]: v for k, v in raw_context.items()}
-                context_example += json.dumps(context, indent=4)
-
-            if entry.contents:
-                content = entry.contents
-                if isinstance(content, STRING_TYPES):
-                    md_example += content
-                else:
-                    md_example += json.dumps(content)
-
-    except RuntimeError:
-        errors.append('The provided example for cmd {} has failed...'.format(cmd))
-
-    except Exception as e:
-        errors.append(
-            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e)) +
-            '. Please check your command inputs and outputs')
-
-    cmd = cmd.split(' ')[0][1:]
-    return cmd, md_example, context_example, errors
-
-
-def is_error(execute_command_result):
-    """
-        Check if the given execute_command_result has an error entry
-
-        :type execute_command_result: ``dict`` or ``list``
-        :param execute_command_result: Demisto entry (required) or result of demisto.executeCommand()
-
-        :return: True if the execute_command_result has an error entry, false otherwise
-        :rtype: ``bool``
-    """
-    if not execute_command_result:
-        return False
-
-    if isinstance(execute_command_result, list):
-        if len(execute_command_result) > 0:
-            for entry in execute_command_result:
-                if type(entry) == dict and entry['Type'] == entryTypes['error']:
-                    return True
-
-    return type(execute_command_result) == dict and execute_command_result['Type'] == entryTypes['error']
-
-
-entryTypes = {
-    'note': 1,
-    'downloadAgent': 2,
-    'file': 3,
-    'error': 4,
-    'pinned': 5,
-    'userManagement': 6,
-    'image': 7,
-    'plagroundError': 8,
-    'playgroundError': 8,
-    'entryInfoFile': 9,
-    'warning': 11,
-    'map': 15,
-    'widget': 17
-}
+def command_example_filter(command):
+    if command.startswith('#'):
+        return
+    elif not command.startswith('!'):
+        return f'!{command}'
+    return command

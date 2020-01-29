@@ -1,4 +1,7 @@
 from demisto_sdk.commands.common.tools import *
+from demisto_sdk.commands.run_cmd.runner import Runner
+
+STRING_TYPES = (str, bytes)  # type: ignore
 
 
 class HEADER_TYPE:
@@ -138,3 +141,98 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
         st = "".join(["\\" + str(c) if c in r"\`*_{}[]()#+-!" else str(c) for c in st])
 
     return st
+
+
+def run_command(command_example):
+    errors = []
+    context_example = ''
+    md_example = ''
+    cmd = command_example
+    try:
+        runner = Runner('')
+        res, raw_context = runner.execute_command(command_example)
+        if not res:
+            raise RuntimeError('something went wrong with your command: {}'.format(command_example))
+
+        for entry in res:
+            if is_error(entry):
+                raise RuntimeError('something went wrong with your command: {}'.format(command_example))
+
+            if raw_context:
+                context = {k.split('(')[0]: v for k, v in raw_context.items()}
+                context_example += json.dumps(context, indent=4)
+
+            if entry.contents:
+                content = entry.contents
+                if isinstance(content, STRING_TYPES):
+                    md_example += content
+                else:
+                    md_example += json.dumps(content)
+
+    except RuntimeError:
+        errors.append('The provided example for cmd {} has failed...'.format(cmd))
+
+    except Exception as e:
+        errors.append(
+            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e)) +
+            '. Please check your command inputs and outputs')
+
+    cmd = cmd.split(' ')[0][1:]
+    return cmd, md_example, context_example, errors
+
+
+def is_error(execute_command_result):
+    """
+        Check if the given execute_command_result has an error entry
+
+        :type execute_command_result: ``dict`` or ``list``
+        :param execute_command_result: Demisto entry (required) or result of demisto.executeCommand()
+
+        :return: True if the execute_command_result has an error entry, false otherwise
+        :rtype: ``bool``
+    """
+    if not execute_command_result:
+        return False
+
+    if isinstance(execute_command_result, list):
+        if len(execute_command_result) > 0:
+            for entry in execute_command_result:
+                if type(entry) == dict and entry['Type'] == entryTypes['error']:
+                    return True
+
+    # return type(execute_command_result) == dict and execute_command_result.type == entryTypes['error']
+    return execute_command_result.type == entryTypes['error']
+
+
+def build_example_dict(command_examples):
+    """
+    gets an array of command examples, run them one by one and return a map of
+        {base command -> (example command, markdown, outputs)}
+    Note: if a command appears more then once, run all occurrences but stores only the first.
+    """
+    examples = {}  # type: dict
+    errors = []  # type: list
+    for example in command_examples:
+        cmd, md_example, context_example, cmd_errors = run_command(example)
+        errors.extend(cmd_errors)
+
+        if not cmd_errors and cmd not in examples:
+            examples[cmd] = (example, md_example, context_example)
+    return examples, errors
+
+
+entryTypes = {
+    'note': 1,
+    'downloadAgent': 2,
+    'file': 3,
+    'error': 4,
+    'pinned': 5,
+    'userManagement': 6,
+    'image': 7,
+    'plagroundError': 8,
+    'playgroundError': 8,
+    'entryInfoFile': 9,
+    'warning': 11,
+    'map': 15,
+    'widget': 17
+}

@@ -1,64 +1,30 @@
 from os import path
 from demisto_sdk.commands.generate_docs.common import *
-from demisto_sdk.commands.common.update_id_set import get_script_data
+from demisto_sdk.commands.common.update_id_set import get_depends_on
 
 
-def generate_script_doc(input, output, commands, id_set, verbose=False):
+def generate_script_doc(input, output, examples, id_set='', verbose=False):
     try:
-        # output and id_set.json validations
-        if not path.isdir(output):
-            print_error(f'Error: output directory not found in {output}')
-            return
-
-        if not id_set:
-            print_error('Error: Missing option "-id" / "--id_set".')
-            return
-
-        if not path.exists(id_set):
-            print_error(f'Error: id_set.json not found in {id_set}')
-            return
-
-        # set script_py and script.yml values
-        if path.isdir(input):
-            # in case of package folder
-            package_folder = os.path.basename(input)
-            script_yml = os.path.join(input, f'{package_folder}.yml')
-            script_py = os.path.join(input, f'{package_folder}.py')
-            if not path.exists(script_yml):
-                print_error(f'Error: script yml file not found in {script_yml}')
-                return
-            if not path.exists(script_py):
-                print_error(f'Error: script python file not found in {script_py}')
-                return
-
-            with open(script_py) as f:
-                script_py = f.read()
-        else:
-            # in case of unified script file
-            script = get_yaml(input)
-            script_py = script.get('script', '-')
-            if script_py == '-':
-                print_error(f'Error: script code not found in {input}')
-                return
-            script_yml = input
-
         doc = []
         errors = []
-        script = get_yaml(script_yml)
+        used_in = []
+        script = get_yaml(input)
 
         # get script data
-        secript_info = get_script_info(script_yml)
+        secript_info = get_script_info(input)
         script_id = script.get('commonfields')['id']
 
         # get script dependencies
-        script_data = get_script_data(script_yml, script_py)
-        script_data = script_data[script_id]
-        dependencies = script_data.get('script_executions', [])
+        dependencies, _ = get_depends_on(script)
 
-        used_in = get_used_in(id_set, script_id)
+        if not id_set:
+            errors.append(f'id_set.json file is missing')
+        elif not path.exists(id_set):
+            used_in = get_used_in(id_set, script_id)
+
 
         description = script.get('comment', '')
-        deprecated = script_data.get('deprecated', False)
+        deprecated = script.get('deprecated', False)
         # get inputs/outputs
         inputs, inputs_errors = get_inputs(script)
         outputs, outputs_errors = get_outputs(script)
@@ -78,11 +44,13 @@ def generate_script_doc(input, output, commands, id_set, verbose=False):
 
         doc.extend(generate_table_section(secript_info, 'Script Data', text='This is the metadata of the script.'))
 
-        doc.extend(generate_list_section('Dependencies', dependencies, True, 'No dependencies found.',
-                                         'This script uses the following commands and scripts.'))
+        if dependencies:
+            doc.extend(generate_list_section('Dependencies', dependencies, True,
+                                             text='This script uses the following commands and scripts.'))
 
-        doc.extend(generate_list_section('Used In', used_in, True, 'This script not used anywhere.',
-                                         'This script is used in the following playbooks and scripts.'))
+        if used_in:
+            doc.extend(generate_list_section('Used In', used_in, True,
+                                             text='This script is used in the following playbooks and scripts.'))
 
         doc.extend(generate_table_section(inputs, 'Inputs', 'There are no inputs for this script.'))
 
@@ -93,9 +61,9 @@ def generate_script_doc(input, output, commands, id_set, verbose=False):
         save_output(output, 'README.md', doc_text)
 
         if errors:
-            print_error('Possible Errors:')
+            print_warning('Possible Errors:')
             for error in errors:
-                print_error(error)
+                print_warning(error)
 
     except Exception as ex:
         if verbose:

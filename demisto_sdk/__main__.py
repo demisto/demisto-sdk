@@ -24,6 +24,7 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.validation.type_file.find_type import find_type
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error
@@ -503,15 +504,34 @@ def init(**kwargs):
     "-o", "--output", help="The output dir to write the documentation file into.", required=True)
 @click.option(
     "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file.", required=True)
+    help="The type of yml file.", required=False)
 @click.option(
-    "-c", "--commands", help="Path for file containing command examples. Each Command should be in a separate line."
-                             " For example: !fidelis-list-alerts time_frame=Last 7 Days, required=False")
+    "-e", "--examples", help="Used for script or integration - Path for file containing command or script examples."
+                             " Each Command should be in a separate line.")
 @click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 def generate_doc(file_type, **kwargs):
+    input_path = kwargs['input']
+    output_path = kwargs['output']
+
+    if input_path and not os.path.isfile(input_path):
+        print_error(F'Input file {input_path} was not found.')
+        return 1
+
+    if not input_path.lower().endswith('.yml'):
+        print_error(F'Input {input_path} is not a valid yml file.')
+        return 1
+
+    if output_path and not os.path.isdir(output_path):
+        print_error(F'Output directory {output_path} was not found.')
+        return 1
+
+    if not file_type:
+        file_type = find_type(kwargs.get('input', ''))
+
+    print(f'start generate {file_type} documentation...')
     if file_type == 'integration':
         return generate_integration_doc(**kwargs)
     elif file_type == 'script':

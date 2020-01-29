@@ -1,7 +1,7 @@
 from demisto_sdk.commands.generate_docs.common import *
 
 
-def generate_playbook_doc(input, output, commands, id_set, verbose=False):
+def generate_playbook_doc(input, output, examples, id_set, verbose=False):
     try:
         playbook = get_yaml(input)
         errors = []
@@ -44,9 +44,9 @@ def generate_playbook_doc(input, output, commands, id_set, verbose=False):
         save_output(output, 'README.md', doc_text)
 
         if errors:
-            print_error('Possible Errors:')
+            print_warning('Possible Errors:')
             for error in errors:
-                print_error(error)
+                print_warning(error)
 
     except Exception as ex:
         if verbose:

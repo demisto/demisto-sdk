@@ -279,7 +279,7 @@ class TestMergeScriptPackageToYMLIntegration:
         """
         sanity test of merge_script_package_to_yml of integration
         """
-        from demisto_sdk.yaml_tools.unifier import Unifier
+        from demisto_sdk.commands.unify.unifier import Unifier
 
         create_test_package(
             test_dir=self.test_dir_path,
@@ -316,7 +316,7 @@ class TestMergeScriptPackageToYMLIntegration:
         """
         -
         """
-        from demisto_sdk.yaml_tools.unifier import Unifier
+        from demisto_sdk.commands.unify.unifier import Unifier
         description = '''
         some test with special chars
         שלום
@@ -354,7 +354,7 @@ class TestMergeScriptPackageToYMLIntegration:
         """
         -
         """
-        from demisto_sdk.yaml_tools.unifier import Unifier
+        from demisto_sdk.commands.unify.unifier import Unifier
         description = ''' this is a regular line
   some test with special chars
         hello
@@ -410,7 +410,7 @@ class TestMergeScriptPackageToYMLScript:
         """
         sanity test of merge_script_package_to_yml of script
         """
-        from demisto_sdk.yaml_tools.unifier import Unifier
+        from demisto_sdk.commands.unify.unifier import Unifier
 
         create_test_package(
             test_dir=self.test_dir_path,
@@ -439,7 +439,7 @@ class TestMergeScriptPackageToYMLScript:
         """
         sanity test of merge_script_package_to_yml of script
         """
-        from demisto_sdk.yaml_tools.unifier import Unifier
+        from demisto_sdk.commands.unify.unifier import Unifier
 
         create_test_package(
             test_dir=self.test_dir_path,

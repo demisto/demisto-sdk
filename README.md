@@ -137,7 +137,7 @@ Run Secrets validator to catch sensitive data before exposing your code to publi
    demisto-sdk secrets
    ```
 
-For detalied command usage press [here](demisto_sdk/commands/secrets/secrets.md)
+For detalied command usage press [here](demisto_sdk/commands/secrets/secrets_command.md)
 
 ---
 

@@ -495,9 +495,5 @@ def exit_from_program(result=0, **kwargs):
 # todo: add download from demisto command
 
 
-def demisto_sdk_cli():
-    main()
-
-
 if __name__ == '__main__':
     sys.exit(main())

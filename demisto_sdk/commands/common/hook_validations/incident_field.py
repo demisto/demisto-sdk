@@ -60,7 +60,8 @@ class IncidentFieldValidator(BaseValidator):
         """Validate that field is marked as content."""
         is_valid_flag = self.current_file.get('content') is True
         if not is_valid_flag:
-            print_error("The content key must be set to true, please update the file '{}'".format(self.file_path))
+            print_error("The content key must be set to true, please update the file '{}'".format(
+                self.file_path))
 
         return is_valid_flag
 
@@ -68,7 +69,8 @@ class IncidentFieldValidator(BaseValidator):
         """Validate that field is not marked as system."""
         is_valid_flag = self.current_file.get('system', False) is False
         if not is_valid_flag:
-            print_error("The system key must be set to false, please update the file '{}'".format(self.file_path))
+            print_error("The system key must be set to false, please update the file '{}'".format(
+                self.file_path))
 
         return is_valid_flag
 

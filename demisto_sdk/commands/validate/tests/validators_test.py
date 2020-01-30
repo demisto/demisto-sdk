@@ -56,8 +56,10 @@ class TestValidators:
         (INVALID_WIDGET_PATH, WIDGET_TARGET, False, WidgetValidator),
         (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True, DashboardValidator),
         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
-        (VALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, True, IncidentFieldValidator),
-        (INVALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, False, IncidentFieldValidator),
+        (VALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET,
+         True, IncidentFieldValidator),
+        (INVALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET,
+         False, IncidentFieldValidator),
         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
         (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),
         (INVALID_SCRIPT_PATH, SCRIPT_TARGET, False, ScriptValidator),
@@ -119,7 +121,8 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
+            mocker.patch.object(
+                ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.validate_file_release_notes_exists() is answer
         finally:
@@ -169,7 +172,8 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
+            mocker.patch.object(
+                ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.is_valid_release_notes_structure() is answer
         finally:

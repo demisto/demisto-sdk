@@ -40,7 +40,8 @@ class Initiator:
 
         if name is not None and len(name) != 0:
             while ' ' in name:
-                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+                name = str(input(
+                    "The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
@@ -76,9 +77,11 @@ class Initiator:
             created_object (str): the type of the created object (integration/script/pack)
         """
         while not self.dir_name or len(self.dir_name) == 0:
-            self.dir_name = str(input(f"Please input the name of the initialized {created_object}: "))
+            self.dir_name = str(
+                input(f"Please input the name of the initialized {created_object}: "))
             while ' ' in self.dir_name:
-                self.dir_name = str(input("The directory name cannot have spaces in it, Enter a different name: "))
+                self.dir_name = str(
+                    input("The directory name cannot have spaces in it, Enter a different name: "))
 
     def get_object_id(self, created_object: str):
         if not self.id:
@@ -93,7 +96,8 @@ class Initiator:
                 self.id = self.dir_name
             else:
                 while not self.id:
-                    self.id = str(input(f"Please enter the id name for the {created_object}: "))
+                    self.id = str(
+                        input(f"Please enter the id name for the {created_object}: "))
 
     def pack_init(self) -> bool:
         """Creates a pack directory tree.
@@ -103,7 +107,8 @@ class Initiator:
         """
         # if an output directory given create the pack there
         if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
+            self.full_output_path = os.path.join(
+                self.output_dir, self.dir_name)
 
         # content-descriptor file indicates we are in "content" repository
         # thus we will create the pack under Packs directory
@@ -136,9 +141,11 @@ class Initiator:
         fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
 
-        print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
+        print_color(
+            f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
-        create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
+        create_integration = str(
+            input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
             integration_init = Initiator(output_dir=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True)
@@ -154,7 +161,8 @@ class Initiator:
         """
         # if output directory given create the integration there
         if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
+            self.full_output_path = os.path.join(
+                self.output_dir, self.dir_name)
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
@@ -175,9 +183,11 @@ class Initiator:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION)
-            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_INTEGRATION)
+            self.fix_test_file_import(
+                name_to_change=self.HELLO_WORLD_INTEGRATION)
 
-        print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
+        print_color(
+            f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
 
         return True
 
@@ -189,7 +199,8 @@ class Initiator:
         """
         # if output directory given create the script there
         if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
+            self.full_output_path = os.path.join(
+                self.output_dir, self.dir_name)
 
         # will create the script under the Scripts directory of the pack
         elif os.path.isdir(SCRIPTS_DIR):
@@ -212,7 +223,8 @@ class Initiator:
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_SCRIPT)
             self.fix_test_file_import(name_to_change=self.HELLO_WORLD_SCRIPT)
 
-        print_color(f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
+        print_color(
+            f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
 
         return True
 
@@ -222,7 +234,8 @@ class Initiator:
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
-        yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+        yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(
+            self.full_output_path, f"{current_suffix}.yml"))
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
         yml_dict["display"] = self.id
@@ -265,7 +278,8 @@ class Initiator:
             to_delete = str(input(f"The directory {self.full_output_path} "
                                   f"already exists.\nDo you want to overwrite it? Y/N ")).lower()
             while to_delete != 'y' and to_delete != 'n':
-                to_delete = str(input(f"Your response was invalid.\nDo you want to delete it? Y/N ").lower())
+                to_delete = str(
+                    input(f"Your response was invalid.\nDo you want to delete it? Y/N ").lower())
 
             if to_delete in ['y', 'yes']:
                 shutil.rmtree(path=self.full_output_path, ignore_errors=True)
@@ -297,7 +311,8 @@ class Initiator:
         """
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
             file_contents = fp.read()
-            file_contents = file_contents.replace(name_to_change, self.dir_name)
+            file_contents = file_contents.replace(
+                name_to_change, self.dir_name)
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
             fp.write(file_contents)

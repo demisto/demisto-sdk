@@ -13,7 +13,8 @@ class ReputationValidator(BaseValidator):
             internal_version = reputation.get('version')
             if internal_version != self.DEFAULT_VERSION:
                 object_id = reputation.get('id')
-                print_error(Errors.wrong_version_reputations(self.file_path, object_id, self.DEFAULT_VERSION))
+                print_error(Errors.wrong_version_reputations(
+                    self.file_path, object_id, self.DEFAULT_VERSION))
                 is_valid = False
                 self.is_valid = False
         return is_valid

@@ -39,7 +39,8 @@ class IDSetValidator:
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set = self.load_id_set()
-            self.id_set_path = os.path.join(self.configuration.env_dir, 'configs', 'id_set.json')
+            self.id_set_path = os.path.join(
+                self.configuration.env_dir, 'configs', 'id_set.json')
             self.script_set = self.id_set[self.SCRIPTS_SECTION]
             self.playbook_set = self.id_set[self.PLAYBOOK_SECTION]
             self.integration_set = self.id_set[self.INTEGRATION_SECTION]
@@ -75,8 +76,10 @@ class IDSetValidator:
         for checked_instance in obj_set:
             checked_instance_id = list(checked_instance.keys())[0]
             checked_instance_data = checked_instance[checked_instance_id]
-            checked_instance_toversion = checked_instance_data.get('toversion', '99.99.99')
-            checked_instance_fromversion = checked_instance_data.get('fromversion', '0.0.0')
+            checked_instance_toversion = checked_instance_data.get(
+                'toversion', '99.99.99')
+            checked_instance_fromversion = checked_instance_data.get(
+                'fromversion', '0.0.0')
             obj_to_version = obj_data[file_id].get('toversion', '99.99.99')
             obj_from_version = obj_data[file_id].get('fromversion', '0.0.0')
             if checked_instance_id == file_id and checked_instance_toversion == obj_to_version and \
@@ -106,23 +109,27 @@ class IDSetValidator:
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = get_playbook_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, playbook_data, self.playbook_set)
 
             elif re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = get_playbook_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.test_playbook_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, playbook_data, self.test_playbook_set)
 
             elif re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
                     re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
 
                 script_data = get_script_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, script_data, self.script_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, script_data, self.script_set)
 
             elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
 
                 integration_data = get_integration_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, integration_data, self.integration_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, integration_data, self.integration_set)
 
             elif re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
                     re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE) or \
@@ -131,7 +138,8 @@ class IDSetValidator:
                 unifier = Unifier(os.path.dirname(file_path))
                 yml_path, code = unifier.get_script_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
-                is_valid = self.is_valid_in_id_set(yml_path, script_data, self.script_set)
+                is_valid = self.is_valid_in_id_set(
+                    yml_path, script_data, self.script_set)
 
         return is_valid
 
@@ -155,8 +163,10 @@ class IDSetValidator:
         for section, section_data in self.id_set.items():
             for instance in section_data:
                 instance_id = list(instance.keys())[0]
-                instance_to_version = instance[instance_id].get('toversion', '99.99.99')
-                instance_from_version = instance[instance_id].get('fromversion', '0.0.0')
+                instance_to_version = instance[instance_id].get(
+                    'toversion', '99.99.99')
+                instance_from_version = instance[instance_id].get(
+                    'fromversion', '0.0.0')
                 if obj_id == instance_id:
                     if section != obj_type and LooseVersion(obj_fromversion) < LooseVersion(instance_to_version):
                         is_duplicated = True

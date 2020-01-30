@@ -42,7 +42,8 @@ class BaseValidator:
             True if version is valid, else False
         """
         if self.current_file.get('version') != self.DEFAULT_VERSION:
-            print_error(Errors.wrong_version(self.file_path, self.DEFAULT_VERSION))
+            print_error(Errors.wrong_version(
+                self.file_path, self.DEFAULT_VERSION))
             self.is_valid = False
             return False
         return True
@@ -61,7 +62,8 @@ class BaseValidator:
             # check release_notes file exists and contain text
             if release_notes is None:
                 self.is_valid = False
-                print_error("Missing release notes for: {}".format(self.file_path))
+                print_error(
+                    "Missing release notes for: {}".format(self.file_path))
                 return False
         return True
 
@@ -73,7 +75,8 @@ class BaseValidator:
         Returns:
             (bool): is release branch
         """
-        diff_string_config_yml = run_command("git diff origin/master .circleci/config.yml")
+        diff_string_config_yml = run_command(
+            "git diff origin/master .circleci/config.yml")
         if re.search(r'[+-][ ]+CONTENT_VERSION: ".*', diff_string_config_yml):
             return True
         return False

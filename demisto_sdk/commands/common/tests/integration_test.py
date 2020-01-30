@@ -36,8 +36,10 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_docker_image_changed() is answer
 
-    REQUIED_FIELDS_FALSE = {"configuration": [{"name": "test", "required": False}]}
-    REQUIED_FIELDS_TRUE = {"configuration": [{"name": "test", "required": True}]}
+    REQUIED_FIELDS_FALSE = {"configuration": [
+        {"name": "test", "required": False}]}
+    REQUIED_FIELDS_TRUE = {"configuration": [
+        {"name": "test", "required": True}]}
     IS_ADDED_REQUIRED_FIELDS_INPUTS = [
         (REQUIED_FIELDS_FALSE, REQUIED_FIELDS_TRUE, False),
         (REQUIED_FIELDS_TRUE, REQUIED_FIELDS_FALSE, True),
@@ -51,7 +53,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
 
-    CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
+    CONFIGURATION_JSON_1 = {"configuration": [
+        {"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
     FIELD_TO_REQUIRED_INPUTS = [
         (CONFIGURATION_JSON_1, EXPECTED_JSON_1),
@@ -59,11 +62,15 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("input_json, expected", FIELD_TO_REQUIRED_INPUTS)
     def test_get_field_to_required_dict(self, input_json, expected):
-        assert IntegrationValidator._get_field_to_required_dict(input_json) == expected
+        assert IntegrationValidator._get_field_to_required_dict(
+            input_json) == expected
 
-    IS_CONTEXT_CHANGED_OLD = [{"name": "test", "outputs": [{"contextPath": "test"}]}]
-    IS_CONTEXT_CHANGED_NEW = [{"name": "test", "outputs": [{"contextPath": "test2"}]}]
-    IS_CONTEXT_CHANGED_ADDED_PATH = [{"name": "test", "outputs": [{"contextPath": "test"}, {"contextPath": "test2"}]}]
+    IS_CONTEXT_CHANGED_OLD = [
+        {"name": "test", "outputs": [{"contextPath": "test"}]}]
+    IS_CONTEXT_CHANGED_NEW = [
+        {"name": "test", "outputs": [{"contextPath": "test2"}]}]
+    IS_CONTEXT_CHANGED_ADDED_PATH = [{"name": "test", "outputs": [
+        {"contextPath": "test"}, {"contextPath": "test2"}]}]
     IS_CONTEXT_CHANGED_ADDED_COMMAND = [{"name": "test", "outputs": [{"contextPath": "test"}]},
                                         {"name": "test2", "outputs": [{"contextPath": "new command"}]}]
     IS_CHANGED_CONTEXT_INPUTS = [
@@ -83,11 +90,16 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_context_path() is answer
 
-    CHANGED_COMMAND_INPUT_1 = [{"name": "test", "arguments": [{"name": "test"}]}]
-    CHANGED_COMMAND_INPUT_2 = [{"name": "test", "arguments": [{"name": "test1"}]}]
-    CHANGED_COMMAND_NAME_INPUT = [{"name": "test1", "arguments": [{"name": "test1"}]}]
-    CHANGED_COMMAND_INPUT_ADDED_ARG = [{"name": "test", "arguments": [{"name": "test"}, {"name": "test1"}]}]
-    CHANGED_COMMAND_INPUT_REQUIRED = [{"name": "test", "arguments": [{"name": "test", "required": True}]}]
+    CHANGED_COMMAND_INPUT_1 = [
+        {"name": "test", "arguments": [{"name": "test"}]}]
+    CHANGED_COMMAND_INPUT_2 = [
+        {"name": "test", "arguments": [{"name": "test1"}]}]
+    CHANGED_COMMAND_NAME_INPUT = [
+        {"name": "test1", "arguments": [{"name": "test1"}]}]
+    CHANGED_COMMAND_INPUT_ADDED_ARG = [
+        {"name": "test", "arguments": [{"name": "test"}, {"name": "test1"}]}]
+    CHANGED_COMMAND_INPUT_REQUIRED = [
+        {"name": "test", "arguments": [{"name": "test", "required": True}]}]
     CHANGED_COMMAND_INPUT_ADDED_REQUIRED = [
         {"name": "test", "arguments": [{"name": "test"}, {"name": "test1", "required": True}]}]
     CHANGED_COMMAND_OR_ARG_INPUTS = [
@@ -154,8 +166,10 @@ class TestIntegrationValidator:
         assert error_message == ': The parameter \'test\' of the file is duplicated, please remove one of its ' \
                                 'appearances.'
 
-    WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
-    WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]
+    WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [
+        {"name": "test1"}, {"name": "test2"}]}]
+    WITH_DUP_ARGS = [{"name": "testing", "arguments": [
+        {"name": "test1"}, {"name": "test1"}]}]
     DUPLICATE_ARGS_INPUTS = [
         (WITHOUT_DUP_ARGS, False),
         (WITH_DUP_ARGS, True)
@@ -210,10 +224,12 @@ class TestIntegrationValidator:
 
     DEFUALT_ARGS_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
-    DEFUALT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
+    DEFUALT_ARGS_INVALID_1 = [
+        {"name": "file", "required": True, "default": True}, {"name": "verbose"}]
     DEFUALT_ARGS_INVALID_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
-    DEFUALT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
+    DEFUALT_ARGS_INVALID_3 = [
+        {"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_INPUTS = [
         (DEFUALT_ARGS_2, True),
         (DEFUALT_ARGS_INVALID_1, False),
@@ -233,22 +249,34 @@ class TestIntegrationValidator:
                           {"contextPath": "DBotScore.lives.matter"}]
     MOCK_REPUTATIONS_2 = [{"name": "panorama-commit-status", "outputs": 1}]
     MOCK_REPUTATIONS_INVALID_EMAIL = [
-        {"contextPath": "DBotScore.Indicator", "description": "The indicator that was tested.", "type": "string"},
-        {"contextPath": "DBotScore.Type", "description": "The indicator type.", "type": "string"},
-        {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
-        {"contextPath": "DBotScore.Sc0re", "description": "The actual score.", "type": "int"},
+        {"contextPath": "DBotScore.Indicator",
+            "description": "The indicator that was tested.", "type": "string"},
+        {"contextPath": "DBotScore.Type",
+            "description": "The indicator type.", "type": "string"},
+        {"contextPath": "DBotScore.Vendor",
+            "description": "Vendor used to calculate the score.", "type": "string"},
+        {"contextPath": "DBotScore.Sc0re",
+            "description": "The actual score.", "type": "int"},
         {"contextPath": "Email.To", "description": "email to", "type": "string"}]
     MOCK_REPUTATIONS_INVALID_FILE = [
-        {"contextPath": "DBotScore.Indicator", "description": "The indicator that was tested.", "type": "string"},
-        {"contextPath": "DBotScore.Type", "description": "The indicator type.", "type": "string"},
-        {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
-        {"contextPath": "DBotScore.Score", "description": "The actual score.", "type": "int"},
+        {"contextPath": "DBotScore.Indicator",
+            "description": "The indicator that was tested.", "type": "string"},
+        {"contextPath": "DBotScore.Type",
+            "description": "The indicator type.", "type": "string"},
+        {"contextPath": "DBotScore.Vendor",
+            "description": "Vendor used to calculate the score.", "type": "string"},
+        {"contextPath": "DBotScore.Score",
+            "description": "The actual score.", "type": "int"},
         {"contextPath": "File.Md5", "description": "The MD5 hash of the file.", "type": "string"}]
     MOCK_REPUTATIONS_VALID_IP = [
-        {"contextPath": "DBotScore.Indicator", "description": "The indicator that was tested.", "type": "string"},
-        {"contextPath": "DBotScore.Type", "description": "The indicator type.", "type": "string"},
-        {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
-        {"contextPath": "DBotScore.Score", "description": "The actual score.", "type": "int"},
+        {"contextPath": "DBotScore.Indicator",
+            "description": "The indicator that was tested.", "type": "string"},
+        {"contextPath": "DBotScore.Type",
+            "description": "The indicator type.", "type": "string"},
+        {"contextPath": "DBotScore.Vendor",
+            "description": "Vendor used to calculate the score.", "type": "string"},
+        {"contextPath": "DBotScore.Score",
+            "description": "The actual score.", "type": "int"},
         {"contextPath": "IP.Address", "description": "IP address", "type": "string"}]
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (MOCK_REPUTATIONS_1, "not bang", True),
@@ -260,7 +288,8 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("current, name, answer", IS_OUTPUT_FOR_REPUTATION_INPUTS)
     def test_is_outputs_for_reputations_commands_valid(self, current, name, answer):
-        current = {"script": {"commands": [{"name": name, "outputs": current}]}}
+        current = {"script": {"commands": [
+            {"name": name, "outputs": current}]}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
@@ -295,10 +324,14 @@ class TestIntegrationValidator:
         validator.old_file = old
         assert validator.is_valid_beta_integration() is answer
 
-    PROXY_VALID = [{"name": "proxy", "type": 8, "display": "Use system proxy settings", "required": False}]
-    PROXY_WRONG_TYPE = [{"name": "proxy", "type": 9, "display": "Use system proxy settings", "required": False}]
-    PROXY_WRONG_DISPLAY = [{"name": "proxy", "type": 8, "display": "bla", "required": False}]
-    PROXY_WRONG_REQUIRED = [{"name": "proxy", "type": 8, "display": "Use system proxy settings", "required": True}]
+    PROXY_VALID = [{"name": "proxy", "type": 8,
+                    "display": "Use system proxy settings", "required": False}]
+    PROXY_WRONG_TYPE = [{"name": "proxy", "type": 9,
+                         "display": "Use system proxy settings", "required": False}]
+    PROXY_WRONG_DISPLAY = [
+        {"name": "proxy", "type": 8, "display": "bla", "required": False}]
+    PROXY_WRONG_REQUIRED = [{"name": "proxy", "type": 8,
+                             "display": "Use system proxy settings", "required": True}]
     IS_PROXY_INPUTS = [
         (PROXY_VALID, True),
         (PROXY_WRONG_TYPE, False),

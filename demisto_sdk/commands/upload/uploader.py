@@ -29,7 +29,8 @@ class Uploader:
                     unifier = Unifier(self.path, outdir=self.path)
                     self.path = unifier.merge_script_package_to_yml()[0][0]
                 except IndexError:
-                    print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
+                    print_color(
+                        'Error: Path input is not a valid package directory.', LOG_COLORS.RED)
                     return 1
 
             # Upload the file to Demisto
@@ -37,13 +38,15 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(
+                f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
 
         except Exception as ex:
             raise ex
 
         finally:
-            if self.unify and os.path.exists(self.path):  # Remove the temporary file
+            # Remove the temporary file
+            if self.unify and os.path.exists(self.path):
                 os.remove(self.path)
 
         return 0

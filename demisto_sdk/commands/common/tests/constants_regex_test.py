@@ -61,7 +61,8 @@ def get_test_code_file_paths(folder):
 
 
 def test_integration_code_files():
-    acceptable_integration_code_files, unacceptable_integration_code_files = get_test_code_file_paths(INTEGRATIONS_DIR)
+    acceptable_integration_code_files, unacceptable_integration_code_files = get_test_code_file_paths(
+        INTEGRATIONS_DIR)
 
     verify(
         acceptable_integration_code_files,
@@ -71,7 +72,8 @@ def test_integration_code_files():
 
 
 def test_script_code_files():
-    acceptable_script_code_files, unacceptable_script_code_files = get_test_code_file_paths(SCRIPTS_DIR)
+    acceptable_script_code_files, unacceptable_script_code_files = get_test_code_file_paths(
+        SCRIPTS_DIR)
 
     verify(
         acceptable_script_code_files,
@@ -125,7 +127,8 @@ def get_test_yml_file_paths(folder, prefix, legacy_only=False):
 
 @pytest.mark.skip(reason="to be fixed later")
 def test_integration_yml_files():
-    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(INTEGRATIONS_DIR, 'integration')
+    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(
+        INTEGRATIONS_DIR, 'integration')
 
     verify(
         acceptable_integration_yml,
@@ -136,7 +139,8 @@ def test_integration_yml_files():
 
 @pytest.mark.skip(reason="to be fixed later")
 def test_script_yml_files():
-    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(SCRIPTS_DIR, 'script')
+    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(
+        SCRIPTS_DIR, 'script')
 
     verify(
         acceptable_integration_yml,
@@ -178,35 +182,53 @@ test_packs_regex_params = [
       'Scripts/script-CBAlerts.md'],
      [PACKAGE_YML_FILE_REGEX]),
     (['Packs/XDR/Integrations/XDR/XDR.py'],
-     ['Packs/Integrations/XDR/XDR_test.py', 'Packs/Sade/Integrations/XDR/test_yarden.py'],
+     ['Packs/Integrations/XDR/XDR_test.py',
+         'Packs/Sade/Integrations/XDR/test_yarden.py'],
      [PACKS_INTEGRATION_PY_REGEX]),
     (['Packs/XDR/Integrations/XDR/XDR.js'],
-     ['Packs/Integrations/XDR/XDR_test.js', 'Packs/Sade/Integrations/XDR/test_yarden.js'],
+     ['Packs/Integrations/XDR/XDR_test.js',
+         'Packs/Sade/Integrations/XDR/test_yarden.js'],
      [PACKS_INTEGRATION_JS_REGEX]),
-    (['Packs/XDR/Integrations/XDR/XDR.yml'], ['Packs/Integrations/XDR/XDR_test.py'], [PACKS_INTEGRATION_YML_REGEX]),
+    (['Packs/XDR/Integrations/XDR/XDR.yml'],
+     ['Packs/Integrations/XDR/XDR_test.py'], [PACKS_INTEGRATION_YML_REGEX]),
     (['Packs/Sade/Integrations/XDR/XDR_test.py'], ['Packs/Sade/Integrations/yarden.py'],
      [PACKS_INTEGRATION_TEST_PY_REGEX]),
 
-    (['Packs/XDR/Scripts/Random/Random.yml'], ['Packs/Scripts/Random/Random.py'], [PACKS_SCRIPT_YML_REGEX]),
-    (['Packs/XDR/Scripts/Random/Random.py'], ['Packs/Scripts/Random/Random_test.py'], [PACKS_SCRIPT_PY_REGEX]),
-    (['Packs/XDR/Scripts/Random/Random_test.py'], ['Packs/Sade/Scripts/test_yarden.pt'], [PACKS_SCRIPT_TEST_PY_REGEX]),
-    (['Packs/XDR/Scripts/Random/Random.js'], ['Packs/Sade/Scripts/lo_yarden.py'], [PACKS_SCRIPT_JS_REGEX]),
-    (['Packs/XDR/Playbooks/XDR.yml'], ['Packs/Playbooks/XDR/XDR_test.py'], [PACKS_PLAYBOOK_YML_REGEX]),
-    (['Packs/XDR/TestPlaybooks/playbook.yml'], ['Packs/TestPlaybooks/nonpb.xml'], [PACKS_TEST_PLAYBOOKS_REGEX]),
-    (['Packs/Sade/Classifiers/yarden.json'], ['Packs/Sade/Classifiers/yarden-json.txt'], [PACKS_CLASSIFIERS_REGEX]),
-    (['Packs/Sade/Dashboards/yarden.json'], ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_DASHBOARDS_REGEX]),
+    (['Packs/XDR/Scripts/Random/Random.yml'],
+     ['Packs/Scripts/Random/Random.py'], [PACKS_SCRIPT_YML_REGEX]),
+    (['Packs/XDR/Scripts/Random/Random.py'],
+     ['Packs/Scripts/Random/Random_test.py'], [PACKS_SCRIPT_PY_REGEX]),
+    (['Packs/XDR/Scripts/Random/Random_test.py'],
+     ['Packs/Sade/Scripts/test_yarden.pt'], [PACKS_SCRIPT_TEST_PY_REGEX]),
+    (['Packs/XDR/Scripts/Random/Random.js'],
+     ['Packs/Sade/Scripts/lo_yarden.py'], [PACKS_SCRIPT_JS_REGEX]),
+    (['Packs/XDR/Playbooks/XDR.yml'],
+     ['Packs/Playbooks/XDR/XDR_test.py'], [PACKS_PLAYBOOK_YML_REGEX]),
+    (['Packs/XDR/TestPlaybooks/playbook.yml'],
+     ['Packs/TestPlaybooks/nonpb.xml'], [PACKS_TEST_PLAYBOOKS_REGEX]),
+    (['Packs/Sade/Classifiers/yarden.json'],
+     ['Packs/Sade/Classifiers/yarden-json.txt'], [PACKS_CLASSIFIERS_REGEX]),
+    (['Packs/Sade/Dashboards/yarden.json'],
+     ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_DASHBOARDS_REGEX]),
     (['Packs/Sade/IncidentTypes/yarden.json'], ['Packs/Sade/IncidentTypes/yarden-json.txt'],
      [PACKS_INCIDENT_TYPES_REGEX]),
-    (['Packs/Sade/Widgets/yarden.json'], ['Packs/Sade/Widgets/yarden-json.txt'], [PACKS_WIDGETS_REGEX]),
-    (['Packs/Sade/Layouts/yarden.json'], ['Packs/Sade/Layouts/yarden_json.yml'], [PACKS_LAYOUTS_REGEX]),
-    (['Packs/Sade/package-meta.json'], ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_PACKAGE_META_REGEX]),
-    (['Packs/XDR/CHANGELOG.md'], ['Packs/Integrations/XDR/CHANGELOG.md'], [PACKS_CHANGELOG_REGEX]),
+    (['Packs/Sade/Widgets/yarden.json'],
+     ['Packs/Sade/Widgets/yarden-json.txt'], [PACKS_WIDGETS_REGEX]),
+    (['Packs/Sade/Layouts/yarden.json'],
+     ['Packs/Sade/Layouts/yarden_json.yml'], [PACKS_LAYOUTS_REGEX]),
+    (['Packs/Sade/package-meta.json'],
+     ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_PACKAGE_META_REGEX]),
+    (['Packs/XDR/CHANGELOG.md'],
+     ['Packs/Integrations/XDR/CHANGELOG.md'], [PACKS_CHANGELOG_REGEX]),
     (['Packs/Sade/IncidentFields/yarden.json'], ['Packs/Sade/IncidentFields/yarden-json.txt'],
      [PACKS_INCIDENT_FIELDS_REGEX]),
     (['Scripts/Sade/Sade_test.py'], ['Scripts/Sade/Sade.py'], [SCRIPT_TEST_PY_REGEX]),
-    (['Integrations/Sade/Sade_test.py'], ['Integrations/Sade/test_Sade.py'], [INTEGRATION_TEST_PY_REGEX]),
-    (['IndicatorFields/incidentfield-sade.json'], ['IndicatorFields/incidentfield.json'], [INDICATOR_FIELDS_REGEX]),
-    (['IncidentTypes/incidenttype-Cortex_XDR.json'], ['IncidentTypes/incident-Cortex_XDR.json'], [INCIDENT_TYPE_REGEX]),
+    (['Integrations/Sade/Sade_test.py'],
+     ['Integrations/Sade/test_Sade.py'], [INTEGRATION_TEST_PY_REGEX]),
+    (['IndicatorFields/incidentfield-sade.json'],
+     ['IndicatorFields/incidentfield.json'], [INDICATOR_FIELDS_REGEX]),
+    (['IncidentTypes/incidenttype-Cortex_XDR.json'],
+     ['IncidentTypes/incident-Cortex_XDR.json'], [INCIDENT_TYPE_REGEX]),
 ]
 
 

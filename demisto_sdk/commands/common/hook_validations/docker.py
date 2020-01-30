@@ -28,7 +28,8 @@ class DockerImageValidator(object):
         self.yml_file = get_yaml(yml_file_path)
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get('fromversion', '0')
-        self.docker_image_name, self.docker_image_tag = DockerImageValidator.parse_docker_image(self.yml_docker_image)
+        self.docker_image_name, self.docker_image_tag = DockerImageValidator.parse_docker_image(
+            self.yml_docker_image)
         self.is_latest_tag = True
         self.docker_image_latest_tag = DockerImageValidator.get_docker_image_latest_tag(self.docker_image_name,
                                                                                         self.yml_docker_image)
@@ -82,7 +83,8 @@ class DockerImageValidator(object):
         :param www_auth: www-authenticate header value
         :type www_auth: string
         """
-        match = re.match(r'.*realm="(.+)",service="(.+)".*', www_auth, re.IGNORECASE)
+        match = re.match(r'.*realm="(.+)",service="(.+)".*',
+                         www_auth, re.IGNORECASE)
         if not match:
             return ()
         return match.groups()
@@ -174,7 +176,8 @@ class DockerImageValidator(object):
         latest_tag_name = 'latest'
         latest_tag_date = datetime.now() - timedelta(days=400000)
         for tag in tags:
-            tag_date = datetime.strptime(tag.get('last_updated'), '%Y-%m-%dT%H:%M:%S.%fZ')
+            tag_date = datetime.strptime(
+                tag.get('last_updated'), '%Y-%m-%dT%H:%M:%S.%fZ')
             if tag_date >= latest_tag_date:
                 latest_tag_date = tag_date
                 latest_tag_name = tag.get('name')
@@ -194,14 +197,16 @@ class DockerImageValidator(object):
         """
         try:
             tag = ''
-            auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
+            auth_token = DockerImageValidator.docker_auth(
+                docker_image_name, False, DEFAULT_REGISTRY)
             headers = ACCEPT_HEADER.copy()
             if auth_token:
                 headers['Authorization'] = 'Bearer {}'.format(auth_token)
 
             # first try to get the docker image tags using normal http request
             res = requests.get(
-                url='https://hub.docker.com/v2/repositories/{}/tags'.format(docker_image_name),
+                url='https://hub.docker.com/v2/repositories/{}/tags'.format(
+                    docker_image_name),
                 verify=False,
             )
             if res.status_code == 200:
@@ -214,7 +219,8 @@ class DockerImageValidator(object):
                 # if http request did not succeed than get tags using the API.
                 # See: https://docs.docker.com/registry/spec/api/#listing-image-tags
                 res = requests.get(
-                    'https://{}/v2/{}/tags/list'.format(DEFAULT_REGISTRY, docker_image_name),
+                    'https://{}/v2/{}/tags/list'.format(
+                        DEFAULT_REGISTRY, docker_image_name),
                     headers=headers,
                     timeout=TIMEOUT,
                     verify=False
@@ -246,7 +252,8 @@ class DockerImageValidator(object):
             tag = ''
             image = ''
             try:
-                image_regex = re.findall(r'(demisto\/.+)', docker_image, re.IGNORECASE)
+                image_regex = re.findall(
+                    r'(demisto\/.+)', docker_image, re.IGNORECASE)
                 if image_regex:
                     image = image_regex[0]
                 if ':' in image:

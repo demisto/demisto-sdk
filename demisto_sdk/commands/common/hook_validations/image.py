@@ -23,7 +23,8 @@ class ImageValidator:
         else:
             if checked_type(file_path, YML_INTEGRATION_REGEXES):
                 try:
-                    self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
+                    self.file_path = glob.glob(os.path.join(
+                        os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
                     self._is_valid = False
                     print_error("You've created/modified a package but failed to provide an image as a .png file, "
@@ -46,8 +47,10 @@ class ImageValidator:
     def oversize_image(self):
         """Check if the image if over sized, bigger than IMAGE_MAX_SIZE"""
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
-            if os.path.getsize(self.file_path) > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                print_error("{} has too large logo, please update the logo to be under 10kB".format(self.file_path))
+            # disable-secrets-detection
+            if os.path.getsize(self.file_path) > self.IMAGE_MAX_SIZE:
+                print_error("{} has too large logo, please update the logo to be under 10kB".format(
+                    self.file_path))
                 self._is_valid = False
 
         else:
@@ -59,7 +62,8 @@ class ImageValidator:
             image = data_dictionary.get('image', '')
 
             if ((len(image) - 22) / 4.0) * 3 > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                print_error("{} has too large logo, please update the logo to be under 10kB".format(self.file_path))
+                print_error("{} has too large logo, please update the logo to be under 10kB".format(
+                    self.file_path))
                 self._is_valid = False
 
     def is_existing_image(self):
@@ -86,7 +90,8 @@ class ImageValidator:
                 is_image_in_package = True
 
         if not (is_image_in_package or is_image_in_yml):
-            print_error("You have failed to add an image in the yml/package for {}".format(self.file_path))
+            print_error(
+                "You have failed to add an image in the yml/package for {}".format(self.file_path))
             self._is_valid = False
             return False
 
@@ -96,13 +101,15 @@ class ImageValidator:
         data_dictionary = get_yaml(self.file_path)
 
         if not data_dictionary:
-            print_error("{} isn't an image file or unified integration file.".format(self.file_path))
+            print_error(
+                "{} isn't an image file or unified integration file.".format(self.file_path))
             self._is_valid = False
 
         image = data_dictionary.get('image', '')
 
         if not image:
-            print_error("{} is a yml file but has no image field.".format(self.file_path))
+            print_error(
+                "{} is a yml file but has no image field.".format(self.file_path))
             self._is_valid = False
 
         image_data = image.split('base64,')
@@ -110,7 +117,8 @@ class ImageValidator:
             return image_data[1]
 
         else:
-            print_error("{}'s image field isn't in base64 encoding.".format(self.file_path))
+            print_error(
+                "{}'s image field isn't in base64 encoding.".format(self.file_path))
             self._is_valid = False
 
     def load_image(self):

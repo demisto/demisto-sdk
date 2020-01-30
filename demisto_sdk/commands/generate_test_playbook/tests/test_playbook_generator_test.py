@@ -26,7 +26,8 @@ class TestGenerateTestPlaybook:
     def teardown_class(cls):
         print("Tearing down TestGenerateTestPlaybook class")
         if os.path.exists(TestGenerateTestPlaybook.TEMP_DIR):
-            shutil.rmtree(TestGenerateTestPlaybook.TEMP_DIR, ignore_errors=False, onerror=None)
+            shutil.rmtree(TestGenerateTestPlaybook.TEMP_DIR,
+                          ignore_errors=False, onerror=None)
 
     def test_generate_test_playbook(self):
         generator = PlaybookTestsGenerator(

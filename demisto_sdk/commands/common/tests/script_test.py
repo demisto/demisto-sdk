@@ -293,7 +293,8 @@ class TestScriptValidator:
 
     @pytest.mark.parametrize('script, expected', INPUTS_CONFIGURATION_EXTRACTION)
     def test_configuration_extraction(self, script, expected):
-        assert ScriptValidator._get_arg_to_required_dict(script) == expected, 'Failed to extract configuration'
+        assert ScriptValidator._get_arg_to_required_dict(
+            script) == expected, 'Failed to extract configuration'
 
     PYTHON3_SUBTYPE = {
         "type": "python",

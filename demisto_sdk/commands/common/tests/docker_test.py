@@ -51,7 +51,8 @@ MOCK_TAG_LIST = [{
     u'id': 72714981
 }]
 
-FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+FILES_PATH = os.path.normpath(os.path.join(
+    __file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 TEST_INTEGRATION_FILE = os.path.join(FILES_PATH, 'fake_integration.yml')
 TEST_SCRIPT_FILE = os.path.join(FILES_PATH, 'fake-script.yml')
 
@@ -59,7 +60,8 @@ TEST_SCRIPT_FILE = os.path.join(FILES_PATH, 'fake-script.yml')
 # demisto/python-deb doesn't contain a latest tag
 @pytest.mark.parametrize('image', ['python', 'python-deb', 'python3', 'python3-deb'])
 def test_get_docker_image_latest_tag(image):
-    tag = DockerImageValidator.get_docker_image_latest_tag('demisto/' + image, '')
+    tag = DockerImageValidator.get_docker_image_latest_tag(
+        'demisto/' + image, '')
     # current latest tag is 2.7.16.2728 or 3.7.2.2728 disable-secrets-detection
     assert int(tag.split('.')[3]) >= 2728
 
@@ -100,19 +102,25 @@ def test_parse_www_auth(www_auth, expected):
 # disable-secrets-detection-start
 @pytest.mark.parametrize('input_tags, output_tags',
                          [(['1.2.3.0', '4.5.6.0', '7.8.9.0'], ['4.5.6.0', '1.2.3.0', '7.8.9.0']),
-                          (['1.2.3.0', '4.a.6.0', '7.8.9.0'], ['7.8.9.0', '1.2.3.0']),
+                          (['1.2.3.0', '4.a.6.0', '7.8.9.0'],
+                           ['7.8.9.0', '1.2.3.0']),
                           (['aaa', 'bbb'], []), (['6a.7.6'], []), (['6..4'], [])])
 # disable-secrets-detection-end
 def test_clear_non_numbered_tags(input_tags, output_tags):
-    assert sorted(output_tags) == sorted(DockerImageValidator.clear_non_numbered_tags(input_tags))
+    assert sorted(output_tags) == sorted(
+        DockerImageValidator.clear_non_numbered_tags(input_tags))
 
 
 # disable-secrets-detection-start
 def test_parse_docker_image():
-    assert 'demisto/python', '1.3-alpine' == DockerImageValidator.parse_docker_image('demisto/python:1.3-alpine')
-    assert 'demisto/slack', '1.2.3.4' == DockerImageValidator.parse_docker_image('demisto/slack:1.2.3.4')
-    assert 'demisto/python', '' == DockerImageValidator.parse_docker_image('demisto/python/1.2.3.4')
-    assert ('', '') == DockerImageValidator.parse_docker_image('blah/blah:1.2.3.4')
+    assert 'demisto/python', '1.3-alpine' == DockerImageValidator.parse_docker_image(
+        'demisto/python:1.3-alpine')
+    assert 'demisto/slack', '1.2.3.4' == DockerImageValidator.parse_docker_image(
+        'demisto/slack:1.2.3.4')
+    assert 'demisto/python', '' == DockerImageValidator.parse_docker_image(
+        'demisto/python/1.2.3.4')
+    assert ('', '') == DockerImageValidator.parse_docker_image(
+        'blah/blah:1.2.3.4')
 # disable-secrets-detection-end
 
 

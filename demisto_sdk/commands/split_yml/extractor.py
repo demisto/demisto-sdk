@@ -32,7 +32,8 @@ class Extractor:
         Returns:
              int. status code for the operation.
         """
-        print("Starting migration of: {} to dir: {}".format(self.yml_path, self.dest_path))
+        print("Starting migration of: {} to dir: {}".format(
+            self.yml_path, self.dest_path))
         arg_path = self.dest_path
         output_path = os.path.abspath(self.dest_path)
         os.makedirs(output_path, exist_ok=True)
@@ -41,7 +42,8 @@ class Extractor:
         code_file = "{}/{}.py".format(output_path, base_name)
         self.extract_code(code_file)
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
-        self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
+        self.extract_long_description(
+            "{}/{}_description.md".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)
         print("Creating yml file: {} ...".format(yaml_out))
         ryaml = YAML()
@@ -55,14 +57,16 @@ class Extractor:
             if 'detaileddescription' in yaml_obj:
                 del yaml_obj['detaileddescription']
         if script_obj['type'] != 'python':
-            print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_obj['type']))
+            print('Script is not of type "python". Found type: {}. Nothing to do.'.format(
+                script_obj['type']))
             return 1
         script_obj['script'] = SingleQuotedScalarString('')
         with open(yaml_out, 'w') as yf:
             ryaml.dump(yaml_obj, yf)
         print("Running autopep8 on file: {} ...".format(code_file))
         try:
-            subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
+            subprocess.call(
+                ["autopep8", "-i", "--max-line-length", "130", code_file])
         except FileNotFoundError:
             print_color("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
                         "Make sure to install it with: pip install autopep8.\n"
@@ -76,7 +80,8 @@ class Extractor:
         shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
         try:
             subprocess.call(["pipenv", "install", "--dev"], cwd=output_path)
-            print("Installing all py requirements from docker: [{}] into pipenv".format(docker))
+            print(
+                "Installing all py requirements from docker: [{}] into pipenv".format(docker))
             requirements = subprocess.check_output(["docker", "run", "--rm", docker,
                                                     "pip", "freeze", "--disable-pip-version-check"],
                                                    universal_newlines=True, stderr=subprocess.DEVNULL).strip()
@@ -85,7 +90,8 @@ class Extractor:
             fp.close()
 
             try:
-                subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+                subprocess.check_call(
+                    ["pipenv", "install", "-r", fp.name], cwd=output_path)
 
             except Exception:
                 print_color("Failed installing requirements in pipenv.\n "
@@ -93,7 +99,8 @@ class Extractor:
 
             os.unlink(fp.name)
             print("Installing flake8 for linting")
-            subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
+            subprocess.call(["pipenv", "install", "--dev",
+                             "flake8"], cwd=output_path)
         except FileNotFoundError:
             print_color("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
                         "Make sure to install it with: pip3 install pipenv.\n"
@@ -106,7 +113,8 @@ class Extractor:
         else:
             with open(changelog, 'wt', encoding='utf-8') as changelog_file:
                 changelog_file.write("## [Unreleased]\n-\n")
-        print_color("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
+        print_color("\nCompleted: setting up package: {}\n".format(
+            arg_path), LOG_COLORS.GREEN)
         print("Next steps: \n",
               "* Install additional py packages for unit testing (if needed): cd {}; pipenv install <package>\n".format(
                   arg_path),
@@ -138,7 +146,8 @@ class Extractor:
             if common_server:
                 code_file.write("from CommonServerPython import *\n")
             code_file.write(script)
-            if script[-1] != '\n':  # make sure files end with a new line (pyml seems to strip the last newline)
+            # make sure files end with a new line (pyml seems to strip the last newline)
+            if script[-1] != '\n':
                 code_file.write("\n")
 
         return 0

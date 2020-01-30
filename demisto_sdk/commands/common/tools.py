@@ -69,17 +69,20 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE,
+                  universal_newlines=True, cwd=cwd)
     else:
         p = Popen(command.split(), cwd=cwd)
 
     output, err = p.communicate()
     if err:
         if exit_on_error:
-            print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            print_error(
+                'Failed to run command {}\nerror details:\n{}'.format(command, err))
             sys.exit(1)
         else:
-            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            raise RuntimeError(
+                'Failed to run command {}\nerror details:\n{}'.format(command, err))
 
     return output
 
@@ -89,7 +92,8 @@ def get_remote_file(full_file_path, tag='master'):
     tag = tag.lstrip('origin/')
 
     # The replace in the end is for Windows support
-    github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = os.path.join(
+        CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
     try:
         res = requests.get(github_path, verify=False)
         res.raise_for_status()
@@ -145,7 +149,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
             if uniq_identifier in packagify_diff:
                 # if name appears as added and removed, this is packagify process - treat as modified.
                 removed_files.remove(packagify_diff[uniq_identifier])
-                modified_files.add((packagify_diff[uniq_identifier], file_path))
+                modified_files.add(
+                    (packagify_diff[uniq_identifier], file_path))
                 continue
 
         updated_added_files.add(file_path)
@@ -442,10 +447,12 @@ def get_python_version(docker_image, log_verbose, no_prints=False):
                            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
                           universal_newlines=True, stderr=stderr_out).strip()
     if not no_prints:
-        print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+        print("Detected python version: [{}] for docker image: {}".format(
+            py_ver, docker_image))
 
     py_num = float(py_ver)
-    if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
+    # pylint can only work on python 3.4 and up
+    if py_num < 2.7 or (3 < py_num < 3.4):
         raise ValueError("Python vesion for docker image: {} is not supported: {}. "
                          "We only support python 2.7.* and python3 >= 3.4.".format(docker_image, py_num))
     return py_num

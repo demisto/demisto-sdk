@@ -66,14 +66,18 @@ class SecretsValidator(object):
         secrets_found = {}
         # make sure not in middle of merge
         if not run_command('git rev-parse -q --verify MERGE_HEAD'):
-            secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
-            secrets_found = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
+            secrets_file_paths = self.get_all_diff_text_files(
+                branch_name, is_circle)
+            secrets_found = self.search_potential_secrets(
+                secrets_file_paths, self.ignore_entropy)
             if secrets_found:
                 secrets_found_string = 'Secrets were found in the following files:'
                 for file_name in secrets_found:
-                    secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
+                    secrets_found_string += ('\n\nIn File: ' +
+                                             file_name + '\n')
                     secrets_found_string += '\nThe following expressions were marked as secrets: \n'
-                    secrets_found_string += json.dumps(secrets_found[file_name], indent=4)
+                    secrets_found_string += json.dumps(
+                        secrets_found[file_name], indent=4)
 
                 if not is_circle:
                     secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
@@ -142,11 +146,13 @@ class SecretsValidator(object):
             is_pack = is_file_path_in_pack(file_path)
             pack_name = get_pack_name(file_path)
             # Get generic/ioc/files white list sets based on if pack or not
-            secrets_white_list, ioc_white_list, files_white_list = self.get_white_listed_items(is_pack, pack_name)
+            secrets_white_list, ioc_white_list, files_white_list = self.get_white_listed_items(
+                is_pack, pack_name)
             # Skip white listed files
 
             if file_path in files_white_list:
-                print("Skipping secrets detection for file: {} as it is white listed".format(file_path))
+                print("Skipping secrets detection for file: {} as it is white listed".format(
+                    file_path))
                 continue
             # Init vars for current loop
             file_name = os.path.basename(file_path)
@@ -158,12 +164,14 @@ class SecretsValidator(object):
             file_contents = self.get_file_contents(file_path, file_extension)
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
-                file_contents = self.remove_white_list_regex(file_contents, secrets_white_list)
+                file_contents = self.remove_white_list_regex(
+                    file_contents, secrets_white_list)
 
             yml_file_contents = self.get_related_yml_contents(file_path)
             # Add all context output paths keywords to whitelist temporary
             if file_extension == YML_FILE_EXTENSION or yml_file_contents:
-                temp_white_list = self.create_temp_white_list(yml_file_contents if yml_file_contents else file_contents)
+                temp_white_list = self.create_temp_white_list(
+                    yml_file_contents if yml_file_contents else file_contents)
                 secrets_white_list = secrets_white_list.union(temp_white_list)
             # Search by lines after strings with high entropy / IoCs regex as possibly suspicious
             for line in file_contents.split('\n'):
@@ -200,7 +208,8 @@ class SecretsValidator(object):
 
             if high_entropy_strings or secrets_found_with_regex:
                 # uniquify identical matches between lists
-                file_secrets = list(set(high_entropy_strings + secrets_found_with_regex))
+                file_secrets = list(
+                    set(high_entropy_strings + secrets_found_with_regex))
                 secrets_found[file_name] = file_secrets
 
         return secrets_found
@@ -217,7 +226,8 @@ class SecretsValidator(object):
         context_paths = re.findall(r'contextPath: (\S+\.+\S+)', file_contents)
         for context_path in context_paths:
             context_path = context_path.split('.')
-            context_path = [white_item.lower() for white_item in context_path if len(white_item) > 4]
+            context_path = [white_item.lower()
+                            for white_item in context_path if len(white_item) > 4]
             temp_white_list = temp_white_list.union(context_path)
 
         return temp_white_list
@@ -227,13 +237,15 @@ class SecretsValidator(object):
         yml_file_contents = ''
         # Validate if it is integration documentation file or supported file extension
         if checked_type(file_path, REQUIRED_YML_FILE_TYPES):
-            yml_file_contents = self.retrieve_related_yml(os.path.dirname(file_path))
+            yml_file_contents = self.retrieve_related_yml(
+                os.path.dirname(file_path))
         return yml_file_contents
 
     @staticmethod
     def retrieve_related_yml(integration_path):
         matching_yml_file_contents = None
-        yml_file = os.path.join(integration_path, os.path.basename(integration_path) + '.yml')
+        yml_file = os.path.join(
+            integration_path, os.path.basename(integration_path) + '.yml')
         if os.path.exists(yml_file):
             with io.open(yml_file, mode="r", encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()
@@ -258,7 +270,8 @@ class SecretsValidator(object):
             false_positives += uuids
         # docker images version are detected as ips. so we ignore and whitelist them
         # example: dockerimage: demisto/duoadmin:1.0.0.147
-        re_res = re.search(r'dockerimage:\s*\w*demisto/\w+:(\d+.\d+.\d+.\d+)', line)
+        re_res = re.search(
+            r'dockerimage:\s*\w*demisto/\w+:(\d+.\d+.\d+.\d+)', line)
         if re_res:
             docker_version = re_res.group(1)
             false_positives.append(docker_version)
@@ -328,12 +341,14 @@ class SecretsValidator(object):
             for name, white_list in secrets_white_list_file.items():
                 if name == 'iocs':
                     for sublist in white_list:
-                        ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
+                        ioc_white_list += [
+                            white_item for white_item in white_list[sublist] if len(white_item) > 4]
                     final_white_list += ioc_white_list
                 elif name == 'files':
                     files_while_list = white_list
                 else:
-                    final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
+                    final_white_list += [
+                        white_item for white_item in white_list if len(white_item) > 4]
 
             return final_white_list, ioc_white_list, files_while_list
 
@@ -347,7 +362,8 @@ class SecretsValidator(object):
                 temp_white_list = secrets_white_list_file.read().split('\n')
             for white_list_line in temp_white_list:
                 if white_list_line.startswith('file:'):
-                    white_list_line = os.path.join(PACKS_DIR, pack_name, white_list_line[5:])
+                    white_list_line = os.path.join(
+                        PACKS_DIR, pack_name, white_list_line[5:])
                     if not os.path.isfile(os.path.join(white_list_line)):
                         print_warning(f'{white_list_line} not found.\n'
                                       'please add the file name in the following format\n'
@@ -387,7 +403,8 @@ class SecretsValidator(object):
             pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
             num_pages = pdf_reader.numPages
         except PyPDF2.utils.PdfReadError:
-            print('ERROR: Could not parse PDF file in path: {} - ***Review Manually***'.format(file_path))
+            print(
+                'ERROR: Could not parse PDF file in path: {} - ***Review Manually***'.format(file_path))
             return file_contents
         while page_num < num_pages:
             pdf_page = pdf_reader.getPage(page_num)
@@ -404,7 +421,8 @@ class SecretsValidator(object):
                 file_contents = soup.text
                 return file_contents
         except Exception as ex:
-            print_error('Unable to parse the following file {} due to error {}'.format(file_path, ex))
+            print_error(
+                'Unable to parse the following file {} due to error {}'.format(file_path, ex))
             raise
 
     @staticmethod
@@ -451,7 +469,8 @@ class SecretsValidator(object):
             if secrets_found:
                 return True
             else:
-                print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
+                print_color(
+                    'Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
                 return False
 
     def run(self):

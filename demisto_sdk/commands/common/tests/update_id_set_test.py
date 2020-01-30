@@ -94,7 +94,8 @@ INTEGRATION_DATA = {
             ("file_path",
                 "/root/project/tests/test_files/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"),
             ("fromversion", "4.1.0"),
-            ("commands", ["xdr-get-incidents", "xdr-get-incident-extra-data", "xdr-update-incident"])
+            ("commands", ["xdr-get-incidents",
+                          "xdr-get-incident-extra-data", "xdr-update-incident"])
         ]
     )
 }
@@ -168,9 +169,11 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(data['file_path'], PLAYBOOK_DATA['file_path'])
         self.assertEqual(data['fromversion'], PLAYBOOK_DATA['fromversion'])
         self.assertListEqual(data['tests'], PLAYBOOK_DATA['tests'])
-        self.assertSetEqual(set(data['implementing_playbooks']), set(PLAYBOOK_DATA['implementing_playbooks']))
+        self.assertSetEqual(set(data['implementing_playbooks']), set(
+            PLAYBOOK_DATA['implementing_playbooks']))
         self.assertListEqual(data['tests'], PLAYBOOK_DATA['tests'])
-        self.assertDictEqual(data['command_to_integration'], PLAYBOOK_DATA['command_to_integration'])
+        self.assertDictEqual(
+            data['command_to_integration'], PLAYBOOK_DATA['command_to_integration'])
 
 
 if __name__ == '__main__':

@@ -25,12 +25,14 @@ class DescriptionValidator:
     def is_valid_beta_description(self):
         """Check if beta disclaimer exists in detailed description"""
         data_dictionary = get_yaml(self.file_path)
-        description_in_yml = data_dictionary.get('detaileddescription', '') if data_dictionary else ''
+        description_in_yml = data_dictionary.get(
+            'detaileddescription', '') if data_dictionary else ''
 
         if not re.match(BETA_INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+                md_file_path = glob.glob(os.path.join(
+                    os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
                 self._is_valid = False
                 print_error("No detailed description file was found in the package {}. Please add one,"
@@ -69,7 +71,8 @@ class DescriptionValidator:
                 and not re.match(BETA_INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+                md_file_path = glob.glob(os.path.join(
+                    os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
                 print_warning("No detailed description file was found in the package {}."
                               " Consider adding one.".format(package_path))

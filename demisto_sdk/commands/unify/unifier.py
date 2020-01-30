@@ -60,22 +60,28 @@ class Unifier:
             if 'fromversion' in yml_data:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['fromversion'], '5.0.0') >= 0:
-                    raise ValueError('Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
-                yml_text = re.sub(r'^fromversion:.*$', 'fromversion: 5.0.0', yml_text, flags=re.MULTILINE)
+                    raise ValueError(
+                        'Failed: {}. dockerimage45 set for 5.0 and later only'.format(self.dest_path))
+                yml_text = re.sub(
+                    r'^fromversion:.*$', 'fromversion: 5.0.0', yml_text, flags=re.MULTILINE)
             else:
                 yml_text = 'fromversion: 5.0.0\n' + yml_text
             if 'toversion' in yml_data:
                 # validate that this is a script/integration which targets both 4.5 and 5.0+.
                 if server_version_compare(yml_data['toversion'], '5.0.0') < 0:
-                    raise ValueError('Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
-                yml_text45 = re.sub(r'^toversion:.*$', 'toversion: 4.5.9', yml_text45, flags=re.MULTILINE)
+                    raise ValueError(
+                        'Failed: {}. dockerimage45 set for 4.5 and earlier only'.format(self.dest_path))
+                yml_text45 = re.sub(
+                    r'^toversion:.*$', 'toversion: 4.5.9', yml_text45, flags=re.MULTILINE)
             else:
                 yml_text45 = 'toversion: 4.5.9\n' + yml_text45
-            if script_obj.get('dockerimage45'):  # we have a value for dockerimage45 set it as dockerimage
+            # we have a value for dockerimage45 set it as dockerimage
+            if script_obj.get('dockerimage45'):
                 yml_text45 = re.sub(r'(^\s*dockerimage:).*$', r'\1 ' + script_obj.get('dockerimage45'),
                                     yml_text45, flags=re.MULTILINE)
             else:  # no value for dockerimage45 remove the dockerimage entry
-                yml_text45 = re.sub(r'^\s*dockerimage:.*\n?', '', yml_text45, flags=re.MULTILINE)
+                yml_text45 = re.sub(r'^\s*dockerimage:.*\n?',
+                                    '', yml_text45, flags=re.MULTILINE)
             output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
             output_map = {
                 self.dest_path: yml_text,
@@ -97,13 +103,15 @@ class Unifier:
         if self.package_path.endswith('/'):
             self.package_path = self.package_path.rstrip('/')
         package_dir_name = os.path.basename(self.package_path)
-        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+        output_filename = '{}-{}.yml'.format(
+            DIR_TO_PREFIX[self.dir_name], package_dir_name)
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
         else:
             self.dest_path = os.path.join(self.dir_name, output_filename)
 
-        yml_paths, yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
+        yml_paths, yml_path = get_yml_paths_in_dir(
+            self.package_path, Errors.no_yml_file(self.package_path))
         for path in yml_paths:
             # The plugin creates a unified YML file for the package.
             # In case this script runs locally and there is a unified YML file in the package we need to ignore it.
@@ -126,21 +134,27 @@ class Unifier:
         with io.open(yml_path, mode='r', encoding='utf-8') as yml_file:
             yml_text = yml_file.read()
 
-        yml_text, script_path = self.insert_script_to_yml(script_type, yml_text, yml_data)
+        yml_text, script_path = self.insert_script_to_yml(
+            script_type, yml_text, yml_data)
         image_path = None
         desc_path = None
         if self.dir_name in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR):
             yml_text, image_path = self.insert_image_to_yml(yml_data, yml_text)
-            yml_text, desc_path = self.insert_description_to_yml(yml_data, yml_text)
+            yml_text, desc_path = self.insert_description_to_yml(
+                yml_data, yml_text)
 
-        output_map = self.write_yaml_with_docker(yml_text, yml_data, script_obj)
-        unifier_outputs = list(output_map.keys()), yml_path, script_path, image_path, desc_path
-        print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
+        output_map = self.write_yaml_with_docker(
+            yml_text, yml_data, script_obj)
+        unifier_outputs = list(
+            output_map.keys()), yml_path, script_path, image_path, desc_path
+        print_color("Created unified yml: {}".format(
+            unifier_outputs[0][0]), LOG_COLORS.GREEN)
         return unifier_outputs
 
     def insert_image_to_yml(self, yml_data, yml_text):
         image_data, found_img_path = self.get_data("*png")
-        image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
+        image_data = self.image_prefix + \
+            base64.b64encode(image_data).decode('utf-8')
 
         if yml_data.get('image'):
             yml_text = yml_text.replace(yml_data['image'], image_data)
@@ -216,7 +230,8 @@ class Unifier:
         # the API module code will be pasted in place of the import.
         module_import, module_name = self.check_api_module_imports(script_code)
         if module_import:
-            script_code = self.insert_module_code(script_code, module_import, module_name)
+            script_code = self.insert_module_code(
+                script_code, module_import, module_name)
 
         clean_code = self.clean_python_code(script_code)
 
@@ -236,7 +251,8 @@ class Unifier:
                     raise ValueError("Please change the script to be blank or a dash(-) for package {}"
                                      .format(self.package_path))
         else:
-            raise ValueError('Unknown yml type for dir: {}. Expecting: Scripts/Integrations'.format(self.package_path))
+            raise ValueError(
+                'Unknown yml type for dir: {}. Expecting: Scripts/Integrations'.format(self.package_path))
 
         yml_text = yml_text.replace("script: ''", "script: " + script_code)
         yml_text = yml_text.replace("script: '-'", "script: " + script_code)
@@ -292,7 +308,8 @@ class Unifier:
         :return: The integration script with the module code appended in place of the import
         """
 
-        module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+        module_path = os.path.join(
+            './Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
         module_code = Unifier._get_api_module_code(module_name, module_path)
 
         module_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
@@ -312,16 +329,20 @@ class Unifier:
             with io.open(module_path, mode='r', encoding='utf-8') as script_file:
                 module_code = script_file.read()
         except Exception as e:
-            raise ValueError('Could not retrieve the module [{}] code: {}'.format(module_name, str(e)))
+            raise ValueError(
+                'Could not retrieve the module [{}] code: {}'.format(module_name, str(e)))
 
         return module_code
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):
         script_code = script_code.replace("import demistomock as demisto", "")
-        script_code = script_code.replace("from CommonServerPython import *", "")
-        script_code = script_code.replace("from CommonServerUserPython import *", "")
+        script_code = script_code.replace(
+            "from CommonServerPython import *", "")
+        script_code = script_code.replace(
+            "from CommonServerUserPython import *", "")
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
-            script_code = script_code.replace("from __future__ import print_function", "")
+            script_code = script_code.replace(
+                "from __future__ import print_function", "")
         return script_code

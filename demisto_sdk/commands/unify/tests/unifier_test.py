@@ -53,7 +53,8 @@ def test_clean_python_code():
     script_code = "import demistomock as demistofrom CommonServerPython import *" \
                   "from CommonServerUserPython import *from __future__ import print_function"
     # Test remove_print_future is False
-    script_code = unifier.clean_python_code(script_code, remove_print_future=False)
+    script_code = unifier.clean_python_code(
+        script_code, remove_print_future=False)
     assert script_code == "from __future__ import print_function"
     # Test remove_print_future is True
     script_code = unifier.clean_python_code(script_code)
@@ -64,12 +65,14 @@ def test_get_code_file():
     from demisto_sdk.commands.unify.unifier import Unifier
     # Test integration case
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
-    assert unifier.get_code_file(".py") == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.py"
+    assert unifier.get_code_file(
+        ".py") == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.py"
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files")
     with pytest.raises(Exception):
         unifier.get_code_file(".py")
     # Test script case
-    unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/")
+    unifier = Unifier(
+        f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/")
     assert unifier.get_code_file(".py") == f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/" \
                                            f"CalculateGeoDistance.py"
 
@@ -79,7 +82,8 @@ def test_get_script_package_data():
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/")
     with pytest.raises(Exception):
         unifier.get_script_package_data()
-    unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance")
+    unifier = Unifier(
+        f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance")
     with open(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py", "r") as \
             code_file:
         code = code_file.read()
@@ -128,13 +132,15 @@ def test_insert_image_to_yml():
         unifier.image_prefix = "data:image/png;base64,"
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
             image_data = image_file.read()
-            image_data = unifier.image_prefix + base64.b64encode(image_data).decode('utf-8')
+            image_data = unifier.image_prefix + \
+                base64.b64encode(image_data).decode('utf-8')
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", mode="r", encoding="utf-8") \
                 as yml_file:
             yml_text_test = yml_file.read()
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", "r") as yml:
             yml_data = yaml.safe_load(yml)
-        yml_text, found_img_path = unifier.insert_image_to_yml(yml_data, yml_text_test)
+        yml_text, found_img_path = unifier.insert_image_to_yml(
+            yml_data, yml_text_test)
         yml_text_test = 'image: ' + image_data + '\n' + yml_text_test
         assert found_img_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
         assert yml_text == yml_text_test
@@ -152,7 +158,8 @@ def test_check_api_module_imports():
                                          'from MicrosoftApiModule import *'])
 def test_insert_module_code(mocker, import_name):
     from demisto_sdk.commands.unify.unifier import Unifier
-    mocker.patch.object(Unifier, '_get_api_module_code', return_value=DUMMY_MODULE)
+    mocker.patch.object(Unifier, '_get_api_module_code',
+                        return_value=DUMMY_MODULE)
     module_name = 'MicrosoftApiModule'
     new_code = DUMMY_SCRIPT.replace(import_name, '\n### GENERATED CODE ###\n# This code was inserted in place of an API'
                                                  ' module.{}\n'.format(DUMMY_MODULE))
@@ -178,7 +185,8 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
         with open(file_path + ".yml", "r") as yml:
             test_yml_data = yaml.safe_load(yml)
 
-        yml_text, script_path = unifier.insert_script_to_yml(".py", test_yml_text, test_yml_data)
+        yml_text, script_path = unifier.insert_script_to_yml(
+            ".py", test_yml_text, test_yml_data)
 
         with open(file_path + ".py", mode="r", encoding="utf-8") as script_file:
             script_code = script_file.read()
@@ -186,8 +194,10 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
         lines = ['|-']
         lines.extend(u'    {}'.format(line) for line in clean_code.split('\n'))
         script_code = u'\n'.join(lines)
-        test_yml_text = test_yml_text.replace("script: ''", "script: " + script_code)
-        test_yml_text = test_yml_text.replace("script: '-'", "script: " + script_code)
+        test_yml_text = test_yml_text.replace(
+            "script: ''", "script: " + script_code)
+        test_yml_text = test_yml_text.replace(
+            "script: '-'", "script: " + script_code)
 
         assert yml_text == test_yml_text
         assert script_path == file_path + ".py"

@@ -300,7 +300,8 @@ def secrets(config, **kwargs):
 )
 @pass_config
 def lint(config, dir, **kwargs):
-    linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
+    linter = LintManager(configuration=config.configuration,
+                         project_dir_list=dir, **kwargs)
     return linter.run_dev_packages()
 
 

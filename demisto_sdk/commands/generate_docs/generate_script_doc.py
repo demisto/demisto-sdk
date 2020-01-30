@@ -11,6 +11,9 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
         example_section = []
 
         if examples:
+            if not examples.startswith('!'):
+                examples = f'!{examples}'
+
             example_dict, build_errors = build_example_dict([examples])
             script_name = examples.split(' ')[0][1:]
             example_section, example_errors = generate_script_example(script_name, example_dict)

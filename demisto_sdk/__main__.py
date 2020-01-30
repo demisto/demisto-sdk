@@ -499,20 +499,21 @@ def init(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="path of the yml file.", required=True)
+    "-i", "--input", help="Path of the yml file.", required=True)
 @click.option(
-    "-o", "--output", help="The output dir to write the documentation file into.", required=True)
+    "-o", "--output", help="The output dir to write the documentation file into,"
+                           " documentation file name is README.md.", required=True)
 @click.option(
     "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
     help="The type of yml file.", required=False)
 @click.option(
     "-e", "--examples", help="For integration - Path for file containing command or script examples."
                              " Each Command should be in a separate line."
-                             " For script - the script example surrounded by double quotes")
+                             " For script - the script example surrounded by double quotes.")
 @click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 def generate_doc(file_type, **kwargs):
     input_path = kwargs['input']
     output_path = kwargs['output']

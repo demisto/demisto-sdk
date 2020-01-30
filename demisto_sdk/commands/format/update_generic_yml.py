@@ -4,7 +4,7 @@ import yaml
 import yamlordereddictloader
 
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.validate.hook_validations.structure import StructureValidator
 
 
 class BaseUpdateYML:
@@ -28,7 +28,8 @@ class BaseUpdateYML:
         self.source_file = source_file
 
         if not self.source_file:
-            print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
+            print_color(
+                'Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
             sys.exit(1)
 
         try:
@@ -86,9 +87,11 @@ class BaseUpdateYML:
         """
         print(F'Removing _dev and _copy suffixes from name and display tags')
 
-        self.yml_data['name'] = self.yml_data.get('name', '').replace('_copy', '').replace('_dev', '')
+        self.yml_data['name'] = self.yml_data.get(
+            'name', '').replace('_copy', '').replace('_dev', '')
         if self.yml_data.get('display'):
-            self.yml_data['display'] = self.yml_data.get('display', '').replace('_copy', '').replace('_dev', '')
+            self.yml_data['display'] = self.yml_data.get(
+                'display', '').replace('_copy', '').replace('_dev', '')
 
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name."""
@@ -113,7 +116,8 @@ class BaseUpdateYML:
             if '\n' in data:
                 return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
             return dumper.org_represent_str(data)
-        yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
+        yaml.add_representer(
+            str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
 
         with open(self.output_file_name, 'w') as f:
             yaml.dump(
@@ -124,18 +128,21 @@ class BaseUpdateYML:
 
     def update_yml(self):
         """Manager function for the generic YML updates."""
-        print_color(F'=======Starting updates for YML: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(
+            F'=======Starting updates for YML: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.remove_copy_and_dev_suffixes_from_name()
         self.update_id_to_equal_name()
         self.set_version_to_default()
 
-        print_color(F'=======Finished generic updates for YML: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+        print_color(
+            F'=======Finished generic updates for YML: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
     def initiate_file_validator(self, validator_type, scheme_type):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
-        structure = StructureValidator(file_path=str(self.output_file_name), predefined_scheme=scheme_type)
+        structure = StructureValidator(file_path=str(
+            self.output_file_name), predefined_scheme=scheme_type)
         validator = validator_type(structure)
 
         if structure.is_valid_file() and validator.is_valid_file(validate_rn=False):

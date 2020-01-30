@@ -2,7 +2,7 @@ import re
 
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_error
-from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.validate.hook_validations.playbook import PlaybookValidator
 
 
 class PlaybookYMLFormat(BaseUpdateYML):
@@ -49,7 +49,8 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
             is_input_version_valid = False
             while not is_input_version_valid:
-                print_color('Please specify the desired version X.X.X', LOG_COLORS.YELLOW)
+                print_color(
+                    'Please specify the desired version X.X.X', LOG_COLORS.YELLOW)
                 user_desired_version = input()
                 if re.match(r'\d+\.\d+\.\d+', user_desired_version):
                     self.yml_data['fromversion'] = user_desired_version
@@ -61,13 +62,15 @@ class PlaybookYMLFormat(BaseUpdateYML):
         """Manager function for the playbook YML updater."""
         super().update_yml()
 
-        print_color(F'========Starting updates for playbook: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(
+            F'========Starting updates for playbook: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.add_description()
         self.update_playbook_task_name()
         self.update_fromversion()
         self.save_yml_to_destination_file()
 
-        print_color(F'========Finished updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+        print_color(
+            F'========Finished updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
         return self.initiate_file_validator(PlaybookValidator, 'playbook')

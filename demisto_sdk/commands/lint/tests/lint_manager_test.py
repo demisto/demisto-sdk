@@ -27,7 +27,8 @@ class TestCreateFailedUnitTestsFile:
 
         self.outfile = 'several_failed_packages.txt'
 
-        LintManager.create_failed_unittests_file(['test', 'test2', 'test'], self.outfile)
+        LintManager.create_failed_unittests_file(
+            ['test', 'test2', 'test'], self.outfile)
         assert os.path.isfile(self.outfile)
         with open(self.outfile) as file_:
             file_content = file_.read()

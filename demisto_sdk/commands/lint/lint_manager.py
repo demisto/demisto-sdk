@@ -68,8 +68,10 @@ class LintManager:
             self.pkgs = self._get_packages_to_run()
 
         self.configuration = configuration
-        self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
-        self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
+        self.requirements_for_python3 = get_dev_requirements(
+            3.7, self.configuration.envs_dirs_base, self.log_verbose)
+        self.requirements_for_python2 = get_dev_requirements(
+            2.7, self.configuration.envs_dirs_base, self.log_verbose)
         self.outfile = outfile
 
     @staticmethod
@@ -151,7 +153,8 @@ class LintManager:
         # when we modify the file for mypy includes
         if 'Scripts/CommonServerPython' in pkgs_to_run:
             pkgs_to_run.remove('Scripts/CommonServerPython')
-            res, _ = self._run_single_package_thread(package_dir='Scripts/CommonServerPython')
+            res, _ = self._run_single_package_thread(
+                package_dir='Scripts/CommonServerPython')
             if res == 0:
                 good_pkgs.append('Scripts/CommonServerPython')
 
@@ -159,7 +162,8 @@ class LintManager:
                 fail_pkgs.append('Scripts/CommonServerPython')
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures_submit = [executor.submit(self._run_single_package_thread, directory) for directory in pkgs_to_run]
+            futures_submit = [executor.submit(
+                self._run_single_package_thread, directory) for directory in pkgs_to_run]
             for future in list(concurrent.futures.as_completed(futures_submit)):
                 result = future.result()
                 status_code = result[0]
@@ -200,10 +204,12 @@ class LintManager:
 
         # This will return a list of all files that changed up until the last commit (not including any changes
         # which were made but not yet committed).
-        changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch}")
+        changes_from_last_commit_vs_master = run_command(
+            f"git diff origin/master...{current_branch}")
 
         # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
-        changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")
+        changes_since_last_commit = run_command(
+            f"git diff --name-only -- {pkg_dir}")
 
         # if the package is in the list of changed files or if any files within the package were changed
         # but not yet committed, return True
@@ -256,14 +262,17 @@ class LintManager:
 
         if fail_pkgs:
             print_color("\n******* FAIL PKGS: *******", LOG_COLORS.RED)
-            print_color("\n\t{}\n".format("\n\t".join(fail_pkgs)), LOG_COLORS.RED)
+            print_color("\n\t{}\n".format(
+                "\n\t".join(fail_pkgs)), LOG_COLORS.RED)
 
         if good_pkgs:
             print_color("\n******* SUCCESS PKGS: *******", LOG_COLORS.GREEN)
-            print_color("\n\t{}\n".format("\n\t".join(good_pkgs)), LOG_COLORS.GREEN)
+            print_color("\n\t{}\n".format(
+                "\n\t".join(good_pkgs)), LOG_COLORS.GREEN)
 
         if not good_pkgs and not fail_pkgs:
-            print_color("\n******* No changed packages found *******\n", LOG_COLORS.YELLOW)
+            print_color(
+                "\n******* No changed packages found *******\n", LOG_COLORS.YELLOW)
 
         if fail_pkgs:
             return 1

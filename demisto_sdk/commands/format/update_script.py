@@ -1,6 +1,6 @@
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.validate.hook_validations.script import ScriptValidator
 
 
 class ScriptYMLFormat(BaseUpdateYML):
@@ -20,10 +20,12 @@ class ScriptYMLFormat(BaseUpdateYML):
         """Manager function for the script YML updater."""
         super().update_yml()
 
-        print_color(F'========Starting updates for script: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(
+            F'========Starting updates for script: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.save_yml_to_destination_file()
 
-        print_color(F'========Finished updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+        print_color(
+            F'========Finished updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
         return self.initiate_file_validator(ScriptValidator, 'script')

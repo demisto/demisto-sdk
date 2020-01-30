@@ -16,7 +16,8 @@ class Runner:
             debug_path (str): The path in which you will save the debug file.
             client (DefaultApi): Demisto-SDK client object.
         """
-    SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
+    SECTIONS_HEADER_REGEX = re.compile(
+        r'^(Context Outputs|Human Readable section|Raw Response section)')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
     def __init__(self, query: str, insecure: bool = False, debug: str = None, debug_path: str = None,
@@ -74,7 +75,8 @@ class Runner:
             'investigationId': playground_id,
             'data': self.query
         }
-        ans = self.client.investigation_add_entries_sync(update_entry=update_entry)
+        ans = self.client.investigation_add_entries_sync(
+            update_entry=update_entry)
 
         log_ids = []
 
@@ -111,7 +113,8 @@ class Runner:
                         if self.SECTIONS_HEADER_REGEX.match(line):
                             print_color(line, LOG_COLORS.YELLOW)
                         elif self.FULL_LOG_REGEX.match(line):
-                            print_color('Full Integration Log:', LOG_COLORS.YELLOW)
+                            print_color('Full Integration Log:',
+                                        LOG_COLORS.YELLOW)
                         else:
                             print(line)
         else:
@@ -121,4 +124,5 @@ class Runner:
                     with open(result, 'r+') as log_info:
                         for line in log_info:
                             output_file.write(line.encode('utf-8'))
-            print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
+            print_color(
+                f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)

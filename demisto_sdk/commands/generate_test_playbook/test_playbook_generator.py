@@ -248,15 +248,18 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
     outputs = command.get('outputs', [])
     conditions = outputs_to_condition(outputs)
 
-    task_command = create_automation_task(test_playbook.task_counter, command_name, item_type=item_type)
+    task_command = create_automation_task(
+        test_playbook.task_counter, command_name, item_type=item_type)
     test_playbook.add_task(task_command)
 
     if len(outputs) > 0:
         # add verify output task only if automation have outputs
         if no_outputs:
-            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
+            task_verify_outputs = create_verify_outputs_task(
+                test_playbook.task_counter, [])
         else:
-            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
+            task_verify_outputs = create_verify_outputs_task(
+                test_playbook.task_counter, conditions)
 
         test_playbook.add_task(task_verify_outputs)
 
@@ -308,7 +311,8 @@ class PlaybookTestsGenerator:
             print_error(str(ex))
             return
         except AttributeError:
-            print_error(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file')
+            print_error(
+                f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file')
             return
 
         test_playbook = Playbook(
@@ -338,4 +342,5 @@ class PlaybookTestsGenerator:
         with open(self.test_playbook_yml_path, 'w') as yf:
             ryaml.dump(test_playbook.to_dict(), yf)
 
-            print_color(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}', LOG_COLORS.GREEN)
+            print_color(
+                f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}', LOG_COLORS.GREEN)

@@ -19,7 +19,8 @@ def get_current_working_branch() -> str:
 
 
 def get_changed_files(from_branch: str = 'master', filter_results: Callable = None):
-    temp_files = run_command(f'git diff --name-status {from_branch}').split('\n')
+    temp_files = run_command(
+        f'git diff --name-status {from_branch}').split('\n')
     files: List = []
     for file in temp_files:
         if file:

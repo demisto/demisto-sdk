@@ -3,7 +3,7 @@ from typing import List
 from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.validate.hook_validations.integration import IntegrationValidator
 
 
 class IntegrationYMLFormat(BaseUpdateYML):
@@ -38,7 +38,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
         print(F'Updating reputation commands\' basic arguments to be True for default, isArray and required')
 
-        integration_commands = self.yml_data.get('script', {}).get('commands', [])
+        integration_commands = self.yml_data.get(
+            'script', {}).get('commands', [])
 
         for command in integration_commands:
             command_name = command.get('name', '')
@@ -74,7 +75,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
         """Manager function for the integration YML updater."""
         super().update_yml()
 
-        print_color(F'========Starting updates for integration: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(
+            F'========Starting updates for integration: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.update_proxy_insecure_param_to_default()
         self.set_reputation_commands_basic_argument_as_needed()

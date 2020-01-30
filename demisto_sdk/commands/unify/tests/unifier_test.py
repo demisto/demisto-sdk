@@ -8,7 +8,7 @@ import base64
 from demisto_sdk.commands.common.git_tools import git_path
 import yamlordereddictloader
 
-from demisto_sdk.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_yaml
 
 TEST_VALID_CODE = '''import demistomock as demisto
 from CommonServerPython import *

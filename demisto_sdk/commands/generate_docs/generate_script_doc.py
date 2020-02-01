@@ -1,6 +1,9 @@
-from os import path
-from demisto_sdk.commands.generate_docs.common import *
+import os
 from demisto_sdk.commands.common.update_id_set import get_depends_on
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error, get_docker_images,\
+    get_from_version, get_json
+from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
+    generate_list_section, build_example_dict
 
 
 def generate_script_doc(input, output, examples, id_set='', verbose=False):
@@ -33,7 +36,7 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
 
         if not id_set:
             errors.append(f'id_set.json file is missing')
-        elif not path.exists(id_set):
+        elif not os.path.isfile(id_set):
             errors.append(f'id_set.json file {id_set} was not found')
         else:
             used_in = get_used_in(id_set, script_id)
@@ -195,12 +198,12 @@ def generate_script_example(script_name, example=None):
     errors = []
     context_example = None
     md_example = ''
-    if example is not None:
+    if example:
         script_example = example[script_name][0]
         md_example = example[script_name][1]
         context_example = example[script_name][2]
     else:
-        errors.append(f'did not get any example for {script_name}. please add it manually.')
+        return '', [f'did not get any example for {script_name}. please add it manually.']
 
     example = [
         '',

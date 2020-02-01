@@ -1,4 +1,6 @@
-from demisto_sdk.commands.generate_docs.common import *
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
+from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
+    generate_list_section, HEADER_TYPE
 
 
 def generate_playbook_doc(input, output, examples, id_set, verbose=False):

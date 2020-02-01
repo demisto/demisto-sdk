@@ -1,4 +1,7 @@
-from demisto_sdk.commands.generate_docs.common import *
+import os.path
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
+from demisto_sdk.commands.generate_docs.common import build_example_dict, add_lines, generate_section,\
+    save_output, generate_table_section, stringEscapeMD
 
 
 def generate_integration_doc(input, output, examples, id_set, verbose=False):

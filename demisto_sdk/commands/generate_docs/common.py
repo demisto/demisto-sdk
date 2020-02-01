@@ -1,4 +1,7 @@
-from demisto_sdk.commands.common.tools import *
+import os.path
+import re
+import json
+from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 STRING_TYPES = (str, bytes)  # type: ignore

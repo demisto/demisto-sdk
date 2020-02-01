@@ -23,7 +23,8 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
             errors.extend(build_errors)
             errors.extend(example_errors)
         else:
-            errors.append(f'Script example is missing.')
+            errors.append(f'Note: Script example was not provided. For a more complete documentation,run with the -e '
+                          f'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
 
         script = get_yaml(input)
 

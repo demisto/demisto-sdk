@@ -221,4 +221,4 @@ class TestIncidentFieldsValidator:
             structure.is_valid = True
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
-            assert validator.is_valid_cliname()
+            assert not validator.is_valid_cliname()

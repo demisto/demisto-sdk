@@ -327,9 +327,9 @@ class TestMergeScriptPackageToYMLIntegration:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
+            base_yml='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
             script_code=TEST_VALID_CODE,
-            image_file='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
+            image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
             detailed_description=description,
         )
 
@@ -344,7 +344,7 @@ class TestMergeScriptPackageToYMLIntegration:
         assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
         actual_yml = get_yaml(export_yml_path)
 
-        expected_yml = get_yaml('tests/test_files/Unifier/SampleIntegPackage/'
+        expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/'
                                 'integration-SampleIntegPackageDescSpecialChars.yml')
 
         assert expected_yml == actual_yml
@@ -370,9 +370,9 @@ final test: hi
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
+            base_yml='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage.yml',
             script_code=TEST_VALID_CODE,
-            image_file='tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
+            image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
             detailed_description=description,
         )
 
@@ -387,7 +387,7 @@ final test: hi
         assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
 
         actual_yml = get_yaml(export_yml_path)
-        expected_yml = get_yaml('tests/test_files/Unifier/SampleIntegPackage/'
+        expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/'
                                 'integration-SampleIntegPackageDescAsYML.yml')
 
         assert expected_yml == actual_yml
@@ -415,7 +415,7 @@ class TestMergeScriptPackageToYMLScript:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/SampleScriptPackage/SampleScriptPackage.yml',
+            base_yml='demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/SampleScriptPackage.yml',
             script_code=TEST_VALID_CODE,
         )
 
@@ -431,7 +431,8 @@ class TestMergeScriptPackageToYMLScript:
 
         actual_yml = get_yaml(export_yml_path)
 
-        expected_yml = get_yaml('tests/test_files/Unifier/SampleScriptPackage/script-SampleScriptPackageSanity.yml')
+        expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/'
+                                'script-SampleScriptPackageSanity.yml')
 
         assert expected_yml == actual_yml
 
@@ -444,7 +445,7 @@ class TestMergeScriptPackageToYMLScript:
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
-            base_yml='tests/test_files/Unifier/SampleScriptPackage/SampleScriptPackageDocker45.yml',
+            base_yml='demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/SampleScriptPackageDocker45.yml',
             script_code=TEST_VALID_CODE,
         )
 

@@ -41,7 +41,7 @@ class GroupFieldTypes(IntEnum):
         return group in [group.value for group in cls]
 
 
-# Demisto is using a Bleve DB, those keys can be the cliName
+# Demisto is using a Bleve DB, those keys cannot be the cliName
 BleveMapping = {
     0: [
         "id",

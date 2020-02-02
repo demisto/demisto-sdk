@@ -38,14 +38,10 @@ class GroupFieldTypes(IntEnum):
 
     @classmethod
     def is_valid_group(cls, group):
-        return group in (
-            cls.INCIDENT_FIELD.value,
-            cls.EVIDENCE_FIELD.value,
-            cls.INDICATOR_FIELD.value,
-        )
+        return group in [group.value for group in cls]
 
 
-# Demisto is using a Bleve DB, those keys can be the cliName
+# Demisto is using a Bleve DB, those keys cannot be the cliName
 BleveMapping = {
     0: [
         "id",

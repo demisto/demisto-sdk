@@ -91,3 +91,4 @@ def test_playbook_task_description_name(source_path):
 
     assert 'description' in base_yml.yml_data['tasks']['7']['task']
     assert base_yml.yml_data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API'
+    assert base_yml.yml_data['tasks']['25']['task']['description'] == 'Check if there is a SHA256 hash in context.'

@@ -196,3 +196,29 @@ class TestIncidentFieldsValidator:
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_matching_cliname_regex()
+
+    @pytest.mark.parametrize("cliname, group", VALID_CLINAMES_AND_GROUPS)
+    def test_is_valid_cliname(self, cliname, group):
+        current_file = {"cliName": cliname, "group": group}
+        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+            structure = StructureValidator("")
+            structure.current_file = current_file
+            structure.old_file = None
+            structure.file_path = "random_path"
+            structure.is_valid = True
+            validator = IncidentFieldValidator(structure)
+            validator.current_file = current_file
+            assert validator.is_valid_cliname()
+
+    @pytest.mark.parametrize("cliname, group", INVALID_CLINAMES_AND_GROUPS)
+    def test_is_valid_cliname_invalid(self, cliname, group):
+        current_file = {"cliName": cliname, "group": group}
+        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+            structure = StructureValidator("")
+            structure.current_file = current_file
+            structure.old_file = None
+            structure.file_path = "random_path"
+            structure.is_valid = True
+            validator = IncidentFieldValidator(structure)
+            validator.current_file = current_file
+            assert validator.is_valid_cliname()

@@ -26,7 +26,6 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         for task_id, task in self.yml_data.get('tasks', {}).items():
             if task['task'].get('description'):
-                import ipdb; ipdb.set_trace()
                 continue  # In case we already have a description we should skip the setting of an empty value
 
             task['task'].update({'description': ''})

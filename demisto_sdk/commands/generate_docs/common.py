@@ -28,7 +28,7 @@ def save_output(path, file_name, content):
     print_color(f'Output file was saved to :\n{output}', LOG_COLORS.GREEN)
 
 
-def generate_section(title, data):
+def generate_section(title, data=''):
     """
     Generate simple section in markdown format.
     :param title: The section title.
@@ -44,7 +44,7 @@ def generate_section(title, data):
     return section
 
 
-def generate_list_section(title, data, horizontal_rule=False, empty_message='', text='', header_type=HEADER_TYPE.H2):
+def generate_list_section(title, data='', horizontal_rule=False, empty_message='', text='', header_type=HEADER_TYPE.H2):
     """
      Generate list section in markdown format.
      :param data: list of strings.

@@ -144,8 +144,7 @@ def test_get_script_info():
 
     assert info[0]['Description'] == 'python3'
     assert info[1]['Description'] == 'Algosec'
-    assert info[2]['Description'] == 'demisto/python3:3.7.5.5420'
-    assert info[3]['Description'] == '5.0.0'
+    assert info[2]['Description'] == '5.0.0'
 
 
 def test_get_script_inputs():

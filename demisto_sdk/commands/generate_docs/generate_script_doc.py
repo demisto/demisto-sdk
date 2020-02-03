@@ -1,6 +1,6 @@
 import os
 from demisto_sdk.commands.common.update_id_set import get_depends_on
-from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error, get_docker_images,\
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error,\
     get_from_version, get_json
 from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
     generate_list_section, build_example_dict
@@ -58,10 +58,8 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
             doc.append('`Deprecated`')
 
         doc.append(description)
-        doc.extend(generate_list_section('',
-                                         ['Script Data', 'Dependencies', 'Used In', 'Inputs', 'Outputs']))
 
-        doc.extend(generate_table_section(secript_info, 'Script Data', text='This is the metadata of the script.'))
+        doc.extend(generate_table_section(secript_info, 'Script Data'))
 
         if dependencies:
             doc.extend(generate_list_section('Dependencies', dependencies, True,
@@ -109,13 +107,10 @@ def get_script_info(script_path):
     tags = script.get('tags')
     tags = ', '.join(map(str, tags))
 
-    docker_images = get_docker_images(script)
-    docker_images = ', '.join(map(str, docker_images))
     from_version = get_from_version(script_path)
 
     return [{'Name': 'Script Type', 'Description': script_type},
             {'Name': 'Tags', 'Description': tags},
-            {'Name': 'Docker Image', 'Description': docker_images},
             {'Name': 'Demisto Version', 'Description': from_version}]
 
 

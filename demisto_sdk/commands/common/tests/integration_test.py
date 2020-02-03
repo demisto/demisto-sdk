@@ -435,6 +435,3 @@ class TestIntegrationValidator:
             validator.current_file['configuration'].append(t)
 
         assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
-
-
-

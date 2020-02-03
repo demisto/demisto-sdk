@@ -414,7 +414,7 @@ class TestIntegrationValidator:
     def test_is_fetch_params_exist(self):
         structure = mock_structure("")
         validator = IntegrationValidator(structure)
-        validator.file_path = 'tests/test_files/Akamai_SIEM.yml'
+        validator.file_path = 'demisto_sdk/tests/test_files/Akamai_SIEM.yml'
         with open(validator.file_path, 'r') as f:
             _file = safe_load(f)
         validator.current_file = _file

@@ -208,8 +208,6 @@ class Initiator:
 
     @staticmethod
     def get_valid_user_input(options_list, option_message):
-        # category_options = "\nPack category options: \n"
-
         for index, option in enumerate(options_list, start=1):
             option_message += f"[{index}] {option}\n"
         option_message += "\nEnter option: "

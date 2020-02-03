@@ -523,7 +523,6 @@ class IntegrationValidator(BaseValidator):
             ]
             for param in fetch_params:
                 if param not in params:
-                    param['required'] = 'false'
                     print_error(f"You're missing a required param in the"
                                 f" file '{self.file_path}', the param is '{param}'")
                     return_value = False

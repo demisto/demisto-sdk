@@ -416,8 +416,25 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.file_path = 'tests/test_files/Akamai_SIEM.yml'
         with open(validator.file_path, 'r') as f:
-            validator.current_file = safe_load(f)
+            _file = safe_load(f)
+        validator.current_file = _file
         assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
-        validator.current_file['configuration'] = [t for t in validator.current_file['configuration']
+        # missing param in configuration
+        validator.current_file['configuration'] = [t for t in _file['configuration']
                                                    if not t['name'] == 'incidentType']
         assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        # missing param
+        validator.current_file['configuration'] = [t if not t['name'] == 'incidentType' else t.pop('name')
+                                                   for t in _file['configuration']]
+        assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        # incorrect param
+        validator.current_file['configuration'] = []
+        for t in _file['configuration']:
+            if t.get('name') == 'incidentType':
+                t['type'] = 123
+            validator.current_file['configuration'].append(t)
+
+        assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+
+
+

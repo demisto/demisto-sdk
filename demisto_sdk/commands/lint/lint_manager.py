@@ -217,8 +217,6 @@ class LintManager:
             # which were made but not yet committed).
             changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch} --name-only")
 
-        print(f'changes_from_last_commit_vs_master:\n{changes_from_last_commit_vs_master}')
-
         # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
         changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")
 

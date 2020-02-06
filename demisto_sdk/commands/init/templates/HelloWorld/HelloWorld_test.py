@@ -1,4 +1,4 @@
-from demisto_sdk.commands.init.templates.HelloWorld.HelloWorld import Client, say_hello_command,\
+from HelloWorld import Client, say_hello_command,\
     say_hello_over_http_command
 
 

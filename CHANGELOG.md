@@ -6,6 +6,7 @@
 
 ### 0.3.6
 * Fixed an issue where demisto-sdk **validate** failed on modified scripts without error message.
+* Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
 
 ### 0.3.5
 * Fixed an issue with docker tag validation for integrations.

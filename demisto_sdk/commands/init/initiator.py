@@ -84,7 +84,7 @@ class Initiator:
         if not self.id:
             if self.is_pack_creation:  # There was no option to enter the ID in this process.
                 use_dir_name = str(input(f"Do you want to use the directory name as an "
-                                         f"ID for the {created_object}? Y/N"))
+                                         f"ID for the {created_object}? Y/N "))
             else:
                 use_dir_name = str(input(f"No ID given for the {created_object}'s yml file. "
                                          f"Do you want to use the directory name? Y/N "))

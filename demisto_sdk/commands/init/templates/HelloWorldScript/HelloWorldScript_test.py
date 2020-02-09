@@ -1,4 +1,4 @@
-from HelloWorldScript import say_hello, say_hello_command
+from .HelloWorldScript import say_hello, say_hello_command
 
 
 def test_say_hello():

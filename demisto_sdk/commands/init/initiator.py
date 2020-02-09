@@ -297,7 +297,8 @@ class Initiator:
         """
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
             file_contents = fp.read()
-            file_contents = file_contents.replace(name_to_change, self.dir_name)
+
+        file_contents = file_contents.replace(f'.{name_to_change}', self.dir_name)
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
             fp.write(file_contents)

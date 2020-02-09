@@ -67,6 +67,12 @@ mapping:
           defaultassigneecomplex:
             type: map
             allowempty: True
+          sla:
+            type: map
+            allowempty: True
+          restrictedcompletion:
+            type: bool
+            allowempty: True
           scriptarguments:
             type: map
             allowempty: True

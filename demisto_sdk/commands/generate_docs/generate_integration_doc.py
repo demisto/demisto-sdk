@@ -147,7 +147,7 @@ def generate_single_command_section(index, cmd, example_dict):
                                                                                            cmd['name']))
             section.append(
                 '| {} | {} | {} | '.format(output['contextPath'], output.get('type', 'unknown'),
-                                           output.get('description').encode('utf-8')))
+                                           output.get('description')))
         section.append('')
 
     # Raw output:

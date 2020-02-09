@@ -7,7 +7,7 @@ class Errors:
 
     @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`"\
+        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
             .format(file_path, given_fromversion, needed_from_version)
 
     @staticmethod
@@ -758,3 +758,7 @@ IOC_OUTPUTS_DICT = {
     'ip': {'IP.Address'},
     'url': {'URL.Data'}
 }
+
+PACK_INITIAL_VERSION = '1.0.0'
+
+PACK_SUPPORT_OPTIONS = ['demisto', 'partner', 'developer', 'community']

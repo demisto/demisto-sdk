@@ -91,7 +91,7 @@ class Initiator:
         if not self.id:
             if self.is_pack_creation:  # There was no option to enter the ID in this process.
                 use_dir_name = str(input(f"Do you want to use the directory name as an "
-                                         f"ID for the {created_object}? Y/N"))
+                                         f"ID for the {created_object}? Y/N "))
             else:
                 use_dir_name = str(input(f"No ID given for the {created_object}'s yml file. "
                                          f"Do you want to use the directory name? Y/N "))
@@ -379,7 +379,8 @@ class Initiator:
         """
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
             file_contents = fp.read()
-            file_contents = file_contents.replace(name_to_change, self.dir_name)
+
+        file_contents = file_contents.replace(f'.{name_to_change}', self.dir_name)
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
             fp.write(file_contents)

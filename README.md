@@ -351,7 +351,41 @@ outputs:
   type: Date
 ```
 
+## generate-docs
+Generate documentation file for integration, playbook or script from yaml file.
 
+**Arguments**:
+* **-i, --input**
+    Path of the yml file.
+
+* **-o, --output**
+    The output dir to write the documentation file into, documentation file name is README.md.
+
+* **-t, --file_type**
+    The type of yml file. When the argument is empty, the type will be selected automatically.
+
+* **-e, --examples**
+    In order to create example, DEMISTO_BASE_URL environment variable should contain the Demisto base URL, and DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    **For integration** - Path for file containing command or script examples.
+    Each Command should be in a separate line. **For script** - the script example surrounded by double quotes.
+    When the argument is empty, the documentation will be generate without examples.
+
+* **-id, --id_set**
+    Path of updated id_set.json file, used for generates script documentation.
+     When the argument is empty, the documentation will be generate without `Used In` section.
+
+* **-v, --verbose**
+    Verbose output - mainly for debugging purposes.
+
+**Examples**:
+`demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Playbooks/playbook-Block_IP_-_Generic.yml`
+This will generate documentation file to Block IP - Generic playbook in /Users/Documentations/README.md.
+
+`demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Integrations/Tanium_v2/Tanium_v2.yml -c /Users/tanium_commands.txt`
+This will generate documentation file to Tanium V2 integration in /Users/Documentations/README.md, the file /Users/tanium_commands.txt should contains the example commands to execute.
+
+`demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Scripts/script-PrintErrorEntry.yml -id /demisto/content/Tests/id_set.json -e "!PrintErrorEntry message=Hi"`
+This will generate documentation file to PrintErrorEntry script in /Users/Documentations/README.md. id_set.json should be updated to gets all the integration that uses this script.
 
 ## In the code
 You can import the SDK core class in your python code as follows:

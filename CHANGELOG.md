@@ -6,6 +6,7 @@
 
 ### 0.3.7
 * Fixed an issue where *unify* created a malformed integration yml.
+* Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
 
 
 ### 0.3.6

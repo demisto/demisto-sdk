@@ -222,12 +222,13 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
 
 
 @pytest.mark.parametrize('package_path, dir_name, file_path', [
-    (f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/", "Integrations", f"{git_path()}/demisto_sdk/tests/test_files/"
-                                                                           f"VulnDB/VulnDB"),
+    (f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/", "Integrations",
+     f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB"),
     (f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/", "Scripts",
      f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance"),
     (f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/", "fake_directory",
-     f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB")])
+     f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB"),
+])
 def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
     from demisto_sdk.commands.unify.unifier import Unifier
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
@@ -242,8 +243,7 @@ def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
         else:
             test_yml_data['script']['script'] = 'blah'
 
-        with pytest.raises(ValueError):
-            unifier.insert_script_to_yml(".py", {'script': {}}, test_yml_data)
+        unifier.insert_script_to_yml(".py", {'script': {}}, test_yml_data)
 
 
 def create_test_package(test_dir, package_name, base_yml, script_code, detailed_description='', image_file=''):
@@ -291,14 +291,10 @@ class TestMergeScriptPackageToYMLIntegration:
         )
 
         unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
-        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/SampleIntegPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/SampleIntegPackage.py'
-        assert orig_image == f'{self.export_dir_path}/SampleIntegPackage_image.png'
-        assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
 
         comment = '# this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6'
         with open(export_yml_path) as file_:
@@ -334,14 +330,10 @@ class TestMergeScriptPackageToYMLIntegration:
         )
 
         unifier = Unifier(self.export_dir_path, outdir=self.test_dir_path)
-        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/SampleIntegPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/SampleIntegPackage.py'
-        assert orig_image == f'{self.export_dir_path}/SampleIntegPackage_image.png'
-        assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
         actual_yml = get_yaml(export_yml_path)
 
         expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/'
@@ -377,14 +369,10 @@ final test: hi
         )
 
         unifier = Unifier(self.export_dir_path, outdir=self.test_dir_path)
-        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/SampleIntegPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/SampleIntegPackage.py'
-        assert orig_image == f'{self.export_dir_path}/SampleIntegPackage_image.png'
-        assert orig_description == f'{self.export_dir_path}/SampleIntegPackage_description.md'
 
         actual_yml = get_yaml(export_yml_path)
         expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/'
@@ -420,14 +408,10 @@ class TestMergeScriptPackageToYMLScript:
         )
 
         unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
-        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
         assert export_yml_path == self.expected_yml_path
-        assert orig_yml == f'{self.export_dir_path}/SampleScriptPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/SampleScriptPackage.py'
-        assert orig_image is None
-        assert orig_description is None
 
         actual_yml = get_yaml(export_yml_path)
 
@@ -450,17 +434,13 @@ class TestMergeScriptPackageToYMLScript:
         )
 
         unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
-        yml_files, orig_yml, orig_script, orig_image, orig_description = unifier.merge_script_package_to_yml()
+        yml_files = unifier.merge_script_package_to_yml()
         assert len(yml_files) == 2
         export_yml_path = yml_files[0]
         export_yml_path_45 = yml_files[1]
 
         assert export_yml_path == self.expected_yml_path
         assert export_yml_path_45 == self.expected_yml_path.replace('.yml', '_45.yml')
-        assert orig_yml == f'{self.export_dir_path}/SampleScriptPackage.yml'
-        assert orig_script == f'{self.export_dir_path}/SampleScriptPackage.py'
-        assert orig_image is None
-        assert orig_description is None
 
         actual_yml = get_yaml(export_yml_path)
 

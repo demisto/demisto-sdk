@@ -11,7 +11,7 @@ from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error,\
-    print_color, LOG_COLORS
+    print_warning, print_color, LOG_COLORS
 from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, \
     DEFAULT_IMAGE_PREFIX, SCRIPTS_DIR
 
@@ -153,9 +153,9 @@ class Unifier:
 
         output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
-        print_color("Created unified yml: {}".format(unifier_outputs[0][0]), LOG_COLORS.GREEN)
+        print_color(f'Created unified yml: {list(output_map.keys())}', LOG_COLORS.GREEN)
 
-        return unifier_outputs
+        return unifier_outputs[0]
 
     def insert_image_to_yml(self, yml_data, yml_unified):
         image_data, found_img_path = self.get_data("*png")
@@ -227,14 +227,16 @@ class Unifier:
         clean_code = self.clean_python_code(script_code)
 
         if self.is_script_package:
-            if yml_data.get('script') not in ('', '-'):
-                raise ValueError(f'Please change the script to be blank or a dash(-) for package {self.package_path}')
+            if yml_data.get('script', '') not in ('', '-'):
+                print_warning(f'Script section is not empty in package {self.package_path}.'
+                              f'It should be blank or a dash(-).')
 
             yml_unified['script'] = FoldedScalarString(clean_code)
 
         else:
             if yml_data['script'].get('script', '') not in ('', '-'):
-                raise ValueError(f'Please change the script to be blank or a dash(-) for package {self.package_path}')
+                print_warning(f'Script section is not empty in package {self.package_path}.'
+                              f'It should be blank or a dash(-).')
 
             yml_unified['script']['script'] = FoldedScalarString(clean_code)
 

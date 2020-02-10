@@ -72,7 +72,6 @@ mapping:
             allowempty: True
           restrictedcompletion:
             type: bool
-            allowempty: True
           scriptarguments:
             type: map
             allowempty: True

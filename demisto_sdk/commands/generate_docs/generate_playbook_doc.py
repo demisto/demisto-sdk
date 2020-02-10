@@ -156,6 +156,8 @@ def get_input_data(input_section):
     :return: The input default value(accessor) and the input source(root).
     """
     default_value = input_section.get('value')
+    if isinstance(default_value, str):
+        return default_value, ''
 
     if default_value:
         complex = default_value.get('complex')

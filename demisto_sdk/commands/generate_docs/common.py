@@ -148,7 +148,7 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
 
 def execute_command(command_example):
     errors = []
-    context_example = ''
+    context = {}
     md_example = ''
     cmd = command_example
     try:
@@ -163,7 +163,6 @@ def execute_command(command_example):
 
             if raw_context:
                 context = {k.split('(')[0]: v for k, v in raw_context.items()}
-                context_example += json.dumps(context, indent=4)
 
             if entry.contents:
                 content = entry.contents
@@ -181,7 +180,7 @@ def execute_command(command_example):
             '. Please check your command inputs and outputs')
 
     cmd = cmd.split(' ')[0][1:]
-    return cmd, md_example, context_example, errors
+    return cmd, md_example, context, errors
 
 
 def is_error(execute_command_result):
@@ -217,6 +216,10 @@ def build_example_dict(command_examples):
     errors = []  # type: list
     for example in command_examples:
         cmd, md_example, context_example, cmd_errors = execute_command(example)
+        if 'playbookQuery' in context_example:
+            del context_example['playbookQuery']
+
+        context_example = json.dumps(context_example, indent=4)
         errors.extend(cmd_errors)
 
         if not cmd_errors and cmd not in examples:

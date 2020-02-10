@@ -1,6 +1,6 @@
 import demistomock as demisto
-from CommonServerPython import *  # lgtm [py/polluting-import] pylint: disable=wildcard-import
-from CommonServerUserPython import *  # lgtm [py/polluting-import] pylint: disable=wildcard-import
+from CommonServerPython import *  # noqa: E402 lgtm [py/polluting-import]
+from CommonServerUserPython import *  # noqa: E402 lgtm [py/polluting-import]
 
 
 def say_hello(name):

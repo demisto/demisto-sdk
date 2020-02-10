@@ -1,6 +1,6 @@
 import demistomock as demisto
-from CommonServerPython import *  # lgtm [py/polluting-import]
-from CommonServerUserPython import *  # lgtm [py/polluting-import]
+from CommonServerPython import *  # lgtm [py/polluting-import] pylint: disable=wildcard-import
+from CommonServerUserPython import *  # lgtm [py/polluting-import] pylint: disable=wildcard-import
 # IMPORTS
 
 import json

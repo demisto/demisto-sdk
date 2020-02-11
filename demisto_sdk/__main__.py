@@ -161,7 +161,8 @@ def extract_code(config, **kwargs):
 )
 def unify(**kwargs):
     unifier = Unifier(**kwargs)
-    return unifier.merge_script_package_to_yml()
+    unifier.merge_script_package_to_yml()
+    return 0
 
 
 # ====================== validate ====================== #

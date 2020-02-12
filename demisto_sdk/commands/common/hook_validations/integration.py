@@ -1,6 +1,6 @@
 from typing import List
 from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
-    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
+    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FETCH_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
@@ -508,24 +508,12 @@ class IntegrationValidator(BaseValidator):
         return_value = True
         if self.current_file.get('script', {}).get('isfetch') is True:
             params = [_key for _key in self.current_file.get('configuration', [])]
-            fetch_params: List = [
-                {
-                    'display': 'Incident type',
-                    'name': 'incidentType',
-                    'required': False,
-                    'type': 13
-                },
-                {
-                    'display': 'Fetch incidents',
-                    'name': 'isFetch',
-                    'required': False,
-                    'type': 8
-                }
-            ]
-            for param in fetch_params:
+            for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(f"You're missing a required param in the"
-                                f" file '{self.file_path}', the param is '{param}'")
+                    print_error(f'YIntegration with fetch-incidents was detected '
+                                f'("isfetch:  true" was found in the YAML file).'
+                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
+                                f'the param is:\n{param}')
                     return_value = False
 
         return return_value

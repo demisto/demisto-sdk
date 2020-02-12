@@ -768,3 +768,18 @@ IOC_OUTPUTS_DICT = {
 PACK_INITIAL_VERSION = '1.0.0'
 
 PACK_SUPPORT_OPTIONS = ['demisto', 'partner', 'developer', 'community']
+
+FETCH_REQUIRED_PARAMS = [
+    {
+        'display': 'Incident type',
+        'name': 'incidentType',
+        'required': False,
+        'type': 13
+    },
+    {
+        'display': 'Fetch incidents',
+        'name': 'isFetch',
+        'required': False,
+        'type': 8
+    }
+]

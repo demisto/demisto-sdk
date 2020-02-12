@@ -1,7 +1,9 @@
 import pytest
-from yaml import safe_load
 from mock import patch
 from typing import Optional
+from copy import copy
+
+from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 
@@ -411,51 +413,55 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert not validator.is_valid_feed()
 
-    def test_is_fetch_params_exist_valid(self):
-        structure = mock_structure("")
-        validator = IntegrationValidator(structure)
-        validator.file_path = 'demisto_sdk/tests/test_files/Akamai_SIEM.yml'
-        with open(validator.file_path, 'r') as f:
-            _file = safe_load(f)
-        validator.current_file = _file
-        assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
+    class TestIsFetchParamsExist:
+        config = {
+            'configuration': FETCH_REQUIRED_PARAMS,
+            'script': {'isfetch': True}
+        }
+        validator = IntegrationValidator(mock_structure("", config))
 
-    def _test_is_fetch_params_exist_sanity(self):
-        # missing param in configuration
-        structure = mock_structure("")
-        validator = IntegrationValidator(structure)
-        validator.file_path = 'demisto_sdk/tests/test_files/Akamai_SIEM.yml'
-        with open(validator.file_path, 'r') as f:
-            _file = safe_load(f)
-        _file['configuration'] = [t for t in _file['configuration'] if not t['name'] == 'incidentType']
-        validator.current_file = _file
+        def setup(self):
+            return copy(self.validator)
 
-        assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        def test_valid(self):
+            validator = self.setup()
+            assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
 
-    def _test_is_fetch_params_exist_missing_field(self):
-        # missing param
-        structure = mock_structure("")
-        validator = IntegrationValidator(structure)
-        validator.file_path = 'demisto_sdk/tests/test_files/Akamai_SIEM.yml'
-        with open(validator.file_path, 'r') as f:
-            _file = safe_load(f)
-        _file['configuration'] = [t if not t['name'] == 'incidentType' else t.pop('name')
-                                  for t in _file['configuration']]
-        validator.current_file = _file
-        assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        def test_sanity(self):
+            # missing param in configuration
+            validator = self.setup()
+            validator.current_file['configuration'] = [t for t in validator.current_file['configuration']
+                                                       if t['name'] != 'incidentType']
+            assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
 
-    def test_is_fetch_params_exist_malformed_field(self):
-        # incorrect param
-        structure = mock_structure("")
-        validator = IntegrationValidator(structure)
-        validator.file_path = 'demisto_sdk/tests/test_files/Akamai_SIEM.yml'
-        with open(validator.file_path, 'r') as f:
-            _file = safe_load(f)
-        validator.current_file = _file
-        validator.current_file['configuration'] = []
-        for t in _file['configuration']:
-            if t.get('name') == 'incidentType':
-                t['type'] = 123
-            validator.current_file['configuration'].append(t)
+        def test_missing_field(self):
+            # missing param
+            validator = self.setup()
+            configuration = validator.current_file['configuration']
+            for i in range(len(configuration)):
+                if configuration[i]['name'] == 'incidentType':
+                    del configuration[i]['name']
+            validator.current_file['configuration'] = configuration
+            assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
 
-        assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        def test_malformed_field(self):
+            # incorrect param
+            validator = self.setup()
+            validator.current_file['configuration'] = []
+            for t in self.validator.current_file['configuration']:
+                if t['name'] == 'incidentType':
+                    t['type'] = 123
+                validator.current_file['configuration'].append(t)
+
+            assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+
+        def test_not_fetch(self):
+            validator = self.setup()
+            validator.current_file['configuration'] = []
+            validator.current_file['script']['isfetch'] = False
+            for t in self.validator.current_file['configuration']:
+                if t['name'] == 'incidentType':
+                    t['type'] = 123
+                validator.current_file['configuration'].append(t)
+
+            assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'

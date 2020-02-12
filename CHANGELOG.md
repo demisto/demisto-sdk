@@ -5,6 +5,7 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.3.7
+* Added *generate-docs* command to generate documentation file for integration, playbook or script.
 * Fixed an issue where *unify* created a malformed integration yml.
 * Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
 

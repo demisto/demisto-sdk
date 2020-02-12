@@ -265,7 +265,7 @@ class FilesValidator:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
-            structure_validator = StructureValidator(file_path, old_file_path)
+            structure_validator = StructureValidator(file_path, old_file_path=old_file_path)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
 
@@ -375,7 +375,7 @@ class FilesValidator:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
-            structure_validator = StructureValidator(file_path)
+            structure_validator = StructureValidator(file_path, is_new_file=True)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
 

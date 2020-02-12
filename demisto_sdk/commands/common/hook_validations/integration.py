@@ -474,7 +474,8 @@ class IntegrationValidator(BaseValidator):
                     self.is_valid = False
                     return True
 
-            elif not is_field_hidden and not configuration_display:
+            elif not is_field_hidden and not configuration_display \
+                    and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
                 print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
                 self.is_valid = False
                 return True

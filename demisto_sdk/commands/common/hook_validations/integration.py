@@ -1,4 +1,3 @@
-from typing import List
 from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator

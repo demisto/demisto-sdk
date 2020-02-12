@@ -205,13 +205,7 @@ class LintManager:
 
         # This will check if there are any changes between current master version and the last commit in master
         if os.environ.get('CIRCLE_COMPARE_URL') and current_branch == "master":
-            # CIRCLE_COMPARE_URL variable should looks like this example:
-            # https://github.com/demisto/content/compare/9d29563ccc5be9ea2b3146112da604d53ead21aa...dd8e9ae45c5e3a0de07d6659aa68352348a1427e
-            commits = os.environ['CIRCLE_COMPARE_URL'].split("/")[-1]
-
-            # will run this command for the example above:
-            # git diff 9d29563ccc5be9ea2b3146112da604d53ead21aa...dd8e9ae45c5e3a0de07d6659aa68352348a1427e --name-only
-            changes_from_last_commit_vs_master = run_command(f"git diff {commits} --name-only")
+            changes_from_last_commit_vs_master = run_command("git diff --name-only HEAD..HEAD^")
         else:
             # This will return a list of all files that changed up until the last commit (not including any changes
             # which were made but not yet committed).

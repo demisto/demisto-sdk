@@ -55,6 +55,11 @@ tasks:
           - operator: general.uniq
     reputationcalc: 0
     separatecontext: true
+    sla:
+      hours: 1
+      days: 0
+      weeks: 0
+    restrictedcompletion: true
     loop:
       iscommand: false
       exitCondition: ""
@@ -109,6 +114,10 @@ tasks:
       - "10"
     reputationcalc: 0
     separatecontext: false
+    sla:
+      hours: 1
+      days: 0
+      weeks: 0
     view: |-
       {
         "position": {

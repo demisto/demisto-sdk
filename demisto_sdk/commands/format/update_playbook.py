@@ -25,6 +25,9 @@ class PlaybookYMLFormat(BaseUpdateYML):
             self.yml_data['description'] = ''
 
         for task_id, task in self.yml_data.get('tasks', {}).items():
+            if task['task'].get('description'):
+                continue  # In case we already have a description we should skip the setting of an empty value
+
             task['task'].update({'description': ''})
 
     def update_playbook_task_name(self):

@@ -1,0 +1,26 @@
+commonfields:
+  id: Test script
+  version: 1
+name: Test script
+fromversion: 5.0.0
+script: "-"
+type: python
+tags:
+- Algosec
+enabled: true
+args:
+- name: InputA
+  required: true
+- name: InputB
+  description: This is input b
+  defaultValue: 127.0.0.1
+outputs:
+- contextPath: outputA
+  description: This is output a
+  type: boolean
+- contextPath: outputB
+scripttarget: 0
+subtype: python3
+runonce: false
+dockerimage: demisto/python3:3.7.5.5420
+runas: DBotWeakRole

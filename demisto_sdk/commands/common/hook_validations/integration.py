@@ -54,6 +54,7 @@ class IntegrationValidator(BaseValidator):
             self.is_docker_image_valid(),
             self.is_valid_feed(),
             self.is_fetch_params_exist(),
+            self.is_feed_params_exist(),
         ]
         return all(answers)
 
@@ -509,7 +510,7 @@ class IntegrationValidator(BaseValidator):
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(f'YIntegration with fetch-incidents was detected '
+                    print_error(f'Integration with fetch-incidents was detected '
                                 f'("isfetch:  true" was found in the YAML file).'
                                 f'\nA required parameter is missing or malformed in the file {self.file_path}, '
                                 f'the param is:\n{param}')
@@ -524,15 +525,14 @@ class IntegrationValidator(BaseValidator):
             bool. True if the integration is defined as well False otherwise.
         """
         return_value = True
-        if self.current_file.get('script', {}).get('isfeed') is True:
+        if self.current_file.get('script', {}).get('feed') is True:
             params = [_key for _key in self.current_file.get('configuration', [])]
-            feed_params: List = [
-
-            ]
             for param in FEED_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(f"You're missing a required param in the"
-                                f" file '{self.file_path}', the param is '{param}'")
+                    print_error(f'Feed Integration with was detected '
+                                f'("feed:  true" was found in the YAML file).'
+                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
+                                f'the param is:\n{param}')
                     return_value = False
 
         return return_value

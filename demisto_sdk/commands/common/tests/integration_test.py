@@ -3,7 +3,7 @@ from mock import patch
 from typing import Optional
 from copy import copy
 
-from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS
+from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 
@@ -465,3 +465,56 @@ class TestIntegrationValidator:
                 validator.current_file['configuration'].append(t)
 
             assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
+
+    class TestIsFeedParamsExist:
+        config = {
+            'configuration': FEED_REQUIRED_PARAMS,
+            'script': {'feed': True}
+        }
+        validator = IntegrationValidator(mock_structure("", config))
+
+        def setup(self):
+            return copy(self.validator)
+
+        def test_valid(self):
+            validator = self.setup()
+            assert validator.is_feed_params_exist(), 'is_feed_params_exist() returns False instead True'
+
+        def test_sanity(self):
+            # missing param in configuration
+            validator = self.setup()
+            validator.current_file['configuration'] = [t for t in validator.current_file['configuration']
+                                                       if not t.get('display')]
+            assert validator.is_feed_params_exist() is False, 'is_feed_params_exist() returns True instead False'
+
+        def test_missing_field(self):
+            # missing param
+            validator = self.setup()
+            configuration = validator.current_file['configuration']
+            for i in range(len(configuration)):
+                if not configuration[i].get('display'):
+                    del configuration[i]['name']
+            validator.current_file['configuration'] = configuration
+            assert validator.is_feed_params_exist() is False, 'is_feed_params_exist() returns True instead False'
+
+        def test_malformed_field(self):
+            # incorrect param
+            validator = self.setup()
+            validator.current_file['configuration'] = []
+            for t in self.validator.current_file['configuration']:
+                if not t.get('display'):
+                    t['type'] = 123
+                validator.current_file['configuration'].append(t)
+
+            assert validator.is_feed_params_exist() is False, 'is_feed_params_exist() returns True instead False'
+
+        def test_not_fetch(self):
+            validator = self.setup()
+            validator.current_file['configuration'] = []
+            validator.current_file['script']['feed'] = False
+            for t in self.validator.current_file['configuration']:
+                if not t.get('display'):
+                    t['type'] = 123
+                validator.current_file['configuration'].append(t)
+
+            assert validator.is_feed_params_exist(), 'is_feed_params_exist() returns False instead True'

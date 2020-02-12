@@ -1,17 +1,36 @@
+{#Declare image to build from#}
 FROM {{ image }}
 
-{% set project_name = project_dir.split('/')[-2] %}
+{#Init variable if run in circleci#}
+{% if circle_ci %}
+ENV CI {{ circle_ci }}
+{% endif %}
 
-RUN mkdir -p /devwork/{{ project_name }}
-
+{#Install build base packages if required on alpine docker image#}
 RUN OS_RELEASE=$(cat /etc/os-release); if echo "$OS_RELEASE" | grep -q "alpine"; then apk add build-base; fi;
 
-RUN pip install --upgrade pip
-RUN printf {{ pypi_packs }} > /devwork/test-requirements.txt
+{#Creating test main directory#}
+RUN mkdir -p /devwork/
+
+{#Install requirment - all if test defined otherwise only pylint#}
+{% if not no_test %}
+RUN printf "{{ pypi_packs | join('\\n') }}" > /devwork/test-requirements.txt
 RUN python -m pip install -r /devwork/test-requirements.txt
+{% else %}
+RUN  python -m pip install pylint
+{% endif %}
 
-COPY / /devwork/{{ project_name }}
+{#Create package directory#}
+{% set project_name = project_dir.split('/')[-2] %}
+COPY  / /devwork/{{ project_name }}/
+RUN rm -f /devwork/{{ project_name }}/__init__.py > /dev/null
 
+{#Change group ownershir and permissions - Due to contaier security issues#}
+RUN chown -R :4000 /devwork/
+RUN chmod -R 775 /devwork
+
+{#Define working dir starting container#}
 WORKDIR /devwork/{{ project_name }}
 
+{#Container entry point (Every command will start with /bin/sh -c)#}
 ENTRYPOINT ["/bin/sh", "-c"]

@@ -1,36 +1,37 @@
 import logging
 import os
-from datetime import datetime
 
 
-DEBUG = False
+def logging_setup(verbose: int, log_path: str) -> logging.Logger:
+    """ Init logger object for logging in demisto-sdk
+        For more info - https://docs.python.org/3/library/logging.html
 
+    Args:
+        verbose(int) verosity level - 1-6
+        log_path(str): Path to save log of all levels
 
-def logging_setup(verbosity=False, logpath=None, logger_name=None):
-    logger = logging.getLogger(logger_name)
-    logger.removeHandler(logger.handlers.pop())
-    log_level = logging.INFO
-    fmt = '%(message)s'
+    Returns:
+        logging.Logger: logger object
+    """
+    logger: logging.Logger = logging.getLogger('demisto-sdk')
+    logger.setLevel(logging.DEBUG)
+    log_level = logging.getLevelName((6 - verbose) * 10)
+    fmt = logging.Formatter('%(levelname)s - %(message)s')
 
-    ch = logging.StreamHandler()
-    if verbosity:
-        log_level = logging.DEBUG
-    formatter = logging.Formatter(fmt)
-    logger.setLevel(log_level)
+    if verbose:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(log_level)
+        console_handler.setFormatter(fmt)
+        logger.addHandler(console_handler)
 
-    ch.setLevel(level=log_level)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-    logger.propagate = False
-
-    if logpath:
-        file_handler = logging.FileHandler(
-            os.path.join(logpath, f"demisto-sdk-lint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"))
-
-        file_handler.setLevel(logging.DEBUG)
-
-        file_handler.setFormatter(formatter)
+    # Setting debug log file if in circleci
+    if log_path:
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
+        file_handler.setFormatter(fmt)
+        file_handler.setLevel(level=logging.DEBUG)
         logger.addHandler(file_handler)
+
+    logger.propagate = False
 
     return logger
 

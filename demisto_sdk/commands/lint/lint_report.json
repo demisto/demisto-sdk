@@ -1,0 +1,92 @@
+{
+    "Integrations/Akamai_WAF": {
+        "bandit_errors": null,
+        "exit_code": 8,
+        "flake8_errors": null,
+        "images": [
+            {
+                "image": "demisto/akamai:1.0.0.5063",
+                "image_errors": null,
+                "pylint_errors": null,
+                "pytest_json": {
+                    "report": {
+                        "created_at": "2020-03-01 07:01:34.739541",
+                        "environment": {
+                            "Platform": "Linux-4.9.184-linuxkit-x86_64-with",
+                            "Python": "3.7.5"
+                        },
+                        "summary": {
+                            "duration": 0.07628130912780762,
+                            "failed": 1,
+                            "num_tests": 2,
+                            "passed": 1
+                        },
+                        "tests": [
+                            {
+                                "call": {
+                                    "duration": 0.0011243820190429688,
+                                    "longrepr": [
+                                        "def test_3():",
+                                        ">       assert {\"hello\": 1, \"bye\": 5} == {\"hello\": 7, \"bye\": 8}",
+                                        "E       AssertionError: assert {'bye': 5, 'hello': 1} == {'bye': 8, 'hello': 7}",
+                                        "E         Differing items:",
+                                        "E         {'bye': 5} != {'bye': 8}",
+                                        "E         {'hello': 1} != {'hello': 7}",
+                                        "E         Full diff:",
+                                        "E         - {'bye': 5, 'hello': 1}",
+                                        "E         ?         ^           ^",
+                                        "E         + {'bye': 8, 'hello': 7}...",
+                                        "E         ",
+                                        "E         ...Full output truncated (2 lines hidden), use '-vv' to show",
+                                        "",
+                                        "test_new.py:2: AssertionError"
+                                    ],
+                                    "name": "call",
+                                    "outcome": "failed"
+                                },
+                                "duration": 0.026391267776489258,
+                                "name": "test_new.py::test_3",
+                                "outcome": "failed",
+                                "run_index": 0,
+                                "setup": {
+                                    "duration": 0.012194156646728516,
+                                    "name": "setup",
+                                    "outcome": "passed"
+                                },
+                                "teardown": {
+                                    "duration": 0.0008785724639892578,
+                                    "name": "teardown",
+                                    "outcome": "passed"
+                                }
+                            },
+                            {
+                                "call": {
+                                    "duration": 0.0005395412445068359,
+                                    "name": "call",
+                                    "outcome": "passed"
+                                },
+                                "duration": 0.0026099681854248047,
+                                "name": "test_new.py::test_4",
+                                "outcome": "passed",
+                                "run_index": 1,
+                                "setup": {
+                                    "duration": 0.0007464885711669922,
+                                    "name": "setup",
+                                    "outcome": "passed"
+                                },
+                                "teardown": {
+                                    "duration": 0.0005774497985839844,
+                                    "name": "teardown",
+                                    "outcome": "passed"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ],
+        "mypy_errors": null,
+        "path": "Integrations/Akamai_WAF",
+        "pkg": "Akamai_WAF"
+    }
+}

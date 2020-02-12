@@ -9,6 +9,7 @@ pytest = "*"
 pytest-mock = "*"
 requests-mock = "*"
 pytest-xdist = "*"
+pytest-json = "*"
 
 [packages]
 

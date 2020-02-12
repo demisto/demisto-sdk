@@ -7,7 +7,7 @@ class Errors:
 
     @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`"\
+        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
             .format(file_path, given_fromversion, needed_from_version)
 
     @staticmethod
@@ -123,6 +123,12 @@ class Errors:
     def breaking_backwards_docker(cls, file_path, old_docker, new_docker):
         return "{}: {}, You've changed the docker for the file," \
                " this is not allowed. Old: {}, New: {} ".format(file_path, cls.BACKWARDS, old_docker, new_docker)
+
+    @staticmethod
+    def not_latest_docker(file_path, current_docker, latest_docker):
+        return "{}: You're not using latest docker for the file," \
+               " please update to latest version. Current: {}, Latest: {} ".format(file_path, current_docker,
+                                                                                   latest_docker)
 
     @classmethod
     def breaking_backwards_arg_changed(cls, file_path):
@@ -758,3 +764,7 @@ IOC_OUTPUTS_DICT = {
     'ip': {'IP.Address'},
     'url': {'URL.Data'}
 }
+
+PACK_INITIAL_VERSION = '1.0.0'
+
+PACK_SUPPORT_OPTIONS = ['demisto', 'partner', 'developer', 'community']

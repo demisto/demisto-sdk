@@ -4,12 +4,19 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.7
+* Fixed an issue where *unify* created a malformed integration yml.
+* Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
+
+
 ### 0.3.6
 * Fixed an issue where demisto-sdk **validate** failed on modified scripts without error message.
+
 
 ### 0.3.5
 * Fixed an issue with docker tag validation for integrations.
 * Restructured repo source code.
+
 
 ### 0.3.4
 * Saved failing unit tests as a file.
@@ -30,6 +37,7 @@
 * Added pack parameter for **init**.
 * Fixed an issue where error would appear if name parameter is not set in **init**.
 
+
 ### 0.3.2
 * Fixed the handling of classifier files in **validate**.
 
@@ -40,7 +48,6 @@
 
 
 ### 0.3.0
-
 * Added support for multi-package **lint** both with parallel and without.
 * Added all parameter in **lint** to run on all packages and packs in content repository.
 * Added **format** for:

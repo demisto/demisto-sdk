@@ -830,3 +830,18 @@ FEED_REQUIRED_PARAMS = [
                           ' the indicator might still be added to the system.'
     }
 ]
+
+FETCH_REQUIRED_PARAMS = [
+    {
+        'display': 'Incident type',
+        'name': 'incidentType',
+        'required': False,
+        'type': 13
+    },
+    {
+        'display': 'Fetch incidents',
+        'name': 'isFetch',
+        'required': False,
+        'type': 8
+    }
+]

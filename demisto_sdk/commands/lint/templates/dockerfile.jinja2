@@ -1,0 +1,17 @@
+FROM {{ image }}
+
+{% set project_name = project_dir.split('/')[-2] %}
+
+RUN mkdir -p /devwork/{{ project_name }}
+
+RUN OS_RELEASE=$(cat /etc/os-release); if echo "$OS_RELEASE" | grep -q "alpine"; then apk add build-base; fi;
+
+RUN pip install --upgrade pip
+RUN printf {{ pypi_packs }} > /devwork/test-requirements.txt
+RUN python -m pip install -r /devwork/test-requirements.txt
+
+COPY / /devwork/{{ project_name }}
+
+WORKDIR /devwork/{{ project_name }}
+
+ENTRYPOINT ["/bin/sh", "-c"]

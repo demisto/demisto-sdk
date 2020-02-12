@@ -56,7 +56,7 @@ def print_warning(warning_str):
     print_color(warning_str, LOG_COLORS.YELLOW)
 
 
-def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
+def run_command(command, is_silenced=True, exit_on_error=True, universal_newlines=True, cwd=None):
     """Run a bash command in the shell.
 
     Args:
@@ -69,19 +69,21 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=universal_newlines, cwd=cwd)
     else:
         p = Popen(command.split(), cwd=cwd)
 
-    output, err = p.communicate()
-    if err:
+    stdout, stderr = p.communicate()
+    if stderr:
         if exit_on_error:
-            print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            print_error('Failed to run command {}\nerror details:\n{}'.format(command, stderr))
             sys.exit(1)
         else:
-            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, stderr))
+    if universal_newlines:
+        return stdout
 
-    return output
+    return stdout.decode("utf-8")
 
 
 def get_remote_file(full_file_path, tag='master'):
@@ -402,17 +404,29 @@ def get_docker_images(script_obj):
     return imgs
 
 
-def get_all_docker_images(script_obj):
+def get_all_docker_images(script_obj, py_version: bool = False):
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
     Args:
         script_obj (dict): A yml dict.
+        py_version
 
     Returns:
-        List. A list of all docker images.
+        List. A list of all docker images, python version used
     """
     # this makes sure the first docker in the list is the main docker image.
-    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
+    python_version = ''
+    if script_obj.get('dockerimage'):
+        imgs = [script_obj.get('dockerimage')]
+        tmp_python_version = script_obj.get('subtype')
+        if tmp_python_version:
+            if '3' in tmp_python_version:
+                python_version = '3'
+            elif '2' in tmp_python_version:
+                python_version = '2'
+    else:
+        imgs = [DEF_DOCKER]
+        python_version = '2'
 
     # get additional docker images
     for key in script_obj.keys():
@@ -422,6 +436,9 @@ def get_all_docker_images(script_obj):
 
             elif isinstance(script_obj.get(key), list):
                 imgs.extend(script_obj.get(key))
+
+    if py_version:
+        return imgs, python_version
 
     return imgs
 

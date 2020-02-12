@@ -21,6 +21,10 @@ from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.create_artifacts.content_creator import ContentCreator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
+from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.validation.type_file.find_type import find_type
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error
@@ -262,46 +266,52 @@ def secrets(config, **kwargs):
                          "docker image of an integration/script. Meant to be used with integrations/scripts that use "
                          "the folder (package) structure. Will lookup up what docker image to use and will setup the "
                          "dev dependencies and file in the target folder. ")
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    "-d", "--dir", help="Specify directory of integration/script")
-@click.option(
-    "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
-@click.option(
-    "--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
-@click.option(
-    "--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
-@click.option(
-    "--no-bandit", is_flag=True, help="Do NOT run bandit linter")
-@click.option(
-    "--no-test", is_flag=True, help="Do NOT test (skip pytest)")
-@click.option(
-    "-r", "--root", is_flag=True, help="Run pytest container with root user")
-@click.option(
-    "-k", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
-@click.option(
-    "--cpu-num",
-    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs)",
-    default=0)
-@click.option(
-    "-p", "--parallel", is_flag=True, help="Run tests in parallel")
-@click.option(
-    "-m", "--max-workers", type=int, help="How many threads to run in parallel")
-@click.option(
-    "-g", "--git", is_flag=True, help="Will run only on changed packages")
-@click.option(
-    "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
-@click.option(
-    "--outfile", help="Save failing packages to a file"
-)
-@pass_config
-def lint(config, dir, **kwargs):
-    linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
-    return linter.run_dev_packages()
+@click.help_option('-h', '--help')
+@click.option("-d", "--dir-pack", help="Specify directory of integration/script", type=click.Path(exists=True))
+@click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
+@click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+@click.option("-p", "--parallel", default=1, help="Run tests in parallel")
+@click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
+@click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
+@click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
+@click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
+@click.option("-k", "--keep-container", is_flag=True, help="Keep the test container")
+@click.option("-r", "--report", help="html report - dir to create the report", type=click.Path(exists=True))
+def lint(dir_pack: str, git: bool, all_packs: bool, verbose: bool, parallel: int, no_flake8: bool,
+         no_bandit: bool, no_mypy: bool, no_pylint: bool, no_test: bool, keep_container: bool, report: str):
+    """Run lints and unit-tests on Demisto packages
+
+    Args:
+        dir_pack: packs to run lint on.
+        git: Perform lint and test only on chaged packs.
+        all_packs: Whether to run on all packages.
+        verbose: Whether to output a detailed response.
+        parallel: Whether to run command on multiple threads.
+        no_flake8: Whether to skip flake8.
+        no_bandit: Whether to skip bandit.
+        no_mypy: Whether to skip mypy.
+        no_pylint: Whether to skip pylint.
+        no_test: Whether to skip pytest.
+        keep_container: Whether to keep the test container.
+        report: directory to create report.
+
+    Returns:
+        int. 0 on success and 1 if any package failed
+    """
+    lint_manager = LintManager(dir_packs=dir_pack,
+                               git=git,
+                               all_packs=all_packs,
+                               verbose=verbose)
+    return lint_manager.run_dev_packages(parallel=parallel,
+                                         no_flake8=no_flake8,
+                                         no_bandit=no_bandit,
+                                         no_mypy=no_mypy,
+                                         no_pylint=no_pylint,
+                                         no_test=no_test,
+                                         keep_container=keep_container,
+                                         report=report)
 
 
 # ====================== format ====================== #
@@ -488,9 +498,64 @@ def init(**kwargs):
     return 0
 
 
+# ====================== generate-docs ====================== #
+@main.command(name="generate-docs",
+              short_help="Generate documentation for integration, playbook or script from yaml file.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="Path of the yml file.", required=True)
+@click.option(
+    "-o", "--output", help="The output dir to write the documentation file into,"
+                           " documentation file name is README.md.", required=True)
+@click.option(
+    "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
+    help="The type of yml file.", required=False)
+@click.option(
+    "-e", "--examples", help="For integration - Path for file containing command or script examples."
+                             " Each Command should be in a separate line."
+                             " For script - the script example surrounded by double quotes.")
+@click.option(
+    "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
+def generate_doc(file_type, **kwargs):
+    input_path = kwargs['input']
+    output_path = kwargs['output']
+
+    # validate inputs
+    if input_path and not os.path.isfile(input_path):
+        print_error(F'Input file {input_path} was not found.')
+        return 1
+
+    if not input_path.lower().endswith('.yml'):
+        print_error(F'Input {input_path} is not a valid yml file.')
+        return 1
+
+    if output_path and not os.path.isdir(output_path):
+        print_error(F'Output directory {output_path} was not found.')
+        return 1
+
+    if not file_type:
+        file_type = find_type(kwargs.get('input', ''))
+
+    print(f'Start generate {file_type} documentation...')
+    if file_type == 'integration':
+        return generate_integration_doc(**kwargs)
+    elif file_type == 'script':
+        return generate_script_doc(**kwargs)
+    elif file_type == 'playbook':
+        return generate_playbook_doc(**kwargs)
+    else:
+        print_error(f'File type {file_type} is not supported.')
+        return 1
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
 
 # todo: add download from demisto command
 

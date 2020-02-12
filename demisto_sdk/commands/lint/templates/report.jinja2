@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Demisto-sdk lint report</title>
+    <meta name="Demisto-sdk" content="Lint report flake8, bandit, mypy, pylint, pytest">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        #myInput {
+            background-image: url('/css/searchicon.png'); /* Add a search icon to input */
+            background-position: 10px 12px; /* Position the search icon */
+            background-repeat: no-repeat; /* Do not repeat the icon image */
+            width: 100%; /* Full-width */
+            font-size: 16px; /* Increase font-size */
+            padding: 12px 20px 12px 40px; /* Add some padding */
+            border: 1px solid #ddd; /* Add a grey border */
+            margin-bottom: 12px; /* Add some space below the input */
+        }
+
+        .filteredtable tbody tr,
+        .tablefilter {
+            display: none;
+        }
+
+        .tablefilter + .suc {
+            cursor: pointer;
+            background-color: #F08080;
+            color: white;
+            padding: 3px;
+
+        }
+
+        .tablefilter + .fa {
+            cursor: pointer;
+            background-color: #90EE90;
+            color: white;
+            padding: 3px;
+
+        }
+
+        #table-success.tablefilter:checked ~ table tbody tr.table-danger,
+        #table-danger.tablefilter:checked ~ table tbody tr.table-success {
+            display: table-row;
+        }
+    </style>
+</head>
+<body>
+<input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search ....">
+<script>
+    function myFunction() {
+        // Declare variables
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("myTable");
+        tr = table.getElementsByTagName("tr");
+
+        // Loop through all table rows, and hide those who don't match the search query
+        for (i = 1; i < tr.length; i++) {
+            // Hide the row initially.
+            tr[i].style.display = "none";
+
+            td = tr[i].getElementsByTagName("td");
+            for (var j = 0; j < td.length; j++) {
+                cell = tr[i].getElementsByTagName("td")[j];
+                if (cell) {
+                    if (cell.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                        break;
+                    }
+                }
+            }
+        }
+    }
+</script>
+<!-- Filter -->
+<input type="checkbox" class="tablefilter suc" name="table-success" id="table-success" checked/>
+<label class="suc" for="table-success">Success</label>
+<input type="checkbox" class="tablefilter" name="table-danger" id="table-danger" checked/>
+<label class="fa" for="table-danger">Failed</label>
+<table class="table table-sm table-bordered table-striped table-hover table-responsive filteredtable" id="myTable"
+       cellspacing="0"
+       width="100%">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">Package</th>
+        <th scope="col">Path</th>
+        <th scope="col">pytest errors</th>
+        <th scope="col">flake8 errors</th>
+        <th scope="col">bandit errors</th>
+        <th scope="col">mypy errors</th>
+        <th scope="col">pylint errors</th>
+        <th scope="col">collected tests</th>
+        <th scope="col">images</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for pkg in pkgs_status %}
+        <tr class="{% if pkg.status == 1 %}{{ "table-danger" }}{% else %}{{ "table-success" }}{% endif %}">
+            <td>{{ pkg.pkg }}</td>
+            <td>{{ pkg.path }}</td>
+            <td>
+                <ul>
+                    {% for fail_test in pkg.pytest_errors %}
+                        <li>{{ fail_test }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+            <td>{{ pkg.flake8_errors }}</td>
+            <td>{{ pkg.bandit_errors }}</td>
+            <td>{{ pkg.mypy_errors }}</td>
+            <td>{{ pkg.pylint_errors }}</td>
+            <td>{{ pkg.pytest_collected_tests}}</td>
+            <td>
+                <ul>
+                    {% for image in pkg.images %}
+                        <li>{{ image.image }} - {{ image.python_version }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>

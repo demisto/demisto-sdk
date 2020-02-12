@@ -1,6 +1,6 @@
 from typing import List
 from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
-    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
+    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
@@ -523,6 +523,26 @@ class IntegrationValidator(BaseValidator):
                 }
             ]
             for param in fetch_params:
+                if param not in params:
+                    print_error(f"You're missing a required param in the"
+                                f" file '{self.file_path}', the param is '{param}'")
+                    return_value = False
+
+        return return_value
+
+    def is_feed_params_exist(self) -> bool:
+        """
+        validate that all required fields in integration that have fetch incidents are in the yml file.
+        Returns:
+            bool. True if the integration is defined as well False otherwise.
+        """
+        return_value = True
+        if self.current_file.get('script', {}).get('isfeed') is True:
+            params = [_key for _key in self.current_file.get('configuration', [])]
+            feed_params: List = [
+
+            ]
+            for param in FEED_REQUIRED_PARAMS:
                 if param not in params:
                     print_error(f"You're missing a required param in the"
                                 f" file '{self.file_path}', the param is '{param}'")

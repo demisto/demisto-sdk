@@ -768,3 +768,65 @@ IOC_OUTPUTS_DICT = {
 PACK_INITIAL_VERSION = '1.0.0'
 
 PACK_SUPPORT_OPTIONS = ['demisto', 'partner', 'developer', 'community']
+
+FEED_REQUIRED_PARAMS = [
+    {
+        'display': 'Fetch indicators',
+        'name': 'feed',
+        'defaultvalue': True,
+        'type': 8,
+        'required': False
+    },
+    {
+        'display': 'Indicator Reputation',
+        'name': 'feedReputation',
+        'defaultvalue': 'feedInstanceReputationNotSet',
+        'type': 18,
+        'required': False,
+        'options': ['None', 'Good', 'Suspicious', 'Bad'],
+        'additionalinfo': 'Indicators from this integration instance will be marked with this reputation'
+    },
+    {
+        'display': 'Source Reliability',
+        'name': 'feedReliability',
+        'defaultvalue': 'F - Reliability cannot be judged',
+        'type': 15,
+        'required': True,
+        'options': [
+            'A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable',
+            'E - Unreliable', 'F - Reliability cannot be judged'],
+        'additionalinfo': 'Reliability of the source providing the intelligence data'
+    },
+    {
+        'display': "",
+        'name': 'feedExpirationPolicy',
+        'defaultvalue': 'indicatorType',
+        'type': 17,
+        'required': False,
+        'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
+    },
+    {
+        'display': "",
+        'name': 'feedExpirationInterval',
+        'defaultvalue': 20160,
+        'type': 1,
+        'required': False
+    },
+    {
+        'display': 'Feed Fetch Interval',
+        'name': 'feedFetchInterval',
+        'defaultvalue': 240,
+        'type': 19,
+        'required': False
+    },
+    {
+        'display': 'Bypass exclusion list',
+        'name': 'feedBypassExclusionList',
+        'defaultvalue': "",
+        'type': 8,
+        'required': False,
+        'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
+                          ' This means that if an indicator from this feed is on the exclusion list,'
+                          ' the indicator might still be added to the system.'
+    }
+]

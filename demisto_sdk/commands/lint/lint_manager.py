@@ -1,138 +1,160 @@
-# STD python packages
-import concurrent
-import os
-import concurrent.futures.thread
-from typing import List, Dict, Any, Optional
+# STD packages
+import concurrent.futures
+import json
 import logging
-import time
-# 3-rd party packages
+import os
+import sys
+import textwrap
+from typing import List
+import git
+import re
+# Third party packages
 import docker
-from jinja2 import Environment, FileSystemLoader
-from tqdm import tqdm
 # Local packages
-from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 from demisto_sdk.commands.common.logger import Colors, logging_setup
-from demisto_sdk.commands.common.tools import get_dev_requirements, run_command
+from demisto_sdk.commands.common.tools import print_v, print_error
+from demisto_sdk.commands.lint.helpers import get_test_modules
 from demisto_sdk.commands.lint.linter import Linter
 
-# Logger object init
+# Define check exit code if failed
+FAIL_EXIT_CODES = {
+    "flake8": 0b1,
+    "bandit": 0b10,
+    "mypy": 0b100,
+    "pytest": 0b1000,
+    "pylint": 0b10000,
+    "image": 0b100000
+}
+
 logger: logging.Logger
 
 
 class LintManager:
-    """LintManager used to activate lint command using Linters in a single or multi thread.
+    """ LintManager used to activate lint command using Linters in a single or multi thread.
 
     Attributes:
-        dir_packs: A CSV of directories to run lint on.
-        git: Perform lint and test only on chaged packs.
-        all_packs: Whether to run on all packages.
-        verbose: Whether to output a detailed response.
+        dir_packs(str): Directories to run lint on.
+        git(bool): Perform lint and test only on chaged packs.
+        all_packs(bool): Whether to run on all packages.
+        verbose(int): Whether to output a detailed response.
+        log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, dir_packs: str, git: bool, all_packs: bool, verbose: bool):
+    def __init__(self, dir_packs: str, git: bool, all_packs: bool, verbose: bool, log_path: str):
+        self._verbose = verbose
+        # Set logging level and file handler if required
         global logger
-        logger = logging_setup(verbosity=verbose)
-        self.config = Configuration()
-        self.pkgs: List[str]
-        if all_packs or (not dir_packs and git):
-            self.pkgs = LintManager.get_all_directories()
-            logger.info(f"Packages found {Colors.Fg.cyan}{len(self.pkgs)}{Colors.reset}")
-        else:
-            self.pkgs = dir_packs.split(',')
-        if git:
-            self.pkgs = LintManager._get_packages_to_run(self.pkgs)
-            for pkg in self.pkgs:
-                logger.info(f"Pkgs added after comparing to git {Colors.Fg.cyan}{pkg}{Colors.reset}")
-        self.requirements_for_python3: str = get_dev_requirements(3.7, self.config.envs_dirs_base)
-        self.requirements_for_python2: str = get_dev_requirements(2.7, self.config.envs_dirs_base)
-        self.common_server_created: bool = False
-
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
-                         no_test: bool, keep_container: bool, report: str) -> int:
-        """Runs the Lint command on all given packages.
-        Args:
-            parallel: Whether to run command on multiple threads.
-            no_flake8: Whether to skip flake8.
-            no_bandit: Whether to skip bandit.
-            no_mypy: Whether to skip mypy.
-            no_pylint: Whether to skip pylint.
-            no_test: Whether to skip pytest.
-            keep_container: Whether to keep the test container.
-            report: directory to create report.
-        Returns:
-            int. 0 on success and 1 if any package failed
-        """
-        # Overall tests status
-        lint_status: Dict[str, Any] = {
-            "status": 0,
-            "flake8_exit_code": 0,
-            "flake8_errors": {},
-            "bandit_exit_code": 0,
-            "bandit_errors": {},
-            "mypy_exit_code": 0,
-            "mypy_errors": {},
-            "pylint_exit_code": 0,
-            "pylint_errors": {},
-            "pytest_exit_code": 0,
-            "pytest_errors": {},
-            "pytest_collected_tests": []
-        }
-        # Detailed packages status
-        pkgs_status: List[Dict[str, Any]] = []
-        # Cumulative exit to be returned
-        return_exit_code: int = 0
-        # Get docker client for dockr setup
-        docker_client = docker.from_env()
-
-        linters: List[Linter] = []
-        for pack in self.pkgs:
-            logger.debug(f"Permform lint on {Colors.Fg.cyan}{pack}{Colors.reset}")
-            linter: Linter = Linter(pack_dir=pack,
-                                    req_2=self.requirements_for_python2,
-                                    req_3=self.requirements_for_python3)
-            linters.append(linter)
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
-            future_to_linter = {}
-            pbar = tqdm(unit="pkgs", bar_format='{percentage:3.0f}%:{bar}{r_bar} {desc}', ncols=100,
-                        total=len(self.pkgs))
-            # Start the load operations
-            for linter in linters:
-                future_to_linter[executor.submit(fn=linter.run_dev_packages,
-                                                 docker_client=docker_client,
-                                                 lint_status=lint_status,
-                                                 pbar=pbar,
-                                                 no_flake8=no_flake8,
-                                                 no_bandit=no_bandit,
-                                                 no_mypy=no_mypy,
-                                                 no_pylint=no_pylint,
-                                                 no_test=no_test,
-                                                 keep_container=keep_container)] = linter
-            for future in concurrent.futures.as_completed(future_to_linter):
-                pbar.update()
-                pbar.set_description_str(f"{future_to_linter[future].pack_name}")
-                exit_code, lint_status, pkg_status = future.result()
-                pkgs_status.append(pkg_status)
-                if exit_code:
-                    return_exit_code = exit_code
-            pbar.set_description_str(f"Finished")
-            pbar.close()
-
-        # Iterating overall packages required - performing all chosen tests
-
-        self._print_final_results(lint_status)
-        if report:
-            self._generate_report(pkgs_status, report)
-
-        return return_exit_code
+        logger = logging_setup(verbose=verbose,
+                               log_path=log_path)
+        # Gather facts for manager
+        self._facts = self._gather_facts()
+        # Filter packages to lint and test check
+        self._pkgs = self._get_packages(content_repo=self._facts["content_repo"],
+                                        dir_packs=dir_packs,
+                                        git=git,
+                                        all_packs=all_packs)
 
     @staticmethod
-    def get_all_directories() -> List[str]:
+    def _gather_facts():
+        """ Gather shared required facts for lint command execution - Also perform mandatory resource checkup.
+            1. Content repo object.
+            2. Requirements file for docker images.
+            3. Mandatory test modules - demisto-mock.py etc
+            3. Docker daemon check.
+
+        Returns:
+            dict: facts
+        """
+        facts = {
+            "content_repo": None,
+            "requirements_3": None,
+            "requirements_2": None,
+            "test_modules": None
+        }
+        # Get content repo object
+        try:
+            git_repo = git.Repo(os.getcwd(),
+                                search_parent_directories=True)
+            if 'content' not in git_repo.remote().urls.__next__():
+                raise git.InvalidGitRepositoryError
+            facts["content_repo"] = git_repo
+            logger.info(f"lint - Content path {git_repo.working_dir}")
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
+            print_error("Please run demisto-sdk lint in content repository - Aborting!")
+            logger.critical(f"demisto-sdk-lint - can't locate content repo {e}")
+            sys.exit(1)
+        # Get global requirements file
+        pipfile_dir = os.path.join(os.path.dirname(__file__), 'dev_envs/default_python')
+        try:
+            for py_num in ['2', '3']:
+                pipfile_lock_path = os.path.join(pipfile_dir + py_num, 'Pipfile.lock')
+                with open(file=pipfile_lock_path) as f:
+                    lock_file: dict = json.load(fp=f)["develop"]
+                    facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in lock_file.items()]
+                    logger.info(f"lint - Test requirement successfully collected for python {py_num}")
+                    logger.debug(f"lint - Test requirement are {facts[f'requirements_{py_num}']}")
+        except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
+            print_error("Can't parse pipfile.lock - Aborting!")
+            logger.critical(f"demisto-sdk-lint - can't parse pipfile.lock {e}")
+            sys.exit(1)
+        # ￿Get mandatory modulestest modules and Internet connection for docker usage
+        try:
+            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"])
+            logger.info(f"lint - Test mandatory modules successfully collected")
+        except git.GitCommandError as e:
+            print_error("Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
+                        "connection)")
+            logger.critical(f"demisto-sdk-lint - unable to get mandatory test-modules demisto-mock.py etc {e}",
+                            exc_info=False)
+            sys.exit(1)
+        # Validating docker engine connection
+        docker_client: docker.DockerClient = docker.from_env()
+        daemon_connection = docker_client.ping()
+        if not daemon_connection:
+            print_error("Can't communicate with Docker daemon - check your docker Engine is ON - Aborting!")
+            logger.critical(f"demisto-sdk-lint - Can't communicate with Docker daemon")
+            sys.exit(1)
+        logger.info(f"lint - Docker daemon test passed")
+
+        return facts
+
+    def _get_packages(self, content_repo: git.Repo, dir_packs: str, git: bool, all_packs: bool):
+        """ Get packages paths to run lint command.
+
+        Args:
+            content_repo(git.Repo): Content repository object.
+            dir_packs(str): dir packs list specified as argument.
+            git(bool): Perform lint and test only on chaged packs.
+            all_packs(bool): Whether to run on all packages.
+
+        Returns:
+            list[str]: Pkgs to run lint
+        """
+        pkgs: list
+        if (all_packs or git) and not dir_packs:
+            pkgs = LintManager._get_all_packages()
+        else:
+            pkgs = dir_packs.split(',')
+        total_found = len(pkgs)
+        print(f"Total content packages found {Colors.Fg.cyan}{total_found}{Colors.reset}")
+        if git:
+            pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
+                                                        pkgs=pkgs)
+            for pkg in pkgs:
+                print_v(f"Package added after comparing to git {Colors.Fg.cyan}{pkg}{Colors.reset}",
+                        log_verbose=self._verbose)
+        print(f"Execute lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} "
+              f"packages")
+
+        return pkgs
+
+    @staticmethod
+    def _get_all_packages() -> List[str]:
         """Gets all integration, script and beta_integrations in packages and packs in content repo.
 
         Returns:
-            List. A list of integration, script and beta_integration names.
+            list: A list of integration, script and beta_integration names.
         """
         all_directories = []
         # get all integrations, scripts and beta_integrations from packs
@@ -157,98 +179,300 @@ class LintManager:
         return all_directories
 
     @staticmethod
-    def _get_packages_to_run(pkgs: List[str]) -> List[str]:
-        """Checks which packages had changes in them and should run on Lint.
-
-        Returns:
-            list[str]. A list of names of packages that should run.
-        """
-        # get the current branch name.
-        current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
-        logger.info(f"Checking for pkgs changed in branch {Colors.Fg.cyan}{current_branch[:-1]}{Colors.reset}")
-        pkgs_to_run = []
-        pbar = tqdm(iterable=pkgs, unit="pkgs", bar_format='{percentage:3.0f}%:{bar}{r_bar}', ncols=100)
-        for directory in pbar:
-            if LintManager._check_should_run_pkg(pkg_dir=directory):
-                pkgs_to_run.append(directory)
-        pbar.close()
-
-        return pkgs_to_run
-
-    @staticmethod
-    def _check_should_run_pkg(pkg_dir: str) -> bool:
-        """Checks if there is a difference in the package before this Lint run and after it.
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: list) -> list:
+        """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
+        run on Lint.
 
         Args:
-            pkg_dir: The package directory to check.
+            pkgs(list): pkgs to check
 
         Returns:
-            bool. True if there is a difference and False otherwise.
+            list: A list of names of packages that should run.
         """
-        # get the current branch name.
-        current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
+        print(f"Comparing to git using branch {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset}")
+        untracked_files = content_repo.untracked_files
+        staged_files = [os.path.dirname(item.b_path) for item in content_repo.index.diff(None, paths=pkgs)]
+        changed_from_master = [os.path.dirname(item.b_path) for item in content_repo.head.commit.diff('master',
+                                                                                                      paths=pkgs)]
+        all_changed = set(untracked_files).union(set(staged_files)).union(set(changed_from_master))
+        pkgs_to_check = all_changed.intersection(set(pkgs))
 
-        # This will return a list of all files that changed up until the last commit (not including any changes
-        # which were made but not yet committed).
-        changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch}")
+        return list(pkgs_to_check)
 
-        # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
-        changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")
-
-        # if the package is in the list of changed files or if any files within the package were changed
-        # but not yet committed, return True
-        if pkg_dir in changes_from_last_commit_vs_master or len(changes_since_last_commit) > 0:
-            return True
-
-        # if no changes were made to the package - return False.
-        return False
-
-    @staticmethod
-    def _print_final_results(lint_status) -> int:
-        """Print the results of parallel lint command.
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
+                         no_test: bool, keep_container: bool, test_xml: str, json_report: str) -> int:
+        """ Runs the Lint command on all given packages.
 
         Args:
-
+            parallel(int): Whether to run command on multiple threads.
+            no_flake8(bool): Whether to skip flake8.
+            no_bandit(bool): Whether to skip bandit.
+            no_mypy(bool): Whether to skip mypy.
+            no_pylint(bool): Whether to skip pylint.
+            no_test(bool): Whether to skip pytest.
+            keep_container(bool): Whether to keep the test container.
+            test_xml(str): Path for saving pytest xml results.
+            json_report(str): Path for store json report.
 
         Returns:
-            int. 0 on success and 1 if any package failed
+            int: exit code by falil exit codes by var FAIL_EXIT_CODES
+        """
+        lint_status = {
+            "fail_packs_flake8": [],
+            "fail_packs_bandit": [],
+            "fail_packs_mypy": [],
+            "fail_packs_pylint": [],
+            "fail_packs_pytest": [],
+            "fail_packs_image": [],
+        }
+        # Detailed packages status
+        pkgs_status = {}
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
+            return_exit_code: int = 0
+            results = []
+            for pack in self._pkgs:
+                print_v(f"Permform lint on {Colors.Fg.cyan}{pack}{Colors.reset}", log_verbose=self._verbose)
+                linter: Linter = Linter(pack_dir=pack,
+                                        content_path=self._facts["content_repo"].working_dir,
+                                        req_2=self._facts["requirements_2"],
+                                        req_3=self._facts["requirements_3"])
+                results.append(executor.submit(fn=linter.run_dev_packages,
+                                               no_flake8=no_flake8,
+                                               no_bandit=no_bandit,
+                                               no_mypy=no_mypy,
+                                               no_pylint=no_pylint,
+                                               no_test=no_test,
+                                               modules=self._facts["test_modules"],
+                                               keep_container=keep_container,
+                                               test_xml=test_xml))
+            counter = 0
+            for future in concurrent.futures.as_completed(results):
+                exit_code, pkg_status = future.result()
+                pkgs_status[pkg_status["pkg"]] = pkg_status
+                if exit_code:
+                    if exit_code & FAIL_EXIT_CODES["flake8"]:
+                        lint_status["fail_packs_flake8"].append(pkg_status["pkg"])
+                    if exit_code & FAIL_EXIT_CODES["bandit"]:
+                        lint_status["fail_packs_bandit"].append(pkg_status["pkg"])
+                    if exit_code & FAIL_EXIT_CODES["mypy"]:
+                        lint_status["fail_packs_mypy"].append(pkg_status["pkg"])
+                    if exit_code & FAIL_EXIT_CODES["pylint"]:
+                        lint_status["fail_packs_pylint"].append(pkg_status["pkg"])
+                    if exit_code & FAIL_EXIT_CODES["pytest"]:
+                        lint_status["fail_packs_pytest"].append(pkg_status["pkg"])
+                    if exit_code & FAIL_EXIT_CODES["image"]:
+                        lint_status["fail_packs_image"].append(pkg_status["pkg"])
+                    if not return_exit_code & exit_code:
+                        return_exit_code += exit_code
+                counter += 1
+
+        self._report_results(lint_status=lint_status,
+                             pkgs_status=pkgs_status,
+                             return_exit_code=return_exit_code)
+        LintManager._create_report(pkgs_status=pkgs_status,
+                                   path=json_report)
+
+        return return_exit_code
+
+    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
+        """ Log report to console
+
+        Args:
+            lint_status(dict): Overall lint status
+            pkgs_status(dict): All pkgs status dict
+            return_exit_code(int): exit code will indicate which lint or test failed
      """
-        logger.info("\n")
-        # Log summary status
-        for check in ["flake8", "bandit", "mypy", "pylint", "pytest"]:
-            if lint_status[f"{check}_exit_code"]:
-                logger.warning(f"{check} - {Colors.Bg.red}[FAILED]{Colors.reset}")
-            else:
-                logger.warning(f"{check} - {Colors.Bg.green}[PASS]{Colors.reset}")
-        logger.info("\n")
-        # Log errors from string
-        for check in ["flake8", "bandit", "mypy"]:
-            if lint_status[f"{check}_exit_code"]:
-                logger.info(f"{Colors.underline}{Colors.bold}{check} - Errors summary{Colors.reset}")
-                for pkg, error in lint_status[f"{check}_errors"].items():
-                    logger.info(f"{Colors.Fg.cyan}Package - {pkg}{Colors.reset}")
-                    logger.info(f"{error}")
-        # Log errors from list
-        for check in ["pylint", "pytest"]:
-            if lint_status[f"{check}_exit_code"]:
-                logger.info(f"{Colors.underline}{Colors.bold}{check} - Errors summary{Colors.reset}")
-                for pkg, errors in lint_status[f"{check}_errors"].items():
-                    logger.info(f"{Colors.Fg.cyan}Package - {pkg}{Colors.reset}")
-                    for error in errors:
-                        logger.info(f"{error}")
+        self.report_pass_lint_checks(return_exit_code=return_exit_code)
+        self.report_failed_lint_checks(return_exit_code=return_exit_code,
+                                       pkgs_status=pkgs_status,
+                                       lint_status=lint_status)
+        self.report_unit_tests(return_exit_code=return_exit_code,
+                               pkgs_status=pkgs_status,
+                               lint_status=lint_status)
+        self.report_failed_image_creation(return_exit_code=return_exit_code,
+                                          pkgs_status=pkgs_status,
+                                          lint_status=lint_status)
 
-    def _generate_report(self, pkgs_status: Dict[str, Any], report: Optional[str]) -> int:
-        """Print the results of parallel lint command.
+    @staticmethod
+    def report_pass_lint_checks(return_exit_code: int):
+        """ Log PASS/FAIL on each lint/test
 
         Args:
+            return_exit_code(int): exit code will indicate which lint or test failed
+         """
+        for lint in ["flake8", "bandit", "mypy", "pylint", "pytest"]:
+            spacing = 7 - len(lint)
+            if not FAIL_EXIT_CODES[lint] & return_exit_code:
+                print(f"{lint} {' ' * spacing}- {Colors.Bg.green}[PASS]{Colors.reset}")
+            else:
+                print(f"{lint} {' ' * spacing}- {Colors.Bg.red}[FAIL]{Colors.reset}")
 
+    @staticmethod
+    def report_failed_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
+        """ Log failed lint log if exsits
 
-        Returns:
-            int. 0 on success and 1 if any package failed
+        Args:
+            lint_status(dict): Overall lint status
+            pkgs_status(dict): All pkgs status dict
+            return_exit_code(int): exit code will indicate which lint or test failed
         """
-        file_loader = FileSystemLoader(f'{self.config.sdk_env_dir}/lint/templates')
-        env = Environment(loader=file_loader)
-        template = env.get_template('report.jinja2')
-        table = template.render(pkgs_status=pkgs_status)
-        with open(f"{report}/index{time.strftime('%Y%m%d-%H%M%S')}.html", mode='w') as f:
-            f.write(table)
+        for lint in ["flake8", "bandit", "mypy"]:
+            if FAIL_EXIT_CODES[lint] & return_exit_code:
+                sentence = f" {lint.capitalize()} errors "
+                print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+                print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
+                print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+                for fail_pack in lint_status[f"fail_packs_{lint}"]:
+                    print(f"{Colors.Fg.cyan}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
+                    print(pkgs_status[fail_pack][f"{lint}_errors"])
+
+        if FAIL_EXIT_CODES["pylint"] & return_exit_code:
+            sentence = f" Pylint errors "
+            print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+            print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
+            print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+            for fail_pack in lint_status[f"fail_packs_pylint"]:
+                print(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}")
+                print(pkgs_status[fail_pack]["images"][0]["pylint_errors"])
+
+    def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
+        """ Log failed unit-tests , if verbosity specified will log also success unit-tests
+
+        Args:
+            lint_status(dict): Overall lint status
+            pkgs_status(dict): All pkgs status dict
+            return_exit_code(int): exit code will indicate which lint or test failed
+        """
+        # Indentation config
+        packs_with_tests = 0
+        preferred_width = 100
+        pack_indent = 2
+        pack_prefix = " " * pack_indent + "- Package: "
+        wrapper_pack = textwrap.TextWrapper(initial_indent=pack_prefix,
+                                            width=preferred_width,
+                                            subsequent_indent=' ' * len(pack_prefix))
+        docker_indent = 6
+        docker_prefix = " " * docker_indent + "- Image: "
+        wrapper_docker_image = textwrap.TextWrapper(initial_indent=docker_prefix,
+                                                    width=preferred_width,
+                                                    subsequent_indent=' ' * len(docker_prefix))
+        test_indent = 9
+        test_prefix = " " * test_indent + "- "
+        wrapper_test = textwrap.TextWrapper(initial_indent=test_prefix, width=preferred_width,
+                                            subsequent_indent=' ' * len(test_prefix))
+        error_indent = 9
+        error_first_prefix = " " * error_indent + "  Error: "
+        error_sec_prefix = " " * error_indent + "         "
+        wrapper_first_error = textwrap.TextWrapper(initial_indent=error_first_prefix, width=preferred_width,
+                                                   subsequent_indent=' ' * len(error_first_prefix))
+        wrapper_sec_error = textwrap.TextWrapper(initial_indent=error_sec_prefix, width=preferred_width,
+                                                 subsequent_indent=' ' * len(error_sec_prefix))
+        # Log unit-tests
+        sentence = " Unit Tests "
+        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+        print(f"{sentence}")
+        print(f"{'#' * len(sentence)}{Colors.reset}")
+        # Log passed unit-tests
+        passed_printed = False
+        for pkg, status in pkgs_status.items():
+            if not passed_printed and status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
+                print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
+                passed_printed = True
+                print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
+                for image in status["images"]:
+                    if not image.get("image_errors"):
+                        tests = image.get("pytest_json", {}).get("report", {}).get("tests")
+                        if tests:
+                            print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
+                            if not FAIL_EXIT_CODES["pytest"] & status["exit_code"]:
+                                packs_with_tests += 1
+                            for test_case in tests:
+                                if test_case.get("call", {}).get("outcome") != "failed":
+                                    name = re.sub(pattern=r"\[.*\]",
+                                                  repl="",
+                                                  string=test_case.get("name"))
+                                    print_v(wrapper_test.fill(name), log_verbose=self._verbose)
+
+            # Log failed unit-tests
+            if FAIL_EXIT_CODES["pytest"] & return_exit_code:
+                print(f"\n{Colors.Fg.blue}Failed Unit-tests:{Colors.reset}")
+                for fail_pack in lint_status["fail_packs_pytest"]:
+                    packs_with_tests += 1
+                    print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
+                    for image in pkgs_status[fail_pack]["images"]:
+                        tests = image.get("pytest_json", {}).get("report", {}).get("tests")
+                        for test_case in tests:
+                            if test_case.get("call", {}).get("outcome") == "failed":
+                                name = re.sub(pattern=r"\[.*\]",
+                                              repl="",
+                                              string=test_case.get("name"))
+                                print(wrapper_test.fill(name))
+                                if test_case.get("call", {}).get("longrepr"):
+                                    for i in range(len(test_case.get("call", {}).get("longrepr"))):
+                                        if i == 0:
+                                            print(wrapper_first_error.fill(
+                                                test_case.get("call", {}).get("longrepr")[i]))
+                                        else:
+                                            print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
+
+            # Log unit-tests summary
+            print(f"\n{Colors.Fg.blue}Summary:{Colors.reset}")
+            print(f"Packages: {len(pkgs_status)}")
+            print(f"Packages with unit-tests: {packs_with_tests}")
+            print(f"   Pass: {Colors.Fg.green}{packs_with_tests - len(lint_status['fail_packs_pytest'])}"
+                  f"{Colors.reset}")
+            print(f"   Failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
+            if lint_status['fail_packs_pytest']:
+                print(f"Failed packages:")
+                preferred_width = 100
+                fail_pack_indent = 3
+                fail_pack_prefix = " " * fail_pack_indent + "- "
+                wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
+                                                         subsequent_indent=' ' * len(fail_pack_prefix))
+                for fail_pack in lint_status["fail_packs_pytest"]:
+                    print(wrapper_fail_pack.fill(fail_pack))
+
+    @staticmethod
+    def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):
+        """ Log failed image creation if occured
+
+        Args:
+            lint_status(dict): Overall lint status
+            pkgs_status(dict): All pkgs status dict
+            return_exit_code(int): exit code will indicate which lint or test failed
+     """
+        # Indentation config
+        preferred_width = 100
+        indent = 2
+        pack_prefix = " " * indent + "- Package: "
+        wrapper_pack = textwrap.TextWrapper(initial_indent=pack_prefix,
+                                            width=preferred_width,
+                                            subsequent_indent=' ' * len(pack_prefix))
+        image_prefix = " " * indent + "  Image: "
+        wrapper_image = textwrap.TextWrapper(initial_indent=image_prefix, width=preferred_width,
+                                             subsequent_indent=' ' * len(image_prefix))
+        indent_error = 4
+        error_prefix = " " * indent_error + "  Error: "
+        wrapper_error = textwrap.TextWrapper(initial_indent=error_prefix, width=preferred_width,
+                                             subsequent_indent=' ' * len(error_prefix))
+        # Log failed images creation
+        if FAIL_EXIT_CODES["image"] & return_exit_code:
+            sentence = f" Image creation errors "
+            print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+            print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
+            print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+            for fail_pack in lint_status["fail_packs_image"]:
+                print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
+                for image in pkgs_status[fail_pack]["images"]:
+                    print(wrapper_image.fill(image["image"]))
+                    print(wrapper_error.fill(image["image_errors"]))
+
+    @staticmethod
+    def _create_report(pkgs_status: dict, path: str):
+        if path:
+            with open(file=os.path.join(path, "lint_report.json"), mode='w') as f:
+                json.dump(fp=f,
+                          obj=pkgs_status,
+                          indent=4,
+                          sort_keys=True)

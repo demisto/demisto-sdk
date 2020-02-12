@@ -271,40 +271,47 @@ def secrets(config, **kwargs):
 @click.option("-d", "--dir-pack", help="Specify directory of integration/script", type=click.Path(exists=True))
 @click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
-@click.option("-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvvvvv",
+              type=click.IntRange(0, 6, clamp=True))
 @click.option("-p", "--parallel", default=1, help="Run tests in parallel")
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
 @click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
-@click.option("-k", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option("-r", "--report", help="html report - dir to create the report", type=click.Path(exists=True))
-def lint(dir_pack: str, git: bool, all_packs: bool, verbose: bool, parallel: int, no_flake8: bool,
-         no_bandit: bool, no_mypy: bool, no_pylint: bool, no_test: bool, keep_container: bool, report: str):
-    """Run lints and unit-tests on Demisto packages
+@click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
+@click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True))
+@click.option("--json-report", help="Path to store pytest xml results", type=click.Path(exists=True))
+@click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True))
+def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int, no_flake8: bool,
+         no_bandit: bool, no_mypy: bool, no_pylint: bool, no_test: bool, keep_container: bool, test_xml: str,
+         json_report: str, log_path: str):
+    """ Run lints and unit-tests on Demisto packages
 
     Args:
-        dir_pack: packs to run lint on.
-        git: Perform lint and test only on chaged packs.
-        all_packs: Whether to run on all packages.
-        verbose: Whether to output a detailed response.
-        parallel: Whether to run command on multiple threads.
-        no_flake8: Whether to skip flake8.
-        no_bandit: Whether to skip bandit.
-        no_mypy: Whether to skip mypy.
-        no_pylint: Whether to skip pylint.
-        no_test: Whether to skip pytest.
-        keep_container: Whether to keep the test container.
-        report: directory to create report.
+        dir_pack(str): packs to run lint on.
+        git(bool): Perform lint and test only on chaged packs.
+        all_packs(bool): Whether to run on all packages.
+        verbose(int): Whether to output a detailed response.
+        parallel(int): Whether to run command on multiple threads.
+        no_flake8(bool): Whether to skip flake8.
+        no_bandit(bool): Whether to skip bandit.
+        no_mypy(bool): Whether to skip mypy.
+        no_pylint(bool): Whether to skip pylint.
+        no_test(bool): Whether to skip pytest.
+        keep_container(bool): Whether to keep the test container.
+        test_xml(str): Path or store pytest xmls.
+        json_report(str): Path for store json report.
+        log_path(str): Path to all levels of logs.
 
     Returns:
-        int. 0 on success and 1 if any package failed
+        int: 0 on success and 1 if any package failed
     """
     lint_manager = LintManager(dir_packs=dir_pack,
                                git=git,
                                all_packs=all_packs,
-                               verbose=verbose)
+                               verbose=verbose,
+                               log_path=log_path)
     return lint_manager.run_dev_packages(parallel=parallel,
                                          no_flake8=no_flake8,
                                          no_bandit=no_bandit,
@@ -312,7 +319,8 @@ def lint(dir_pack: str, git: bool, all_packs: bool, verbose: bool, parallel: int
                                          no_pylint=no_pylint,
                                          no_test=no_test,
                                          keep_container=keep_container,
-                                         report=report)
+                                         test_xml=test_xml,
+                                         json_report=json_report)
 
 
 # ====================== format ====================== #

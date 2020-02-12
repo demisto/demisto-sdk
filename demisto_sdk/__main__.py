@@ -161,7 +161,8 @@ def extract_code(config, **kwargs):
 )
 def unify(**kwargs):
     unifier = Unifier(**kwargs)
-    return unifier.merge_script_package_to_yml()
+    unifier.merge_script_package_to_yml()
+    return 0
 
 
 # ====================== validate ====================== #
@@ -558,10 +559,6 @@ def exit_from_program(result=0, **kwargs):
 
 
 # todo: add download from demisto command
-
-
-def demisto_sdk_cli():
-    main()
 
 
 if __name__ == '__main__':

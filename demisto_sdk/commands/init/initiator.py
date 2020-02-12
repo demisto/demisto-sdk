@@ -2,13 +2,15 @@ import os
 import shutil
 import yaml
 import yamlordereddictloader
-
+import json
+from datetime import datetime
 from typing import Dict
 from distutils.dir_util import copy_tree
 from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, \
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR,\
-    CONNECTIONS_DIR, DASHBOARDS_DIR, MISC_DIR, REPORTS_DIR, WIDGETS_DIR
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, \
+    CONNECTIONS_DIR, DASHBOARDS_DIR, MISC_DIR, REPORTS_DIR, WIDGETS_DIR, PACK_INITIAL_VERSION, INTEGRATION_CATEGORIES, \
+    PACK_SUPPORT_OPTIONS
 
 
 class Initiator:
@@ -47,6 +49,11 @@ class Initiator:
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+    PACK_TEMPLATE_FOLDER = 'PackData'
+    PACK_METADATA_TEMPLATE = 'metadata_template.json'
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+    PACK_INITIAL_VERSION = "1.0.0"
+
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
                 MISC_DIR, REPORTS_DIR, WIDGETS_DIR]
@@ -84,7 +91,7 @@ class Initiator:
         if not self.id:
             if self.is_pack_creation:  # There was no option to enter the ID in this process.
                 use_dir_name = str(input(f"Do you want to use the directory name as an "
-                                         f"ID for the {created_object}? Y/N"))
+                                         f"ID for the {created_object}? Y/N "))
             else:
                 use_dir_name = str(input(f"No ID given for the {created_object}'s yml file. "
                                          f"Do you want to use the directory name? Y/N "))
@@ -126,10 +133,6 @@ class Initiator:
         fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 
-        with open(os.path.join(self.full_output_path, 'metadata.json'), 'a') as fp:
-            # TODO fill this once metadata.json script is ready
-            fp.write('[]')
-
         fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
         fp.close()
 
@@ -138,6 +141,16 @@ class Initiator:
 
         print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
+        metadata_path = os.path.join(self.full_output_path, 'metadata.json')
+        with open(metadata_path, 'a') as fp:
+            user_response = input("\nDo you want to fill pack's metadata file? Y/N ").lower()
+            fill_manually = user_response in ['y', 'yes']
+
+            pack_metadata = Initiator.create_metadata(fill_manually)
+            json.dump(pack_metadata, fp, indent=4)
+
+            print_color(f"Created pack metadata at path : {metadata_path}", LOG_COLORS.GREEN)
+
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
             integration_init = Initiator(output_dir=os.path.join(self.full_output_path, 'Integrations'),
@@ -145,6 +158,75 @@ class Initiator:
             return integration_init.init()
 
         return True
+
+    @staticmethod
+    def create_metadata(fill_manually):
+        metadata = {
+            'displayName': '',
+            'description': '',
+            'support': '',
+            'serverMinVersion': '',
+            'currentVersion': PACK_INITIAL_VERSION,
+            'author': '',
+            'url': '',
+            'email': '',
+            'categories': [],
+            'tags': [],
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'beta': False,
+            'deprecated': False,
+            'certification': '',
+            'useCases': [],
+            'keywords': [],
+            'dependencies': {},
+        }
+
+        if not fill_manually:
+            return metadata
+
+        metadata['displayName'] = input("\nDisplay name of the pack: ")
+        metadata['description'] = input("\nDescription of the pack: ")
+        metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
+                                                             option_message="\nSupport type of the pack: \n")
+        metadata['serverMinVersion'] = input("\nServer min version: ")
+        metadata['author'] = input("\nAuthor of the pack: ")
+
+        support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
+        while support_url and "http" not in support_url:
+            support_url = input("\nIncorrect input. Please enter full valid url: ")
+        metadata['url'] = support_url
+
+        metadata['email'] = input("\nThe email in which you can be contacted in: ")
+        metadata['categories'] = [Initiator.get_valid_user_input(options_list=INTEGRATION_CATEGORIES,
+                                                                 option_message="\nPack category options: \n")]
+        tags = input("\nTags of the pack, comma separated values: ")
+        tags_list = [t.strip() for t in tags.split(',')]
+        metadata['tags'] = tags_list
+
+        return metadata
+
+    @staticmethod
+    def get_valid_user_input(options_list, option_message):
+        for index, option in enumerate(options_list, start=1):
+            option_message += f"[{index}] {option}\n"
+        option_message += "\nEnter option: "
+
+        user_choice = input(option_message)
+
+        invalid_input = True
+        while invalid_input:
+            try:
+                user_choice = int(user_choice)
+
+                if user_choice not in range(1, len(options_list) + 1):
+                    user_choice = input(f"\nInvalid option {user_choice}, please enter valid choice: ")
+                else:
+                    invalid_input = False
+            except ValueError:
+                user_choice = input("\nThe option must be integer, please enter valid choice: ")
+
+        return options_list[user_choice - 1]
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
@@ -252,7 +334,7 @@ class Initiator:
             os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
                       os.path.join(self.full_output_path, f"{self.dir_name}_image.png"))
 
-    def create_new_directory(self,) -> bool:
+    def create_new_directory(self, ) -> bool:
         """Creates a new directory for the integration/script/pack.
 
         Returns:
@@ -297,7 +379,8 @@ class Initiator:
         """
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
             file_contents = fp.read()
-            file_contents = file_contents.replace(name_to_change, self.dir_name)
+
+        file_contents = file_contents.replace(f'.{name_to_change}', self.dir_name)
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
             fp.write(file_contents)

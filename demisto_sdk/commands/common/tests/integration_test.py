@@ -370,7 +370,8 @@ class TestIntegrationValidator:
         (INVALID_DISPLAY_NON_HIDDEN, False),
         (INVALID_DISPLAY_NON_HIDDEN, False),
         (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
-        (INVALID_DISPLAY_TYPE_EXPIRATION, False)
+        (INVALID_DISPLAY_TYPE_EXPIRATION, False),
+        (FEED_REQUIRED_PARAMS, True),
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)

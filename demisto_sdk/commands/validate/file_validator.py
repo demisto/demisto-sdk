@@ -142,11 +142,13 @@ class FilesValidator:
                 old_format_files.add(file_path)
             elif file_status.lower() == 'm' and checked_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
-            elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.'):
+            elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.') \
+                    and os.path.isfile(file_path):
                 added_files_list.add(file_path)
             elif file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
+
                 deleted_files.add(file_path)
-            elif file_status.lower().startswith('r') and checked_type(file_path):
+            elif file_status.lower().startswith('r') and checked_type(file_path) and os.path.isfile(file_path):
                 # if a code file changed, take the associated yml file.
                 if checked_type(file_data[2], CODE_FILES_REGEX):
                     modified_files_list.add(file_path)

@@ -24,6 +24,7 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(object):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration):
+        self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
         self.file_path = yml_file_path
@@ -34,10 +35,11 @@ class DockerImageValidator(object):
         self.is_latest_tag = True
         self.docker_image_latest_tag = DockerImageValidator.get_docker_image_latest_tag(self.docker_image_name,
                                                                                         self.yml_docker_image)
-        self.is_valid = True
 
     def is_docker_image_valid(self):
-        if not self.is_docker_image_latest_tag():
+        if not self.docker_image_latest_tag:
+            self.is_valid = False
+        elif not self.is_docker_image_latest_tag():
             print_error(Errors.not_latest_docker(self.file_path, self.docker_image_tag, self.docker_image_latest_tag))
             self.is_valid = False
         return self.is_valid
@@ -195,6 +197,9 @@ class DockerImageValidator(object):
         Returns:
             The last updated docker image tag
         """
+        if yml_docker_image and not yml_docker_image.startswith('demisto/'):
+            print_error('docker img must be a demisto docker img.')
+            return ''
         try:
             tag = ''
             auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)

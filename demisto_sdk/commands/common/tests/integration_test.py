@@ -495,7 +495,7 @@ class TestIsFeedParamsExist:
 
         assert self.validator.is_feed_params_exist() is False, 'is_feed_params_exist() returns True instead False'
 
-    def test_not_fetch(self):
+    def test_not_feed(self):
         self.test_malformed_field()
         self.validator.current_file['script']['feed'] = False
 

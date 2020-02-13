@@ -222,3 +222,31 @@ class TestIncidentFieldsValidator:
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_valid_cliname()
+
+    data_is_valid_version = [
+        (-1, True),
+        (0, False),
+        (1, False),
+    ]
+
+    @pytest.mark.parametrize('version, is_valid', data_is_valid_version)
+    def test_is_valid_version(self, version, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"version": version}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
+
+    data_is_valid_from_version = [
+        ('5.0.0', True),
+        ('4.', False),
+        ('', False),
+        ('4.0.0', False),
+    ]
+
+    @pytest.mark.parametrize('from_version, is_valid', data_is_valid_from_version)
+    def test_is_valid_from_version(self, from_version, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"fromVersion": from_version}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_valid_from_version() == is_valid, f'is_valid_from_version({from_version})' \
+                                                              f' returns {not is_valid}.'

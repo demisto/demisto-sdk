@@ -1,7 +1,7 @@
 import pytest
 from mock import patch
 from typing import Optional
-from copy import copy
+from copy import deepcopy
 
 from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
@@ -413,55 +413,45 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert not validator.is_valid_feed()
 
-    class TestIsFetchParamsExist:
+
+class TestIsFetchParamsExist:
+    def setup(self):
         config = {
-            'configuration': FETCH_REQUIRED_PARAMS,
+            'configuration': deepcopy(FETCH_REQUIRED_PARAMS),
             'script': {'isfetch': True}
         }
-        validator = IntegrationValidator(mock_structure("", config))
+        self.validator = IntegrationValidator(mock_structure("", config))
 
-        def setup(self):
-            return copy(self.validator)
+    def test_valid(self):
+        assert self.validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
 
-        def test_valid(self):
-            validator = self.setup()
-            assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
+    def test_sanity(self):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'incidentType']
+        assert self.validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
 
-        def test_sanity(self):
-            # missing param in configuration
-            validator = self.setup()
-            validator.current_file['configuration'] = [t for t in validator.current_file['configuration']
-                                                       if t['name'] != 'incidentType']
-            assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+    def test_missing_field(self):
+        # missing param
+        for i, t in enumerate(self.validator.current_file['configuration']):
+            if t['name'] == 'incidentType':
+                del self.validator.current_file['configuration'][i]['name']
+        print(self.validator.current_file['configuration'])
+        assert self.validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
 
-        def test_missing_field(self):
-            # missing param
-            validator = self.setup()
-            configuration = validator.current_file['configuration']
-            for i in range(len(configuration)):
-                if configuration[i]['name'] == 'incidentType':
-                    del configuration[i]['name']
-            validator.current_file['configuration'] = configuration
-            assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+    def test_malformed_field(self):
+        # incorrect param
+        config = self.validator.current_file['configuration']
+        self.validator.current_file['configuration'] = []
+        for t in config:
+            if t['name'] == 'incidentType':
+                t['type'] = 123
+            self.validator.current_file['configuration'].append(t)
 
-        def test_malformed_field(self):
-            # incorrect param
-            validator = self.setup()
-            validator.current_file['configuration'] = []
-            for t in self.validator.current_file['configuration']:
-                if t['name'] == 'incidentType':
-                    t['type'] = 123
-                validator.current_file['configuration'].append(t)
+        assert self.validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
 
-            assert validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
-
-        def test_not_fetch(self):
-            validator = self.setup()
-            validator.current_file['configuration'] = []
-            validator.current_file['script']['isfetch'] = False
-            for t in self.validator.current_file['configuration']:
-                if t['name'] == 'incidentType':
-                    t['type'] = 123
-                validator.current_file['configuration'].append(t)
-
-            assert validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
+    def test_not_fetch(self):
+        self.test_malformed_field()
+        self.validator.is_valid = True
+        self.validator.current_file['script']['isfetch'] = False
+        assert self.validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'

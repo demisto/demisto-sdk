@@ -1,13 +1,20 @@
 import os.path
-from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
+import yaml
+from demisto_sdk.commands.common.tools import print_warning, print_error
 from demisto_sdk.commands.generate_docs.common import build_example_dict, add_lines, generate_section,\
     save_output, generate_table_section, stringEscapeMD
 
 
 def generate_integration_doc(input, output, examples, id_set, verbose=False):
     try:
-        yml_data = get_yaml(input)
-
+        yml_data = {}
+        with open(input, 'r', encoding="utf8") as stream:
+            try:
+                yml_data = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print_error(f'Failed open integration file from {input}:\n{exc}')
+                return
+        # yml_data = get_yaml(input)
         errors = []
         example_dict = {}
         if examples and os.path.isfile(examples):

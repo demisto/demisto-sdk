@@ -140,7 +140,8 @@ def test_get_input_data_complex():
 
 def test_get_script_info():
     from demisto_sdk.commands.generate_docs.generate_script_doc import get_script_info
-    info = get_script_info(TEST_SCRIPT_PATH)
+    script = get_yaml(TEST_SCRIPT_PATH)
+    info = get_script_info(script)
 
     assert info[0]['Description'] == 'python3'
     assert info[1]['Description'] == 'Algosec'

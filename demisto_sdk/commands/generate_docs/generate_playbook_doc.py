@@ -11,7 +11,8 @@ def generate_playbook_doc(input, output, examples, id_set, verbose=False):
             try:
                 playbook = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
-                print(exc)
+                print_error(f'Failed open playbook file from {input}:\n{exc}')
+                return
 
         # playbook = get_yaml(input)
         errors = []

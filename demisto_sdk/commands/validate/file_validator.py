@@ -145,8 +145,8 @@ class FilesValidator:
             elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.') \
                     and os.path.isfile(file_path):
                 added_files_list.add(file_path)
-            elif file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
-
+            elif file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.')\
+                    and os.path.isfile(file_path):
                 deleted_files.add(file_path)
             elif file_status.lower().startswith('r') and checked_type(file_path) and os.path.isfile(file_path):
                 # if a code file changed, take the associated yml file.

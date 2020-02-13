@@ -1,3 +1,4 @@
+import yaml
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
 from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
     generate_list_section, HEADER_TYPE
@@ -5,6 +6,12 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
 
 def generate_playbook_doc(input, output, examples, id_set, verbose=False):
     try:
+        with open(input, 'r', encoding="utf8") as stream:
+            try:
+                playbook = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+
         playbook = get_yaml(input)
         errors = []
 

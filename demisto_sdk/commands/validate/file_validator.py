@@ -130,6 +130,9 @@ class FilesValidator:
                 file_status = 'r'
                 file_path = file_data[2]
 
+            if not os.path.isfile(file_path):
+                continue
+
             if checked_type(file_path, CODE_FILES_REGEX) and file_status.lower() != 'd' \
                     and not file_path.endswith('_test.py'):
                 # naming convention - code file and yml file in packages must have same name.

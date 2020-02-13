@@ -423,7 +423,6 @@ class TestIsFetchParamsExist:
         }
         self.validator = IntegrationValidator(mock_structure("", config))
 
-
     def test_valid(self):
         assert self.validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
 

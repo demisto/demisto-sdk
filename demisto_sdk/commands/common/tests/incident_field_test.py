@@ -241,6 +241,8 @@ class TestIncidentFieldsValidator:
         ('4.', False),
         ('', False),
         ('4.0.0', False),
+        ('5.0.1', True),
+        ('100.0.0', True),
     ]
 
     @pytest.mark.parametrize('from_version, is_valid', data_is_valid_from_version)

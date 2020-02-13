@@ -1,6 +1,6 @@
 In order to release a new version of `demisto-sdk` to the public follow these steps:
 
-1) Make sure the **CAHNGELOG.md** file is in order and is updated with all the changes in the current release.
+1) Make sure the **CHANGELOG.md** file is in order and is updated with all the changes in the current release.
 2) In demisto-sdk repository's main page click on **releases**.
 3) Click on **Draft a new release**.
 4) Update the **Tag version** and **Release title** - the form should be vX.X.X .

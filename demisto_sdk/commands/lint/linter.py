@@ -10,9 +10,8 @@ import subprocess
 from datetime import datetime
 import requests
 from typing import List
-from demisto_sdk.common.constants import TYPE_TO_EXTENSION, TYPE_PWSH, TYPE_PYTHON
 
-from demisto_sdk.commands.common.constants import Errors
+from demisto_sdk.commands.common.constants import Errors, TYPE_TO_EXTENSION, TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.tools import print_v, get_all_docker_images, get_python_version, \

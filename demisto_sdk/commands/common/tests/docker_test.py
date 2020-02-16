@@ -67,7 +67,7 @@ def test_get_docker_image_latest_tag(image):
 data_test_none_demisto_docker = [
     (('demisto/algorithmia', '1.0.0.6016'), '1.0.0.6016'),
     (('demisto/google-api-py3', '1.0.0.5992'), '1.0.0.5992'),
-     (('blabla/google-api-py3', '1.0.0.5992'), ''),
+    (('blabla/google-api-py3', '1.0.0.5992'), ''),
 ]
 
 
@@ -90,6 +90,8 @@ def test_get_docker_image_from_yml():
         docker_validator.is_integration = False
         docker_image = docker_validator.get_docker_image_from_yml()
         assert docker_image == "demisto/stix2:1.0.0.204"
+
+
 # disable-secrets-detection-end
 
 
@@ -125,6 +127,8 @@ def test_parse_docker_image():
     assert 'demisto/slack', '1.2.3.4' == DockerImageValidator.parse_docker_image('demisto/slack:1.2.3.4')
     assert 'demisto/python', '' == DockerImageValidator.parse_docker_image('demisto/python/1.2.3.4')
     assert ('', '') == DockerImageValidator.parse_docker_image('blah/blah:1.2.3.4')
+
+
 # disable-secrets-detection-end
 
 

@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.9
+* Added a validation that incident field can not be required.
+
 ### 0.3.8
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors
 

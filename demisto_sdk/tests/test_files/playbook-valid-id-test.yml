@@ -861,6 +861,10 @@ tasks:
           "y": 2000
         }
       }
+    fieldMapping:
+      - incidentfield: details
+        output:
+          simple: Set
   "28":
     id: "28"
     taskid: 8ae1ca42-1f1d-4ae7-883e-814705b8aae2

@@ -64,6 +64,18 @@ def test_get_docker_image_latest_tag(image):
     assert int(tag.split('.')[3]) >= 2728
 
 
+data_test_none_demisto_docker = [
+    (('demisto/algorithmia', '1.0.0.6016'), '1.0.0.6016'),
+    (('demisto/google-api-py3', '1.0.0.5992'), '1.0.0.5992'),
+     (('blabla/google-api-py3', '1.0.0.5992'), ''),
+]
+
+
+@pytest.mark.parametrize('docker, output', data_test_none_demisto_docker)
+def test_none_demisto_docker(docker, output):
+    assert DockerImageValidator.get_docker_image_latest_tag(docker[0], f'{docker[0]}:{docker[1]}') == output
+
+
 # disable-secrets-detection-start
 def test_get_docker_image_from_yml():
     with patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):

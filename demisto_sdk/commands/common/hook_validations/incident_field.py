@@ -309,14 +309,10 @@ class IncidentFieldValidator(BaseValidator):
         is_valid = True
         try:
             server_base_version = self.current_file.get('fromVersion').split('.')[0]
-            if server_base_version and int(server_base_version) >= 5:
-            else:
+            if not int(server_base_version) >= 5:
                 error_msg = f'{self.file_path}: "fromVersion" mast be at least 5.0.0'
                 is_valid = False
-        except AttributeError:
-            error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
-            is_valid = False
-        except ValueError:
+        except (AttributeError, ValueError):
             error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
             is_valid = False
 

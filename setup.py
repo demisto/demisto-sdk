@@ -36,7 +36,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     entry_points={
-        'console_scripts': ['demisto-sdk=demisto_sdk.__main__:demisto_sdk_cli']
+        'console_scripts': ['demisto-sdk = demisto_sdk.__main__:main']
     },
     long_description=readme,
     long_description_content_type='text/markdown',

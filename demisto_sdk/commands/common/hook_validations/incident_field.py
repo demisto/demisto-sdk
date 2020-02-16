@@ -158,15 +158,15 @@ class IncidentFieldValidator(BaseValidator):
     """
 
     def is_backward_compatible(self):
-        """Check whether the Incident Field is backward compatible or not, update the _is_valid field to determine that
-        TODO
+        """Check whether the Incident Field is backward compatible or not,
+        update the _is_valid field to determine that
         """
         if not self.old_file:
             return True
 
         is_bc_broke = any(
             [
-                # in the future, add BC checks here
+                self.is_changed_type()
             ]
         )
 
@@ -315,6 +315,22 @@ class IncidentFieldValidator(BaseValidator):
         except (AttributeError, ValueError):
             error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
             is_valid = False
+
+        if not is_valid:
+            print_error(error_msg)
+        return is_valid
+
+    def is_changed_type(self):
+        # type: () -> bool
+        """Validate that the type was not changed."""
+        error_msg = None
+        is_valid = True
+        current_type = self.current_file.get('type', {})
+        if self.old_file:
+            old_type = self.old_file.get('type', {})
+            if old_type and old_type != current_type:
+                error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
+                is_valid = False
 
         if not is_valid:
             print_error(error_msg)

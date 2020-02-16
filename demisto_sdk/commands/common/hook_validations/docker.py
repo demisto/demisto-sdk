@@ -198,7 +198,7 @@ class DockerImageValidator(object):
             The last updated docker image tag
         """
         if yml_docker_image and not yml_docker_image.startswith('demisto/'):
-            print_error('docker img must be a demisto docker img.')
+            print_error('docker image must be a demisto docker image. e.g: demisto/python:<tag>')
             return ''
         try:
             tag = ''

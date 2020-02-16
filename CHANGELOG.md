@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.9
+* Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
+
 ### 0.3.8
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors
 

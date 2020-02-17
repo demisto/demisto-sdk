@@ -6,6 +6,7 @@
 
 ### 0.3.9
 * Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
+* Added to the image validator the new DBot default image.
 
 ### 0.3.8
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors

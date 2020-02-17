@@ -6,6 +6,7 @@
 
 ### 0.3.9
 * Added a validation that incident field can not be required.
+* Added to the image validator the new DBot default image.
 
 ### 0.3.8
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors

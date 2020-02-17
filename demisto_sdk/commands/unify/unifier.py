@@ -50,7 +50,7 @@ class Unifier:
 
         self.ryaml = YAML()
         self.ryaml.preserve_quotes = True
-        # self.ryaml.width = 400  # make sure long lines will not break (relevant for code section)
+        self.ryaml.width = 400  # make sure long lines will not break (relevant for code section)
         if self.yml_path:
             with open(self.yml_path, 'r') as yml_file:
                 self.yml_data = self.ryaml.load(yml_file)

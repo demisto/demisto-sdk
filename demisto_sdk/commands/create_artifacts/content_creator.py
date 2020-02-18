@@ -151,7 +151,13 @@ class ContentCreator:
             if parent_dir_name != SCRIPTS_DIR:
                 script_obj = yml_info['script']
             unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
+
+            ryaml = YAML()
+            ryaml.allow_duplicate_keys = True
+            with io.open(path, mode='r', encoding='utf-8') as file_:
+                yml_unified = ryaml.load(file_)
             out_map = unifier.write_yaml_with_docker(yml_unified, yml_info, script_obj)
+
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))
             return
@@ -177,14 +183,9 @@ class ContentCreator:
             with open(path, 'r') as file_:
                 yml_info = yaml.safe_load(file_)
 
-            ryaml = YAML()
-            ryaml.allow_duplicate_keys = True
-            with io.open(path, mode='r', encoding='utf-8') as file_:
-                yml_unified = ryaml.load(file_)
-
             ver = yml_info.get('fromversion', '0')
             print(f' - processing: {ver} ({path})')
-            copy_func(path, os.path.join(bundle, os.path.basename(path)), yml_info, yml_unified)
+            copy_func(path, os.path.join(bundle, os.path.basename(path)), yml_info)
             content_files += 1
         print(f' - total files: {content_files}')
 

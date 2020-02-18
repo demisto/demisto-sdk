@@ -8,6 +8,7 @@
 * Added to the image validator the new DBot default image.
 
 ### 0.3.8
+* Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors
 
 

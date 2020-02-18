@@ -7,7 +7,7 @@ import shutil
 import zipfile
 from typing import List
 import yaml
-import yamlordereddictloader
+from ruamel.yaml import YAML
 
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.tools import get_child_directories, get_child_files, print_warning, \
@@ -128,7 +128,8 @@ class ContentCreator:
                     zipf.write(os.path.join(root, file_name), file_name)
             zipf.close()
 
-    def copy_playbook_yml(self, path, out_path, *args):
+    @staticmethod
+    def copy_playbook_yml(path, out_path):
         """
         Add "playbook-" prefix to playbook file's copy destination filename if it wasn't already present
         """
@@ -139,7 +140,8 @@ class ContentCreator:
             out_path = os.path.join(dest_dir_path, new_name)
         shutil.copyfile(path, out_path)
 
-    def copy_content_yml(self, path, out_path, yml_info):
+    @staticmethod
+    def copy_content_yml(path, out_path, yml_info, yml_unified):
         """
         Copy content ymls (except for playbooks) to the out_path (presumably a bundle)
         """
@@ -148,10 +150,8 @@ class ContentCreator:
             script_obj = yml_info
             if parent_dir_name != SCRIPTS_DIR:
                 script_obj = yml_info['script']
-            with io.open(path, mode='r', encoding='utf-8') as file_:
-                yml_data = yaml.load(file_, Loader=yamlordereddictloader.SafeLoader)
             unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
-            out_map = unifier.write_yaml_with_docker(yml_data, yml_info, script_obj)
+            out_map = unifier.write_yaml_with_docker(yml_unified, yml_info, script_obj)
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))
             return
@@ -177,9 +177,14 @@ class ContentCreator:
             with open(path, 'r') as file_:
                 yml_info = yaml.safe_load(file_)
 
+            ryaml = YAML()
+            ryaml.allow_duplicate_keys = True
+            with io.open(path, mode='r', encoding='utf-8') as file_:
+                yml_unified = ryaml.load(file_)
+
             ver = yml_info.get('fromversion', '0')
             print(f' - processing: {ver} ({path})')
-            copy_func(path, os.path.join(bundle, os.path.basename(path)), yml_info)
+            copy_func(path, os.path.join(bundle, os.path.basename(path)), yml_info, yml_unified)
             content_files += 1
         print(f' - total files: {content_files}')
 

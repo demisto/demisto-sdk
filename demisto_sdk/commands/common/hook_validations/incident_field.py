@@ -183,6 +183,8 @@ class IncidentFieldValidator(BaseValidator):
                 self.is_valid_content_flag(),
                 self.is_valid_system_flag(),
                 self.is_valid_cliname(),
+                self.is_valid_version(),
+                self.is_valid_from_version(),
             ]
         )
 
@@ -300,4 +302,20 @@ class IncidentFieldValidator(BaseValidator):
             print_error(
                 f"{self.file_path}: cliName field can not be {cliname} as it's a builtin key."
             )
+        return is_valid
+
+    def is_valid_from_version(self):
+        error_msg = None
+        is_valid = True
+        try:
+            server_base_version = self.current_file.get('fromVersion').split('.')[0]
+            if not int(server_base_version) >= 5:
+                error_msg = f'{self.file_path}: "fromVersion" mast be at least 5.0.0'
+                is_valid = False
+        except (AttributeError, ValueError):
+            error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
+            is_valid = False
+
+        if not is_valid:
+            print_error(error_msg)
         return is_valid

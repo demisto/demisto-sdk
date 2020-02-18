@@ -4,7 +4,15 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.9
+* Added to the image validator the new DBot default image.
+
+### 0.3.8
+* Fixed an issue where *unify* broke long lines in script section causing syntax errors
+
+
 ### 0.3.7
+* Added *generate-docs* command to generate documentation file for integration, playbook or script.
 * Fixed an issue where *unify* created a malformed integration yml.
 * Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
 

@@ -141,7 +141,7 @@ class ContentCreator:
         shutil.copyfile(path, out_path)
 
     @staticmethod
-    def copy_content_yml(path, out_path, yml_info, yml_unified):
+    def copy_content_yml(path, out_path, yml_info):
         """
         Copy content ymls (except for playbooks) to the out_path (presumably a bundle)
         """

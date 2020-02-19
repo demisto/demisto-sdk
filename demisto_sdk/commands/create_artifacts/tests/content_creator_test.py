@@ -8,7 +8,7 @@ class TestContentCreator:
         current_dir = os.path.normpath(os.path.join(__file__,
                                                     f'{git_path()}/demisto_sdk/commands/create_artifacts', 'tests'))
         self.scripts_full_path = os.path.join(current_dir, 'test_files', 'content_repo_example', 'Scripts')
-        self.content_bundle = os.path.join('test_files', 'content_repo_example', 'bundle_content')
+        self.content_bundle = os.path.join(current_dir, 'test_files', 'content_repo_example', 'bundle_content')
         self.content_bundle_full_path = os.path.join(current_dir, 'test_files', 'content_repo_example',
                                                      'bundle_content')
         self.content_repo = os.path.join(current_dir, 'test_files', 'content_repo_example')

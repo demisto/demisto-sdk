@@ -63,7 +63,7 @@ class Unifier:
         self.is_script_package = isinstance(self.yml_data.get('script'), str)
         self.dir_name = SCRIPTS_DIR if self.is_script_package else dir_name
 
-    def write_yaml_with_docker(self, yml_data, script_obj):
+    def write_yaml_with_docker(self, yml_unified, yml_data, script_obj):
         """Write out the yaml file taking into account the dockerimage45 tag.
         If it is present will create 2 integration files
         One for 4.5 and below and one for 5.0.
@@ -77,21 +77,21 @@ class Unifier:
         Returns:
             dict -- dictionary mapping output path to unified data
         """
-        output_map = {self.dest_path: yml_data}
+        output_map = {self.dest_path: yml_unified}
         if 'dockerimage45' in script_obj:
             # we need to split into two files 45 and 50. Current one will be from version 5.0
             if self.is_script_package:  # scripts
-                del yml_data['dockerimage45']
+                del yml_unified['dockerimage45']
             else:  # integrations
-                del yml_data['script']['dockerimage45']
+                del yml_unified['script']['dockerimage45']
 
-            yml_unified45 = copy.deepcopy(yml_data)
+            yml_unified45 = copy.deepcopy(yml_unified)
 
             # validate that this is a script/integration which targets both 4.5 and 5.0+.
             if server_version_compare(yml_data.get('fromversion', '0.0.0'), '5.0.0') >= 0:
                 raise ValueError(f'Failed: {self.dest_path}. dockerimage45 set for 5.0 and later only')
 
-            yml_data['fromversion'] = '5.0.0'
+            yml_unified['fromversion'] = '5.0.0'
 
             # validate that this is a script/integration which targets both 4.5 and 5.0+.
             if server_version_compare(yml_data.get('toversion', '99.99.99'), '5.0.0') < 0:
@@ -110,7 +110,7 @@ class Unifier:
 
             output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
             output_map = {
-                self.dest_path: yml_data,
+                self.dest_path: yml_unified,
                 output_path45: yml_unified45,
             }
 

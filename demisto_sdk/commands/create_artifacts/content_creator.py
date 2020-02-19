@@ -150,7 +150,7 @@ class ContentCreator:
             if parent_dir_name != SCRIPTS_DIR:
                 script_obj = yml_info['script']
             unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
-            out_map = unifier.write_yaml_with_docker(yml_info, script_obj)
+            out_map = unifier.write_yaml_with_docker(yml_info, yml_info, script_obj)
 
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))

@@ -3,7 +3,7 @@ import base64
 
 from demisto_sdk.commands.common.tools import re, print_error, os, get_yaml, checked_type
 from demisto_sdk.commands.common.constants import IMAGE_REGEX, INTEGRATION_REGEX, DEFAULT_IMAGE_BASE64, \
-    INTEGRATION_REGXES, YML_INTEGRATION_REGEXES
+    DEFAULT_DBOT_IMAGE_BASE64, INTEGRATION_REGXES, YML_INTEGRATION_REGEXES
 
 
 class ImageValidator:
@@ -130,11 +130,9 @@ class ImageValidator:
         """Check if the image is the default one"""
         image = self.load_image()
 
-        if image == DEFAULT_IMAGE_BASE64:  # disable-secrets-detection
+        if image in [DEFAULT_IMAGE_BASE64, DEFAULT_DBOT_IMAGE_BASE64]:  # disable-secrets-detection
             print_error("{} is the default image, please change to the "
                         "integration image.".format(self.file_path))
             self._is_valid = False
             return False
-
-        else:
-            return True
+        return True

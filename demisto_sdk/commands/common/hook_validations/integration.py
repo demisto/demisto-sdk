@@ -390,7 +390,7 @@ class IntegrationValidator(BaseValidator):
         """
         current_command_to_context_paths = self._get_command_to_context_paths(self.current_file)
         old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
-
+        print('barkkkk')
         if not old_command_to_context_paths:
             return False
         if not current_command_to_context_paths and old_command_to_context_paths:

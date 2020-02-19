@@ -7,8 +7,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 
 class TestContentCreator:
     def setup(self):
-        current_dir = os.path.normpath(os.path.join(__file__,
-                                                    f'{git_path()}/demisto_sdk/commands/create_artifacts', 'tests'))
+        current_dir = f'{git_path()}/demisto_sdk/commands/create_artifacts/tests'
         self.scripts_full_path = os.path.join(current_dir, 'test_files', 'content_repo_example', 'Scripts')
         self._dir = mkdtemp()
         self.content_repo = os.path.join(current_dir, 'test_files', 'content_repo_example')
@@ -38,8 +37,6 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo, content_version='2.5.0',
                                          content_bundle_path=self._dir,
                                          preserve_bundles=False)
-        print(self.scripts_full_path)
-        print(self._dir)
         content_creator.copy_dir_files(self.scripts_full_path, content_creator.content_bundle)
 
         assert filecmp.cmp(f'{self.scripts_full_path}/script-Sleep.yml',

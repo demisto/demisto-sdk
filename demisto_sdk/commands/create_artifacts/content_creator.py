@@ -168,6 +168,7 @@ class ContentCreator:
         :return: None
         """
         scan_files, _ = get_yml_paths_in_dir(dir_path, error_msg='')
+        print(scan_files)
         content_files = 0
         dir_name = os.path.basename(dir_path)
         for path in scan_files:

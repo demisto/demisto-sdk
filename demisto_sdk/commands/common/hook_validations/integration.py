@@ -392,6 +392,9 @@ class IntegrationValidator(BaseValidator):
         old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
 
         if not current_command_to_context_paths and not old_command_to_context_paths:
+            return False
+        if (not current_command_to_context_paths and old_command_to_context_paths) or \
+                (current_command_to_context_paths and not old_command_to_context_paths):
             return True
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():

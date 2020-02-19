@@ -391,6 +391,8 @@ class IntegrationValidator(BaseValidator):
         current_command_to_context_paths = self._get_command_to_context_paths(self.current_file)
         old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
 
+        if not current_command_to_context_paths and not old_command_to_context_paths:
+            return True
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):

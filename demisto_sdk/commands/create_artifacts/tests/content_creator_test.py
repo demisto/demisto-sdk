@@ -11,8 +11,6 @@ class TestContentCreator:
                                                     f'{git_path()}/demisto_sdk/commands/create_artifacts', 'tests'))
         self.scripts_full_path = os.path.join(current_dir, 'test_files', 'content_repo_example', 'Scripts')
         self._dir = mkdtemp()
-        self.content_bundle_full_path = os.path.join(current_dir, 'test_files', 'content_repo_example',
-                                                     'bundle_content')
         self.content_repo = os.path.join(current_dir, 'test_files', 'content_repo_example')
 
     def teardown(self):

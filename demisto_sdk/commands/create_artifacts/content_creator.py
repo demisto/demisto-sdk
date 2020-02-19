@@ -179,8 +179,10 @@ class ContentCreator:
                 yml_info = ryaml.load(file_)
             ver = yml_info.get('fromversion', '0')
             print(f' - processing: {ver} ({path})')
-
             if dir_name in ['Playbooks', 'TestPlaybooks']:
+                # in TestPlaybook dir we might have scripts - all should go to test_bundle
+                if dir_name == 'TestPlaybooks' and os.path.basename(path).startswith('script-'):
+                    self.copy_content_yml(path, os.path.join(bundle, os.path.basename(path)), yml_info)
                 self.copy_playbook_yml(path, os.path.join(bundle, os.path.basename(path)))
             else:
                 self.copy_content_yml(path, os.path.join(bundle, os.path.basename(path)), yml_info)

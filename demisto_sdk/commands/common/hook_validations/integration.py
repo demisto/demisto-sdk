@@ -370,7 +370,7 @@ class IntegrationValidator(BaseValidator):
             context_list = []
             outputs = command.get('outputs', None)
             if not outputs:
-                return {}
+                continue
             for output in outputs:
                 command_name = command['name']
                 try:

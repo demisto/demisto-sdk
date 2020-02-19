@@ -368,9 +368,9 @@ class IntegrationValidator(BaseValidator):
         commands = integration_json.get('script', {}).get('commands', [])
         for command in commands:
             context_list = []
-            outputs = command.get('outputs', [])
+            outputs = command.get('outputs', None)
             if not outputs:
-                return None
+                return {}
             for output in outputs:
                 command_name = command['name']
                 try:

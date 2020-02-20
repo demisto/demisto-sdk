@@ -395,7 +395,11 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("feed, fromversion", VALID_FEED)
     def test_valid_feed(self, feed, fromversion):
-        current = {"script": {"feed": feed}, "fromversion": fromversion}
+        current = {
+            "script": {"feed": feed},
+            "fromversion": fromversion,
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS)
+        }
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_feed()
@@ -468,13 +472,13 @@ class TestIsFeedParamsExist:
         self.validator = IntegrationValidator(mock_structure("", config))
 
     def test_valid(self):
-        assert self.validator.is_feed_params_exist(), 'is_feed_params_exist() returns False instead True'
+        assert self.validator.is_valid_fetch(), 'is_feed_params_exist() returns False instead True'
 
     def test_sanity(self):
         # missing param in configuration
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if not t.get('display')]
-        assert self.validator.is_feed_params_exist() is False, 'is_feed_params_exist() returns True instead False'
+        assert self.validator.is_valid_fetch() is False, 'is_feed_params_exist() returns True instead False'
 
     def test_missing_field(self):
         # missing param
@@ -483,7 +487,7 @@ class TestIsFeedParamsExist:
             if not configuration[i].get('display'):
                 del configuration[i]['name']
         self.validator.current_file['configuration'] = configuration
-        assert self.validator.is_feed_params_exist() is False, 'is_feed_params_exist() returns True instead False'
+        assert self.validator.is_valid_fetch() is False, 'is_feed_params_exist() returns True instead False'
 
     def test_malformed_field(self):
         # incorrect param
@@ -493,10 +497,4 @@ class TestIsFeedParamsExist:
                 t['type'] = 123
             self.validator.current_file['configuration'].append(t)
 
-        assert self.validator.is_feed_params_exist() is False, 'is_feed_params_exist() returns True instead False'
-
-    def test_not_feed(self):
-        self.test_malformed_field()
-        self.validator.current_file['script']['feed'] = False
-
-        assert self.validator.is_feed_params_exist(), 'is_feed_params_exist() returns False instead True'
+        assert self.validator.is_valid_fetch() is False, 'is_feed_params_exist() returns True instead False'

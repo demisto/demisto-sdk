@@ -54,7 +54,6 @@ class IntegrationValidator(BaseValidator):
             self.is_docker_image_valid(),
             self.is_valid_feed(),
             self.is_fetch_params_exist(),
-            self.is_feed_params_exist(),
         ]
         return all(answers)
 
@@ -493,12 +492,14 @@ class IntegrationValidator(BaseValidator):
 
     def is_valid_feed(self):
         # type: () -> bool
+        valid_from_version = valid_feed_params = True
         if self.current_file.get("script", {}).get("feed"):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
-                return False
-        return True
+                valid_from_version = False
+            valid_feed_params = self.is_valid_fetch()
+        return valid_from_version and valid_feed_params
 
     def is_fetch_params_exist(self) -> bool:
         """
@@ -506,7 +507,7 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. True if the integration is defined as well False otherwise.
         """
-        return_value = True
+        fetch_params_exist = True
         if self.current_file.get('script', {}).get('isfetch') is True:
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
@@ -515,25 +516,24 @@ class IntegrationValidator(BaseValidator):
                                 f'("isfetch:  true" was found in the YAML file).'
                                 f'\nA required parameter is missing or malformed in the file {self.file_path}, '
                                 f'the param is:\n{param}')
-                    return_value = False
+                    fetch_params_exist = False
 
-        return return_value
+        return fetch_params_exist
 
-    def is_feed_params_exist(self) -> bool:
+    def is_valid_fetch(self) -> bool:
         """
         validate that all required fields in integration that have fetch incidents are in the yml file.
         Returns:
             bool. True if the integration is defined as well False otherwise.
         """
-        return_value = True
-        if self.current_file.get('script', {}).get('feed') is True:
-            params = [_key for _key in self.current_file.get('configuration', [])]
-            for param in FEED_REQUIRED_PARAMS:
-                if param not in params:
-                    print_error(f'Feed Integration with was detected '
-                                f'("feed:  true" was found in the YAML file).'
-                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                                f'the param is:\n{param}')
-                    return_value = False
+        params_exist = True
+        params = [_key for _key in self.current_file.get('configuration', [])]
+        for param in FEED_REQUIRED_PARAMS:
+            if param not in params:
+                print_error(f'Feed Integration with was detected '
+                            f'("feed:  true" was found in the YAML file).'
+                            f'\nA required parameter is missing or malformed in the file {self.file_path}, '
+                            f'the param is:\n{param}')
+                params_exist = False
 
-        return return_value
+        return params_exist

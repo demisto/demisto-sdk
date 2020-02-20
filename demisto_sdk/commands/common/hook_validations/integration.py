@@ -390,8 +390,10 @@ class IntegrationValidator(BaseValidator):
         """
         current_command_to_context_paths = self._get_command_to_context_paths(self.current_file)
         old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
+        # if old integration command has no outputs, no change of context will occur.
         if not old_command_to_context_paths:
             return False
+        # if new integration command has no outputs, and old one does, a change of context will occur.
         if not current_command_to_context_paths and old_command_to_context_paths:
             return True
         for old_command, old_context_paths in old_command_to_context_paths.items():

@@ -6,6 +6,9 @@
 
 ### 0.3.9
 * Added to the image validator the new DBot default image.
+* Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
+* Fixed an issue where *validate* failed on integration commands without outputs.
+
 
 ### 0.3.8
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors

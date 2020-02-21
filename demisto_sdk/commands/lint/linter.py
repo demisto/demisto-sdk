@@ -304,7 +304,7 @@ class Linter:
         """
         lint_files = self._get_lint_files()
         python_exe = 'python2' if py_num < 3 else 'python3'
-        output = run_command(' '.join([python_exe, 'vulture', lint_files, '--min-confidence 60']),
+        output = run_command(' '.join([python_exe, '-m', 'vulture', lint_files, '--min-confidence 60']),
                              cwd=self.project_dir)
         self.lock.acquire()
         print("========= Running vulture on: {} ===============".format(lint_files))

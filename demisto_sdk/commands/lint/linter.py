@@ -41,9 +41,9 @@ class Linter:
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration(),
                  lock: threading.Lock = threading.Lock(), no_bandit: bool = False, requirements_3: str = '',
-                 requirements_2: str = ''):
+                 requirements_2: str = '', no_vulture: bool = False):
 
-        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
+        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit and no_vulture:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
@@ -69,7 +69,8 @@ class Linter:
             'flake8': not no_flake8,
             'mypy': not no_mypy,
             'bandit': not no_bandit,
-            'tests': not no_test
+            'tests': not no_test,
+            'vulture': not no_vulture
         }
         self.lock = lock
         self.requirements_3 = requirements_3
@@ -99,7 +100,7 @@ class Linter:
         if self.common_server_created:
             os.remove(os.path.join(self.project_dir, self.common_server_target_path))
 
-    def run_dev_packages(self) -> int:
+    def run_dev_packages(self) -> int:  # noqa: C901
         return_code = 0
         # load yaml
         _, yml_path = get_yml_paths_in_dir(self.project_dir, Errors.no_yml_file(self.project_dir))
@@ -140,6 +141,11 @@ class Linter:
 
         if self.run_args['bandit']:
             result_val = self.run_bandit(py_num)
+            if result_val:
+                return_code = result_val
+
+        if self.run_args['vulture']:
+            result_val = self.run_vulture(py_num)
             if result_val:
                 return_code = result_val
 
@@ -277,6 +283,34 @@ class Linter:
         print_v('Using: {} to run bandit'.format(python_exe))
         if len(output) == 0:
             print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
+            if self.lock.locked():
+                self.lock.release()
+            return 0
+
+        else:
+            print_error(output)
+            if self.lock.locked():
+                self.lock.release()
+            return 1
+
+    def run_vulture(self, py_num) -> int:
+        """Run vulture
+
+        Args:
+            py_num: The python version in use
+
+        Returns:
+            int. 0 on successful vulture run, 1 otherwise.
+        """
+        lint_files = self._get_lint_files()
+        python_exe = 'python2' if py_num < 3 else 'python3'
+        output = run_command(' '.join([python_exe, 'vulture', lint_files, '--min-confidence 60']),
+                             cwd=self.project_dir)
+        self.lock.acquire()
+        print("========= Running vulture on: {} ===============".format(lint_files))
+        print_v('Using: {} to run vulture'.format(python_exe))
+        if len(output) == 0:
+            print_color("vulture completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
             if self.lock.locked():
                 self.lock.release()
             return 0

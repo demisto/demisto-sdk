@@ -263,10 +263,10 @@ def secrets(config, **kwargs):
 
 # ====================== lint ====================== #
 @main.command(name="lint",
-              short_help="Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the"
-                         "docker image of an integration/script. Meant to be used with integrations/scripts that use "
-                         "the folder (package) structure. Will lookup up what docker image to use and will setup the "
-                         "dev dependencies and file in the target folder. ")
+              short_help="Run lintings (flake8, mypy, pylint, bandit, vulture) and pytest. pylint and pytest will run "
+                         "within the docker image of an integration/script. Meant to be used with integrations/scripts "
+                         "that use the folder (package) structure. Will lookup up what docker image to use and will "
+                         "setup the dev dependencies and file in the target folder. ")
 @click.help_option(
     '-h', '--help'
 )
@@ -280,6 +280,8 @@ def secrets(config, **kwargs):
     "--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option(
     "--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option(
+    "--no-vulture", is_flag=True, help="Do NOT run vulture linter")
 @click.option(
     "--no-test", is_flag=True, help="Do NOT test (skip pytest)")
 @click.option(

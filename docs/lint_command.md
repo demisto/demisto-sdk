@@ -1,6 +1,6 @@
 ### Lint
 
-Run lintings (flake8, mypy, pylint, bandit) and pytest.
+Run lintings (flake8, mypy, pylint, bandit, vulture) and pytest.
 pylint and pytest will run within all the docker images of an integration/script.
 Meant to be used with integrations/scripts that use the folder (package) structure.
 
@@ -21,6 +21,8 @@ make sure the code works as intended.
   Do NOT run flake8 linter (default: False)
 * **--no-bandit**
   Do NOT run bandit linter (default: False)
+* **--no-vulture**
+  Do NOT run vulture linter (default: False)
 * **--no-test**
   Do NOT test (skip pytest) (default: False)
 * **-r, --root**
@@ -57,7 +59,7 @@ Also this will check the amount of CPU's available to run pytest on and use them
 <br/><br/>
 
 `demisto-sdk lint -d Scripts/HelloWorldScript --no-pytest --no-pylint`
-This will run only the linters (flake8, mypy, bandit) on "Scripts/HelloWorldScript".
+This will run only the linters (flake8, mypy, bandit, vulture) on "Scripts/HelloWorldScript".
 <br/><br/>
 
 `demisto-sdk lint -d Integrations/HelloWorld --no-mypy --no-flake8 --no-pytest -k -r`

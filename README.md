@@ -102,7 +102,7 @@ This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
 
 ### [Lint](https://github.com/demisto/demisto-sdk/tree/master/docs/lint_command.md)
 
-Run lintings (flake8, mypy, pylint, bandit) and pytest.
+Run lintings (flake8, mypy, pylint, bandit, vulture) and pytest.
 pylint and pytest will run within all the docker images of an integration/script. Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
 **Arguments**:
 * **-d DIR, --dir DIR**
@@ -115,6 +115,8 @@ pylint and pytest will run within all the docker images of an integration/script
   Do NOT run flake8 linter (default: False)
 * **--no-bandit**
   Do NOT run bandit linter (default: False)
+* **--no-vulture**
+  Do NOT run vulture linter (default: False)
 * **--no-test**
   Do NOT test (skip pytest) (default: False)
 * **-r, --root**

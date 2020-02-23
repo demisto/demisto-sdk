@@ -1,20 +1,11 @@
-import yaml
-from demisto_sdk.commands.common.tools import print_warning, print_error
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
 from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
     generate_list_section, HEADER_TYPE
 
 
 def generate_playbook_doc(input, output, examples, id_set, verbose=False):
     try:
-        playbook = {}
-        with open(input, 'r', encoding="utf8") as stream:
-            try:
-                playbook = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print_error(f'Failed open playbook file from {input}:\n{exc}')
-                return
-
-        # playbook = get_yaml(input)
+        playbook = get_yaml(input)
         errors = []
 
         description = playbook.get('description', '')

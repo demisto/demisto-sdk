@@ -1,7 +1,6 @@
 import os
-import yaml
 from demisto_sdk.commands.common.update_id_set import get_depends_on
-from demisto_sdk.commands.common.tools import print_warning, print_error, get_json
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error, get_json
 from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
     generate_list_section, build_example_dict
 
@@ -26,17 +25,10 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
             errors.append(f'Note: Script example was not provided. For a more complete documentation,run with the -e '
                           f'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
 
-        script = {}
-        with open(input, 'r', encoding="utf8") as stream:
-            try:
-                script = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print_error(f'Failed open script file from {input}:\n{exc}')
-                return
-        # script = get_yaml(input)
+        script = get_yaml(input)
 
         # get script data
-        secript_info = get_script_info(script)
+        secript_info = get_script_info(input)
         script_id = script.get('commonfields')['id']
 
         # get script dependencies
@@ -100,12 +92,13 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
             return
 
 
-def get_script_info(script):
+def get_script_info(script_path):
     """
     Gets script information(type, tags, docker image and demisto version).
     :param script_path: the script yml file path.
     :return: list of dicts contains the script information.
     """
+    script = get_yaml(script_path)
     script_type = script.get('subtype')
     if not script_type:
         script_type = script.get('type')

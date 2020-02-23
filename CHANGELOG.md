@@ -6,6 +6,7 @@
 
 ### 0.3.9
 * Added a validation that incident field can not be required.
+* Added a validation the a playbook can not have a rolename set.
 * Added to the image validator the new DBot default image.
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
 * Fixed an issue where *validate* failed on integration commands without outputs.

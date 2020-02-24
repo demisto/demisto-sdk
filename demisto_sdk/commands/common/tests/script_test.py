@@ -333,3 +333,22 @@ class TestScriptValidator:
         validator = get_validator()
         validator.current_file = current_file
         assert validator.is_valid_subtype() is answer
+
+
+
+    V2_VALID = {"display": "integrationname v2", "name": "integrationname v2", "id": "integrationname v2"}
+    V2_WRONG_DISPLAY =  {"display": "integrationname V2", "name": "integrationname V2", "id": "integrationname V2"}
+    V2_WRONG_DISPLAY = {"display": "integrationnameV2", "name": "integrationnameV2", "id": "integrationnameV2"}
+    V2_WRONG_DISPLAY = {"display": "integrationnamev2", "name": "integrationnamev2", "id": "integrationnamev2"}
+    V2_NAME_INPUTS = [
+        (V2_VALID, True),
+        (V2_WRONG_DISPLAY, False),
+        (V2_WRONG_DISPLAY, False),
+        (V2_WRONG_DISPLAY, False)
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
+    def test_is_valid_name(self, current, answer):
+        validator = get_validator()
+        validator.current_file = current
+        assert validator.is_valid_name() is answer

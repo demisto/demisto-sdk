@@ -2,6 +2,8 @@ from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
+
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
 
@@ -508,7 +510,9 @@ class IntegrationValidator(BaseValidator):
 
     def is_valid_display_name(self):
         # type: () -> bool
-        if not super(IntegrationValidator, self)._is_v2_file():
+        print(self.current_file)
+
+        if not is_v2_file(self.current_file):
             return True
         else:
             displayName = self.current_file.get('display')

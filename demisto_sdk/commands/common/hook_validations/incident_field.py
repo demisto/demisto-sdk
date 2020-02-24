@@ -332,8 +332,8 @@ class IncidentFieldValidator(BaseValidator):
         # as can be seen in this pr: https://github.com/demisto/content/pull/5682
         required = self.current_file.get('required', False)
         if required:
-            error_msg = f'{self.file_path}: new incident fields should not be required due to: ' \
-                        f'https://github.com/demisto/etc/issues/22069'
+            error_msg = f'{self.file_path}: new incident fields can not be required' \
+                        f' due to a current platform limitation.'
             is_valid = False
         if not is_valid:
             print_error(error_msg)

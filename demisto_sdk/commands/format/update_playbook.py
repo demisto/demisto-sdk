@@ -60,6 +60,12 @@ class PlaybookYMLFormat(BaseUpdateYML):
                 else:
                     print_error('Version format is not valid')
 
+    def delete_sourceplaybookid(self):
+        """Delete the not needed sourceplaybookid fields"""
+        print(F'Removing sourceplaybookid field from playbook')
+        if 'sourceplaybookid' in self.yml_data:
+            self.yml_data.pop('sourceplaybookid', None)
+
     def format_file(self):
         """Manager function for the playbook YML updater."""
         super().update_yml()

@@ -126,4 +126,3 @@ class BaseValidator:
                         " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
             return False
         return True
-

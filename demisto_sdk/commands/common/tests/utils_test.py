@@ -1,9 +1,5 @@
-import os
-import glob
 import pytest
 
-from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.hook_validations import utils
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
 
 

@@ -518,7 +518,7 @@ class IntegrationValidator(BaseValidator):
             displayName = self.current_file.get('display')
             correctName = " v2"
             print(displayName)
-            if not correctName in displayName:
+            if correctName not in displayName:
                 print_error(Errors.invalid_v2_file_name(self.file_path))
                 return False
             return True

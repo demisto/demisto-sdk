@@ -178,7 +178,7 @@ class ScriptValidator(BaseValidator):
         else:
             name = self.current_file.get('name')
             correctName = " v2"
-            if not correctName in name:
+            if correctName not in name:
                 print_error(Errors.invalid_v2_file_name(self.file_path))
                 return False
             return True

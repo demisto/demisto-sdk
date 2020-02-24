@@ -334,10 +334,8 @@ class TestScriptValidator:
         validator.current_file = current_file
         assert validator.is_valid_subtype() is answer
 
-
-
     V2_VALID = {"display": "integrationname v2", "name": "integrationname v2", "id": "integrationname v2"}
-    V2_WRONG_DISPLAY =  {"display": "integrationname V2", "name": "integrationname V2", "id": "integrationname V2"}
+    V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname V2", "id": "integrationname V2"}
     V2_WRONG_DISPLAY = {"display": "integrationnameV2", "name": "integrationnameV2", "id": "integrationnameV2"}
     V2_WRONG_DISPLAY = {"display": "integrationnamev2", "name": "integrationnamev2", "id": "integrationnamev2"}
     V2_NAME_INPUTS = [

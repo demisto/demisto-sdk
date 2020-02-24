@@ -35,14 +35,18 @@ class StructureValidator:
         '.json': json.load,
     }
 
-    def __init__(self, file_path, old_file_path=None, predefined_scheme=None, configuration=Configuration()):
-        # type: (str, Optional[str], Optional[str], Configuration) -> None
+    def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None,
+                 configuration=Configuration()):
+        # type: (str, Optional[bool], Optional[str], Optional[str], Configuration) -> None
         self.is_valid = True
         self.file_path = file_path
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
-        self.old_file = get_remote_file(old_file_path) if old_file_path else get_remote_file(file_path)
+        if is_new_file:
+            self.old_file = {}
+        else:
+            self.old_file = get_remote_file(old_file_path if old_file_path else file_path)
         self.configuration = configuration
 
     def is_valid_file(self):

@@ -69,13 +69,16 @@ class TestIntegrationValidator:
     IS_CONTEXT_CHANGED_ADDED_PATH = [{"name": "test", "outputs": [{"contextPath": "test"}, {"contextPath": "test2"}]}]
     IS_CONTEXT_CHANGED_ADDED_COMMAND = [{"name": "test", "outputs": [{"contextPath": "test"}]},
                                         {"name": "test2", "outputs": [{"contextPath": "new command"}]}]
+    IS_CONTEXT_CHANGED_NO_OUTPUTS = [{"name": "test"}]
     IS_CHANGED_CONTEXT_INPUTS = [
         (IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, False),
         (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, True),
         (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, True),
         (IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, False),
         (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, False),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, True)
+        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, True),
+        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, False),
+        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, True),
     ]
 
     @pytest.mark.parametrize("current, old, answer", IS_CHANGED_CONTEXT_INPUTS)

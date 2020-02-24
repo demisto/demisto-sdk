@@ -104,7 +104,7 @@ def get_script_info(script_path):
     if not script_type:
         script_type = script.get('type')
 
-    tags = script.get('tags')
+    tags = script.get('tags', [])
     tags = ', '.join(map(str, tags))
 
     from_version = get_from_version(script_path)

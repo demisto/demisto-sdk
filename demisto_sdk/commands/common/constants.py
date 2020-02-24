@@ -226,8 +226,12 @@ class Errors:
         return f"Found incompatible file path: {file_path}."
 
     @staticmethod
-    def invalid_v2_file_name(file_path):
-        return f"The name of the v2 file : {file_path} is incorrect , should be *name* v2."
+    def invalid_v2_integration_name(file_path):
+        return f"The name of the v2 integration : {file_path} is incorrect , should be *name* v2."
+
+    @staticmethod
+    def invalid_v2_script_name(file_path):
+        return f"The name of the v2 script : {file_path} is incorrect , should be *name* v2."
 
 
 # dirs

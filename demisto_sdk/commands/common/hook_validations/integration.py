@@ -510,15 +510,12 @@ class IntegrationValidator(BaseValidator):
 
     def is_valid_display_name(self):
         # type: () -> bool
-        print(self.current_file)
-
         if not is_v2_file(self.current_file):
             return True
         else:
-            displayName = self.current_file.get('display')
-            correctName = " v2"
-            print(displayName)
-            if correctName not in displayName:
-                print_error(Errors.invalid_v2_file_name(self.file_path))
+            display_name = self.current_file.get('display')
+            correct_name = " v2"
+            if correct_name not in display_name:
+                print_error(Errors.invalid_v2_integration_name(self.file_path))
                 return False
             return True

@@ -159,6 +159,9 @@ def extract_code(config, **kwargs):
 @click.option(
     "-o", "--outdir", help="The output dir to write the unified yml to", required=True
 )
+@click.option(
+    "-f", "--force", help="Forcefully overwrites the preexisting yml if one exists", required=False
+)
 def unify(**kwargs):
     unifier = Unifier(**kwargs)
     unifier.merge_script_package_to_yml()

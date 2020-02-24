@@ -241,18 +241,17 @@ class StructureValidator:
         return is_valid_path
 
     def print_error_msg(self, err):
-        errorpath = str(err).split('Path: ')[1][2:-4].split('/')
-        key = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+        path_from_error = str(err).split('Path: ')[1][2:-4].split('/')
+        key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
         curr = self.current_file
-        for a in errorpath:
+        for single_path in path_from_error:
             if type(curr) is list:
-                curr = curr[int(a)]
+                curr = curr[int(single_path)]
             else:
-                curr = curr.get(a)
+                curr = curr.get(single_path)
         if curr.get('name'):
-            print_error('Failed: {} failed.\nMissing {} in: {}'.format(self.file_path, str(key), str(curr.get('name'))))
+            print_error('Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), str(curr.get('name'))))
         elif curr.get('contextPath'):
-            print_error(
-                'Failed: {} failed.\nMissing {} in: {}'.format(self.file_path, str(key), str(curr.get('contextPath'))))
+            print_error('Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), str(curr.get('contextPath'))))
         else:
-            print_error('Failed: {} failed.\nMising {} in : {}'.format(self.file_path, str(key), str(curr)))
+            print_error('Failed: {} failed.\nMising {} in {}'.format(self.file_path, str(key_from_error), str(curr)))

@@ -105,7 +105,7 @@ class StructureValidator:
                         schema_files=[path])
             core.validate(raise_exception=True)
         except Exception as err:
-            print_error('Failed: {} failed.\n{}'.format(self.file_path, str(err)))
+            self.print_error_msg(err)
             self.is_valid = False
             return False
         return True
@@ -239,3 +239,20 @@ class StructureValidator:
         if not is_valid_path:
             print_error(Errors.invalid_file_path(self.file_path))
         return is_valid_path
+
+    def print_error_msg(self, err):
+        errorpath = str(err).split('Path: ')[1][2:-4].split('/')
+        key = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+        curr = self.current_file
+        for a in errorpath:
+            if type(curr) is list:
+                curr = curr[int(a)]
+            else:
+                curr = curr.get(a)
+        if curr.get('name'):
+            print_error('Failed: {} failed.\nMissing {} in: {}'.format(self.file_path, str(key), str(curr.get('name'))))
+        elif curr.get('contextPath'):
+            print_error(
+                'Failed: {} failed.\nMissing {} in: {}'.format(self.file_path, str(key), str(curr.get('contextPath'))))
+        else:
+            print_error('Failed: {} failed.\nMising {} in : {}'.format(self.file_path, str(key), str(curr)))

@@ -327,7 +327,7 @@ class IncidentFieldValidator(BaseValidator):
         error_msg = None
         is_valid = True
 
-        # due to server limitation presented in: https://github.com/demisto/etc/issues/22069
+        # due to a current platform limitation, incident fields can not be set to required
         # after it will be fixed, need to validate that required field are not associated to all incident types
         # as can be seen in this pr: https://github.com/demisto/content/pull/5682
         required = self.current_file.get('required', False)

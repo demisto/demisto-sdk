@@ -38,6 +38,7 @@ class IntegrationValidator(BaseValidator):
             self.is_changed_subtype(),
             self.is_not_valid_display_configuration(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
+            self.is_valid_display_name(),
             not self.is_outputs_for_reputations_commands_valid()
         ]
         return not any(answers)

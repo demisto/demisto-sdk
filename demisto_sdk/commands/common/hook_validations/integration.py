@@ -53,6 +53,7 @@ class IntegrationValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_feed(),
+            self.is_valid_display_name(),
         ]
         return all(answers)
 
@@ -61,7 +62,7 @@ class IntegrationValidator(BaseValidator):
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that"""
         answers = [
             self.is_valid_default_arguments(),
-            self.is_valid_beta()
+            self.is_valid_beta(),
         ]
         return all(answers)
 
@@ -504,3 +505,16 @@ class IntegrationValidator(BaseValidator):
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
                 return False
         return True
+
+    def is_valid_display_name(self):
+        # type: () -> bool
+        if not super(IntegrationValidator, self)._is_v2_file():
+            return True
+        else:
+            displayName = self.current_file.get('display')
+            correctName = " v2"
+            print(displayName)
+            if not correctName in displayName:
+                print_error(Errors.invalid_v2_file_name(self.file_path))
+                return False
+            return True

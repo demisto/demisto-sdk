@@ -126,3 +126,14 @@ class BaseValidator:
                         " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
             return False
         return True
+
+    def _is_v2_file(self):
+        """Check if the file is a v2 file
+        Returns:
+            bool. Whether the file is a v2 file
+        """
+        name = self.current_file.get('name', '')
+        namePref = str(name[-2:].lower())
+        if namePref != "v2":
+            return False
+        return True

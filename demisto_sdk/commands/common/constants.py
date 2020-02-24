@@ -225,6 +225,10 @@ class Errors:
     def invalid_file_path(file_path):
         return f"Found incompatible file path: {file_path}."
 
+    @staticmethod
+    def invalid_v2_file_name(file_path):
+        return f"The name of the v2 file : {file_path} is incorrect , should be *name* v2."
+
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'

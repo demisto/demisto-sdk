@@ -428,13 +428,13 @@ class TestIsFetchParamsExist:
         self.validator = IntegrationValidator(mock_structure("", config))
 
     def test_valid(self):
-        assert self.validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
+        assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'
 
     def test_sanity(self):
         # missing param in configuration
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if t['name'] != 'incidentType']
-        assert self.validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
 
     def test_missing_field(self):
         # missing param
@@ -442,7 +442,7 @@ class TestIsFetchParamsExist:
             if t['name'] == 'incidentType':
                 del self.validator.current_file['configuration'][i]['name']
         print(self.validator.current_file['configuration'])
-        assert self.validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
 
     def test_malformed_field(self):
         # incorrect param
@@ -453,13 +453,13 @@ class TestIsFetchParamsExist:
                 t['type'] = 123
             self.validator.current_file['configuration'].append(t)
 
-        assert self.validator.is_fetch_params_exist() is False, 'is_fetch_params_exist() returns True instead False'
+        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
 
     def test_not_fetch(self):
         self.test_malformed_field()
         self.validator.is_valid = True
         self.validator.current_file['script']['isfetch'] = False
-        assert self.validator.is_fetch_params_exist(), 'is_fetch_params_exist() returns False instead True'
+        assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'
 
 
 class TestIsFeedParamsExist:
@@ -472,13 +472,13 @@ class TestIsFeedParamsExist:
         self.validator = IntegrationValidator(mock_structure("", config))
 
     def test_valid(self):
-        assert self.validator.is_valid_fetch(), 'is_feed_params_exist() returns False instead True'
+        assert self.validator.all_feed_params_exist(), 'all_feed_params_exist() returns False instead True'
 
     def test_sanity(self):
         # missing param in configuration
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if not t.get('display')]
-        assert self.validator.is_valid_fetch() is False, 'is_feed_params_exist() returns True instead False'
+        assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'
 
     def test_missing_field(self):
         # missing param
@@ -487,7 +487,7 @@ class TestIsFeedParamsExist:
             if not configuration[i].get('display'):
                 del configuration[i]['name']
         self.validator.current_file['configuration'] = configuration
-        assert self.validator.is_valid_fetch() is False, 'is_feed_params_exist() returns True instead False'
+        assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'
 
     def test_malformed_field(self):
         # incorrect param
@@ -497,4 +497,4 @@ class TestIsFeedParamsExist:
                 t['type'] = 123
             self.validator.current_file['configuration'].append(t)
 
-        assert self.validator.is_valid_fetch() is False, 'is_feed_params_exist() returns True instead False'
+        assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'

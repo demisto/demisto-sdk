@@ -53,7 +53,7 @@ class IntegrationValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_feed(),
-            self.is_fetch_params_exist(),
+            self.is_valid_fetch(),
         ]
         return all(answers)
 
@@ -498,10 +498,10 @@ class IntegrationValidator(BaseValidator):
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
                 valid_from_version = False
-            valid_feed_params = self.is_valid_fetch()
+            valid_feed_params = self.all_feed_params_exist()
         return valid_from_version and valid_feed_params
 
-    def is_fetch_params_exist(self) -> bool:
+    def is_valid_fetch(self) -> bool:
         """
         validate that all required fields in integration that have fetch incidents are in the yml file.
         Returns:
@@ -520,7 +520,7 @@ class IntegrationValidator(BaseValidator):
 
         return fetch_params_exist
 
-    def is_valid_fetch(self) -> bool:
+    def all_feed_params_exist(self) -> bool:
         """
         validate that all required fields in integration that have fetch incidents are in the yml file.
         Returns:

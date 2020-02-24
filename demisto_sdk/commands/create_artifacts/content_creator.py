@@ -252,8 +252,14 @@ class ContentCreator:
                     shutil.copyfile(new_path, os.path.join(self.test_bundle, os.path.basename(new_path)))
 
             else:
+                # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
+                # but when copied to the test_bundle, playbook-* prefix should be added to them
+                if not path.startswith('script-') and not path.startswith('playbook-'):
+                    path_basename = f'playbook-{os.path.basename(path)}'
+                else:
+                    path_basename = os.path.basename(path)
                 print(f'Copying path {path}')
-                shutil.copyfile(path, os.path.join(self.test_bundle, os.path.basename(path)))
+                shutil.copyfile(path, os.path.join(self.test_bundle, path_basename))
 
     def copy_packs_content_to_old_bundles(self, packs):
         """

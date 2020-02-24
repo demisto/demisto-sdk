@@ -5,6 +5,7 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.3.9
+* Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.
 * Added a validation the a playbook can not have a rolename set.
 * Added to the image validator the new DBot default image.
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.

@@ -6,6 +6,8 @@
 
 ### 0.3.9
 * Added a BC validation for changing incident field type.
+* Added to the *format* command the deletion of the *sourceplaybookid* field.
+* Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
 * Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.
 * Added a validation the a playbook can not have a rolename set.
 * Added to the image validator the new DBot default image.

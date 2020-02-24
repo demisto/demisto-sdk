@@ -1,6 +1,7 @@
 import os
 from demisto_sdk.commands.common.update_id_set import get_depends_on
-from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error, get_json
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error,\
+    get_from_version, get_json
 from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
     generate_list_section, build_example_dict
 
@@ -105,7 +106,8 @@ def get_script_info(script_path):
 
     tags = script.get('tags', [])
     tags = ', '.join(map(str, tags))
-    from_version = script.get('fromversion', '0.0.0')
+
+    from_version = get_from_version(script_path)
 
     return [{'Name': 'Script Type', 'Description': script_type},
             {'Name': 'Tags', 'Description': tags},

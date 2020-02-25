@@ -304,8 +304,11 @@ class Linter:
         """
         lint_files = self._get_lint_files()
         python_exe = 'python2' if py_num < 3 else 'python3'
-        output = run_command(' '.join([python_exe, '-m', 'vulture', lint_files, '--min-confidence 60']),
-                             cwd=self.project_dir)
+        cmd_args = [python_exe, '-m', 'vulture', lint_files, '--min-confidence 60']
+        vulture_whitelist_path = os.path.join(self.project_dir, '.vulture_whitelist.py')
+        if os.path.isfile(vulture_whitelist_path):
+            cmd_args.insert(4, vulture_whitelist_path)
+        output = run_command(' '.join(cmd_args), cwd=self.project_dir)
         self.lock.acquire()
         print("========= Running vulture on: {} ===============".format(lint_files))
         print_v('Using: {} to run vulture'.format(python_exe))

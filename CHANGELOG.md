@@ -12,6 +12,7 @@
 * Fixed an issue where *validate* failed on integration commands without outputs.
 * Added a new hook for naming of v2 integrations and scripts 
 
+
 ### 0.3.8
 * Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors

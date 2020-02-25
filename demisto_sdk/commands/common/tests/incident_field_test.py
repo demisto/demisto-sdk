@@ -255,3 +255,16 @@ class TestIncidentFieldsValidator:
         validator = IncidentFieldValidator(structure)
         assert validator.is_valid_from_version() == is_valid, f'is_valid_from_version({from_version})' \
                                                               f' returns {not is_valid}.'
+
+    data_required = [
+        (True, False),
+        (False, True),
+    ]
+
+    @pytest.mark.parametrize('required, is_valid', data_required)
+    def test_is_valid_required(self, required, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"required": required}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_valid_required() == is_valid, f'is_valid_required({required})' \
+                                                          f' returns {not is_valid}.'

@@ -225,6 +225,14 @@ class Errors:
     def invalid_file_path(file_path):
         return f"Found incompatible file path: {file_path}."
 
+    @staticmethod
+    def invalid_v2_integration_name(file_path, file_name):
+        return f"The name of the v2 integration : {file_path} is incorrect , should be {file_name} v2."
+
+    @staticmethod
+    def invalid_v2_script_name(file_path, file_name):
+        return f"The name of the v2 script : {file_path} is incorrect , should be {file_name}V2."
+
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
@@ -897,3 +905,73 @@ IOC_OUTPUTS_DICT = {
 PACK_INITIAL_VERSION = '1.0.0'
 
 PACK_SUPPORT_OPTIONS = ['demisto', 'partner', 'developer', 'community']
+
+FEED_REQUIRED_PARAMS = [
+    {
+        'display': 'Fetch indicators',
+        'name': 'feed',
+        'type': 8,
+        'required': False
+    },
+    {
+        'display': 'Indicator Reputation',
+        'name': 'feedReputation',
+        'type': 18,
+        'required': False,
+        'options': ['None', 'Good', 'Suspicious', 'Bad'],
+        'additionalinfo': 'Indicators from this integration instance will be marked with this reputation'
+    },
+    {
+        'display': 'Source Reliability',
+        'name': 'feedReliability',
+        'type': 15,
+        'required': True,
+        'options': [
+            'A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable',
+            'E - Unreliable', 'F - Reliability cannot be judged'],
+        'additionalinfo': 'Reliability of the source providing the intelligence data'
+    },
+    {
+        'display': "",
+        'name': 'feedExpirationPolicy',
+        'type': 17,
+        'required': False,
+        'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
+    },
+    {
+        'display': "",
+        'name': 'feedExpirationInterval',
+        'type': 1,
+        'required': False
+    },
+    {
+        'display': 'Feed Fetch Interval',
+        'name': 'feedFetchInterval',
+        'type': 19,
+        'required': False
+    },
+    {
+        'display': 'Bypass exclusion list',
+        'name': 'feedBypassExclusionList',
+        'type': 8,
+        'required': False,
+        'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
+                          ' This means that if an indicator from this feed is on the exclusion list,'
+                          ' the indicator might still be added to the system.'
+    }
+]
+
+FETCH_REQUIRED_PARAMS = [
+    {
+        'display': 'Incident type',
+        'name': 'incidentType',
+        'required': False,
+        'type': 13
+    },
+    {
+        'display': 'Fetch incidents',
+        'name': 'isFetch',
+        'required': False,
+        'type': 8
+    }
+]

@@ -905,14 +905,12 @@ FEED_REQUIRED_PARAMS = [
     {
         'display': 'Fetch indicators',
         'name': 'feed',
-        'defaultvalue': True,
         'type': 8,
         'required': False
     },
     {
         'display': 'Indicator Reputation',
         'name': 'feedReputation',
-        'defaultvalue': 'feedInstanceReputationNotSet',
         'type': 18,
         'required': False,
         'options': ['None', 'Good', 'Suspicious', 'Bad'],
@@ -921,7 +919,6 @@ FEED_REQUIRED_PARAMS = [
     {
         'display': 'Source Reliability',
         'name': 'feedReliability',
-        'defaultvalue': 'F - Reliability cannot be judged',
         'type': 15,
         'required': True,
         'options': [
@@ -932,7 +929,6 @@ FEED_REQUIRED_PARAMS = [
     {
         'display': "",
         'name': 'feedExpirationPolicy',
-        'defaultvalue': 'indicatorType',
         'type': 17,
         'required': False,
         'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
@@ -940,21 +936,18 @@ FEED_REQUIRED_PARAMS = [
     {
         'display': "",
         'name': 'feedExpirationInterval',
-        'defaultvalue': 20160,
         'type': 1,
         'required': False
     },
     {
         'display': 'Feed Fetch Interval',
         'name': 'feedFetchInterval',
-        'defaultvalue': 240,
         'type': 19,
         'required': False
     },
     {
         'display': 'Bypass exclusion list',
         'name': 'feedBypassExclusionList',
-        'defaultvalue': "",
         'type': 8,
         'required': False,
         'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'

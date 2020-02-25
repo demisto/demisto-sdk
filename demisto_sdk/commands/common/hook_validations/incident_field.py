@@ -332,8 +332,8 @@ class IncidentFieldValidator(BaseValidator):
         # as can be seen in this pr: https://github.com/demisto/content/pull/5682
         required = self.current_file.get('required', False)
         if required:
-            error_msg = f'{self.file_path}: new incident fields can not be required' \
-                        f' due to a current platform limitation.'
+            error_msg = f'{self.file_path}: new incident fields can not be required.' \
+                        f' change to:\nrequired: false.'
             is_valid = False
         if not is_valid:
             print_error(error_msg)
@@ -348,7 +348,7 @@ class IncidentFieldValidator(BaseValidator):
         if self.old_file:
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
-                error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
+                error_msg = f'{self.file_path}: Changing incident field type is not allowed.'
                 is_valid = False
 
         if not is_valid:

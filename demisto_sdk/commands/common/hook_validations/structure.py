@@ -107,7 +107,7 @@ class StructureValidator:
         except Exception as err:
             try:
                 self.print_error_msg(err)
-            except Exception as e:
+            except Exception:
                 print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
             self.is_valid = False
             return False

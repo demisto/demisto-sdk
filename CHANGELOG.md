@@ -4,8 +4,12 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
-### 0.3.9
+## 0.4.0
 * Added a BC validation for changing incident field type.
+
+
+### 0.3.9
+* Added a validation that incident field can not be required.
 * Added validation for fetch incident parameters.
 * Added validation for feed integration parameters.
 * Added to the *format* command the deletion of the *sourceplaybookid* field.

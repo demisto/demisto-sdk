@@ -185,6 +185,7 @@ class IncidentFieldValidator(BaseValidator):
                 self.is_valid_cliname(),
                 self.is_valid_version(),
                 self.is_valid_from_version(),
+                self.is_valid_required()
             ]
         )
 
@@ -316,6 +317,24 @@ class IncidentFieldValidator(BaseValidator):
             error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
             is_valid = False
 
+        if not is_valid:
+            print_error(error_msg)
+        return is_valid
+
+    def is_valid_required(self):
+        # type: () -> bool
+        """Validate that the incident field is not required."""
+        error_msg = None
+        is_valid = True
+
+        # due to a current platform limitation, incident fields can not be set to required
+        # after it will be fixed, need to validate that required field are not associated to all incident types
+        # as can be seen in this pr: https://github.com/demisto/content/pull/5682
+        required = self.current_file.get('required', False)
+        if required:
+            error_msg = f'{self.file_path}: new incident fields can not be required' \
+                        f' due to a current platform limitation.'
+            is_valid = False
         if not is_valid:
             print_error(error_msg)
         return is_valid

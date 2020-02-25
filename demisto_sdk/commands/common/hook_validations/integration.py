@@ -38,7 +38,6 @@ class IntegrationValidator(BaseValidator):
             self.is_changed_subtype(),
             self.is_not_valid_display_configuration(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
-            self.is_valid_display_name(),
             not self.is_outputs_for_reputations_commands_valid()
         ]
         return not any(answers)
@@ -516,7 +515,7 @@ class IntegrationValidator(BaseValidator):
         else:
             display_name = self.current_file.get('display')
             correct_name = " v2"
-            if correct_name not in display_name:
-                print_error(Errors.invalid_v2_integration_name(self.file_path))
+            if not display_name.endswith(correct_name):
+                print_error(Errors.invalid_v2_integration_name(self.file_path,self.current_file.get('name')[:-2]))
                 return False
             return True

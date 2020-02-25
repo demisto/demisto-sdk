@@ -106,7 +106,7 @@ class StructureValidator:
             core.validate(raise_exception=True)
         except Exception as err:
             try:
-                self.print_error_msg(err)
+                self.print_errors(err)
             except Exception:
                 print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
             self.is_valid = False
@@ -243,7 +243,22 @@ class StructureValidator:
             print_error(Errors.invalid_file_path(self.file_path))
         return is_valid_path
 
+    def print_errors(self, err):
+        """A rapper which runs the print error message for a list of errors in yaml
+        Returns:
+            parsed error message from pykwalify
+        """
+        if ".\n" in str(err):
+            a=str(err).split('.\n')
+            for error in str(err).split('.\n'):
+                self.print_error_msg(error)
+        else:
+            self.print_error_msg(str(err))
+
     def print_error_msg(self, err):
+        """Returns a parsed error message from pykwalify
+        Args: an schema error message from pykwalify
+        """
         path_from_error = str(err).split('Path: ')[1][2:-4].split('/')
         if path_from_error[0] != '':
             curr = self.current_file
@@ -252,28 +267,34 @@ class StructureValidator:
             for single_path in path_from_error:
                 if type(curr) is list:
                     curr = curr[int(single_path)]
-                    key_list.append(curr.get('name'))
+                    if curr.get('name'):
+                        key_list.append(curr.get('name'))
+                    elif curr.get('contextPath'):
+                        key_list.append(curr.get('contextPath'))
                 else:
                     curr = curr.get(single_path)
                     key_list.append(single_path)
             if curr.get('name'):
-                print_error('Failed: {} failed.\nMissing {} in {} Path: {}'.format(self.file_path, str(key_from_error),
-                                                                                   str(curr.get('name')),
-                                                                                   str(key_list).strip('[]').replace(
-                                                                                       ',', '->')))
+                print_error('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                                    str(curr.get('name')),
+                                                                                    str(key_list).strip('[]').replace(
+                                                                                        ',', '->')))
             elif curr.get('contextPath'):
-                print_error('Failed: {} failed.\nMissing {} in {} Path: {}'.format(self.file_path, str(key_from_error),
-                                                                                   str(curr.get('contextPath')),
-                                                                                   str(key_list).strip('[]').replace(
-                                                                                       ',', '->')))
+                print_error('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                                    str(curr.get('contextPath')),
+                                                                                    str(key_list).strip('[]').replace(
+                                                                                        ',', '->')))
             else:
                 print_error(
-                    'Failed: {} failed.\nMissing {} in {} Path: {}'.format(self.file_path, str(key_from_error),
-                                                                           str(curr),
-                                                                           str(key_list).strip('[]').replace(',',
-                                                                                                             '->')))
+                    'Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                            str(curr),
+                                                                            str(key_list).strip('[]').replace(',',
+                                                                                                              '->')))
         else:
-            key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+            if 'key' in str(err):
+                key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+            else:
+                key_from_error = str(err).split('Key')[1].split('.')[0].replace("'", '-').split('-')[1]
             print_error(
                 'Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), "root",
                                                               ))

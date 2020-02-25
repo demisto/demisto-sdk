@@ -1,5 +1,5 @@
 from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
-    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
+    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
@@ -55,6 +55,7 @@ class IntegrationValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_feed(),
+            self.is_valid_fetch(),
             self.is_valid_display_name(),
         ]
         return all(answers)
@@ -483,7 +484,8 @@ class IntegrationValidator(BaseValidator):
                     self.is_valid = False
                     return True
 
-            elif not is_field_hidden and not configuration_display:
+            elif not is_field_hidden and not configuration_display \
+                    and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
                 print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
                 self.is_valid = False
                 return True
@@ -501,12 +503,50 @@ class IntegrationValidator(BaseValidator):
 
     def is_valid_feed(self):
         # type: () -> bool
+        valid_from_version = valid_feed_params = True
         if self.current_file.get("script", {}).get("feed"):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
-                return False
-        return True
+                valid_from_version = False
+            valid_feed_params = self.all_feed_params_exist()
+        return valid_from_version and valid_feed_params
+
+    def is_valid_fetch(self) -> bool:
+        """
+        validate that all required fields in integration that have fetch incidents are in the yml file.
+        Returns:
+            bool. True if the integration is defined as well False otherwise.
+        """
+        fetch_params_exist = True
+        if self.current_file.get('script', {}).get('isfetch') is True:
+            params = [_key for _key in self.current_file.get('configuration', [])]
+            for param in FETCH_REQUIRED_PARAMS:
+                if param not in params:
+                    print_error(f'Integration with fetch-incidents was detected '
+                                f'("isfetch:  true" was found in the YAML file).'
+                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
+                                f'the param is:\n{param}')
+                    fetch_params_exist = False
+
+        return fetch_params_exist
+
+    def all_feed_params_exist(self) -> bool:
+        """
+        validate that all required fields in feed integration are in the yml file.
+        Returns:
+            bool. True if the integration is defined as well False otherwise.
+        """
+        params_exist = True
+        params = [_key for _key in self.current_file.get('configuration', [])]
+        for param in FEED_REQUIRED_PARAMS:
+            if param not in params:
+                print_error(f'Feed Integration was detected '
+                            f'\nA required parameter is missing or malformed in the file {self.file_path}, '
+                            f'the param is:\n{param}')
+                params_exist = False
+
+        return params_exist
 
     def is_valid_display_name(self):
         # type: () -> bool

@@ -2,6 +2,8 @@ from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES
     DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
+
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
 
@@ -54,6 +56,7 @@ class IntegrationValidator(BaseValidator):
             self.is_docker_image_valid(),
             self.is_valid_feed(),
             self.is_valid_fetch(),
+            self.is_valid_display_name(),
         ]
         return all(answers)
 
@@ -62,7 +65,7 @@ class IntegrationValidator(BaseValidator):
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that"""
         answers = [
             self.is_valid_default_arguments(),
-            self.is_valid_beta()
+            self.is_valid_beta(),
         ]
         return all(answers)
 
@@ -536,11 +539,26 @@ class IntegrationValidator(BaseValidator):
         """
         params_exist = True
         params = [_key for _key in self.current_file.get('configuration', [])]
+        for counter, param in enumerate(params):
+            if 'defaultvalue' in param:
+                params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
                 print_error(f'Feed Integration was detected '
                             f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                            f'the param is:\n{param}')
+                            f'the param should be:\n{param}')
                 params_exist = False
 
         return params_exist
+
+    def is_valid_display_name(self):
+        # type: () -> bool
+        if not is_v2_file(self.current_file):
+            return True
+        else:
+            display_name = self.current_file.get('display')
+            correct_name = " v2"
+            if not display_name.endswith(correct_name):
+                print_error(Errors.invalid_v2_integration_name(self.file_path, self.current_file.get('name')[:-2]))
+                return False
+            return True

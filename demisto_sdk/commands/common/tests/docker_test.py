@@ -68,6 +68,8 @@ data_test_none_demisto_docker = [
     (('demisto/algorithmia', '1.0.0.6016'), '1.0.0.6016'),
     (('demisto/google-api-py3', '1.0.0.5992'), '1.0.0.5992'),
     (('blabla/google-api-py3', '1.0.0.5992'), ''),
+    (('devdemisto/python3', '3.8.1.6088'), '3.8.1.6088'),
+    (('unknownvuser/v-alpine', 'at_v_commit-b17ade1257cfe086c1742c91deeb6c606037b893'), '')
 ]
 
 

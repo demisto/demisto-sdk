@@ -6,6 +6,8 @@
 
 ### 0.3.9
 * Added a validation that incident field can not be required.
+* Added validation for fetch incident parameters.
+* Added validation for feed integration parameters.
 * Added to the *format* command the deletion of the *sourceplaybookid* field.
 * Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
 * Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.

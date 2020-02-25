@@ -530,7 +530,7 @@ class IntegrationValidator(BaseValidator):
 
     def all_feed_params_exist(self) -> bool:
         """
-        validate that all required fields in integration that have fetch incidents are in the yml file.
+        validate that all required fields in feed integration are in the yml file.
         Returns:
             bool. True if the integration is defined as well False otherwise.
         """
@@ -538,8 +538,7 @@ class IntegrationValidator(BaseValidator):
         params = [_key for _key in self.current_file.get('configuration', [])]
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
-                print_error(f'Feed Integration with was detected '
-                            f'("feed:  true" was found in the YAML file).'
+                print_error(f'Feed Integration was detected '
                             f'\nA required parameter is missing or malformed in the file {self.file_path}, '
                             f'the param is:\n{param}')
                 params_exist = False

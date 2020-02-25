@@ -5,6 +5,9 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.3.9
+* Added to the *format* command the deletion of the *sourceplaybookid* field.
+* Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
+* Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.
 * Added a validation the a playbook can not have a rolename set.
 * Added to the image validator the new DBot default image.
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.

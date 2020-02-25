@@ -197,7 +197,7 @@ def get_last_release_version():
 
 def get_file(method, file_path, type_of_file):
     data_dictionary = None
-    with open(os.path.expanduser(file_path), "r") as f:
+    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
             try:
                 data_dictionary = method(f)

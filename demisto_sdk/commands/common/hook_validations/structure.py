@@ -249,7 +249,6 @@ class StructureValidator:
             parsed error message from pykwalify
         """
         if ".\n" in str(err):
-            a=str(err).split('.\n')
             for error in str(err).split('.\n'):
                 self.print_error_msg(error)
         else:

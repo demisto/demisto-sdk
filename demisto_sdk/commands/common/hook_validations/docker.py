@@ -1,5 +1,5 @@
 from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.tools import get_yaml, print_error
+from demisto_sdk.commands.common.tools import get_yaml, print_error, print_warning
 from distutils.version import LooseVersion
 from pkg_resources import parse_version
 from datetime import datetime, timedelta
@@ -197,9 +197,12 @@ class DockerImageValidator(object):
         Returns:
             The last updated docker image tag
         """
-        if yml_docker_image and not yml_docker_image.startswith('demisto/'):
-            print_error('docker image must be a demisto docker image. e.g: demisto/python:<tag>')
-            return ''
+        if yml_docker_image:
+            if yml_docker_image.startswith('devdemisto/'):
+                print_warning('docker image must be a demisto docker image. e.g: demisto/python:<tag>')
+            elif not yml_docker_image.startswith('demisto/'):
+                print_error('docker image must be a demisto docker image. e.g: demisto/python:<tag>')
+                return ''
         try:
             tag = ''
             auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)

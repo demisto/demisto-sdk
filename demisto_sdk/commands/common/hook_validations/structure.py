@@ -259,15 +259,17 @@ class StructureValidator:
         Args: an schema error message from pykwalify
         """
         path_from_error = str(err).split('Path: ')[1][2:-4].split('/')
-        if path_from_error[0] != '':
+        if isinstance(path_from_error, list) and path_from_error[0]:
             curr = self.current_file
             key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
             key_list = []
             for single_path in path_from_error:
                 if type(curr) is list:
                     curr = curr[int(single_path)]
+                    # if the error is from arguments section of file
                     if curr.get('name'):
                         key_list.append(curr.get('name'))
+                    # if the error is from outputs section of file
                     elif curr.get('contextPath'):
                         key_list.append(curr.get('contextPath'))
                 else:

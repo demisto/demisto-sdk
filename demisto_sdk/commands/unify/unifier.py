@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, INTEGRATION
 class Unifier:
 
     def __init__(self, indir: str, dir_name=INTEGRATIONS_DIR, outdir='',
-                 image_prefix=DEFAULT_IMAGE_PREFIX, force: str = None):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
         directory_name = ""
         for optional_dir_name in DIR_TO_PREFIX:
@@ -32,13 +32,7 @@ class Unifier:
 
         self.image_prefix = image_prefix
         self.package_path = indir
-        if force is None:
-            self.use_force = False
-        else:
-            if force == ('True' or 'true' or 't'):
-                self.use_force = True
-            else:
-                self.use_force = False
+        self.use_force = force
         if self.package_path.endswith(os.sep):
             self.package_path = self.package_path.rstrip(os.sep)
 

@@ -244,7 +244,7 @@ class StructureValidator:
         return is_valid_path
 
     def print_errors(self, err):
-        """A rapper which runs the print error message for a list of errors in yaml
+        """A wrapper which runs the print error message for a list of errors in yaml
         Returns:
             parsed error message from pykwalify
         """
@@ -258,33 +258,49 @@ class StructureValidator:
         """Returns a parsed error message from pykwalify
         Args: an schema error message from pykwalify
         """
-        path_from_error = str(err).split('Path: ')[1][2:-4].split('/')
-        if isinstance(path_from_error, list) and path_from_error[0]:
+        # err is : '<SchemaError: error code 2: Schema validation failed:
+        #  - Cannot find required key \'description\'. Path: \'\''
+        step_1 = str(err).split('Path: ')
+        # step_1 is : ["<SchemaError: error code 2: Schema validation failed:\n - Cannot find required key
+        # 'description'. ", "'/script/commands/0/outputs/20'.: ", "'/'>"]
+        step_2 = step_1[1]
+        # step_2 is : '\'/script/commands/0/outputs/20\'.: '
+        step_3 = step_2[2:-4]
+        # step_3 is : 'script/commands/0/outputs/20'
+        error_path = step_3.split('/')
+        # error_path  is : ['script', 'commands', '0', 'outputs', '20']
+
+        # check if the Path from the error is '' :
+        if isinstance(error_path, list) and error_path[0]:
             curr = self.current_file
             key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
             key_list = []
-            for single_path in path_from_error:
+            for single_path in error_path:
                 if type(curr) is list:
                     curr = curr[int(single_path)]
-                    # if the error is from arguments section of file
+                    # if the error is from arguments of file
                     if curr.get('name'):
                         key_list.append(curr.get('name'))
-                    # if the error is from outputs section of file
+                    # if the error is from outputs of file
                     elif curr.get('contextPath'):
                         key_list.append(curr.get('contextPath'))
                 else:
                     curr = curr.get(single_path)
                     key_list.append(single_path)
+
+            # if the error is from arguments of file
             if curr.get('name'):
                 print_error('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
                                                                                     str(curr.get('name')),
                                                                                     str(key_list).strip('[]').replace(
                                                                                         ',', '->')))
+            # if the error is from outputs of file
             elif curr.get('contextPath'):
                 print_error('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
                                                                                     str(curr.get('contextPath')),
                                                                                     str(key_list).strip('[]').replace(
                                                                                         ',', '->')))
+            # if the error is from neither arguments , outputs nor root
             else:
                 print_error(
                     'Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),

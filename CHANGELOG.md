@@ -5,6 +5,9 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.3.9
+* Added a validation that incident field can not be required.
+* Added validation for fetch incident parameters.
+* Added validation for feed integration parameters.
 * Added to the *format* command the deletion of the *sourceplaybookid* field.
 * Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
 * Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.
@@ -12,7 +15,7 @@
 * Added to the image validator the new DBot default image.
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
 * Fixed an issue where *validate* failed on integration commands without outputs.
-
+* Added a new hook for naming of v2 integrations and scripts.
 
 ### 0.3.8
 * Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.

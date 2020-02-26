@@ -11,11 +11,12 @@ class ReadMeValidator:
 
     def is_file_valid(self):
         mdx_parse = f'{os.path.dirname(os.path.abspath(__file__))}/../mdx-parse.js'
-        res = subprocess.run(['node', mdx_parse, '-f', self.file_path], text=True, timeout=10, capture_output=True)
-        if res.returncode != 0:
-            print_error(f'Failed verfiying: {self.file_path}. Error: {res.stderr}')
-            return False
+        is_node = subprocess.run(['node', '-v'], text=True, timeout=10, capture_output=True)
+        if is_node.returncode == 0:
+            res = subprocess.run(['node', mdx_parse, '-f', self.file_path], text=True, timeout=10, capture_output=True)
+            if res.returncode != 0:
+                print_error(f'Failed verfiying: {self.file_path}. Error: {res.stderr}')
+                return False
+        else:
+            return None
         return True
-
-
-

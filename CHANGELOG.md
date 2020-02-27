@@ -6,7 +6,7 @@
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
-
+* Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.
 
 ### 0.3.9
 * Added a validation that incident field can not be required.

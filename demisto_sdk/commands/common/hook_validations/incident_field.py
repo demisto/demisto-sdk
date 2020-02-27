@@ -315,9 +315,13 @@ class IncidentFieldValidator(BaseValidator):
         # if not a new file, will be checked here
         # if has an old_file, will be checked in BC checks
         if not self.old_file:
-            from_version = self.current_file.get("fromVersion", "0.0.0")
-            if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                error_msg = f'{self.file_path}: fromVersion must be at least 5.0.0'
+            try:
+                from_version = self.current_file.get("fromVersion", "0.0.0")
+                if LooseVersion(from_version) < LooseVersion("5.0.0"):
+                    error_msg = f'{self.file_path}: fromVersion must be at least 5.0.0'
+                    is_valid = False
+            except (AttributeError, ValueError):
+                error_msg = f'{self.file_path}: "fromVersion" has an invalid value.'
                 is_valid = False
 
         if not is_valid:

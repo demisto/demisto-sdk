@@ -4,6 +4,10 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.4.0
+* Added a BC check for incident fields - changing from version is not allowed.
+
+
 ### 0.3.9
 * Added a validation that incident field can not be required.
 * Added validation for fetch incident parameters.

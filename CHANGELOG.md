@@ -4,12 +4,38 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.9
+* Added a validation that incident field can not be required.
+* Added validation for fetch incident parameters.
+* Added validation for feed integration parameters.
+* Added to the *format* command the deletion of the *sourceplaybookid* field.
+* Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
+* Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.
+* Added a validation the a playbook can not have a rolename set.
+* Added to the image validator the new DBot default image.
+* Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
+* Fixed an issue where *validate* failed on integration commands without outputs.
+* Added a new hook for naming of v2 integrations and scripts.
+
+### 0.3.8
+* Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.
+* Fixed an issue where *unify* broke long lines in script section causing syntax errors
+
+
+### 0.3.7
+* Added *generate-docs* command to generate documentation file for integration, playbook or script.
+* Fixed an issue where *unify* created a malformed integration yml.
+* Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
+
+
 ### 0.3.6
 * Fixed an issue where demisto-sdk **validate** failed on modified scripts without error message.
+
 
 ### 0.3.5
 * Fixed an issue with docker tag validation for integrations.
 * Restructured repo source code.
+
 
 ### 0.3.4
 * Saved failing unit tests as a file.
@@ -30,6 +56,7 @@
 * Added pack parameter for **init**.
 * Fixed an issue where error would appear if name parameter is not set in **init**.
 
+
 ### 0.3.2
 * Fixed the handling of classifier files in **validate**.
 
@@ -40,7 +67,6 @@
 
 
 ### 0.3.0
-
 * Added support for multi-package **lint** both with parallel and without.
 * Added all parameter in **lint** to run on all packages and packs in content repository.
 * Added **format** for:

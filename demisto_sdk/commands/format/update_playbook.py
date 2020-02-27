@@ -25,6 +25,9 @@ class PlaybookYMLFormat(BaseUpdateYML):
             self.yml_data['description'] = ''
 
         for task_id, task in self.yml_data.get('tasks', {}).items():
+            if task['task'].get('description'):
+                continue  # In case we already have a description we should skip the setting of an empty value
+
             task['task'].update({'description': ''})
 
     def update_playbook_task_name(self):
@@ -56,6 +59,12 @@ class PlaybookYMLFormat(BaseUpdateYML):
                     is_input_version_valid = True
                 else:
                     print_error('Version format is not valid')
+
+    def delete_sourceplaybookid(self):
+        """Delete the not needed sourceplaybookid fields"""
+        print(F'Removing sourceplaybookid field from playbook')
+        if 'sourceplaybookid' in self.yml_data:
+            self.yml_data.pop('sourceplaybookid', None)
 
     def format_file(self):
         """Manager function for the playbook YML updater."""

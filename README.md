@@ -260,9 +260,92 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
 
    ```shell
    demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml
-   ```
 
-For detalied command usage press [here](demisto_sdk/commands/upload/upload_command.md)
+---
+
+## generate-docs
+Generate documentation file for integration, playbook or script from yaml file.
+
+**Arguments**:
+* **-i, --input**
+    Path of the yml file.
+
+* **-o, --output**
+    The output dir to write the documentation file into, documentation file name is README.md.
+
+* **-t, --file_type**
+    The type of yml file. When the argument is empty, the type will be selected automatically.
+
+* **-e, --examples**
+    In order to create example, DEMISTO_BASE_URL environment variable should contain the Demisto base URL, and DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    **For integration** - Path for file containing command or script examples.
+    Each Command should be in a separate line. **For script** - the script example surrounded by double quotes.
+    When the argument is empty, the documentation will be generate without examples.
+
+* **-id, --id_set**
+    Path of updated id_set.json file, used for generates script documentation.
+     When the argument is empty, the documentation will be generate without `Used In` section.
+
+* **-v, --verbose**
+    Verbose output - mainly for debugging purposes.
+
+**Examples**:
+`demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Playbooks/playbook-Block_IP_-_Generic.yml`
+This will generate documentation file to Block IP - Generic playbook in /Users/Documentations/README.md.
+
+`demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Integrations/Tanium_v2/Tanium_v2.yml -c /Users/tanium_commands.txt`
+This will generate documentation file to Tanium V2 integration in /Users/Documentations/README.md, the file /Users/tanium_commands.txt should contains the example commands to execute.
+
+`demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Scripts/script-PrintErrorEntry.yml -id /demisto/content/Tests/id_set.json -e "!PrintErrorEntry message=Hi"`
+This will generate documentation file to PrintErrorEntry script in /Users/Documentations/README.md. id_set.json should be updated to gets all the integration that uses this script.
+
+## In the code
+You can import the SDK core class in your python code as follows:
+
+`from demisto_sdk.core import DemistoSDK`
+
+## Dev Environment Setup
+We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) for managing environments and running unit tests.
+
+1) Clone the Demisto-SDK repository (Make sure that you have GitHub account):\
+`git clone https://github.com/demisto/demisto-sdk`
+
+2) **If you are using a default python version 3.7 or 3.8 you can skip this part.**
+
+    [pyenv](https://github.com/pyenv/pyenv) is an easy tool to control the versions of python on your environment.
+[Install pyenv](https://github.com/pyenv/pyenv#installation) and then run:
+    ```
+    pyenv install 3.7.5
+    pyenv install 3.8.0
+    ```
+    After installing run in `{path_to_demisto-sdk}/demisto-sdk`:
+    ```
+    cd {path_to_demisto-sdk}/demisto-sdk
+    pyenv versions
+    ```
+    And you should see marked with asterisks:
+    ```
+    * 3.7.5 (set by /{path_to_demisto-sdk}/demisto-sdk/.python-version)
+    * 3.8.0 (set by /{path_to_demisto-sdk}/demisto-sdk/.python-version)
+    ```
+
+    If not, simply run the following command from the Demisto-SDK repository:
+    ```
+    pyenv local 3.7.5 3.8.0
+    ```
+
+3) Using the terminal go to the Demisto-SDK repository - we will set up the development environment there.
+
+4) Install `tox`:
+    ```
+    pip install tox
+    ```
+    Then setup dev virtual envs for python 3 (will also install all necessary requirements):
+    ```
+    tox
+    ```
+5) Set your IDE to use the virtual environment you created using the following path:
+`/{path_to_demisto-sdk}/demisto-sdk/.tox/py37/bin/python`
 
 ---
 
@@ -281,7 +364,6 @@ Generate Test Playbook from integration/script yml
 For detalied command usage press [here](demisto_sdk/commands/generate_test_playbook/generate_test_playbook_command.md)
 
 ---
-
 
 ### Convert JSON to Demisto Outputs
 Convert JSON format to demisto entry context yaml format.
@@ -322,6 +404,17 @@ Convert JSON format to demisto entry context yaml format.
    ````
 
 For detalied command usage press [here](demisto_sdk/commands/json_to_outputs/json_to_outputs_command.md)
+
+---
+
+### How to run commands in your development environment
+In the Demisto-SDK repository while on the git branch you want to activate and run this command to use python 3.7:
+ ```
+ source .tox/py37/bin/activate
+ ```
+or this command to use python 3.8:
+
+For detalied command usage press [here](demisto_sdk/commands/upload/upload_command.md)
 
 ---
 

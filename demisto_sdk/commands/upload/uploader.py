@@ -27,7 +27,7 @@ class Uploader:
             if self.unify:  # Create a temporary unified yml file
                 try:
                     unifier = Unifier(self.path, outdir=self.path)
-                    self.path = unifier.merge_script_package_to_yml()[0][0]
+                    self.path = unifier.merge_script_package_to_yml()[0]
                 except IndexError:
                     print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
                     return 1

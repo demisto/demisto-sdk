@@ -180,13 +180,20 @@ class LintManager:
         """
         print("Filtering out directories that did not change")
         pkgs_to_run = []
+
+        current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
+        print(f'current_branch = {current_branch}')
+
+        if os.environ.get('CIRCLE_COMPARE_URL'):
+            print(f"CIRCLE_COMPARE_URL = {os.environ['CIRCLE_COMPARE_URL']}")
+
         for directory in self.pkgs:
-            if self._check_should_run_pkg(pkg_dir=directory):
+            if self._check_should_run_pkg(pkg_dir=directory, current_branch=current_branch):
                 pkgs_to_run.append(directory)
 
         return pkgs_to_run
 
-    def _check_should_run_pkg(self, pkg_dir: str) -> bool:
+    def _check_should_run_pkg(self, pkg_dir: str, current_branch: str) -> bool:
         """Checks if there is a difference in the package before this Lint run and after it.
 
         Args:
@@ -195,12 +202,14 @@ class LintManager:
         Returns:
             bool. True if there is a difference and False otherwise.
         """
-        # get the current branch name.
-        current_branch = run_command(f"git rev-parse --abbrev-ref HEAD")
 
-        # This will return a list of all files that changed up until the last commit (not including any changes
-        # which were made but not yet committed).
-        changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch}")
+        # This will check if there are any changes between current master version and the last commit in master
+        if os.environ.get('CIRCLE_COMPARE_URL') and current_branch == "master":
+            changes_from_last_commit_vs_master = run_command("git diff --name-only HEAD..HEAD^")
+        else:
+            # This will return a list of all files that changed up until the last commit (not including any changes
+            # which were made but not yet committed).
+            changes_from_last_commit_vs_master = run_command(f"git diff origin/master...{current_branch} --name-only")
 
         # This will check if any changes were made to the files in the package (pkg_dir) but are yet to be committed.
         changes_since_last_commit = run_command(f"git diff --name-only -- {pkg_dir}")

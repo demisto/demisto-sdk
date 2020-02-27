@@ -1,5 +1,8 @@
 type: map
 mapping:
+  elasticcommonfields:
+    type: map
+    allowempty: True
   id:
     type: str
     required: true
@@ -67,6 +70,13 @@ mapping:
           defaultassigneecomplex:
             type: map
             allowempty: True
+          sla:
+            type: map
+            allowempty: True
+          quietmode:
+            type: int
+          restrictedcompletion:
+            type: bool
           scriptarguments:
             type: map
             allowempty: True
@@ -111,6 +121,9 @@ mapping:
               iscommand:
                 type: bool
                 required: true
+              elasticcommonfields:
+                type: map
+                allowempty: True
               brand:
                 type: text
                 required: true
@@ -175,6 +188,8 @@ mapping:
     required: true
   toversion:
     type: text
+  quiet:
+    type: bool
   tests:
     type: seq
     sequence:
@@ -204,6 +219,8 @@ schema;input_schema:
       required: true
     required:
       type: bool
+    playbookInputQuery:
+      type: any
 
 # playbook->outputs
 schema;output_schema:

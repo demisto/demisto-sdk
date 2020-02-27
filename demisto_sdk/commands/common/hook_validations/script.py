@@ -2,6 +2,7 @@ from demisto_sdk.commands.common.constants import PYTHON_SUBTYPES, Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, server_version_compare, get_dockerimage45
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
 
 
 class ScriptValidator(BaseValidator):
@@ -56,6 +57,7 @@ class ScriptValidator(BaseValidator):
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
+            self.is_valid_name(),
         ])
 
         return is_script_valid
@@ -168,3 +170,15 @@ class ScriptValidator(BaseValidator):
         if docker_image_validator.is_docker_image_valid():
             return True
         return False
+
+    def is_valid_name(self):
+        # type: () -> bool
+        if not is_v2_file(self.current_file):
+            return True
+        else:
+            name = self.current_file.get('name')
+            correct_name = "V2"
+            if not name.endswith(correct_name):
+                print_error(Errors.invalid_v2_script_name(self.file_path, self.current_file.get('name')[:-2]))
+                return False
+            return True

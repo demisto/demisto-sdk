@@ -55,6 +55,11 @@ tasks:
           - operator: general.uniq
     reputationcalc: 0
     separatecontext: true
+    sla:
+      hours: 1
+      days: 0
+      weeks: 0
+    restrictedcompletion: true
     loop:
       iscommand: false
       exitCondition: ""
@@ -109,6 +114,10 @@ tasks:
       - "10"
     reputationcalc: 0
     separatecontext: false
+    sla:
+      hours: 1
+      days: 0
+      weeks: 0
     view: |-
       {
         "position": {
@@ -852,6 +861,13 @@ tasks:
           "y": 2000
         }
       }
+    fieldMapping:
+      - incidentfield: details
+        output:
+          simple: Set
+      - incidentfield: Google Mail Status
+        output:
+          simple: On Hold
   "28":
     id: "28"
     taskid: 8ae1ca42-1f1d-4ae7-883e-814705b8aae2

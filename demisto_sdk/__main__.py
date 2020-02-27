@@ -21,6 +21,10 @@ from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.create_artifacts.content_creator import ContentCreator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import json_to_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
+from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.validation.type_file.find_type import find_type
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error
@@ -153,11 +157,17 @@ def extract_code(config, **kwargs):
     "-i", "--indir", help="The path to the files to unify", required=True
 )
 @click.option(
-    "-o", "--outdir", help="The output dir to write the unified yml to", required=True
+    "-o", "--outdir", help="The output dir to write the unified yml to", required=False
+)
+@click.option(
+    "--force", help="Forcefully overwrites the preexisting yml if one exists",
+    is_flag=True,
+    show_default=False
 )
 def unify(**kwargs):
     unifier = Unifier(**kwargs)
-    return unifier.merge_script_package_to_yml()
+    unifier.merge_script_package_to_yml()
+    return 0
 
 
 # ====================== validate ====================== #
@@ -488,15 +498,65 @@ def init(**kwargs):
     return 0
 
 
+# ====================== generate-docs ====================== #
+@main.command(name="generate-docs",
+              short_help="Generate documentation for integration, playbook or script from yaml file.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="Path of the yml file.", required=True)
+@click.option(
+    "-o", "--output", help="The output dir to write the documentation file into,"
+                           " documentation file name is README.md.", required=True)
+@click.option(
+    "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
+    help="The type of yml file.", required=False)
+@click.option(
+    "-e", "--examples", help="For integration - Path for file containing command or script examples."
+                             " Each Command should be in a separate line."
+                             " For script - the script example surrounded by double quotes.")
+@click.option(
+    "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
+def generate_doc(file_type, **kwargs):
+    input_path = kwargs['input']
+    output_path = kwargs['output']
+
+    # validate inputs
+    if input_path and not os.path.isfile(input_path):
+        print_error(F'Input file {input_path} was not found.')
+        return 1
+
+    if not input_path.lower().endswith('.yml'):
+        print_error(F'Input {input_path} is not a valid yml file.')
+        return 1
+
+    if output_path and not os.path.isdir(output_path):
+        print_error(F'Output directory {output_path} was not found.')
+        return 1
+
+    if not file_type:
+        file_type = find_type(kwargs.get('input', ''))
+
+    print(f'Start generate {file_type} documentation...')
+    if file_type == 'integration':
+        return generate_integration_doc(**kwargs)
+    elif file_type == 'script':
+        return generate_script_doc(**kwargs)
+    elif file_type == 'playbook':
+        return generate_playbook_doc(**kwargs)
+    else:
+        print_error(f'File type {file_type} is not supported.')
+        return 1
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 # todo: add download from demisto command
-
-
-def demisto_sdk_cli():
-    main()
 
 
 if __name__ == '__main__':

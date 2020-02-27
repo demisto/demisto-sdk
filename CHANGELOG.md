@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.3.10
+* Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.
+
 ### 0.3.9
 * Added a validation that incident field can not be required.
 * Added validation for fetch incident parameters.

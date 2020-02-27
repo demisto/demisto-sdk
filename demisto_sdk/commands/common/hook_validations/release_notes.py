@@ -6,7 +6,6 @@ import re
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.common.tools import print_error, get_latest_release_notes_text, \
     get_release_notes_file_path
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 
 
 class ReleaseNotesValidator:
@@ -39,9 +38,8 @@ class ReleaseNotesValidator:
         Returns:
             str. empty string if no changes made or no origin/master branch, otherwise full difference context.
         """
-        a=run_command(F'git diff --unified=100 '
+        return run_command(F'git diff --unified=100 '
                            F'origin/master {self.release_notes_path}')
-        return a
 
     def is_release_notes_changed(self):
         """Validates that a new comment was added to release notes.

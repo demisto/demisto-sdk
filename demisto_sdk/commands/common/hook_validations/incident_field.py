@@ -373,6 +373,6 @@ class IncidentFieldValidator(BaseValidator):
                 error_msg = f'{self.file_path}: Changing incident field type is not allowed.'
                 is_valid = False
 
-        if not error_msg:
+        if error_msg:
             print_error(error_msg)
         return is_valid

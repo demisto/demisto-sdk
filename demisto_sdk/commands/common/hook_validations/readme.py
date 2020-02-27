@@ -28,5 +28,5 @@ class ReadMeValidator:
                 return None
             return True
         except Exception as err:
-            print_warning(err)
+            print("yana")
             return None

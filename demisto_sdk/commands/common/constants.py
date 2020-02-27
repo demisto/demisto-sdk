@@ -438,7 +438,6 @@ INTEGRATION_REGEX = r'{}{}/(integration-[^\\/]+)\.yml$'.format(CAN_START_WITH_DO
 INTEGRATION_README_REGEX = r'{}{}/([^\\/]+)/README.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_CHANGELOG_REGEX = r'{}{}/([^\\/]+)/CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 
-
 PACKS_DIR_REGEX = r'^{}{}/'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_INTEGRATION_JS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
@@ -494,7 +493,6 @@ REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 README_REGEX = r'{}{}/readme.*\.md$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_FIELDS_DIR)
-
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
@@ -703,7 +701,7 @@ CHECKED_TYPES_REGEXES = [
     MISC_REGEX,
     REPORT_REGEX,
     REPUTATION_REGEX,
-    #changelog
+    # changelog
     PACKS_CHANGELOG_REGEX,
     # ReadMe,
     INTEGRATION_README_REGEX,

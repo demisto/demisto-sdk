@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.4.0
+* Added a validator for Indicator Types objects.
+
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
 * Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.

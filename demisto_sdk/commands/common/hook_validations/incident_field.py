@@ -324,7 +324,7 @@ class IncidentFieldValidator(BaseValidator):
                 error_msg = f'{self.file_path}: "fromVersion" has an invalid value.'
                 is_valid = False
 
-        if not is_valid:
+        if error_msg:
             print_error(error_msg)
         return is_valid
 
@@ -357,6 +357,7 @@ class IncidentFieldValidator(BaseValidator):
             error_msg = f'{self.file_path}: new incident fields can not be required.' \
                         f' change to:\nrequired: false.'
             is_valid = False
+
         if error_msg:
             print_error(error_msg)
         return is_valid

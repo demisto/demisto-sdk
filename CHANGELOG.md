@@ -5,7 +5,7 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.4.0
-* Added a validator for Indicator Types objects.
+* Added a validator for Indicator Types objects (reputation-*.json).
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.

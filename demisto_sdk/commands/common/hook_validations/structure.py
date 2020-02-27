@@ -261,7 +261,7 @@ class StructureValidator:
         # err is : '<SchemaError: error code 2: Schema validation failed:
         #  - Cannot find required key \'description\'. Path: \'\''
         step_1 = str(err).split('Path: ')
-        # step_1 is : ["<SchemaError: error code 2: Schema validation failed:\n - Cannot find required key
+        # step_1 example: ["<SchemaError: error code 2: Schema validation failed:\n - Cannot find required key
         # 'description'. ", "'/script/commands/0/outputs/20'.: ", "'/'>"]
         step_2 = step_1[1]
         # step_2 example: '\'/script/commands/0/outputs/20\'.: '

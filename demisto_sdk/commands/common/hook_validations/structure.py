@@ -266,7 +266,7 @@ class StructureValidator:
         step_2 = step_1[1]
         # step_2 example: '\'/script/commands/0/outputs/20\'.: '
         step_3 = step_2[2:-4]
-        # step_3 is : 'script/commands/0/outputs/20'
+        # step_3 example: 'script/commands/0/outputs/20'
         error_path = step_3.split('/')
         # error_path example: ['script', 'commands', '0', 'outputs', '20']
 

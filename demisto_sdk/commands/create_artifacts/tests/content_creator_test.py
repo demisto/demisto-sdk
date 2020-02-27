@@ -76,8 +76,16 @@ class TestContentCreator:
                                          content_bundle_path=self._bundle_dir,
                                          test_bundle_path=self._test_dir,
                                          preserve_bundles=False)
+        content_creator.copy_packs_content_to_old_bundles([f'{self.Packs_full_path}/FeedAzure'])
 
         # test Packs repo, TestPlaybooks repo copy without playbook- prefix
-        content_creator.copy_packs_content_to_old_bundles([f'{self.Packs_full_path}/FeedAzure'])
         assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/FeedAzure_test.yml',
                            f'{self._test_dir}/playbook-FeedAzure_test.yml')
+        assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/playbook-FeedAzure_test_copy_no_prefix.yml',
+                           f'{self._test_dir}/playbook-FeedAzure_test_copy_no_prefix.yml')
+
+        # test Packs repo, TestPlaybooks repo copy scripts and do not add them the playbook- prefix
+        assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/just_a_test_script.yml',
+                           f'{self._test_dir}/script-just_a_test_script.yml')
+        assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/script-prefixed_automation.yml',
+                           f'{self._test_dir}/script-prefixed_automation.yml')

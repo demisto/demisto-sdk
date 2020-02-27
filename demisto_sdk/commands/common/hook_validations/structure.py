@@ -268,7 +268,7 @@ class StructureValidator:
         step_3 = step_2[2:-4]
         # step_3 is : 'script/commands/0/outputs/20'
         error_path = step_3.split('/')
-        # error_path  is : ['script', 'commands', '0', 'outputs', '20']
+        # error_path example: ['script', 'commands', '0', 'outputs', '20']
 
         # check if the Path from the error is '' :
         if isinstance(error_path, list) and error_path[0]:

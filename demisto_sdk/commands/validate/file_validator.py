@@ -16,9 +16,9 @@ import re
 
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX,\
-    KNOWN_FILE_STATUSES, IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX,\
-    SCRIPT_REGEX, IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES,\
+from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, \
+    KNOWN_FILE_STATUSES, IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, \
+    SCRIPT_REGEX, IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
     JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES
@@ -34,7 +34,6 @@ from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValida
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
-
 from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
     get_yml_paths_in_dir
@@ -46,7 +45,6 @@ class FilesValidator:
     """FilesValidator is a class that's designed to validate all the changed files on your branch, and all files in case
     you are on master, this class will be used on your local env as the validation hook(pre-commit), and on CircleCi
     to make sure you did not bypass the hooks as a safety precaution.
-
     Attributes:
         is_backward_check (bool): Whether to check for backwards compatibility.
         prev_ver (str): If using git, holds the branch to compare the current one to. Default is origin/master.
@@ -106,12 +104,10 @@ class FilesValidator:
     @staticmethod
     def get_modified_files(files_string, tag='master', print_ignored_files=False):
         """Get lists of the modified files in your branch according to the files string.
-
         Args:
             files_string (string): String that was calculated by git using `git diff` command.
             tag (string): String of git tag used to update modified files.
             print_ignored_files (bool): should print ignored files.
-
         Returns:
             (modified_files_list, added_files_list, deleted_files). Tuple of sets.
         """
@@ -142,7 +138,7 @@ class FilesValidator:
             if file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     FilesValidator._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
-            elif file_status.lower() == 'm' or checked_type(file_path) and not file_path.startswith('.'):
+            elif file_status.lower() == 'm' and checked_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
             elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.'):
                 added_files_list.add(file_path)
@@ -175,10 +171,8 @@ class FilesValidator:
 
     def get_modified_and_added_files(self, tag='origin/master'):
         """Get lists of the modified and added files in your branch according to the git diff output.
-
         Args:
             tag (string): String of git tag used to update modified files
-
         Returns:
             (modified_files, added_files). Tuple of sets.
         """
@@ -246,17 +240,9 @@ class FilesValidator:
         if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
-    def is_valid_readme_file(self, file_path):
-        readme_validator = ReadMeValidator(file_path)
-        if not readme_validator.is_file_valid():
-            self._is_valid = False
-
-
     def validate_modified_files(self, modified_files):  # noqa: C901
         """Validate the modified files from your branch.
-
         In case we encounter an invalid file we set the self._is_valid param to False.
-
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
@@ -266,118 +252,121 @@ class FilesValidator:
                 old_file_path, file_path = file_path
 
             print('Validating {}'.format(file_path))
-            # if not checked_type(file_path) :
-            #     print_warning('- Skipping validation of non-content entity file.')
-            #     continue
+            if not checked_type(file_path):
+                print_warning('- Skipping validation of non-content entity file.')
+                continue
 
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
+
+            elif 'README' in file_path:
+                readme_validator = ReadMeValidator(file_path)
+                valid = readme_validator.is_file_valid()
+                if valid is None:
+                    self._is_valid = True
+                elif not valid:
+                    self._is_valid = False
+                continue
+
+            structure_validator = StructureValidator(file_path, old_file_path=old_file_path)
+            if not structure_validator.is_valid_file():
+                self._is_valid = False
+
+            if self.validate_id_set:
+                if not self.id_set_validator.is_file_valid_in_set(file_path):
+                    self._is_valid = False
+
+            elif checked_type(file_path, YML_INTEGRATION_REGEXES):
+                image_validator = ImageValidator(file_path)
+                if not image_validator.is_valid():
+                    self._is_valid = False
+
+                description_validator = DescriptionValidator(file_path)
+                if not description_validator.is_valid():
+                    self._is_valid = False
+
+                integration_validator = IntegrationValidator(structure_validator)
+                if self.is_backward_check and not integration_validator.is_backward_compatible():
+                    self._is_valid = False
+
+                if not integration_validator.is_valid_file():
+                    self._is_valid = False
+
+            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
+                image_validator = ImageValidator(file_path)
+                if not image_validator.is_valid():
+                    self._is_valid = False
+
+                description_validator = DescriptionValidator(file_path)
+                if not description_validator.is_valid_beta_description():
+                    self._is_valid = False
+
+                integration_validator = IntegrationValidator(structure_validator)
+                if not integration_validator.is_valid_beta_integration():
+                    self._is_valid = False
+
+            elif checked_type(file_path, [SCRIPT_REGEX]):
+                script_validator = ScriptValidator(structure_validator)
+                if self.is_backward_check and not script_validator.is_backward_compatible():
+                    self._is_valid = False
+                if not script_validator.is_valid_file():
+                    self._is_valid = False
+
+            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
+                playbook_validator = PlaybookValidator(structure_validator)
+                if not playbook_validator.is_valid_playbook(is_new_playbook=False):
+                    self._is_valid = False
+
+            elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
+                unifier = Unifier(os.path.dirname(file_path))
+                yml_path, _ = unifier.get_script_package_data()
+                # Set file path to the yml file
+                structure_validator.file_path = yml_path
+                script_validator = ScriptValidator(structure_validator)
+                if self.is_backward_check and not script_validator.is_backward_compatible():
+                    self._is_valid = False
+
+                if not script_validator.is_valid_file():
+                    self._is_valid = False
+
+            elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
+                image_validator = ImageValidator(file_path)
+                if not image_validator.is_valid():
+                    self._is_valid = False
+
+            # incident fields and indicator fields are using the same scheme.
+            elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
+                incident_field_validator = IncidentFieldValidator(structure_validator)
+                if not incident_field_validator.is_valid_file():
+                    self._is_valid = False
+                if self.is_backward_check and not incident_field_validator.is_backward_compatible():
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
+                layout_validator = LayoutValidator(structure_validator)
+                if not layout_validator.is_valid_layout():
+                    self._is_valid = False
+
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
 
-            elif 'README' in file_path:
-                print("in readme production")
-                self.is_valid_readme_file(file_path)
+            elif checked_type(file_path, [REPUTATION_REGEX]):
+                print_color(
+                    F'Skipping validation for file {file_path} since no validation is currently defined.',
+                    LOG_COLORS.YELLOW)
+
+            elif checked_type(file_path, CHECKED_TYPES_REGEXES):
+                pass
+
             else:
-                structure_validator = StructureValidator(file_path, old_file_path=old_file_path)
-                if not structure_validator.is_valid_file():
-                    self._is_valid = False
-
-                if self.validate_id_set:
-                    if not self.id_set_validator.is_file_valid_in_set(file_path):
-                        self._is_valid = False
-
-                elif checked_type(file_path, YML_INTEGRATION_REGEXES):
-                    image_validator = ImageValidator(file_path)
-                    if not image_validator.is_valid():
-                        self._is_valid = False
-
-                    description_validator = DescriptionValidator(file_path)
-                    if not description_validator.is_valid():
-                        self._is_valid = False
-
-                    integration_validator = IntegrationValidator(structure_validator)
-                    if self.is_backward_check and not integration_validator.is_backward_compatible():
-                        self._is_valid = False
-
-                    if not integration_validator.is_valid_file():
-                        self._is_valid = False
-
-                elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
-                    image_validator = ImageValidator(file_path)
-                    if not image_validator.is_valid():
-                        self._is_valid = False
-
-                    description_validator = DescriptionValidator(file_path)
-                    if not description_validator.is_valid_beta_description():
-                        self._is_valid = False
-
-                    integration_validator = IntegrationValidator(structure_validator)
-                    if not integration_validator.is_valid_beta_integration():
-                        self._is_valid = False
-
-                elif checked_type(file_path, [SCRIPT_REGEX]):
-                    script_validator = ScriptValidator(structure_validator)
-                    if self.is_backward_check and not script_validator.is_backward_compatible():
-                        self._is_valid = False
-                    if not script_validator.is_valid_file():
-                        self._is_valid = False
-
-                elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
-                    playbook_validator = PlaybookValidator(structure_validator)
-                    if not playbook_validator.is_valid_playbook(is_new_playbook=False):
-                        self._is_valid = False
-
-                elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
-                    unifier = Unifier(os.path.dirname(file_path))
-                    yml_path, _ = unifier.get_script_package_data()
-                    # Set file path to the yml file
-                    structure_validator.file_path = yml_path
-                    script_validator = ScriptValidator(structure_validator)
-                    if self.is_backward_check and not script_validator.is_backward_compatible():
-                        self._is_valid = False
-
-                    if not script_validator.is_valid_file():
-                        self._is_valid = False
-
-                elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
-                    image_validator = ImageValidator(file_path)
-                    if not image_validator.is_valid():
-                        self._is_valid = False
-
-                # incident fields and indicator fields are using the same scheme.
-                elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
-                    incident_field_validator = IncidentFieldValidator(structure_validator)
-                    if not incident_field_validator.is_valid_file():
-                        self._is_valid = False
-                    if self.is_backward_check and not incident_field_validator.is_backward_compatible():
-                        self._is_valid = False
-
-                elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
-                    layout_validator = LayoutValidator(structure_validator)
-                    if not layout_validator.is_valid_layout():
-                        self._is_valid = False
-
-
-                elif checked_type(file_path, [REPUTATION_REGEX]):
-                    print_color(
-                        F'Skipping validation for file {file_path} since no validation is currently defined.',
-                        LOG_COLORS.YELLOW)
-
-                elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-                    pass
-
-                else:
-                    print_error("The file type of {} is not supported in validate command".format(file_path))
-                    print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
-                                "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
-                    self._is_valid = False
+                print_error("The file type of {} is not supported in validate command".format(file_path))
+                print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
+                            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
+                self._is_valid = False
 
     def validate_added_files(self, added_files):  # noqa: C901
         """Validate the added files from your branch.
-
         In case we encounter an invalid file we set the self._is_valid param to False.
-
         Args:
             added_files (set): A set of the modified files in the current branch.
         """
@@ -387,13 +376,14 @@ class FilesValidator:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
-            elif 'CHANGELOG' in file_path:
-                self.is_valid_release_notes(file_path)
-
             elif 'README' in file_path:
-                #need to add
-                print("in production")
-
+                readme_validator = ReadMeValidator(file_path)
+                valid = readme_validator.is_file_valid()
+                if valid is None:
+                    self._is_valid = True
+                elif not valid:
+                    self._is_valid = False
+                continue
 
             structure_validator = StructureValidator(file_path, is_new_file=True)
             if not structure_validator.is_valid_file():
@@ -460,6 +450,8 @@ class FilesValidator:
                 if not layout_validator.is_valid_layout():
                     self._is_valid = False
 
+            elif 'CHANGELOG' in file_path:
+                self.is_valid_release_notes(file_path)
 
             elif checked_type(file_path, [REPUTATION_REGEX]):
                 print_color(
@@ -477,7 +469,6 @@ class FilesValidator:
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).
-
         Args:
             old_format_files(set): file names which are in the old format.
         """
@@ -571,7 +562,6 @@ class FilesValidator:
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.
-
         Returns:
             (bool). Whether the structure is valid or not.
         """
@@ -600,7 +590,6 @@ class FilesValidator:
 
     def validate_against_previous_version(self, no_error=False):
         """Validate all files that were changed between previous version and branch_sha
-
         Args:
             no_error (bool): If set to true will restore self._is_valid after run (will not return new errors)
         """

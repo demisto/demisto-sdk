@@ -238,7 +238,8 @@ class Errors:
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
-CHANGE_LOG = 'CHANGELOG'
+README = 'README'
+CHANGELOG = 'CHANGELOG'
 SCRIPTS_DIR = 'Scripts'
 PLAYBOOKS_DIR = 'Playbooks'
 TEST_PLAYBOOKS_DIR = 'TestPlaybooks'
@@ -492,6 +493,8 @@ MISC_REGEX = r'{}{}.*reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_D
 REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
+README_REGEX = r'{}{}/readme.*\.md$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_FIELDS_DIR)
+
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
@@ -702,7 +705,8 @@ CHECKED_TYPES_REGEXES = [
     REPUTATION_REGEX,
     #changelog
     PACKS_CHANGELOG_REGEX,
-    # CHANGE_LOG,
+    # ReadMe,
+    INTEGRATION_README_REGEX,
 ]
 
 CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in
@@ -864,7 +868,8 @@ SCHEMA_TO_REGEX = {
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': [INCIDENT_TYPE_REGEX],
-    'image': [IMAGE_REGEX]
+    'image': [IMAGE_REGEX],
+    'readme': [README]
 }
 
 FILE_TYPES_PATHS_TO_VALIDATE = {

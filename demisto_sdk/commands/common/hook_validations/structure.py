@@ -258,7 +258,7 @@ class StructureValidator:
         """Returns a parsed error message from pykwalify
         Args: an schema error message from pykwalify
         """
-        # err is : '<SchemaError: error code 2: Schema validation failed:
+        # err example: '<SchemaError: error code 2: Schema validation failed:
         #  - Cannot find required key \'description\'. Path: \'\''
         step_1 = str(err).split('Path: ')
         # step_1 example: ["<SchemaError: error code 2: Schema validation failed:\n - Cannot find required key

@@ -106,7 +106,7 @@ class StructureValidator:
             core.validate(raise_exception=True)
         except Exception as err:
             try:
-                self.print_errors(err)
+                print_error(self.parse_error_msg(err))
             except Exception:
                 print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
             self.is_valid = False
@@ -243,18 +243,18 @@ class StructureValidator:
             print_error(Errors.invalid_file_path(self.file_path))
         return is_valid_path
 
-    def print_errors(self, err):
+    def parse_error_msg(self, err) -> str:
         """A wrapper which runs the print error message for a list of errors in yaml
         Returns:
             parsed error message from pykwalify
         """
         if ".\n" in str(err):
             for error in str(err).split('.\n'):
-                self.print_error_msg(error)
+                return self.parse_error_line(error)
         else:
-            self.print_error_msg(str(err))
+            return self.parse_error_line(str(err))
 
-    def print_error_msg(self, err):
+    def parse_error_line(self, err) -> str:
         """Returns a parsed error message from pykwalify
         Args: an schema error message from pykwalify
         """
@@ -290,19 +290,19 @@ class StructureValidator:
 
             # if the error is from arguments of file
             if curr.get('name'):
-                print_error('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
-                                                                                    str(curr.get('name')),
-                                                                                    str(key_list).strip('[]').replace(
-                                                                                        ',', '->')))
+                return ('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                                str(curr.get('name')),
+                                                                                str(key_list).strip('[]').replace(
+                                                                                    ',', '->')))
             # if the error is from outputs of file
             elif curr.get('contextPath'):
-                print_error('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
-                                                                                    str(curr.get('contextPath')),
-                                                                                    str(key_list).strip('[]').replace(
-                                                                                        ',', '->')))
+                return ('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                                str(curr.get('contextPath')),
+                                                                                str(key_list).strip('[]').replace(
+                                                                                    ',', '->')))
             # if the error is from neither arguments , outputs nor root
             else:
-                print_error(
+                return (
                     'Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
                                                                             str(curr),
                                                                             str(key_list).strip('[]').replace(',',
@@ -312,6 +312,6 @@ class StructureValidator:
                 key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
             else:
                 key_from_error = str(err).split('Key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            print_error(
+            return (
                 'Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), "root",
                                                               ))

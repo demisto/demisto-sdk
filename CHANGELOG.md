@@ -4,7 +4,7 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
-### 0.3.11
+### 0.4.0
 * Added a BC validation for changing incident field type.
 
 ### 0.3.10

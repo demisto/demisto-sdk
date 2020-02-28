@@ -219,7 +219,10 @@ class Linter:
         lint_files = self._get_lint_files()
         python_exe = 'python2' if py_num < 3 else 'python3'
         print_v('Using: {} to run flake8'.format(python_exe))
-        output = run_command(f'{python_exe} -m flake8 {self.project_dir} --exclude=.vulture_whitelist.py', cwd=self.configuration.env_dir)
+        output = run_command(
+            f'{python_exe} -m flake8 {self.project_dir} --exclude=.vulture_whitelist.py',
+            cwd=self.configuration.env_dir
+        )
         self.lock.acquire()
         print("\n========= Running flake8 on: {}===============".format(lint_files))
         if len(output) == 0:

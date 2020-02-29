@@ -120,7 +120,7 @@ class Linter:
     def run_py_non_docker_tasks(self, dockers: List[str]) -> int:
         return_code = 0
         py_num = get_python_version(dockers[0])
-        self._setup_dev_files(py_num)
+        self._setup_dev_files_py(py_num)
         if self.run_args['flake8']:
             result_val = self.run_flake8(py_num)
             if result_val:
@@ -149,6 +149,8 @@ class Linter:
                     LOG_COLORS.YELLOW)
         if self.script_type == TYPE_PYTHON:
             self.run_py_non_docker_tasks(dockers)
+        if self.script_type == TYPE_PWSH:
+            self._setup_dev_files_pwsh()
 
         for docker in dockers:
             for try_num in (1, 2):
@@ -433,7 +435,7 @@ class Linter:
             else:
                 print("Test container [{}] was left available".format(container_id))
 
-    def _setup_dev_files(self, py_num):
+    def _setup_dev_files_py(self, py_num):
         # copy demistomock and common server
         try:
             shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
@@ -447,6 +449,18 @@ class Linter:
                             self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)))
+
+    def _setup_dev_files_pwsh(self):
+        # copy common server
+        try:
+            shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.ps1', self.project_dir)
+            if "/Scripts/CommonServerPowerShell" not in self.project_dir:
+                # Otherwise we already have the CommonServerPowerShell.py file
+                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1',
+                            self.project_dir)
+        except Exception as e:
+            print('Could not copy CommonServerPowerShell.ps1: {}'.format(str(e)))
+            raise
 
     def check_api_module_imports(self, py_num):
         """

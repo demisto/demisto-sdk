@@ -203,7 +203,7 @@ class Unifier:
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
                         r'|conftest\.py|__init__\.py|ApiModule\.py'
-                        r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|\.Tests\.ps1')
+                        r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
         if not self.package_path.endswith('/'):
             self.package_path += '/'
         if self.package_path.endswith('Scripts/CommonServerPython'):
@@ -229,7 +229,10 @@ class Unifier:
         if module_import:
             script_code = self.insert_module_code(script_code, module_import, module_name)
 
-        clean_code = self.clean_python_code(script_code)
+        if script_type == '.py':
+            clean_code = self.clean_python_code(script_code)
+        if script_type == '.ps1':
+            clean_code = self.clean_pwsh_code(script_code)
 
         if self.is_script_package:
             if yml_data.get('script', '') not in ('', '-'):
@@ -321,4 +324,10 @@ class Unifier:
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
             script_code = script_code.replace("from __future__ import print_function", "")
+        return script_code
+
+    @staticmethod
+    def clean_pwsh_code(script_code):
+        script_code = script_code.replace(". $PSScriptRoot\\demistomock.ps1", "")
+        script_code = script_code.replace(". $PSScriptRoot\\CommonServerPowerShell.ps1", "")
         return script_code

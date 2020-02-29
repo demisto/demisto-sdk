@@ -22,11 +22,11 @@ class ReadMeValidator:
                     return False
             else:
                 print_warning(
-                    f'There is no node or packages installed in your system.\n status of node {is_node.returncode}\n '
-                    f'status of mdx package {is_mdx.returncode}\n status of fs_extra {is_fs_extra.returncode}\n '
-                    f'status of commander {is_commander.returncode}')
+                    f'Status of node {is_node.returncode}\n '
+                    f'Status of mdx package {is_mdx.returncode}\n status of fs_extra {is_fs_extra.returncode}\n '
+                    f'Status of commander {is_commander.returncode}')
                 return None
             return True
         except Exception as err:
-            print("yana")
+            print_warning(f'There is no node installed on the machine, Test Skipped, error {err}')
             return None

@@ -204,12 +204,12 @@ class Unifier:
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
                         r'|conftest\.py|__init__\.py|ApiModule\.py'
                         r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
-        if not self.package_path.endswith('/'):
-            self.package_path += '/'
+        if self.package_path.endswith('/'):
+            self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
         if self.package_path.endswith('Scripts/CommonServerPython'):
-            return self.package_path + 'CommonServerPython.py'
+            return os.path.join(self.package_path, 'CommonServerPython.py')
         if self.package_path.endswith('Scripts/CommonServerPowerShell'):
-            return self.package_path + 'CommonServerPowerShell.ps1'
+            return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 

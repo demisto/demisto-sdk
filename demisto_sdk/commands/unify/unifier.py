@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, INTEGRATION
 class Unifier:
 
     def __init__(self, indir: str, dir_name=INTEGRATIONS_DIR, outdir='',
-                 image_prefix=DEFAULT_IMAGE_PREFIX):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
         directory_name = ""
         for optional_dir_name in DIR_TO_PREFIX:
@@ -32,6 +32,7 @@ class Unifier:
 
         self.image_prefix = image_prefix
         self.package_path = indir
+        self.use_force = force
         if self.package_path.endswith(os.sep):
             self.package_path = self.package_path.rstrip(os.sep)
 
@@ -115,7 +116,7 @@ class Unifier:
             }
 
         for file_path, file_data in output_map.items():
-            if os.path.isfile(file_path):
+            if os.path.isfile(file_path) and self.use_force is False:
                 raise ValueError(f'Output file already exists: {self.dest_path}.'
                                  ' Make sure to remove this file from source control'
                                  ' or rename this package (for example if it is a v2).')
@@ -162,7 +163,7 @@ class Unifier:
         image_data, found_img_path = self.get_data("*png")
         image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
-        if yml_data.get('image'):
+        if yml_data.get('image')and self.use_force is False:
             raise ValueError('Please move the image from the yml to an image file (.png)'
                              f' in the package: {self.package_path}')
 
@@ -173,7 +174,7 @@ class Unifier:
     def insert_description_to_yml(self, yml_data, yml_unified):
         desc_data, found_desc_path = self.get_data('*_description.md')
 
-        if yml_data.get('detaileddescription'):
+        if yml_data.get('detaileddescription') and self.use_force is False:
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
                              f' in the package: {self.package_path}')
         if desc_data:

@@ -6,7 +6,7 @@ import glob
 import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple
+from typing import Union, Optional, Tuple, Dict
 
 import urllib3
 import yaml
@@ -486,3 +486,67 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
                                 stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))
     return requirements
+
+
+def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
+    """
+    Get a dict representing the file
+
+    Arguments:
+        path - a path to the file
+
+    Returns:
+        dict representation of the file, and the file_type, either .yml ot .json
+    """
+    if path:
+        if path.endswith('.yml'):
+            return get_yaml(path), 'yml'
+        elif path.endswith('.json'):
+            return get_json(path), 'json'
+    return {}, None
+
+
+def find_type(path: str):
+    """
+    returns the content file type
+
+    Arguments:
+        path - a path to the file
+
+    Returns:
+        string representing the content file type
+    """
+    _dict, file_type = get_dict_from_file(path)
+    if file_type == 'yml':
+        if 'category' in _dict:
+            return 'integration'
+        elif 'script' in _dict:
+            return 'script'
+        elif 'tasks' in _dict:
+            return 'playbook'
+
+    elif file_type == 'json':
+        if 'widgetType' in _dict:
+            return 'widget'
+        elif 'reportType' in _dict:
+            return 'report'
+        elif 'preProcessingScript' in _dict:
+            return 'incidenttype'
+        elif 'regex' in _dict:
+            return 'reputation'
+        elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
+            return 'classifier'
+        elif 'layout' in _dict:
+            if 'kind' in _dict or 'typeId' in _dict:
+                return 'layout'
+            else:
+                return 'dashboard'
+
+        elif 'id' in _dict:
+            _id = _dict['id'].lower()
+            if _id.startswith('incident'):
+                return 'incidentfield'
+            elif _id.startswith('indicator'):
+                return 'indicatorfield'
+
+    return ''

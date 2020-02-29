@@ -1,6 +1,8 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
+from distutils.version import LooseVersion
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error
 from enum import Enum, IntEnum
@@ -166,7 +168,7 @@ class IncidentFieldValidator(BaseValidator):
 
         is_bc_broke = any(
             [
-                # in the future, add BC checks here
+                self.is_changed_from_version(),
             ]
         )
 
@@ -184,7 +186,8 @@ class IncidentFieldValidator(BaseValidator):
                 self.is_valid_system_flag(),
                 self.is_valid_cliname(),
                 self.is_valid_version(),
-                self.is_valid_from_version(),
+                self.is_current_valid_from_version(),
+                self.is_valid_required()
             ]
         )
 
@@ -304,18 +307,56 @@ class IncidentFieldValidator(BaseValidator):
             )
         return is_valid
 
-    def is_valid_from_version(self):
+    def is_current_valid_from_version(self):
+        # type: () -> bool
         error_msg = None
         is_valid = True
-        try:
-            server_base_version = self.current_file.get('fromVersion').split('.')[0]
-            if not int(server_base_version) >= 5:
-                error_msg = f'{self.file_path}: "fromVersion" mast be at least 5.0.0'
-                is_valid = False
-        except (AttributeError, ValueError):
-            error_msg = f'{self.file_path}: "fromVersion" as an invalid value.'
-            is_valid = False
 
+        # if not a new file, will be checked here
+        # if has an old_file, will be checked in BC checks
+        if not self.old_file:
+            try:
+                from_version = self.current_file.get("fromVersion", "0.0.0")
+                if LooseVersion(from_version) < LooseVersion("5.0.0"):
+                    error_msg = f'{self.file_path}: fromVersion must be at least 5.0.0'
+                    is_valid = False
+            except (AttributeError, ValueError):
+                error_msg = f'{self.file_path}: "fromVersion" has an invalid value.'
+                is_valid = False
+
+        if not is_valid:
+            print_error(error_msg)
+        return is_valid
+
+    def is_changed_from_version(self):
+        # type: () -> bool
+        """Check if fromversion has been changed.
+
+       Returns:
+           bool. Whether fromversion has been changed.
+       """
+        old_from_version = self.old_file.get('fromVersion', None)
+        if old_from_version:
+            current_from_version = self.current_file.get('fromVersion', None)
+            if old_from_version != current_from_version:
+                print_error(Errors.from_version_modified_after_rename())
+                return True
+        return False
+
+    def is_valid_required(self):
+        # type: () -> bool
+        """Validate that the incident field is not required."""
+        error_msg = None
+        is_valid = True
+
+        # due to a current platform limitation, incident fields can not be set to required
+        # after it will be fixed, need to validate that required field are not associated to all incident types
+        # as can be seen in this pr: https://github.com/demisto/content/pull/5682
+        required = self.current_file.get('required', False)
+        if required:
+            error_msg = f'{self.file_path}: new incident fields can not be required' \
+                        f' due to a current platform limitation.'
+            is_valid = False
         if not is_valid:
             print_error(error_msg)
         return is_valid

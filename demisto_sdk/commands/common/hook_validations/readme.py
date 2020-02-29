@@ -14,9 +14,10 @@ class ReadMeValidator:
             is_mdx = subprocess.run(['npm', 'ls', '@mdx-js/mdx'], text=True, timeout=10, capture_output=True)
             is_fs_extra = subprocess.run(['npm', 'ls', 'fs-extra'], text=True, timeout=10, capture_output=True)
             is_commander = subprocess.run(['npm', 'ls', 'commander'], text=True, timeout=10, capture_output=True)
-            if is_node.returncode == 0 and is_mdx.returncode == 0 and is_fs_extra.returncode == 0 and\
+            if is_node.returncode == 0 and is_mdx.returncode == 0 and is_fs_extra.returncode == 0 and \
                     is_commander.returncode == 0:
-                res = subprocess.run(['node', mdx_parse, '-f', self.file_path], text=True, timeout=10, capture_output=True)
+                res = subprocess.run(['node', mdx_parse, '-f', self.file_path], text=True, timeout=10,
+                                     capture_output=True)
                 if res.returncode != 0:
                     print_error(f'Failed verfiying: {self.file_path}. Error: {res.stderr}')
                     return False

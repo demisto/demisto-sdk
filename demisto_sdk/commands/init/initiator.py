@@ -307,7 +307,6 @@ class Initiator:
         yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(self.full_output_path, f"{current_suffix}.yml"))
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
-        yml_dict["display"] = self.id
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(

@@ -6,6 +6,7 @@
 
 ### 0.4.0
 * Added a BC validation for changing incident field type.
+* Fixed an issue where init command would generate an invalid yml for scripts.
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.

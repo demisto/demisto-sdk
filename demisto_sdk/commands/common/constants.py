@@ -226,12 +226,14 @@ class Errors:
         return f"Found incompatible file path: {file_path}."
 
     @staticmethod
-    def invalid_v2_integration_name(file_path, file_name):
-        return f"The name of the v2 integration : {file_path} is incorrect , should be {file_name} v2."
+    def invalid_v2_integration_name(file_path):
+        return f"The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
+               f"e.g: Kenna v2, Jira v2"
 
     @staticmethod
-    def invalid_v2_script_name(file_path, file_name):
-        return f"The name of the v2 script : {file_path} is incorrect , should be {file_name}V2."
+    def invalid_v2_script_name(file_path):
+        return f"The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
+               f" e.g: DBotTrainTextClassifierV2"
 
 
 # dirs

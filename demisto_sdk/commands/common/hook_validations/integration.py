@@ -559,6 +559,6 @@ class IntegrationValidator(BaseValidator):
             display_name = self.current_file.get('display')
             correct_name = " v2"
             if not display_name.endswith(correct_name):
-                print_error(Errors.invalid_v2_integration_name(self.file_path, self.current_file.get('display')[:-2]))
+                print_error(Errors.invalid_v2_integration_name(self.file_path))
                 return False
             return True

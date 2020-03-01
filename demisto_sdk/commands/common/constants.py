@@ -861,7 +861,7 @@ SCHEMA_TO_REGEX = {
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': [INCIDENT_TYPE_REGEX],
     'image': [IMAGE_REGEX],
-    'reputation': [REPUTATION_REGEX]
+    'reputation': [REPUTATION_REGEX],
 }
 
 FILE_TYPES_PATHS_TO_VALIDATE = {

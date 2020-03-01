@@ -304,7 +304,8 @@ class Linter:
         """
         lint_files = self._get_lint_files()
         python_exe = 'python2' if py_num < 3 else 'python3'
-        cmd_args = [python_exe, '-m', 'vulture', lint_files, '--min-confidence 100']
+        cmd_args = [python_exe, '-m', 'vulture', lint_files, '--min-confidence',
+                    os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')]
         vulture_whitelist_path = os.path.join(self.project_dir, '.vulture_whitelist.py')
         if os.path.isfile(vulture_whitelist_path):
             cmd_args.insert(4, vulture_whitelist_path)

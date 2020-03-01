@@ -67,3 +67,8 @@ This will run only pylint and pytest on "Integrations/HelloWorld" using the root
 
 `demisto-sdk lint -g --outfile ~/failures.txt`
 This indicates lint runs only on changed packages from content repo's 'origin/master' branch and saves the failed packages to failures.txt file.
+
+
+**Notes**
+Vulture reports dead code with confidence level of 100% by default.
+The minimum confidence level can be set by changing the environment variable `VULTURE_MIN_CONFIDENCE_LEVEL`, i.e. `export VULTURE_MIN_CONFIDENCE_LEVEL=60`.

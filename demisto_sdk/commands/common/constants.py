@@ -933,13 +933,15 @@ FEED_REQUIRED_PARAMS = [
         'name': 'feedExpirationPolicy',
         'type': 17,
         'required': False,
-        'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
+        'options': ['never', 'interval', 'indicatorType', 'suddenDeath'],
+        'hidden': True
     },
     {
         'display': "",
         'name': 'feedExpirationInterval',
         'type': 1,
-        'required': False
+        'required': False,
+        'hidden': True
     },
     {
         'display': 'Feed Fetch Interval',

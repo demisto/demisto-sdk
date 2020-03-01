@@ -436,6 +436,11 @@ class FilesValidator:
                 if not incident_field_validator.is_valid_file():
                     self._is_valid = False
 
+            elif checked_type(file_path, [REPUTATION_REGEX]):
+                reputation_validator = ReputationValidator(structure_validator)
+                if not reputation_validator.is_valid_file():
+                    self._is_valid = False
+
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
                 layout_validator = LayoutValidator(structure_validator)
                 if not layout_validator.is_valid_layout():
@@ -443,11 +448,6 @@ class FilesValidator:
 
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
-
-            elif checked_type(file_path, [REPUTATION_REGEX]):
-                print_color(
-                    F'Skipping validation for file {file_path} since no validation is currently defined.',
-                    LOG_COLORS.YELLOW)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass

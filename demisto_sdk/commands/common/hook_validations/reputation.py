@@ -50,17 +50,15 @@ class ReputationValidator(BaseValidator):
 
     def is_id_equals_name(self):
         # type: () -> bool
-        """Validate that the expiration field of a 5.5 reputation file is numeric."""
+        """Validate that the id equal name."""
         error_msg = None
         is_valid = True
 
-        from_version = self.current_file.get("fromVersion", "0.0.0")
-        if LooseVersion(from_version) >= LooseVersion("5.5.0"):
-            id_ = self.current_file.get('id', None)
-            name = self.current_file.get('name', None)
-            if not id_ or not name or id_ != name:
-                error_msg = f'{self.file_path}: id and name field are not equal.'
-                is_valid = False
+        id_ = self.current_file.get('id', None)
+        name = self.current_file.get('name', None)
+        if not id_ or not name or id_ != name:
+            error_msg = f'{self.file_path}: id and name fields are not equal.'
+            is_valid = False
 
         if error_msg:
             print_error(error_msg)

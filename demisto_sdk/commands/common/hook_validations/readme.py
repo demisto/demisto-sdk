@@ -1,7 +1,6 @@
 import subprocess
 import os
 from demisto_sdk.commands.common.tools import print_error, print_warning
-import re
 
 
 class ReadMeValidator:

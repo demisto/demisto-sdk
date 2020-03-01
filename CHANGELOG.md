@@ -4,7 +4,7 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
-### 0.3.11
+### 0.4.0
 * Fixed an issue where init command would generate an invalid yml for scripts.
 
 ### 0.3.10

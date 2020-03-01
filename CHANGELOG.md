@@ -7,7 +7,7 @@
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
 * Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.
-* Added a readme.md html validation.
+* Added a new hook for validating README.md files
 
 ### 0.3.9
 * Added a validation that incident field can not be required.
@@ -21,7 +21,6 @@
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
 * Fixed an issue where *validate* failed on integration commands without outputs.
 * Added a new hook for naming of v2 integrations and scripts.
-* Added a new hook for validating README.md files
 
 ### 0.3.8
 * Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.

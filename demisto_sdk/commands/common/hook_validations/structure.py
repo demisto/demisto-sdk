@@ -80,10 +80,10 @@ class StructureValidator:
             if get_matching_regex(self.file_path, regex_list):
                 return scheme_name
 
-        pretty_formated_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
+        pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
         print_error(f"The file {self.file_path} does not match any scheme we have please, refer to the following list"
-                    f" for the various file name options we have in our repo {pretty_formated_string_of_regexes}")
+                    f" for the various file name options we have in our repo {pretty_formatted_string_of_regexes}")
         return None
 
     def is_valid_scheme(self):

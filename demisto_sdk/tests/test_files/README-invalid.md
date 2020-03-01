@@ -1,4 +1,4 @@
-Use the Quin-C AccessData integration to protect against and provide additional visibility into phishing and other malicious email attacks. This integration was integrated and tested with version 20190926 of Quin-C Accessdata. 
+Use the Quin-C AccessData integration to protect against and provide additional visibility into phishing and other malicious email attacks. This integration was integrated and tested with version 20190926 of Quin-C Accessdata.
 
 Documentation for the integration was provided by Quin-C.
 
@@ -19,7 +19,7 @@ For example, you can look at “Accessdata: Dump memory for malicious process”
     | Token | A piece of data that servers use to verify for authenticity | eea810f5-a6f6 |
     | Trust any certificate (not secure) | When selected, certificates are not checked. | N/A |
     | Use system proxy settings | Runs the integration instance using the proxy server (HTTP or HTTPS) that you defined in the server configuration. | https<span>://proxyserver.com |
-    
+
 4.  Click **Test** to validate the URLs, token, and connection.
 
 ## Commands
@@ -62,10 +62,10 @@ accessdata-legacyagent-get-processlist caseid=2 target_ip=X.X.X.X
 ```
 {
     "Accessdata.Job": {
-        "ID": 157, 
-        "Type": "Volatile", 
-        "CaseID": "2", 
-        "State": "Unknown", 
+        "ID": 157,
+        "Type": "Volatile",
+        "CaseID": "2",
+        "State": "Unknown",
         "CaseJobID": "2_157"
     }
 }
@@ -110,10 +110,10 @@ accessdata-legacyagent-get-memorydump caseid=2 target_ip=X.X.X.X
 ```
 {
     "Accessdata.Job": {
-        "ID": 158, 
-        "Type": "LegacyMemoryDump", 
-        "CaseID": "2", 
-        "State": "Unknown", 
+        "ID": 158,
+        "Type": "LegacyMemoryDump",
+        "CaseID": "2",
+        "State": "Unknown",
         "CaseJobID": "2_158"
     }
 }
@@ -198,9 +198,9 @@ accessdata-jobstatus-scan caseJobID=2_153
 ```
 {
     "Accessdata.Job": {
-        "ID": "153", 
-        "CaseID": "2", 
-        "State": "Success", 
+        "ID": "153",
+        "CaseID": "2",
+        "State": "Success",
         "CaseJobID": "2_153"
     }
 }
@@ -246,10 +246,10 @@ accessdata-get-jobstatus-processlist caseID=2 jobID=153
 ```
 {
     "Accessdata.Job": {
-        "ID": "153", 
-        "Result": "\\\\X.X.X.X\\D$\\paths\\cases\\ProcessingHelperCase\\b389a8e9-4ce4-473d-8d2e-9026f53f925c\\Jobs\\job_153\\fa9787a3-49a1-4d73-a194-7c944eb9a3bf\\1\\snapshot.xml", 
-        "CaseID": "2", 
-        "State": "Success", 
+        "ID": "153",
+        "Result": "\\\\X.X.X.X\\D$\\paths\\cases\\ProcessingHelperCase\\b389a8e9-4ce4-473d-8d2e-9026f53f925c\\Jobs\\job_153\\fa9787a3-49a1-4d73-a194-7c944eb9a3bf\\1\\snapshot.xml",
+        "CaseID": "2",
+        "State": "Success",
         "CaseJobID": "2_153"
     }
 }
@@ -294,10 +294,10 @@ accessdata-get-jobstatus-memorydump caseID=2 jobID=154
 ```
 {
     "Accessdata.Job": {
-        "ID": "154", 
-        "Result": "\\\\X.X.X.X\\data\\SiteServer\\storage\\60564598-ca55-475c-9f27-ab4992e8ff46\\1\\memdump.mem", 
-        "CaseID": "2", 
-        "State": "Success", 
+        "ID": "154",
+        "Result": "\\\\X.X.X.X\\data\\SiteServer\\storage\\60564598-ca55-475c-9f27-ab4992e8ff46\\1\\memdump.mem",
+        "CaseID": "2",
+        "State": "Success",
         "CaseJobID": "2_154"
     }
 }

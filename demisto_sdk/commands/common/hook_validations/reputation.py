@@ -11,13 +11,19 @@ class ReputationValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         """Check whether the reputation file is valid or not
         """
-        return all(
-            [
-                self.is_valid_version(),
-                self.is_valid_expiration(),
+        is_reputation_valid = all([
+            self.is_valid_version(),
+            self.is_valid_expiration()
+        ])
+
+        # check only on added files
+        if not self.old_file:
+            is_reputation_valid = all([
+                is_reputation_valid,
                 self.is_id_equals_name()
-            ]
-        )
+            ])
+
+        return is_reputation_valid
 
     def is_valid_version(self):
         # type: () -> bool

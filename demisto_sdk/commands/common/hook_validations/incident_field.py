@@ -168,7 +168,7 @@ class IncidentFieldValidator(BaseValidator):
         is_bc_broke = any(
             [
                 self.is_changed_type(),
-                self.is_changed_from_version()
+                self.is_changed_from_version(),
             ]
         )
 

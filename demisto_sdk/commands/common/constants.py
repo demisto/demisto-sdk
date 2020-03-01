@@ -469,6 +469,8 @@ PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
+PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
+
 PACKS_PACKAGE_META_REGEX = r'{}{}/([^/]+)/package-meta\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 
 BETA_SCRIPT_REGEX = r'{}{}/(script-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, BETA_INTEGRATIONS_DIR)
@@ -705,6 +707,8 @@ CHECKED_TYPES_REGEXES = [
     PACKS_CHANGELOG_REGEX,
     # ReadMe,
     INTEGRATION_README_REGEX,
+    PACKS_README_REGEX,
+    PACKS_README_REGEX_INNER,
 ]
 
 CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in

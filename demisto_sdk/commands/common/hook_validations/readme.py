@@ -20,9 +20,7 @@ class ReadMeValidator:
                 res = subprocess.run(['node', mdx_parse, '-f', self.file_path], text=True, timeout=10,
                                      capture_output=True)
                 if res.returncode != 0:
-                    print_error(f'Failed verfiying: {self.file_path}. Error: {res.stderr}')
-                    fix = self.fix_invalid_file()
-                    print(fix)
+                    print_error(f'Failed verfiying README.md, Path: {self.file_path}. Error Message is: {res.stderr}')
                     return False
             else:
                 print_warning(
@@ -34,18 +32,3 @@ class ReadMeValidator:
         except Exception as err:
             print_warning(f'There is no node installed on the machine, Test Skipped, error {err}')
             return None
-
-    def fix_invalid_file(self):
-        with open(self.file_path) as md:
-            readme = md.read()
-        replace_tuples = [
-            ('<br>', '<br/>'),
-            ('<hr>', '<hr/>'),
-            ('<pre>', '<pre>{`'),
-            ('</pre>', '`}</pre>'),
-        ]
-        for old, new in replace_tuples:
-            readme = readme.replace(old, new)
-        # remove html comments
-        readme = re.sub(r'<\!--.*?-->', '', readme, flags=re.DOTALL)
-        return readme

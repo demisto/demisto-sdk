@@ -226,12 +226,14 @@ class Errors:
         return f"Found incompatible file path: {file_path}."
 
     @staticmethod
-    def invalid_v2_integration_name(file_path, file_name):
-        return f"The name of the v2 integration : {file_path} is incorrect , should be {file_name} v2."
+    def invalid_v2_integration_name(file_path):
+        return f"The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
+               f"e.g: Kenna v2, Jira v2"
 
     @staticmethod
-    def invalid_v2_script_name(file_path, file_name):
-        return f"The name of the v2 script : {file_path} is incorrect , should be {file_name}V2."
+    def invalid_v2_script_name(file_path):
+        return f"The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
+               f" e.g: DBotTrainTextClassifierV2"
 
 
 # dirs
@@ -486,7 +488,7 @@ CLASSIFIER_REGEX = r'{}{}.*classifier-.*\.json$'.format(CAN_START_WITH_DOT_SLASH
 LAYOUT_REGEX = r'{}{}.*layout-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, LAYOUTS_DIR)
 INCIDENT_FIELD_REGEX = r'{}{}/incidentfield-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, INCIDENT_FIELDS_DIR)
 MISC_REGEX = r'{}{}.*reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
-REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
+REPUTATION_REGEX = r'{}{}/reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 
@@ -858,7 +860,8 @@ SCHEMA_TO_REGEX = {
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': [INCIDENT_TYPE_REGEX],
-    'image': [IMAGE_REGEX]
+    'image': [IMAGE_REGEX],
+    'reputation': [REPUTATION_REGEX],
 }
 
 FILE_TYPES_PATHS_TO_VALIDATE = {

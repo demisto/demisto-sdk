@@ -1,0 +1,62 @@
+type: map
+mapping:
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  modified:
+    type: str
+  id:
+    type: str
+    required: True
+  version:
+    type: number
+    required: True
+  sortValues:
+    type: any
+  commitMessage:
+    type: str
+  shouldPublish:
+    type: bool
+  shouldCommit:
+    type: bool
+  regex:
+    type: str
+  details:
+    type: str
+  prevDetails:
+    type: str
+  reputationScriptName:
+    type: str
+  reputationCommand:
+    type: str
+  enhancementScriptNames:
+    type: any
+  system:
+    type: bool
+  locked:
+    type: bool
+  disabled:
+    type: bool
+  file:
+    type: bool
+  updateAfter:
+    type: int
+  mergeContext:
+    type: bool
+  formatScript:
+    type: str
+  contextPath:
+    type: str
+  contextValue:
+    type: str
+  excludedBrands:
+    type: any
+  defaultMapping:
+    type: any
+  manualMapping:
+    type: bool
+  fileHashesPriority:
+    type: any
+  expiration:
+    type: int

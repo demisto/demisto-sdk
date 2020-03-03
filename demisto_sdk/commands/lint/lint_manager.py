@@ -394,44 +394,44 @@ class LintManager:
                                                   string=test_case.get("name"))
                                     print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
-            # Log failed unit-tests
-            if FAIL_EXIT_CODES["pytest"] & return_exit_code:
-                print(f"\n{Colors.Fg.blue}Failed Unit-tests:{Colors.reset}")
-                for fail_pack in lint_status["fail_packs_pytest"]:
-                    packs_with_tests += 1
-                    print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
-                    for image in pkgs_status[fail_pack]["images"]:
-                        tests = image.get("pytest_json", {}).get("report", {}).get("tests")
-                        for test_case in tests:
-                            if test_case.get("call", {}).get("outcome") == "failed":
-                                name = re.sub(pattern=r"\[.*\]",
-                                              repl="",
-                                              string=test_case.get("name"))
-                                print(wrapper_test.fill(name))
-                                if test_case.get("call", {}).get("longrepr"):
-                                    for i in range(len(test_case.get("call", {}).get("longrepr"))):
-                                        if i == 0:
-                                            print(wrapper_first_error.fill(
-                                                test_case.get("call", {}).get("longrepr")[i]))
-                                        else:
-                                            print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
+        # Log failed unit-tests
+        if FAIL_EXIT_CODES["pytest"] & return_exit_code:
+            print(f"\n{Colors.Fg.blue}Failed Unit-tests:{Colors.reset}")
+            for fail_pack in lint_status["fail_packs_pytest"]:
+                packs_with_tests += 1
+                print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
+                for image in pkgs_status[fail_pack]["images"]:
+                    tests = image.get("pytest_json", {}).get("report", {}).get("tests")
+                    for test_case in tests:
+                        if test_case.get("call", {}).get("outcome") == "failed":
+                            name = re.sub(pattern=r"\[.*\]",
+                                          repl="",
+                                          string=test_case.get("name"))
+                            print(wrapper_test.fill(name))
+                            if test_case.get("call", {}).get("longrepr"):
+                                for i in range(len(test_case.get("call", {}).get("longrepr"))):
+                                    if i == 0:
+                                        print(wrapper_first_error.fill(
+                                            test_case.get("call", {}).get("longrepr")[i]))
+                                    else:
+                                        print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
 
-            # Log unit-tests summary
-            print(f"\n{Colors.Fg.blue}Summary:{Colors.reset}")
-            print(f"Packages: {len(pkgs_status)}")
-            print(f"Packages with unit-tests: {packs_with_tests}")
-            print(f"   Pass: {Colors.Fg.green}{packs_with_tests - len(lint_status['fail_packs_pytest'])}"
-                  f"{Colors.reset}")
-            print(f"   Failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
-            if lint_status['fail_packs_pytest']:
-                print(f"Failed packages:")
-                preferred_width = 100
-                fail_pack_indent = 3
-                fail_pack_prefix = " " * fail_pack_indent + "- "
-                wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
-                                                         subsequent_indent=' ' * len(fail_pack_prefix))
-                for fail_pack in lint_status["fail_packs_pytest"]:
-                    print(wrapper_fail_pack.fill(fail_pack))
+        # Log unit-tests summary
+        print(f"\n{Colors.Fg.blue}Summary:{Colors.reset}")
+        print(f"Packages: {len(pkgs_status)}")
+        print(f"Packages with unit-tests: {packs_with_tests}")
+        print(f"   Pass: {Colors.Fg.green}{packs_with_tests - len(lint_status['fail_packs_pytest'])}"
+              f"{Colors.reset}")
+        print(f"   Failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
+        if lint_status['fail_packs_pytest']:
+            print(f"Failed packages:")
+            preferred_width = 100
+            fail_pack_indent = 3
+            fail_pack_prefix = " " * fail_pack_indent + "- "
+            wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
+                                                     subsequent_indent=' ' * len(fail_pack_prefix))
+            for fail_pack in lint_status["fail_packs_pytest"]:
+                print(wrapper_fail_pack.fill(fail_pack))
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):

@@ -93,11 +93,10 @@ class StructureValidator:
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        INFO = 20
         if self.scheme_name in [None, 'image']:
             return True
         try:
-            logging.disable(INFO)
+            logging.disable(logging.INFO)
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
             core = Core(source_file=self.file_path,

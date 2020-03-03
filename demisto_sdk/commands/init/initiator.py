@@ -179,7 +179,7 @@ class Initiator:
             'certification': 'certified',
             'useCases': [],
             'keywords': [],
-            'price': "0",
+            'price': 0,
             'dependencies': {},
         }
 

@@ -103,6 +103,7 @@ def get_remote_file(full_file_path, tag='master'):
         details = json.loads(res.content)
     else:
         details = yaml.safe_load(res.content)
+
     return details
 
 

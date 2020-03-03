@@ -240,8 +240,6 @@ class Errors:
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
-README = 'README'
-CHANGELOG = 'CHANGELOG'
 SCRIPTS_DIR = 'Scripts'
 PLAYBOOKS_DIR = 'Playbooks'
 TEST_PLAYBOOKS_DIR = 'TestPlaybooks'
@@ -873,7 +871,6 @@ SCHEMA_TO_REGEX = {
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': [INCIDENT_TYPE_REGEX],
     'image': [IMAGE_REGEX],
-    'readme': [README],
     'reputation': [REPUTATION_REGEX]
 }
 

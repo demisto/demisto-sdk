@@ -32,9 +32,9 @@ class ReadMeValidator:
                               f'\n '
                               f'Status of commander {is_commander.returncode}')
         except Exception as err:  # check if you can catch a more exact exception
-            if "No such file or directory: 'node': 'node'" in res.stderr:
+            if "No such file or directory: 'node': 'node'" in err:
                 print_warning(f'There is no node installed on the machine, Test Skipped, error {err}')
             else:
-                print_error(f'Failed while verifying README.md, Path: {self.file_path}. Error Message is: {res.stderr}')
+                print_error(f'Failed while verifying README.md, Path: {self.file_path}. Error Message is: {err}')
                 is_valid = False
         return is_valid

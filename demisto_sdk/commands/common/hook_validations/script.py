@@ -57,9 +57,13 @@ class ScriptValidator(BaseValidator):
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
-            self.is_valid_name(),
         ])
-
+        # check only on added files
+        if not self.old_file:
+            is_script_valid = all([
+                is_script_valid,
+                self.is_valid_name()
+            ])
         return is_script_valid
 
     @classmethod
@@ -179,6 +183,6 @@ class ScriptValidator(BaseValidator):
             name = self.current_file.get('name')
             correct_name = "V2"
             if not name.endswith(correct_name):
-                print_error(Errors.invalid_v2_script_name(self.file_path, self.current_file.get('name')[:-2]))
+                print_error(Errors.invalid_v2_script_name(self.file_path))
                 return False
             return True

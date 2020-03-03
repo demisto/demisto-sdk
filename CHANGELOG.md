@@ -10,6 +10,7 @@
 * Fixed an issue where init command would generate an invalid yml for scripts.
 * Fixed an issue in misleading error message in v2 validation hook.
 * Fixed an issue in v2 hook which now is set only on newly added scripts.
+* Fixed an issue about disabling pykwalify info log prints
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.

@@ -8,7 +8,7 @@ import re
 from typing import Optional
 
 import yaml
-from pykwalify.core import Core
+from pykwalify.core import Core, logging
 
 from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
     SCHEMA_TO_REGEX
@@ -93,9 +93,11 @@ class StructureValidator:
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
+        INFO = 20
         if self.scheme_name in [None, 'image']:
             return True
         try:
+            logging.disable(INFO)
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
             core = Core(source_file=self.file_path,

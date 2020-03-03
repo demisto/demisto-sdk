@@ -262,12 +262,9 @@ class FilesValidator:
 
             elif 'README' in file_path:
                 readme_validator = ReadMeValidator(file_path)
-                valid = readme_validator.is_file_valid()
-                if valid is None:
-                    self._is_valid = True
-                elif not valid:
+                if not readme_validator.is_file_valid():
                     self._is_valid = False
-                continue
+                    continue
 
             structure_validator = StructureValidator(file_path, old_file_path=old_file_path)
             if not structure_validator.is_valid_file():

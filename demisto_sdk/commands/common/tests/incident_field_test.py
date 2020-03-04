@@ -288,3 +288,24 @@ class TestIncidentFieldsValidator:
         validator = IncidentFieldValidator(structure)
         assert validator.is_valid_required() == is_valid, f'is_valid_required({required})' \
                                                           f' returns {not is_valid}.'
+
+    data_is_changed_type = [
+        ('shortText', 'shortText', True),
+        ('shortText', 'longText', False),
+        ('number', 'number', True),
+        ('shortText', 'number', False),
+        ('timer', 'timer', True),
+        ('timer', 'number', False),
+        ('timer', 'shortText', False),
+        ('singleSelect', 'singleSelect', True),
+        ('singleSelect', 'shortText', False)
+    ]
+
+    @pytest.mark.parametrize('current_type, old_type, is_valid', data_is_changed_type)
+    def test_is_changed_type(self, current_type, old_type, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"type": current_type}
+        structure.old_file = {"type": old_type}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
+                                                        f' returns {not is_valid}.'

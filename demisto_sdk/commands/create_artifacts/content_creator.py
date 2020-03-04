@@ -6,12 +6,11 @@ import json
 import shutil
 import zipfile
 from typing import List
-import yaml
-import yamlordereddictloader
+from ruamel.yaml import YAML
 
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.tools import get_child_directories, get_child_files, print_warning, \
-    get_yml_paths_in_dir, print_error
+    get_yml_paths_in_dir, print_error, find_type
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR,\
     DASHBOARDS_DIR, WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
@@ -128,7 +127,8 @@ class ContentCreator:
                     zipf.write(os.path.join(root, file_name), file_name)
             zipf.close()
 
-    def copy_playbook_yml(self, path, out_path, *args):
+    @staticmethod
+    def copy_playbook_yml(path, out_path):
         """
         Add "playbook-" prefix to playbook file's copy destination filename if it wasn't already present
         """
@@ -139,7 +139,8 @@ class ContentCreator:
             out_path = os.path.join(dest_dir_path, new_name)
         shutil.copyfile(path, out_path)
 
-    def copy_content_yml(self, path, out_path, yml_info):
+    @staticmethod
+    def copy_content_yml(path, out_path, yml_info):
         """
         Copy content ymls (except for playbooks) to the out_path (presumably a bundle)
         """
@@ -148,10 +149,9 @@ class ContentCreator:
             script_obj = yml_info
             if parent_dir_name != SCRIPTS_DIR:
                 script_obj = yml_info['script']
-            with io.open(path, mode='r', encoding='utf-8') as file_:
-                yml_data = yaml.load(file_, Loader=yamlordereddictloader.SafeLoader)
             unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
-            out_map = unifier.write_yaml_with_docker(yml_data, yml_info, script_obj)
+            out_map = unifier.write_yaml_with_docker(yml_info, yml_info, script_obj)
+
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))
             return
@@ -169,17 +169,23 @@ class ContentCreator:
         scan_files, _ = get_yml_paths_in_dir(dir_path, error_msg='')
         content_files = 0
         dir_name = os.path.basename(dir_path)
-        copy_func = self.copy_playbook_yml if dir_name in ['Playbooks', 'TestPlaybooks'] else self.copy_content_yml
         for path in scan_files:
             if len(os.path.basename(path)) >= self.file_name_max_size:
                 self.long_file_names.append(path)
 
-            with open(path, 'r') as file_:
-                yml_info = yaml.safe_load(file_)
-
+            ryaml = YAML()
+            ryaml.allow_duplicate_keys = True
+            with io.open(path, mode='r', encoding='utf-8') as file_:
+                yml_info = ryaml.load(file_)
             ver = yml_info.get('fromversion', '0')
             print(f' - processing: {ver} ({path})')
-            copy_func(path, os.path.join(bundle, os.path.basename(path)), yml_info)
+            if dir_name in ['Playbooks', 'TestPlaybooks']:
+                # in TestPlaybook dir we might have scripts - all should go to test_bundle
+                if dir_name == 'TestPlaybooks' and os.path.basename(path).startswith('script-'):
+                    self.copy_content_yml(path, os.path.join(bundle, os.path.basename(path)), yml_info)
+                self.copy_playbook_yml(path, os.path.join(bundle, os.path.basename(path)))
+            else:
+                self.copy_content_yml(path, os.path.join(bundle, os.path.basename(path)), yml_info)
             content_files += 1
         print(f' - total files: {content_files}')
 
@@ -246,8 +252,18 @@ class ContentCreator:
                     shutil.copyfile(new_path, os.path.join(self.test_bundle, os.path.basename(new_path)))
 
             else:
-                print(f'Copying path {path}')
-                shutil.copyfile(path, os.path.join(self.test_bundle, os.path.basename(path)))
+                # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
+                # but when copied to the test_bundle, playbook-* prefix should be added to them
+                file_type = find_type(path)
+                path_basename = os.path.basename(path)
+                if file_type == 'script':
+                    if not path_basename.startswith('script-'):
+                        path_basename = f'script-{os.path.basename(path)}'
+                elif file_type == 'playbook':
+                    if not path_basename.startswith('playbook-'):
+                        path_basename = f'playbook-{os.path.basename(path)}'
+                print(f'Copying path {path} as {path_basename}')
+                shutil.copyfile(path, os.path.join(self.test_bundle, path_basename))
 
     def copy_packs_content_to_old_bundles(self, packs):
         """
@@ -417,6 +433,12 @@ class ContentCreator:
                 shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
             else:
                 print_warning('release-notes.md was not found in the content directory and therefore not '
+                              'copied over to the artifacts directory')
+            if os.path.exists('beta-release-notes.md'):
+                print('copying beta-release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
+                shutil.copyfile('beta-release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+            else:
+                print_warning('beta-release-notes.md was not found in the content directory and therefore not '
                               'copied over to the artifacts directory')
             print(f'finished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
         finally:

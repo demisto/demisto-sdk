@@ -178,6 +178,7 @@ class LintManager:
                 all_directories.append(root)
         return all_directories
 
+
     @staticmethod
     def _filter_changed_packages(content_repo: git.Repo, pkgs: list) -> list:
         """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should

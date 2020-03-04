@@ -26,9 +26,68 @@ class TestPlaybookValidator:
         (ROLENAME_EXIST_EMPTY, True),
         (ROLENAME_EXIST_NON_EMPTY, False)
     ]
+    CONDITION_NOT_EXIST_1 = ROLENAME_NOT_EXIST
+    CONDITION_NOT_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "tasks": {'1': {'type': 'not_condition'}}}
+    CONDITION_EXIST_EMPTY_1 = {"id": "Intezer - scan host", "version": -1,
+                               "tasks": {
+                                   '1': {'type': 'not_condition'},
+                                   '2': {'type': 'condition'}}
+                               }
+    CONDITION_EXIST_EMPTY_2 = {"id": "Intezer - scan host", "version": -1,
+                               "tasks":
+                                   {'1': {'type': 'condition',
+                                          'nexttasks': {}}}
+                               }
+    CONDITION_EXIST_PARTIAL_1 = {"id": "Intezer - scan host", "version": -1,
+                                 "tasks":
+                                     {'1': {'type': 'condition',
+                                            'conditions': [],
+                                            'nexttasks': {}}}
+                                 }
+    CONDITION_EXIST_PARTIAL_2 = {"id": "Intezer - scan host", "version": -1,
+                                 "tasks":
+                                     {'1':
+                                          {'type': 'condition',
+                                           'conditions': [{'label': 'yes'}],
+                                           'nexttasks': {'#default#': ['2']}}}
+                                 }
+    CONDITION_EXIST_PARTIAL_3 = {"id": "Intezer - scan host", "version": -1,
+                                 "tasks":
+                                     {'1': {'type': 'condition',
+                                            'conditions': [{'label': 'yes'}],
+                                            'nexttasks': {'#default#': []}}}
+                                 }
+    CONDITION_EXIST_FULL_NO_TASK_ID = {"id": "Intezer - scan host", "version": -1,
+                                       "tasks":
+                                           {'1': {'type': 'condition',
+                                                  'conditions': [{'label': 'yes'}],
+                                                  'nexttasks': {'#default#': []}}}
+                                       }
+    CONDITION_EXIST_FULL = {"id": "Intezer - scan host", "version": -1,
+                            "tasks":
+                                {'1': {'type': 'condition',
+                                       'conditions': [{'label': 'yes'}],
+                                       'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}
+                            }
+    IS_CONDITIONAL_INPUTS = [
+        (CONDITION_NOT_EXIST_1, True),
+        (CONDITION_EXIST_EMPTY_1, False),
+        (CONDITION_EXIST_EMPTY_2, False),
+        (CONDITION_EXIST_PARTIAL_1, False),
+        (CONDITION_EXIST_PARTIAL_2, False),
+        (CONDITION_EXIST_PARTIAL_3, False),
+        (CONDITION_EXIST_FULL_NO_TASK_ID, False),
+        (CONDITION_EXIST_FULL, True)
+    ]
 
     @pytest.mark.parametrize("current_file, answer", IS_NO_ROLENAME_INPUTS)
     def test_is_added_required_fields(self, current_file, answer):
         structure = mock_structure("", current_file)
         validator = PlaybookValidator(structure)
         assert validator.is_no_rolename() is answer
+
+    @pytest.mark.parametrize("current_file, answer", IS_CONDITIONAL_INPUTS)
+    def test_is_condition_branches_handled_correctly(self, current_file, answer):
+        structure = mock_structure("", current_file)
+        validator = PlaybookValidator(structure)
+        assert validator.is_condition_branches_handled_correctly() is answer

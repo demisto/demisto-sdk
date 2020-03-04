@@ -20,7 +20,8 @@ class PlaybookValidator(BaseValidator):
             new_playbook_checks = [
                 self.is_valid_version(),
                 self.is_id_equals_name(),
-                self.is_no_rolename()
+                self.is_no_rolename(),
+                self.is_condition_branches_handled_correctly()
             ]
             answers = all(new_playbook_checks)
         else:
@@ -28,7 +29,8 @@ class PlaybookValidator(BaseValidator):
             # for modified playbooks - id may not be equal to name.
             modified_playbook_checks = [
                 self.is_valid_version(),
-                self.is_no_rolename()
+                self.is_no_rolename(),
+                self.is_condition_branches_handled_correctly()
             ]
             answers = all(modified_playbook_checks)
 
@@ -61,4 +63,37 @@ class PlaybookValidator(BaseValidator):
             print_error("Playbook can not have a rolename.")
             self.is_valid = False
             return False
+        return True
+
+    def is_condition_branches_handled_correctly(self):  # type: () -> bool
+        """Check whether the playbook conditional tasks has all optional branches handled
+
+        Return:
+            bool. if the Playbook handles all condition branches correctly.
+        """
+        tasks = self.current_file.get('tasks', {})
+        if tasks:
+            for task in tasks.values():
+                if task.get('type') == 'condition':
+                    # default condition should always exist
+                    task_condition_labels = {'#default#'}
+                    for condition in task.get('conditions', []):
+                        label = condition.get('label')
+                        if label:
+                            task_condition_labels.add(label)
+                    next_tasks = task.get('nexttasks', {})
+                    for next_task_branch, next_task_ids in next_tasks.items():
+                        try:
+                            if next_task_ids:
+                                task_condition_labels.remove(next_task_branch)
+                        except KeyError as e:
+                            print_error('Playbook has conditional task with unreachable next task: {}'.format(str(e)))
+                            self.is_valid = False
+                            return False
+                    # if there are task_condition_labels left then not all branches are handled
+                    if task_condition_labels:
+                        print_error('Playbook has conditional task with unhandled branches: {}'.format(
+                            str(task_condition_labels)))
+                        self.is_valid = False
+                        return False
         return True

@@ -10,7 +10,7 @@ from pathlib import Path
 import docker.errors
 import docker.models.containers
 import docker
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, exceptions
 # Local packages
 from demisto_sdk.commands.common.tools import get_all_docker_images
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
@@ -216,12 +216,13 @@ class Linter:
         logger.info(f"{self._pack_name} - Flake8 - Start")
         stdout, stderr = run_command_lint_os(command=build_flake8_command(lint_files),
                                              cwd=self._pack_abs_dir)
-
-        if len(stdout) == 0:
+        if stderr:
+            return 1, stderr
+        elif len(stdout) == 0:
             logger.info(f"{self._pack_name} - Flake8 - Finshed success")
             return 0, ""
 
-        logger.error(f"{self._pack_name} - Flake8 - Finshed Finshed errors found")
+        logger.info(f"{self._pack_name} - Flake8 - Finshed Finshed errors found")
         logger.debug(f"{self._pack_name} - Flake8 - Finshed  errors - {stdout}")
 
         return 1, stdout
@@ -240,11 +241,13 @@ class Linter:
         stdout, stderr = run_command_lint_os(command=build_bandit_command(lint_files),
                                              cwd=self._pack_abs_dir)
 
-        if len(stdout) == 0:
+        if stderr:
+            return 1, stderr
+        elif len(stdout) == 0:
             logger.info(f"{self._pack_name} - Bandit - Finshed success")
             return 0, ""
 
-        logger.error(f"{self._pack_name} - Bandit - Finshed Finshed errors found")
+        logger.info(f"{self._pack_name} - Bandit - Finshed Finshed errors found")
         logger.debug(f"{self._pack_name} - Bandit - Finshed  errors - {stdout}")
 
         return 1, stdout
@@ -263,11 +266,13 @@ class Linter:
         logger.info(f"{self._pack_name} - Mypy - Start")
         stdout, stderr = run_command_lint_os(command=build_mypy_command(files=lint_files, version=py_num),
                                              cwd=self._pack_abs_dir)
-        if 'Success: no issues found' in stdout:
+        if stderr:
+            return 1, stderr
+        elif 'Success: no issues found' in stdout:
             logger.info(f"{self._pack_name} - Mypy - Finshed success")
             return 0, ""
 
-        logger.error(f"{self._pack_name} - Mypy - Finshed Finshed errors found")
+        logger.info(f"{self._pack_name} - Mypy - Finshed Finshed errors found")
         logger.debug(f"{self._pack_name} - Mypy - Finshed  errors - {stdout}")
 
         return 1, stdout
@@ -352,11 +357,14 @@ class Linter:
             requirements = self._req_2
         else:
             requirements = self._req_3
-        dockerfile = template.render(image=docker_base_image[0],
-                                     pypi_packs=requirements + self._facts["additional_requirements"],
-                                     project_dir=str(self._pack_abs_dir),
-                                     circle_ci=os.getenv("CI", False),
-                                     no_test=(self._facts["test"] and no_test))
+        try:
+            dockerfile = template.render(image=docker_base_image[0],
+                                         pypi_packs=requirements + self._facts["additional_requirements"],
+                                         project_dir=str(self._pack_abs_dir),
+                                         circle_ci=os.getenv("CI", False),
+                                         no_test=(self._facts["test"] and no_test))
+        except exceptions.TemplateError as e:
+            return test_image_id, str(e)
         # Try 3 times creating image - error occures with communicating with docker API
         errors = ""
         for trial in range(2):
@@ -417,7 +425,7 @@ class Linter:
             if container_exit_code in [1, 2]:
                 # 1-fatal message issued
                 # 2-Error message issued
-                logger.error(f"{self._pack_name} - Pylint - Image {test_image} - Finshed errors found")
+                logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Finshed errors found")
                 container_log = container_obj.logs().decode("utf-8")
                 container_exit_code = 1
             elif container_exit_code in [4, 8, 16]:
@@ -446,7 +454,7 @@ class Linter:
             return 2, container_log
 
         if container_exit_code:
-            logger.error(f"{self._pack_name} - Pylint - Image {test_image} - Finished errors found")
+            logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Finished errors found")
         else:
             logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Finished success")
 
@@ -527,7 +535,7 @@ class Linter:
             return 2, test_json
 
         if container_exit_code:
-            logger.error(f"{self._pack_name} - Pytest - Image{test_image} - Finished errors found")
+            logger.info(f"{self._pack_name} - Pytest - Image{test_image} - Finished errors found")
         else:
             logger.info(f"{self._pack_name} - Pytest - Image {test_image} - Finished success")
 

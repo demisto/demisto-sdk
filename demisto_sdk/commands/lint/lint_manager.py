@@ -49,12 +49,12 @@ class LintManager:
         logger = logging_setup(verbose=verbose,
                                log_path=log_path)
         # Gather facts for manager
-        self._facts = self._gather_facts()
+        self._facts: dict = self._gather_facts()
         # Filter packages to lint and test check
-        self._pkgs = self._get_packages(content_repo=self._facts["content_repo"],
-                                        dir_packs=dir_packs,
-                                        git=git,
-                                        all_packs=all_packs)
+        self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
+                                                    dir_packs=dir_packs,
+                                                    git=git,
+                                                    all_packs=all_packs)
 
     @staticmethod
     def _gather_facts():
@@ -120,7 +120,7 @@ class LintManager:
 
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, dir_packs: str, git: bool, all_packs: bool):
+    def _get_packages(self, content_repo: git.Repo, dir_packs: str, git: bool, all_packs: bool) -> List[Path]:
         """ Get packages paths to run lint command.
 
         Args:
@@ -130,7 +130,7 @@ class LintManager:
             all_packs(bool): Whether to run on all packages.
 
         Returns:
-            list[Path]: Pkgs to run lint
+            List[Path]: Pkgs to run lint
         """
         pkgs: list
         if (all_packs or git) and not dir_packs:
@@ -180,17 +180,16 @@ class LintManager:
 
         return all_directories
 
-
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: list) -> set:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path]) -> List[Path]:
         """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
         run on Lint.
 
         Args:
-            pkgs(list): pkgs to check
+            pkgs(List[Path]): pkgs to check
 
         Returns:
-            list: A list of names of packages that should run.
+            List[Path]: A list of names of packages that should run.
         """
         print(f"Comparing to git using branch {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset}")
         untracked_files = [Path(item) for item in content_repo.untracked_files]
@@ -200,7 +199,7 @@ class LintManager:
         all_changed = set(untracked_files).union(staged_files).union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 
-        return pkgs_to_check
+        return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
                          no_test: bool, keep_container: bool, test_xml: str, json_report: str) -> int:
@@ -274,7 +273,7 @@ class LintManager:
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code)
         LintManager._create_report(pkgs_status=pkgs_status,
-                                   path=Path(json_report))
+                                   path=json_report)
 
         return return_exit_code
 
@@ -379,23 +378,24 @@ class LintManager:
         # Log passed unit-tests
         passed_printed = False
         for pkg, status in pkgs_status.items():
-            if not passed_printed and status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
-                print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
-                passed_printed = True
-            print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
-            for image in status["images"]:
-                if not image.get("image_errors"):
-                    tests = image.get("pytest_json", {}).get("report", {}).get("tests")
-                    if tests:
-                        print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
-                        if not FAIL_EXIT_CODES["pytest"] & status["exit_code"]:
-                            packs_with_tests += 1
-                        for test_case in tests:
-                            if test_case.get("call", {}).get("outcome") != "failed":
-                                name = re.sub(pattern=r"\[.*\]",
-                                              repl="",
-                                              string=test_case.get("name"))
-                                print_v(wrapper_test.fill(name), log_verbose=self._verbose)
+            if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
+                if not passed_printed:
+                    print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
+                    passed_printed = True
+                print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
+                for image in status["images"]:
+                    if not image.get("image_errors"):
+                        tests = image.get("pytest_json", {}).get("report", {}).get("tests")
+                        if tests:
+                            print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
+                            if not FAIL_EXIT_CODES["pytest"] & status["exit_code"]:
+                                packs_with_tests += 1
+                            for test_case in tests:
+                                if test_case.get("call", {}).get("outcome") != "failed":
+                                    name = re.sub(pattern=r"\[.*\]",
+                                                  repl="",
+                                                  string=test_case.get("name"))
+                                    print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
         # Log failed unit-tests
         if FAIL_EXIT_CODES["pytest"] & return_exit_code:
@@ -472,9 +472,9 @@ class LintManager:
                     print(wrapper_error.fill(image["image_errors"]))
 
     @staticmethod
-    def _create_report(pkgs_status: dict, path: Path):
+    def _create_report(pkgs_status: dict, path: str):
         if path:
-            json_path = path / "lint_report.json"
+            json_path = Path(path) / "lint_report.json"
             json.dump(fp=json_path.open(mode='w'),
                       obj=pkgs_status,
                       indent=4,

@@ -3,6 +3,7 @@ import concurrent.futures
 import json
 import logging
 import os
+from pathlib import Path
 import sys
 import textwrap
 from typing import List
@@ -85,10 +86,10 @@ class LintManager:
             logger.critical(f"demisto-sdk-lint - can't locate content repo {e}")
             sys.exit(1)
         # Get global requirements file
-        pipfile_dir = os.path.join(os.path.dirname(__file__), 'dev_envs/default_python')
+        pipfile_dir = Path(__file__).parent / 'dev_envs'
         try:
             for py_num in ['2', '3']:
-                pipfile_lock_path = os.path.join(pipfile_dir + py_num, 'Pipfile.lock')
+                pipfile_lock_path = pipfile_dir / f'default_python{py_num}/Pipfile.lock'
                 with open(file=pipfile_lock_path) as f:
                     lock_file: dict = json.load(fp=f)["develop"]
                     facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in lock_file.items()]
@@ -129,13 +130,13 @@ class LintManager:
             all_packs(bool): Whether to run on all packages.
 
         Returns:
-            list[str]: Pkgs to run lint
+            list[Path]: Pkgs to run lint
         """
         pkgs: list
         if (all_packs or git) and not dir_packs:
             pkgs = LintManager._get_all_packages()
         else:
-            pkgs = dir_packs.split(',')
+            pkgs = [Path(item) for item in dir_packs.split(',')]
         total_found = len(pkgs)
         print(f"Total content packages found {Colors.Fg.cyan}{total_found}{Colors.reset}")
         if git:
@@ -163,23 +164,24 @@ class LintManager:
                 if ('Integrations/' in root or 'Scripts/' in root or 'Beta_Integrations/' in root) \
                         and len(root.split('/')) == 4:
                     logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
-                    all_directories.append(root)
+                    all_directories.append(Path(root))
         for root, _, _ in os.walk(INTEGRATIONS_DIR):
             if 'Integrations/' in root and len(root.split('/')) == 2:
                 logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
-                all_directories.append(root)
+                all_directories.append(Path(root))
         for root, _, _ in os.walk(SCRIPTS_DIR):
             if 'Scripts/' in root and len(root.split('/')) == 2:
                 logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
-                all_directories.append(root)
+                all_directories.append(Path(root))
         for root, _, _ in os.walk(BETA_INTEGRATIONS_DIR):
             if 'Beta_Integrations/' in root and len(root.split('/')) == 2:
                 logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
-                all_directories.append(root)
+                all_directories.append(Path(root))
+
         return all_directories
 
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: list) -> list:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: list) -> set:
         """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
         run on Lint.
 
@@ -190,14 +192,14 @@ class LintManager:
             list: A list of names of packages that should run.
         """
         print(f"Comparing to git using branch {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset}")
-        untracked_files = content_repo.untracked_files
-        staged_files = [os.path.dirname(item.b_path) for item in content_repo.index.diff(None, paths=pkgs)]
-        changed_from_master = [os.path.dirname(item.b_path) for item in content_repo.head.commit.diff('master',
-                                                                                                      paths=pkgs)]
-        all_changed = set(untracked_files).union(set(staged_files)).union(set(changed_from_master))
-        pkgs_to_check = all_changed.intersection(set(pkgs))
+        untracked_files = [Path(item) for item in content_repo.untracked_files]
+        staged_files = {Path(item.b_path).parent for item in content_repo.index.diff(None, paths=pkgs)}
+        changed_from_master = {Path(item.b_path).parent for item in content_repo.head.commit.diff('origin/master',
+                                                                                                  paths=pkgs)}
+        all_changed = set(untracked_files).union(staged_files).union(changed_from_master)
+        pkgs_to_check = all_changed.intersection(pkgs)
 
-        return list(pkgs_to_check)
+        return pkgs_to_check
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
                          no_test: bool, keep_container: bool, test_xml: str, json_report: str) -> int:
@@ -234,7 +236,7 @@ class LintManager:
             for pack in self._pkgs:
                 print_v(f"Permform lint on {Colors.Fg.cyan}{pack}{Colors.reset}", log_verbose=self._verbose)
                 linter: Linter = Linter(pack_dir=pack,
-                                        content_path=self._facts["content_repo"].working_dir,
+                                        content_path=Path(self._facts["content_repo"].working_dir),
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"])
                 results.append(executor.submit(fn=linter.run_dev_packages,
@@ -271,7 +273,7 @@ class LintManager:
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code)
         LintManager._create_report(pkgs_status=pkgs_status,
-                                   path=json_report)
+                                   path=Path(json_report))
 
         return return_exit_code
 
@@ -469,10 +471,10 @@ class LintManager:
                     print(wrapper_error.fill(image["image_errors"]))
 
     @staticmethod
-    def _create_report(pkgs_status: dict, path: str):
+    def _create_report(pkgs_status: dict, path: Path):
         if path:
-            with open(file=os.path.join(path, "lint_report.json"), mode='w') as f:
-                json.dump(fp=f,
-                          obj=pkgs_status,
-                          indent=4,
-                          sort_keys=True)
+            json_path = path / "lint_report.json"
+            json.dump(fp=json_path.open(mode='w'),
+                      obj=pkgs_status,
+                      indent=4,
+                      sort_keys=True)

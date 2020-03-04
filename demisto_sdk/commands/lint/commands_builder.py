@@ -1,5 +1,6 @@
 # STD python packages
-import os
+from pathlib import Path
+from typing import List
 
 # Third party packages
 
@@ -8,14 +9,14 @@ import os
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
 
 
-def build_flake8_command(file: str) -> str:
+def build_flake8_command(files: List[Path]) -> str:
     """
         Build command for executing flake8 lint check
     Args:
-        file: files to execute lint
+        files(List[Path]): files to execute lint
 
     Returns:
-        flake8 command
+        str: flake8 command
     """
     max_line_len = 130
     # Ignoring flake specific errors https://flake8.pycqa.org/en/latest/user/error-codes.html
@@ -28,19 +29,20 @@ def build_flake8_command(file: str) -> str:
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # Generating file pattrens - path1,path2,path3,..
-    command += f" {file}"
+    files = [str(file) for file in files]
+    command += ' ' + ' '.join(files)
 
     return command
 
 
-def build_bandit_command(files: list) -> str:
+def build_bandit_command(files: List[Path]) -> str:
     """ Build command for executing bandit lint check
 
     Args:
-        files(list): files to execute lint
+        files(List(Path)):  files to execute lint
 
     Returns:
-        bandit command
+        str: bandit command
     """
     command = "python3 -m bandit"
     # Only reporting on the high-severity issues
@@ -54,20 +56,21 @@ def build_bandit_command(files: list) -> str:
     # only show output in the case of an error
     command += f" -q"
     # Generating path pattrens - path1,path2,path3,..
+    files = [str(item) for item in files]
     command += f" -r {','.join(files)}"
 
     return command
 
 
-def build_mypy_command(files: list, version: str) -> str:
-    """ Build command to execute with mypy module https://mypy.readthedocs.io/en/stable/command_line.html
+def build_mypy_command(files: List[Path], version: float) -> str:
+    """ Build command to execute with mypy module
 
     Args:
-        files(list): files to execute lint
+        files(List[Path]): files to execute lint
         version(str): python varsion X.Y (3.7, 2.7 ..)
 
     Returns:
-        mypy command
+        str: mypy command
     """
     command = "python3 -m mypy"
     # Define python versions
@@ -89,19 +92,20 @@ def build_mypy_command(files: list, version: str) -> str:
     # Disable cache creation
     command += " --cache-dir=/dev/null"
     # Generating path pattrens - file1 file2 file3,..
+    files = [str(item) for item in files]
     command += " " + " ".join(files)
 
     return command
 
 
-def build_pylint_command(files: list) -> str:
+def build_pylint_command(files: List[Path]) -> str:
     """ Build command to execute with pylint module
-        https://docs.pylint.org/en/1.6.0/features.html
+
     Args:
-        files: files to execute lint
+        files(List[Path]): files to execute lint
 
     Returns:
-        pylint command
+       str: pylint command
     """
     command = "python -m pylint"
     # Excluded files
@@ -116,19 +120,21 @@ def build_pylint_command(files: list) -> str:
     # E1101 when accessed.
     command += " --generated-members=requests.packages.urllib3,requests.codes.ok"
     # Generating path pattrens - file1 file2 file3,..
-    files = [os.path.basename(file) for file in files]
+    files = [file.name for file in files]
     command += " " + " ".join(files)
 
     return command
 
 
 def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
-    """
-        Build command to execute with pytest module
-        https://docs.pytest.org/en/latest/usage.html
+    """ Build command to execute with pytest module
+
+    Args:
+        test_xml(str): path indicate if required or not
+        json(bool): Define json creation after test
 
     Returns:
-        pytest command
+        str: pytest command
     """
     command = "pytest"
     # One line per failure

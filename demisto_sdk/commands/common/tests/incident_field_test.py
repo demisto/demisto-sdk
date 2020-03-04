@@ -222,3 +222,90 @@ class TestIncidentFieldsValidator:
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_valid_cliname()
+
+    data_is_valid_version = [
+        (-1, True),
+        (0, False),
+        (1, False),
+    ]
+
+    @pytest.mark.parametrize('version, is_valid', data_is_valid_version)
+    def test_is_valid_version(self, version, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"version": version}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
+
+    data_is_valid_from_version = [
+        ('5.0.0', True),
+        ('4.', False),
+        ('', False),
+        ('4.0.0', False),
+        ('5.0.1', True),
+        ('100.0.0', True),
+        ('5', False),
+        (None, False)
+    ]
+
+    @pytest.mark.parametrize('from_version, is_valid', data_is_valid_from_version)
+    def test_is_current_valid_from_version(self, from_version, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"fromVersion": from_version}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_current_valid_from_version() == is_valid, f'is_valid_from_version({from_version})' \
+                                                                      f' returns {not is_valid}.'
+
+    IS_FROM_VERSION_CHANGED_NO_OLD = {}
+    IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
+    IS_FROM_VERSION_CHANGED_NEW = {"fromVersion": "5.0.0"}
+    IS_FROM_VERSION_CHANGED_NO_NEW = {}
+    IS_FROM_VERSION_CHANGED_NEW_HIGHER = {"fromVersion": "5.5.0"}
+    IS_CHANGED_FROM_VERSION_INPUTS = [
+        (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NO_OLD, False),
+        (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NEW, True),
+        (IS_FROM_VERSION_CHANGED_OLD, IS_FROM_VERSION_CHANGED_NEW, False),
+        (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NO_NEW, False),
+        (IS_FROM_VERSION_CHANGED_OLD, IS_FROM_VERSION_CHANGED_NEW_HIGHER, True),
+    ]
+
+    @pytest.mark.parametrize("current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS)
+    def test_is_changed_from_version(self, current_from_version, old_from_version, answer):
+        structure = StructureValidator("")
+        structure.old_file = old_from_version
+        structure.current_file = current_from_version
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_changed_from_version() is answer
+
+    data_required = [
+        (True, False),
+        (False, True),
+    ]
+
+    @pytest.mark.parametrize('required, is_valid', data_required)
+    def test_is_valid_required(self, required, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"required": required}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_valid_required() == is_valid, f'is_valid_required({required})' \
+                                                          f' returns {not is_valid}.'
+
+    data_is_changed_type = [
+        ('shortText', 'shortText', True),
+        ('shortText', 'longText', False),
+        ('number', 'number', True),
+        ('shortText', 'number', False),
+        ('timer', 'timer', True),
+        ('timer', 'number', False),
+        ('timer', 'shortText', False),
+        ('singleSelect', 'singleSelect', True),
+        ('singleSelect', 'shortText', False)
+    ]
+
+    @pytest.mark.parametrize('current_type, old_type, is_valid', data_is_changed_type)
+    def test_is_changed_type(self, current_type, old_type, is_valid):
+        structure = StructureValidator("")
+        structure.current_file = {"type": current_type}
+        structure.old_file = {"type": old_type}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
+                                                        f' returns {not is_valid}.'

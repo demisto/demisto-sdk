@@ -1,3 +1,4 @@
+
 class TestGatherFacts:
     """python version, docker images, yml parsing, test exists, lint files"""
 

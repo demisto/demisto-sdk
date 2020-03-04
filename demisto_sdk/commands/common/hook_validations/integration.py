@@ -1,7 +1,9 @@
 from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
-    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT
+    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
+
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
 
@@ -53,6 +55,8 @@ class IntegrationValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_feed(),
+            self.is_valid_fetch(),
+            self.is_valid_display_name(),
         ]
         return all(answers)
 
@@ -61,7 +65,7 @@ class IntegrationValidator(BaseValidator):
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that"""
         answers = [
             self.is_valid_default_arguments(),
-            self.is_valid_beta()
+            self.is_valid_beta(),
         ]
         return all(answers)
 
@@ -368,7 +372,10 @@ class IntegrationValidator(BaseValidator):
         commands = integration_json.get('script', {}).get('commands', [])
         for command in commands:
             context_list = []
-            for output in command.get('outputs', []):
+            outputs = command.get('outputs', None)
+            if not outputs:
+                continue
+            for output in outputs:
                 command_name = command['name']
                 try:
                     context_list.append(output['contextPath'])
@@ -387,7 +394,12 @@ class IntegrationValidator(BaseValidator):
         """
         current_command_to_context_paths = self._get_command_to_context_paths(self.current_file)
         old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
-
+        # if old integration command has no outputs, no change of context will occur.
+        if not old_command_to_context_paths:
+            return False
+        # if new integration command has no outputs, and old one does, a change of context will occur.
+        if not current_command_to_context_paths and old_command_to_context_paths:
+            return True
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
@@ -472,7 +484,8 @@ class IntegrationValidator(BaseValidator):
                     self.is_valid = False
                     return True
 
-            elif not is_field_hidden and not configuration_display:
+            elif not is_field_hidden and not configuration_display \
+                    and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
                 print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
                 self.is_valid = False
                 return True
@@ -490,9 +503,62 @@ class IntegrationValidator(BaseValidator):
 
     def is_valid_feed(self):
         # type: () -> bool
+        valid_from_version = valid_feed_params = True
         if self.current_file.get("script", {}).get("feed"):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
+                valid_from_version = False
+            valid_feed_params = self.all_feed_params_exist()
+        return valid_from_version and valid_feed_params
+
+    def is_valid_fetch(self) -> bool:
+        """
+        validate that all required fields in integration that have fetch incidents are in the yml file.
+        Returns:
+            bool. True if the integration is defined as well False otherwise.
+        """
+        fetch_params_exist = True
+        if self.current_file.get('script', {}).get('isfetch') is True:
+            params = [_key for _key in self.current_file.get('configuration', [])]
+            for param in FETCH_REQUIRED_PARAMS:
+                if param not in params:
+                    print_error(f'Integration with fetch-incidents was detected '
+                                f'("isfetch:  true" was found in the YAML file).'
+                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
+                                f'the param is:\n{param}')
+                    fetch_params_exist = False
+
+        return fetch_params_exist
+
+    def all_feed_params_exist(self) -> bool:
+        """
+        validate that all required fields in feed integration are in the yml file.
+        Returns:
+            bool. True if the integration is defined as well False otherwise.
+        """
+        params_exist = True
+        params = [_key for _key in self.current_file.get('configuration', [])]
+        for counter, param in enumerate(params):
+            if 'defaultvalue' in param:
+                params[counter].pop('defaultvalue')
+        for param in FEED_REQUIRED_PARAMS:
+            if param not in params:
+                print_error(f'Feed Integration was detected '
+                            f'\nA required parameter is missing or malformed in the file {self.file_path}, '
+                            f'the param should be:\n{param}')
+                params_exist = False
+
+        return params_exist
+
+    def is_valid_display_name(self):
+        # type: () -> bool
+        if not is_v2_file(self.current_file):
+            return True
+        else:
+            display_name = self.current_file.get('display')
+            correct_name = " v2"
+            if not display_name.endswith(correct_name):
+                print_error(Errors.invalid_v2_integration_name(self.file_path))
                 return False
-        return True
+            return True

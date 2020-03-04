@@ -22,7 +22,7 @@ def save_output(path, file_name, content):
     """
     output = os.path.join(path, file_name)
 
-    with open(output, "w") as doc_file:
+    with open(output, mode="w", encoding="utf8") as doc_file:
         doc_file.write(content)
 
     print_color(f'Output file was saved to :\n{output}', LOG_COLORS.GREEN)

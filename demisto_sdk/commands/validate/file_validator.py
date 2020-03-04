@@ -262,7 +262,7 @@ class FilesValidator:
 
             elif 'README' in file_path:
                 readme_validator = ReadMeValidator(file_path)
-                if not readme_validator.is_file_valid():
+                if not readme_validator.is_valid_file():
                     self._is_valid = False
                     continue
 
@@ -376,7 +376,7 @@ class FilesValidator:
 
             elif 'README' in file_path:
                 readme_validator = ReadMeValidator(file_path)
-                if not readme_validator.is_file_valid():
+                if not readme_validator.is_valid_file():
                     self._is_valid = False
                     continue
 

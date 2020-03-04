@@ -9,7 +9,15 @@ class ReadMeValidator:
         self.is_valid = True
         self.ready = False
 
-    def is_file_valid(self) -> bool:
+    def is_valid_file(self):
+        """Check whether the readme file is valid or not
+        """
+        is_readme_valid = all([
+            self.is_mdx_file(),
+        ])
+        return is_readme_valid
+
+    def is_mdx_file(self) -> bool:
         mdx_parse = f'{os.path.dirname(os.path.abspath(__file__))}/../mdx-parse.js'
         self.are_modules_installed_for_verify()
         if self.ready:

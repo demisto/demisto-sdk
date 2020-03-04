@@ -16,4 +16,4 @@ def test_is_file_valid(current, answer):
     readme_validator = ReadMeValidator(current)
     ready = readme_validator.are_modules_installed_for_verify()
     if ready:
-        assert readme_validator.is_file_valid() is answer
+        assert readme_validator.is_valid_file() is answer

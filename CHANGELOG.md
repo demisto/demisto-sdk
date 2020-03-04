@@ -6,15 +6,15 @@
 
 ### 0.4.0
 * Added a validator for Indicator Types (reputation-*.json).
+* Added a validator for README.md files.
 * Added a BC validation for changing incident field type.
 * Fixed an issue where init command would generate an invalid yml for scripts.
-* Fixed an issue in misleading error message in v2 validation hook.
-* Fixed an issue in v2 hook which now is set only on newly added scripts.
+* Fixed a misleading error message in v2 validation hook.
+* Fixed an issue in v2 hook which now is applied only to newly added scripts.
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
 * Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.
-* Added a new hook for validating README.md files
 
 
 ### 0.3.9

@@ -1,6 +1,6 @@
 # STD python packages
 import logging
-from typing import Tuple
+from typing import Tuple, List
 import yaml
 import os
 import tempfile
@@ -103,7 +103,7 @@ class Linter:
                            content_path=self._content_path,
                            version_two=self._facts["version_two"]) as lint_files:
                 # If temp files created for lint check - replace them
-                self._facts["lint_files"] = lint_files
+                self._facts["lint_files"]: List[Path] = lint_files
                 # Run lint check on host - flake8, bandit, mypy
                 self._run_lint_on_host(no_flake8=no_flake8,
                                        no_bandit=no_bandit,
@@ -126,7 +126,7 @@ class Linter:
             indicate if pack is python pack
         """
         # Loading pkg yaml
-        yml_file = self._pack_abs_dir / f"{self._pack_name}.yml"
+        yml_file: Path = self._pack_abs_dir / f"{self._pack_name}.yml"
         if not yml_file.exists():
             logger.info(f"{self._pack_name} - Facts - Skiping no yaml file found {yml_file}")
             return
@@ -203,11 +203,11 @@ class Linter:
                     self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
 
-    def _run_flake8(self, lint_files: list) -> Tuple[int, str]:
+    def _run_flake8(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
         Args:
-            lint_files(list): file to perform lint
+            lint_files(List[Path]): file to perform lint
 
         Returns:
            int:  0 on successful else 1, errors
@@ -226,11 +226,11 @@ class Linter:
 
         return 1, stdout
 
-    def _run_bandit(self, lint_files: list) -> Tuple[int, str]:
+    def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run bandit in pack dir
 
         Args:
-            lint_files(list): file to perform lint
+            lint_files(List[Path]): file to perform lint
 
         Returns:
            int:  0 on successful else 1, errors
@@ -249,12 +249,12 @@ class Linter:
 
         return 1, stdout
 
-    def _run_mypy(self, py_num: float, lint_files: list) -> Tuple[int, str]:
+    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
-            py_num: The python version in use
-            lint_files: file to perform lint
+            py_num(float): The python version in use
+            lint_files(List[Path]): file to perform lint
 
         Returns:
            int:  0 on successful else 1, errors
@@ -281,7 +281,6 @@ class Linter:
             keep_container(bool): Whether to keep the test container.
             test_xml(str): Path for saving pytest xml results.
         """
-        image: str
         for image in self._facts["images"]:
             # Give each image 2 tries, if first failed willl validate second time
             for trial in range(2):
@@ -313,7 +312,7 @@ class Linter:
                             exit_code, test_json = self._docker_run_pytest(test_image=docker_image_created,
                                                                            keep_container=keep_container,
                                                                            test_xml=test_xml)
-                            status["pytest_json"] = test_json
+                            status["pytest_json"]: dict = test_json
                             if exit_code:
                                 self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES["pytest"]
                                 if exit_code in [3, 4]:
@@ -343,7 +342,7 @@ class Linter:
         Returns:
             str: image short uniq ID
         """
-        test_image_id: str = ""
+        test_image_id = ""
         logger.info(f"{self._pack_name} - Image build - Creating image based on {docker_base_image[0]}")
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')

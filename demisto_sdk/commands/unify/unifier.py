@@ -202,7 +202,7 @@ class Unifier:
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|ApiModule\.py')
+                        r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py')
 
         if self.package_path.endswith('Scripts/CommonServerPython'):
             return os.path.join(self.package_path, 'CommonServerPython.py')

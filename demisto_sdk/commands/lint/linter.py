@@ -170,7 +170,8 @@ class Linter:
                 else:
                     if k != "CommonServerPython.py":
                         lint_files.remove(file_path)
-        lint_files = (set(lint_files).difference(type_1)).difference(type_2)
+        lint_files = set(lint_files).difference(type_1).difference(type_2).difference(
+            [os.path.join(self._pack_abs_dir, '__init__.py')])
         self._facts["lint_files"] = list(lint_files)
         logger.info(f"{self._pack_name} - Facts - Lint files {self._facts['lint_files']}")
 

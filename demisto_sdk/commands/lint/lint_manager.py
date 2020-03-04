@@ -379,20 +379,20 @@ class LintManager:
             if not passed_printed and status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
                 print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
                 passed_printed = True
-                print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
-                for image in status["images"]:
-                    if not image.get("image_errors"):
-                        tests = image.get("pytest_json", {}).get("report", {}).get("tests")
-                        if tests:
-                            print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
-                            if not FAIL_EXIT_CODES["pytest"] & status["exit_code"]:
-                                packs_with_tests += 1
-                            for test_case in tests:
-                                if test_case.get("call", {}).get("outcome") != "failed":
-                                    name = re.sub(pattern=r"\[.*\]",
-                                                  repl="",
-                                                  string=test_case.get("name"))
-                                    print_v(wrapper_test.fill(name), log_verbose=self._verbose)
+            print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
+            for image in status["images"]:
+                if not image.get("image_errors"):
+                    tests = image.get("pytest_json", {}).get("report", {}).get("tests")
+                    if tests:
+                        print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
+                        if not FAIL_EXIT_CODES["pytest"] & status["exit_code"]:
+                            packs_with_tests += 1
+                        for test_case in tests:
+                            if test_case.get("call", {}).get("outcome") != "failed":
+                                name = re.sub(pattern=r"\[.*\]",
+                                              repl="",
+                                              string=test_case.get("name"))
+                                print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
         # Log failed unit-tests
         if FAIL_EXIT_CODES["pytest"] & return_exit_code:

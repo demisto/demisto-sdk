@@ -5,10 +5,12 @@ Module contains validation of schemas, ids and paths.
 import json
 import os
 import re
+import logging
+
 from typing import Optional
 
 import yaml
-from pykwalify.core import Core, logging
+from pykwalify.core import Core
 
 from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
     SCHEMA_TO_REGEX
@@ -96,6 +98,8 @@ class StructureValidator:
         if self.scheme_name in [None, 'image']:
             return True
         try:
+            logging.getLogger(__name__)
+            # disabling info massages of pykwalify such as: INFO:pykwalify.core:validation.valid
             logging.disable(logging.INFO)
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))

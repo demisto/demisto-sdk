@@ -10,7 +10,7 @@ from ruamel.yaml import YAML
 
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.tools import get_child_directories, get_child_files, print_warning, \
-    get_yml_paths_in_dir, print_error
+    get_yml_paths_in_dir, print_error, find_type
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR,\
     DASHBOARDS_DIR, WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
@@ -254,11 +254,15 @@ class ContentCreator:
             else:
                 # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
                 # but when copied to the test_bundle, playbook-* prefix should be added to them
-                if not path.startswith('script-') and not path.startswith('playbook-'):
-                    path_basename = f'playbook-{os.path.basename(path)}'
-                else:
-                    path_basename = os.path.basename(path)
-                print(f'Copying path {path}')
+                file_type = find_type(path)
+                path_basename = os.path.basename(path)
+                if file_type == 'script':
+                    if not path_basename.startswith('script-'):
+                        path_basename = f'script-{os.path.basename(path)}'
+                elif file_type == 'playbook':
+                    if not path_basename.startswith('playbook-'):
+                        path_basename = f'playbook-{os.path.basename(path)}'
+                print(f'Copying path {path} as {path_basename}')
                 shutil.copyfile(path, os.path.join(self.test_bundle, path_basename))
 
     def copy_packs_content_to_old_bundles(self, packs):
@@ -429,6 +433,12 @@ class ContentCreator:
                 shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
             else:
                 print_warning('release-notes.md was not found in the content directory and therefore not '
+                              'copied over to the artifacts directory')
+            if os.path.exists('beta-release-notes.md'):
+                print('copying beta-release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
+                shutil.copyfile('beta-release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+            else:
+                print_warning('beta-release-notes.md was not found in the content directory and therefore not '
                               'copied over to the artifacts directory')
             print(f'finished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
         finally:

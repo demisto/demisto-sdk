@@ -1,6 +1,9 @@
 import pytest
 from mock import patch
 from typing import Optional
+from copy import deepcopy
+
+from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 
@@ -370,7 +373,8 @@ class TestIntegrationValidator:
         (INVALID_DISPLAY_NON_HIDDEN, False),
         (INVALID_DISPLAY_NON_HIDDEN, False),
         (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
-        (INVALID_DISPLAY_TYPE_EXPIRATION, False)
+        (INVALID_DISPLAY_TYPE_EXPIRATION, False),
+        (FEED_REQUIRED_PARAMS, True),
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)
@@ -394,7 +398,11 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("feed, fromversion", VALID_FEED)
     def test_valid_feed(self, feed, fromversion):
-        current = {"script": {"feed": feed}, "fromversion": fromversion}
+        current = {
+            "script": {"feed": feed},
+            "fromversion": fromversion,
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS)
+        }
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_feed()
@@ -412,3 +420,102 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert not validator.is_valid_feed()
+
+    V2_VALID = {"display": "integrationname v2", "name": "integrationname v2", "id": "integrationname v2"}
+    V2_WRONG_DISPLAY_1 = {"display": "integrationname V2", "name": "integrationname V2", "id": "integrationname V2"}
+    V2_WRONG_DISPLAY_2 = {"display": "integrationnameV2", "name": "integrationnameV2", "id": "integrationnameV2"}
+    V2_WRONG_DISPLAY_3 = {"display": "integrationnamev2", "name": "integrationnamev2", "id": "integrationnamev2"}
+    V2_NAME_INPUTS = [
+        (V2_VALID, True),
+        (V2_WRONG_DISPLAY_1, False),
+        (V2_WRONG_DISPLAY_2, False),
+        (V2_WRONG_DISPLAY_3, False)
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
+    def test_is_valid_display_name(self, current, answer):
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_display_name() is answer
+
+
+class TestIsFetchParamsExist:
+    def setup(self):
+        config = {
+            'configuration': deepcopy(FETCH_REQUIRED_PARAMS),
+            'script': {'isfetch': True}
+        }
+        self.validator = IntegrationValidator(mock_structure("", config))
+
+    def test_valid(self):
+        assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'
+
+    def test_sanity(self):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'incidentType']
+        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
+
+    def test_missing_field(self):
+        # missing param
+        for i, t in enumerate(self.validator.current_file['configuration']):
+            if t['name'] == 'incidentType':
+                del self.validator.current_file['configuration'][i]['name']
+        print(self.validator.current_file['configuration'])
+        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
+
+    def test_malformed_field(self):
+        # incorrect param
+        config = self.validator.current_file['configuration']
+        self.validator.current_file['configuration'] = []
+        for t in config:
+            if t['name'] == 'incidentType':
+                t['type'] = 123
+            self.validator.current_file['configuration'].append(t)
+
+        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
+
+    def test_not_fetch(self):
+        self.test_malformed_field()
+        self.validator.is_valid = True
+        self.validator.current_file['script']['isfetch'] = False
+        assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'
+
+
+class TestIsFeedParamsExist:
+
+    def setup(self):
+        config = {
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS),
+            'script': {'feed': True}
+        }
+        self.validator = IntegrationValidator(mock_structure("", config))
+
+    def test_valid(self):
+        assert self.validator.all_feed_params_exist(), 'all_feed_params_exist() returns False instead True'
+
+    def test_sanity(self):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if not t.get('display')]
+        assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'
+
+    def test_missing_field(self):
+        # missing param
+        configuration = self.validator.current_file['configuration']
+        for i in range(len(configuration)):
+            if not configuration[i].get('display'):
+                del configuration[i]['name']
+        self.validator.current_file['configuration'] = configuration
+        assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'
+
+    def test_malformed_field(self):
+        # incorrect param
+        self.validator.current_file['configuration'] = []
+        for t in self.validator.current_file['configuration']:
+            if not t.get('display'):
+                t['type'] = 123
+            self.validator.current_file['configuration'].append(t)
+
+        assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'

@@ -225,6 +225,16 @@ class Errors:
     def invalid_file_path(file_path):
         return f"Found incompatible file path: {file_path}."
 
+    @staticmethod
+    def invalid_v2_integration_name(file_path):
+        return f"The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
+               f"e.g: Kenna v2, Jira v2"
+
+    @staticmethod
+    def invalid_v2_script_name(file_path):
+        return f"The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
+               f" e.g: DBotTrainTextClassifierV2"
+
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
@@ -478,7 +488,7 @@ CLASSIFIER_REGEX = r'{}{}.*classifier-.*\.json$'.format(CAN_START_WITH_DOT_SLASH
 LAYOUT_REGEX = r'{}{}.*layout-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, LAYOUTS_DIR)
 INCIDENT_FIELD_REGEX = r'{}{}/incidentfield-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, INCIDENT_FIELDS_DIR)
 MISC_REGEX = r'{}{}.*reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
-REPUTATION_REGEX = r'{}{}.*reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
+REPUTATION_REGEX = r'{}{}/reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 
@@ -493,7 +503,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
-PACKS_PACK_META_FILE_NAME = 'metadata.json'
+PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
 
 PYTHON_TEST_REGEXES = [
@@ -850,7 +860,8 @@ SCHEMA_TO_REGEX = {
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': [INCIDENT_TYPE_REGEX],
-    'image': [IMAGE_REGEX]
+    'image': [IMAGE_REGEX],
+    'reputation': [REPUTATION_REGEX],
 }
 
 FILE_TYPES_PATHS_TO_VALIDATE = {
@@ -892,3 +903,73 @@ IOC_OUTPUTS_DICT = {
 PACK_INITIAL_VERSION = '1.0.0'
 
 PACK_SUPPORT_OPTIONS = ['demisto', 'partner', 'developer', 'community']
+
+FEED_REQUIRED_PARAMS = [
+    {
+        'display': 'Fetch indicators',
+        'name': 'feed',
+        'type': 8,
+        'required': False
+    },
+    {
+        'display': 'Indicator Reputation',
+        'name': 'feedReputation',
+        'type': 18,
+        'required': False,
+        'options': ['None', 'Good', 'Suspicious', 'Bad'],
+        'additionalinfo': 'Indicators from this integration instance will be marked with this reputation'
+    },
+    {
+        'display': 'Source Reliability',
+        'name': 'feedReliability',
+        'type': 15,
+        'required': True,
+        'options': [
+            'A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable',
+            'E - Unreliable', 'F - Reliability cannot be judged'],
+        'additionalinfo': 'Reliability of the source providing the intelligence data'
+    },
+    {
+        'display': "",
+        'name': 'feedExpirationPolicy',
+        'type': 17,
+        'required': False,
+        'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
+    },
+    {
+        'display': "",
+        'name': 'feedExpirationInterval',
+        'type': 1,
+        'required': False
+    },
+    {
+        'display': 'Feed Fetch Interval',
+        'name': 'feedFetchInterval',
+        'type': 19,
+        'required': False
+    },
+    {
+        'display': 'Bypass exclusion list',
+        'name': 'feedBypassExclusionList',
+        'type': 8,
+        'required': False,
+        'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
+                          ' This means that if an indicator from this feed is on the exclusion list,'
+                          ' the indicator might still be added to the system.'
+    }
+]
+
+FETCH_REQUIRED_PARAMS = [
+    {
+        'display': 'Incident type',
+        'name': 'incidentType',
+        'required': False,
+        'type': 13
+    },
+    {
+        'display': 'Fetch incidents',
+        'name': 'isFetch',
+        'required': False,
+        'type': 8
+    }
+]

@@ -24,6 +24,7 @@ class LintManager:
         no_mypy (bool): Whether to skip mypy.
         no_bandit (bool): Whether to skip bandit.
         no_pslint (bool): Whether to skip powershell lint.
+        no_vulture (bool): Whether to skip vulture.
         verbose (bool): Whether to output a detailed response.
         root (bool): Whether to run pytest container with root user.
         keep_container (bool): Whether to keep the test container.
@@ -39,7 +40,7 @@ class LintManager:
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
                  no_pslint: bool = False,
-                 git: bool = False, run_all_tests: bool = False, outfile: str = '',
+                 no_vulture: bool = False, git: bool = False, run_all_tests: bool = False, outfile: str = '',
                  configuration: Configuration = Configuration()):
 
         if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
@@ -59,6 +60,7 @@ class LintManager:
             'tests': not no_test,
             'bandit': not no_bandit,
             'pslint': not no_pslint,
+            'vulture': not no_vulture,
         }
 
         if run_all_tests or (not project_dir_list and git):
@@ -122,6 +124,7 @@ class LintManager:
                                 keep_container=self.keep_container, cpu_num=self.cpu_num,
                                 configuration=self.configuration, no_bandit=not self.run_args['bandit'],
                                 no_pslint=not self.run_args['pslint'],
+                                no_vulture=not self.run_args['vulture'],
                                 requirements_3=self.requirements_for_python3,
                                 requirements_2=self.requirements_for_python2)
                 run_status_code = linter.run_dev_packages()
@@ -241,6 +244,7 @@ class LintManager:
                             no_mypy=not self.run_args['mypy'], root=self.root,
                             keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
                             lock=LOCK, no_bandit=not self.run_args['bandit'],
+                            no_vulture=not self.run_args['vulture'],
                             no_pslint=not self.run_args['pslint'],
                             requirements_3=self.requirements_for_python3,
                             requirements_2=self.requirements_for_python2)

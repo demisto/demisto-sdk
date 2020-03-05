@@ -43,9 +43,9 @@ class Linter:
                  cpu_num: int = 0, configuration: Configuration = Configuration(),
                  lock: threading.Lock = threading.Lock(), no_bandit: bool = False, no_pslint: bool = False,
                  requirements_3: str = '',
-                 requirements_2: str = ''):
+                 requirements_2: str = '', no_vulture: bool = False):
 
-        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
+        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit and no_vulture:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
@@ -77,6 +77,7 @@ class Linter:
             'bandit': not no_bandit,
             'tests': not no_test,
             'pslint': not no_pslint,
+            'vulture': not no_vulture,
         }
         self.lock = lock
         self.requirements_3 = requirements_3
@@ -135,6 +136,12 @@ class Linter:
             result_val = self.run_bandit(py_num)
             if result_val:
                 return_code = result_val
+
+        if self.run_args['vulture']:
+            result_val = self.run_vulture(py_num)
+            if result_val:
+                return_code = result_val
+
         return return_code
 
     def run_dev_packages(self) -> int:
@@ -268,6 +275,38 @@ class Linter:
             else:
                 print_error(output)
                 return 1
+
+    def run_vulture(self, py_num) -> int:
+        """Run vulture
+
+        Args:
+            py_num: The python version in use
+
+        Returns:
+            int. 0 on successful vulture run, 1 otherwise.
+        """
+        lint_files = self._get_lint_files()
+        python_exe = 'python2' if py_num < 3 else 'python3'
+        cmd_args = [python_exe, '-m', 'vulture', lint_files, '--min-confidence',
+                    os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')]
+        vulture_whitelist_path = os.path.join(self.project_dir, '.vulture_whitelist.py')
+        if os.path.isfile(vulture_whitelist_path):
+            cmd_args.insert(4, vulture_whitelist_path)
+        output = run_command(' '.join(cmd_args), cwd=self.project_dir)
+        self.lock.acquire()
+        print("========= Running vulture on: {} ===============".format(lint_files))
+        print_v('Using: {} to run vulture'.format(python_exe))
+        if len(output) == 0:
+            print_color("vulture completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
+            if self.lock.locked():
+                self.lock.release()
+            return 0
+
+        else:
+            print_error(output)
+            if self.lock.locked():
+                self.lock.release()
+            return 1
 
     def _docker_login(self):
         if self.docker_login_completed:

@@ -202,7 +202,7 @@ class Unifier:
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|ApiModule\.py'
+                        r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py'
                         r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
         if self.package_path.endswith('/'):
             self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join

@@ -11,9 +11,10 @@ from typing import Union, Optional, Tuple, Dict
 import urllib3
 import yaml
 import requests
+import logging
 
-from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES,\
-    CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX,\
+from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
+    CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
     DEF_DOCKER
 
 # disable insecure warnings
@@ -27,7 +28,7 @@ class LOG_COLORS:
     YELLOW = '\033[0;33m'
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str, ) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -550,3 +551,17 @@ def find_type(path: str):
                 return 'indicatorfield'
 
     return ''
+
+
+def disable_logs(name, level):
+    """
+    disable logs from channel name starting from equal and bigger than level
+
+    Arguments:
+        name -  channel name
+        level - enum for a specific level which represent the max level from which logs will be printed.
+                e.g. :Logger.ERROR = 40 - all logs that are ERROR level an grater will be printed , all lower will not
+    """
+    log = logging.getLogger(name)
+    log.level = level
+    log.manager._clear_cache()

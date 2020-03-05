@@ -98,7 +98,7 @@ class StructureValidator:
         if self.scheme_name in [None, 'image']:
             return True
         try:
-            logging.getLogger(__name__)
+            logging.getLogger('pykwalify.core')
             # disabling info massages of pykwalify such as: INFO:pykwalify.core:validation.valid
             logging.disable(logging.INFO)
             path = os.path.normpath(

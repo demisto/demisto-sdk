@@ -15,7 +15,8 @@ from demisto_sdk.tests.constants_test import VALID_TEST_PLAYBOOK_PATH, INVALID_P
     DASHBOARD_TARGET, WIDGET_TARGET, PLAYBOOK_TARGET, VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, INTEGRATION_TARGET, \
     INCIDENT_FIELD_TARGET, PLAYBOOK_PACK_TARGET, INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS, \
     INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD, \
-    INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2, INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4
+    INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2, INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4, \
+    VALID_REPUTATION_FILE, INVALID_REPUTATION_FILE
 
 
 class TestStructureValidator:
@@ -74,6 +75,16 @@ class TestStructureValidator:
     @pytest.mark.parametrize("path, scheme, answer", SCHEME_VALIDATION_INDICATORFIELDS)
     def test_scheme_validation_indicatorfield(self, path, scheme, answer, mocker):
         validator = StructureValidator(file_path=path, predefined_scheme='incidentfield')
+        assert validator.is_valid_scheme() is answer
+
+    SCHEME_VALIDATION_REPUTATION = [
+        (VALID_REPUTATION_FILE, True),
+        (INVALID_REPUTATION_FILE, False)
+    ]
+
+    @pytest.mark.parametrize("path, answer", SCHEME_VALIDATION_REPUTATION)
+    def test_scheme_validation_reputation(self, path, answer):
+        validator = StructureValidator(file_path=path, predefined_scheme='reputation')
         assert validator.is_valid_scheme() is answer
 
     INPUTS_VALID_FROM_VERSION_MODIFIED = [

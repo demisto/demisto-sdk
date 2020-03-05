@@ -11,7 +11,7 @@ import yaml
 from pykwalify.core import Core
 
 from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
-    SCHEMA_TO_REGEX, REPUTATION_REGEX
+    SCHEMA_TO_REGEX
 from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
 from demisto_sdk.commands.common.configuration import Configuration
 
@@ -80,13 +80,10 @@ class StructureValidator:
             if get_matching_regex(self.file_path, regex_list):
                 return scheme_name
 
-        if get_matching_regex(self.file_path, [REPUTATION_REGEX]):
-            return 'reputation'
-
-        pretty_formated_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
+        pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
         print_error(f"The file {self.file_path} does not match any scheme we have please, refer to the following list"
-                    f" for the various file name options we have in our repo {pretty_formated_string_of_regexes}")
+                    f" for the various file name options we have in our repo {pretty_formatted_string_of_regexes}")
         return None
 
     def is_valid_scheme(self):
@@ -96,7 +93,7 @@ class StructureValidator:
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, 'reputation', 'image']:
+        if self.scheme_name in [None, 'image']:
             return True
         try:
             path = os.path.normpath(

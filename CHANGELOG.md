@@ -11,6 +11,8 @@
 * Fixed an issue where init command would generate an invalid yml for scripts.
 * Fixed an issue in misleading error message in v2 validation hook.
 * Fixed an issue in v2 hook which now is set only on newly added scripts.
+* Added more indicative message for errors in yaml files.
+
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
@@ -29,6 +31,7 @@
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
 * Fixed an issue where *validate* failed on integration commands without outputs.
 * Added a new hook for naming of v2 integrations and scripts.
+
 
 ### 0.3.8
 * Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.

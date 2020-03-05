@@ -51,7 +51,7 @@ class Unifier:
 
         self.ryaml = YAML()
         self.ryaml.preserve_quotes = True
-        self.ryaml.width = 400  # make sure long lines will not break (relevant for code section)
+        self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if self.yml_path:
             with open(self.yml_path, 'r') as yml_file:
                 self.yml_data = self.ryaml.load(yml_file)
@@ -202,7 +202,7 @@ class Unifier:
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|ApiModule\.py')
+                        r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py')
 
         if self.package_path.endswith('Scripts/CommonServerPython'):
             return os.path.join(self.package_path, 'CommonServerPython.py')

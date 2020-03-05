@@ -78,21 +78,21 @@ class TestValidators:
             os.remove(target)
 
     INPUTS_IS_CONDITION_BRANCHES_HANDLED_CORRECTLY = [
-        (INVALID_PLAYBOOK_CONDITION_1, PLAYBOOK_TARGET, False),
-        (INVALID_PLAYBOOK_CONDITION_2, PLAYBOOK_TARGET, False),
-        (VALID_PLAYBOOK_CONDITION, PLAYBOOK_TARGET, True)
+        (INVALID_PLAYBOOK_CONDITION_1, False),
+        (INVALID_PLAYBOOK_CONDITION_2, False),
+        (VALID_PLAYBOOK_CONDITION, True)
     ]
 
-    @pytest.mark.parametrize('source, target, answer', INPUTS_IS_CONDITION_BRANCHES_HANDLED_CORRECTLY)
-    def test_is_condition_branches_handled_correctly(self, source, target, answer):
+    @pytest.mark.parametrize('source, answer', INPUTS_IS_CONDITION_BRANCHES_HANDLED_CORRECTLY)
+    def test_is_condition_branches_handled_correctly(self, source, answer):
         # type: (str, str, Any) -> None
         try:
-            copyfile(source, target)
+            copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
             validator = PlaybookValidator(structure)
             assert validator.is_condition_branches_handled_correctly() is answer
         finally:
-            os.remove(target)
+            os.remove(PLAYBOOK_TARGET)
 
     INPUTS_LOCKED_PATHS = [
         (VALID_REPUTATION_PATH, True, ReputationValidator),

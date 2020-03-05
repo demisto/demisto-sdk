@@ -26,7 +26,8 @@ from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_P
     LAYOUT_TARGET, WIDGET_TARGET, DASHBOARD_TARGET, INTEGRATION_TARGET, \
     INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, \
     VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_ID_PATH, \
-    VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH
+    INVALID_PLAYBOOK_CONDITION_1, INVALID_PLAYBOOK_CONDITION_2, VALID_PLAYBOOK_CONDITION, VALID_INTEGRATION_ID_PATH, \
+    INVALID_INTEGRATION_ID_PATH
 
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
@@ -73,6 +74,23 @@ class TestValidators:
             structure = StructureValidator(source)
             validator = validator(structure)
             assert validator.is_valid_version() is answer
+        finally:
+            os.remove(target)
+
+    INPUTS_IS_CONDITION_BRANCHES_HANDLED_CORRECTLY = [
+        (INVALID_PLAYBOOK_CONDITION_1, PLAYBOOK_TARGET, False),
+        (INVALID_PLAYBOOK_CONDITION_2, PLAYBOOK_TARGET, False),
+        (VALID_PLAYBOOK_CONDITION, PLAYBOOK_TARGET, True)
+    ]
+
+    @pytest.mark.parametrize('source, target, answer', INPUTS_IS_CONDITION_BRANCHES_HANDLED_CORRECTLY)
+    def test_is_condition_branches_handled_correctly(self, source, target, answer):
+        # type: (str, str, Any) -> None
+        try:
+            copyfile(source, target)
+            structure = StructureValidator(source)
+            validator = PlaybookValidator(structure)
+            assert validator.is_condition_branches_handled_correctly() is answer
         finally:
             os.remove(target)
 

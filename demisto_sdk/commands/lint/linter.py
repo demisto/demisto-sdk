@@ -1,9 +1,8 @@
 # STD python packages
 import logging
 from typing import Tuple, List
-import yaml
-import os
 import tempfile
+import os
 import json
 from pathlib import Path
 # 3-rd party packages
@@ -11,6 +10,7 @@ import docker.errors
 import docker.models.containers
 import docker
 from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
 # Local packages
 from demisto_sdk.commands.common.tools import get_all_docker_images
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
@@ -133,19 +133,20 @@ class Linter:
         logger.info(f"{self._pack_name} - Facts -  Using yaml file {yml_file}")
 
         # Parsing pack yaml - inorder to verify if check needed
-        yml_obj: dict = yaml.safe_load(yml_file.read_text(encoding='utf-8'))
-        pack_type = yml_obj.get('script', {}).get('type')
+        yml_obj: dict = YAML().load(yml_file)
+        script_obj: dict = yml_obj.get('script', {})
+        pack_type = script_obj.get('type')
 
         # return no check needed if not python pack
         if pack_type == 'python':
             self._facts["python_pack"] = True
             logger.info(f"{self._pack_name} - Facts - Python package")
         else:
-            logger.info(f"{self._pack_name} - Facts - Skipping due to not python pack by yaml")
+            logger.info(f"{self._pack_name} - Facts - Skipping due to not {pack_type} type by yaml")
             return
 
         # Getting python version from docker image - verfying if not valid docker image configured
-        for image in get_all_docker_images(script_obj=yml_obj.get('script')):
+        for image in get_all_docker_images(script_obj=script_obj):
             py_num: float = get_python_version_from_image(image=image)
             self._facts["images"].append([image, py_num])
             logger.info(f"{self._pack_name} - Facts - {image} - Python {py_num}")
@@ -353,7 +354,7 @@ class Linter:
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
         env = Environment(loader=file_loader, trim_blocks=True, lstrip_blocks=True)
         template = env.get_template('dockerfile.jinja2')
-        if docker_base_image[1] < 2:
+        if docker_base_image[1] < 3:
             requirements = self._req_2
         else:
             requirements = self._req_3
@@ -441,8 +442,8 @@ class Linter:
 
             # Keeping container if needed or remove it
             if keep_container:
-                logger.info(f"{self._pack_name} - Pylint - Image {test_image} - container name"
-                            f" {self._pack_name}-pylint")
+                print(f"{self._pack_name} - Pylint - Image {test_image} - container name"
+                      f" {self._pack_name}-pylint")
             else:
                 try:
                     container_obj.remove(force=True)
@@ -503,7 +504,7 @@ class Linter:
                 if test_xml:
                     test_data_xml: bytes = get_file_from_container(container_obj=container_obj,
                                                                    container_path="/devwork/report_pytest.xml")
-                    xml_apth = os.path.join(test_xml, f'{self._pack_name}_pytest.xml')
+                    xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)
 
@@ -523,8 +524,8 @@ class Linter:
                 return 2, test_xml
             # Remove container if not needed
             if keep_container:
-                logger.info(f"{self._pack_name} - Pytest - Image {test_image} - conatiner name "
-                            f"{self._pack_name}-pytest")
+                print(f"{self._pack_name} - Pytest - Image {test_image} - conatiner name"
+                      f"{self._pack_name}-pytest")
             else:
                 try:
                     container_obj.remove(force=True)

@@ -20,7 +20,8 @@ def build_flake8_command(files: List[Path]) -> str:
     """
     max_line_len = 130
     # Ignoring flake specific errors https://flake8.pycqa.org/en/latest/user/error-codes.html
-    errors_ignoring = ["W293", "W504", "W291", "W605", "F405", "F403", "E999", "W503", "F841", "E302", "C901", "F821"]
+    errors_ignoring = ["W293", "W504", "W291", "W605", "F405", "F403", "E999", "W503", "F841", "E302", "C901", "F821",
+                       "E402"]
     command = "python3 -m flake8"
     # Max allowed line lenth in python modules
     command += f" --max-line-length {max_line_len}"

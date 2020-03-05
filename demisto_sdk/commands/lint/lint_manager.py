@@ -163,19 +163,19 @@ class LintManager:
             if 'Packs/' in root:
                 if ('Integrations/' in root or 'Scripts/' in root or 'Beta_Integrations/' in root) \
                         and len(root.split('/')) == 4:
-                    logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
+                    logger.debug(f"Add to filter {root}")
                     all_directories.append(Path(root))
         for root, _, _ in os.walk(INTEGRATIONS_DIR):
             if 'Integrations/' in root and len(root.split('/')) == 2:
-                logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
+                logger.debug(f"Add to filter {root}")
                 all_directories.append(Path(root))
         for root, _, _ in os.walk(SCRIPTS_DIR):
             if 'Scripts/' in root and len(root.split('/')) == 2:
-                logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
+                logger.debug(f"Add to filter {root}")
                 all_directories.append(Path(root))
         for root, _, _ in os.walk(BETA_INTEGRATIONS_DIR):
             if 'Beta_Integrations/' in root and len(root.split('/')) == 2:
-                logger.debug(f"Add to filter {Colors.Fg.cyan}{root}{Colors.reset}")
+                logger.debug(f"Add to filter {root}")
                 all_directories.append(Path(root))
 
         return all_directories

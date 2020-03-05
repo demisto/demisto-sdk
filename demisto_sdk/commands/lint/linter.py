@@ -15,7 +15,8 @@ from demisto_sdk.commands.common.constants import Errors, TYPE_TO_EXTENSION, TYP
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.tools import print_v, get_all_docker_images, get_python_version, \
-    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command, get_log_verbose
+    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command, get_log_verbose, \
+    print_warning
 
 
 class Linter:
@@ -148,7 +149,7 @@ class Linter:
         return_code = 0
         supported_types = (TYPE_PYTHON, TYPE_PWSH)
         if self.script_type not in supported_types:
-            print(f'Script is not of types: {supported_types}. Found type: {self.script_type}. Nothing to do.')
+            print_warning(f'Script is not of types: {supported_types}. Found type: {self.script_type}. Nothing to do.')
             return 0
 
         dockers = get_all_docker_images(self.script_obj)

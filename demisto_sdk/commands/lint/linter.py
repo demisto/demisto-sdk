@@ -156,7 +156,7 @@ class Linter:
         print_color("============ Starting process for: {} ============\n".format(self.project_dir),
                     LOG_COLORS.YELLOW)
         if self.script_type == TYPE_PYTHON:
-            self.run_py_non_docker_tasks(dockers)
+            return_code = self.run_py_non_docker_tasks(dockers)
         if self.script_type == TYPE_PWSH:
             self._setup_dev_files_pwsh()
 

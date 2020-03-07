@@ -282,6 +282,7 @@ def secrets(config, **kwargs):
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
+@click.option("--no-vulture", is_flag=True, help="Do NOT run mypy static type checking")
 @click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
@@ -289,8 +290,8 @@ def secrets(config, **kwargs):
 @click.option("--json-report", help="Path to store pytest xml results", type=click.Path(exists=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True))
 def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int, no_flake8: bool,
-         no_bandit: bool, no_mypy: bool, no_pylint: bool, no_test: bool, keep_container: bool, test_xml: str,
-         json_report: str, log_path: str):
+         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, keep_container: bool,
+         test_xml: str, json_report: str, log_path: str):
     """ Run lints and unit-tests on Demisto packages
 
     Args:
@@ -302,6 +303,7 @@ def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int,
         no_flake8(bool): Whether to skip flake8.
         no_bandit(bool): Whether to skip bandit.
         no_mypy(bool): Whether to skip mypy.
+        no_vulture(bool): Whether to skip vulture
         no_pylint(bool): Whether to skip pylint.
         no_test(bool): Whether to skip pytest.
         keep_container(bool): Whether to keep the test container.
@@ -321,6 +323,7 @@ def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int,
                                          no_flake8=no_flake8,
                                          no_bandit=no_bandit,
                                          no_mypy=no_mypy,
+                                         no_vulture=no_vulture,
                                          no_pylint=no_pylint,
                                          no_test=no_test,
                                          keep_container=keep_container,

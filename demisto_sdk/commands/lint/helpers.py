@@ -10,6 +10,7 @@ import re
 from typing import List, Tuple
 import shlex
 from subprocess import Popen, PIPE
+from contextlib import contextmanager
 # Third party packages
 import git
 import docker.errors
@@ -42,78 +43,72 @@ def get_test_modules(content_repo: git.Repo) -> dict:
     return modules_content
 
 
-class LintFiles:
+@contextmanager
+def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[Path], modules: dict,
+                          version_two: bool):
     """ LintFiles is context manager to mandatory files for lint and test
             1. Entrance - download missing files to pack.
             2. Closing - Remove downloaded files from pack.
 
-        Attributes:
+        Args:
             pack_path(Path): abs path of pack
             lint_files(list): file to execute lint - for adding typing in python 2.7
             modules(dict): modules content to locate in pack path
-            content_path(str): content absolute path
+            content_path(Path): content absolute path
+            version_two(bool): wheter package support Python version 2
 
         Raises:
             IOError: if can't write to files due permissions or other reasons
 
     """
-
-    def __init__(self, pack_path: Path, lint_files: List[Path], modules: dict, content_path: Path, version_two: bool):
-        self._pack_path = pack_path
-        self._content_path = content_path
-        self._lint_files = lint_files
-        self._modules = modules
-        self._added_modules: List[Path] = []
-        self._version_two = version_two
-
-    def __enter__(self):
+    added_modules: List[Path] = []
+    try:
         # Add mandatory test,lint modules
-        for module, content in self._modules.items():
-            cur_path = self._pack_path / module
+        for module, content in modules.items():
+            cur_path = pack_path / module
             if not cur_path.exists():
                 cur_path.write_bytes(content)
-                self._added_modules.append(cur_path)
+                added_modules.append(cur_path)
 
         # Append empty so it will exists
-        cur_path = self._pack_path / "CommonServerUserPython.py"
+        cur_path = pack_path / "CommonServerUserPython.py"
         if not cur_path.exists():
             cur_path.touch()
-            self._added_modules.append(cur_path)
+            added_modules.append(cur_path)
 
         # Add API modules to directory if needed
         module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
-        for lint_file in self._lint_files:
+        for lint_file in lint_files:
             module_name = ""
             data = lint_file.read_text(encoding="utf-8")
             module_match = re.search(module_regex, data)
             if module_match:
                 module_name = module_match.group(1)
             if module_name:
-                module_path = self._content_path / 'Packs/ApiModules/Scripts' / module_name / f'/{module_name}.py'
-                cur_path = self._pack_path / f'/{module_name}.py'
+                module_path = content_path / 'Packs/ApiModules/Scripts' / module_name / f'/{module_name}.py'
+                cur_path = pack_path / f'/{module_name}.py'
                 shutil.copy(module_path, cur_path)
-                self._added_modules.append(cur_path)
+                added_modules.append(cur_path)
 
         # Add typing import if needed to python version 2 packages
-        if self._version_two:
-            for lint_file in self._lint_files:
+        if version_two:
+            for lint_file in lint_files:
                 with open(file=lint_file) as f:
                     s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
                     if s.find(b"from typing import") == -1 or s.find(b"import typing") == -1:
-                        self._lint_files.remove(lint_file)
+                        lint_files.remove(lint_file)
                         tmp_lint_file = lint_file.with_suffix('.tmp')
-                        self._lint_files.append(tmp_lint_file)
+                        lint_files.append(tmp_lint_file)
                         shutil.copyfile(lint_file, tmp_lint_file)
                         with open(tmp_lint_file, 'a+') as f_tmp:
                             content = f_tmp.read()
                             f_tmp.seek(0)
                             f_tmp.write("from typing import *".rstrip('\r\n') + '\n' + content)
-                        self._added_modules.append(tmp_lint_file)
+                        added_modules.append(tmp_lint_file)
 
-        return self._lint_files
-
-    def __exit__(self, *args):
-        for added_module in self._added_modules:
+        yield lint_files
+    finally:
+        for added_module in added_modules:
             if added_module.exists():
                 added_module.unlink()
 
@@ -161,15 +156,29 @@ def get_python_version_from_image(image: str) -> float:
     return py_num
 
 
-def run_command_lint_os(command: str, cwd: Path) -> Tuple[str, str]:
-    process = Popen(shlex.split(command),
-                    cwd=cwd,
-                    stdout=PIPE,
-                    stderr=PIPE,
-                    universal_newlines=True)
-    stdout, stderr = process.communicate()
+def run_command_os(command: str, cwd: Path) -> Tuple[str, str, int]:
+    """ Run command in subprocess tty
 
-    return stdout, stderr
+    Args:
+        command(str): Command to be executed.
+        cwd(Path): Path from pathlib object to be executed
+
+    Returns:
+        str: Stdout of the command
+        str: Stderr of the command
+        int: exit code of command
+    """
+    try:
+        process = Popen(shlex.split(command),
+                        cwd=cwd,
+                        stdout=PIPE,
+                        stderr=PIPE,
+                        universal_newlines=True)
+        stdout, stderr = process.communicate()
+    except OSError as e:
+        return '', str(e), 1
+
+    return stdout, stderr, process.returncode
 
 
 def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> str:

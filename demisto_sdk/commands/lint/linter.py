@@ -1,27 +1,28 @@
 # STD python packages
 import logging
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 import tempfile
 import os
 import json
-from pathlib import Path
 # 3-rd party packages
 import docker.errors
 import docker.models.containers
 import docker
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
+from wcmatch.pathlib import Path, BRACE, NEGATE
 # Local packages
 from demisto_sdk.commands.common.tools import get_all_docker_images
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
-    build_pylint_command, build_flake8_command
-from demisto_sdk.commands.lint.helpers import get_file_from_container, LintFiles, get_python_version_from_image, \
-    run_command_lint_os
+    build_pylint_command, build_flake8_command, build_vulture_command
+from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image, \
+    run_command_os, create_tmp_lint_files
 
 FAIL_EXIT_CODES = {
     "flake8": 0b1,
     "bandit": 0b10,
     "mypy": 0b100,
+    "vulture": 0b1000000,
     "pytest": 0b1000,
     "pylint": 0b10000,
     "image": 0b100000
@@ -34,7 +35,7 @@ class Linter:
     """ Linter used to activate lint command on single package
 
         Attributes:
-            pack_dir(str): Pack to run lint on.
+            pack_dir(Path): Pack to run lint on.
             req_2(list): requirements for docker using python2
             req_3(list): requirements for docker using python3
     """
@@ -68,8 +69,8 @@ class Linter:
             "exit_code": 0
         }
 
-    def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_test: bool,
-                         modules: dict, keep_container: bool, test_xml: str) -> Tuple[int, dict]:
+    def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                         no_test: bool, modules: dict, keep_container: bool, test_xml: str) -> Tuple[int, dict]:
         """ Run lint and tests on single package
         Perfroming the follow:
             1. Run the lint on OS - flake8, bandit, mypy.
@@ -79,6 +80,7 @@ class Linter:
             no_flake8(bool): Whether to skip flake8
             no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
+            no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
             no_test(bool): Whether to skip pytest
             modules(dict): Mandatory modules to locate in pack path (CommonServerPython.py etc)
@@ -96,25 +98,23 @@ class Linter:
             return 0b0, self._pkg_lint_status
 
         # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-        try:
-            with LintFiles(pack_path=self._pack_abs_dir,
-                           lint_files=self._facts["lint_files"],
-                           modules=modules,
-                           content_path=self._content_path,
-                           version_two=self._facts["version_two"]) as lint_files:
-                # If temp files created for lint check - replace them
-                self._facts["lint_files"]: List[Path] = lint_files
-                # Run lint check on host - flake8, bandit, mypy
-                self._run_lint_on_host(no_flake8=no_flake8,
-                                       no_bandit=no_bandit,
-                                       no_mypy=no_mypy)
-                # Run lint and test check on pack docker image
-                self._run_lint_on_docker_image(no_pylint=no_pylint,
-                                               no_test=no_test,
-                                               keep_container=keep_container,
-                                               test_xml=test_xml)
-        except IOError:
-            pass
+        with create_tmp_lint_files(content_path=self._content_path,
+                                   pack_path=self._pack_abs_dir,
+                                   lint_files=self._facts["lint_files"],
+                                   modules=modules,
+                                   version_two=self._facts["version_two"]) as lint_files:
+            # If temp files created for lint check - replace them
+            self._facts["lint_files"]: List[Path] = lint_files
+            # Run lint check on host - flake8, bandit, mypy
+            self._run_lint_in_host(no_flake8=no_flake8,
+                                   no_bandit=no_bandit,
+                                   no_mypy=no_mypy,
+                                   no_vulture=no_vulture)
+            # Run lint and test check on pack docker image
+            self._run_lint_on_docker_image(no_pylint=no_pylint,
+                                           no_test=no_test,
+                                           keep_container=keep_container,
+                                           test_xml=test_xml)
 
         return self._pkg_lint_status["exit_code"], self._pkg_lint_status
 
@@ -126,24 +126,23 @@ class Linter:
             indicate if pack is python pack
         """
         # Loading pkg yaml
-        yml_file: Path = self._pack_abs_dir / f"{self._pack_name}.yml"
-        if not yml_file.exists():
+        yml_file: Optional[Path] = next(self._pack_abs_dir.glob(rf'{self._pack_name}.{{yml,yaml}}', flags=BRACE), None)
+        if not yml_file:
             logger.info(f"{self._pack_name} - Facts - Skiping no yaml file found {yml_file}")
             return
         logger.info(f"{self._pack_name} - Facts -  Using yaml file {yml_file}")
 
         # Parsing pack yaml - inorder to verify if check needed
         yml_obj: dict = YAML().load(yml_file)
-        script_obj: dict = yml_obj.get('script', {})
+        script_obj: dict = yml_obj if 'script' not in yml_obj.keys() else yml_obj.get('script', {})
         pack_type = script_obj.get('type')
 
         # return no check needed if not python pack
-        if pack_type == 'python':
-            self._facts["python_pack"] = True
-            logger.info(f"{self._pack_name} - Facts - Python package")
-        else:
-            logger.info(f"{self._pack_name} - Facts - Skipping due to not {pack_type} type by yaml")
+        if not pack_type == 'python':
+            logger.info(f"{self._pack_name} - Facts - Not Python package")
             return
+        self._facts["python_pack"] = True
+        logger.info(f"{self._pack_name} - Facts - Python package")
 
         # Getting python version from docker image - verfying if not valid docker image configured
         for image in get_all_docker_images(script_obj=script_obj):
@@ -154,34 +153,26 @@ class Linter:
                 self._facts["version_two"] = True
 
         # Checking wheter *test* exsits in package
-        test_type_1 = set(self._pack_abs_dir.glob(r"*_test.py"))
-        test_type_2 = set(self._pack_abs_dir.glob(r"test_*.py"))
-        if test_type_1 or test_type_2:
-            self._facts["test"] = True
+        self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None) else False
+        if self._facts["test"]:
             logger.info(f"{self._pack_name} - Facts - Tests found")
 
         # Get lint files
-        lint_files = set(self._pack_abs_dir.glob(r"*.py"))
-        not_lint_files = {self._pack_abs_dir / '__init__.py'}.union(test_type_1, test_type_2).union(
-            # Copied test modules path
-            {self._pack_abs_dir / k for k in modules.keys()}
-        )
-        lint_files = lint_files.difference(not_lint_files)
+        lint_files = set(self._pack_abs_dir.glob(["*.py", "!*_test.py", "!test_*.py", "!__init__.py"], flags=NEGATE))
+        test_modules = {self._pack_abs_dir / k for k in modules.keys()}
+        lint_files = lint_files.difference(test_modules)
         self._facts["lint_files"] = list(lint_files)
         for lint_file in lint_files:
             logger.info(f"{self._pack_name} - Facts - Lint files {lint_file}")
 
         # Gather package requirements embeded test-requirements.py file
-        try:
-            test_requirements = self._pack_abs_dir / 'test-requirements.txt'
-            if test_requirements.exists():
-                additional_req = test_requirements.read_text(encoding='utf-8')
-                self._facts["additinal_requirements"].extend(additional_req)
-                logger.debug(f"{self._pack_name} - Facts - Additional package Pypi packages found - {additional_req}")
-        except (FileNotFoundError, IOError) as e:
-            logger.critical(f"{self._pack_name} - Facts - requirments gather - {e}")
+        test_requirements = self._pack_abs_dir / 'test-requirements.txt'
+        if test_requirements.exists():
+            additional_req = test_requirements.read_text(encoding='utf-8')
+            self._facts["additinal_requirements"].extend(additional_req)
+            logger.debug(f"{self._pack_name} - Facts - Additional package Pypi packages found - {additional_req}")
 
-    def _run_lint_on_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool):
+    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
         """ Run lint check on host
 
         Args:
@@ -190,7 +181,7 @@ class Linter:
             no_mypy: Whether to skip mypy.
         """
         if self._facts["lint_files"]:
-            for lint_check in ["flake8", "bandit", "mypy"]:
+            for lint_check in ["flake8", "bandit", "mypy", "vulture"]:
                 exit_code: int = 0b0
                 output: str = ""
                 if lint_check == "flake8" and not no_flake8:
@@ -200,6 +191,8 @@ class Linter:
                 elif lint_check == "mypy" and not no_mypy and self._facts["images"][0]:
                     exit_code, output = self._run_mypy(py_num=self._facts["images"][0][1],
                                                        lint_files=self._facts["lint_files"])
+                elif lint_check == "vulture" and not no_vulture:
+                    exit_code, output = self._run_vulture(lint_files=self._facts["lint_files"])
                 if exit_code:
                     self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
@@ -215,11 +208,11 @@ class Linter:
            str: Bandit errors
         """
         logger.info(f"{self._pack_name} - Flake8 - Start")
-        stdout, stderr = run_command_lint_os(command=build_flake8_command(lint_files),
-                                             cwd=self._pack_abs_dir)
+        stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files),
+                                                   cwd=self._pack_abs_dir)
         if stderr:
             return 1, stderr
-        elif len(stdout) == 0:
+        elif not exit_code:
             logger.info(f"{self._pack_name} - Flake8 - Finshed success")
             return 0, ""
 
@@ -239,12 +232,12 @@ class Linter:
            str: Bandit errors
         """
         logger.info(f"{self._pack_name} - Bandit - Start")
-        stdout, stderr = run_command_lint_os(command=build_bandit_command(lint_files),
-                                             cwd=self._pack_abs_dir)
+        stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),
+                                                   cwd=self._pack_abs_dir)
 
         if stderr:
             return 1, stderr
-        elif len(stdout) == 0:
+        elif not exit_code:
             logger.info(f"{self._pack_name} - Bandit - Finshed success")
             return 0, ""
 
@@ -265,16 +258,41 @@ class Linter:
            str: Bandit errors
         """
         logger.info(f"{self._pack_name} - Mypy - Start")
-        stdout, stderr = run_command_lint_os(command=build_mypy_command(files=lint_files, version=py_num),
-                                             cwd=self._pack_abs_dir)
+        stdout, stderr, exid_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
+                                                   cwd=self._pack_abs_dir)
         if stderr:
             return 1, stderr
-        elif 'Success: no issues found' in stdout:
+        elif not exid_code:
             logger.info(f"{self._pack_name} - Mypy - Finshed success")
             return 0, ""
 
         logger.info(f"{self._pack_name} - Mypy - Finshed Finshed errors found")
         logger.debug(f"{self._pack_name} - Mypy - Finshed  errors - {stdout}")
+
+        return 1, stdout
+
+    def _run_vulture(self, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Run mypy in pack dir
+
+        Args:
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int:  0 on successful else 1, errors
+           str: Bandit errors
+        """
+        logger.info(f"{self._pack_name} - Vulture - Start")
+        stdout, stderr, exid_code = run_command_os(command=build_vulture_command(files=lint_files,
+                                                                                 pack_path=self._pack_abs_dir),
+                                                   cwd=self._pack_abs_dir)
+        if stderr:
+            return 1, stderr
+        elif not exid_code:
+            logger.info(f"{self._pack_name} - Vulture - Finshed success")
+            return 0, ""
+
+        logger.info(f"{self._pack_name} - Vulture - Finshed Finshed errors found")
+        logger.debug(f"{self._pack_name} - Vulture - Finshed  errors - {stdout}")
 
         return 1, stdout
 
@@ -461,7 +479,7 @@ class Linter:
 
         return container_exit_code, container_log
 
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: bool) -> Tuple[int, str]:
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str]:
         """ Run Pylint in container based to created test image
 
         Args:
@@ -524,7 +542,7 @@ class Linter:
                 return 2, test_xml
             # Remove container if not needed
             if keep_container:
-                print(f"{self._pack_name} - Pytest - Image {test_image} - conatiner name"
+                print(f"{self._pack_name} - Pytest - Image {test_image} - conatiner name "
                       f"{self._pack_name}-pytest")
             else:
                 try:

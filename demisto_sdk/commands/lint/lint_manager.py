@@ -3,7 +3,6 @@ import concurrent.futures
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import textwrap
 from typing import List
@@ -11,6 +10,7 @@ import git
 import re
 # Third party packages
 import docker
+from wcmatch.pathlib import Path
 # Local packages
 from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 from demisto_sdk.commands.common.logger import Colors, logging_setup
@@ -23,6 +23,7 @@ FAIL_EXIT_CODES = {
     "flake8": 0b1,
     "bandit": 0b10,
     "mypy": 0b100,
+    "vulture": 0b1000000,
     "pytest": 0b1000,
     "pylint": 0b10000,
     "image": 0b100000
@@ -202,7 +203,7 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
-                         no_test: bool, keep_container: bool, test_xml: str, json_report: str) -> int:
+                         no_vulture: bool, no_test: bool, keep_container: bool, test_xml: str, json_report: str) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -210,6 +211,7 @@ class LintManager:
             no_flake8(bool): Whether to skip flake8.
             no_bandit(bool): Whether to skip bandit.
             no_mypy(bool): Whether to skip mypy.
+            no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint.
             no_test(bool): Whether to skip pytest.
             keep_container(bool): Whether to keep the test container.
@@ -243,6 +245,7 @@ class LintManager:
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,
                                                no_mypy=no_mypy,
+                                               no_vulture=no_vulture,
                                                no_pylint=no_pylint,
                                                no_test=no_test,
                                                modules=self._facts["test_modules"],
@@ -303,7 +306,7 @@ class LintManager:
         Args:
             return_exit_code(int): exit code will indicate which lint or test failed
          """
-        for lint in ["flake8", "bandit", "mypy", "pylint", "pytest"]:
+        for lint in ["flake8", "bandit", "mypy", "vulture", "pylint", "pytest"]:
             spacing = 7 - len(lint)
             if not FAIL_EXIT_CODES[lint] & return_exit_code:
                 print(f"{lint} {' ' * spacing}- {Colors.Bg.green}[PASS]{Colors.reset}")
@@ -319,7 +322,7 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for lint in ["flake8", "bandit", "mypy"]:
+        for lint in ["flake8", "bandit", "mypy", "vulture"]:
             if FAIL_EXIT_CODES[lint] & return_exit_code:
                 sentence = f" {lint.capitalize()} errors "
                 print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")

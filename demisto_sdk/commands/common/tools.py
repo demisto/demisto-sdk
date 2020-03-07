@@ -6,7 +6,7 @@ import glob
 import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple, Dict
+from typing import Union, Optional, Tuple
 
 import urllib3
 import yaml
@@ -56,7 +56,7 @@ def print_warning(warning_str):
     print_color(warning_str, LOG_COLORS.YELLOW)
 
 
-def run_command(command, is_silenced=True, exit_on_error=True, universal_newlines=True, cwd=None):
+def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     """Run a bash command in the shell.
 
     Args:
@@ -69,21 +69,19 @@ def run_command(command, is_silenced=True, exit_on_error=True, universal_newline
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=universal_newlines, cwd=cwd)
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
         p = Popen(command.split(), cwd=cwd)
 
-    stdout, stderr = p.communicate()
-    if stderr:
+    output, err = p.communicate()
+    if err:
         if exit_on_error:
-            print_error('Failed to run command {}\nerror details:\n{}'.format(command, stderr))
+            print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
             sys.exit(1)
         else:
-            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, stderr))
-    if universal_newlines:
-        return stdout
+            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
 
-    return stdout.decode("utf-8")
+    return output
 
 
 def get_remote_file(full_file_path, tag='master'):
@@ -199,7 +197,7 @@ def get_last_release_version():
 
 def get_file(method, file_path, type_of_file):
     data_dictionary = None
-    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
+    with open(os.path.expanduser(file_path), "r") as f:
         if file_path.endswith(type_of_file):
             try:
                 data_dictionary = method(f)
@@ -404,29 +402,17 @@ def get_docker_images(script_obj):
     return imgs
 
 
-def get_all_docker_images(script_obj, py_version: bool = False):
+def get_all_docker_images(script_obj):
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
     Args:
         script_obj (dict): A yml dict.
-        py_version
 
     Returns:
-        List. A list of all docker images, python version used
+        List. A list of all docker images.
     """
     # this makes sure the first docker in the list is the main docker image.
-    python_version = ''
-    if script_obj.get('dockerimage'):
-        imgs = [script_obj.get('dockerimage')]
-        tmp_python_version = script_obj.get('subtype')
-        if tmp_python_version:
-            if '3' in tmp_python_version:
-                python_version = '3'
-            elif '2' in tmp_python_version:
-                python_version = '2'
-    else:
-        imgs = [DEF_DOCKER]
-        python_version = '2'
+    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
 
     # get additional docker images
     for key in script_obj.keys():
@@ -436,9 +422,6 @@ def get_all_docker_images(script_obj, py_version: bool = False):
 
             elif isinstance(script_obj.get(key), list):
                 imgs.extend(script_obj.get(key))
-
-    if py_version:
-        return imgs, python_version
 
     return imgs
 
@@ -503,67 +486,3 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
                                 stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))
     return requirements
-
-
-def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
-    """
-    Get a dict representing the file
-
-    Arguments:
-        path - a path to the file
-
-    Returns:
-        dict representation of the file, and the file_type, either .yml ot .json
-    """
-    if path:
-        if path.endswith('.yml'):
-            return get_yaml(path), 'yml'
-        elif path.endswith('.json'):
-            return get_json(path), 'json'
-    return {}, None
-
-
-def find_type(path: str):
-    """
-    returns the content file type
-
-    Arguments:
-        path - a path to the file
-
-    Returns:
-        string representing the content file type
-    """
-    _dict, file_type = get_dict_from_file(path)
-    if file_type == 'yml':
-        if 'category' in _dict:
-            return 'integration'
-        elif 'script' in _dict:
-            return 'script'
-        elif 'tasks' in _dict:
-            return 'playbook'
-
-    elif file_type == 'json':
-        if 'widgetType' in _dict:
-            return 'widget'
-        elif 'reportType' in _dict:
-            return 'report'
-        elif 'preProcessingScript' in _dict:
-            return 'incidenttype'
-        elif 'regex' in _dict:
-            return 'reputation'
-        elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
-            return 'classifier'
-        elif 'layout' in _dict:
-            if 'kind' in _dict or 'typeId' in _dict:
-                return 'layout'
-            else:
-                return 'dashboard'
-
-        elif 'id' in _dict:
-            _id = _dict['id'].lower()
-            if _id.startswith('incident'):
-                return 'incidentfield'
-            elif _id.startswith('indicator'):
-                return 'indicatorfield'
-
-    return ''

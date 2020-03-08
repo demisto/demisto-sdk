@@ -80,7 +80,8 @@ class PlaybookValidator(BaseValidator):
                 # default condition should always exist
                 task_condition_labels = {'#default#'}
                 for condition in task.get('conditions', []):
-                    if label := condition.get('label'):
+                    label = condition.get('label')
+                    if label:
                         task_condition_labels.add(label)
                 next_tasks: Dict = task.get('nexttasks', {})
                 for next_task_branch, next_task_ids in next_tasks.items():

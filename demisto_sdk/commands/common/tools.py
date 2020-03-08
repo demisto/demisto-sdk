@@ -14,7 +14,7 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES,\
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX,\
-    DEF_DOCKER
+    DEF_DOCKER, SDK_API_GIHUB_RELEASES
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -182,17 +182,24 @@ def get_child_files(directory):
     return child_files
 
 
-def get_last_release_version():
+def get_last_remote_release_version():
     """
-    Get latest release tag (xx.xx.xx)
+    Get latest release tag from remote github page
 
     :return: tag
     """
-    tags = run_command('git tag').split('\n')
-    tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
-    tags.sort(key=LooseVersion, reverse=True)
-
-    return tags[0]
+    try:
+        releases_request = requests.get(SDK_API_GIHUB_RELEASES, verify=False)
+        releases_request.raise_for_status()
+        releases = requests.get(SDK_API_GIHUB_RELEASES, verify=False).json()
+        if isinstance(releases, list) and isinstance(releases[0], dict):
+            latest_release = releases[0].get('tag_name')
+            if isinstance(latest_release, str):
+                # remove v prefix
+                return latest_release[1:]
+    except Exception:
+        print_warning('Could not get latest demisto-sdk version.')
+    return ''
 
 
 def get_file(method, file_path, type_of_file):

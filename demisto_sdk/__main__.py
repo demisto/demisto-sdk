@@ -27,7 +27,7 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_pl
 from demisto_sdk.validation.type_file.find_type import find_type
 
 # Common tools
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version
 from demisto_sdk.commands.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
@@ -57,6 +57,11 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 @pass_config
 def main(config, version, env_dir):
     config.configuration = Configuration()
+    cur_version = get_distribution('demisto-sdk').version
+    last_release = get_last_remote_release_version()
+    if last_release and cur_version != last_release:
+        print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
+                      f'You should consider upgrading via "pip install --upgrade demisto-sdk" command.')
     if version:
         version = get_distribution('demisto-sdk').version
         print(version)

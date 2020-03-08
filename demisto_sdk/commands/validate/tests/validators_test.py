@@ -26,7 +26,7 @@ from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_P
     LAYOUT_TARGET, WIDGET_TARGET, DASHBOARD_TARGET, INTEGRATION_TARGET, \
     INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, \
     VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_ID_PATH, \
-    VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH
+    VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT
 
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
@@ -199,3 +199,19 @@ class TestValidators:
             assert validator.is_id_equals_name() is answer
         finally:
             os.remove(target)
+
+    INPUTS_IS_CONNECTED_TO_ROOT = [
+        (INVALID_PLAYBOOK_PATH_FROM_ROOT, False),
+        (VALID_TEST_PLAYBOOK_PATH, True)
+    ]
+
+    @pytest.mark.parametrize('source, answer', INPUTS_IS_CONNECTED_TO_ROOT)
+    def test_is_condition_branches_handled_correctly(self, source, answer):
+        # type: (str, str, Any) -> None
+        try:
+            copyfile(source, PLAYBOOK_TARGET)
+            structure = StructureValidator(source)
+            validator = PlaybookValidator(structure)
+            assert validator.is_root_connected_to_all_tasks() is answer
+        finally:
+            os.remove(PLAYBOOK_TARGET)

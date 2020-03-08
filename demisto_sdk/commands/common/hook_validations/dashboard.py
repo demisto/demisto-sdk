@@ -50,7 +50,7 @@ class DashboardValidator(BaseValidator):
         """
         return super(DashboardValidator, self)._is_id_equals_name('dashboard')
 
-    def is_contains_forbidden_fields(self):
+    def contains_forbidden_fields(self):
         # type: () -> bool
         """Return if root and widgets exclude the unnecessary fields.
 

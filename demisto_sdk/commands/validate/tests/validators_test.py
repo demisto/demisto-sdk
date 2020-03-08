@@ -224,7 +224,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, answer', INPUTS_IS_CONNECTED_TO_ROOT)
-    def test_is_condition_branches_handled_correctly(self, source, answer):
+    def test_is_root_connected_to_all_tasks(self, source, answer):
         # type: (str, str, Any) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)

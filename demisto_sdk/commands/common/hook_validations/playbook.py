@@ -1,3 +1,5 @@
+from typing import Dict
+
 from demisto_sdk.commands.common.tools import print_error
 
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -71,29 +73,25 @@ class PlaybookValidator(BaseValidator):
         Return:
             bool. if the Playbook handles all condition branches correctly.
         """
-        tasks = self.current_file.get('tasks', {})
-        if tasks:
-            for task in tasks.values():
-                if task.get('type') == 'condition':
-                    # default condition should always exist
-                    task_condition_labels = {'#default#'}
-                    for condition in task.get('conditions', []):
-                        label = condition.get('label')
-                        if label:
-                            task_condition_labels.add(label)
-                    next_tasks = task.get('nexttasks', {})
-                    for next_task_branch, next_task_ids in next_tasks.items():
-                        try:
-                            if next_task_ids:
-                                task_condition_labels.remove(next_task_branch)
-                        except KeyError as e:
-                            print_error('Playbook has conditional task with unreachable next task: {}'.format(str(e)))
-                            self.is_valid = False
-                            return False
-                    # if there are task_condition_labels left then not all branches are handled
-                    if task_condition_labels:
-                        print_error('Playbook has conditional task with unhandled branches: {}'.format(
-                            str(task_condition_labels)))
-                        self.is_valid = False
-                        return False
-        return True
+        is_unreachable: bool = True
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            if task.get('type') == 'condition':
+                # default condition should always exist
+                task_condition_labels = {'#default#'}
+                for condition in task.get('conditions', []):
+                    if label := condition.get('label'):
+                        task_condition_labels.add(label)
+                next_tasks: Dict = task.get('nexttasks', {})
+                for next_task_branch, next_task_ids in next_tasks.items():
+                    try:
+                        if next_task_ids:
+                            task_condition_labels.remove(next_task_branch)
+                    except KeyError as e:
+                        print_error(f'Playbook has conditional task with unreachable next task: {str(e)}')
+                        self.is_valid = is_unreachable = False
+                # if there are task_condition_labels left then not all branches are handled
+                if task_condition_labels:
+                    print_error(f'Playbook has conditional task with unhandled branches: {str(task_condition_labels)}')
+                    self.is_valid = is_unreachable = False
+        return is_unreachable

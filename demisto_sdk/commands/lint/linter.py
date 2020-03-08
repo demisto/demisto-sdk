@@ -34,8 +34,10 @@ class Linter:
             lock (threading.Lock): A mutex lock to be used for multi-thread lint.
         """
     common_server_target_path = "CommonServerPython.py"
-    common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
-                                "CommonServerPython/CommonServerPython.py"
+    common_server_pack_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Packs/Base/Scripts/" \
+                                     "CommonServerPython/CommonServerPython.py"
+    common_server_script_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
+                                       "CommonServerPython/CommonServerPython.py"
 
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
@@ -86,13 +88,20 @@ class Linter:
         if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
             # Get file from git
             try:
-                res = requests.get(self.common_server_remote_path, verify=False)
+                res = requests.get(self.common_server_pack_remote_path, verify=False)
                 with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
                     f.write(res.text)
                     self.common_server_created = True
             except requests.exceptions.RequestException:
-                print_error(Errors.no_common_server_python(self.common_server_remote_path))
-                return False
+                # TODO: remove this
+                try:
+                    res = requests.get(self.common_server_pack_remote_path, verify=False)
+                    with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
+                        f.write(res.text)
+                        self.common_server_created = True
+                except requests.exceptions.RequestException:
+                    print_error(Errors.no_common_server_python(self.common_server_script_remote_path))
+                    return False
         return True
 
     def remove_common_server_python(self):
@@ -470,9 +479,8 @@ class Linter:
             self.check_api_module_imports(py_num)
             if "/Scripts/CommonServerPython" not in self.project_dir:
                 # Otherwise we already have the CommonServerPython.py file
-                common_server_path = get_common_server_path(self.configuration.env_dir)
-
-                shutil.copy(common_server_path, self.project_dir)
+                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
+                            self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)), self.log_verbose)
 

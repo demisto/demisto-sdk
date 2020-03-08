@@ -33,21 +33,17 @@ class ReadMeValidator:
         try:
             # check if requiring modules in node exist
             is_node = subprocess.run(['node', '-v'], text=True, timeout=10, capture_output=True)
-            print(f"return code node {is_node.stdout}")
             is_mdx = subprocess.run(['npm', 'ls', '@mdx-js/mdx'], text=True, timeout=10, capture_output=True)
-            print(f"return code node {is_mdx.stdout}")
             is_fs_extra = subprocess.run(['npm', 'ls', 'fs-extra'], text=True, timeout=10, capture_output=True)
-            print(f"return code node {is_fs_extra.stdout}")
             is_commander = subprocess.run(['npm', 'ls', 'commander'], text=True, timeout=10, capture_output=True)
-            print(f"return code node {is_commander.stdout}")
 
             if is_node.returncode == 0 and is_mdx.returncode == 0 and is_fs_extra.returncode == 0 and \
                     is_commander.returncode == 0:
                 ready = True
             else:
                 print_warning(f'There are some modules that are not installed on the machine, Test Skipped\n'
-                              f' error {is_mdx.stdout} \n'
-                              f' error {is_fs_extra.stdout}\n'
+                              f' error {is_mdx} \n'
+                              f' error {is_fs_extra}\n'
                               f' error {is_commander}')
 
         except Exception as err:

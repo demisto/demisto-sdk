@@ -12,22 +12,10 @@ import re
 import docker
 from wcmatch.pathlib import Path
 # Local packages
-from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import print_v, print_error
-from demisto_sdk.commands.lint.helpers import get_test_modules
+from demisto_sdk.commands.lint.helpers import get_test_modules, FAIL_EXIT_CODES
 from demisto_sdk.commands.lint.linter import Linter
-
-# Define check exit code if failed
-FAIL_EXIT_CODES = {
-    "flake8": 0b1,
-    "bandit": 0b10,
-    "mypy": 0b100,
-    "vulture": 0b1000000,
-    "pytest": 0b1000,
-    "pylint": 0b10000,
-    "image": 0b100000
-}
 
 logger: logging.Logger
 
@@ -135,7 +123,7 @@ class LintManager:
         """
         pkgs: list
         if (all_packs or git) and not dir_packs:
-            pkgs = LintManager._get_all_packages()
+            pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
         else:
             pkgs = [Path(item) for item in dir_packs.split(',')]
         total_found = len(pkgs)
@@ -152,34 +140,24 @@ class LintManager:
         return pkgs
 
     @staticmethod
-    def _get_all_packages() -> List[str]:
+    def _get_all_packages(content_dir: str) -> List[str]:
         """Gets all integration, script and beta_integrations in packages and packs in content repo.
 
         Returns:
             list: A list of integration, script and beta_integration names.
         """
-        all_directories = []
-        # get all integrations, scripts and beta_integrations from packs
-        for root, _, _ in os.walk(PACKS_DIR):
-            if 'Packs/' in root:
-                if ('Integrations/' in root or 'Scripts/' in root or 'Beta_Integrations/' in root) \
-                        and len(root.split('/')) == 4:
-                    logger.debug(f"Add to filter {root}")
-                    all_directories.append(Path(root))
-        for root, _, _ in os.walk(INTEGRATIONS_DIR):
-            if 'Integrations/' in root and len(root.split('/')) == 2:
-                logger.debug(f"Add to filter {root}")
-                all_directories.append(Path(root))
-        for root, _, _ in os.walk(SCRIPTS_DIR):
-            if 'Scripts/' in root and len(root.split('/')) == 2:
-                logger.debug(f"Add to filter {root}")
-                all_directories.append(Path(root))
-        for root, _, _ in os.walk(BETA_INTEGRATIONS_DIR):
-            if 'Beta_Integrations/' in root and len(root.split('/')) == 2:
-                logger.debug(f"Add to filter {root}")
-                all_directories.append(Path(root))
+        # ￿Get packages from main content path
+        content_main_pkgs: set = set(Path(content_dir).glob(['Integrations/*/',
+                                                             'Scripts/*/',
+                                                             'Beta_Integrations/*/']))
+        # Get packages from packs path
+        packs_dir: Path = Path(content_dir) / 'Packs'
+        content_packs_pkgs: set = set(packs_dir.rglob(['Integrations/*/',
+                                                       'Scripts/*/',
+                                                       'Beta_Integrations/*/']))
+        all_pkgs = content_packs_pkgs.union(content_main_pkgs)
 
-        return all_directories
+        return list(all_pkgs)
 
     @staticmethod
     def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path]) -> List[Path]:

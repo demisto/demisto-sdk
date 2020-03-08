@@ -17,6 +17,17 @@ import docker.errors
 import docker
 from docker.models.containers import Container
 
+# Define check exit code if failed
+FAIL_EXIT_CODES = {
+    "flake8": 0b1,
+    "bandit": 0b10,
+    "mypy": 0b100,
+    "vulture": 0b1000000,
+    "pytest": 0b1000,
+    "pylint": 0b10000,
+    "image": 0b100000
+}
+
 
 def get_test_modules(content_repo: git.Repo) -> dict:
     """ Get required test modules from content repository - {remote}/master

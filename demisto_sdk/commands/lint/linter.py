@@ -16,17 +16,7 @@ from demisto_sdk.commands.common.tools import get_all_docker_images
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
     build_pylint_command, build_flake8_command, build_vulture_command
 from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image, \
-    run_command_os, create_tmp_lint_files
-
-FAIL_EXIT_CODES = {
-    "flake8": 0b1,
-    "bandit": 0b10,
-    "mypy": 0b100,
-    "vulture": 0b1000000,
-    "pytest": 0b1000,
-    "pylint": 0b10000,
-    "image": 0b100000
-}
+    run_command_os, create_tmp_lint_files, FAIL_EXIT_CODES
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -52,7 +42,6 @@ class Linter:
         # Facts gathered regarding pack lint and test
         self._facts = {
             "images": [],
-            "python_pack": False,
             "test": False,
             "version_two": False,
             "lint_files": [],
@@ -62,6 +51,7 @@ class Linter:
         self._pkg_lint_status = {
             "pkg": self._pack_name,
             "path": str(self._pack_rel_dir),
+            "errors": [],
             "images": [],
             "flake8_errors": None,
             "bandit_errors": None,
@@ -92,9 +82,9 @@ class Linter:
             dict: lint and test all status, pkg status)
         """
         # Gather information for lint check information
-        self._gather_facts(modules)
+        skip = self._gather_facts(modules)
         # If not python pack - skip pack
-        if not self._facts["python_pack"]:
+        if skip:
             return 0b0, self._pkg_lint_status
 
         # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
@@ -118,30 +108,35 @@ class Linter:
 
         return self._pkg_lint_status["exit_code"], self._pkg_lint_status
 
-    def _gather_facts(self, modules) -> object:
+    def _gather_facts(self, modules: dict) -> bool:
         """ Gathering facts about the package - python version, docker images, vaild docker image, yml parsing
+        Args:
+            modules(dict): Test mandatory modules to be ignore in lint check
 
         Returns:
-            pkg lint status, python version, docker images, indicate if docker image valid,
-            indicate if pack is python pack
+            bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
-        # Loading pkg yaml
+        # Loooking for pkg yaml
         yml_file: Optional[Path] = next(self._pack_abs_dir.glob(rf'{self._pack_name}.{{yml,yaml}}', flags=BRACE), None)
         if not yml_file:
             logger.info(f"{self._pack_name} - Facts - Skiping no yaml file found {yml_file}")
-            return
+            self._pkg_lint_status["errors"].append('Unable to find yml file in package')
+            return True
         logger.info(f"{self._pack_name} - Facts -  Using yaml file {yml_file}")
 
         # Parsing pack yaml - inorder to verify if check needed
-        yml_obj: dict = YAML().load(yml_file)
-        script_obj: dict = yml_obj if 'script' not in yml_obj.keys() else yml_obj.get('script', {})
-        pack_type = script_obj.get('type')
+        try:
+            yml_obj: dict = YAML().load(yml_file)
+            script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
+            pack_type = script_obj.get('type')
+        except (FileNotFoundError, IOError, KeyError):
+            self._pkg_lint_status["errors"].append('Unable to parse package yml')
+            return True
 
         # return no check needed if not python pack
         if not pack_type == 'python':
             logger.info(f"{self._pack_name} - Facts - Not Python package")
-            return
-        self._facts["python_pack"] = True
+            return True
         logger.info(f"{self._pack_name} - Facts - Python package")
 
         # Getting python version from docker image - verfying if not valid docker image configured
@@ -156,6 +151,8 @@ class Linter:
         self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None) else False
         if self._facts["test"]:
             logger.info(f"{self._pack_name} - Facts - Tests found")
+        else:
+            logger.info(f"{self._pack_name} - Facts - Tests not found")
 
         # Get lint files
         lint_files = set(self._pack_abs_dir.glob(["*.py", "!*_test.py", "!test_*.py", "!__init__.py"], flags=NEGATE))
@@ -168,17 +165,21 @@ class Linter:
         # Gather package requirements embeded test-requirements.py file
         test_requirements = self._pack_abs_dir / 'test-requirements.txt'
         if test_requirements.exists():
-            additional_req = test_requirements.read_text(encoding='utf-8')
-            self._facts["additinal_requirements"].extend(additional_req)
-            logger.debug(f"{self._pack_name} - Facts - Additional package Pypi packages found - {additional_req}")
+            try:
+                additional_req = test_requirements.read_text(encoding='utf-8')
+                self._facts["additinal_requirements"].extend(additional_req)
+                logger.debug(f"{self._pack_name} - Facts - Additional package Pypi packages found - {additional_req}")
+            except (FileNotFoundError, IOError):
+                self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
 
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
         """ Run lint check on host
 
         Args:
-            no_flake8: Whether to skip flake8.
-            no_bandit: Whether to skip bandit.
-            no_mypy: Whether to skip mypy.
+            no_flake8(bool): Whether to skip flake8.
+            no_bandit(bool): Whether to skip bandit.
+            no_mypy(bool): Whether to skip mypy.
+            no_vulture(bool): Whether to skip Vulture.
         """
         if self._facts["lint_files"]:
             for lint_check in ["flake8", "bandit", "mypy", "vulture"]:

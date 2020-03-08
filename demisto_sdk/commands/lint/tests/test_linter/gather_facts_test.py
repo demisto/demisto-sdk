@@ -1,23 +1,48 @@
-class TestGatherFacts:
-    """python version, docker images, yml parsing, test exists, lint files"""
 
-    def test_not_valid_yml_parsed(self):
-        """Not valid yml parsed - should not continue"""
+class TestYamlParse:
+    def test_valid_yaml_key_script_is_dict(self):
+        pass
 
-    def test_not_valid_python_version(self):
-        """Not valid python version - should not continue"""
+    def test_valid_yaml_key_script_is_not_dict(self):
+        pass
 
-    def test_not_valid_docker_images(self):
-        """Not valid docker images - should not continue"""
+    def test_not_valid_yaml(self):
+        pass
+
+
+class TestPythonPack:
+    def test_package_is_python_pack(self):
+        pass
+
+    def test_package_is_not_python_pack(self):
+        pass
+
+
+class TestDockerImagesCollection:
+    def test_docker_images_exists(self):
+        pass
+
+    def test_python_version_valid_from_image(self):
+        pass
+
+    def test_python_version_not_valid_from_image(self):
+        pass
+
+
+class TestTestsCollection:
+    def test_tests_exists(self):
+        pass
 
     def test_tests_not_exists(self):
-        """Should configure facts to False"""
+        pass
 
-    def test_tests_exists(self):
-        """Should configure facts to True"""
+
+class TestLintFilesCollection:
+    def test_lint_files_exists_only_relevant_files(self):
+        pass
+
+    def test_lint_files_exists(self):
+        pass
 
     def test_lint_files_not_exists(self):
-        """Should configure with empty list"""
-
-    def test_lint_files_commonserverpython(self):
-        """Should configure with commonserverpython.py"""
+        pass

@@ -2,20 +2,21 @@ import os
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple
-
 import pytest
 import yaml
 
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+
 from demisto_sdk.tests.constants_test import VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, \
     VALID_INTEGRATION_TEST_PATH, VALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_ID_PATH, VALID_PLAYBOOK_ID_PATH, \
     INVALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, INVALID_WIDGET_PATH, \
     VALID_WIDGET_PATH, VALID_DASHBOARD_PATH, INVALID_DASHBOARD_PATH, LAYOUT_TARGET, \
     DASHBOARD_TARGET, WIDGET_TARGET, PLAYBOOK_TARGET, VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, INTEGRATION_TARGET, \
     INCIDENT_FIELD_TARGET, PLAYBOOK_PACK_TARGET, INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS, \
-    INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD, VALID_REPUTATION_FILE, \
-    INVALID_REPUTATION_FILE
+    INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD, \
+    INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2, INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4, \
+    VALID_REPUTATION_FILE, INVALID_REPUTATION_FILE
 
 
 class TestStructureValidator:
@@ -159,3 +160,35 @@ class TestStructureValidator:
             assert structure.is_valid_file() is answer
         finally:
             os.remove(target)
+
+    pykwalify_error_1 = "'<SchemaError: error code 2: Schema validation failed:\n" \
+                        " - Cannot find required key \'category\'. Path: \'\'.: Path: \'/\'>'"
+    expected_error_1 = "Missing category in root"
+    pykwalify_error_2 = "'<SchemaError: error code 2: Schema validation failed:\n" \
+                        " - Cannot find required key \'id\'. Path: \'/commonfields\'.: Path: \'/\'>'"
+    expected_error_2 = "Missing id in {'version': -1}, Path: 'commonfields'"
+    pykwalify_error_3 = "'<SchemaError: error code 2: Schema validation failed:\n" \
+                        " - Cannot find required key \'description\'. Path: \'/script/commands/0/arguments/0\'.: " \
+                        "Path: \'/\'>'"
+    expected_error_3 = "Missing description in top-priority, Path: 'script'-> 'commands'->" \
+                       " 'integrationTest-search-vulnerabilities'-> 'arguments'-> 'top-priority'"
+    pykwalify_error_4 = "'<SchemaError: error code 2: Schema validation failed:\n " \
+                        "- Cannot find required key \'description\'. Path: \'/script/commands/5/outputs/0\'.: " \
+                        "Path: \'/\'>'"
+    expected_error_4 = "Missing description in integrationTest.ConnectorsList.ID, Path:" \
+                       " 'script'-> 'commands'-> 'integrationTest-get-connectors'-> 'outputs'->" \
+                       " 'integrationTest.ConnectorsList.ID'"
+
+    TEST_ERRORS = [
+        (INVALID_INTEGRATION_YML_1, 'integration', pykwalify_error_1, expected_error_1),
+        (INVALID_INTEGRATION_YML_2, 'integration', pykwalify_error_2, expected_error_2),
+        (INVALID_INTEGRATION_YML_3, 'integration', pykwalify_error_3, expected_error_3),
+        (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_4, expected_error_4),
+    ]  # type: List[Tuple[str,str,str, str]]
+
+    @pytest.mark.parametrize('path, scheme , error, correct', TEST_ERRORS)
+    def test_print_error_msg(self, path, scheme, error, correct, mocker):
+        mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value=scheme)
+        structure = StructureValidator(file_path=path)
+        err = structure.parse_error_line(error)
+        assert correct in err

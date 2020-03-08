@@ -47,7 +47,7 @@ def test_is_id_equal_name(id_, name, is_valid):
     assert validator.is_id_equals_name() == is_valid, f'is_id_equal_name returns {not is_valid}.'
 
 
-data_is_not_excluding_fields = [
+data_is_contains_forbidden_fields = [
     ({"system": False}, False),
     ({"isCommon": False}, False),
     ({"shared": False}, False),
@@ -58,11 +58,11 @@ data_is_not_excluding_fields = [
 ]
 
 
-@pytest.mark.parametrize('current_file, is_valid', data_is_not_excluding_fields)
-def test_is_not_excluding_fields(current_file, is_valid):
+@pytest.mark.parametrize('current_file, is_valid', data_is_contains_forbidden_fields)
+def test_is_contains_forbidden_fields(current_file, is_valid):
     structure = mock_structure("", current_file)
     validator = DashboardValidator(structure)
-    assert validator.is_not_excluding_fields() == is_valid, f'is_excluding_fields returns {not is_valid}.'
+    assert validator.is_contains_forbidden_fields() == is_valid, f'is_excluding_fields returns {not is_valid}.'
 
 
 data_is_including_fields = [

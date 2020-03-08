@@ -89,10 +89,12 @@ class PlaybookValidator(BaseValidator):
                         if next_task_ids:
                             task_condition_labels.remove(next_task_branch)
                     except KeyError as e:
-                        print_error(f'Playbook has conditional task with unreachable next task: {str(e)}')
+                        print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
+                                    f'next task condition "{next_task_branch}"')
                         self.is_valid = is_unreachable = False
                 # if there are task_condition_labels left then not all branches are handled
                 if task_condition_labels:
-                    print_error(f'Playbook has conditional task with unhandled branches: {str(task_condition_labels)}')
+                    print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled branches: '
+                                f'{str(task_condition_labels)}')
                     self.is_valid = is_unreachable = False
         return is_unreachable

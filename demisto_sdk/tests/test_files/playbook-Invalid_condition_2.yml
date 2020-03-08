@@ -48,6 +48,8 @@ tasks:
       - "4"
       "yes":
       - "3"
+      "maybe":
+      - "5"
     separatecontext: false
     conditions:
     - label: "yes"

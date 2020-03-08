@@ -72,8 +72,8 @@ data_test_none_demisto_docker = [
 
 @pytest.mark.parametrize('docker, docker_tag, expected_output', data_test_none_demisto_docker)
 def test_none_demisto_docker(docker, docker_tag, expected_output):
-    assert DockerImageValidator.get_docker_image_latest_tag(docker, '{}:{}'.format(docker, docker_tag)) \
-           == expected_output
+    assert DockerImageValidator.get_docker_image_latest_tag(docker,
+                                                            '{}:{}'.format(docker, docker_tag)) == expected_output
 
 
 # disable-secrets-detection-start

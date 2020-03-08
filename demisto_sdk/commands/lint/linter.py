@@ -95,7 +95,7 @@ class Linter:
             except requests.exceptions.RequestException:
                 # TODO: remove this
                 try:
-                    res = requests.get(self.common_server_pack_remote_path, verify=False)
+                    res = requests.get(self.common_server_script_remote_path, verify=False)
                     with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
                         f.write(res.text)
                         self.common_server_created = True

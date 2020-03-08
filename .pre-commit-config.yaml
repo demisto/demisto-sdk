@@ -6,15 +6,17 @@ repos:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-docstring-first
+        exclude: demisto_sdk/tests/test_files/*
     -   id: check-json
     -   id: check-yaml
+        exclude: demisto_sdk/tests/test_files/*
     -   id: debug-statements
         language_version: python3
     -   id: name-tests-test
-        exclude: ^tests/tests_constants.py$
+        exclude: demisto_sdk/tests/test_files/*
     -   id: requirements-txt-fixer
     -   id: flake8
 -   repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v1.4.4
+    rev: v1.5
     hooks:
     -   id: autopep8

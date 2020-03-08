@@ -5,6 +5,7 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 
 ### 0.4.0
+* Added a validator for Dashboards (dashboard-*.json).
 * Added a validator for Indicator Types (reputation-*.json).
 * Added a BC validation for changing incident field type.
 * Fixed an issue where init command would generate an invalid yml for scripts.

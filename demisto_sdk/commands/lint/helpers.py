@@ -96,9 +96,10 @@ def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[
             if module_match:
                 module_name = module_match.group(1)
             if module_name:
-                module_path = content_path / 'Packs/ApiModules/Scripts' / module_name / f'/{module_name}.py'
-                cur_path = pack_path / f'/{module_name}.py'
-                shutil.copy(module_path, cur_path)
+                module_path = content_path / 'Packs/ApiModules/Scripts' / module_name / f'{module_name}.py'
+                cur_path = pack_path / f'{module_name}.py'
+                shutil.copy(src=module_path,
+                            dst=cur_path)
                 added_modules.append(cur_path)
 
         # Add typing import if needed to python version 2 packages

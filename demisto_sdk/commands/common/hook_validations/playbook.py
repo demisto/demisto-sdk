@@ -90,7 +90,7 @@ class PlaybookValidator(BaseValidator):
                     try:
                         if next_task_ids:
                             task_condition_labels.remove(next_task_branch)
-                    except KeyError as e:
+                    except KeyError:
                         print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
                                     f'next task condition "{next_task_branch}"')
                         self.is_valid = is_unreachable = False

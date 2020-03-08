@@ -65,17 +65,14 @@ def test_get_docker_image_latest_tag(image):
 
 
 data_test_none_demisto_docker = [
-    (('demisto/algorithmia', '1.0.0.6016'), '1.0.0.6016'),
-    (('demisto/google-api-py3', '1.0.0.5992'), '1.0.0.5992'),
-    (('blabla/google-api-py3', '1.0.0.5992'), ''),
-    (('devdemisto/python3', '3.8.1.6088'), '3.8.1.6088'),
-    (('unknownvuser/v-alpine', 'at_v_commit-b17ade1257cfe086c1742c91deeb6c606037b893'), '')
+    ('blabla/google-api-py3', '1.0.0.5992', ''),
+    ('unknownvuser/v-alpine', 'at_v_commit-b17ade1257cfe086c1742c91deeb6c606037b893', '')
 ]
 
 
-@pytest.mark.parametrize('docker, output', data_test_none_demisto_docker)
-def test_none_demisto_docker(docker, output):
-    assert DockerImageValidator.get_docker_image_latest_tag(docker[0], f'{docker[0]}:{docker[1]}') == output
+@pytest.mark.parametrize('docker, docker_tag, expected_output', data_test_none_demisto_docker)
+def test_none_demisto_docker(docker, docker_tag, expected_output):
+    assert DockerImageValidator.get_docker_image_latest_tag(docker, '{}:{}'.format(docker, docker_tag)) == expected_output
 
 
 # disable-secrets-detection-start

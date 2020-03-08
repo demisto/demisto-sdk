@@ -11,7 +11,6 @@ from typing import Union, Optional, Tuple, Dict
 import urllib3
 import yaml
 import requests
-import logging
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
@@ -551,17 +550,3 @@ def find_type(path: str):
                 return 'indicatorfield'
 
     return ''
-
-
-def disable_logs(name, level):
-    """
-    disable logs from channel name starting from equal and bigger than level
-
-    Arguments:
-        name -  channel name
-        level - enum for a specific level which represent the max level from which logs will be printed.
-                e.g. :Logger.ERROR = 40 - all logs that are ERROR level an grater will be printed , all lower will not
-    """
-    log = logging.getLogger(name)
-    log.level = level
-    log.manager._clear_cache()

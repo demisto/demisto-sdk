@@ -14,7 +14,7 @@ from pykwalify.core import Core
 
 from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
     SCHEMA_TO_REGEX
-from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error, disable_logs
+from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
 from demisto_sdk.commands.common.configuration import Configuration
 
 
@@ -99,7 +99,8 @@ class StructureValidator:
             return True
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
-            disable_logs('pykwalify.core', logging.ERROR)
+            log = logging.getLogger('pykwalify.core')
+            log.setLevel(logging.WARNING)
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
             core = Core(source_file=self.file_path,

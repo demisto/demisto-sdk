@@ -81,4 +81,7 @@ class PlaybookValidator(BaseValidator):
             next_tasks = task.get('nexttasks', {})
             for next_task_ids in next_tasks.values():
                 next_tasks_bucket.update(next_task_ids)
+        orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
+        if orphan_tasks:
+            print_error(f'The following tasks ids have no previous tasks: {orphan_tasks}')
         return tasks_bucket.issubset(next_tasks_bucket)

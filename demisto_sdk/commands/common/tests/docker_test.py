@@ -64,6 +64,18 @@ def test_get_docker_image_latest_tag(image):
     assert int(tag.split('.')[3]) >= 2728
 
 
+data_test_none_demisto_docker = [
+    ('blabla/google-api-py3', '1.0.0.5992', ''),
+    ('unknownvuser/v-alpine', 'at_v_commit-b17ade1257cfe086c1742c91deeb6c606037b893', '')
+]
+
+
+@pytest.mark.parametrize('docker, docker_tag, expected_output', data_test_none_demisto_docker)
+def test_none_demisto_docker(docker, docker_tag, expected_output):
+    assert DockerImageValidator.get_docker_image_latest_tag(docker,
+                                                            '{}:{}'.format(docker, docker_tag)) == expected_output
+
+
 # disable-secrets-detection-start
 def test_get_docker_image_from_yml():
     with patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
@@ -78,6 +90,8 @@ def test_get_docker_image_from_yml():
         docker_validator.is_integration = False
         docker_image = docker_validator.get_docker_image_from_yml()
         assert docker_image == "demisto/stix2:1.0.0.204"
+
+
 # disable-secrets-detection-end
 
 
@@ -113,6 +127,8 @@ def test_parse_docker_image():
     assert 'demisto/slack', '1.2.3.4' == DockerImageValidator.parse_docker_image('demisto/slack:1.2.3.4')
     assert 'demisto/python', '' == DockerImageValidator.parse_docker_image('demisto/python/1.2.3.4')
     assert ('', '') == DockerImageValidator.parse_docker_image('blah/blah:1.2.3.4')
+
+
 # disable-secrets-detection-end
 
 

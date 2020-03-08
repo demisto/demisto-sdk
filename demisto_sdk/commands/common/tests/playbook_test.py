@@ -80,6 +80,47 @@ class TestPlaybookValidator:
         (CONDITION_EXIST_FULL, True)
     ]
 
+    TASKS_NOT_EXIST = ROLENAME_NOT_EXIST
+    NEXT_TASKS_NOT_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                              "tasks": {'1': {'type': 'not_condition'}}}
+    NEXT_TASKS_NOT_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                              "tasks": {
+                                  '1': {'type': 'title'},
+                                  '2': {'type': 'condition'}}
+                              }
+    NEXT_TASKS_INVALID_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                                  "tasks": {
+                                      '1': {'type': 'title', 'nexttasks': {'next': ['3']}},
+                                      '2': {'type': 'condition'}}
+                                  }
+    NEXT_TASKS_INVALID_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                                  "tasks": {
+                                      '1': {'type': 'title', 'nexttasks': {'next': ['3']}},
+                                      '2': {'type': 'condition'},
+                                      '3': {'type': 'condition'}}
+                                  }
+    NEXT_TASKS_VALID_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                                "tasks": {
+                                    '1': {'type': 'title', 'nexttasks': {'next': ['2', '3']}},
+                                    '2': {'type': 'condition'},
+                                    '3': {'type': 'condition'}}
+                                }
+    NEXT_TASKS_VALID_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                                "tasks": {
+                                    '1': {'type': 'title', 'nexttasks': {'next': ['2']}},
+                                    '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
+                                    '3': {'type': 'condition'}}
+                                }
+    IS_ROOT_CONNECTED_INPUTS = [
+        (TASKS_NOT_EXIST, True),
+        (NEXT_TASKS_NOT_EXIST_1, True),
+        (NEXT_TASKS_NOT_EXIST_2, False),
+        (NEXT_TASKS_INVALID_EXIST_1, False),
+        (NEXT_TASKS_INVALID_EXIST_2, False),
+        (NEXT_TASKS_VALID_EXIST_1, True),
+        (NEXT_TASKS_VALID_EXIST_2, True),
+    ]
+
     @pytest.mark.parametrize("current_file, answer", IS_NO_ROLENAME_INPUTS)
     def test_is_added_required_fields(self, current_file, answer):
         structure = mock_structure("", current_file)
@@ -91,3 +132,9 @@ class TestPlaybookValidator:
         structure = mock_structure("", current_file)
         validator = PlaybookValidator(structure)
         assert validator.is_condition_branches_handled_correctly() is answer
+
+    @pytest.mark.parametrize("current_file, answer", IS_ROOT_CONNECTED_INPUTS)
+    def test_is_root_connected_to_all_tasks(self, current_file, answer):
+        structure = mock_structure("", current_file)
+        validator = PlaybookValidator(structure)
+        assert validator.is_root_connected_to_all_tasks() is answer

@@ -23,6 +23,7 @@ class PlaybookValidator(BaseValidator):
                 self.is_valid_version(),
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
+                self.is_root_connected_to_all_tasks(),
                 self.is_condition_branches_handled_correctly()
             ]
             answers = all(new_playbook_checks)
@@ -32,6 +33,7 @@ class PlaybookValidator(BaseValidator):
             modified_playbook_checks = [
                 self.is_valid_version(),
                 self.is_no_rolename(),
+                self.is_root_connected_to_all_tasks(),
                 self.is_condition_branches_handled_correctly()
             ]
             answers = all(modified_playbook_checks)
@@ -98,3 +100,24 @@ class PlaybookValidator(BaseValidator):
                                 f'{str(task_condition_labels)}')
                     self.is_valid = is_unreachable = False
         return is_unreachable
+
+    def is_root_connected_to_all_tasks(self):  # type: () -> bool
+        """Check whether the playbook root is connected to all tasks
+
+        Return:
+            bool. if the Playbook has root is connected to all tasks.
+        """
+        start_task_id = self.current_file.get('starttaskid')
+        tasks = self.current_file.get('tasks', {})
+        tasks_bucket = set()
+        next_tasks_bucket = set()
+        for task_id, task in tasks.items():
+            if task_id != start_task_id:
+                tasks_bucket.add(task_id)
+            next_tasks = task.get('nexttasks', {})
+            for next_task_ids in next_tasks.values():
+                next_tasks_bucket.update(next_task_ids)
+        orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
+        if orphan_tasks:
+            print_error(f'The following tasks ids have no previous tasks: {orphan_tasks}')
+        return tasks_bucket.issubset(next_tasks_bucket)

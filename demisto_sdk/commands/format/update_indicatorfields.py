@@ -3,9 +3,9 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
 
 ARGUMENTS_DEFAULT_VALUES = {
-    'content': 'true',
-    'system': 'false',
-    'required': 'false',
+    'content': True,
+    'system': False,
+    'required': False,
 }
 
 ARGUMENTS_TO_REMOVE = ['sortValues',
@@ -23,8 +23,8 @@ ARGUMENTS_TO_REMOVE = ['sortValues',
                        'prevType']
 
 
-class IncidentFieldJSONFormat(BaseUpdateJSON):
-    """IncidentFieldJSONFormat class is designed to update incident fields JSON file according to Demisto's convention.
+class IndicatorFieldJSONFormat(BaseUpdateJSON):
+    """IndicatorFieldJSONFormat class is designed to update incident fields JSON file according to Demisto's convention.
 
         Attributes:
             source_file (str): the path to the file we are updating at the moment.
@@ -32,29 +32,21 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             json_data (Dict): YML file data arranged in a Dict.
     """
 
-    def __init__(self, source_file='', output_file_name=''):
-        super().__init__(source_file, output_file_name)
-
-    def set_default_values_as_needed(self):
-        """Sets basic arguments of reputation commands to be default, isArray and required."""
-        print(F'Updating required default values')
-
-        for field in ARGUMENTS_DEFAULT_VALUES:
-            self.json_data[field] = ARGUMENTS_DEFAULT_VALUES[field]
-
-    def remove_unnecessary_keys(self):
-        for key in ARGUMENTS_TO_REMOVE:
-            self.json_data.pop(key, None)
+    def __init__(self, source_file='', output_file_name='', old_file=''):
+        super().__init__(source_file, output_file_name, old_file)
 
     def format_file(self):
         """Manager function for the integration YML updater."""
         super().update_json()
 
-        print_color(F'========Starting updates for incident field: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'========Starting updates for indicator field: {self.source_file}=======', LOG_COLORS.YELLOW)
 
-        self.set_default_values_as_needed()
+        super().set_default_values_as_needed(ARGUMENTS_DEFAULT_VALUES)
+        super().remove_unnecessary_keys(ARGUMENTS_TO_REMOVE)
+        super().set_fromVersion()
+        super().save_json_to_destination_file()
 
-        print_color(F'========Finished updates for incident field: {self.output_file_name}=======',
+        print_color(F'========Finished updates for indicator field: {self.output_file_name}=======',
                     LOG_COLORS.YELLOW)
 
-        return self.initiate_file_validator(IncidentFieldValidator, 'incident_field')
+        return self.initiate_file_validator(IncidentFieldValidator, 'incidentfield')

@@ -3,9 +3,9 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
 
 ARGUMENTS_DEFAULT_VALUES = {
-    'content': 'true',
-    'system': 'false',
-    'required': 'false',
+    'content': True,
+    'system': False,
+    'required': False,
 }
 
 ARGUMENTS_TO_REMOVE = ['sortValues',
@@ -32,8 +32,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             json_data (Dict): YML file data arranged in a Dict.
     """
 
-    def __init__(self, source_file='', output_file_name=''):
-        super().__init__(source_file, output_file_name)
+    def __init__(self, source_file='', output_file_name='', old_file=''):
+        super().__init__(source_file, output_file_name, old_file)
 
     def format_file(self):
         """Manager function for the integration YML updater."""
@@ -43,8 +43,9 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
         super().set_default_values_as_needed(ARGUMENTS_DEFAULT_VALUES)
         super().remove_unnecessary_keys(ARGUMENTS_TO_REMOVE)
-
+        super().set_fromVersion()
+        super().save_json_to_destination_file()
         print_color(F'========Finished updates for incident field: {self.output_file_name}=======',
                     LOG_COLORS.YELLOW)
 
-        return self.initiate_file_validator(IncidentFieldValidator, 'incident_field')
+        return self.initiate_file_validator(IncidentFieldValidator, 'incidentfield')

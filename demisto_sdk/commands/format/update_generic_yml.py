@@ -24,9 +24,9 @@ class BaseUpdateYML:
         'PlaybookYMLFormat': '',
     }
 
-    def __init__(self, source_file='', output_file_name=''):
+    def __init__(self, source_file='', output_file_name='', old_file=''):
         self.source_file = source_file
-
+        self.old_file = old_file
         if not self.source_file:
             print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
             sys.exit(1)

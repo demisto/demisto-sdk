@@ -21,8 +21,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
         'proxy': 'Use system proxy settings'
     }
 
-    def __init__(self, source_file='', output_file_name=''):
-        super().__init__(source_file, output_file_name)
+    def __init__(self, source_file='', output_file_name='', old_file=''):
+        super().__init__(source_file, output_file_name, old_file)
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""

@@ -14,7 +14,7 @@ from demisto_sdk.common.constants import Errors
 from demisto_sdk.yaml_tools.unifier import Unifier
 from demisto_sdk.common.configuration import Configuration
 from demisto_sdk.common.tools import print_v, get_all_docker_images, get_python_version, \
-    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
+    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command, get_common_server_path
 
 
 class Linter:
@@ -432,8 +432,9 @@ class Linter:
             self.check_api_module_imports(py_num)
             if "/Scripts/CommonServerPython" not in self.project_dir:
                 # Otherwise we already have the CommonServerPython.py file
-                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
-                            self.project_dir)
+                common_server_path = get_common_server_path(self.configuration.env_dir)
+
+                shutil.copy(common_server_path, self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)), self.log_verbose)
 

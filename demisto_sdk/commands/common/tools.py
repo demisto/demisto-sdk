@@ -27,7 +27,7 @@ class LOG_COLORS:
     YELLOW = '\033[0;33m'
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str, ) -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir

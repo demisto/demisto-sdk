@@ -41,7 +41,7 @@ class StructureValidator:
                  configuration=Configuration()):
         # type: (str, Optional[bool], Optional[str], Optional[str], Configuration) -> None
         self.is_valid = True
-        self.file_path = file_path
+        self.file_path = file_path.replace('\\', '/')
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()

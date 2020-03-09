@@ -40,6 +40,7 @@ from demisto_sdk.commands.common.tools import checked_type, run_command, print_e
     get_yml_paths_in_dir
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.lint.lint_manager import LintManager
 
 
 class FilesValidator:
@@ -61,7 +62,10 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 configuration=Configuration()):
+                 configuration=Configuration(), no_pylint: bool = False, no_flake8: bool = False, no_mypy: bool = False,
+                 no_test: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
+                 cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
+                 run_all_tests: bool = False, outfile: str = ''):
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
@@ -88,14 +92,66 @@ class FilesValidator:
         if self.validate_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=self.configuration)
 
-    def run(self):
-        print_color('Starting validating files structure', LOG_COLORS.GREEN)
-        if self.is_valid_structure():
-            print_color('The files are valid', LOG_COLORS.GREEN)
-            return 0
-        else:
-            print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
-            return 1
+        self.lint_args = {}
+        self.lint_args['no_test'] = no_test
+        self.lint_args['no_pylint'] = no_pylint
+        self.lint_args['no_mypy'] = no_mypy
+        self.lint_args['no_flake8'] = no_flake8
+        self.lint_args['verbose'] = verbose
+        self.lint_args['root'] = root
+        self.lint_args['keep_container'] = keep_container
+        self.lint_args['cpu_num'] = cpu_num
+        self.lint_args['parallel'] = parallel
+        self.lint_args['max_workers'] = max_workers
+        self.lint_args['no_bandit'] = no_bandit
+        self.lint_args['run_all_tests'] = run_all_tests
+        self.lint_args['outfile'] = outfile
+        self.lint_args['git'] = use_git
+
+    def run(self, run_validate, run_lint):
+        print(f'run lint: {run_lint}')
+        print(f'run validate: {run_validate}')
+        if run_lint:
+            if self.use_git:
+                modified_files, added_files, old_format_files, packs = self.get_modified_and_added_files()
+                print('=======')
+                print(modified_files)
+                print(added_files)
+                print('=======')
+
+                all_files = list(modified_files) + list(added_files)
+            else:
+                if self.file_path:
+                    all_files = [self.file_path]
+                else:
+                    print('Not path found')
+                    return 0
+
+            dir_list = self.get_dir_list_from_files(all_files)
+            project_dir_list = ','.join(dir_list)
+            print_color('Running lints on the directories:\n* ' + '\n* '.join(dir_list), LOG_COLORS.GREEN)
+
+            linter = LintManager(configuration=self.configuration, project_dir_list=project_dir_list, **self.lint_args)
+            linter.run_dev_packages()
+
+        if run_validate:
+            print_color('Starting validating files structure', LOG_COLORS.GREEN)
+            if self.is_valid_structure():
+                print_color('The files are valid', LOG_COLORS.GREEN)
+                return 0
+            else:
+                print_color('The files were found as invalid, the exact error message can be located above',
+                            LOG_COLORS.RED)
+                return 1
+
+    def get_dir_list_from_files(self, files):
+        dir_list = []
+        for f in files:
+            path = os.path.join(os.getcwd(), f)
+            path = os.path.dirname(os.path.abspath(path))
+            dir_list.append(path)
+
+        return list(dict.fromkeys(dir_list))
 
     @staticmethod
     def get_current_working_branch():

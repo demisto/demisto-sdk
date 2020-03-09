@@ -204,6 +204,41 @@ def unify(**kwargs):
 @click.option(
     '-p', '--path', help='Path of file to validate specifically.'
 )
+@click.option(
+    '-l', '--run-lint', is_flag=True, show_default=True,
+    default=True, help='run lints and unit-tests.')
+@click.option(
+    '-v', '--run-validate', is_flag=True, show_default=True,
+    default=True, help='run validate Demisto structure and requirements.')
+@click.option(
+    "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
+@click.option(
+    "--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
+@click.option(
+    "--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
+@click.option(
+    "--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option(
+    "--no-test", is_flag=True, help="Do NOT test (skip pytest)")
+@click.option(
+    "-r", "--root", is_flag=True, help="Run pytest container with root user")
+@click.option(
+    "-k", "--keep-container", is_flag=True, help="Keep the test container")
+@click.option(
+    "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+@click.option(
+    "--cpu-num",
+    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs)",
+    default=0)
+@click.option(
+    "--parallel", is_flag=True, help="Run tests in parallel")
+@click.option(
+    "-m", "--max-workers", type=int, help="How many threads to run in parallel")
+@click.option(
+    "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
+@click.option(
+    "--outfile", help="Save failing packages to a file"
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -218,8 +253,14 @@ def validate(config, **kwargs):
                                    is_backward_check=not kwargs['no_backward_comp'],
                                    is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
-                                   file_path=kwargs.get('path'))
-        return validator.run()
+                                   file_path=kwargs.get('path'), no_pylint=kwargs.get('no_pylint'),
+                                   no_flake8=kwargs.get('no_flake8'), no_mypy=kwargs.get('no_mypy'),
+                                   no_test=kwargs.get('no_test'), verbose=kwargs.get('verbose'),
+                                   root=kwargs.get('root'), keep_container=kwargs.get('keep_container'),
+                                   cpu_num=kwargs.get('cpu_num'), parallel=kwargs.get('parallel'),
+                                   max_workers=kwargs.get('max_workers'), no_bandit=kwargs.get('no_bandit'),
+                                   run_all_tests=kwargs.get('run_all_tests'), outfile=kwargs.get('outfile'))
+        return validator.run(kwargs.get('run_lint'), kwargs.get('run_validate'))
 
 
 # ====================== create ====================== #

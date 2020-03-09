@@ -4,6 +4,57 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.4.0
+* Added a warning message when not running the latest sdk version.
+* Added a validator to check that the root is connected to all tasks in the playbook.
+* Added a validator for Dashboards (dashboard-*.json).
+* Added a validator for Indicator Types (reputation-*.json).
+* Added a BC validation for changing incident field type.
+* Fixed an issue where init command would generate an invalid yml for scripts.
+* Fixed an issue in misleading error message in v2 validation hook.
+* Fixed an issue in v2 hook which now is set only on newly added scripts.
+* Added more indicative message for errors in yaml files.
+* Fixed an issue about disabling pykwalify info log prints.
+
+### 0.3.10
+* Added a BC check for incident fields - changing from version is not allowed.
+* Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.
+
+
+### 0.3.9
+* Added a validation that incident field can not be required.
+* Added validation for fetch incident parameters.
+* Added validation for feed integration parameters.
+* Added to the *format* command the deletion of the *sourceplaybookid* field.
+* Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
+* Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.
+* Added a validation the a playbook can not have a rolename set.
+* Added to the image validator the new DBot default image.
+* Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
+* Fixed an issue where *validate* failed on integration commands without outputs.
+* Added a new hook for naming of v2 integrations and scripts.
+
+
+### 0.3.8
+* Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.
+* Fixed an issue where *unify* broke long lines in script section causing syntax errors
+
+
+### 0.3.7
+* Added *generate-docs* command to generate documentation file for integration, playbook or script.
+* Fixed an issue where *unify* created a malformed integration yml.
+* Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
+
+
+### 0.3.6
+* Fixed an issue where demisto-sdk **validate** failed on modified scripts without error message.
+
+
+### 0.3.5
+* Fixed an issue with docker tag validation for integrations.
+* Restructured repo source code.
+
+
 ### 0.3.4
 * Saved failing unit tests as a file.
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
@@ -23,6 +74,7 @@
 * Added pack parameter for **init**.
 * Fixed an issue where error would appear if name parameter is not set in **init**.
 
+
 ### 0.3.2
 * Fixed the handling of classifier files in **validate**.
 
@@ -33,7 +85,6 @@
 
 
 ### 0.3.0
-
 * Added support for multi-package **lint** both with parallel and without.
 * Added all parameter in **lint** to run on all packages and packs in content repository.
 * Added **format** for:

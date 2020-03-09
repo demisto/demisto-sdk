@@ -1,0 +1,48 @@
+category: Authentication
+commonfields:
+  id: TestIntegPackage
+  version: -1
+configuration:
+- defaultvalue: https://example.net
+  display: Server URL (e.g. https://example.net)  # this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6
+  name: url
+  required: true
+  type: 0
+- display: Username
+  name: credentials
+  required: true
+  type: 9
+- display: Trust any certificate (not secure)
+  name: insecure
+  required: false
+  type: 8
+- display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+description: This is the Hello World integration for getting started.
+display: TestIntegPackage
+name: TestIntegPackage
+script:
+  commands:
+  - arguments:
+    - default: false
+      description: The name of whom you want to say hello to.
+      isArray: false
+      name: name
+      required: false
+      secret: false
+    deprecated: false
+    description: Hello command - prints hello to anyone
+    execution: false
+    name: helloworld-say-hello
+    outputs:
+    - contextPath: hello
+      description: Should be Hello **something** here
+      type: String
+  isfetch: false
+  runonce: false
+  script: '-'
+  type: python
+  subtype: python3
+  dockerimage: demisto/python3:3.7.4.2245

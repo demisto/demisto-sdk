@@ -1,4 +1,4 @@
-from demisto_sdk.common.tools import get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_yaml, get_json
 from typing import Dict, Tuple, Union
 
 

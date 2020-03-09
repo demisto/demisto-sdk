@@ -16,18 +16,18 @@ jobs:
             name: tox build
             command: |
               pip install tox
-              tox -q tests
+              tox -v demisto_sdk
         - run:
             name: pre-commit
             command: |
               . .tox/py37/bin/activate
               pre-commit --version
-              pre-commit run --color never -a
+              pre-commit run -a
               deactivate
         - run:
             name: deploy
             command: |
-              ./deploy.sh
+              ./demisto_sdk/utils/deploy.sh
 workflows:
   version: 2
   build_and_release:

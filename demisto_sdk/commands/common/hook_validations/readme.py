@@ -6,6 +6,15 @@ NODE_MODULES_DIRECTORY = os.path.dirname(os.path.dirname(os.path.dirname(os.path
 
 
 class ReadMeValidator:
+    """ReadMeValidator is a validator for readme.md files
+        In order to run the validator correctly please make sure:
+        - Node installed on you machine
+        - Node-modules folder should be in demisto-sdk folder
+        - make sure that the module '@mdx-js/mdx' , 'fs-extra', 'commander' are installed in node-modules folder
+        If not installed the validator will print warning with relevant module that is missing , please install
+        using " npm install *missing_module_name* "
+    """
+
     def __init__(self, file_path):
         self.file_path = file_path
 
@@ -42,17 +51,21 @@ class ReadMeValidator:
                                          cwd=NODE_MODULES_DIRECTORY)
             is_commander = subprocess.run(['npm', 'ls', 'commander'], text=True, timeout=10, capture_output=True,
                                           cwd=NODE_MODULES_DIRECTORY)
-
+            print(NODE_MODULES_DIRECTORY)
             if is_node.returncode == 0 and is_mdx.returncode == 0 and is_fs_extra.returncode == 0 and \
                     is_commander.returncode == 0:
                 ready = True
             else:
                 if is_mdx.returncode:
-                    print_warning("The npm module: @mdx-js/mdx is not installed on machine, Test Skipped")
+                    print_warning(f"The npm module: @mdx-js/mdx is not installed"
+                                  f" directory:{NODE_MODULES_DIRECTORY}, Test Skipped")
                 if is_fs_extra.returncode:
-                    print_warning("The npm module: fs-extra is not installed on machine, Test Skipped")
+                    print_warning(f"The npm module: fs-extra is not installed"
+                                  f" directory: {NODE_MODULES_DIRECTORY}, Test Skipped")
                 if is_commander.returncode:
-                    print_warning("The npm module: commander is not installed on machine, Test Skipped")
+                    print_warning(f"The npm module: commander is not installed"
+                                  f" directory: {NODE_MODULES_DIRECTORY}, Test Skipped")
+                print_warning(f"The correct directory for node-modules folder should be in {NODE_MODULES_DIRECTORY}")
         except Exception as err:
             if "No such file or directory: 'node': 'node'" in str(err):
                 print_warning(f'There is no node installed on the machine, Test Skipped, warning: {err}')

@@ -560,3 +560,14 @@ def find_type(path: str):
                 return 'indicatorfield'
 
     return ''
+
+
+def get_common_server_path(env_dir):
+    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts',
+                                           'CommonServerPython', 'CommonServerPython.py')
+    common_server_script_path = os.path.join(env_dir, 'Scripts', 'CommonServerPython',
+                                             'CommonServerPython.py')
+    if os.path.exists(common_server_pack_path):
+        return common_server_pack_path
+
+    return common_server_script_path

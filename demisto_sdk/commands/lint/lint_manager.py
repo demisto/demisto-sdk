@@ -6,7 +6,8 @@ from typing import Tuple, List
 from demisto_sdk.commands.lint.linter import Linter
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
-from demisto_sdk.commands.common.tools import get_dev_requirements, print_color, LOG_COLORS, run_command
+from demisto_sdk.commands.common.tools import get_dev_requirements, print_color, LOG_COLORS, run_command,\
+    get_common_server_path
 
 
 LOCK = threading.Lock()
@@ -153,7 +154,8 @@ class LintManager:
         # when we modify the file for mypy includes
         if 'Scripts/CommonServerPython' in pkgs_to_run:
             pkgs_to_run.remove('Scripts/CommonServerPython')
-            res, _ = self._run_single_package_thread(package_dir='Scripts/CommonServerPython')
+            common_server_path = get_common_server_path(self.configuration.env_dir)
+            res, _ = self._run_single_package_thread(package_dir=common_server_path)
             if res == 0:
                 good_pkgs.append('Scripts/CommonServerPython')
 

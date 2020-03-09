@@ -1,7 +1,7 @@
 elasticcommonfields: {}
-id: Invalid_condition_2
+id: Invalid_condition_unhandled_branch
 version: -1
-name: Invalid_condition_2
+name: Invalid_condition_unhandled_branch
 starttaskid: "0"
 tasks:
   "0":
@@ -22,7 +22,7 @@ tasks:
     view: |-
       {
         "position": {
-          "x": 480,
+          "x": 50,
           "y": 50
         }
       }
@@ -33,23 +33,19 @@ tasks:
     quietmode: 0
   "1":
     id: "1"
-    taskid: 1a811f5b-7f43-4d4a-8ccd-9a5ad76a6af6
+    taskid: 29fcdc11-65f2-47ae-84ff-4ffb9b8a0435
     type: condition
     task:
       elasticcommonfields: {}
-      id: 1a811f5b-7f43-4d4a-8ccd-9a5ad76a6af6
+      id: 29fcdc11-65f2-47ae-84ff-4ffb9b8a0435
       version: -1
       name: Condition Task
       type: condition
       iscommand: false
       brand: ""
     nexttasks:
-      "no":
-      - "4"
-      "yes":
-      - "3"
-      "maybe":
-      - "5"
+      '#default#':
+      - "2"
     separatecontext: false
     conditions:
     - label: "yes"
@@ -62,20 +58,10 @@ tasks:
           right:
             value:
               simple: "1"
-    - label: "no"
-      condition:
-      - - operator: isEqualString
-          left:
-            value:
-              simple: "1"
-            iscontext: true
-          right:
-            value:
-              simple: "0"
     view: |-
       {
         "position": {
-          "x": 480,
+          "x": 50,
           "y": 195
         }
       }
@@ -84,15 +70,15 @@ tasks:
     ignoreworker: false
     skipunavailable: false
     quietmode: 0
-  "3":
-    id: "3"
-    taskid: 7215f544-7d13-4a96-84a1-75387ef05fd4
+  "2":
+    id: "2"
+    taskid: ba4a480f-181d-4793-85e0-6f4df490f0de
     type: title
     task:
       elasticcommonfields: {}
-      id: 7215f544-7d13-4a96-84a1-75387ef05fd4
+      id: ba4a480f-181d-4793-85e0-6f4df490f0de
       version: -1
-      name: Done Yes
+      name: Done
       type: title
       iscommand: false
       brand: ""
@@ -100,32 +86,7 @@ tasks:
     view: |-
       {
         "position": {
-          "x": 480,
-          "y": 370
-        }
-      }
-    note: false
-    timertriggers: []
-    ignoreworker: false
-    skipunavailable: false
-    quietmode: 0
-  "4":
-    id: "4"
-    taskid: f8f88970-ef38-4c94-88be-c0c7fd8bc238
-    type: title
-    task:
-      elasticcommonfields: {}
-      id: f8f88970-ef38-4c94-88be-c0c7fd8bc238
-      version: -1
-      name: Done No
-      type: title
-      iscommand: false
-      brand: ""
-    separatecontext: false
-    view: |-
-      {
-        "position": {
-          "x": 910,
+          "x": 50,
           "y": 370
         }
       }
@@ -140,8 +101,8 @@ view: |-
     "paper": {
       "dimensions": {
         "height": 385,
-        "width": 810,
-        "x": 480,
+        "width": 380,
+        "x": 50,
         "y": 50
       }
     }

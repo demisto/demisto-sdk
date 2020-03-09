@@ -24,7 +24,7 @@ class PlaybookValidator(BaseValidator):
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
-                self.is_condition_branches_handled_correctly()
+                self.is_condition_branches_handled()
             ]
             answers = all(new_playbook_checks)
         else:
@@ -34,7 +34,7 @@ class PlaybookValidator(BaseValidator):
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
-                self.is_condition_branches_handled_correctly()
+                self.is_condition_branches_handled()
             ]
             answers = all(modified_playbook_checks)
 
@@ -69,13 +69,13 @@ class PlaybookValidator(BaseValidator):
             return False
         return True
 
-    def is_condition_branches_handled_correctly(self):  # type: () -> bool
+    def is_condition_branches_handled(self):  # type: () -> bool
         """Check whether the playbook conditional tasks has all optional branches handled
 
         Return:
             bool. if the Playbook handles all condition branches correctly.
         """
-        is_unreachable: bool = True
+        is_all_condition_branches_handled: bool = True
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
             if task.get('type') == 'condition':
@@ -93,13 +93,13 @@ class PlaybookValidator(BaseValidator):
                     except KeyError:
                         print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
                                     f'next task condition "{next_task_branch}"')
-                        self.is_valid = is_unreachable = False
+                        self.is_valid = is_all_condition_branches_handled = False
                 # if there are task_condition_labels left then not all branches are handled
                 if task_condition_labels:
                     print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled branches: '
                                 f'{str(task_condition_labels)}')
-                    self.is_valid = is_unreachable = False
-        return is_unreachable
+                    self.is_valid = is_all_condition_branches_handled = False
+        return is_all_condition_branches_handled
 
     def is_root_connected_to_all_tasks(self):  # type: () -> bool
         """Check whether the playbook root is connected to all tasks

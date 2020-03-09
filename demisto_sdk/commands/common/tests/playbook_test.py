@@ -121,20 +121,20 @@ class TestPlaybookValidator:
         (NEXT_TASKS_VALID_EXIST_2, True),
     ]
 
-    @pytest.mark.parametrize("current_file, answer", IS_NO_ROLENAME_INPUTS)
-    def test_is_added_required_fields(self, current_file, answer):
-        structure = mock_structure("", current_file)
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_NO_ROLENAME_INPUTS)
+    def test_is_added_required_fields(self, playbook_json, expected_result):
+        structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
-        assert validator.is_no_rolename() is answer
+        assert validator.is_no_rolename() is expected_result
 
-    @pytest.mark.parametrize("current_file, answer", IS_CONDITIONAL_INPUTS)
-    def test_is_condition_branches_handled_correctly(self, current_file, answer):
-        structure = mock_structure("", current_file)
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_CONDITIONAL_INPUTS)
+    def test_is_condition_branches_handled(self, playbook_json, expected_result):
+        structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
-        assert validator.is_condition_branches_handled_correctly() is answer
+        assert validator.is_condition_branches_handled() is expected_result
 
-    @pytest.mark.parametrize("current_file, answer", IS_ROOT_CONNECTED_INPUTS)
-    def test_is_root_connected_to_all_tasks(self, current_file, answer):
-        structure = mock_structure("", current_file)
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_ROOT_CONNECTED_INPUTS)
+    def test_is_root_connected_to_all_tasks(self, playbook_json, expected_result):
+        structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
-        assert validator.is_root_connected_to_all_tasks() is answer
+        assert validator.is_root_connected_to_all_tasks() is expected_result

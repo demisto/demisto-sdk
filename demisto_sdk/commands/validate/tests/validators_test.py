@@ -77,20 +77,20 @@ class TestValidators:
         finally:
             os.remove(target)
 
-    INPUTS_IS_CONDITION_BRANCHES_HANDLED_CORRECTLY = [
+    INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
         (INVALID_PLAYBOOK_CONDITION_2, False),
         (VALID_PLAYBOOK_CONDITION, True)
     ]
 
-    @pytest.mark.parametrize('source, answer', INPUTS_IS_CONDITION_BRANCHES_HANDLED_CORRECTLY)
-    def test_is_condition_branches_handled_correctly(self, source, answer):
+    @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
+    def test_is_condition_branches_handled(self, source, answer):
         # type: (str, str, Any) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
             validator = PlaybookValidator(structure)
-            assert validator.is_condition_branches_handled_correctly() is answer
+            assert validator.is_condition_branches_handled() is answer
         finally:
             os.remove(PLAYBOOK_TARGET)
 

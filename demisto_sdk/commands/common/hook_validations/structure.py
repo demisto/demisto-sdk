@@ -5,6 +5,8 @@ Module contains validation of schemas, ids and paths.
 import json
 import os
 import re
+import logging
+
 from typing import Optional
 
 import yaml
@@ -96,6 +98,9 @@ class StructureValidator:
         if self.scheme_name in [None, 'image']:
             return True
         try:
+            # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
+            log = logging.getLogger('pykwalify.core')
+            log.setLevel(logging.WARNING)
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
             core = Core(source_file=self.file_path,

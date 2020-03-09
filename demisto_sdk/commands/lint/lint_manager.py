@@ -240,6 +240,8 @@ class LintManager:
                         lint_status["fail_packs_bandit"].append(pkg_status["pkg"])
                     if exit_code & FAIL_EXIT_CODES["mypy"]:
                         lint_status["fail_packs_mypy"].append(pkg_status["pkg"])
+                    if exit_code & FAIL_EXIT_CODES["mypy"]:
+                        lint_status["fail_packs_vulture"].append(pkg_status["pkg"])
                     if exit_code & FAIL_EXIT_CODES["pylint"]:
                         lint_status["fail_packs_pylint"].append(pkg_status["pkg"])
                     if exit_code & FAIL_EXIT_CODES["pytest"]:

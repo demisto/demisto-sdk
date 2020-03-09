@@ -44,7 +44,6 @@ def get_test_modules(content_repo: git.Repo) -> dict:
                "Scripts/CommonServerPython/CommonServerPython.py"]
     modules_content = {}
     remote = content_repo.remote()
-    remote.fetch()
     for module in modules:
         modules_content[os.path.basename(module)] = content_repo.commit(f'{remote.name}/master').tree[
             module].data_stream.read()
@@ -115,7 +114,7 @@ def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[
                         with open(tmp_lint_file, 'a+') as f_tmp:
                             content = f_tmp.read()
                             f_tmp.seek(0)
-                            f_tmp.write("from typing import *".rstrip('\r\n') + '\n' + content)
+                            f_tmp.write("from typing import *  # noqa: F401".rstrip('\r\n') + '\n' + content)
                         added_modules.append(tmp_lint_file)
 
         yield lint_files

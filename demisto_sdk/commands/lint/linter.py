@@ -172,6 +172,8 @@ class Linter:
             except (FileNotFoundError, IOError):
                 self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
 
+        return False
+
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
         """ Run lint check on host
 
@@ -313,19 +315,19 @@ class Linter:
                 # Docker image status - visualize
                 status = {
                     "image": image[0],
-                    "image_errors": None,
-                    "pylint_errors": None,
+                    "image_errors": "",
+                    "pylint_errors": "",
                     "pytest_json": {}
                 }
                 # Creating image if pylint specifie or found tests and tests specified
-                docker_image_created, errors = self._docker_image_create(docker_base_image=image,
-                                                                         no_test=no_test)
-                if docker_image_created:
+                image_id, errors = self._docker_image_create(docker_base_image=image,
+                                                             no_test=no_test)
+                if image_id:
                     # Set image creation status
                     for check in ["pylint", "pytest"]:
                         # Perform pylint
                         if not no_pylint and check == "pylint" and self._facts["lint_files"]:
-                            exit_code, output = self._docker_run_pylint(test_image=docker_image_created,
+                            exit_code, output = self._docker_run_pylint(test_image=image_id,
                                                                         keep_container=keep_container)
                             if exit_code:
                                 self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES["pylint"]
@@ -334,7 +336,7 @@ class Linter:
                                     need_to_retry = True
                         # Perform pytest
                         elif not no_test and self._facts["test"] and check == "pytest":
-                            exit_code, test_json = self._docker_run_pytest(test_image=docker_image_created,
+                            exit_code, test_json = self._docker_run_pytest(test_image=image_id,
                                                                            keep_container=keep_container,
                                                                            test_xml=test_xml)
                             status["pytest_json"]: dict = test_json
@@ -555,7 +557,7 @@ class Linter:
             return 2, test_json
 
         if container_exit_code:
-            logger.info(f"{self._pack_name} - Pytest - Image{test_image} - Finished errors found")
+            logger.info(f"{self._pack_name} - Pytest - Image {test_image} - Finished errors found")
         else:
             logger.info(f"{self._pack_name} - Pytest - Image {test_image} - Finished success")
 

@@ -1,7 +1,17 @@
+from wcmatch.pathlib import Path
+from typing import Callable
+from demisto_sdk.commands.lint import linter
+
 
 class TestYamlParse:
-    def test_valid_yaml_key_script_is_dict(self):
-        pass
+    def test_valid_yaml_key_script_is_dict(self, demisto_content: Callable, create_integration: Callable):
+        integration_path: Path = create_integration(content_path=demisto_content,
+                                                    type_script_key=True)
+        runner = linter.Linter(content_path=demisto_content,
+                               pack_dir=integration_path,
+                               req_2=[],
+                               req_3=[])
+        assert runner._gather_facts(modules={})
 
     def test_valid_yaml_key_script_is_not_dict(self):
         pass

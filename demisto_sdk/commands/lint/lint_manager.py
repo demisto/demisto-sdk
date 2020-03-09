@@ -203,6 +203,7 @@ class LintManager:
             "fail_packs_flake8": [],
             "fail_packs_bandit": [],
             "fail_packs_mypy": [],
+            "fail_packs_vulture": [],
             "fail_packs_pylint": [],
             "fail_packs_pytest": [],
             "fail_packs_image": [],
@@ -229,28 +230,16 @@ class LintManager:
                                                modules=self._facts["test_modules"],
                                                keep_container=keep_container,
                                                test_xml=test_xml))
-            counter = 0
+
             for future in concurrent.futures.as_completed(results):
                 exit_code, pkg_status = future.result()
                 pkgs_status[pkg_status["pkg"]] = pkg_status
                 if exit_code:
-                    if exit_code & FAIL_EXIT_CODES["flake8"]:
-                        lint_status["fail_packs_flake8"].append(pkg_status["pkg"])
-                    if exit_code & FAIL_EXIT_CODES["bandit"]:
-                        lint_status["fail_packs_bandit"].append(pkg_status["pkg"])
-                    if exit_code & FAIL_EXIT_CODES["mypy"]:
-                        lint_status["fail_packs_mypy"].append(pkg_status["pkg"])
-                    if exit_code & FAIL_EXIT_CODES["mypy"]:
-                        lint_status["fail_packs_vulture"].append(pkg_status["pkg"])
-                    if exit_code & FAIL_EXIT_CODES["pylint"]:
-                        lint_status["fail_packs_pylint"].append(pkg_status["pkg"])
-                    if exit_code & FAIL_EXIT_CODES["pytest"]:
-                        lint_status["fail_packs_pytest"].append(pkg_status["pkg"])
-                    if exit_code & FAIL_EXIT_CODES["image"]:
-                        lint_status["fail_packs_image"].append(pkg_status["pkg"])
+                    for check, code in FAIL_EXIT_CODES.items():
+                        if exit_code & code:
+                            lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
                     if not return_exit_code & exit_code:
                         return_exit_code += exit_code
-                counter += 1
 
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
@@ -361,24 +350,25 @@ class LintManager:
         # Log passed unit-tests
         passed_printed = False
         for pkg, status in pkgs_status.items():
-            if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
-                if not passed_printed:
-                    print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
-                    passed_printed = True
-                print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
-                for image in status["images"]:
-                    if not image.get("image_errors"):
-                        tests = image.get("pytest_json", {}).get("report", {}).get("tests")
-                        if tests:
-                            print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
-                            if not FAIL_EXIT_CODES["pytest"] & status["exit_code"]:
-                                packs_with_tests += 1
-                            for test_case in tests:
-                                if test_case.get("call", {}).get("outcome") != "failed":
-                                    name = re.sub(pattern=r"\[.*\]",
-                                                  repl="",
-                                                  string=test_case.get("name"))
-                                    print_v(wrapper_test.fill(name), log_verbose=self._verbose)
+            if status.get("images"):
+                if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
+                    if not passed_printed:
+                        print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
+                        passed_printed = True
+                    print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
+                    for image in status["images"]:
+                        if not image.get("image_errors"):
+                            tests = image.get("pytest_json", {}).get("report", {}).get("tests")
+                            if tests:
+                                print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
+                                if not FAIL_EXIT_CODES["pytest"] & status["exit_code"]:
+                                    packs_with_tests += 1
+                                for test_case in tests:
+                                    if test_case.get("call", {}).get("outcome") != "failed":
+                                        name = re.sub(pattern=r"\[.*\]",
+                                                      repl="",
+                                                      string=test_case.get("name"))
+                                        print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
         # Log failed unit-tests
         if FAIL_EXIT_CODES["pytest"] & return_exit_code:

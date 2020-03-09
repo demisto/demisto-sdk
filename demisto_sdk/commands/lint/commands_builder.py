@@ -102,7 +102,7 @@ def build_mypy_command(files: List[Path], version: float) -> str:
 
 def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     """ Build command to execute with pylint module
-
+        https://github.com/PyCQA/bandit
     Args:
         files(List[Path]): files to execute lint
         pack_path(Path): Package path
@@ -110,7 +110,7 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     Returns:
        str: vulture command
     """
-    command = "python -m vulture"
+    command = "python3 -m vulture"
     # Excluded files
     command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
     # File to be excluded when performing lints check

@@ -14,7 +14,7 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES,\
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX,\
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH
+    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -194,17 +194,27 @@ def get_child_files(directory):
     return child_files
 
 
-def get_last_release_version():
+def get_last_remote_release_version():
     """
-    Get latest release tag (xx.xx.xx)
+    Get latest release tag from remote github page
 
     :return: tag
     """
-    tags = run_command('git tag').split('\n')
-    tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
-    tags.sort(key=LooseVersion, reverse=True)
-
-    return tags[0]
+    try:
+        releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False)
+        releases_request.raise_for_status()
+        releases = requests.get(SDK_API_GITHUB_RELEASES, verify=False).json()
+        if isinstance(releases, list) and isinstance(releases[0], dict):
+            latest_release = releases[0].get('tag_name')
+            if isinstance(latest_release, str):
+                # remove v prefix
+                return latest_release[1:]
+    except Exception as exc:
+        exc_msg = str(exc)
+        if isinstance(exc, requests.exceptions.ConnectionError):
+            exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\nThis may happen if you are not connected to the internet.'
+        print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+    return ''
 
 
 def get_file(method, file_path, type_of_file):
@@ -561,3 +571,14 @@ def find_type(path: str):
                 return 'indicatorfield'
 
     return ''
+
+
+def get_common_server_path(env_dir):
+    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts',
+                                           'CommonServerPython', 'CommonServerPython.py')
+    common_server_script_path = os.path.join(env_dir, 'Scripts', 'CommonServerPython',
+                                             'CommonServerPython.py')
+    if os.path.exists(common_server_pack_path):
+        return common_server_pack_path
+
+    return common_server_script_path

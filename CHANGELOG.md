@@ -4,6 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.4.1
+* Added a validator to verify all branches are handled in conditional task in a playbook.
+
 ### 0.4.0
 * Added a warning message when not running the latest sdk version.
 * Added a validator to check that the root is connected to all tasks in the playbook.

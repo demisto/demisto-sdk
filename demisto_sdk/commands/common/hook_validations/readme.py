@@ -30,6 +30,8 @@ class ReadMeValidator:
     def are_modules_installed_for_verify(self):
         is_valid = True
         ready = False
+        check = subprocess.Popen(['npm', 'ls', 'commander'], text=True, shell=True)
+        print(check.returncode)
         try:
             # check if requiring modules in node exist
             is_node = subprocess.run(['node', '-v'], text=True, timeout=10, capture_output=True)
@@ -48,13 +50,13 @@ class ReadMeValidator:
 
         except Exception as err:
             if "No such file or directory: 'node': 'node'" in str(err):
-                print_warning(f'There is no node installed on the machine, Test Skipped, error {err}')
+                print_warning(f'There is no node installed on the machine, Test Skipped, warning: {err}')
             if "Cannot find module 'fs-extra'" in str(err):
-                print_warning(f'There is no fs-extra module installed on the machine, Test Skipped, error {err}')
+                print_warning(f'There is no fs-extra module installed on the machine, Test Skipped, warning: {err}')
             if "Cannot find module '@mdx-js/mdx'" in str(err):
-                print_warning(f'There is no @mdx-js/mdx module installed on the machine, Test Skipped, error {err}')
+                print_warning(f'There is no @mdx-js/mdx module installed on the machine, Test Skipped, warning: {err}')
             if "Cannot find module 'commander'" in str(err):
-                print_warning(f'There is no commander module installed on the machine, Test Skipped, error {err}')
+                print_warning(f'There is no commander module installed on the machine, Test Skipped, warning: {err}')
             else:
                 print_error(f'Failed while verifying README.md, Path: {self.file_path}. Error Message is: {err}')
                 is_valid = False

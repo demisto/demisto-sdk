@@ -14,7 +14,7 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES,\
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX,\
-    DEF_DOCKER, SDK_API_GIHUB_RELEASES
+    DEF_DOCKER, SDK_API_GITHUB_RELEASES
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -189,9 +189,9 @@ def get_last_remote_release_version():
     :return: tag
     """
     try:
-        releases_request = requests.get(SDK_API_GIHUB_RELEASES, verify=False)
+        releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False)
         releases_request.raise_for_status()
-        releases = requests.get(SDK_API_GIHUB_RELEASES, verify=False).json()
+        releases = requests.get(SDK_API_GITHUB_RELEASES, verify=False).json()
         if isinstance(releases, list) and isinstance(releases[0], dict):
             latest_release = releases[0].get('tag_name')
             if isinstance(latest_release, str):

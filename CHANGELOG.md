@@ -4,9 +4,9 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
-### 0.4.1
+### 0.4.3
 
-### 0.4.0
+### 0.4.2
 * Fixed an issue where validate failed on Windows.
 * Added a validator to verify all branches are handled in conditional task in a playbook.
 * Added a warning message when not running the latest sdk version.

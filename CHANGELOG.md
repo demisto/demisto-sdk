@@ -9,6 +9,8 @@
 * Added a validator for README.md files.
 
 ### 0.4.0
+* Fixed an issue where validate failed on Windows.
+* Added a validator to verify all branches are handled in conditional task in a playbook.
 * Added a warning message when not running the latest sdk version.
 * Added a validator to check that the root is connected to all tasks in the playbook.
 * Added a validator for Dashboards (dashboard-*.json).

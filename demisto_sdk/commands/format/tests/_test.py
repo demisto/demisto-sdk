@@ -1,53 +1,40 @@
-# import os
-# import pytest
-# from shutil import copyfile
-#
-#
-# from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
-# from demisto_sdk.commands.format.update_incidentfields import IncidentFieldJSONFormat
-# from demisto_sdk.commands.format.update_incidenttypes import IncidentTypesJSONFormat
-# from demisto_sdk.commands.format.update_indicatorfields import IndicatorFieldJSONFormat
-# from demisto_sdk.commands.format.update_incidenttypes import IncidentTypesJSONFormat
-# from demisto_sdk.commands.format.update_incidenttypes import IncidentTypesJSONFormat
-#
-# from demisto_sdk.commands.format.format_module import format_manager
-#
-#
-# class TestMergeScriptPackageToYMLIntegration:
-#     def setup(self):
-#         self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
-#         os.makedirs(self.test_dir_path)
-#         self.package_name = 'SampleIntegPackage'
-#         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
-#         self.expected_yml_path = os.path.join(self.test_dir_path, 'integration-SampleIntegPackage.yml')
-#
-#     def teardown(self):
-#         if self.test_dir_path:
-#             shutil.rmtree(self.test_dir_path)
-#
-#     INPUTS_IS_VALID_VERSION = [
-#         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),
-#         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False, LayoutValidator),
-#         (VALID_WIDGET_PATH, WIDGET_TARGET, True, WidgetValidator),
-#         (INVALID_WIDGET_PATH, WIDGET_TARGET, False, WidgetValidator),
-#         (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True, DashboardValidator),
-#         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
-#         (VALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, True, IncidentFieldValidator),
-#         (INVALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, False, IncidentFieldValidator),
-#         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
-#         (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),
-#         (INVALID_SCRIPT_PATH, SCRIPT_TARGET, False, ScriptValidator),
-#         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
-#         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
-#     ]
-#
-#     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-#     def test_format_file(self, source, target, answer, validator):
-#         # type: (str, str, Any, Type[BaseValidator]) -> None
-#         res = []
-#         try:
-#             copyfile(source, target)
-#             res = format_manager(False, source)
-#             assert validator.is_valid_version() is answer
-#         finally:
-#             os.remove(target)
+import os
+import pytest
+import shutil
+
+from demisto_sdk.tests.constants_test import SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, \
+    SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY, \
+    DESTINATION_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY,\
+    SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_DASHBOARD_COPY,\
+    DESTINATION_FORMAT_DASHBOARD_COPY
+
+
+from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.common.configuration import Configuration
+
+
+class TestFormattingJson:
+    def setup(self):
+        conf = Configuration()
+        self.test_output_dir_path = os.path.join(conf.sdk_env_dir, 'tests', 'test_files', 'Formatting', 'Results')
+        os.makedirs(self.test_output_dir_path)
+
+    def teardown(self):
+        if self.test_output_dir_path:
+            shutil.rmtree(self.test_output_dir_path)
+
+    FORMAT_FILES = [
+        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, 1),
+        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, 1),
+        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, 1),
+        (SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, 1),
+        (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, 1),
+        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY, 1),
+        (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, 1),
+    ]
+
+    @pytest.mark.parametrize('source, target ,answer', FORMAT_FILES)
+    def test_format_file(self, source, target, answer):
+        shutil.copyfile(source, target)
+        res = format_manager(False, source_file=source, output_file_name=self.test_output_dir_path, old_file=False)
+        assert res is answer

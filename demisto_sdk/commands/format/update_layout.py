@@ -17,6 +17,8 @@ ARGUMENTS_TO_REMOVE = ['sortValues',
                        'prevTypeId',
                        'prevType']
 
+DEFAULT_JSON_VERSION = -1
+
 
 class LayoutJSONFormat(BaseUpdateJSON):
     """LayoutJSONFormat class is designed to update incident fields JSON file according to Demisto's convention.
@@ -30,12 +32,18 @@ class LayoutJSONFormat(BaseUpdateJSON):
     def __init__(self, source_file='', output_file_name='', old_file=''):
         super().__init__(source_file, output_file_name, old_file)
 
+    def set_version_to_default(self):
+        """Replaces the version of the YML to default."""
+        print(F'Setting JSON version to default: {self.DEFAULT_JSON_VERSION}')
+        self.json_data['layout']['version'] = self.DEFAULT_JSON_VERSION  # ?  ?????
+        print(self.json_data)
+
     def format_file(self):
         """Manager function for the integration YML updater."""
-        super().update_json()
 
         print_color(F'========Starting updates for incident field: {self.source_file}=======', LOG_COLORS.YELLOW)
 
+        self.set_version_to_default()
         super().remove_unnecessary_keys(ARGUMENTS_TO_REMOVE)
         super().set_fromVersion()
         super().save_json_to_destination_file()

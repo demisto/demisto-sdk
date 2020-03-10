@@ -69,19 +69,15 @@ class BaseUpdateJSON:
         print(F'Setting JSON version to default: {self.DEFAULT_JSON_VERSION}')
 
         self.json_data['version'] = self.DEFAULT_JSON_VERSION
-        print(self.json_data)
 
     def set_fromVersion(self):
         """Set fromVersion to default if not exist."""
         "only for added files"
-        print(f"in from version function")
+
         if not self.old_file:
-            print(f"Setting from version")
+            print(F'Setting fromversion field')
             if "fromVersion" not in self.json_data:
-                print(f"Adding from version")
-                print(F'Setting fromVersion to default: {self.DEFAULT_FROMVERSION}')
                 self.json_data['fromVersion'] = self.DEFAULT_FROMVERSION
-                print(self.json_data)
 
     def set_default_values_as_needed(self, ARGUMENTS_DEFAULT_VALUES):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -89,13 +85,11 @@ class BaseUpdateJSON:
 
         for field in ARGUMENTS_DEFAULT_VALUES:
             self.json_data[field] = ARGUMENTS_DEFAULT_VALUES[field]
-        print(self.json_data)
 
     def remove_unnecessary_keys(self, ARGUMENTS_TO_REMOVE):
-        print("removing unnecseery keys")
+        print(F'Removing Unnecessary fields from file')
         for key in ARGUMENTS_TO_REMOVE:
             self.json_data.pop(key, None)
-        print(self.json_data)
 
     def save_json_to_destination_file(self):
         """Save formatted JSON data to destination file."""

@@ -3,9 +3,7 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 
 ARGUMENTS_DEFAULT_VALUES = {
-    'content': True,
-    'system': False,
-    'required': False,
+    'system': False
 }
 
 ARGUMENTS_TO_REMOVE = ['sortValues',

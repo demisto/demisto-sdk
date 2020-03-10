@@ -36,7 +36,6 @@ class LayoutJSONFormat(BaseUpdateJSON):
         """Replaces the version of the YML to default."""
         print(F'Setting JSON version to default: {self.DEFAULT_JSON_VERSION}')
         self.json_data['layout']['version'] = self.DEFAULT_JSON_VERSION  # ?  ?????
-        print(self.json_data)
 
     def format_file(self):
         """Manager function for the integration YML updater."""

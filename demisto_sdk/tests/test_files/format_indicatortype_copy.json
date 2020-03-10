@@ -1,17 +1,17 @@
 {
-    "id": "accountRep",
-    "version": 2,
+    "id": "CIDR",
+    "version": 1000000,
     "fromVersion": "5.5.0",
-    "modified": "2019-07-18T08:57:51.058271942Z",
+    "modified": "2019-07-18T07:17:53.843554502Z",
     "sortValues": null,
     "commitMessage": "",
     "shouldPublish": false,
     "shouldCommit": false,
-    "regex": "",
-    "details": "Account",
-    "prevDetails": "Account",
+    "regex": "\\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(?:\\[\\.\\]|\\.)){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\\/([0-9]|[1-2][0-9]|3[0-2]))\\b",
+    "details": "CIDR",
+    "prevDetails": "CIDR",
     "reputationScriptName": "",
-    "reputationCommand": "",
+    "reputationCommand": "cidr",
     "enhancementScriptNames": [],
     "system": true,
     "locked": false,
@@ -20,201 +20,180 @@
     "updateAfter": 0,
     "mergeContext": false,
     "formatScript": "",
-    "contextPath": "",
-    "contextValue": "",
+    "contextPath": "CIDR(val.Address \u0026\u0026 val.Range === obj.Address)",
+    "contextValue": "Address",
     "excludedBrands": [],
+    "expiration": 10080,
     "defaultMapping": {
-      "accounttype": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Type",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        "asn": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "ASN",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "blocked": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Blocked",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "blocked": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "Blocked",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "displayname": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "DisplayName",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "detectionengines": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "DetectionEngines",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "domainname": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Domain",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "geocountry": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "Geo.Country",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "emailaddress": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Email.Address",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "geolocation": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "Geo.Location",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "groups": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Groups",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "internal": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "Internal",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "indicatoridentification": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "ID",
-          "transformers": [
-            {
-              "operator": "toUpperCase",
-              "args": {}
-            },
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "positivedetections": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "PositiveDetections",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "organizationalunitou": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "OrganizationUnit",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "region": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "Region",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "username": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Username",
-          "transformers": [
-            {
-              "operator": "uniq",
-              "args": {}
+        },
+        "associations": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "Associations",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
             }
-          ]
+        },
+        "reportedby": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "ReportedBy",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
+            }
+        },
+        "threattypes": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "ThreatTypes",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
+            }
+        },
+        "trafficlightprotocoltlp": {
+            "simple": "",
+            "complex": {
+                "root": "CIDR",
+                "filters": [],
+                "accessor": "TrafficLightProtocol",
+                "transformers": [
+                    {
+                        "operator": "uniq",
+                        "args": {}
+                    }
+                ]
+            }
         }
-      },
-      "associations": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Associations",
-          "transformers": [{
-            "operator": "uniq",
-            "args": {}
-          }]
-        }
-      },
-      "reportedby": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "ReportedBy",
-          "transformers": [{
-            "operator": "uniq",
-            "args": {}
-          }]
-        }
-      },
-      "threattypes": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "ThreatTypes",
-          "transformers": [{
-            "operator": "uniq",
-            "args": {}
-          }]
-        }
-      },
-      "trafficlightprotocoltlp": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "TrafficLightProtocol",
-          "transformers": [{
-            "operator": "uniq",
-            "args": {}
-          }]
-        }
-      },
-      "tags": {
-        "simple": "",
-        "complex": {
-          "root": "Account",
-          "filters": [],
-          "accessor": "Tags",
-          "transformers": [{
-            "operator": "uniq",
-            "args": {}
-          }]
-        }
-      }
     },
     "manualMapping": null,
     "fileHashesPriority": null
-  }
+}

@@ -4,6 +4,10 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
+### 0.4.1
+* Added format for incidentfields, incidenttypes, indicatorfields, indicatortype, layout, dashboards.
+* Fixed a issue where reputation name was checks instead of details in reputation validator.
+
 ### 0.4.0
 * Added a validator for Indicator Types (reputation-*.json).
 * Added a BC validation for changing incident field type.

@@ -10,7 +10,7 @@ from ruamel.yaml import YAML
 
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.tools import get_child_directories, get_child_files, print_warning, \
-    get_yml_paths_in_dir, print_error, find_type
+    get_yml_paths_in_dir, print_error, find_type, get_common_server_path
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR,\
     DASHBOARDS_DIR, WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
@@ -340,7 +340,7 @@ class ContentCreator:
                     self.copy_dir_files(content_dir, dest_dir)
 
     @staticmethod
-    def update_content_version(content_ver: str = '', path: str = './Scripts/CommonServerPython/CommonServerPython.py'):
+    def update_content_version(content_ver: str = '', path: str = ''):
         regex = r'CONTENT_RELEASE_VERSION = .*'
         if not content_ver:
             try:
@@ -352,6 +352,8 @@ class ContentCreator:
                 return
 
         try:
+            if not path:
+                path = get_common_server_path('.')
             with open(path, 'r+') as file_:
                 content = file_.read()
                 content = re.sub(regex, f"CONTENT_RELEASE_VERSION = '{content_ver}'", content, re.M)
@@ -361,11 +363,13 @@ class ContentCreator:
             print_warning(f'Could not open CommonServerPython File - {ex}')
 
     @staticmethod
-    def update_branch(path: str = './Scripts/CommonServerPython/CommonServerPython.py'):
+    def update_branch(path: str = ''):
 
         regex = r'CONTENT_BRANCH_NAME = .*'
         branch_name = get_current_working_branch()
         try:
+            if not path:
+                path = get_common_server_path('.')
             with open(path, 'r+') as file_:
                 content = file_.read()
                 content = re.sub(regex, f"CONTENT_BRANCH_NAME = '{branch_name}'", content, re.M)

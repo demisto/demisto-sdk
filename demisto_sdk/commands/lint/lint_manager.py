@@ -7,7 +7,7 @@ from demisto_sdk.commands.lint.linter import Linter
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
 from demisto_sdk.commands.common.tools import get_dev_requirements, print_color, LOG_COLORS, run_command,\
-    get_common_server_dir
+    get_common_server_dir, get_common_server_dir_pwsh
 
 
 LOCK = threading.Lock()
@@ -152,15 +152,20 @@ class LintManager:
 
         # run CommonServer non parallel to avoid conflicts
         # when we modify the file for mypy includes
-        if 'Scripts/CommonServerPython' in pkgs_to_run:
-            pkgs_to_run.remove('Scripts/CommonServerPython')
-            common_server_path = get_common_server_dir('')
-            res, _ = self._run_single_package_thread(package_dir=common_server_path)
-            if res == 0:
-                good_pkgs.append('Scripts/CommonServerPython')
+        single_thread_script = [
+            get_common_server_dir(''),
+            get_common_server_dir_pwsh('')
+        ]
+        for script_dir in single_thread_script:
+            if script_dir in pkgs_to_run:
+                pkgs_to_run.remove(script_dir)
+                print(f'Running single threaded dir: {script_dir}')
+                res, _ = self._run_single_package_thread(package_dir=script_dir)
+                if res == 0:
+                    good_pkgs.append(script_dir)
 
-            else:
-                fail_pkgs.append('Scripts/CommonServerPython')
+                else:
+                    fail_pkgs.append(script_dir)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures_submit = [executor.submit(self._run_single_package_thread, directory) for directory in pkgs_to_run]

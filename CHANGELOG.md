@@ -4,8 +4,14 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
-### 0.4.0
+### 0.4.3
 * Added a validator for IncidentTypes (incidenttype-*.json).
+
+### 0.4.2
+* Fixed an issue where validate failed on Windows.
+* Added a validator to verify all branches are handled in conditional task in a playbook.
+* Added a warning message when not running the latest sdk version.
+* Added a validator to check that the root is connected to all tasks in the playbook.
 * Added a validator for Dashboards (dashboard-*.json).
 * Added a validator for Indicator Types (reputation-*.json).
 * Added a BC validation for changing incident field type.
@@ -13,7 +19,7 @@
 * Fixed an issue in misleading error message in v2 validation hook.
 * Fixed an issue in v2 hook which now is set only on newly added scripts.
 * Added more indicative message for errors in yaml files.
-
+* Disabled pykwalify info log prints.
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.

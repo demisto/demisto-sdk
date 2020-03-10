@@ -16,7 +16,7 @@ from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.tools import print_v, get_all_docker_images, get_python_version, \
     print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command, get_log_verbose, \
-    print_warning, get_common_server_path
+    print_warning, get_common_server_path, get_common_server_path_pwsh
 
 
 class Linter:
@@ -505,7 +505,7 @@ class Linter:
             shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.ps1', self.project_dir)
             if "/Scripts/CommonServerPowerShell" not in self.project_dir:
                 # Otherwise we already have the CommonServerPowerShell.py file
-                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1',
+                shutil.copy(get_common_server_path_pwsh(self.configuration.env_dir),
                             self.project_dir)
         except Exception as e:
             print('Could not copy CommonServerPowerShell.ps1: {}'.format(str(e)))

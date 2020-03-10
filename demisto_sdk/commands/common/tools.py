@@ -574,11 +574,26 @@ def find_type(path: str):
 
 
 def get_common_server_path(env_dir):
-    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts',
-                                           'CommonServerPython', 'CommonServerPython.py')
-    common_server_script_path = os.path.join(env_dir, 'Scripts', 'CommonServerPython',
-                                             'CommonServerPython.py')
+    common_server_dir = get_common_server_dir(env_dir)
+    return os.path.join(common_server_dir, 'CommonServerPython.py')
+
+
+def get_common_server_path_pwsh(env_dir):
+    common_server_dir = get_common_server_dir_pwsh(env_dir)
+    return os.path.join(common_server_dir, 'CommonServerPowerShell.ps1')
+
+
+def _get_common_server_dir_general(env_dir, name):
+    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts', name)
+    common_server_script_path = os.path.join(env_dir, 'Scripts', name)
     if os.path.exists(common_server_pack_path):
         return common_server_pack_path
-
     return common_server_script_path
+
+
+def get_common_server_dir(env_dir):
+    return _get_common_server_dir_general(env_dir, 'CommonServerPython')
+
+
+def get_common_server_dir_pwsh(env_dir):
+    return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')

@@ -5,6 +5,8 @@ Module contains validation of schemas, ids and paths.
 import json
 import os
 import re
+import logging
+
 from typing import Optional
 
 import yaml
@@ -39,7 +41,7 @@ class StructureValidator:
                  configuration=Configuration()):
         # type: (str, Optional[bool], Optional[str], Optional[str], Configuration) -> None
         self.is_valid = True
-        self.file_path = file_path
+        self.file_path = file_path.replace('\\', '/')
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
@@ -96,13 +98,19 @@ class StructureValidator:
         if self.scheme_name in [None, 'image']:
             return True
         try:
+            # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
+            log = logging.getLogger('pykwalify.core')
+            log.setLevel(logging.WARNING)
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
             core = Core(source_file=self.file_path,
                         schema_files=[path])
             core.validate(raise_exception=True)
         except Exception as err:
-            print_error('Failed: {} failed.\n{}'.format(self.file_path, str(err)))
+            try:
+                print_error(self.parse_error_msg(err))
+            except Exception:
+                print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
             self.is_valid = False
             return False
         return True
@@ -236,3 +244,76 @@ class StructureValidator:
         if not is_valid_path:
             print_error(Errors.invalid_file_path(self.file_path))
         return is_valid_path
+
+    def parse_error_msg(self, err) -> str:
+        """A wrapper which runs the print error message for a list of errors in yaml
+        Returns:
+            parsed error message from pykwalify
+        """
+        if ".\n" in str(err):
+            for error in str(err).split('.\n'):
+                return self.parse_error_line(error)
+        else:
+            return self.parse_error_line(str(err))
+
+    def parse_error_line(self, err) -> str:
+        """Returns a parsed error message from pykwalify
+        Args: an schema error message from pykwalify
+        """
+        # err example: '<SchemaError: error code 2: Schema validation failed:
+        #  - Cannot find required key \'description\'. Path: \'\''
+        step_1 = str(err).split('Path: ')
+        # step_1 example: ["<SchemaError: error code 2: Schema validation failed:\n - Cannot find required key
+        # 'description'. ", "'/script/commands/0/outputs/20'.: ", "'/'>"]
+        step_2 = step_1[1]
+        # step_2 example: '\'/script/commands/0/outputs/20\'.: '
+        step_3 = step_2[2:-4]
+        # step_3 example: 'script/commands/0/outputs/20'
+        error_path = step_3.split('/')
+        # error_path example: ['script', 'commands', '0', 'outputs', '20']
+
+        # check if the Path from the error is '' :
+        if isinstance(error_path, list) and error_path[0]:
+            curr = self.current_file
+            key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+            key_list = []
+            for single_path in error_path:
+                if type(curr) is list:
+                    curr = curr[int(single_path)]
+                    # if the error is from arguments of file
+                    if curr.get('name'):
+                        key_list.append(curr.get('name'))
+                    # if the error is from outputs of file
+                    elif curr.get('contextPath'):
+                        key_list.append(curr.get('contextPath'))
+                else:
+                    curr = curr.get(single_path)
+                    key_list.append(single_path)
+
+            # if the error is from arguments of file
+            if curr.get('name'):
+                return ('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                                str(curr.get('name')),
+                                                                                str(key_list).strip('[]').replace(
+                                                                                    ',', '->')))
+            # if the error is from outputs of file
+            elif curr.get('contextPath'):
+                return ('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                                str(curr.get('contextPath')),
+                                                                                str(key_list).strip('[]').replace(
+                                                                                    ',', '->')))
+            # if the error is from neither arguments , outputs nor root
+            else:
+                return (
+                    'Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
+                                                                            str(curr),
+                                                                            str(key_list).strip('[]').replace(',',
+                                                                                                              '->')))
+        else:
+            if 'key' in str(err):
+                key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+            else:
+                key_from_error = str(err).split('Key')[1].split('.')[0].replace("'", '-').split('-')[1]
+            return (
+                'Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), "root",
+                                                              ))

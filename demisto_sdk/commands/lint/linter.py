@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.tools import print_v, get_all_docker_images, get_python_version, \
-    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command
+    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command, get_common_server_path
 
 
 class Linter:
@@ -34,16 +34,18 @@ class Linter:
             lock (threading.Lock): A mutex lock to be used for multi-thread lint.
         """
     common_server_target_path = "CommonServerPython.py"
-    common_server_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
-                                "CommonServerPython/CommonServerPython.py"
+    common_server_pack_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Packs/Base/Scripts/" \
+                                     "CommonServerPython/CommonServerPython.py"
+    common_server_script_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
+                                       "CommonServerPython/CommonServerPython.py"
 
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, configuration: Configuration = Configuration(),
                  lock: threading.Lock = threading.Lock(), no_bandit: bool = False, requirements_3: str = '',
-                 requirements_2: str = ''):
+                 requirements_2: str = '', no_vulture: bool = False):
 
-        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit:
+        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit and no_vulture:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.configuration = configuration
@@ -69,7 +71,8 @@ class Linter:
             'flake8': not no_flake8,
             'mypy': not no_mypy,
             'bandit': not no_bandit,
-            'tests': not no_test
+            'tests': not no_test,
+            'vulture': not no_vulture
         }
         self.lock = lock
         self.requirements_3 = requirements_3
@@ -85,13 +88,20 @@ class Linter:
         if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
             # Get file from git
             try:
-                res = requests.get(self.common_server_remote_path, verify=False)
+                res = requests.get(self.common_server_pack_remote_path, verify=False)
                 with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
                     f.write(res.text)
                     self.common_server_created = True
             except requests.exceptions.RequestException:
-                print_error(Errors.no_common_server_python(self.common_server_remote_path))
-                return False
+                # TODO: remove this
+                try:
+                    res = requests.get(self.common_server_script_remote_path, verify=False)
+                    with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
+                        f.write(res.text)
+                        self.common_server_created = True
+                except requests.exceptions.RequestException:
+                    print_error(Errors.no_common_server_python(self.common_server_script_remote_path))
+                    return False
         return True
 
     def remove_common_server_python(self):
@@ -99,7 +109,7 @@ class Linter:
         if self.common_server_created:
             os.remove(os.path.join(self.project_dir, self.common_server_target_path))
 
-    def run_dev_packages(self) -> int:
+    def run_dev_packages(self) -> int:  # noqa: C901
         return_code = 0
         # load yaml
         _, yml_path = get_yml_paths_in_dir(self.project_dir, Errors.no_yml_file(self.project_dir))
@@ -140,6 +150,11 @@ class Linter:
 
         if self.run_args['bandit']:
             result_val = self.run_bandit(py_num)
+            if result_val:
+                return_code = result_val
+
+        if self.run_args['vulture']:
+            result_val = self.run_vulture(py_num)
             if result_val:
                 return_code = result_val
 
@@ -277,6 +292,38 @@ class Linter:
         print_v('Using: {} to run bandit'.format(python_exe))
         if len(output) == 0:
             print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
+            if self.lock.locked():
+                self.lock.release()
+            return 0
+
+        else:
+            print_error(output)
+            if self.lock.locked():
+                self.lock.release()
+            return 1
+
+    def run_vulture(self, py_num) -> int:
+        """Run vulture
+
+        Args:
+            py_num: The python version in use
+
+        Returns:
+            int. 0 on successful vulture run, 1 otherwise.
+        """
+        lint_files = self._get_lint_files()
+        python_exe = 'python2' if py_num < 3 else 'python3'
+        cmd_args = [python_exe, '-m', 'vulture', lint_files, '--min-confidence',
+                    os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')]
+        vulture_whitelist_path = os.path.join(self.project_dir, '.vulture_whitelist.py')
+        if os.path.isfile(vulture_whitelist_path):
+            cmd_args.insert(4, vulture_whitelist_path)
+        output = run_command(' '.join(cmd_args), cwd=self.project_dir)
+        self.lock.acquire()
+        print("========= Running vulture on: {} ===============".format(lint_files))
+        print_v('Using: {} to run vulture'.format(python_exe))
+        if len(output) == 0:
+            print_color("vulture completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
             if self.lock.locked():
                 self.lock.release()
             return 0
@@ -432,8 +479,8 @@ class Linter:
             self.check_api_module_imports(py_num)
             if "/Scripts/CommonServerPython" not in self.project_dir:
                 # Otherwise we already have the CommonServerPython.py file
-                shutil.copy(self.configuration.env_dir + '/Scripts/CommonServerPython/CommonServerPython.py',
-                            self.project_dir)
+                common_server_path = get_common_server_path(self.configuration.env_dir)
+                shutil.copy(common_server_path, self.project_dir)
         except Exception as e:
             print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)), self.log_verbose)
 

@@ -9,11 +9,18 @@
 * Fixed a issue where reputation name was checks instead of details in reputation validator.
 
 ### 0.4.0
+* Fixed an issue where validate failed on Windows.
+* Added a validator to verify all branches are handled in conditional task in a playbook.
+* Added a warning message when not running the latest sdk version.
+* Added a validator to check that the root is connected to all tasks in the playbook.
+* Added a validator for Dashboards (dashboard-*.json).
 * Added a validator for Indicator Types (reputation-*.json).
 * Added a BC validation for changing incident field type.
 * Fixed an issue where init command would generate an invalid yml for scripts.
 * Fixed an issue in misleading error message in v2 validation hook.
 * Fixed an issue in v2 hook which now is set only on newly added scripts.
+* Added more indicative message for errors in yaml files.
+* Fixed an issue about disabling pykwalify info log prints.
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
@@ -32,6 +39,7 @@
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
 * Fixed an issue where *validate* failed on integration commands without outputs.
 * Added a new hook for naming of v2 integrations and scripts.
+
 
 ### 0.3.8
 * Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.

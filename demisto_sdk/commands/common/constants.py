@@ -497,13 +497,14 @@ ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'script'
 ]
 ID_IN_ROOT = [  # entities in which 'id' key is in the root
-    'playbook'
+    'playbook',
+    'dashboard'
 ]
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
-PACKS_PACK_META_FILE_NAME = 'metadata.json'
+PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
 
 PYTHON_TEST_REGEXES = [
@@ -814,6 +815,7 @@ PYTHON_SUBTYPES = {'python3', 'python2'}
 # github repository url
 CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
 CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
+SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'

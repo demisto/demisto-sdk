@@ -569,7 +569,7 @@ def get_common_server_path(env_dir):
 
 def get_common_server_path_pwsh(env_dir):
     common_server_dir = get_common_server_dir_pwsh(env_dir)
-    return os.path.join(common_server_dir, 'CommonServerPowerShell.py')
+    return os.path.join(common_server_dir, 'CommonServerPowerShell.ps1')
 
 
 def _get_common_server_dir_general(env_dir, name):

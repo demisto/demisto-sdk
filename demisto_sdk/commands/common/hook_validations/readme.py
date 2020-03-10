@@ -2,7 +2,8 @@ import subprocess
 import os
 from demisto_sdk.commands.common.tools import print_error, print_warning
 
-NODE_MODULES_DIRECTORY = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.join(__file__)))))
+NODE_MODULES_DIRECTORY = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.join(__file__))))))
 
 
 class ReadMeValidator:
@@ -20,10 +21,13 @@ class ReadMeValidator:
     def is_valid_file(self):
         """Check whether the readme file is valid or not
         """
-        is_readme_valid = all([
-            self.is_mdx_file(),
-        ])
-        return is_readme_valid
+        if os.environ.get('VALIDATE_README'):
+            is_readme_valid = all([
+                self.is_mdx_file(),
+            ])
+            return is_readme_valid
+        else:
+            return True
 
     def is_mdx_file(self) -> bool:
         mdx_parse = f'{os.path.dirname(os.path.abspath(__file__))}/../mdx-parse.js'
@@ -50,7 +54,6 @@ class ReadMeValidator:
                                          cwd=NODE_MODULES_DIRECTORY)
             is_commander = subprocess.run(['npm', 'ls', 'commander'], text=True, timeout=10, capture_output=True,
                                           cwd=NODE_MODULES_DIRECTORY)
-            print(NODE_MODULES_DIRECTORY)
             if is_node.returncode == 0 and is_mdx.returncode == 0 and is_fs_extra.returncode == 0 and \
                     is_commander.returncode == 0:
                 ready = True
@@ -64,7 +67,6 @@ class ReadMeValidator:
                 if is_commander.returncode:
                     print_warning(f"The npm module: commander is not installed in the "
                                   f"directory: {NODE_MODULES_DIRECTORY}, Test Skipped.")
-                print_warning(f"The correct directory for node-modules folder should be in {NODE_MODULES_DIRECTORY}.")
         except Exception as err:
             if "No such file or directory: 'node': 'node'" in str(err):
                 print_warning(f'There is no node installed on the machine, Test Skipped, warning: {err}')

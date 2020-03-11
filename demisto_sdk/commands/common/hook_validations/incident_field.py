@@ -328,21 +328,6 @@ class IncidentFieldValidator(BaseValidator):
             print_error(error_msg)
         return is_valid
 
-    def is_changed_from_version(self):
-        # type: () -> bool
-        """Check if fromversion has been changed.
-
-       Returns:
-           bool. Whether fromversion has been changed.
-       """
-        old_from_version = self.old_file.get('fromVersion', None)
-        if old_from_version:
-            current_from_version = self.current_file.get('fromVersion', None)
-            if old_from_version != current_from_version:
-                print_error(Errors.from_version_modified_after_rename())
-                return True
-        return False
-
     def is_valid_required(self):
         # type: () -> bool
         """Validate that the incident field is not required."""
@@ -362,18 +347,34 @@ class IncidentFieldValidator(BaseValidator):
             print_error(error_msg)
         return is_valid
 
+    def is_changed_from_version(self):
+        # type: () -> bool
+        """Check if fromversion has been changed.
+
+       Returns:
+           bool. Whether fromversion has been changed.
+       """
+        is_fromversion_changed = False
+        old_from_version = self.old_file.get('fromVersion', None)
+        if old_from_version:
+            current_from_version = self.current_file.get('fromVersion', None)
+            if old_from_version != current_from_version:
+                print_error(Errors.from_version_modified_after_rename())
+                is_fromversion_changed = True
+        return is_fromversion_changed
+
     def is_changed_type(self):
         # type: () -> bool
         """Validate that the type was not changed."""
         error_msg = None
-        is_valid = True
+        is_type_changed = False
         current_type = self.current_file.get('type', "")
         if self.old_file:
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
                 error_msg = f'{self.file_path}: Changing incident field type is not allowed.'
-                is_valid = False
+                is_type_changed = True
 
         if error_msg:
             print_error(error_msg)
-        return is_valid
+        return is_type_changed

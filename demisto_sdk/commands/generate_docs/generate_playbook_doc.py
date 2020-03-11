@@ -1,9 +1,10 @@
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
-from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
-    generate_list_section, HEADER_TYPE
+from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD, \
+    generate_list_section, HEADER_TYPE, generate_section, generate_numbered_section
 
 
-def generate_playbook_doc(input, output, examples, id_set, verbose=False):
+def generate_playbook_doc(input, output, global_permissions: str = None, additional_info: str = None,
+                          limitations: str = None, troubleshooting: str = None, verbose=False):
     try:
         playbook = get_yaml(input)
         errors = []
@@ -23,6 +24,12 @@ def generate_playbook_doc(input, output, examples, id_set, verbose=False):
         errors.extend(inputs_errors)
         errors.extend(outputs_errors)
 
+        # Playbooks global permissions
+        if global_permissions:
+            if '\n' in global_permissions:
+                global_permissions = global_permissions.split('\n')
+            doc.extend(generate_section('Permissions', global_permissions))
+
         doc.extend(generate_list_section('Sub-playbooks', playbooks, header_type=HEADER_TYPE.H3,
                                          empty_message='This playbook does not use any sub-playbooks.'))
 
@@ -38,6 +45,16 @@ def generate_playbook_doc(input, output, examples, id_set, verbose=False):
         doc.extend(generate_table_section(inputs, 'Playbook Inputs', 'There are no inputs for this playbook.'))
 
         doc.extend(generate_table_section(outputs, 'Playbook Outputs', 'There are no outputs for this playbook.'))
+
+        # Additional info
+        if additional_info:
+            doc.extend(generate_numbered_section('Additional Information', additional_info))
+        # Known limitations
+        if limitations:
+            doc.extend(generate_numbered_section('Known Limitations', limitations))
+        # Troubleshooting
+        if troubleshooting:
+            doc.extend(generate_section('Troubleshooting', troubleshooting))
 
         doc.append('<!-- Playbook PNG image comes here -->')
 

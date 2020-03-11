@@ -1,10 +1,12 @@
 import os.path
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
-from demisto_sdk.commands.generate_docs.common import build_example_dict, add_lines, generate_section,\
-    save_output, generate_table_section, stringEscapeMD
+from demisto_sdk.commands.generate_docs.common import build_example_dict, add_lines, generate_section, \
+    save_output, generate_table_section, stringEscapeMD, generate_numbered_section
 
 
-def generate_integration_doc(input, output, examples, id_set, verbose=False):
+def generate_integration_doc(input, output, examples, use_cases: str = None, global_permissions: str = None,
+                             command_permissions: str = None, additional_info: str = None, limitations: str = None,
+                             troubleshooting: str = None, verbose=False):
     try:
         yml_data = get_yaml(input)
 
@@ -17,21 +19,42 @@ def generate_integration_doc(input, output, examples, id_set, verbose=False):
         else:
             errors.append(f'Command examples was not found {examples}.')
 
+        command_permissions_dict = {}
+        if command_permissions and os.path.isfile(command_permissions):
+            command_permissions = get_command_permissions(command_permissions)
+            for command_permission in command_permissions:
+                key, value = command_permission.split(": ", 1)
+                command_permissions_dict.add(key, value)
+        else:
+            errors.append(f'Command permissions was not found {command_permissions}.')
+
         docs = []  # type: list
         docs.extend(add_lines(yml_data.get('description')))
-        docs.append('This integration was integrated and tested with version xx of {}'.format(yml_data['name']))
+        docs.extend('This integration was integrated and tested with version xx of {}'.format(yml_data['name']))
+
+        # Integration use cases
+        if use_cases:
+            docs.extend(generate_numbered_section('Use Cases', use_cases))
+        # Integration global permissions
+        if global_permissions:
+            docs.extend(generate_section('Permissions (required for all the commands)', global_permissions))
         # Setup integration to work with Demisto
         docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
         # Setup integration on Demisto
         docs.extend(generate_setup_section(yml_data))
         # Commands
-        command_section, command_errors = generate_commands_section(yml_data, example_dict)
+        command_section, command_errors = generate_commands_section(yml_data, example_dict, command_permissions)
         docs.extend(command_section)
         errors.extend(command_errors)
         # Additional info
-        docs.extend(generate_section('Additional Information', ''))
+        if additional_info:
+            docs.extend(generate_numbered_section('Additional Information', additional_info))
         # Known limitations
-        docs.extend(generate_section('Known Limitations', ''))
+        if limitations:
+            docs.extend(generate_numbered_section('Known Limitations', limitations))
+        # Troubleshooting
+        if troubleshooting:
+            docs.extend(generate_section('Troubleshooting', troubleshooting))
 
         doc_text = '\n'.join(docs)
 
@@ -72,7 +95,7 @@ def generate_setup_section(yaml_data):
 
 
 # Commands
-def generate_commands_section(yaml_data, example_dict):
+def generate_commands_section(yaml_data, example_dict, command_permissions_dict: str):
     errors = []  # type: list
     section = [
         '## Commands',
@@ -80,11 +103,11 @@ def generate_commands_section(yaml_data, example_dict):
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.'
     ]
     commands = filter(lambda cmd: not cmd.get('deprecated', False), yaml_data['script']['commands'])
-
     command_sections = []
 
     for i, cmd in enumerate(commands):
-        cmd_section, cmd_errors = generate_single_command_section(i, cmd, example_dict)
+        permissions = command_permissions_dict.get(cmd)
+        cmd_section, cmd_errors = generate_single_command_section(cmd, example_dict, permissions)
         command_sections.extend(cmd_section)
         errors.extend(cmd_errors)
 
@@ -92,7 +115,7 @@ def generate_commands_section(yaml_data, example_dict):
     return section, errors
 
 
-def generate_single_command_section(index, cmd, example_dict):
+def generate_single_command_section(cmd, example_dict, permission: str = None):
     cmd_example = example_dict.get(cmd['name'])
     errors = []
     section = [
@@ -100,7 +123,7 @@ def generate_single_command_section(index, cmd, example_dict):
         '***',
         cmd.get('description', ' '),
         '##### Required Permissions',
-        '**FILL IN REQUIRED PERMISSIONS HERE**',
+        permission if permission else '**FILL IN REQUIRED PERMISSIONS HERE**',
         '##### Base Command',
         '',
         '`{}`'.format(cmd['name']),
@@ -224,3 +247,38 @@ def command_example_filter(command):
     elif not command.startswith('!'):
         return f'!{command}'
     return command
+
+
+def get_command_permissions(commands_permissions_file_path):
+    """
+    get command permissions from file
+
+    @param commands_permissions_file_path: command permissions file or the content of such file
+
+    @return: a list of command permissions
+    """
+    commands_permissions = []  # type: list
+
+    if commands_permissions_file_path is None:
+        return commands_permissions
+
+    if os.path.isfile(commands_permissions):
+        with open(commands_permissions, 'r') as permissions_file:
+            permissions = permissions_file.read().splitlines()
+    else:
+        print('failed to open permissions file')
+        permissions = commands_permissions_file_path.split('\n')
+
+    permissions = map(command_permissions_filter, permissions)
+    permissions = list(filter(None, permissions))
+
+    print('found the following commands permissions:\n{}'.format('\n '.join(permissions)))
+    return permissions
+
+
+def command_permissions_filter(permission):
+    if permission.startswith('#'):
+        return
+    elif permission.startswith('!'):
+        return f'{permission}'
+    return permission

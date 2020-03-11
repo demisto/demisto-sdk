@@ -2,11 +2,12 @@ import os
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error,\
     get_from_version, get_json
-from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
-    generate_list_section, build_example_dict
+from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD, \
+    generate_list_section, build_example_dict, generate_section, generate_numbered_section
 
 
-def generate_script_doc(input, output, examples, id_set='', verbose=False):
+def generate_script_doc(input, output, examples, id_set='', global_permissions: str = None, additional_info: str = None,
+                        limitations: str = None, troubleshooting: str = None, verbose=False):
     try:
         doc = []
         errors = []
@@ -65,6 +66,12 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
             doc.extend(generate_list_section('Dependencies', dependencies, True,
                                              text='This script uses the following commands and scripts.'))
 
+        # Script global permissions
+        if global_permissions:
+            if '\n' in global_permissions:
+                global_permissions = global_permissions.split('\n')
+            doc.extend(generate_section('Permissions', global_permissions))
+
         if used_in:
             doc.extend(generate_list_section('Used In', used_in, True,
                                              text='This script is used in the following playbooks and scripts.'))
@@ -75,6 +82,16 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
 
         if example_section:
             doc.extend(example_section)
+
+        # Additional info
+        if additional_info:
+            doc.extend(generate_numbered_section('Additional Information', additional_info))
+        # Known limitations
+        if limitations:
+            doc.extend(generate_numbered_section('Known Limitations', limitations))
+        # Troubleshooting
+        if troubleshooting:
+            doc.extend(generate_section('Troubleshooting', troubleshooting))
 
         doc_text = '\n'.join(doc)
 
@@ -192,8 +209,6 @@ def get_used_in(id_set_path, script_id):
 
 def generate_script_example(script_name, example=None):
     errors = []
-    context_example = None
-    md_example = ''
     if example:
         script_example = example[script_name][0]
         md_example = example[script_name][1]

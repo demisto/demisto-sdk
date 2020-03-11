@@ -44,6 +44,22 @@ def generate_section(title, data=''):
     return section
 
 
+def generate_numbered_section(title, data=''):
+    """
+    Generate numbered section in markdown format.
+    :param title: The section title.
+    :param data: The section text.
+    :return: array of strings contains the section lines in markdown format.
+    """
+    section = [
+        '## {}'.format(title),
+        ''
+    ]
+    if data:
+        section.extend(data.split('# ').join('\n*'))
+    return section
+
+
 def generate_list_section(title, data='', horizontal_rule=False, empty_message='', text='', header_type=HEADER_TYPE.H2):
     """
      Generate list section in markdown format.

@@ -520,9 +520,25 @@ def init(**kwargs):
     "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
     help="The type of yml file.", required=False)
 @click.option(
-    "-e", "--examples", help="For integration - Path for file containing command or script examples."
+    "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '#' (i.e. '# foo. # bar.')",
+    required=False)
+@click.option(
+    "-e", "--examples", help="Path for file containing command or script examples."
                              " Each Command should be in a separate line."
                              " For script - the script example surrounded by double quotes.")
+@click.option(
+    "-gp", "--global_permissions", help="Global permissions in the documentation.", required=False)
+@click.option(
+    "-cp", "--command_permissions", help="Path for file containing commands permissions"
+                                         " Each command permissions should be in a separate line."
+                                         " (i.e. '!command-name # READ-WRITE # Administrator')", required=False)
+@click.option(
+    "-ai", "--additional_info", help="Additional information. Number the steps by '#' (i.e. '# foo. # bar.')",
+    required=False)
+@click.option(
+    "-l", "--limitations", help="Known limitations. Number the steps by '#' (i.e. '# foo. # bar.')", required=False)
+@click.option(
+    "-ts", "--troubleshooting", help="Troubleshooting manual.", required=False)
 @click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(

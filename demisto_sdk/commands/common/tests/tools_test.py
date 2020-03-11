@@ -5,7 +5,10 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX
-from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare
+from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type, get_dict_from_file
+from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
+    VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
+    INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH
 
 
 class TestGenericFunctions:
@@ -28,6 +31,37 @@ class TestGenericFunctions:
             assert first_yml_path == yml_paths_test[0]
         else:
             assert not first_yml_path
+
+    data_test_get_dict_from_file = [
+        (VALID_REPUTATION_FILE, 'json'),
+        (VALID_SCRIPT_PATH, 'yml'),
+        ('test', None),
+        (None, None)
+    ]
+
+    @pytest.mark.parametrize('path, _type', data_test_get_dict_from_file)
+    def test_get_dict_from_file(self, path, _type):
+        output = get_dict_from_file(str(path))[1]
+        assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
+
+    data_test_find_type = [
+        (VALID_DASHBOARD_PATH, 'dashboard'),
+        (VALID_INCIDENT_FIELD_PATH, 'incidentfield'),
+        (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
+        (INDICATORFIELD_EXTRA_FIELDS, 'indicatorfield'),
+        (VALID_INTEGRATION_TEST_PATH, 'integration'),
+        (VALID_LAYOUT_PATH, 'layout'),
+        (VALID_PLAYBOOK_ID_PATH, 'playbook'),
+        (VALID_REPUTATION_FILE, 'reputation'),
+        (VALID_SCRIPT_PATH, 'script'),
+        (VALID_WIDGET_PATH, 'widget'),
+        ('', '')
+    ]
+
+    @pytest.mark.parametrize('path, _type', data_test_find_type)
+    def test_find_type(self, path, _type):
+        output = find_type(str(path))
+        assert output == _type, f'find_type({path}) returns: {output} instead {_type}'
 
 
 class TestGetRemoteFile:

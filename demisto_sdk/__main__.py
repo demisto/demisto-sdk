@@ -14,6 +14,7 @@ from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -24,7 +25,6 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
-from demisto_sdk.validation.type_file.find_type import find_type
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version
@@ -202,7 +202,7 @@ def unify(**kwargs):
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
 @click.option(
-    '-p', '--path', help='Path of file to validate specifically.'
+    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
 )
 @pass_config
 def validate(config, **kwargs):

@@ -167,13 +167,13 @@ Extract code, image and description files from a demisto integration or script y
 1. This command will split the yml file to a directory with the integration components (code, image, description, pipfile etc.
 
    ```shell
-   demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m
+   demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt
    ```
 
 2. This command will split the yml file to a directory with the script components (code, description, pipfile etc.)
 
    ```shell
-   demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt -m
+   demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt
    ```
 
 For detalied command usage press [here](demisto_sdk/commands/split_yml/split_yml_command.md)

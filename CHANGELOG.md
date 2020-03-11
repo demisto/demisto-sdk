@@ -6,6 +6,7 @@
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.
+* Support for linting and unit testing PoweShell integrations.
 
 ### 0.4.2
 * Fixed an issue where validate failed on Windows.

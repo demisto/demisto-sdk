@@ -30,7 +30,7 @@ Also make sure your methods work from the CLI by running `python demisto_sdk <yo
 Push your branch and create a PR in demisto-sdk repository.
 In your IDE go to content repository on a local branch.
 Search for the file: **dev-requirements-py3.txt**.
-There swap the line `demisto-sdk==X.X.X` with: `git+https://github.com/demisto/demisto-sdk.git@{your_sdk_branch_name}`
+There swap the line `demisto-sdk==X.X.X` with: `git+https://github.com/demisto/demisto-sdk.git@{your_sdk_branch_name}`. For example see [here](https://github.com/demisto/content/blob/ad06ef4d1bdd398ce4b70f0fd2e5eab7a772c11c/dev-requirements-py3.txt#L2).
 Go to the file **config.yml** there you can find all the build steps - you can change whichever steps you want to check using demisto-sdk.
 Make any other changes you want in the content repository and push - this will make CircleCI run using your localized branch of demisto-sdk and on the changes made on content repository.
 

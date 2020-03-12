@@ -3,10 +3,12 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.4
+* Fixed an issue where the -p flag in validate was not working.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.
-* Fixed an issue where the -p flag in validate was not working.
+* Support for linting and unit testing PowerShell integrations.
 
 ### 0.4.2
 * Fixed an issue where validate failed on Windows.

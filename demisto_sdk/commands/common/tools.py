@@ -6,15 +6,15 @@ import glob
 import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple, Dict
+from typing import Union, Optional, Tuple, Dict, List
 
 import urllib3
 import yaml
 import requests
 
-from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
-    CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, SDK_API_GITHUB_RELEASES
+from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES,\
+    CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX,\
+    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -25,6 +25,18 @@ class LOG_COLORS:
     RED = '\033[01;31m'
     GREEN = '\033[01;32m'
     YELLOW = '\033[0;33m'
+
+
+LOG_VERBOSE = False
+
+
+def set_log_verbose(verbose: bool):
+    global LOG_VERBOSE
+    LOG_VERBOSE = verbose
+
+
+def get_log_verbose() -> bool:
+    return LOG_VERBOSE
 
 
 def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
@@ -404,15 +416,7 @@ def get_matching_regex(string_to_match, regexes):
     return checked_type(string_to_match, regexes, return_regex=True)
 
 
-def get_docker_images(script_obj):
-    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
-    alt_imgs = script_obj.get('alt_dockerimages')
-    if alt_imgs:
-        imgs.extend(alt_imgs)
-    return imgs
-
-
-def get_all_docker_images(script_obj):
+def get_all_docker_images(script_obj) -> List[str]:
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
     Args:
@@ -422,7 +426,10 @@ def get_all_docker_images(script_obj):
         List. A list of all docker images.
     """
     # this makes sure the first docker in the list is the main docker image.
-    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
+    def_docker_image = DEF_DOCKER
+    if script_obj.get('type') == TYPE_PWSH:
+        def_docker_image = DEF_DOCKER_PWSH
+    imgs = [script_obj.get('dockerimage') or def_docker_image]
 
     # get additional docker images
     for key in script_obj.keys():
@@ -436,7 +443,7 @@ def get_all_docker_images(script_obj):
     return imgs
 
 
-def get_python_version(docker_image, log_verbose, no_prints=False):
+def get_python_version(docker_image, log_verbose=None, no_prints=False):
     """
     Get the python version of a docker image
     Arguments:
@@ -446,6 +453,8 @@ def get_python_version(docker_image, log_verbose, no_prints=False):
     Raises:
         ValueError -- if version is not supported
     """
+    if log_verbose is None:
+        log_verbose = LOG_VERBOSE
     stderr_out = None if log_verbose else DEVNULL
     py_ver = check_output(["docker", "run", "--rm", docker_image,
                            "python", "-c",
@@ -472,12 +481,14 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     return "{}{}".format(envs_dirs_base, int(py_version))
 
 
-def print_v(msg, log_verbose=False):
+def print_v(msg, log_verbose=None):
+    if log_verbose is None:
+        log_verbose = LOG_VERBOSE
     if log_verbose:
         print(msg)
 
 
-def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
+def get_dev_requirements(py_version, envs_dirs_base):
     """
     Get the requirements for the specified py version.
 
@@ -491,7 +502,7 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
         string -- requirement required for the project
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    stderr_out = None if log_verbose else DEVNULL
+    stderr_out = None if LOG_VERBOSE else DEVNULL
     requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
                                 stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))

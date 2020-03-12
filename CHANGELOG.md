@@ -4,8 +4,12 @@
 
 [1]: https://pypi.org/project/demisto-sdk/#history
 
-### 0.4.3
+### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).
+
+### 0.4.3
+* Fixed an issue where the incident and indicator field BC check failed.
+* Support for linting and unit testing PowerShell integrations.
 
 ### 0.4.2
 * Fixed an issue where validate failed on Windows.

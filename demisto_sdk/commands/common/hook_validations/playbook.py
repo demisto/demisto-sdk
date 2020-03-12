@@ -79,32 +79,94 @@ class PlaybookValidator(BaseValidator):
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
             if task.get('type') == 'condition':
-                # default condition should always exist
-                task_condition_labels = {'#default#'}
-                for condition in task.get('conditions', []):
-                    label = condition.get('label')
-                    if label:
-                        task_condition_labels.add(label)
-                next_tasks: Dict = task.get('nexttasks', {})
-                for next_task_branch, next_task_ids in next_tasks.items():
-                    try:
-                        if next_task_ids:
-                            task_condition_labels.remove(next_task_branch)
-                    except KeyError:
-                        print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
-                                    f'next task condition "{next_task_branch}". Please remove this task or add '
-                                    f'this condition to condition task with id:{task.get("id")}.')
-                        self.is_valid = is_all_condition_branches_handled = False
-                # if there are task_condition_labels left then not all branches are handled
-                if task_condition_labels:
-                    try:
-                        task_condition_labels.remove('#default#')
-                        task_condition_labels.add('#else#')
-                    except KeyError:
-                        pass
-                    print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
-                                f'{",".join(map(lambda x: f"{str(x)[1:-1]}", task_condition_labels))}')
-                    self.is_valid = is_all_condition_branches_handled = False
+                # builtin conditional task
+                if task.get('conditions'):
+                    is_all_condition_branches_handled = is_all_condition_branches_handled and \
+                                                        self.is_builtin_condition_task_branches_handled(task)
+                # ask conditional task
+                elif task.get('message'):
+                    is_all_condition_branches_handled = is_all_condition_branches_handled and \
+                                                        self.is_ask_condition_branches_handled(task)
+                # script conditional task
+                elif task.get('scriptName'):
+                    is_all_condition_branches_handled = is_all_condition_branches_handled and \
+                                                        self.is_script_condition_branches_handled(task)
+        return is_all_condition_branches_handled
+
+    def is_builtin_condition_task_branches_handled(self, task):
+        """Checks whether a builtin conditional task branches are handled properly
+
+        Return:
+            bool. if the task handles all condition branches correctly.
+        """
+        # default condition should always exist
+        is_all_condition_branches_handled: bool = True
+        task_condition_labels = {'#default#'}
+        for condition in task.get('conditions', []):
+            label = condition.get('label')
+            if label:
+                task_condition_labels.add(label)
+        next_tasks: Dict = task.get('nexttasks', {})
+        for next_task_branch, next_task_ids in next_tasks.items():
+            try:
+                if next_task_ids:
+                    task_condition_labels.remove(next_task_branch)
+            except KeyError:
+                print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
+                            f'next task condition "{next_task_branch}". Please remove this task or add '
+                            f'this condition to condition task with id:{task.get("id")}.')
+                self.is_valid = is_all_condition_branches_handled = False
+        # if there are task_condition_labels left then not all branches are handled
+        if task_condition_labels:
+            try:
+                task_condition_labels.remove('#default#')
+                task_condition_labels.add('else')
+            except KeyError:
+                pass
+            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
+                        f'{",".join(map(lambda x: f"{str(x)}", task_condition_labels))}')
+            self.is_valid = is_all_condition_branches_handled = False
+        return is_all_condition_branches_handled
+
+    def is_ask_condition_branches_handled(self, task):
+        """Checks whether a builtin conditional task branches are handled properly
+
+        Return:
+            bool. if the task handles all condition branches correctly.
+        """
+        is_all_condition_branches_handled: bool = True
+        next_tasks: Dict = task.get('nexttasks', {})
+        # if default is handled, then it means all branches are being handled
+        if '#default#' in next_tasks:
+            return is_all_condition_branches_handled
+        unhandled_reply_options = set(task.get('message').get('replyOptions'))
+        next_tasks: Dict = task.get('nexttasks', {})
+        for next_task_branch, next_task_ids in next_tasks.items():
+            try:
+                if next_task_ids:
+                    unhandled_reply_options.remove(next_task_branch)
+            except KeyError:
+                pass
+        if unhandled_reply_options:
+            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
+                        f'{",".join(map(lambda x: f"{str(x)}", unhandled_reply_options))}')
+            self.is_valid = is_all_condition_branches_handled = False
+        return is_all_condition_branches_handled
+
+    def is_script_condition_branches_handled(self, task):
+        """Checks whether a script conditional task branches are handled properly
+
+        Return:
+            bool. if the task handles all condition branches correctly.
+        """
+        is_all_condition_branches_handled: bool = True
+        next_tasks: Dict = task.get('nexttasks', {})
+        if '#default#' not in next_tasks:
+            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: else')
+            self.is_valid = is_all_condition_branches_handled = False
+        if 'yes' not in next_tasks:
+            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: yes')
+            self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
     def is_root_connected_to_all_tasks(self):  # type: () -> bool

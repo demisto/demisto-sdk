@@ -71,9 +71,9 @@ class TestPlaybookValidator:
                             }
     IS_CONDITIONAL_INPUTS = [
         (CONDITION_NOT_EXIST_1, True),
-        (CONDITION_EXIST_EMPTY_1, False),
-        (CONDITION_EXIST_EMPTY_2, False),
-        (CONDITION_EXIST_PARTIAL_1, False),
+        (CONDITION_EXIST_EMPTY_1, True),
+        (CONDITION_EXIST_EMPTY_2, True),
+        (CONDITION_EXIST_PARTIAL_1, True),
         (CONDITION_EXIST_PARTIAL_2, False),
         (CONDITION_EXIST_PARTIAL_3, False),
         (CONDITION_EXIST_FULL_NO_TASK_ID, False),

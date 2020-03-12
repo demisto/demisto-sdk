@@ -5,6 +5,8 @@ Module contains validation of schemas, ids and paths.
 import json
 import os
 import re
+import logging
+
 from typing import Optional
 
 import yaml
@@ -39,7 +41,7 @@ class StructureValidator:
                  configuration=Configuration()):
         # type: (str, Optional[bool], Optional[str], Optional[str], Configuration) -> None
         self.is_valid = True
-        self.file_path = file_path
+        self.file_path = file_path.replace('\\', '/')
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
@@ -96,6 +98,9 @@ class StructureValidator:
         if self.scheme_name in [None, 'image']:
             return True
         try:
+            # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
+            log = logging.getLogger('pykwalify.core')
+            log.setLevel(logging.WARNING)
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
             core = Core(source_file=self.file_path,

@@ -6,7 +6,7 @@ import glob
 import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple, Dict
+from typing import Union, Optional, Tuple, Dict, List
 
 import urllib3
 import yaml
@@ -14,7 +14,7 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES,\
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX,\
-    DEF_DOCKER
+    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -25,6 +25,18 @@ class LOG_COLORS:
     RED = '\033[01;31m'
     GREEN = '\033[01;32m'
     YELLOW = '\033[0;33m'
+
+
+LOG_VERBOSE = False
+
+
+def set_log_verbose(verbose: bool):
+    global LOG_VERBOSE
+    LOG_VERBOSE = verbose
+
+
+def get_log_verbose() -> bool:
+    return LOG_VERBOSE
 
 
 def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
@@ -182,17 +194,27 @@ def get_child_files(directory):
     return child_files
 
 
-def get_last_release_version():
+def get_last_remote_release_version():
     """
-    Get latest release tag (xx.xx.xx)
+    Get latest release tag from remote github page
 
     :return: tag
     """
-    tags = run_command('git tag').split('\n')
-    tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
-    tags.sort(key=LooseVersion, reverse=True)
-
-    return tags[0]
+    try:
+        releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False)
+        releases_request.raise_for_status()
+        releases = requests.get(SDK_API_GITHUB_RELEASES, verify=False).json()
+        if isinstance(releases, list) and isinstance(releases[0], dict):
+            latest_release = releases[0].get('tag_name')
+            if isinstance(latest_release, str):
+                # remove v prefix
+                return latest_release[1:]
+    except Exception as exc:
+        exc_msg = str(exc)
+        if isinstance(exc, requests.exceptions.ConnectionError):
+            exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\nThis may happen if you are not connected to the internet.'
+        print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+    return ''
 
 
 def get_file(method, file_path, type_of_file):
@@ -394,15 +416,7 @@ def get_matching_regex(string_to_match, regexes):
     return checked_type(string_to_match, regexes, return_regex=True)
 
 
-def get_docker_images(script_obj):
-    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
-    alt_imgs = script_obj.get('alt_dockerimages')
-    if alt_imgs:
-        imgs.extend(alt_imgs)
-    return imgs
-
-
-def get_all_docker_images(script_obj):
+def get_all_docker_images(script_obj) -> List[str]:
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
     Args:
@@ -412,7 +426,10 @@ def get_all_docker_images(script_obj):
         List. A list of all docker images.
     """
     # this makes sure the first docker in the list is the main docker image.
-    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
+    def_docker_image = DEF_DOCKER
+    if script_obj.get('type') == TYPE_PWSH:
+        def_docker_image = DEF_DOCKER_PWSH
+    imgs = [script_obj.get('dockerimage') or def_docker_image]
 
     # get additional docker images
     for key in script_obj.keys():
@@ -426,7 +443,7 @@ def get_all_docker_images(script_obj):
     return imgs
 
 
-def get_python_version(docker_image, log_verbose, no_prints=False):
+def get_python_version(docker_image, log_verbose=None, no_prints=False):
     """
     Get the python version of a docker image
     Arguments:
@@ -436,6 +453,8 @@ def get_python_version(docker_image, log_verbose, no_prints=False):
     Raises:
         ValueError -- if version is not supported
     """
+    if log_verbose is None:
+        log_verbose = LOG_VERBOSE
     stderr_out = None if log_verbose else DEVNULL
     py_ver = check_output(["docker", "run", "--rm", docker_image,
                            "python", "-c",
@@ -462,12 +481,14 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     return "{}{}".format(envs_dirs_base, int(py_version))
 
 
-def print_v(msg, log_verbose=False):
+def print_v(msg, log_verbose=None):
+    if log_verbose is None:
+        log_verbose = LOG_VERBOSE
     if log_verbose:
         print(msg)
 
 
-def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
+def get_dev_requirements(py_version, envs_dirs_base):
     """
     Get the requirements for the specified py version.
 
@@ -481,7 +502,7 @@ def get_dev_requirements(py_version, envs_dirs_base, log_verbose=False):
         string -- requirement required for the project
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    stderr_out = None if log_verbose else DEVNULL
+    stderr_out = None if LOG_VERBOSE else DEVNULL
     requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
                                 stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))
@@ -553,11 +574,26 @@ def find_type(path: str):
 
 
 def get_common_server_path(env_dir):
-    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts',
-                                           'CommonServerPython', 'CommonServerPython.py')
-    common_server_script_path = os.path.join(env_dir, 'Scripts', 'CommonServerPython',
-                                             'CommonServerPython.py')
+    common_server_dir = get_common_server_dir(env_dir)
+    return os.path.join(common_server_dir, 'CommonServerPython.py')
+
+
+def get_common_server_path_pwsh(env_dir):
+    common_server_dir = get_common_server_dir_pwsh(env_dir)
+    return os.path.join(common_server_dir, 'CommonServerPowerShell.ps1')
+
+
+def _get_common_server_dir_general(env_dir, name):
+    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts', name)
+    common_server_script_path = os.path.join(env_dir, 'Scripts', name)
     if os.path.exists(common_server_pack_path):
         return common_server_pack_path
-
     return common_server_script_path
+
+
+def get_common_server_dir(env_dir):
+    return _get_common_server_dir_general(env_dir, 'CommonServerPython')
+
+
+def get_common_server_dir_pwsh(env_dir):
+    return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')

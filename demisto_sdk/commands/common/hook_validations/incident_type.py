@@ -55,7 +55,6 @@ class IncidentTypeValidator(BaseValidator):
         Returns:
             bool. Whether the current fromversion is valid or not.
         """
-        error_msg = None
         is_valid = True
 
         # if not a new file, will be checked here
@@ -64,14 +63,12 @@ class IncidentTypeValidator(BaseValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    error_msg = f'{self.file_path}: fromVersion must be at least 5.0.0'
+                    print_error(f'{self.file_path}: fromVersion must be at least 5.0.0')
                     is_valid = False
             except (AttributeError, ValueError):
-                error_msg = f'{self.file_path}: "fromVersion" has an invalid value.'
+                print_error(f'{self.file_path}: "fromVersion" has an invalid value.')
                 is_valid = False
 
-        if error_msg:
-            print_error(error_msg)
         return is_valid
 
     def is_id_equals_name(self):
@@ -105,7 +102,6 @@ class IncidentTypeValidator(BaseValidator):
         Returns:
             bool. Whether the fields .
         """
-        error_msg = ""
         is_valid = True
         fields_to_include = ['hours', 'days', 'weeks', 'hoursR', 'daysR', 'weeksR']
 
@@ -116,12 +112,10 @@ class IncidentTypeValidator(BaseValidator):
                     int_field = self.current_file.get(field)
                     if not int_field or not isinstance(int_field, int):
                         is_valid = False
-                        error_msg += f'{self.file_path}: the field {field} needs to be included as an integer.' \
-                                     f' Please add it.\n'
+                        print_error(f'{self.file_path}: the field {field} needs to be included as an integer.'
+                                    f' Please add it.\n')
         except (AttributeError, ValueError):
-            error_msg = f'{self.file_path}: "fromVersion" has an invalid value.'
+            print_error(f'{self.file_path}: "fromVersion" has an invalid value.')
             is_valid = False
 
-        if error_msg:
-            print_error(error_msg)
         return is_valid

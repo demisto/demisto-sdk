@@ -105,7 +105,7 @@ class Linter:
         if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
             # Get file from git
             try:
-                res = requests.get(self.common_server_pack_remote_path, verify=False)
+                res = requests.get(self.common_server_pack_remote_path, verify=False, timeout=10)
                 with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
                     f.write(res.text)
                     self.common_server_created = True

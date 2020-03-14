@@ -396,7 +396,7 @@ class FilesValidator:
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
                 playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook():
+                if not playbook_validator.is_valid_playbook(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
@@ -411,7 +411,7 @@ class FilesValidator:
                     self._is_valid = False
 
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_file(validate_rn=False):
+                if not integration_validator.is_valid_file(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
@@ -421,7 +421,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
 
-                if not script_validator.is_valid_file(validate_rn=False):
+                if not script_validator.is_valid_file(validate_rn=not file_type):
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
@@ -443,17 +443,17 @@ class FilesValidator:
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
-                if not incident_field_validator.is_valid_file(validate_rn=False):
+                if not incident_field_validator.is_valid_file(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
                 reputation_validator = ReputationValidator(structure_validator)
-                if not reputation_validator.is_valid_file(validate_rn=False):
+                if not reputation_validator.is_valid_file(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
                 layout_validator = LayoutValidator(structure_validator)
-                if not layout_validator.is_valid_layout(validate_rn=False):
+                if not layout_validator.is_valid_layout(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
@@ -590,7 +590,7 @@ class FilesValidator:
             if self.file_path:
                 print('Not using git, validating file: {}'.format(self.file_path))
                 self.is_backward_check = False  # if not using git, no need for BC checks
-                self.validate_added_files({self.file_path}, find_type(self.file_path))
+                self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
             else:
                 print('Not using git, validating all files.')
                 self.validate_all_files()

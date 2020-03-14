@@ -585,10 +585,8 @@ def get_common_server_path_pwsh(env_dir):
 
 def _get_common_server_dir_general(env_dir, name):
     common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts', name)
-    common_server_script_path = os.path.join(env_dir, 'Scripts', name)
-    if os.path.exists(common_server_pack_path):
-        return common_server_pack_path
-    return common_server_script_path
+
+    return common_server_pack_path
 
 
 def get_common_server_dir(env_dir):

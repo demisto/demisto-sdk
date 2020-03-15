@@ -7,17 +7,14 @@ from demisto_sdk.commands.common.tools import get_remote_file, get_matching_rege
 from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
     SCHEMA_TO_REGEX
 from pykwalify.core import Core
-# import yaml
+
+import yaml
 import json
 import os
 import re
 import logging
 
 from typing import Optional
-from ruamel.yaml import YAML
-# import io
-ryaml = YAML()
-ryaml.allow_duplicate_keys = True
 
 
 class StructureValidator:
@@ -35,7 +32,7 @@ class StructureValidator:
     SCHEMAS_PATH = "schemas"
 
     FILE_SUFFIX_TO_LOAD_FUNCTION = {
-        '.yml': ryaml.load,
+        '.yml': yaml.load,
         '.json': json.load,
     }
 

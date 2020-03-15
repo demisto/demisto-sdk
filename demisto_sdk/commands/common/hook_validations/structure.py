@@ -47,7 +47,7 @@ class StructureValidator:
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
-        if is_new_file:
+        if is_new_file or predefined_scheme:
             self.old_file = {}
         else:
             self.old_file = get_remote_file(old_file_path if old_file_path else file_path)

@@ -3,12 +3,17 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
-
-### 0.4.1
+### 0.4.4
+* Added a validator for IncidentTypes (incidenttype-*.json).
+* Fixed an issue where the -p flag in the validate was not working.
 * Added format for incidentfields, incidenttypes, indicatorfields, indicatortype, layout, dashboards.
 * Fixed a issue where reputation name was checks instead of details in reputation validator.
 
-### 0.4.0
+### 0.4.3
+* Fixed an issue where the incident and indicator field BC check failed.
+* Support for linting and unit testing PowerShell integrations.
+
+### 0.4.2
 * Fixed an issue where validate failed on Windows.
 * Added a validator to verify all branches are handled in conditional task in a playbook.
 * Added a warning message when not running the latest sdk version.
@@ -20,7 +25,7 @@
 * Fixed an issue in misleading error message in v2 validation hook.
 * Fixed an issue in v2 hook which now is set only on newly added scripts.
 * Added more indicative message for errors in yaml files.
-* Fixed an issue about disabling pykwalify info log prints.
+* Disabled pykwalify info log prints.
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.

@@ -6,13 +6,17 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
     generate_list_section, build_example_dict, generate_section, generate_numbered_section
 
 
-def generate_script_doc(input, output, examples, id_set='', global_permissions: str = None, additional_info: str = None,
-                        limitations: str = None, troubleshooting: str = None, verbose=False):
+def generate_script_doc(input, examples, id_set='', output: str = None, global_permissions: str = None,
+                        additional_info: str = None, limitations: str = None, troubleshooting: str = None,
+                        verbose=False):
     try:
         doc = []
         errors = []
         used_in = []
         example_section = []
+
+        if not output:  # default output dir will be the dir of the input file
+            output = os.path.dirname(os.path.realpath(input))
 
         if examples:
             if not examples.startswith('!'):

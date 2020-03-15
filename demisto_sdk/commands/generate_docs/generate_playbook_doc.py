@@ -1,16 +1,19 @@
+import os
+
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
 from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD, \
     generate_list_section, HEADER_TYPE, generate_section, generate_numbered_section
 
 
-def generate_playbook_doc(input, output, global_permissions: str = None, additional_info: str = None,
+def generate_playbook_doc(input, output: str = None, global_permissions: str = None, additional_info: str = None,
                           limitations: str = None, troubleshooting: str = None, verbose=False):
     try:
         playbook = get_yaml(input)
+        if not output:  # default output dir will be the dir of the input file
+            output = os.path.dirname(os.path.realpath(input))
         errors = []
 
         description = playbook.get('description', '')
-
         if not description:
             errors.append('Error! You are missing description for the playbook')
 

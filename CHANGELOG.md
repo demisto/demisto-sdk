@@ -7,6 +7,9 @@
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.
 * Added the use_cases, global_permissions, command_permissions, additional_info, limitations and troubleshooting arguments to the generate-docs command.
+* Removed the -t argument from the generate-docs command, the file type will be inferred.
+* The -o argument in the generate-docs command is no longer mandatory, default value will be the input file directory.
+
 ### 0.4.2
 * Fixed an issue where validate failed on Windows.
 * Added a validator to verify all branches are handled in conditional task in a playbook.

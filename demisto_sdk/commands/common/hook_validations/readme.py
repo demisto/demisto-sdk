@@ -21,7 +21,7 @@ class ReadMeValidator:
     def is_valid_file(self):
         """Check whether the readme file is valid or not
         """
-        if os.environ.get('VALIDATE_README'):
+        if os.environ.get('DEMISTO_README_VALIDATION'):
             is_readme_valid = all([
                 self.is_mdx_file(),
             ])

@@ -1,5 +1,7 @@
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+
 
 ARGUMENTS_DEFAULT_VALUES = {
     'content': True,
@@ -49,4 +51,4 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
 
 
 # no validator for incident type
-        return self.initiate_file_validator('', 'incidenttype')
+        return self.initiate_file_validator(IncidentTypeValidator, 'incidenttype')

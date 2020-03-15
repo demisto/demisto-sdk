@@ -15,6 +15,8 @@ class BaseUpdateJSON:
             yml_data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
+    SCHEMAS_PATH = "schemas"
+    # os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
 
     DEFAULT_JSON_VERSION = -1
     DEFAULT_FROMVERSION = '5.0.0'

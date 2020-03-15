@@ -103,7 +103,7 @@ def get_remote_file(full_file_path, tag='master'):
     # The replace in the end is for Windows support
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
     try:
-        res = requests.get(github_path, verify=False)
+        res = requests.get(github_path, verify=False, timeout=10)
         res.raise_for_status()
     except Exception as exc:
         print_warning('Could not find the old entity file under "{}".\n'
@@ -201,9 +201,9 @@ def get_last_remote_release_version():
     :return: tag
     """
     try:
-        releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False)
+        releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
         releases_request.raise_for_status()
-        releases = requests.get(SDK_API_GITHUB_RELEASES, verify=False).json()
+        releases = releases_request.json()
         if isinstance(releases, list) and isinstance(releases[0], dict):
             latest_release = releases[0].get('tag_name')
             if isinstance(latest_release, str):

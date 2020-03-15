@@ -2,20 +2,22 @@
 
 Module contains validation of schemas, ids and paths.
 """
+from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
+from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
+    SCHEMA_TO_REGEX
+from pykwalify.core import Core
+# import yaml
 import json
 import os
 import re
 import logging
 
 from typing import Optional
-
-import yaml
-from pykwalify.core import Core
-
-from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
-    SCHEMA_TO_REGEX
-from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
-from demisto_sdk.commands.common.configuration import Configuration
+from ruamel.yaml import YAML
+# import io
+ryaml = YAML()
+ryaml.allow_duplicate_keys = True
 
 
 class StructureValidator:
@@ -33,7 +35,7 @@ class StructureValidator:
     SCHEMAS_PATH = "schemas"
 
     FILE_SUFFIX_TO_LOAD_FUNCTION = {
-        '.yml': yaml.safe_load,
+        '.yml': ryaml.load,
         '.json': json.load,
     }
 

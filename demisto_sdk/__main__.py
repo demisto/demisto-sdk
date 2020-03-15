@@ -323,23 +323,28 @@ def lint(config, dir, **kwargs):
 
 # ====================== format ====================== #
 @main.command(name="format",
-              short_help="Run formatter on a given script/playbook/integration yml file. ")
+              short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
+                         "incidenttype/indicatortype/layout/dashboard file. ")
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-t", "--file-type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file to be formatted.")
-@click.option(
     "-s", "--source-file", help="The path of the script yml file")
+# -i --in
 @click.option(
     "-o", "--output-file-name", help="The path where the formatted file will be saved to")
+# -o --out
+@click.option(
+    "-p", "--pack", help="Specify directory of the pack")
+@click.option(
+    "-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Format changed files using git'
                         '- this will format your branch changes and will run only on them.')
-def format_yml(use_git=False, file_type=None, **kwargs):
-    return format_manager(use_git, file_type, **kwargs)
+def format_yml(use_git=False, file_type=None, pack=None, version=None, from_version=None, system=False, content=True,
+               required=True, **kwargs):
+    return format_manager(use_git, file_type, pack, version, from_version, system, content, required, **kwargs)
 
 
 @main.command(name="upload",

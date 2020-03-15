@@ -1,10 +1,12 @@
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 import os
 import sys
 import yaml
 import yamlordereddictloader
-
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from ruamel.yaml import YAML
+ryaml = YAML()
+ryaml.allow_duplicate_keys = True
 
 
 class BaseUpdateYML:
@@ -67,7 +69,7 @@ class BaseUpdateYML:
         print(F'Reading YML data')
 
         with open(self.source_file) as f:
-            return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+            return ryaml.load(f)
 
     def get_id_and_version_path_object(self):
         """Gets the dict that holds the id and version fields.
@@ -116,11 +118,9 @@ class BaseUpdateYML:
         yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
 
         with open(self.output_file_name, 'w') as f:
-            yaml.dump(
+            ryaml.dump(
                 self.yml_data,
-                f,
-                Dumper=yamlordereddictloader.SafeDumper,
-                default_flow_style=False)
+                f)
 
     def update_yml(self):
         """Manager function for the generic YML updates."""

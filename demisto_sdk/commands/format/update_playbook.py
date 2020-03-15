@@ -66,6 +66,13 @@ class PlaybookYMLFormat(BaseUpdateYML):
         if 'sourceplaybookid' in self.yml_data:
             self.yml_data.pop('sourceplaybookid', None)
 
+    # def transformer_format(self, curr_dict, target='simple'):
+    #     target_lst = list(filter(None,[[val] if key == target else self.transformer_format(curr_dict=val)
+    #     if isinstance(val, dict)
+    #                               else None for key, val in curr_dict.items()]))
+    #     a = [i for b in target_lst for i in b]
+    #     return a
+
     def format_file(self):
         """Manager function for the playbook YML updater."""
         super().update_yml()
@@ -75,6 +82,9 @@ class PlaybookYMLFormat(BaseUpdateYML):
         self.add_description()
         self.update_playbook_task_name()
         self.update_fromversion()
+        # a = self.transformer_format(self.yml_data)
+        # print("hi--------------------------------------------------")
+        # print(a)
         self.save_yml_to_destination_file()
 
         print_color(F'========Finished updates for playbook: {self.output_file_name}=======', LOG_COLORS.YELLOW)

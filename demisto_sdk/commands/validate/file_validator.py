@@ -15,6 +15,7 @@ import os
 import re
 
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, \
@@ -22,7 +23,8 @@ from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORM
     SCRIPT_REGEX, IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, \
+    JSON_ALL_INCIDENT_TYPES_REGEXES
 from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
@@ -356,6 +358,13 @@ class FilesValidator:
                 if not dashboard_validator.is_valid_dashboard(validate_rn=True):
                     self._is_valid = False
 
+            elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
+                incident_type_validator = IncidentTypeValidator(structure_validator)
+                if not incident_type_validator.is_valid_incident_type():
+                    self._is_valid = False
+                if self.is_backward_check and not incident_type_validator.is_backward_compatible():
+                    self._is_valid = False
+
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
 
@@ -459,6 +468,11 @@ class FilesValidator:
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
                 dashboard_validator = DashboardValidator(structure_validator)
                 if not dashboard_validator.is_valid_dashboard():
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
+                incident_type_validator = IncidentTypeValidator(structure_validator)
+                if not incident_type_validator.is_valid_incident_type():
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:

@@ -498,7 +498,8 @@ ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
 ]
 ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'playbook',
-    'dashboard'
+    'dashboard',
+    'incident_type'
 ]
 
 # Pack Unique Files

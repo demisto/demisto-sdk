@@ -6,7 +6,8 @@ from typing import Tuple, List
 from demisto_sdk.commands.lint.linter import Linter
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR
-from demisto_sdk.commands.common.tools import get_dev_requirements, print_color, LOG_COLORS, run_command,\
+from demisto_sdk.commands.common.tools import get_dev_requirements, print_color, LOG_COLORS, run_command, \
+    set_log_verbose, print_error, \
     get_common_server_dir, get_common_server_dir_pwsh
 
 
@@ -23,6 +24,7 @@ class LintManager:
         no_flake8 (bool): Whether to skip flake8.
         no_mypy (bool): Whether to skip mypy.
         no_bandit (bool): Whether to skip bandit.
+        no_pslint (bool): Whether to skip powershell lint.
         no_vulture (bool): Whether to skip vulture.
         verbose (bool): Whether to output a detailed response.
         root (bool): Whether to run pytest container with root user.
@@ -38,6 +40,7 @@ class LintManager:
     def __init__(self, project_dir_list: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, verbose: bool = False, root: bool = False, keep_container: bool = False,
                  cpu_num: int = 0, parallel: bool = False, max_workers: int = 10, no_bandit: bool = False,
+                 no_pslint: bool = False,
                  no_vulture: bool = False, git: bool = False, run_all_tests: bool = False, outfile: str = '',
                  configuration: Configuration = Configuration()):
 
@@ -45,7 +48,7 @@ class LintManager:
             raise ValueError("Nothing to run as all --no-* options specified.")
 
         self.parallel = parallel
-        self.log_verbose = verbose
+        set_log_verbose(verbose)
         self.root = root
         self.max_workers = 10 if max_workers is None else int(max_workers)
         self.keep_container = keep_container
@@ -57,7 +60,8 @@ class LintManager:
             'mypy': not no_mypy,
             'tests': not no_test,
             'bandit': not no_bandit,
-            'vulture': not no_vulture
+            'pslint': not no_pslint,
+            'vulture': not no_vulture,
         }
 
         if run_all_tests or (not project_dir_list and git):
@@ -70,8 +74,8 @@ class LintManager:
             self.pkgs = self._get_packages_to_run()
 
         self.configuration = configuration
-        self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base, self.log_verbose)
-        self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base, self.log_verbose)
+        self.requirements_for_python3 = get_dev_requirements(3.7, self.configuration.envs_dirs_base)
+        self.requirements_for_python2 = get_dev_requirements(2.7, self.configuration.envs_dirs_base)
         self.outfile = outfile
 
     @staticmethod
@@ -117,9 +121,10 @@ class LintManager:
 
                 linter = Linter(project_dir, no_test=not self.run_args['tests'],
                                 no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
-                                no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
+                                no_mypy=not self.run_args['mypy'], root=self.root,
                                 keep_container=self.keep_container, cpu_num=self.cpu_num,
                                 configuration=self.configuration, no_bandit=not self.run_args['bandit'],
+                                no_pslint=not self.run_args['pslint'],
                                 no_vulture=not self.run_args['vulture'],
                                 requirements_3=self.requirements_for_python3,
                                 requirements_2=self.requirements_for_python2)
@@ -240,14 +245,20 @@ class LintManager:
         Returns:
             Tuple[int, str]. The result code for the lint command and the package name.
         """
-        linter = Linter(package_dir, no_test=not self.run_args['tests'],
-                        no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
-                        no_mypy=not self.run_args['mypy'], verbose=self.log_verbose, root=self.root,
-                        keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
-                        lock=LOCK, no_bandit=not self.run_args['bandit'], no_vulture=not self.run_args['vulture'],
-                        requirements_3=self.requirements_for_python3, requirements_2=self.requirements_for_python2)
-
-        return linter.run_dev_packages(), package_dir
+        try:
+            linter = Linter(package_dir, no_test=not self.run_args['tests'],
+                            no_pylint=not self.run_args['pylint'], no_flake8=not self.run_args['flake8'],
+                            no_mypy=not self.run_args['mypy'], root=self.root,
+                            keep_container=self.keep_container, cpu_num=self.cpu_num, configuration=self.configuration,
+                            lock=LOCK, no_bandit=not self.run_args['bandit'],
+                            no_vulture=not self.run_args['vulture'],
+                            no_pslint=not self.run_args['pslint'],
+                            requirements_3=self.requirements_for_python3,
+                            requirements_2=self.requirements_for_python2)
+            return linter.run_dev_packages(), package_dir
+        except Exception as ex:
+            print_error(f'Failed running lint for: {package_dir}. Exception: {ex}')
+            return 1, package_dir
 
     @staticmethod
     def create_failed_unittests_file(failed_unittests, outfile):

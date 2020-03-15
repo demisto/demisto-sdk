@@ -195,18 +195,21 @@ class Unifier:
 
     def get_code_file(self, script_type):
         """Return the first code file in the specified directory path
-        :param script_type: script type: .py or .js
+        :param script_type: script type: .py, .js, .ps1
         :type script_type: str
         :return: path to found code file
         :rtype: str
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py')
-
+                        r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py'
+                        r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
+        if self.package_path.endswith('/'):
+            self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
         if self.package_path.endswith('Scripts/CommonServerPython'):
             return os.path.join(self.package_path, 'CommonServerPython.py')
-
+        if self.package_path.endswith('Scripts/CommonServerPowerShell'):
+            return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
@@ -226,7 +229,10 @@ class Unifier:
         if module_import:
             script_code = self.insert_module_code(script_code, module_import, module_name)
 
-        clean_code = self.clean_python_code(script_code)
+        if script_type == '.py':
+            clean_code = self.clean_python_code(script_code)
+        if script_type == '.ps1':
+            clean_code = self.clean_pwsh_code(script_code)
 
         if self.is_script_package:
             if yml_data.get('script', '') not in ('', '-'):
@@ -318,4 +324,10 @@ class Unifier:
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
             script_code = script_code.replace("from __future__ import print_function", "")
+        return script_code
+
+    @staticmethod
+    def clean_pwsh_code(script_code):
+        script_code = script_code.replace(". $PSScriptRoot\\demistomock.ps1", "")
+        script_code = script_code.replace(". $PSScriptRoot\\CommonServerPowerShell.ps1", "")
         return script_code

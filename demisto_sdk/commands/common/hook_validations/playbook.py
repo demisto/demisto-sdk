@@ -81,16 +81,16 @@ class PlaybookValidator(BaseValidator):
             if task.get('type') == 'condition':
                 # builtin conditional task
                 if task.get('conditions'):
-                    is_all_condition_branches_handled = is_all_condition_branches_handled and self.is_builtin_condition_task_branches_handled(
-                        task)
+                    is_all_condition_branches_handled = self.is_builtin_condition_task_branches_handled(task) and \
+                                                        is_all_condition_branches_handled
                 # ask conditional task
                 elif task.get('message'):
-                    is_all_condition_branches_handled = is_all_condition_branches_handled and self.is_ask_condition_branches_handled(
-                        task)
+                    is_all_condition_branches_handled = self.is_ask_condition_branches_handled(task) and \
+                                                        is_all_condition_branches_handled
                 # script conditional task
                 elif task.get('scriptName'):
-                    is_all_condition_branches_handled = is_all_condition_branches_handled and self.is_script_condition_branches_handled(
-                        task)
+                    is_all_condition_branches_handled = self.is_script_condition_branches_handled(task) and \
+                                                        is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
     def is_builtin_condition_task_branches_handled(self, task):

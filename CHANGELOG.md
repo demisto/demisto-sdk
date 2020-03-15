@@ -3,6 +3,9 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.4
+* Added a validator for IncidentTypes (incidenttype-*.json).
+* Fixed an issue where the -p flag in the validate was not working.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

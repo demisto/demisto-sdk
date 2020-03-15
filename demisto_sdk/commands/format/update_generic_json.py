@@ -10,8 +10,8 @@ class BaseUpdateJSON:
     """BaseUpdateJSON is the base class for all updaters.
 
         Attributes:
-            source_file (str): the path to the file we are updating at the moment.
-            output_file_name (str): the desired file name to save the updated version of the YML to.
+            input (str): the path to the file we are updating at the moment.
+            output (str): the desired file name to save the updated version of the YML to.
             yml_data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
@@ -21,9 +21,9 @@ class BaseUpdateJSON:
     DEFAULT_JSON_VERSION = -1
     DEFAULT_FROMVERSION = '5.0.0'
 
-    def __init__(self, source_file='', output_file_name='', old_file=''):
+    def __init__(self, input='', output='', old_file=''):
         self.fromVersion = True
-        self.source_file = source_file
+        self.source_file = input
         self.old_file = old_file
         if not self.source_file:
             print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
@@ -35,7 +35,7 @@ class BaseUpdateJSON:
             print_color('Provided file is not a valid JSON.', LOG_COLORS.RED)
             sys.exit(1)
 
-        self.output_file_name = self.set_output_file_name(output_file_name)
+        self.output_file_name = self.set_output_file_name(output)
 
     def set_output_file_name(self, output_file_name):
         """Creates and format the output file name according to user input.

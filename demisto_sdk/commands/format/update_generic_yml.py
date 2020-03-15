@@ -13,8 +13,8 @@ class BaseUpdateYML:
     """BaseUpdateYML is the base class for all updaters.
 
         Attributes:
-            source_file (str): the path to the file we are updating at the moment.
-            output_file_name (str): the desired file name to save the updated version of the YML to.
+            input (str): the path to the file we are updating at the moment.
+            output (str): the desired file name to save the updated version of the YML to.
             yml_data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
@@ -26,8 +26,8 @@ class BaseUpdateYML:
         'PlaybookYMLFormat': '',
     }
 
-    def __init__(self, source_file='', output_file_name='', old_file=''):
-        self.source_file = source_file
+    def __init__(self, input='', output='', old_file=''):
+        self.source_file = input
         self.old_file = old_file
         if not self.source_file:
             print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
@@ -39,7 +39,7 @@ class BaseUpdateYML:
             print_color('Provided file is not a valid YML.', LOG_COLORS.RED)
             sys.exit(1)
 
-        self.output_file_name = self.set_output_file_name(output_file_name)
+        self.output_file_name = self.set_output_file_name(output)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def set_output_file_name(self, output_file_name):

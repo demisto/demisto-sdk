@@ -24,13 +24,13 @@ class LayoutJSONFormat(BaseUpdateJSON):
     """LayoutJSONFormat class is designed to update incident fields JSON file according to Demisto's convention.
 
         Attributes:
-            source_file (str): the path to the file we are updating at the moment.
-            output_file_name (str): the desired file name to save the updated version of the YML to.
+            input (str): the path to the file we are updating at the moment.
+            output (str): the desired file name to save the updated version of the YML to.
             json_data (Dict): YML file data arranged in a Dict.
     """
 
-    def __init__(self, source_file='', output_file_name='', old_file=''):
-        super().__init__(source_file, output_file_name, old_file)
+    def __init__(self, input='', output='', old_file=''):
+        super().__init__(input, output, old_file)
 
     def set_version_to_default(self):
         """Replaces the version of the YML to default."""

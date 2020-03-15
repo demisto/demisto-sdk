@@ -329,10 +329,10 @@ def lint(config, dir, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-s", "--source-file", help="The path of the script yml file")
+    "-in", "--input", help="The path of the script yml file")
 # -i --in
 @click.option(
-    "-o", "--output-file-name", help="The path where the formatted file will be saved to")
+    "-out", "--output", help="The path where the formatted file will be saved to")
 # -o --out
 @click.option(
     "-p", "--pack", help="Specify directory of the pack")
@@ -342,9 +342,8 @@ def lint(config, dir, **kwargs):
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Format changed files using git'
                         '- this will format your branch changes and will run only on them.')
-def format_yml(use_git=False, file_type=None, pack=None, version=None, from_version=None, system=False, content=True,
-               required=True, **kwargs):
-    return format_manager(use_git, file_type, pack, version, from_version, system, content, required, **kwargs)
+def format_yml(use_git=False, input=None, pack=None, from_version=None, **kwargs):
+    return format_manager(use_git, input, pack, from_version, **kwargs)
 
 
 @main.command(name="upload",

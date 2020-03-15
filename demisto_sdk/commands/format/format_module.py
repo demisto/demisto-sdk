@@ -1,7 +1,4 @@
-from demisto_sdk.commands.common.constants import YML_ALL_INTEGRATION_REGEXES, YML_ALL_SCRIPTS_REGEXES, \
-    YML_ALL_PLAYBOOKS_REGEX, JSON_ALL_INCIDENT_FIELD_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES, \
-    JSON_ALL_INDICATOR_FIELDS_REGEXES, \
-    JSON_ALL_MISC_REGEXES, JSON_ALL_LAYOUT_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, Errors
+from demisto_sdk.commands.common.constants import Errors
 
 from demisto_sdk.commands.common.git_tools import get_changed_files
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -14,29 +11,24 @@ from demisto_sdk.commands.format.update_indicatortype import IndicatorTypeJSONFo
 from demisto_sdk.commands.format.update_layout import LayoutJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 
-from demisto_sdk.commands.common.update_id_set import checked_type
-from demisto_sdk.commands.common.tools import print_error, get_yml_paths_in_dir
+from demisto_sdk.commands.common.tools import print_error, get_yml_paths_in_dir, find_type
 import os
 
 
-def format_manager(use_git=False, file_type=None, pack_dir=None, version=None, from_version=None, system=False,
-                   content=True, required=True, **kwargs):
+def format_manager(use_git=False, input=None, pack_dir=None, from_version=None, **kwargs):
     """
 
     Args:
         use_git: (bool) in case True use git to format every changed file.
-        file_type: (str) in case of known source file need for filtering to the correct class.
+        input: (str) The path of the specific file.
         pack_dir: (str) in case of known pack file need for formatting
-        version: (int) in case of specific version that needs to be updated.
         from_version: (str) in case of specific value for from_version that needs to be updated.
-        system: (bool) in case of specific value for system that needs to be updated.
-        content: (bool) in case of specific value for content that needs to be updated.
-        required: (bool) in case of specific value for required that needs to be updated.
         **kwargs: other data like out_file and so ...
 
     Returns:
         int 0 in case of success 1 otherwise
     """
+    file_type = find_type(input)
 
     file_type_and_linked_class = {
         'integration': IntegrationYMLFormat,
@@ -51,7 +43,7 @@ def format_manager(use_git=False, file_type=None, pack_dir=None, version=None, f
     }
 
     if file_type in file_type_and_linked_class:
-        format_object = file_type_and_linked_class[file_type](**kwargs)
+        format_object = file_type_and_linked_class[file_type](input, **kwargs)
         return format_object.format_file()
 
     elif pack_dir:
@@ -62,22 +54,12 @@ def format_manager(use_git=False, file_type=None, pack_dir=None, version=None, f
                     for inner_dir in inner_dirs:
                         if inner_dir.startswith('.'):
                             continue
-
                         project_dir = os.path.join(inner_root, inner_dir)
                         _, file_path = get_yml_paths_in_dir(os.path.normpath(project_dir),
                                                             Errors.no_yml_file(project_dir))
                         if file_path:
                             file_path = file_path.replace('\\', '/')
-                            file_type = 'integration' if checked_type(file_path, YML_ALL_INTEGRATION_REGEXES) \
-                                else 'script' if checked_type(file_path, YML_ALL_SCRIPTS_REGEXES) \
-                                else 'playbook' if checked_type(file_path, YML_ALL_PLAYBOOKS_REGEX) \
-                                else 'incidentfield' if checked_type(file_path, JSON_ALL_INCIDENT_FIELD_REGEXES) \
-                                else 'incidenttype' if checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) \
-                                else 'indicatorfield' if checked_type(file_path, JSON_ALL_INDICATOR_FIELDS_REGEXES) \
-                                else 'indicatortype' if checked_type(file_path, JSON_ALL_MISC_REGEXES) \
-                                else 'layout' if checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) \
-                                else 'dashboard' if checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) \
-                                else None
+                            file_type = find_type(file_path)
                             if file_type:
                                 res = file_type_and_linked_class[file_type](source_file=file_path).format_file()
                                 if res:
@@ -89,16 +71,7 @@ def format_manager(use_git=False, file_type=None, pack_dir=None, version=None, f
         for _file in files:
             _old_file = _file['status'] == 'M'
             _file = _file['name']
-            file_type = 'integration' if checked_type(_file, YML_ALL_INTEGRATION_REGEXES) \
-                else 'script' if checked_type(_file, YML_ALL_SCRIPTS_REGEXES) \
-                else 'playbook' if checked_type(_file, YML_ALL_PLAYBOOKS_REGEX) \
-                else 'incidentfield' if checked_type(_file, JSON_ALL_INCIDENT_FIELD_REGEXES) \
-                else 'incidenttype' if checked_type(_file, JSON_ALL_INCIDENT_TYPES_REGEXES) \
-                else 'indicatorfield' if checked_type(_file, JSON_ALL_INDICATOR_FIELDS_REGEXES) \
-                else 'indicatortype' if checked_type(_file, JSON_ALL_MISC_REGEXES) \
-                else 'layout' if checked_type(_file, JSON_ALL_LAYOUT_REGEXES) \
-                else 'dashboard' if checked_type(_file, JSON_ALL_DASHBOARDS_REGEXES) \
-                else None
+            file_type = find_type(_file)
             if file_type:
                 res = file_type_and_linked_class[file_type](source_file=_file, old_file=_old_file).format_file()
                 if res:

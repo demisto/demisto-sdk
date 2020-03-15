@@ -8,6 +8,7 @@
 * Fixed an issue where the -p flag in the validate was not working.
 * Added format for incidentfields, incidenttypes, indicatorfields, indicatortype, layout, dashboards.
 * Fixed a issue where reputation name was checks instead of details in reputation validator.
+* Fixed the naming of flags in format command and removed file_type.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

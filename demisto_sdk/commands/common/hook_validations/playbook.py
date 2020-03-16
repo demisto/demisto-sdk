@@ -164,7 +164,7 @@ class PlaybookValidator(BaseValidator):
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
-    def is_script_condition_branches_handled(self, task: Dict):  # type: () -> bool
+    def is_script_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a script conditional task branches are handled properly
 
         Args:

@@ -108,6 +108,12 @@ class BaseUpdateJSON:
 
         print_color(F'=======Finished generic updates for JSON: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
+    def update_fromVersion(self):
+        """Set fromVersion."""
+
+        self.set_fromVersion()
+        self.save_json_to_destination_file()
+
     def initiate_file_validator(self, validator_type, scheme_type=None):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 

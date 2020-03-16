@@ -61,7 +61,8 @@ def format_manager(use_git=False, input=None, pack_dir=None, from_version=None, 
                             file_path = file_path.replace('\\', '/')
                             file_type = find_type(file_path)
                             if file_type:
-                                res = file_type_and_linked_class[file_type](source_file=file_path).format_file()
+                                res = file_type_and_linked_class[file_type](input=file_path,
+                                                                            old_file=False).set_fromVersion()
                                 if res:
                                     error_list.append(f'Failed to format {file_path}.' + file_type)
 

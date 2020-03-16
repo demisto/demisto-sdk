@@ -36,6 +36,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
 from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
@@ -48,7 +49,6 @@ class FilesValidator:
     """FilesValidator is a class that's designed to validate all the changed files on your branch, and all files in case
     you are on master, this class will be used on your local env as the validation hook(pre-commit), and on CircleCi
     to make sure you did not bypass the hooks as a safety precaution.
-
     Attributes:
         is_backward_check (bool): Whether to check for backwards compatibility.
         prev_ver (str): If using git, holds the branch to compare the current one to. Default is origin/master.
@@ -269,6 +269,12 @@ class FilesValidator:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
+            elif 'README' in file_path:
+                readme_validator = ReadMeValidator(file_path)
+                if not readme_validator.is_valid_file():
+                    self._is_valid = False
+                continue
+
             structure_validator = StructureValidator(file_path, old_file_path=old_file_path)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
@@ -391,6 +397,12 @@ class FilesValidator:
 
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
+
+            elif 'README' in file_path:
+                readme_validator = ReadMeValidator(file_path)
+                if not readme_validator.is_valid_file():
+                    self._is_valid = False
+                    continue
 
             structure_validator = StructureValidator(file_path, is_new_file=True, predefined_scheme=file_type)
             if not structure_validator.is_valid_file():

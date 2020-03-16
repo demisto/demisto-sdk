@@ -215,6 +215,7 @@ class DockerImageValidator(object):
             res = requests.get(
                 url='https://hub.docker.com/v2/repositories/{}/tags'.format(docker_image_name),
                 verify=False,
+                timeout=TIMEOUT,
             )
             if res.status_code == 200:
                 tags = res.json().get('results', [])

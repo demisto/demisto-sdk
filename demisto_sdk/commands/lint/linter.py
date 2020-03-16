@@ -38,8 +38,6 @@ class Linter:
     common_server_target_path = "CommonServerPython.py"
     common_server_pack_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Packs/Base/Scripts/" \
                                      "CommonServerPython/CommonServerPython.py"
-    common_server_script_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Scripts/" \
-                                       "CommonServerPython/CommonServerPython.py"
 
     def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
                  no_mypy: bool = False, root: bool = False, keep_container: bool = False,
@@ -107,20 +105,13 @@ class Linter:
         if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
             # Get file from git
             try:
-                res = requests.get(self.common_server_pack_remote_path, verify=False)
+                res = requests.get(self.common_server_pack_remote_path, verify=False, timeout=10)
                 with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
                     f.write(res.text)
                     self.common_server_created = True
             except requests.exceptions.RequestException:
-                # TODO: remove this
-                try:
-                    res = requests.get(self.common_server_script_remote_path, verify=False)
-                    with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
-                        f.write(res.text)
-                        self.common_server_created = True
-                except requests.exceptions.RequestException:
-                    print_error(Errors.no_common_server_python(self.common_server_script_remote_path))
-                    return False
+                print_error(Errors.no_common_server_python(self.common_server_pack_remote_path))
+                return False
         return True
 
     def remove_common_server_python(self):

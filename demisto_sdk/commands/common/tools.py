@@ -55,6 +55,41 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
     return yml_files, yml_files[0]
 
 
+def get_paths_in_dir(project_dir: str) -> list:
+    """
+    Gets the project directory and returns the path of all yml and json files in it
+    :param project_dir: string path to the project_dir
+    :return: the path of all yml and json files in it
+    """
+    files = []
+    json_files = glob.glob(os.path.join(project_dir, '*.json'))
+    yml_files = glob.glob(os.path.join(project_dir, '*.yml'))
+    files.extend(json_files)
+    files.extend(yml_files)
+    return files
+
+
+def find_pack_files(pack_dir):
+    pack_files = []
+    if pack_dir.endswith('.json') or pack_dir.endswith('.yml'):
+        return[pack_dir]
+    for root, dirs, _ in os.walk(pack_dir):
+        for dir_in_dirs in dirs:
+            for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir_in_dirs)):
+                project_dir = inner_root
+                files = get_paths_in_dir(os.path.normpath(project_dir))
+                if files:
+                    pack_files.extend(files)
+                for inner_dir in inner_dirs:
+                    if inner_dir.startswith('.'):
+                        continue
+                    project_dir = os.path.join(inner_root, inner_dir)
+                    files = get_paths_in_dir(os.path.normpath(project_dir))
+                    if files and files not in pack_files:
+                        pack_files.extend(files)
+    return list(dict.fromkeys(pack_files))
+
+
 # print srt in the given color
 def print_color(str, color):
     print(color + str + LOG_COLORS.NATIVE)

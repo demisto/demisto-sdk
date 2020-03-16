@@ -92,6 +92,10 @@ class BaseUpdateYML:
         if self.yml_data.get('display'):
             self.yml_data['display'] = self.yml_data.get('display', '').replace('_copy', '').replace('_dev', '')
 
+    def update_fromVersion(self, from_version=DEFAULT_FROMVERSION):
+        self.set_fromVersion(from_version=from_version)
+        self.save_yml_to_destination_file()
+
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name."""
         print(F'Updating YML ID to be the same as YML name')
@@ -122,14 +126,14 @@ class BaseUpdateYML:
                 self.yml_data,
                 f)
 
-    def set_fromVersion(self):
+    def set_fromVersion(self, from_version=DEFAULT_FROMVERSION):
         """Set fromVersion to default if not exist."""
         "only for added files"
 
         if not self.old_file:
-            print(F'Setting fromversion field')
-            if "fromversion" not in self.yml_data:
-                self.yml_data['fromversion'] = self.DEFAULT_FROMVERSION
+            print(F'Setting fromVersion field')
+            if "fromVersion" not in self.yml_data:
+                self.yml_data['fromVersion'] = from_version
 
     def update_yml(self):
         """Manager function for the generic YML updates."""

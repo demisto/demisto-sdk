@@ -34,7 +34,6 @@ class BaseUpdateJSON:
         except json.JSONDecodeError:
             print_color('Provided file is not a valid JSON.', LOG_COLORS.RED)
             sys.exit(1)
-
         self.output_file_name = self.set_output_file_name(output)
 
     def set_output_file_name(self, output_file_name):
@@ -72,14 +71,14 @@ class BaseUpdateJSON:
 
         self.json_data['version'] = self.DEFAULT_JSON_VERSION
 
-    def set_fromVersion(self):
+    def set_fromVersion(self, from_version=DEFAULT_FROMVERSION):
         """Set fromVersion to default if not exist."""
         "only for added files"
 
         if not self.old_file:
-            print(F'Setting fromversion field')
+            print(F'Setting fromVersion field')
             if "fromVersion" not in self.json_data:
-                self.json_data['fromVersion'] = self.DEFAULT_FROMVERSION
+                self.json_data['fromVersion'] = from_version
 
     def set_default_values_as_needed(self, ARGUMENTS_DEFAULT_VALUES):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -108,10 +107,10 @@ class BaseUpdateJSON:
 
         print_color(F'=======Finished generic updates for JSON: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-    def update_fromVersion(self):
+    def update_fromVersion(self, from_version=DEFAULT_FROMVERSION):
         """Set fromVersion."""
 
-        self.set_fromVersion()
+        self.set_fromVersion(from_version=from_version)
         self.save_json_to_destination_file()
 
     def initiate_file_validator(self, validator_type, scheme_type=None):

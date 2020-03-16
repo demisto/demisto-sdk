@@ -139,7 +139,7 @@ class PlaybookValidator(BaseValidator):
         # if default is handled, then it means all branches are being handled
         if '#default#' in next_tasks:
             return is_all_condition_branches_handled
-        unhandled_reply_options = set(task.get('message').get('replyOptions'))
+        unhandled_reply_options = set(task.get('message', {}).get('replyOptions'))
         next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch, next_task_ids in next_tasks.items():
             try:

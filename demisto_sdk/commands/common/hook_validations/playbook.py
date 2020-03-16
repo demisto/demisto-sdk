@@ -93,7 +93,7 @@ class PlaybookValidator(BaseValidator):
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
-    def is_builtin_condition_task_branches_handled(self, task: dict):  # type: () -> bool
+    def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
 
         Args:

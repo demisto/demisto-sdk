@@ -2,6 +2,9 @@
 
 Makes sure your content repository files are in order and have valid yml file scheme.
 
+**Notes**
+In order that the readme validaotor will run, please set the env var 'DEMISTO_README_VALIDATION' to True.
+
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.
 This is used in our validation process both locally and in Circle CI.

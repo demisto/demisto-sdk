@@ -143,7 +143,7 @@ class PackUniqueFilesValidator():
             price_field = metadata[PACK_METADATA_PRICE]
             try:
                 int(price_field)
-            except Exception as e:
+            except Exception:
                 self._add_error('The price field in the pack must be a number.')
                 return False
         except (ValueError, TypeError):

@@ -1,6 +1,7 @@
 import pytest
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.git_tools import git_path
+import os
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
@@ -15,5 +16,6 @@ README_INPUTS = [
 def test_is_file_valid(current, answer):
     readme_validator = ReadMeValidator(current)
     ready, is_valid = readme_validator.are_modules_installed_for_verify()
-    if ready:
+    env_var = os.environ.get('DEMISTO_README_VALIDATION')
+    if ready and env_var:
         assert readme_validator.is_valid_file() is answer

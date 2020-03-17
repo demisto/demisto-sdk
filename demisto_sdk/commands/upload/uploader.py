@@ -14,8 +14,8 @@ class Uploader:
             client (DefaultApi): Demisto-SDK client object.
         """
 
-    def __init__(self, path: str, insecure: bool = False, verbose: bool = False):
-        self.path = path
+    def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
+        self.path = input
         self.log_verbose = verbose
         self.unify = os.path.isdir(self.path)
         self.client = demisto_client.configure(verify_ssl=not insecure)

@@ -6,9 +6,11 @@
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).
 * Fixed an issue where the -p flag in the validate was not working.
-* Added the use_cases, global_permissions, command_permissions, additional_info, limitations and troubleshooting arguments to the generate-docs command.
-* Removed the -t argument from the generate-docs command, the file type will be inferred.
-* The -o argument in the generate-docs command is no longer mandatory, default value will be the input file directory.
+* generate-docs command:
+    * Added the use_cases, global_permissions, command_permissions, additional_info, limitations and troubleshooting arguments.
+    * Added the -k --insecure argument to support running the script and integration command in Demisto.
+    * Removed the -t argument, the file type will be inferred.
+    * The -o argument is no longer mandatory, default value will be the input file directory.
 * Added a validator for README.md files.
 
 ### 0.4.3

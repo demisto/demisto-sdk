@@ -109,7 +109,7 @@ class Initiator:
             bool. Returns True if pack was created successfully and False otherwise
         """
         # if an output directory given create the pack there
-        if len(self.output) > 0:
+        if self.output:
             self.full_output_path = os.path.join(self.output, self.dir_name)
 
         # content-descriptor file indicates we are in "content" repository

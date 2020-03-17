@@ -9,7 +9,7 @@ class Uploader:
     """Upload the integration specified in self.infile to the remote Demisto instance.
         Attributes:
             path (str): The path of an integration file or a package directory to upload.
-            log_verbose (bool): Whether to output a detailed response.
+            verbose (bool): Whether to output a detailed response.
             unify (bool): Whether to unify a package.
             client (DefaultApi): Demisto-SDK client object.
         """

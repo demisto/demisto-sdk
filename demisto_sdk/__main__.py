@@ -79,19 +79,11 @@ def main(config, version, env_dir):
     '-h', '--help'
 )
 @click.option(
-    '--infile', '-i',
-    help='The yml file to extract from',
-    required=True
+    '-i', '--input', help='The yml file to extract from', required=True
 )
 @click.option(
-    '--outfile', '-o',
-    required=True,
+    '-o', '--output', required=True,
     help="The output dir to write the extracted code/description/image to."
-)
-@click.option(
-    '--yml-type', '-y',
-    help="Yaml type. If not specified will try to determine type based upon path.",
-    type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
     '--no-demisto-mock',
@@ -108,7 +100,11 @@ def main(config, version, env_dir):
 )
 @pass_config
 def extract(config, **kwargs):
-    extractor = Extractor(configuration=config.configuration, **kwargs)
+    file_type = find_type(kwargs.get('input'))
+    if file_type not in ["integration", "script"]:
+        print_error(F'File is not an Integration or Script.')
+        return 1
+    extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_to_package_format()
 
 

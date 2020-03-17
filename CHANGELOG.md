@@ -8,6 +8,7 @@
 * Fixed an issue where the -p flag in the validate was not working.
 * Added a validator for README.md files.
 * Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
+* Removed the *yml_type* argument in the *split-yml* command.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

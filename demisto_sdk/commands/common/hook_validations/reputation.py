@@ -12,7 +12,7 @@ class ReputationValidator(BaseValidator):
         """Check whether the reputation file is valid or not
         """
         is_reputation_valid = all([
-            super(ReputationValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_version(),
             self.is_valid_expiration()
         ])

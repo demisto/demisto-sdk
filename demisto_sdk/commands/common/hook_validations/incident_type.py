@@ -28,7 +28,7 @@ class IncidentTypeValidator(BaseValidator):
         """Check whether the Incident Type is valid or not
         """
         is_incident_type__valid = all([
-            super(IncidentTypeValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_version()
         ])
 

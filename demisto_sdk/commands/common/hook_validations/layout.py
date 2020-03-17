@@ -12,7 +12,7 @@ class LayoutValidator(BaseValidator):
             bool. Whether the layout is valid or not
         """
         answers = [
-            super(LayoutValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_version()
         ]
         return all(answers)

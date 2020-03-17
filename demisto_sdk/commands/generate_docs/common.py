@@ -1,9 +1,6 @@
 import json
 import os.path
 import re
-
-import demisto_client
-
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.run_cmd.runner import Runner
 
@@ -175,7 +172,9 @@ def execute_command(command_example, insecure: bool):
     md_example = ''
     cmd = command_example
     try:
-        runner = Runner(client=demisto_client.configure(verify_ssl=not insecure))
+        runner = Runner('')
+        if insecure:
+            runner.set_insecure(insecure)
         res, raw_context = runner.execute_command(command_example)
         if not res:
             raise RuntimeError('something went wrong with your command: {}'.format(command_example))

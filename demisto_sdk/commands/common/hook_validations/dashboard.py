@@ -20,7 +20,7 @@ class DashboardValidator(BaseValidator):
             bool. Whether the dashboard is valid or not
         """
         is_dashboard_valid = [
-            super(DashboardValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_version()
         ]
 

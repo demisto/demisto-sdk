@@ -239,7 +239,7 @@ class Initiator:
             bool. True if the integration was created successfully, False otherwise.
         """
         # if output directory given create the integration there
-        if len(self.output) > 0:
+        if self.output:
             self.full_output_path = os.path.join(self.output, self.dir_name)
 
         # will create the integration under the Integrations directory of the pack

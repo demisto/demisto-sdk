@@ -8,7 +8,7 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
 
 def generate_script_doc(input, examples, id_set='', output: str = None, global_permissions: str = None,
                         additional_info: str = None, limitations: str = None, troubleshooting: str = None,
-                        verbose=False):
+                        insecure: bool = False, verbose: bool = False):
     try:
         doc = []
         errors = []
@@ -22,7 +22,7 @@ def generate_script_doc(input, examples, id_set='', output: str = None, global_p
             if not examples.startswith('!'):
                 examples = f'!{examples}'
 
-            example_dict, build_errors = build_example_dict([examples])
+            example_dict, build_errors = build_example_dict([examples], insecure)
             script_name = examples.split(' ')[0][1:]
             example_section, example_errors = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)

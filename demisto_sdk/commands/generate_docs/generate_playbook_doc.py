@@ -6,7 +6,7 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
 
 
 def generate_playbook_doc(input, output: str = None, global_permissions: str = None, additional_info: str = None,
-                          limitations: str = None, troubleshooting: str = None, verbose=False):
+                          limitations: str = None, troubleshooting: str = None, verbose: bool = False):
     try:
         playbook = get_yaml(input)
         if not output:  # default output dir will be the dir of the input file

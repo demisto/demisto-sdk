@@ -540,6 +540,9 @@ def init(**kwargs):
 @click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
+    "-k", "--insecure", help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+@click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 def generate_doc(**kwargs):
     input_path = kwargs.get('input')

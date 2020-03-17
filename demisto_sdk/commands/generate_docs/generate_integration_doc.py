@@ -7,7 +7,7 @@ from demisto_sdk.commands.generate_docs.common import build_example_dict, add_li
 def generate_integration_doc(input, examples, id_set, output: str = None, use_cases: str = None,
                              global_permissions: str = None, command_permissions: str = None,
                              additional_info: str = None, limitations: str = None, troubleshooting: str = None,
-                             verbose=False):
+                             insecure: bool = False, verbose: bool = False):
     try:
         yml_data = get_yaml(input)
 
@@ -18,7 +18,7 @@ def generate_integration_doc(input, examples, id_set, output: str = None, use_ca
         example_dict = {}
         if examples and os.path.isfile(examples):
             command_examples = get_command_examples(examples)
-            example_dict, build_errors = build_example_dict(command_examples)
+            example_dict, build_errors = build_example_dict(command_examples, insecure)
             errors.extend(build_errors)
         else:
             errors.append(f'Command examples was not found {examples}.')

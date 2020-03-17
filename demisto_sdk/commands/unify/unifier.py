@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, INTEGRATION
 class Unifier:
 
     def __init__(self, indir: str, dir_name=INTEGRATIONS_DIR, outdir='',
-                 image_prefix=DEFAULT_IMAGE_PREFIX):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
         directory_name = ""
         for optional_dir_name in DIR_TO_PREFIX:
@@ -32,6 +32,7 @@ class Unifier:
 
         self.image_prefix = image_prefix
         self.package_path = indir
+        self.use_force = force
         if self.package_path.endswith(os.sep):
             self.package_path = self.package_path.rstrip(os.sep)
 
@@ -50,7 +51,7 @@ class Unifier:
 
         self.ryaml = YAML()
         self.ryaml.preserve_quotes = True
-        self.ryaml.width = 400  # make sure long lines will not break (relevant for code section)
+        self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if self.yml_path:
             with open(self.yml_path, 'r') as yml_file:
                 self.yml_data = self.ryaml.load(yml_file)
@@ -115,7 +116,7 @@ class Unifier:
             }
 
         for file_path, file_data in output_map.items():
-            if os.path.isfile(file_path):
+            if os.path.isfile(file_path) and self.use_force is False:
                 raise ValueError(f'Output file already exists: {self.dest_path}.'
                                  ' Make sure to remove this file from source control'
                                  ' or rename this package (for example if it is a v2).')
@@ -162,7 +163,7 @@ class Unifier:
         image_data, found_img_path = self.get_data("*png")
         image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
-        if yml_data.get('image'):
+        if yml_data.get('image')and self.use_force is False:
             raise ValueError('Please move the image from the yml to an image file (.png)'
                              f' in the package: {self.package_path}')
 
@@ -173,7 +174,7 @@ class Unifier:
     def insert_description_to_yml(self, yml_data, yml_unified):
         desc_data, found_desc_path = self.get_data('*_description.md')
 
-        if yml_data.get('detaileddescription'):
+        if yml_data.get('detaileddescription') and self.use_force is False:
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
                              f' in the package: {self.package_path}')
         if desc_data:
@@ -194,18 +195,21 @@ class Unifier:
 
     def get_code_file(self, script_type):
         """Return the first code file in the specified directory path
-        :param script_type: script type: .py or .js
+        :param script_type: script type: .py, .js, .ps1
         :type script_type: str
         :return: path to found code file
         :rtype: str
         """
 
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|ApiModule\.py')
-
+                        r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py'
+                        r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
+        if self.package_path.endswith('/'):
+            self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
         if self.package_path.endswith('Scripts/CommonServerPython'):
             return os.path.join(self.package_path, 'CommonServerPython.py')
-
+        if self.package_path.endswith('Scripts/CommonServerPowerShell'):
+            return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
@@ -225,7 +229,10 @@ class Unifier:
         if module_import:
             script_code = self.insert_module_code(script_code, module_import, module_name)
 
-        clean_code = self.clean_python_code(script_code)
+        if script_type == '.py':
+            clean_code = self.clean_python_code(script_code)
+        if script_type == '.ps1':
+            clean_code = self.clean_pwsh_code(script_code)
 
         if self.is_script_package:
             if yml_data.get('script', '') not in ('', '-'):
@@ -317,4 +324,10 @@ class Unifier:
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
             script_code = script_code.replace("from __future__ import print_function", "")
+        return script_code
+
+    @staticmethod
+    def clean_pwsh_code(script_code):
+        script_code = script_code.replace(". $PSScriptRoot\\demistomock.ps1", "")
+        script_code = script_code.replace(". $PSScriptRoot\\CommonServerPowerShell.ps1", "")
         return script_code

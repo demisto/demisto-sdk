@@ -3,12 +3,48 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.4
+* Added a validator for IncidentTypes (incidenttype-*.json).
+* Fixed an issue where the -p flag in the validate was not working.
+* Added a validator for README.md files.
+* Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
+* Removed the *yml_type* argument in the *split-yml* command.
+
+### 0.4.3
+* Fixed an issue where the incident and indicator field BC check failed.
+* Support for linting and unit testing PowerShell integrations.
+
+### 0.4.2
+* Fixed an issue where validate failed on Windows.
+* Added a validator to verify all branches are handled in conditional task in a playbook.
+* Added a warning message when not running the latest sdk version.
+* Added a validator to check that the root is connected to all tasks in the playbook.
+* Added a validator for Dashboards (dashboard-*.json).
+* Added a validator for Indicator Types (reputation-*.json).
+* Added a BC validation for changing incident field type.
+* Fixed an issue where init command would generate an invalid yml for scripts.
+* Fixed an issue in misleading error message in v2 validation hook.
+* Fixed an issue in v2 hook which now is set only on newly added scripts.
+* Added more indicative message for errors in yaml files.
+* Disabled pykwalify info log prints.
+
+### 0.3.10
+* Added a BC check for incident fields - changing from version is not allowed.
+* Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.
+
 
 ### 0.3.9
+* Added a validation that incident field can not be required.
+* Added validation for fetch incident parameters.
+* Added validation for feed integration parameters.
+* Added to the *format* command the deletion of the *sourceplaybookid* field.
+* Fixed an issue where *fieldMapping* in playbook did not pass the scheme validation.
+* Fixed an issue where *create-content-artifacts* did not copy TestPlaybooks in Packs without prefix of *playbook-*.
 * Added a validation the a playbook can not have a rolename set.
 * Added to the image validator the new DBot default image.
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
 * Fixed an issue where *validate* failed on integration commands without outputs.
+* Added a new hook for naming of v2 integrations and scripts.
 
 
 ### 0.3.8

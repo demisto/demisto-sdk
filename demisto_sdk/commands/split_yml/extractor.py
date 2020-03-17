@@ -1,43 +1,51 @@
-import yaml
-import os
 import base64
-import subprocess
+import os
 import shutil
+import subprocess
 import tempfile
 from io import open
+
+import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, get_docker_images, get_python_version,\
-    get_pipenv_dir
-
-INTEGRATION = 'integration'
-SCRIPT = 'script'
+from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, get_python_version, \
+    get_pipenv_dir, get_all_docker_images
 
 
 class Extractor:
-    def __init__(self, infile: str, outfile: str, no_demisto_mock: bool, no_common_server: bool, yml_type: str,
+    """Extractor is a class that's designed to split a yml file to it's components.
+
+    Attributes:
+        input (str): input yml file path
+        dest_path (str): output path
+        demisto_mock (bool): whether to add an import for demistomock
+        common_server (bool): whether to add an import for common server
+        file_type (str): yml file type
+        configuration (Configuration): Configuration object
+    """
+
+    def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool, no_common_server: bool,
                  configuration: Configuration):
-        self.yml_path = infile
-        self.dest_path = outfile
+        self.input = input
+        self.output = output
         self.demisto_mock = not no_demisto_mock
         self.common_server = not no_common_server
-        self.yml_type = yml_type
+        self.file_type = file_type
         self.config = configuration
 
     def extract_to_package_format(self) -> int:
-        """Extracts the self.yml_path into several files according to the Demisto standard of the package format.
+        """Extracts the self.input yml file into several files according to the Demisto standard of the package format.
 
         Returns:
              int. status code for the operation.
         """
-        print("Starting migration of: {} to dir: {}".format(self.yml_path, self.dest_path))
-        arg_path = self.dest_path
-        output_path = os.path.abspath(self.dest_path)
+        print("Starting migration of: {} to dir: {}".format(self.input, self.output))
+        arg_path = self.output
+        output_path = os.path.abspath(self.output)
         os.makedirs(output_path, exist_ok=True)
         base_name = os.path.basename(output_path)
-        yml_type = self.get_yml_type()
         code_file = "{}/{}.py".format(output_path, base_name)
         self.extract_code(code_file)
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
@@ -46,14 +54,16 @@ class Extractor:
         print("Creating yml file: {} ...".format(yaml_out))
         ryaml = YAML()
         ryaml.preserve_quotes = True
-        with open(self.yml_path, 'r') as yf:
+        with open(self.input, 'r') as yf:
             yaml_obj = ryaml.load(yf)
         script_obj = yaml_obj
-        if yml_type == INTEGRATION:
+
+        if self.file_type == 'integration':
             script_obj = yaml_obj['script']
             del yaml_obj['image']
             if 'detaileddescription' in yaml_obj:
                 del yaml_obj['detaileddescription']
+
         if script_obj['type'] != 'python':
             print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_obj['type']))
             return 1
@@ -61,14 +71,16 @@ class Extractor:
         with open(yaml_out, 'w') as yf:
             ryaml.dump(yaml_obj, yf)
         print("Running autopep8 on file: {} ...".format(code_file))
+
         try:
             subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
         except FileNotFoundError:
             print_color("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
                         "Make sure to install it with: pip install autopep8.\n"
                         "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
+
         print("Detecting python version and setting up pipenv files ...")
-        docker = get_docker_images(script_obj)[0]
+        docker = get_all_docker_images(script_obj)[0]
         py_ver = get_python_version(docker, self.config.log_verbose)
         pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
         print("Copying pipenv files from: {}".format(pip_env_dir))
@@ -99,7 +111,7 @@ class Extractor:
                         "Make sure to install it with: pip3 install pipenv.\n"
                         "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
         # check if there is a changelog
-        yml_changelog = os.path.splitext(self.yml_path)[0] + '_CHANGELOG.md'
+        yml_changelog = os.path.splitext(self.input)[0] + '_CHANGELOG.md'
         changelog = arg_path + '/CHANGELOG.md'
         if os.path.exists(yml_changelog):
             shutil.copy(yml_changelog, changelog)
@@ -111,24 +123,28 @@ class Extractor:
               "* Install additional py packages for unit testing (if needed): cd {}; pipenv install <package>\n".format(
                   arg_path),
               "* Create unit tests\n",
-              "* Check linting and unit tests by running: ./Tests/scripts/pkg_dev_test_tasks.py -d {}\n".format(
+              "* Check linting and unit tests by running: demisto-sdk lint -d {}\n".format(
                   arg_path),
               "* When ready rm from git the source yml and add the new package:\n",
-              "    git rm {}\n".format(self.yml_path),
+              "    git rm {}\n".format(self.input),
               "    git add {}\n".format(arg_path),
               sep=''
               )
         return 0
 
     def extract_code(self, code_file_path) -> int:
-        yml_type = self.get_yml_type()
+        """Extracts the code from the yml_file.
+
+        Returns:
+             int. status code for the operation.
+        """
         common_server = self.common_server
         if common_server:
-            common_server = "CommonServerPython" not in self.yml_path
-        with open(self.yml_path, 'rb') as yml_file:
+            common_server = "CommonServerPython" not in self.input
+        with open(self.input, 'rb') as yml_file:
             yml_data = yaml.safe_load(yml_file)
             script = yml_data['script']
-            if yml_type == INTEGRATION:  # in integration the script is stored at a second level
+            if self.file_type == 'integration':  # in integration the script is stored at a second level
                 script = script['script']
 
         print("Extracting code to: {} ...".format(code_file_path))
@@ -144,11 +160,15 @@ class Extractor:
         return 0
 
     def extract_image(self, output_path) -> int:
-        yml_type = self.get_yml_type()
-        if yml_type == SCRIPT:
+        """Extracts the image from the yml_file.
+
+        Returns:
+             int. status code for the operation.
+        """
+        if self.file_type == 'script':
             return 0  # no image in script type
         print("Extracting image to: {} ...".format(output_path))
-        with open(self.yml_path, 'rb') as yml_file:
+        with open(self.input, 'rb') as yml_file:
             yml_data = yaml.safe_load(yml_file)
             image_b64 = yml_data['image'].split(',')[1]
         with open(output_path, 'wb') as image_file:
@@ -156,10 +176,14 @@ class Extractor:
         return 0
 
     def extract_long_description(self, output_path) -> int:
-        yml_type = self.get_yml_type()
-        if yml_type == SCRIPT:
+        """Extracts the detailed description from the yml_file.
+
+        Returns:
+             int. status code for the operation.
+        """
+        if self.file_type == 'script':
             return 0  # no long description in script type
-        with open(self.yml_path, 'rb') as yml_file:
+        with open(self.input, 'rb') as yml_file:
             yml_data = yaml.safe_load(yml_file)
             long_description = yml_data.get('detaileddescription')
         if long_description:
@@ -167,15 +191,3 @@ class Extractor:
             with open(output_path, 'w', encoding='utf-8') as desc_file:
                 desc_file.write(long_description)
         return 0
-
-    def get_yml_type(self) -> str:
-        yml_type = self.yml_type
-        if not yml_type:
-            if SCRIPT in self.yml_path.lower():
-                yml_type = SCRIPT
-            elif INTEGRATION in self.yml_path.lower():
-                yml_type = INTEGRATION
-            else:
-                raise ValueError('Could not auto determine yml type ({}/{}) based on path: {}'
-                                 .format(SCRIPT, INTEGRATION, self.yml_path))
-        return yml_type

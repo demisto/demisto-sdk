@@ -141,7 +141,7 @@ class Initiator:
 
         print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
-        metadata_path = os.path.join(self.full_output_path, 'metadata.json')
+        metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
             user_response = input("\nDo you want to fill pack's metadata file? Y/N ").lower()
             fill_manually = user_response in ['y', 'yes']
@@ -162,13 +162,13 @@ class Initiator:
     @staticmethod
     def create_metadata(fill_manually):
         metadata = {
-            'displayName': '',
-            'description': '',
-            'support': '',
-            'serverMinVersion': '',
+            'name': '## FILL OUT MANUALLY ##',
+            'description': '## FILL OUT MANUALLY ##',
+            'support': 'demisto',
+            'serverMinVersion': '## FILL OUT MANUALLY #',
             'currentVersion': PACK_INITIAL_VERSION,
-            'author': '',
-            'url': '',
+            'author': 'demisto',
+            'url': 'https://www.demisto.com',
             'email': '',
             'categories': [],
             'tags': [],
@@ -176,16 +176,17 @@ class Initiator:
             'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'beta': False,
             'deprecated': False,
-            'certification': '',
+            'certification': 'certified',
             'useCases': [],
             'keywords': [],
+            'price': '0',
             'dependencies': {},
         }
 
         if not fill_manually:
             return metadata
 
-        metadata['displayName'] = input("\nDisplay name of the pack: ")
+        metadata['name'] = input("\nDisplay name of the pack: ")
         metadata['description'] = input("\nDescription of the pack: ")
         metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
                                                              option_message="\nSupport type of the pack: \n")
@@ -203,6 +204,9 @@ class Initiator:
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',')]
         metadata['tags'] = tags_list
+
+        price = input("\nThe price of the pack: ")
+        metadata['price'] = price
 
         return metadata
 
@@ -256,7 +260,7 @@ class Initiator:
         if self.id != self.HELLO_WORLD_INTEGRATION:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
-            self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION)
+            self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION, integration=True)
             self.fix_test_file_import(name_to_change=self.HELLO_WORLD_INTEGRATION)
 
         print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
@@ -298,16 +302,18 @@ class Initiator:
 
         return True
 
-    def yml_reformatting(self, current_suffix: str):
+    def yml_reformatting(self, current_suffix: str, integration: bool = False):
         """Formats the given yml to fit the newly created integration/script
 
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
+            integration (bool): Indicates if integration yml is being reformatted.
         """
         yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(self.full_output_path, f"{current_suffix}.yml"))
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
-        yml_dict["display"] = self.id
+        if integration:
+            yml_dict["display"] = self.id
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(

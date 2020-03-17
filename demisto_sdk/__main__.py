@@ -14,6 +14,7 @@ from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -24,10 +25,9 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
-from demisto_sdk.validation.type_file.find_type import find_type
 
 # Common tools
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version
 from demisto_sdk.commands.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
 
 
@@ -57,6 +57,11 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 @pass_config
 def main(config, version, env_dir):
     config.configuration = Configuration()
+    cur_version = get_distribution('demisto-sdk').version
+    last_release = get_last_remote_release_version()
+    if last_release and cur_version != last_release:
+        print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
+                      f'You should consider upgrading via "pip install --upgrade demisto-sdk" command.')
     if version:
         version = get_distribution('demisto-sdk').version
         print(version)
@@ -74,19 +79,11 @@ def main(config, version, env_dir):
     '-h', '--help'
 )
 @click.option(
-    '--infile', '-i',
-    help='The yml file to extract from',
-    required=True
+    '-i', '--input', help='The yml file to extract from', required=True
 )
 @click.option(
-    '--outfile', '-o',
-    required=True,
+    '-o', '--output', required=True,
     help="The output dir to write the extracted code/description/image to."
-)
-@click.option(
-    '--yml-type', '-y',
-    help="Yaml type. If not specified will try to determine type based upon path.",
-    type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
     '--no-demisto-mock',
@@ -103,7 +100,11 @@ def main(config, version, env_dir):
 )
 @pass_config
 def extract(config, **kwargs):
-    extractor = Extractor(configuration=config.configuration, **kwargs)
+    file_type = find_type(kwargs.get('input'))
+    if file_type not in ["integration", "script"]:
+        print_error(F'File is not an Integration or Script.')
+        return 1
+    extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_to_package_format()
 
 
@@ -157,7 +158,12 @@ def extract_code(config, **kwargs):
     "-i", "--indir", help="The path to the files to unify", required=True
 )
 @click.option(
-    "-o", "--outdir", help="The output dir to write the unified yml to", required=True
+    "-o", "--outdir", help="The output dir to write the unified yml to", required=False
+)
+@click.option(
+    "--force", help="Forcefully overwrites the preexisting yml if one exists",
+    is_flag=True,
+    show_default=False
 )
 def unify(**kwargs):
     unifier = Unifier(**kwargs)
@@ -192,7 +198,7 @@ def unify(**kwargs):
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
 @click.option(
-    '-p', '--path', help='Path of file to validate specifically.'
+    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
 )
 @pass_config
 def validate(config, **kwargs):
@@ -263,10 +269,10 @@ def secrets(config, **kwargs):
 
 # ====================== lint ====================== #
 @main.command(name="lint",
-              short_help="Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the"
-                         "docker image of an integration/script. Meant to be used with integrations/scripts that use "
-                         "the folder (package) structure. Will lookup up what docker image to use and will setup the "
-                         "dev dependencies and file in the target folder. ")
+              short_help="Run lintings (flake8, mypy, pylint, bandit, vulture) and pytest. pylint and pytest will run "
+                         "within the docker image of an integration/script. Meant to be used with integrations/scripts "
+                         "that use the folder (package) structure. Will lookup up what docker image to use and will "
+                         "setup the dev dependencies and file in the target folder. ")
 @click.help_option(
     '-h', '--help'
 )
@@ -280,6 +286,8 @@ def secrets(config, **kwargs):
     "--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option(
     "--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option(
+    "--no-vulture", is_flag=True, help="Do NOT run vulture linter")
 @click.option(
     "--no-test", is_flag=True, help="Do NOT test (skip pytest)")
 @click.option(

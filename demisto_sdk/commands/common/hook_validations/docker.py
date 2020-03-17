@@ -1,5 +1,5 @@
 from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.tools import get_yaml, print_error
+from demisto_sdk.commands.common.tools import get_yaml, print_error, print_warning
 from distutils.version import LooseVersion
 from pkg_resources import parse_version
 from datetime import datetime, timedelta
@@ -24,6 +24,7 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(object):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration):
+        self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
         self.file_path = yml_file_path
@@ -34,10 +35,11 @@ class DockerImageValidator(object):
         self.is_latest_tag = True
         self.docker_image_latest_tag = DockerImageValidator.get_docker_image_latest_tag(self.docker_image_name,
                                                                                         self.yml_docker_image)
-        self.is_valid = True
 
     def is_docker_image_valid(self):
-        if not self.is_docker_image_latest_tag():
+        if not self.docker_image_latest_tag:
+            self.is_valid = False
+        elif not self.is_docker_image_latest_tag():
             print_error(Errors.not_latest_docker(self.file_path, self.docker_image_tag, self.docker_image_latest_tag))
             self.is_valid = False
         return self.is_valid
@@ -195,6 +197,13 @@ class DockerImageValidator(object):
         Returns:
             The last updated docker image tag
         """
+        if yml_docker_image:
+            if yml_docker_image.startswith('devdemisto/'):
+                print_warning('docker image must be a demisto docker image. When the docker image is ready,'
+                              ' please rename it to: demisto/python:<tag>')
+            elif not yml_docker_image.startswith('demisto/'):
+                print_error('docker image must be a demisto docker image. e.g: demisto/python:<tag>')
+                return ''
         try:
             tag = ''
             auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
@@ -206,6 +215,7 @@ class DockerImageValidator(object):
             res = requests.get(
                 url='https://hub.docker.com/v2/repositories/{}/tags'.format(docker_image_name),
                 verify=False,
+                timeout=TIMEOUT,
             )
             if res.status_code == 200:
                 tags = res.json().get('results', [])

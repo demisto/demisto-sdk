@@ -12,6 +12,7 @@
     * Removed the -t argument, the file type will be inferred.
     * The -o argument is no longer mandatory, default value will be the input file directory.
 * Added a validator for README.md files.
+* Removed the *yml_type* argument in the *split-yml* command.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

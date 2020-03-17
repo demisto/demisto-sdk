@@ -366,7 +366,7 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type():
+                if not incident_type_validator.is_valid_incident_type(validate_rn=True):
                     self._is_valid = False
                 if self.is_backward_check and not incident_type_validator.is_backward_compatible():
                     self._is_valid = False
@@ -479,12 +479,12 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
                 dashboard_validator = DashboardValidator(structure_validator)
-                if not dashboard_validator.is_valid_dashboard():
+                if not dashboard_validator.is_valid_dashboard(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type():
+                if not incident_type_validator.is_valid_incident_type(validate_rn=not file_type):
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:

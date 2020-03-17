@@ -7,6 +7,7 @@
 * Added a validator for IncidentTypes (incidenttype-*.json).
 * Fixed an issue where the -p flag in the validate was not working.
 * Added a validator for README.md files.
+* Release notes validator will now run on: incident fields, indicator fields, incident types, dashboard and reputations.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

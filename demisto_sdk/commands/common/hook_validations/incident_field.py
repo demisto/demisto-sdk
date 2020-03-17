@@ -179,6 +179,7 @@ class IncidentFieldValidator(BaseValidator):
         """
         return all(
             [
+                super().is_valid_file(validate_rn),
                 self.is_valid_name(),
                 self.is_valid_type(),
                 self.is_valid_group(),

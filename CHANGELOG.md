@@ -9,7 +9,7 @@
 * Added a validator for README.md files.
 * Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
 * Removed the *yml_type* argument in the *split-yml* command.
-* Fixed an issue where the validator was trying to validate non-existing files after deleting/ renaming.
+* Fixed an issue where the validator attempted validating non-existing files after deletions or name refactoring.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

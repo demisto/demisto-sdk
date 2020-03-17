@@ -71,14 +71,17 @@ class BaseUpdateJSON:
 
         self.json_data['version'] = self.DEFAULT_JSON_VERSION
 
-    def set_fromVersion(self, from_version=DEFAULT_FROMVERSION):
+    def set_fromVersion(self, from_version=None):
         """Set fromVersion to default if not exist."""
         "only for added files"
-
         if not self.old_file:
-            print(F'Setting fromVersion field')
+            print(F'Setting fromVersion field in json file')
+            # in all json files in repo the fromVersion is set to "fromVersion"
             if "fromVersion" not in self.json_data:
-                self.json_data['fromVersion'] = from_version
+                if from_version:
+                    self.json_data['fromVersion'] = from_version
+                else:
+                    self.json_data['fromVersion'] = self.DEFAULT_FROMVERSION
 
     def set_default_values_as_needed(self, ARGUMENTS_DEFAULT_VALUES):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -107,7 +110,7 @@ class BaseUpdateJSON:
 
         print_color(F'=======Finished generic updates for JSON: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-    def update_fromVersion(self, from_version=DEFAULT_FROMVERSION):
+    def update_fromVersion(self, from_version):
         """Set fromVersion."""
 
         self.set_fromVersion(from_version=from_version)

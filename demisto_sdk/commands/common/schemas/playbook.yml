@@ -183,7 +183,7 @@ mapping:
 
   system:
     type: bool
-  fromVersion:
+  fromversion:
     type: text
     required: true
   toversion:

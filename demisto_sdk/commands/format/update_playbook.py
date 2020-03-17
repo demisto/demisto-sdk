@@ -38,11 +38,11 @@ class PlaybookYMLFormat(BaseUpdateYML):
             if task.get('type', '') == 'playbook':
                 task['task']['name'] = task['task']['playbookName']
 
-    def update_fromversion(self):
+    def update_fromversion_by_user(self):
         """If no fromversion is specified, asks the user for it's value and updates the playbook."""
         print(F'Updating fromversion tag')
 
-        if not self.yml_data.get('fromversion', ''):
+        if not self.yml_data.get('fromVersion', ''):
             print_color('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
                         LOG_COLORS.RED)
             user_answer = input()
@@ -55,7 +55,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
                 print_color('Please specify the desired version X.X.X', LOG_COLORS.YELLOW)
                 user_desired_version = input()
                 if re.match(r'\d+\.\d+\.\d+', user_desired_version):
-                    self.yml_data['fromversion'] = user_desired_version
+                    self.yml_data['fromVersion'] = user_desired_version
                     is_input_version_valid = True
                 else:
                     print_error('Version format is not valid')
@@ -81,7 +81,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         self.add_description()
         self.update_playbook_task_name()
-        self.update_fromversion()
+        # self.update_fromversion_by_user()
         # a = self.transformer_format(self.yml_data)
         # print("hi--------------------------------------------------")
         # print(a)

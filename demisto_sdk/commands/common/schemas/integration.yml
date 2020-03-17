@@ -32,7 +32,7 @@ mapping:
     'Forensics & Malware Analysis', 'IT Services', 'Data Enrichment & Threat Intelligence',
      'Authentication', 'Database', 'Deception', 'Email Gateway']
     required: true
-  fromVersion:
+  fromversion:
     type: str
   toversion:
     type: str

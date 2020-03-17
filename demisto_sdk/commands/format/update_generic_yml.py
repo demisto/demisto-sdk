@@ -18,7 +18,7 @@ class BaseUpdateYML:
             yml_data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
-    DEFAULT_FROMVERSION = "5.0.0"
+    DEFAULT_FROMVERSION = '5.0.0'
     DEFAULT_YML_VERSION = -1
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
         'IntegrationYMLFormat': 'commonfields',
@@ -126,14 +126,17 @@ class BaseUpdateYML:
                 self.yml_data,
                 f)
 
-    def set_fromVersion(self, from_version=DEFAULT_FROMVERSION):
+    def set_fromVersion(self, from_version=None):
         """Set fromVersion to default if not exist."""
         "only for added files"
-
         if not self.old_file:
             print(F'Setting fromVersion field')
-            if "fromVersion" not in self.yml_data:
-                self.yml_data['fromVersion'] = from_version
+            # in playbooks/integrations/script the fromVersion is set to "fromversion"
+            if "fromversion" not in self.yml_data:
+                if from_version:
+                    self.yml_data['fromversion'] = from_version
+                else:
+                    self.yml_data['fromversion'] = str(self.DEFAULT_FROMVERSION)
 
     def update_yml(self):
         """Manager function for the generic YML updates."""

@@ -36,16 +36,16 @@ def test_is_valid_expiration(expiration, is_valid):
                                                         f' returns {not is_valid}.'
 
 
-data_is_id_equals_details = [
+data_is_id_equals_name = [
     ("CIDR", "CIDR", True),
     ("CIDR", "CIDR2", False)
 ]
 
 
-@pytest.mark.parametrize('id_, details, is_valid', data_is_id_equals_details)
-def test_is_id_equals_details(id_, details, is_valid):
+@pytest.mark.parametrize('id_, name, is_valid', data_is_id_equals_name)
+def test_is_id_equals_name(id_, name, is_valid):
     structure = StructureValidator("")
-    structure.current_file = {"id": id_, "details": details}
+    structure.current_file = {"id": id_, "name": name}
     validator = ReputationValidator(structure)
-    assert validator.is_id_equals_details() == is_valid, f'is_id_equals_name({id_}, {details})' \
-        f' returns {not is_valid}.'
+    assert validator.is_id_equals_name() == is_valid, f'is_id_equals_name({id_}, {name})' \
+                                                      f' returns {not is_valid}.'

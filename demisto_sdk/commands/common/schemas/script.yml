@@ -53,7 +53,7 @@ mapping:
     type: seq
     sequence:
       - include: important_schema
-  fromVersion:
+  fromversion:
     type: text
   toversion:
     type: text

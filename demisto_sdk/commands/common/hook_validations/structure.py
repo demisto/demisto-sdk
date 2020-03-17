@@ -32,7 +32,7 @@ class StructureValidator:
     SCHEMAS_PATH = "schemas"
 
     FILE_SUFFIX_TO_LOAD_FUNCTION = {
-        '.yml': yaml.load,
+        '.yml': yaml.safe_load,
         '.json': json.load,
     }
 

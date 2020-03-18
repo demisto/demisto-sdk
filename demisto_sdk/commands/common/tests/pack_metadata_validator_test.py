@@ -20,7 +20,7 @@ class TestPackMetadataValidator:
 
     @pytest.mark.parametrize('metadata', [os.path.join(FILES_PATH, 'pack_metadata_missing_fields.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_missing_fields.json')])
+                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json')])
     def test_metadata_validator_invalid(self, mocker, metadata):
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))

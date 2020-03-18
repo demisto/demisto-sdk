@@ -1,5 +1,17 @@
+
+class TestCreateImage:
+    def test_build_image_no_errors(self):
+        pass
+        
+    def test_build_image_template_error(self):
+        pass
+
+    def test_run_pylint_with_docker_exception(self):
+        pass
+
+
 class TestPylint:
-    def test_run_pyliny_no_errors(self):
+    def test_run_pylint_no_errors(self):
         """Pylint returns no errors"""
 
     def test_run_pylint_with_errors(self):

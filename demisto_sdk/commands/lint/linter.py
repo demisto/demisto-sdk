@@ -126,8 +126,10 @@ class Linter:
 
         # Parsing pack yaml - inorder to verify if check needed
         try:
+            script_obj: dict = {}
             yml_obj: dict = YAML().load(yml_file)
-            script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
+            if isinstance(yml_obj, dict):
+                script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
             pack_type = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
@@ -356,7 +358,7 @@ class Linter:
 
     def _docker_image_create(self, docker_base_image: str, no_test: bool) -> str:
         """ Create docker image:
-            1. Installing build base if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
+            1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
             2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
                installed, packages which being install can be found in path demisto_sdk/commands/lint/dev_envs
             3. The docker image build done by Dockerfile template located in

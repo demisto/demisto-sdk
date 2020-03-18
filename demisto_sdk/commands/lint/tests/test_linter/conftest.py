@@ -1,8 +1,21 @@
 from wcmatch.pathlib import Path
-from typing import List, Callable
+from typing import List, Callable, Optional
 import pytest
 from ruamel.yaml import YAML
 from demisto_sdk.commands.lint.linter import Linter
+
+
+@pytest.fixture
+def linter_obj() -> Linter:
+    return Linter(pack_dir=Path(__file__).parent / 'data' / 'Integration' / 'intergration_sample',
+                  content_path=Path(__file__).parent / 'test_data',
+                  req_3=["pytest==3.0"],
+                  req_2=["pytest==2.0"])
+
+
+@pytest.fixture(scope='session')
+def lint_files() -> List[Path]:
+    return [Path(__file__).parent / 'test_data' / 'Integration' / 'intergration_sample' / 'intergration_sample.py']
 
 
 @pytest.fixture
@@ -24,21 +37,23 @@ def demisto_content() -> Callable:
 
 @pytest.fixture
 def create_integration(mocker) -> Callable:
-    def _create_integration(content_path: Path, path: str = 'Integrations', flake8: bool = False, bandit: bool = False,
-                            mypy: bool = False, vulture: bool = False, pylint: bool = False, test: bool = False,
-                            yml: bool = False, js_type: bool = False, type_script_key: bool = False, image: bool = "",
-                            image_py_num: float = 3.7) \
-            -> Path:
+    def _create_integration(content_path: Path, path: str = 'Integrations', no_lint_file: bool = False, flake8: bool = False, 
+                            bandit: bool = False, mypy: bool = False, vulture: bool = False, pylint: bool = False, 
+                            test: bool = False, no_tests: bool = False, yml: bool = False, js_type: bool = False, 
+                            type_script_key: bool = False, image: bool = "", image_py_num: float = 3.7) -> Path:
         """ Creates tmp content repositry for integration test
 
         Args:
+            content_path(Path): Content path from demisto_content fixture.
             path(str): Path to create integration.
+            no_lint_file(bool): True for not creating pack.py file.
             flake8(bool): True for creating flake8 error.
             bandit(bool): True for creating bandit error.
             mypy(bool): True for creating mypy error.
             vulture(bool): True for creating vulture error.
             pylint(bool): True for creating pylint error.
             test(bool): True for creating test error.
+            no_tests(bool): True for not creating tests in pack.
             yml(bool): True for creating yml structure error.
             js_type(bool): True for definig pack as JavaScript in yml.
             type_script_key(bool): True for define type in script key.
@@ -48,12 +63,13 @@ def create_integration(mocker) -> Callable:
         Returns:
             Path: Path to tmp integration
         """
-
         integration_name = 'Sample_integration'
         integration_path = content_path / path / integration_name
         integration_path.mkdir()
         files_ext = ['.py', '.yml', '_description.md', '_image.png', '_test.py']
         for ext in files_ext:
+            if (ext == '_test.py' and no_tests) or (ext == '.py' and no_lint_file):
+                continue
             (integration_path / f'{integration_name}{ext}').touch()
         if flake8:
             (integration_path / f'{integration_name}.py').write_text('\nfrom typing import *')
@@ -65,7 +81,7 @@ def create_integration(mocker) -> Callable:
             (integration_path / f'{integration_name}.py').write_text('\nfrom typing import *')
         if pylint:
             (integration_path / f'{integration_name}.py').write_text('\ntest()')
-        if test:
+        if test and not no_tests:
             (integration_path / f'{integration_name}_test.py').write_text('\nassert False')
         yml_file = integration_path / f'{integration_name}.yml'
         if yml:
@@ -95,13 +111,12 @@ def create_integration(mocker) -> Callable:
 
 
 @pytest.fixture
-def linter_obj() -> Linter:
-    return Linter(pack_dir=Path(__file__).parent / 'data' / 'Integration' / 'intergration_sample',
-                  content_path=Path(__file__).parent / 'test_data',
-                  req_3=["pytest==3.0"],
-                  req_2=["pytest==2.0"])
+def docker_mock(mocker):
+    def _docker_mock(BuildException: Optional[Exception] = None, image_id: str = "image-id"):
+        from demisto_sdk.commands.lint import linter
+        import docker
+        mocker.patch.object(docker, 'from_env')
+        mocker.patch.object(linter, '')
 
 
-@pytest.fixture(scope='session')
-def lint_files() -> List[Path]:
-    return [Path(__file__).parent / 'test_data' / 'Integration' / 'intergration_sample' / 'intergration_sample.py']
+

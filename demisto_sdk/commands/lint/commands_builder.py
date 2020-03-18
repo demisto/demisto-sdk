@@ -11,8 +11,8 @@ excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPy
 
 
 def build_flake8_command(files: List[Path]) -> str:
-    """
-        Build command for executing flake8 lint check
+    """ Build command for executing flake8 lint check
+        https://flake8.pycqa.org/en/latest/user/invocation.html
     Args:
         files(List[Path]): files to execute lint
 
@@ -39,7 +39,7 @@ def build_flake8_command(files: List[Path]) -> str:
 
 def build_bandit_command(files: List[Path]) -> str:
     """ Build command for executing bandit lint check
-
+        https://github.com/PyCQA/bandit
     Args:
         files(List(Path)):  files to execute lint
 
@@ -66,10 +66,10 @@ def build_bandit_command(files: List[Path]) -> str:
 
 def build_mypy_command(files: List[Path], version: float) -> str:
     """ Build command to execute with mypy module
-
+        https://mypy.readthedocs.io/en/stable/command_line.html
     Args:
         files(List[Path]): files to execute lint
-        version(str): python varsion X.Y (3.7, 2.7 ..)
+        version(float): python varsion X.Y (3.7, 2.7 ..)
 
     Returns:
         str: mypy command
@@ -102,7 +102,7 @@ def build_mypy_command(files: List[Path], version: float) -> str:
 
 def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     """ Build command to execute with pylint module
-        https://github.com/PyCQA/bandit
+        https://github.com/jendrikseipp/vulture
     Args:
         files(List[Path]): files to execute lint
         pack_path(Path): Package path
@@ -127,7 +127,7 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
 
 def build_pylint_command(files: List[Path]) -> str:
     """ Build command to execute with pylint module
-
+        https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
         files(List[Path]): files to execute lint
 
@@ -155,7 +155,7 @@ def build_pylint_command(files: List[Path]) -> str:
 
 def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
     """ Build command to execute with pytest module
-
+        https://docs.pytest.org/en/latest/usage.html
     Args:
         test_xml(str): path indicate if required or not
         json(bool): Define json creation after test

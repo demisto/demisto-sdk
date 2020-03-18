@@ -44,7 +44,10 @@ def format_manager(use_git=False, input=None, from_version=None, **kwargs):
         file_type = find_type(input)
         if file_type:
             #  if input is a directory with a specific file
-            old_file = get_remote_file(input)
+            if not get_remote_file(input):
+                old_file = False
+            else:
+                old_file = True
             error_list.extend(run_format_on_file(input=input, file_type=file_type, old_file=old_file,
                                                  from_version=from_version, **kwargs))
         else:
@@ -54,7 +57,10 @@ def format_manager(use_git=False, input=None, from_version=None, **kwargs):
                 for file in files:
                     file_path = file.replace('\\', '/')
                     file_type = find_type(file_path)
-                    old_file = get_remote_file(input)
+                    if not get_remote_file(input):
+                        old_file = False
+                    else:
+                        old_file = True
                     if file_type:
                         error_list.extend(run_format_on_file(input=input, file_type=file_type, old_file=old_file,
                                                              from_version=from_version, **kwargs))

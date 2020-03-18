@@ -348,7 +348,7 @@ def format_yml(use_git=False, file_type=None, **kwargs):
 @click.option(
     "-i", "--input", help="The path of an integration file or a package directory to upload", required=True)
 @click.option(
-    "-k, --insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 def upload(**kwargs):

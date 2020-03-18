@@ -21,7 +21,7 @@ BASIC_YML_TEST_PACKS = [
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
 def test_basic_yml_updates(source_path, destination_path, formatter, yml_title, file_type):
     schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "Schemas", '{}.yml'.format(file_type)))
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
     base_yml = formatter(source_path, path=schema_path)
     base_yml.update_yml()
     assert yml_title not in str(base_yml.yml_data)
@@ -31,7 +31,7 @@ def test_basic_yml_updates(source_path, destination_path, formatter, yml_title, 
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
 def test_save_output_file(source_path, destination_path, formatter, yml_title, file_type):
     schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "Schemas", '{}.yml'.format(file_type)))
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
     base_yml = formatter(source_path, destination_path, path=schema_path)
     base_yml.save_yml_to_destination_file()
     saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
@@ -50,7 +50,7 @@ INTEGRATION_PROXY_SSL_PACK = [
                          INTEGRATION_PROXY_SSL_PACK)
 def test_proxy_ssl_descriptions(source_path, argument_name, argument_description, file_type, appearances):
     schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "Schemas", '{}.yml'.format(file_type)))
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
     base_yml = IntegrationYMLFormat(source_path, path=schema_path)
     base_yml.update_proxy_insecure_param_to_default()
 
@@ -82,7 +82,7 @@ INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK = [
                          INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK)
 def test_bang_commands_default_arguments(source_path, file_type, bang_command, verifications):
     schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "Schemas", '{}.yml'.format(file_type)))
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
     base_yml = IntegrationYMLFormat(source_path, path=schema_path)
     base_yml.set_reputation_commands_basic_argument_as_needed()
 
@@ -98,7 +98,7 @@ def test_bang_commands_default_arguments(source_path, file_type, bang_command, v
 @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
 def test_playbook_task_description_name(source_path):
     schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "Schemas", '{}.yml'.format('playbook')))
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
     base_yml = PlaybookYMLFormat(source_path, path=schema_path)
     base_yml.add_description()
     base_yml.update_playbook_task_name()
@@ -111,7 +111,7 @@ def test_playbook_task_description_name(source_path):
 @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
 def test_playbook_sourceplaybookid(source_path):
     schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "Schemas", '{}.yml'.format('playbook')))
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
     base_yml = PlaybookYMLFormat(source_path, path=schema_path)
     base_yml.delete_sourceplaybookid()
 

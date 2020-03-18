@@ -8,13 +8,15 @@
 * Fixed an issue where the -p flag in the validate was not working.
 * generate-docs command:
     * Added the use_cases, global_permissions, command_permissions, additional_info, limitations and troubleshooting arguments.
-    * Added the -k --insecure argument to support running the script and integration command in Demisto.
+    * Added the --insecure argument to support running the script and integration command in Demisto.
     * Removed the -t argument, the file type will be inferred.
     * The -o argument is no longer mandatory, default value will be the input file directory.
 * Added a validator for README.md files.
 * Release notes validator will now run on: incident fields, indicator fields, incident types, dashboard and reputations.
 * Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
-* Removed the *yml_type* argument in the *split-yml* command.
+* Fixed an issue where the validator attempted validating non-existing files after deletions or name refactoring.
+* Removed the *yml_type* argument in the *split-yml*, *extract-code* commands.
+* Removed the *file_type* argument in the *generate-test-playbook* command.
 * Fixed the --insecure argument in *upload*
 * Added the --insecure argument in *run-playbook*
 * Standardise the -i --input, -o --output to demisto-sdk commands.

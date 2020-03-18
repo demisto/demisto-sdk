@@ -5,9 +5,8 @@ from demisto_sdk.commands.generate_docs.common import build_example_dict, add_li
 
 
 def generate_integration_doc(input, examples, id_set, output: str = None, use_cases: str = None,
-                             global_permissions: str = None, command_permissions: str = None,
-                             additional_info: str = None, limitations: str = None, troubleshooting: str = None,
-                             insecure: bool = False, verbose: bool = False):
+                             permissions: str = None, command_permissions: str = None,
+                             limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         yml_data = get_yaml(input)
 
@@ -23,15 +22,18 @@ def generate_integration_doc(input, examples, id_set, output: str = None, use_ca
         else:
             errors.append(f'Command examples was not found {examples}.')
 
-        command_permissions_dict = {}
-        if command_permissions and os.path.isfile(command_permissions):
-            command_permissions = get_command_permissions(command_permissions)
-            for command_permission in command_permissions:
-                # get all the permissions after the command name
-                key, value = command_permission.split(" ", 1)
-                command_permissions_dict.update({key: value})
-        else:
-            errors.append(f'Command permissions was not found {command_permissions}.')
+        if permissions == 'per-command':
+            command_permissions_dict = {}
+            if command_permissions and os.path.isfile(command_permissions):
+                command_permissions = get_command_permissions(command_permissions)
+                for command_permission in command_permissions:
+                    # get all the permissions after the command name
+                    key, value = command_permission.split(" ", 1)
+                    command_permissions_dict.update({key: value})
+            else:
+                errors.append(f'Command permissions was not found {command_permissions}.')
+        else:  # permissions in ['none', 'general']
+            command_permissions_dict = None
 
         docs = []  # type: list
         docs.extend(add_lines(yml_data.get('description')))
@@ -40,9 +42,9 @@ def generate_integration_doc(input, examples, id_set, output: str = None, use_ca
         # Integration use cases
         if use_cases:
             docs.extend(generate_numbered_section('Use Cases', use_cases))
-        # Integration global permissions
-        if global_permissions:
-            docs.extend(generate_section('Permissions (required for all the commands)', global_permissions))
+        # Integration general permissions
+        if permissions == 'general':
+            docs.extend(generate_section('Permissions', ''))
         # Setup integration to work with Demisto
         docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
         # Setup integration on Demisto
@@ -51,15 +53,9 @@ def generate_integration_doc(input, examples, id_set, output: str = None, use_ca
         command_section, command_errors = generate_commands_section(yml_data, example_dict, command_permissions_dict)
         docs.extend(command_section)
         errors.extend(command_errors)
-        # Additional info
-        if additional_info:
-            docs.extend(generate_numbered_section('Additional Information', additional_info))
         # Known limitations
         if limitations:
             docs.extend(generate_numbered_section('Known Limitations', limitations))
-        # Troubleshooting
-        if troubleshooting:
-            docs.extend(generate_section('Troubleshooting', troubleshooting))
 
         doc_text = '\n'.join(docs)
 
@@ -100,7 +96,7 @@ def generate_setup_section(yaml_data: dict):
 
 
 # Commands
-def generate_commands_section(yaml_data: dict, example_dict: dict, command_permissions_dict: dict):
+def generate_commands_section(yaml_data: dict, example_dict: dict, command_permissions_dict):
     errors = []  # type: list
     section = [
         '## Commands',
@@ -119,21 +115,26 @@ def generate_commands_section(yaml_data: dict, example_dict: dict, command_permi
     return section, errors
 
 
-def generate_single_command_section(cmd: dict, example_dict: dict, command_permissions_dict: dict):
+def generate_single_command_section(cmd: dict, example_dict: dict, command_permissions_dict):
     cmd_example = example_dict.get(cmd['name'])
-    cmd_permission_example = command_permissions_dict.get(cmd['name']) if command_permissions_dict else None
+    if command_permissions_dict:
+        cmd_permission_example = ['##### Required Permissions', command_permissions_dict.get(cmd['name'])]
+    elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
+        cmd_permission_example = ['##### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
+    else:  # no permissions for this command
+        cmd_permission_example = ['', '']
+
     errors = []
     section = [
         '### {}'.format(cmd['name']),
         '***',
         cmd.get('description', ' '),
-        '##### Required Permissions',
-        cmd_permission_example if cmd_permission_example else '**FILL IN REQUIRED PERMISSIONS HERE**',
+        cmd_permission_example[0],
+        cmd_permission_example[1],
         '##### Base Command',
-        '',
-        '`{}`'.format(cmd['name']),
+        '', '`{}`'.format(cmd['name']),
         '##### Input',
-        '',
+        ''
     ]
 
     # Inputs

@@ -17,7 +17,7 @@
     "certification": "certified",
     "useCases": [],
     "keywords": ["AWS", "Feed"],
-    "price": 0,
+    "price": "ey",
     "dependencies": {
         "Base": {
             "mandatory": true,

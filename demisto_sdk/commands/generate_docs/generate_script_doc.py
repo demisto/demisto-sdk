@@ -6,7 +6,7 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
     generate_list_section, build_example_dict, generate_section, generate_numbered_section
 
 
-def generate_script_doc(input, examples, id_set='', output: str = None, global_permissions: str = None,
+def generate_script_doc(input, examples, id_set='', output: str = None, permissions: str = None,
                         limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc = []
@@ -70,10 +70,8 @@ def generate_script_doc(input, examples, id_set='', output: str = None, global_p
                                              text='This script uses the following commands and scripts.'))
 
         # Script global permissions
-        if global_permissions:
-            if '\n' in global_permissions:
-                global_permissions = global_permissions.split('\n')
-            doc.extend(generate_section('Permissions', global_permissions))
+        if permissions == 'general':
+            doc.extend(generate_section('Permissions', ''))
 
         if used_in:
             doc.extend(generate_list_section('Used In', used_in, True,

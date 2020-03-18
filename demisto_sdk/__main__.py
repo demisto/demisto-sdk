@@ -519,7 +519,8 @@ def init(**kwargs):
                              " Each Command should be in a separate line."
                              " For script - the script example surrounded by double quotes.")
 @click.option(
-    "-gp", "--global_permissions", help="Global permissions in the documentation.", required=False)
+    "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
+    required=True)
 @click.option(
     "-cp", "--command_permissions", help="Path for file containing commands permissions"
                                          " Each command permissions should be in a separate line."

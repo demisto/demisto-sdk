@@ -17,7 +17,7 @@ class Initiator:
     """Initiator creates a new pack/integration/script.
 
        Attributes:
-           output_dir (str): The directory in which init will create the new pack/integration/script
+           output (str): The directory in which init will create the new pack/integration/script
            name (str): The name for the new pack/integration/script directory.
            id (str): The id for the created script/integration.
            integration (bool): Indicates whether to create an integration.
@@ -25,9 +25,9 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    def __init__(self, output_dir: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
+    def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
                  pack: bool = False):
-        self.output_dir = output_dir if output_dir else ''
+        self.output = output if output else ''
         self.id = id
 
         self.is_integration = integration
@@ -109,8 +109,8 @@ class Initiator:
             bool. Returns True if pack was created successfully and False otherwise
         """
         # if an output directory given create the pack there
-        if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
+        if self.output:
+            self.full_output_path = os.path.join(self.output, self.dir_name)
 
         # content-descriptor file indicates we are in "content" repository
         # thus we will create the pack under Packs directory
@@ -153,7 +153,7 @@ class Initiator:
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
-            integration_init = Initiator(output_dir=os.path.join(self.full_output_path, 'Integrations'),
+            integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True)
             return integration_init.init()
 
@@ -239,8 +239,8 @@ class Initiator:
             bool. True if the integration was created successfully, False otherwise.
         """
         # if output directory given create the integration there
-        if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
+        if self.output:
+            self.full_output_path = os.path.join(self.output, self.dir_name)
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
@@ -274,8 +274,8 @@ class Initiator:
             bool. True if the script was created successfully, False otherwise.
         """
         # if output directory given create the script there
-        if len(self.output_dir) > 0:
-            self.full_output_path = os.path.join(self.output_dir, self.dir_name)
+        if self.output:
+            self.full_output_path = os.path.join(self.output, self.dir_name)
 
         # will create the script under the Scripts directory of the pack
         elif os.path.isdir(SCRIPTS_DIR):

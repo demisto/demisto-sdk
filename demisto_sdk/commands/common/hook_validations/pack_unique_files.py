@@ -7,11 +7,14 @@ import re
 import json
 
 from demisto_sdk.commands.common.tools import pack_name_to_path
-from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME, PACKS_PACK_IGNORE_FILE_NAME,\
-    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME
+from demisto_sdk.commands.common.constants import (PACKS_WHITELIST_FILE_NAME, PACKS_PACK_IGNORE_FILE_NAME,
+                                                   PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
+                                                   PACK_METADATA_FIELDS, PACK_METADATA_DEPENDENCIES,
+                                                   PACK_METADATA_PRICE, PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS,
+                                                   PACK_METADATA_CATEGORIES, PACK_METADATA_USE_CASES)
 
 
-class PackUniqueFilesValidator():
+class PackUniqueFilesValidator:
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
@@ -123,15 +126,40 @@ class PackUniqueFilesValidator():
         return False
 
     def _is_pack_meta_file_structure_valid(self):
-        """Check if pack_metadata.json structure is json parse-able"""
+        """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
             pack_meta_file_content = self._read_file_content(self.pack_meta_file)
-            if pack_meta_file_content and json.loads(pack_meta_file_content):
-                return True
+            if not pack_meta_file_content:
+                self._add_error('Pack metadata is empty.')
+                return False
+            metadata = json.loads(pack_meta_file_content)
+            missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
+            if missing_fields:
+                self._add_error('Missing fields in the pack metadata: {}'.format(missing_fields))
+                return False
+            dependencies_field = metadata[PACK_METADATA_DEPENDENCIES]
+            if not isinstance(dependencies_field, dict):
+                self._add_error('The dependencies field in the pack must be a dictionary.')
+                return False
+            price_field = metadata[PACK_METADATA_PRICE]
+            try:
+                int(price_field)
+            except Exception:
+                self._add_error('The price field in the pack must be a number.')
+                return False
+            for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
+                               PACK_METADATA_USE_CASES):
+                field = metadata[list_field]
+                if field and len(field) == 1:
+                    value = field[0]
+                    if not value:
+                        self._add_error('Empty value in the {} field.'.format(list_field))
+                        return False
         except (ValueError, TypeError):
             self._add_error('Could not parse {} file contents to json format'.format(self.pack_meta_file))
+            return False
 
-        return False
+        return True
 
     # pack README.md validation
     def validate_readme_file(self):

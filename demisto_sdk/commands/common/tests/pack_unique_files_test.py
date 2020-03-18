@@ -32,3 +32,8 @@ class TestPackUniqueFilesValidator:
         assert not self.validator.validate_pack_unique_files()
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.validate_pack_unique_files()
+    
+    def test_validate_pack_metadata(self):
+        assert not self.validator.validate_pack_unique_files()
+        fake_validator = PackUniqueFilesValidator('fake')
+        assert fake_validator.validate_pack_unique_files()

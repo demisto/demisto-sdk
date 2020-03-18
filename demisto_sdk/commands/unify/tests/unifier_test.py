@@ -290,7 +290,7 @@ class TestMergeScriptPackageToYMLIntegration:
             image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
         )
 
-        unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
+        unifier = Unifier(input=self.export_dir_path, output=self.test_dir_path)
         yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
@@ -329,7 +329,7 @@ class TestMergeScriptPackageToYMLIntegration:
             detailed_description=description,
         )
 
-        unifier = Unifier(self.export_dir_path, outdir=self.test_dir_path)
+        unifier = Unifier(self.export_dir_path, output=self.test_dir_path)
         yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
@@ -368,7 +368,7 @@ final test: hi
             detailed_description=description,
         )
 
-        unifier = Unifier(self.export_dir_path, outdir=self.test_dir_path)
+        unifier = Unifier(self.export_dir_path, output=self.test_dir_path)
         yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
@@ -407,7 +407,7 @@ class TestMergeScriptPackageToYMLScript:
             script_code=TEST_VALID_CODE,
         )
 
-        unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
+        unifier = Unifier(input=self.export_dir_path, output=self.test_dir_path)
         yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
 
@@ -433,7 +433,7 @@ class TestMergeScriptPackageToYMLScript:
             script_code=TEST_VALID_CODE,
         )
 
-        unifier = Unifier(indir=self.export_dir_path, outdir=self.test_dir_path)
+        unifier = Unifier(input=self.export_dir_path, output=self.test_dir_path)
         yml_files = unifier.merge_script_package_to_yml()
         assert len(yml_files) == 2
         export_yml_path = yml_files[0]

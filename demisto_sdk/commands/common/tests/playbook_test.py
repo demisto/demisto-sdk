@@ -47,9 +47,9 @@ class TestPlaybookValidator:
     CONDITION_EXIST_PARTIAL_2 = {"id": "Intezer - scan host", "version": -1,
                                  "tasks":
                                      {'1':
-                                         {'type': 'condition',
-                                          'conditions': [{'label': 'yes'}],
-                                          'nexttasks': {'#default#': ['2']}}}
+                                       {'type': 'condition',
+                                        'conditions': [{'label': 'yes'}],
+                                        'nexttasks': {'#default#': ['2']}}}
                                  }
     CONDITION_EXIST_PARTIAL_3 = {"id": "Intezer - scan host", "version": -1,
                                  "tasks":
@@ -67,17 +67,59 @@ class TestPlaybookValidator:
                             "tasks":
                                 {'1': {'type': 'condition',
                                        'conditions': [{'label': 'yes'}],
-                                       'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}
-                            }
+                                       'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
+    CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS = {"id": "Intezer - scan host", "version": -1,
+                                            "tasks":
+                                            {'1': {'type': 'condition',
+                                                   'message': {},
+                                                   'nexttasks': {}}}}
+    CONDITIONAL_ASK_EXISTS_NO_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
+                                          "tasks":
+                                              {'1': {'type': 'condition',
+                                                     'message': {'replyOptions': ['yes']},
+                                                     'nexttasks': {}}}
+                                          }
+    CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
+                                                 "tasks":
+                                                     {'1': {'type': 'condition',
+                                                            'message': {'replyOptions': ['yes']},
+                                                            'nexttasks': {'#default#': []}}}}
+    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
+                                            "tasks":
+                                                {'1': {'type': 'condition',
+                                                       'message': {'replyOptions': ['yes']},
+                                                       'nexttasks': {'yes': ['1']}}}
+                                            }
+    CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
+                                                "tasks":
+                                                {'1': {'type': 'condition',
+                                                       'scriptName': 'testScript'}}}
+    CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
+                                            "tasks":
+                                                {'1': {'type': 'condition',
+                                                       'scriptName': 'testScript',
+                                                       'nexttasks': {'#default#': []}}}}
+    CONDITIONAL_SCRPT_WITH_MULTI_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
+                                             "tasks":
+                                                 {'1': {'type': 'condition',
+                                                        'scriptName': 'testScript',
+                                                        'nexttasks': {'#default#': [], 'yes': []}}}}
     IS_CONDITIONAL_INPUTS = [
         (CONDITION_NOT_EXIST_1, True),
-        (CONDITION_EXIST_EMPTY_1, False),
-        (CONDITION_EXIST_EMPTY_2, False),
-        (CONDITION_EXIST_PARTIAL_1, False),
+        (CONDITION_EXIST_EMPTY_1, True),
+        (CONDITION_EXIST_EMPTY_2, True),
+        (CONDITION_EXIST_PARTIAL_1, True),
         (CONDITION_EXIST_PARTIAL_2, False),
         (CONDITION_EXIST_PARTIAL_3, False),
         (CONDITION_EXIST_FULL_NO_TASK_ID, False),
-        (CONDITION_EXIST_FULL, True)
+        (CONDITION_EXIST_FULL, True),
+        (CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS, True),
+        (CONDITIONAL_ASK_EXISTS_NO_NXT_TASK, False),
+        (CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK, True),
+        (CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK, True),
+        (CONDITIONAL_SCRPT_WITHOUT_NXT_TASK, False),
+        (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK, False),
+        (CONDITIONAL_SCRPT_WITH_MULTI_NXT_TASK, True)
     ]
 
     TASKS_NOT_EXIST = ROLENAME_NOT_EXIST

@@ -262,11 +262,12 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
 
 
 class PlaybookTestsGenerator:
-    def __init__(self, infile, outdir, name, no_outputs=False, file_type='integration', verbose=False):
-        self.integration_yml_path = infile
-        self.outdir = outdir
-        if outdir:
-            self.test_playbook_yml_path = os.path.join(outdir, name + '.yml')
+    def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
+                 verbose: bool = False):
+        self.integration_yml_path = input
+        self.output = output
+        if output:
+            self.test_playbook_yml_path = os.path.join(output, name + '.yml')
         else:
             self.test_playbook_yml_path = f'{name}.yml'
 
@@ -285,13 +286,13 @@ class PlaybookTestsGenerator:
         playbook_start_task => delete_context(all) => task1 => verify_outputs_task1 => task2 => verify_outputs_task2
             => task_end
 
-        At the end the functions dumps the new test playbook to the outdir if set, otherwise file will be created in
+        At the end the functions dumps the new test playbook to the output if set, otherwise file will be created in
         local directory
 
         """
-        if self.outdir:
-            if not os.path.isdir(self.outdir):
-                print_error(f'Directory not exist: {self.outdir}')
+        if self.output:
+            if not os.path.isdir(self.output):
+                print_error(f'Directory not exist: {self.output}')
                 return
 
         ryaml = YAML()

@@ -46,7 +46,7 @@ class IntegrationValidator(BaseValidator):
         # type: (bool) -> bool
         """Check whether the Integration is valid or not"""
         answers = [
-            super(IntegrationValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),

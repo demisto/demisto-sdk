@@ -325,9 +325,9 @@ def lint(config, dir, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-in", "--input", help="The path of the script yml file")
+    "-i", "--input", help="The path of the script yml file")
 @click.option(
-    "-out", "--output", help="The path where the formatted file will be saved to")
+    "-o", "--output", help="The path where the formatted file will be saved to")
 @click.option(
     "-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(

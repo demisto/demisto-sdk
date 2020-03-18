@@ -10,8 +10,8 @@
 * Release notes validator will now run on: incident fields, indicator fields, incident types, dashboard and reputations.
 * Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
 * Removed the *yml_type* argument in the *split-yml* command.
-* Fixed the --insecure argument in *upload*.
-* Added the --insecure argument in *run-playbook*.
+* Fixed the --insecure argument in *upload*
+* Added the --insecure argument in *run-playbook*
 * Standardise the -i --input, -o --output to demisto-sdk commands.
 
 ### 0.4.3

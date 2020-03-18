@@ -366,7 +366,7 @@ def upload(**kwargs):
 @click.option(
     "-q", "--query", help="The query to run", required=True)
 @click.option(
-    "-k", "--insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
@@ -408,6 +408,8 @@ def run(**kwargs):
     show_default=True,
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()

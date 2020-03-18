@@ -567,7 +567,7 @@ class IntegrationValidator(BaseValidator):
     def is_all_params_not_hidden(self):
         # type: () -> bool
         ans = True
-        conf = self.current_file.get('configuration')
+        conf = self.current_file.get('configuration', [])
         for int_parameter in conf:
             if int_parameter.get('hidden'):
                 ans = False

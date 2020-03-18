@@ -8,7 +8,7 @@
 * Fixed an issue where the -p flag in the validate was not working.
 * generate-docs command:
     * Added the use_cases, global_permissions, command_permissions, additional_info, limitations and troubleshooting arguments.
-    * Added the -k --insecure argument to support running the script and integration command in Demisto.
+    * Added the --insecure argument to support running the script and integration command in Demisto.
     * Removed the -t argument, the file type will be inferred.
     * The -o argument is no longer mandatory, default value will be the input file directory.
 * Added a validator for README.md files.

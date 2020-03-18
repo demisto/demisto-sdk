@@ -408,8 +408,6 @@ def run(**kwargs):
     show_default=True,
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
-@click.option(
-    "-k, --insecure", help="Skip certificate validation", is_flag=True)
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()

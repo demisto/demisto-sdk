@@ -64,13 +64,12 @@ class ReadMeValidator:
 
     def __init__(self, file_path: str):
         self.content_path = get_content_path()
-        self.file_path = self.content_path / Path(file_path)
+        self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
 
     def is_valid_file(self):
         """Check whether the readme file is valid or not
         """
-        print(os.environ.get('CI') + '########################')
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
             is_readme_valid = all([
                 self.is_mdx_file(),
@@ -96,10 +95,9 @@ class ReadMeValidator:
         try:
             # check if requiring modules in node exist
             _, _, is_node = run_command_os('node -v', cwd=self.pack_path)
-            _, _, is_node = run_command_os('npm install', cwd=self.content_path)
-            _, _, is_mdx = run_command_os('npm ls -g @mdx-js/mdx', cwd=self.content_path)
-            _, _, is_fs_extra = run_command_os('npm ls -g fs-extra', cwd=self.content_path)
-            _, _, is_commander = run_command_os('npm ls -g commander', cwd=self.content_path)
+            _, _, is_mdx = run_command_os('npm ls @mdx-js/mdx', cwd=self.content_path)
+            _, _, is_fs_extra = run_command_os('npm ls fs-extra', cwd=self.content_path)
+            _, _, is_commander = run_command_os('npm ls commander', cwd=self.content_path)
 
             if not is_node and not is_mdx and not is_fs_extra and not is_commander:
                 ready = True

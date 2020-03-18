@@ -31,7 +31,7 @@ class BaseUpdateJSON:
             self.json_data = self.get_json_data_as_dict()
         except json.JSONDecodeError:
             raise Exception('Provided file is not a valid YML.')
-            self.output_file_name = self.set_output_file_name(output)
+        self.output_file_name = self.set_output_file_name(output)
         self.arguments_to_remove = self.arguments_to_remove()
 
     def set_output_file_name(self, output_file_name):

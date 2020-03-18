@@ -1,5 +1,4 @@
 import os
-
 from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.git_tools import git_path
@@ -32,7 +31,7 @@ class TestPackUniqueFilesValidator:
         assert not self.validator.validate_pack_unique_files()
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.validate_pack_unique_files()
-    
+
     def test_validate_pack_metadata(self):
         assert not self.validator.validate_pack_unique_files()
         fake_validator = PackUniqueFilesValidator('fake')

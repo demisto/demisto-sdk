@@ -348,7 +348,7 @@ def format_yml(use_git=False, file_type=None, **kwargs):
 @click.option(
     "-i", "--path", help="The path of an integration file or a package directory to upload", required=True)
 @click.option(
-    "-k, --insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 def upload(**kwargs):
@@ -409,7 +409,7 @@ def run(**kwargs):
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
 @click.option(
-    "-k, --insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation", is_flag=True)
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()

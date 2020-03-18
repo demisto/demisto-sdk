@@ -31,7 +31,6 @@ class BaseUpdateYML:
         self.old_file = old_file
         self.path = path
         self.from_version = from_version
-        self.source_file = False
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
         try:

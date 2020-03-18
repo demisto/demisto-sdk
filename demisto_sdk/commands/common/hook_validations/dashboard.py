@@ -12,7 +12,7 @@ class DashboardValidator(BaseValidator):
             widgets = [item.get('widget') for item in layout_of_dashboard]
         return widgets
 
-    def is_valid_dashboard(self):
+    def is_valid_dashboard(self, validate_rn=True):
         # type: () -> bool
         """Check whether the dashboard is valid or not.
 
@@ -20,6 +20,7 @@ class DashboardValidator(BaseValidator):
             bool. Whether the dashboard is valid or not
         """
         is_dashboard_valid = [
+            super().is_valid_file(validate_rn),
             self.is_valid_version()
         ]
 

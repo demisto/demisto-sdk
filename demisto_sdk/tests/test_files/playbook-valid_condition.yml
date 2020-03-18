@@ -1,16 +1,14 @@
-elasticcommonfields: {}
 id: valid_condition
-version: -1
+version: 1
 name: valid_condition
 starttaskid: "0"
 tasks:
   "0":
     id: "0"
-    taskid: 312b6357-c197-4a13-8a42-ee06e1400bbb
+    taskid: ed7b91db-b56a-4936-8840-a07c9ef8a69e
     type: start
     task:
-      elasticcommonfields: {}
-      id: 312b6357-c197-4a13-8a42-ee06e1400bbb
+      id: ed7b91db-b56a-4936-8840-a07c9ef8a69e
       version: -1
       name: ""
       iscommand: false
@@ -22,7 +20,7 @@ tasks:
     view: |-
       {
         "position": {
-          "x": 480,
+          "x": 602.5,
           "y": 50
         }
       }
@@ -33,23 +31,68 @@ tasks:
     quietmode: 0
   "1":
     id: "1"
-    taskid: 1a811f5b-7f43-4d4a-8ccd-9a5ad76a6af6
+    taskid: 4bf03f81-541d-43ce-8174-e805d2421c7b
     type: condition
     task:
-      elasticcommonfields: {}
-      id: 1a811f5b-7f43-4d4a-8ccd-9a5ad76a6af6
+      id: 4bf03f81-541d-43ce-8174-e805d2421c7b
       version: -1
-      name: Condition Task
+      name: Ask Condition Without No
       type: condition
       iscommand: false
       brand: ""
     nexttasks:
       '#default#':
-      - "5"
-      "no":
-      - "4"
-      "yes":
       - "3"
+      "Yes":
+      - "2"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 602.5,
+          "y": 195
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    message:
+      to:
+        simple: Administrator
+      subject:
+        simple: Gotta ask you a question
+      body:
+        simple: Do you agree?
+      methods:
+      - email
+      format: ""
+      bcc: null
+      cc: null
+      timings:
+        retriescount: 2
+        retriesinterval: 360
+        completeafterreplies: 1
+      replyOptions:
+      - "Yes"
+      - "No"
+    skipunavailable: false
+    quietmode: 0
+  "2":
+    id: "2"
+    taskid: cbd15d23-ab64-4c4d-87da-68fd3ef69630
+    type: condition
+    task:
+      id: cbd15d23-ab64-4c4d-87da-68fd3ef69630
+      version: -1
+      name: Builtin Condition
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#default#':
+      - "9"
+      "yes":
+      - "6"
     separatecontext: false
     conditions:
     - label: "yes"
@@ -62,21 +105,11 @@ tasks:
           right:
             value:
               simple: "1"
-    - label: "no"
-      condition:
-      - - operator: isEqualString
-          left:
-            value:
-              simple: "1"
-            iscontext: true
-          right:
-            value:
-              simple: "0"
     view: |-
       {
         "position": {
-          "x": 480,
-          "y": 195
+          "x": 1032.5,
+          "y": 370
         }
       }
     note: false
@@ -86,47 +119,75 @@ tasks:
     quietmode: 0
   "3":
     id: "3"
-    taskid: 7215f544-7d13-4a96-84a1-75387ef05fd4
-    type: title
+    taskid: e7079a61-8619-4104-8a4b-2a39096f9a7a
+    type: condition
     task:
-      elasticcommonfields: {}
-      id: 7215f544-7d13-4a96-84a1-75387ef05fd4
+      id: e7079a61-8619-4104-8a4b-2a39096f9a7a
       version: -1
-      name: Done Yes
-      type: title
+      name: Ask Condition With Yes No Without Else
+      type: condition
       iscommand: false
       brand: ""
+    nexttasks:
+      "No":
+      - "5"
+      "Yes":
+      - "4"
     separatecontext: false
     view: |-
       {
         "position": {
-          "x": 480,
+          "x": 275,
           "y": 370
         }
       }
     note: false
     timertriggers: []
     ignoreworker: false
+    message:
+      to:
+        simple: Administrator
+      subject:
+        simple: No subject
+      body: {}
+      methods:
+      - email
+      format: ""
+      bcc: null
+      cc: null
+      timings:
+        retriescount: 2
+        retriesinterval: 360
+        completeafterreplies: 1
+      replyOptions:
+      - "Yes"
+      - "No"
     skipunavailable: false
     quietmode: 0
   "4":
     id: "4"
-    taskid: f8f88970-ef38-4c94-88be-c0c7fd8bc238
-    type: title
+    taskid: 1d99783e-855b-4b85-83d4-676fd7f07133
+    type: condition
     task:
-      elasticcommonfields: {}
-      id: f8f88970-ef38-4c94-88be-c0c7fd8bc238
+      id: 1d99783e-855b-4b85-83d4-676fd7f07133
       version: -1
-      name: Done No
-      type: title
+      name: Manual Condition
+      type: condition
       iscommand: false
       brand: ""
+    nexttasks:
+      '#default#':
+      - "7"
+      "Yes":
+      - "6"
     separatecontext: false
+    defaultassigneecomplex:
+      simple: admin
     view: |-
       {
         "position": {
-          "x": 50,
-          "y": 370
+          "x": 60,
+          "y": 545
         }
       }
     note: false
@@ -136,13 +197,12 @@ tasks:
     quietmode: 0
   "5":
     id: "5"
-    taskid: 6f7ba973-5d7c-4983-8943-bb970bfcbdb2
+    taskid: f3c4673f-dcfc-4b0b-8aea-230ad4615dd9
     type: title
     task:
-      elasticcommonfields: {}
-      id: 6f7ba973-5d7c-4983-8943-bb970bfcbdb2
+      id: f3c4673f-dcfc-4b0b-8aea-230ad4615dd9
       version: -1
-      name: Done Else
+      name: "No"
       type: title
       iscommand: false
       brand: ""
@@ -150,8 +210,95 @@ tasks:
     view: |-
       {
         "position": {
-          "x": 910,
-          "y": 370
+          "x": 490,
+          "y": 545
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "6":
+    id: "6"
+    taskid: e7381ae0-184c-4465-8877-4ddb5b2e5145
+    type: title
+    task:
+      id: e7381ae0-184c-4465-8877-4ddb5b2e5145
+      version: -1
+      name: "Yes"
+      type: title
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 1115,
+          "y": 720
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "7":
+    id: "7"
+    taskid: 10163ed4-4e2c-4e00-88e0-571a3c4cda47
+    type: title
+    task:
+      id: 10163ed4-4e2c-4e00-88e0-571a3c4cda47
+      version: -1
+      name: Else
+      type: title
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 720
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "9":
+    id: "9"
+    taskid: 70d05872-a4cc-4e63-8594-6e4f06a063a3
+    type: condition
+    task:
+      id: 70d05872-a4cc-4e63-8594-6e4f06a063a3
+      version: -1
+      name: AreValuesEqual Condition
+      description: Check whether the values provided in arguments are equal. If either
+        of the arguments are missing, no is returned.
+      scriptName: AreValuesEqual
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#default#':
+      - "7"
+      "yes":
+      - "6"
+    scriptarguments:
+      left:
+        simple: "1"
+      right:
+        simple: "1"
+    results:
+    - AreValuesEqual
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 920,
+          "y": 545
         }
       }
     note: false
@@ -161,13 +308,11 @@ tasks:
     quietmode: 0
 view: |-
   {
-    "linkLabelsPosition": {
-      "1_4_no": 0.46
-    },
+    "linkLabelsPosition": {},
     "paper": {
       "dimensions": {
-        "height": 385,
-        "width": 1240,
+        "height": 735,
+        "width": 1445,
         "x": 50,
         "y": 50
       }

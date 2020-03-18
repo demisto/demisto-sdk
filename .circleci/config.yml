@@ -8,7 +8,7 @@ jobs:
   toxify:
 
       docker:
-        - image: python:3.8
+        - image: devdemisto/content-build-sdk:3.0.0.6783
 
       steps:
         - checkout

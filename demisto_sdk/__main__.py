@@ -366,7 +366,7 @@ def upload(**kwargs):
 @click.option(
     "-q", "--query", help="The query to run", required=True)
 @click.option(
-    "-k", "--insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(

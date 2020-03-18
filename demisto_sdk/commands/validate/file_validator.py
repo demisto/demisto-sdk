@@ -140,16 +140,17 @@ class FilesValidator:
                 file_path = os.path.splitext(file_path)[0] + '.yml'
             elif file_path.endswith('.js') or file_path.endswith('.py'):
                 continue
-
-            if file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
+            if file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
+                deleted_files.add(file_path)
+            elif not os.path.isfile(file_path):
+                continue
+            elif file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     FilesValidator._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
             elif file_status.lower() == 'm' and checked_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
             elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.'):
                 added_files_list.add(file_path)
-            elif file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
-                deleted_files.add(file_path)
             elif file_status.lower().startswith('r') and checked_type(file_path):
                 # if a code file changed, take the associated yml file.
                 if checked_type(file_data[2], CODE_FILES_REGEX):

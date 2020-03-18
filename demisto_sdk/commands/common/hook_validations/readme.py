@@ -63,7 +63,8 @@ class ReadMeValidator:
     """
 
     def __init__(self, file_path: str):
-        self.file_path = get_content_path() / Path(file_path)
+        self.content_path = get_content_path()
+        self.file_path = self.content_path / Path(file_path)
         self.pack_path = self.file_path.parent
 
     def is_valid_file(self):
@@ -82,7 +83,7 @@ class ReadMeValidator:
         if ready:
             mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
             # run the java script mdx parse validator
-            stdout, stderr, returncode = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.pack_path)
+            stdout, stderr, returncode = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path)
             if returncode != 0:
                 print_error(f'Failed verifying README.md, Path: {self.file_path}. Error Message is: {stderr}')
                 is_valid = False

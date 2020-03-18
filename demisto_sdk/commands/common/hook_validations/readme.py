@@ -70,6 +70,7 @@ class ReadMeValidator:
     def is_valid_file(self):
         """Check whether the readme file is valid or not
         """
+        print(os.environ.get('CI') + '########################')
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
             is_readme_valid = all([
                 self.is_mdx_file(),

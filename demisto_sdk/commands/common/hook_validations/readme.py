@@ -95,9 +95,10 @@ class ReadMeValidator:
         try:
             # check if requiring modules in node exist
             _, _, is_node = run_command_os('node -v', cwd=self.pack_path)
-            _, _, is_mdx = run_command_os('npm ls -g @mdx-js/mdx', cwd=self.pack_path)
-            _, _, is_fs_extra = run_command_os('npm ls -g fs-extra', cwd=self.pack_path)
-            _, _, is_commander = run_command_os('npm ls -g commander', cwd=self.pack_path)
+            _, _, is_node = run_command_os('npm install', cwd=self.content_path)
+            _, _, is_mdx = run_command_os('npm ls -g @mdx-js/mdx', cwd=self.content_path)
+            _, _, is_fs_extra = run_command_os('npm ls -g fs-extra', cwd=self.content_path)
+            _, _, is_commander = run_command_os('npm ls -g commander', cwd=self.content_path)
 
             if not is_node and not is_mdx and not is_fs_extra and not is_commander:
                 ready = True

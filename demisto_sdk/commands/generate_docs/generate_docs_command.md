@@ -9,11 +9,9 @@ This command is used to create a documentation file for Demisto content files.
 * **-o, --output** The output dir to write the documentation file into, documentation file name is README.md. If not specified, will be in the yml dir.
 * **-u, --use_cases** For integration - Top use-cases. Number the steps by '*' (i.e. '\* foo. * bar.').
 * **-e, --examples** Path for file containing command or script examples. Each Command should be in a separate line. For script - the script example surrounded by double quotes.
-* **-gp, --global_permissions** Global permissions in the documentation.
+* **-p, --permissions** permissions in the documentation.
 * **-cp, --command_permissions** Path for file containing commands permissions. Each command permissions should be in a separate line (i.e. '!command-name Administrator READ-WRITE').
-* **-ai, --additional_info** Additional information. Number the steps by '*' (i.e. '\* foo. * bar.').
 * **-l, --limitations** Known limitations. Number the steps by '*' (i.e. '\* foo. * bar.').
-* **-ts, -troubleshooting** Troubleshooting manual.
 * **-id, --id_set** Path of updated id_set.json file.
 * **--insecure** Skip certificate validation.
 * **-v, --verbose** Verbose output - mainly for debugging purposes.

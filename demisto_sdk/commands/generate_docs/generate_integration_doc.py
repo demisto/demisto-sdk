@@ -125,8 +125,17 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         cmd_permission_example = ['', '']
 
     errors = []
-    section = ['### {}'.format(cmd['name']), '***', cmd.get('description', ' '), cmd_permission_example[0],
-               cmd_permission_example[1], '##### Base Command', '', '`{}`'.format(cmd['name']), '##### Input', '']
+    section = [
+        '### {}'.format(cmd['name']),
+        '***',
+        cmd.get('description', ' '),
+        cmd_permission_example[0],
+        cmd_permission_example[1],
+        '##### Base Command',
+        '', '`{}`'.format(cmd['name']),
+        '##### Input',
+        ''
+    ]
 
     # Inputs
     arguments = cmd.get('arguments')

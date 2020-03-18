@@ -1,7 +1,6 @@
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 import os
-import sys
 import yaml
 import yamlordereddictloader
 from ruamel.yaml import YAML
@@ -32,15 +31,13 @@ class BaseUpdateYML:
         self.old_file = old_file
         self.path = path
         self.from_version = from_version
+        self.source_file = False
         if not self.source_file:
-            print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
-            sys.exit(1)
-
+            raise Exception('Please provide <source path>, <optional - destination path>.')
         try:
             self.yml_data = self.get_yml_data_as_dict()
         except yaml.YAMLError:
-            print_color('Provided file is not a valid YML.', LOG_COLORS.RED)
-            sys.exit(1)
+            raise Exception('Provided file is not a valid YML.')
 
         self.output_file_name = self.set_output_file_name(output)
         self.id_and_version_location = self.get_id_and_version_path_object()

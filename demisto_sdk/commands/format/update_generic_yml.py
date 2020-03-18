@@ -2,7 +2,7 @@ import os
 import sys
 import yaml
 import yamlordereddictloader
-
+import io
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
@@ -67,6 +67,11 @@ class BaseUpdateYML:
         print(F'Reading YML data')
 
         with open(self.source_file) as f:
+            # yaml file can not load = with out a value after it -> changed to '='
+            read_file = f.read()
+            replaced = read_file.replace("simple: =", "simple: '='")
+            # revert str to stream for yaml loader
+            f = io.StringIO(replaced)
             return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
 
     def get_id_and_version_path_object(self):

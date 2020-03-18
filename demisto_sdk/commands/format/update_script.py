@@ -13,8 +13,8 @@ class ScriptYMLFormat(BaseUpdateYML):
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
 
-    def __init__(self, input='', output='', old_file=''):
-        super().__init__(input, output, old_file)
+    def __init__(self, input='', output='', old_file='', path='', from_version=''):
+        super().__init__(input, output, old_file, path, from_version)
 
     def format_file(self):
         """Manager function for the script YML updater."""
@@ -26,4 +26,4 @@ class ScriptYMLFormat(BaseUpdateYML):
 
         print_color(F'========Finished updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-        return self.initiate_file_validator(ScriptValidator, 'script')
+        return self.initiate_file_validator(ScriptValidator)

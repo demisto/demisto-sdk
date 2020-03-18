@@ -6,25 +6,28 @@ from demisto_sdk.tests.constants_test import SOURCE_FORMAT_INCIDENTFIELD_COPY, D
     SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY, \
     DESTINATION_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, \
     SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_DASHBOARD_COPY, \
-    DESTINATION_FORMAT_DASHBOARD_COPY
+    DESTINATION_FORMAT_DASHBOARD_COPY, INCIDENTFIELD_PATH, DASHBOARD_PATH, LAYOUT_PATH, INCIDENTTYPE_PATH,\
+    INDICATORFIELD_PATH, INDICATORTYPE_PATH
 
 from demisto_sdk.commands.format.format_module import format_manager
 
 
 class TestFormattingJson:
     FORMAT_FILES = [
-        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, 'incidentfield', 0),
-        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, 'incidenttype', 0),
-        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, 'indicatorfield', 0),
-        (SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, 'indicatortype', 0),
-        (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, 'layout', 0),
-        (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, 'dashboard', 0),
+        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, INCIDENTFIELD_PATH, 0),
+        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, INCIDENTTYPE_PATH, 0),
+        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, INDICATORFIELD_PATH, 0),
+        (SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, INDICATORTYPE_PATH, 0),
+        (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, LAYOUT_PATH, 0),
+        (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, DASHBOARD_PATH, 0),
     ]
 
-    @pytest.mark.parametrize('source, target ,filetype, answer', FORMAT_FILES)
-    def test_format_file(self, source, target, filetype, answer):
+    @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
+    def test_format_file(self, source, target, path, answer):
+        os.mkdir(path)
         shutil.copyfile(source, target)
-        res = format_manager(use_git=False, source_file=target, file_type=filetype, output_file_name=target,
-                             old_file=False)
+        res = format_manager(use_git=False, input=target, output=target)
         os.remove(target)
+        os.rmdir(path)
+
         assert res is answer

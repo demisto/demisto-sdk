@@ -10,7 +10,7 @@ ryaml.allow_duplicate_keys = True
 
 
 class BaseUpdateYML:
-    """BaseUpdateYML is the base class for all updaters.
+    """BaseUpdateYML is the base class for all yml updaters.
 
         Attributes:
             input (str): the path to the file we are updating at the moment.
@@ -18,7 +18,8 @@ class BaseUpdateYML:
             yml_data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
-    DEFAULT_FROMVERSION = '5.0.0'
+    NEW_FILE_DEFAULT_FROMVERSION = '5.0.0'
+    OLD_FILE_DEFAULT_FROMVERSION = '1.0.0'
     DEFAULT_YML_VERSION = -1
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
         'IntegrationYMLFormat': 'commonfields',
@@ -26,9 +27,11 @@ class BaseUpdateYML:
         'PlaybookYMLFormat': '',
     }
 
-    def __init__(self, input='', output='', old_file=''):
+    def __init__(self, input='', output='', old_file='', path='', from_version=''):
         self.source_file = input
         self.old_file = old_file
+        self.path = path
+        self.from_version = from_version
         if not self.source_file:
             print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
             sys.exit(1)
@@ -41,6 +44,7 @@ class BaseUpdateYML:
 
         self.output_file_name = self.set_output_file_name(output)
         self.id_and_version_location = self.get_id_and_version_path_object()
+        self.arguments_to_remove = self.arguments_to_remove()
 
     def set_output_file_name(self, output_file_name):
         """Creates and format the output file name according to user input.
@@ -81,6 +85,11 @@ class BaseUpdateYML:
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
         return self.yml_data.get(path, self.yml_data)
 
+    def remove_unnecessary_keys(self):
+        print(F'Removing Unnecessary fields from file')
+        for key in self.arguments_to_remove:
+            self.yml_data.pop(key, None)
+
     def remove_copy_and_dev_suffixes_from_name(self):
         """Removes any _dev and _copy suffixes in the file.
 
@@ -91,10 +100,6 @@ class BaseUpdateYML:
         self.yml_data['name'] = self.yml_data.get('name', '').replace('_copy', '').replace('_dev', '')
         if self.yml_data.get('display'):
             self.yml_data['display'] = self.yml_data.get('display', '').replace('_copy', '').replace('_dev', '')
-
-    def update_fromVersion(self, from_version=DEFAULT_FROMVERSION):
-        self.set_fromVersion(from_version=from_version)
-        self.save_yml_to_destination_file()
 
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name."""
@@ -136,22 +141,32 @@ class BaseUpdateYML:
                 if from_version:
                     self.yml_data['fromversion'] = from_version
                 else:
-                    self.yml_data['fromversion'] = str(self.DEFAULT_FROMVERSION)
+                    self.yml_data['fromversion'] = self.NEW_FILE_DEFAULT_FROMVERSION
+
+        # for modified files, set prefered fromVersion field, givven or default
+        else:
+            # in all json files in repo the fromVersion is set to "fromVersion"
+            if "fromversion" not in self.yml_data:
+                if from_version:
+                    self.yml_data['fromversion'] = from_version
+                else:
+                    self.yml_data['fromversion'] = self.OLD_FILE_DEFAULT_FROMVERSION
 
     def update_yml(self):
         """Manager function for the generic YML updates."""
         print_color(F'=======Starting updates for YML: {self.source_file}=======', LOG_COLORS.YELLOW)
-        self.set_fromVersion()
+        self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
+        self.remove_unnecessary_keys()
         self.update_id_to_equal_name()
         self.set_version_to_default()
 
         print_color(F'=======Finished generic updates for YML: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-    def initiate_file_validator(self, validator_type, scheme_type):
+    def initiate_file_validator(self, validator_type):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
-        structure = StructureValidator(file_path=str(self.output_file_name), predefined_scheme=scheme_type)
+        structure = StructureValidator(file_path=str(self.output_file_name))
         validator = validator_type(structure)
 
         if structure.is_valid_file() and validator.is_valid_file(validate_rn=False):
@@ -164,3 +179,14 @@ class BaseUpdateYML:
 
     def format_file(self):
         pass
+
+    def arguments_to_remove(self):
+        arguments_to_remove = []
+        with open(self.path, 'r') as file_obj:
+            a = yaml.safe_load(file_obj)
+        schema_fields = a.get('mapping').keys()
+        file_fields = self.yml_data.keys()
+        for field in file_fields:
+            if field not in schema_fields:
+                arguments_to_remove.append(field)
+        return arguments_to_remove

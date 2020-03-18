@@ -1,30 +1,30 @@
 import os
 import sys
 import json
-
+import yaml
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 
 class BaseUpdateJSON:
-    """BaseUpdateJSON is the base class for all updaters.
+    """BaseUpdateJSON is the base class for all json updaters.
 
         Attributes:
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
-            yml_data (Dict): YML file data arranged in a Dict.
-            id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
+            json_data (Dict): YML file data arranged in a Dict.
     """
-    SCHEMAS_PATH = "schemas"
-    # os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
 
     DEFAULT_JSON_VERSION = -1
-    DEFAULT_FROMVERSION = '5.0.0'
+    NEW_FILE_DEFAULT_FROMVERSION = '5.0.0'
+    OLD_FILE_DEFAULT_FROMVERSION = '1.0.0'
 
-    def __init__(self, input='', output='', old_file=''):
+    def __init__(self, input='', output='', old_file='', path='', from_version=''):
         self.fromVersion = True
         self.source_file = input
         self.old_file = old_file
+        self.path = path
+        self.from_version = from_version
         if not self.source_file:
             print_color('Please provide <source path>, <optional - destination path>.', LOG_COLORS.RED)
             sys.exit(1)
@@ -35,6 +35,7 @@ class BaseUpdateJSON:
             print_color('Provided file is not a valid JSON.', LOG_COLORS.RED)
             sys.exit(1)
         self.output_file_name = self.set_output_file_name(output)
+        self.arguments_to_remove = self.arguments_to_remove()
 
     def set_output_file_name(self, output_file_name):
         """Creates and format the output file name according to user input.
@@ -74,6 +75,7 @@ class BaseUpdateJSON:
     def set_fromVersion(self, from_version=None):
         """Set fromVersion to default if not exist."""
         "only for added files"
+        # for new added files, set prefered fromVersion field, givven or default
         if not self.old_file:
             print(F'Setting fromVersion field in json file')
             # in all json files in repo the fromVersion is set to "fromVersion"
@@ -81,7 +83,15 @@ class BaseUpdateJSON:
                 if from_version:
                     self.json_data['fromVersion'] = from_version
                 else:
-                    self.json_data['fromVersion'] = self.DEFAULT_FROMVERSION
+                    self.json_data['fromVersion'] = self.NEW_FILE_DEFAULT_FROMVERSION
+        # for modified files, set prefered fromVersion field, givven or default
+        else:
+            # in all json files in repo the fromVersion is set to "fromVersion"
+            if "fromVersion" not in self.json_data:
+                if from_version:
+                    self.json_data['fromVersion'] = from_version
+                else:
+                    self.json_data['fromVersion'] = self.OLD_FILE_DEFAULT_FROMVERSION
 
     def set_default_values_as_needed(self, ARGUMENTS_DEFAULT_VALUES):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -90,9 +100,10 @@ class BaseUpdateJSON:
         for field in ARGUMENTS_DEFAULT_VALUES:
             self.json_data[field] = ARGUMENTS_DEFAULT_VALUES[field]
 
-    def remove_unnecessary_keys(self, ARGUMENTS_TO_REMOVE):
+    def remove_unnecessary_keys(self):
         print(F'Removing Unnecessary fields from file')
-        for key in ARGUMENTS_TO_REMOVE:
+        for key in self.arguments_to_remove:
+            print(F'Removing Unnecessary fields from file, key {key}')
             self.json_data.pop(key, None)
 
     def save_json_to_destination_file(self):
@@ -106,23 +117,24 @@ class BaseUpdateJSON:
         print_color(F'=======Starting updates for JSON: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.set_version_to_default()
-        self.set_fromVersion()
+        self.remove_unnecessary_keys()
+        self.set_fromVersion(from_version=self.from_version)
 
         print_color(F'=======Finished generic updates for JSON: {self.output_file_name}=======', LOG_COLORS.YELLOW)
 
-    def update_fromVersion(self, from_version):
-        """Set fromVersion."""
-
-        self.set_fromVersion(from_version=from_version)
-        self.save_json_to_destination_file()
-
-    def initiate_file_validator(self, validator_type, scheme_type=None):
+    def initiate_file_validator(self, validator_type):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
-        structure = StructureValidator(file_path=str(self.output_file_name), predefined_scheme=scheme_type)
-        validator = validator_type(structure)
+        # structure = StructureValidator(file_path=str(self.output_file_name),
+        #                                predefined_scheme=scheme_type)
+        old_file_path = None
+        if isinstance(self.source_file, tuple):
+            old_file_path, file_path = self.source_file
+        structure_validator = StructureValidator(self.source_file, old_file_path=old_file_path)
 
-        if structure.is_valid_file() and validator.is_valid_file(validate_rn=False):
+        validator = validator_type(structure_validator)
+
+        if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
             print_color('The files are valid', LOG_COLORS.GREEN)
             return 0
 
@@ -132,3 +144,14 @@ class BaseUpdateJSON:
 
     def format_file(self):
         pass
+
+    def arguments_to_remove(self):
+        arguments_to_remove = []
+        with open(self.path, 'r') as file_obj:
+            a = yaml.safe_load(file_obj)
+        schema_fields = a.get('mapping').keys()
+        file_fields = self.json_data.keys()
+        for field in file_fields:
+            if field not in schema_fields:
+                arguments_to_remove.append(field)
+        return arguments_to_remove

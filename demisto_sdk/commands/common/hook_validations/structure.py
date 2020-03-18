@@ -2,19 +2,19 @@
 
 Module contains validation of schemas, ids and paths.
 """
+from typing import Optional
+import logging
+import re
+import os
+import json
+import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
 from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
     SCHEMA_TO_REGEX
 from pykwalify.core import Core
 
-import yaml
-import json
-import os
-import re
-import logging
-
-from typing import Optional
+OLD_FILE_DEFAULT_FROMVERSION = '1.0.0'
 
 
 class StructureValidator:
@@ -186,7 +186,8 @@ class StructureValidator:
         from_version_new = self.current_file.get("fromversion") or self.current_file.get("fromVersion")
         from_version_old = self.old_file.get("fromversion") or self.old_file.get("fromVersion")
 
-        if from_version_old != from_version_new:
+        # format command sets fromversion key to 1.0.0 by design, only different fromversion value should cause failure
+        if from_version_new != OLD_FILE_DEFAULT_FROMVERSION and from_version_old != from_version_new:
             print_error(Errors.from_version_modified(self.file_path))
             self.is_valid = False
             return False

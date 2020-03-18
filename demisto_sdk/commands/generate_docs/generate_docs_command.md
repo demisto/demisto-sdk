@@ -14,7 +14,7 @@ This command is used to create a documentation file for Demisto content files.
 * **-ai, --additional_info** Additional information. Number the steps by '*' (i.e. '\* foo. * bar.').
 * **-l, --limitations** Known limitations. Number the steps by '*' (i.e. '\* foo. * bar.').
 * **-ts, -troubleshooting** Troubleshooting manual.
-* **-id, --is_set** Path of updated id_set.json file.
+* **-id, --id_set** Path of updated id_set.json file.
 * **--insecure** Skip certificate validation.
 * **-v, --verbose** Verbose output - mainly for debugging purposes.
 

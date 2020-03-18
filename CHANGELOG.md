@@ -14,7 +14,9 @@
 * Added a validator for README.md files.
 * Release notes validator will now run on: incident fields, indicator fields, incident types, dashboard and reputations.
 * Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
-* Removed the *yml_type* argument in the *split-yml* command.
+* Fixed an issue where the validator attempted validating non-existing files after deletions or name refactoring.
+* Removed the *yml_type* argument in the *split-yml*, *extract-code* commands.
+* Removed the *file_type* argument in the *generate-test-playbook* command.
 * Fixed the --insecure argument in *upload*
 * Added the --insecure argument in *run-playbook*
 * Standardise the -i --input, -o --output to demisto-sdk commands.

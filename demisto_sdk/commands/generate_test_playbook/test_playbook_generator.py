@@ -262,7 +262,8 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
 
 
 class PlaybookTestsGenerator:
-    def __init__(self, input, output, name, no_outputs=False, file_type='integration', verbose=False):
+    def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
+                 verbose: bool = False):
         self.integration_yml_path = input
         self.output = output
         if output:

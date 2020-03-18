@@ -94,7 +94,10 @@ class ReadMeValidator:
         ready = True
         try:
             # check if requiring modules in node exist
-            _, _, is_node = run_command_os('node -v', cwd=self.pack_path)
+            _, _, exit_code = run_command_os('node -v', cwd=self.pack_path)
+            if not exit_code:
+                print_warning(f'There is no node installed on the machine, Test Skipped')
+                ready = False
             packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
             for pack in packs:
                 _, _, exit_code = run_command_os(f'npm ls {pack}', cwd=self.content_path)
@@ -102,10 +105,7 @@ class ReadMeValidator:
                     ready = False
                     print_warning(f"The npm module: {pack} is not installed in the, Test Skipped.")
         except Exception as err:
-            if "No such file or directory: 'node': 'node'" in str(err):
-                print_warning(f'There is no node installed on the machine, Test Skipped, warning: {err}')
-            else:
-                print_error(f'Failed while verifying README.md, Path: {self.file_path}. Error Message is: {err}')
-                is_valid = False
+            print_error(f'Failed while verifying README.md, Path: {self.file_path}. Error Message is: {err}')
+            is_valid = False
 
         return ready, is_valid

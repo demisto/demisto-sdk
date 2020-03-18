@@ -89,25 +89,18 @@ class ReadMeValidator:
                 is_valid = False
         return is_valid
 
-    def are_modules_installed_for_verify(self):
+    def are_modules_installed_for_verify(self) -> Tuple[bool, bool]:
         is_valid = True
-        ready = False
+        ready = True
         try:
             # check if requiring modules in node exist
             _, _, is_node = run_command_os('node -v', cwd=self.pack_path)
-            _, _, is_mdx = run_command_os('npm ls @mdx-js/mdx', cwd=self.content_path)
-            _, _, is_fs_extra = run_command_os('npm ls fs-extra', cwd=self.content_path)
-            _, _, is_commander = run_command_os('npm ls commander', cwd=self.content_path)
-
-            if not is_node and not is_mdx and not is_fs_extra and not is_commander:
-                ready = True
-            else:
-                if is_mdx:
-                    print_warning(f"The npm module: @mdx-js/mdx is not installed in the, Test Skipped.")
-                if is_fs_extra:
-                    print_warning(f"The npm module: fs-extra is not installed in the Test Skipped.")
-                if is_commander:
-                    print_warning(f"The npm module: commander is not installed in the, Test Skipped.")
+            packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
+            for pack in packs:
+                _, _, exit_code = run_command_os(f'npm ls {pack}', cwd=self.content_path)
+                if not exit_code:
+                    ready = False
+                    print_warning(f"The npm module: {pack} is not installed in the, Test Skipped.")
         except Exception as err:
             if "No such file or directory: 'node': 'node'" in str(err):
                 print_warning(f'There is no node installed on the machine, Test Skipped, warning: {err}')

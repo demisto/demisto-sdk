@@ -5,4 +5,3 @@ from unittest.mock import MagicMock
 x = MagicMock(spec=Linter())
 
 x()._run_flake8()
-

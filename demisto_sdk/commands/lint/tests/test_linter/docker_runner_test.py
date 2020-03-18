@@ -2,7 +2,7 @@
 class TestCreateImage:
     def test_build_image_no_errors(self):
         pass
-        
+
     def test_build_image_template_error(self):
         pass
 

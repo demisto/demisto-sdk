@@ -7,9 +7,9 @@ This command is used in order to create a unified yml file, able to be uploaded 
 "Upload Integration" or "Upload Script" buttons, in Demisto's Settings and Automation tabs respectively.
 
 **Arguments**:
-* **-i INDIR, --indir INDIR**
+* **-i, --input**
   The path to the directory in which the files reside
-* **-o OUTDIR, --outdir OUTDIR**
+* **-o, --output**
   The path to the directory into which to write the unified yml file
 
 **Examples**:

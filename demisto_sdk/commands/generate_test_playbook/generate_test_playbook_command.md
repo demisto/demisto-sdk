@@ -2,9 +2,9 @@
 
 Generate Test Playbook from integration/script yml
 **Arguments**:
-* *-i, --infile*
+* *-i, --input*
    Specify integration/script yml path (must be a valid yml file)
-* *-o, --outdir*
+* *-o, --output*
    Specify output directory (Default: current directory)
 * *-n, --name*
    Specify test playbook name

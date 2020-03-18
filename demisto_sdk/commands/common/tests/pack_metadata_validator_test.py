@@ -31,5 +31,5 @@ class TestPackMetadataValidator:
 
     @staticmethod
     def read_file(file_):
-        with io.open(file_, mode="r", encoding="utf-8") as f:
-            return f.read()
+        with io.open(file_, mode="r", encoding="utf-8") as data:
+            return data.read()

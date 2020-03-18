@@ -83,8 +83,8 @@ class ReadMeValidator:
         if ready:
             mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
             # run the java script mdx parse validator
-            stdout, stderr, returncode = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path)
-            if returncode != 0:
+            _, stderr, exit_code = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path)
+            if exit_code:
                 print_error(f'Failed verifying README.md, Path: {self.file_path}. Error Message is: {stderr}')
                 is_valid = False
         return is_valid
@@ -94,16 +94,16 @@ class ReadMeValidator:
         ready = True
         try:
             # check if requiring modules in node exist
-            _, _, exit_code = run_command_os('node -v', cwd=self.pack_path)
-            if not exit_code:
-                print_warning(f'There is no node installed on the machine, Test Skipped')
+            _, stderr, exit_code = run_command_os('node -v', cwd=self.pack_path)
+            if exit_code:
+                print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}')
                 ready = False
             packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
             for pack in packs:
-                _, _, exit_code = run_command_os(f'npm ls {pack}', cwd=self.content_path)
-                if not exit_code:
+                stdout, stderr, exit_code = run_command_os(f'npm ls {pack}', cwd=self.content_path)
+                if exit_code:
                     ready = False
-                    print_warning(f"The npm module: {pack} is not installed in the, Test Skipped.")
+                    print_warning(f"The npm module: {pack} is not installed in the, Test Skipped - {stderr}, {stdout}")
         except Exception as err:
             print_error(f'Failed while verifying README.md, Path: {self.file_path}. Error Message is: {err}')
             is_valid = False

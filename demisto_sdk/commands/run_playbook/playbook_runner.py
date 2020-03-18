@@ -12,11 +12,11 @@ class PlaybookRunner:
         playbook_id (str): the ID of the playbook to run
         should_wait (bool): whether to wait until the playbook run is completed or not.
         timeout (int): timeout for the command. The playbook will continue to run in Demisto
-        demisto_client (DefaultApi): Demisto-SDK client object.
         base_link_to_workplan (str): the base link to see the full playbook run in Demisto.
+        demisto_client (demisto_client): object for creating an incident in Demisto.
     """
 
-    def __init__(self, playbook_id: str, url: str, wait: bool, timeout: int, insecure: bool = False):
+    def __init__(self, playbook_id: str, url: str, wait: bool, timeout: int):
         self.playbook_id = playbook_id
         self.should_wait = wait
         self.timeout = timeout
@@ -24,7 +24,7 @@ class PlaybookRunner:
         # if url parameter is not provided, demisto_client will search the DEMISTO_BASE_URL env variable
         self.demisto_client = demisto_client.configure(
             base_url=url,
-            verify_ssl=not insecure)
+            verify_ssl=False)
 
         self.base_link_to_workplan = self.get_base_link_to_workplan(url)
 

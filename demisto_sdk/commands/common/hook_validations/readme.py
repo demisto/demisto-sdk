@@ -50,11 +50,11 @@ class ReadMeValidator:
             # check if requiring modules in node exist
             is_node = subprocess.run(['node', '-v'], text=True, timeout=10, capture_output=True,
                                      cwd=node_modules_directory)
-            is_mdx = subprocess.run(['npm', 'ls', '@mdx-js/mdx'], text=True, timeout=10, capture_output=True,
+            is_mdx = subprocess.run(['npm', 'ls', '-g', '@mdx-js/mdx'], text=True, timeout=10, capture_output=True,
                                     cwd=node_modules_directory)
-            is_fs_extra = subprocess.run(['npm', 'ls', 'fs-extra'], text=True, timeout=10, capture_output=True,
+            is_fs_extra = subprocess.run(['npm', 'ls', '-g', 'fs-extra'], text=True, timeout=10, capture_output=True,
                                          cwd=node_modules_directory)
-            is_commander = subprocess.run(['npm', 'ls', 'commander'], text=True, timeout=10, capture_output=True,
+            is_commander = subprocess.run(['npm', 'ls', '-g', 'commander'], text=True, timeout=10, capture_output=True,
                                           cwd=node_modules_directory)
             if is_node.returncode == 0 and is_mdx.returncode == 0 and is_fs_extra.returncode == 0 and \
                     is_commander.returncode == 0:

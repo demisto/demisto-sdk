@@ -6,8 +6,7 @@ from demisto_sdk.commands.generate_docs.common import build_example_dict, add_li
 
 def generate_integration_doc(input, examples, id_set, output: str = None, use_cases: str = None,
                              global_permissions: str = None, command_permissions: str = None,
-                             additional_info: str = None, limitations: str = None, troubleshooting: str = None,
-                             insecure: bool = False, verbose: bool = False):
+                             limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         yml_data = get_yaml(input)
 
@@ -51,15 +50,9 @@ def generate_integration_doc(input, examples, id_set, output: str = None, use_ca
         command_section, command_errors = generate_commands_section(yml_data, example_dict, command_permissions_dict)
         docs.extend(command_section)
         errors.extend(command_errors)
-        # Additional info
-        if additional_info:
-            docs.extend(generate_numbered_section('Additional Information', additional_info))
         # Known limitations
         if limitations:
             docs.extend(generate_numbered_section('Known Limitations', limitations))
-        # Troubleshooting
-        if troubleshooting:
-            docs.extend(generate_section('Troubleshooting', troubleshooting))
 
         doc_text = '\n'.join(docs)
 

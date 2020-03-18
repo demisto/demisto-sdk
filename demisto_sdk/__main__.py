@@ -525,12 +525,7 @@ def init(**kwargs):
                                          " Each command permissions should be in a separate line."
                                          " (i.e. '!command-name Administrator READ-WRITE')", required=False)
 @click.option(
-    "-ai", "--additional_info", help="Additional information. Number the steps by '*' (i.e. '* foo. * bar.')",
-    required=False)
-@click.option(
     "-l", "--limitations", help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')", required=False)
-@click.option(
-    "-ts", "--troubleshooting", help="Troubleshooting manual.", required=False)
 @click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(

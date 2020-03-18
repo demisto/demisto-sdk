@@ -7,8 +7,7 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
 
 
 def generate_script_doc(input, examples, id_set='', output: str = None, global_permissions: str = None,
-                        additional_info: str = None, limitations: str = None, troubleshooting: str = None,
-                        insecure: bool = False, verbose: bool = False):
+                        limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc = []
         errors = []
@@ -87,15 +86,9 @@ def generate_script_doc(input, examples, id_set='', output: str = None, global_p
         if example_section:
             doc.extend(example_section)
 
-        # Additional info
-        if additional_info:
-            doc.extend(generate_numbered_section('Additional Information', additional_info))
         # Known limitations
         if limitations:
             doc.extend(generate_numbered_section('Known Limitations', limitations))
-        # Troubleshooting
-        if troubleshooting:
-            doc.extend(generate_section('Troubleshooting', troubleshooting))
 
         doc_text = '\n'.join(doc)
 

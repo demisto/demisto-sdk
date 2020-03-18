@@ -5,8 +5,8 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
     generate_list_section, HEADER_TYPE, generate_section, generate_numbered_section
 
 
-def generate_playbook_doc(input, output: str = None, global_permissions: str = None, additional_info: str = None,
-                          limitations: str = None, troubleshooting: str = None, verbose: bool = False):
+def generate_playbook_doc(input, output: str = None, global_permissions: str = None, limitations: str = None,
+                          verbose: bool = False):
     try:
         playbook = get_yaml(input)
         if not output:  # default output dir will be the dir of the input file
@@ -49,15 +49,9 @@ def generate_playbook_doc(input, output: str = None, global_permissions: str = N
 
         doc.extend(generate_table_section(outputs, 'Playbook Outputs', 'There are no outputs for this playbook.'))
 
-        # Additional info
-        if additional_info:
-            doc.extend(generate_numbered_section('Additional Information', additional_info))
         # Known limitations
         if limitations:
             doc.extend(generate_numbered_section('Known Limitations', limitations))
-        # Troubleshooting
-        if troubleshooting:
-            doc.extend(generate_section('Troubleshooting', troubleshooting))
 
         doc.append('<!-- Playbook PNG image comes here -->')
 

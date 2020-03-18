@@ -53,7 +53,7 @@ class ScriptValidator(BaseValidator):
         # type: (bool) -> bool
         """Check whether the script is valid or not"""
         is_script_valid = all([
-            super(ScriptValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),

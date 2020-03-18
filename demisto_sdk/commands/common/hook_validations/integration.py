@@ -46,7 +46,7 @@ class IntegrationValidator(BaseValidator):
         # type: (bool) -> bool
         """Check whether the Integration is valid or not"""
         answers = [
-            super(IntegrationValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),
@@ -566,6 +566,11 @@ class IntegrationValidator(BaseValidator):
 
     def is_all_params_not_hidden(self):
         # type: () -> bool
+        """
+        Verify there are no hidden integration parameters.
+        Returns:
+            bool. True if there aren't hidden parameters False otherwise.
+        """
         ans = True
         conf = self.current_file.get('configuration', [])
         for int_parameter in conf:

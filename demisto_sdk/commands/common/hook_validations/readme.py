@@ -1,53 +1,6 @@
-from subprocess import Popen, PIPE
 from pathlib import Path
-from typing import Tuple
-import shlex
 import os
-import git
-from demisto_sdk.commands.common.tools import print_error, print_warning
-
-
-def get_content_path() -> str:
-    """ Get abs content path, from any CWD
-
-    Returns:
-        str: Absolute content path
-    """
-    git_repo = ""
-    try:
-        git_repo = git.Repo(os.getcwd(),
-                            search_parent_directories=True)
-        if 'content' not in git_repo.remote().urls.__next__():
-            raise git.InvalidGitRepositoryError
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_error("Please run demisto-sdk lint in content repository - Aborting!")
-
-    return git_repo.working_dir
-
-
-def run_command_os(command: str, cwd: Path) -> Tuple[str, str, int]:
-    """ Run command in subprocess tty
-
-    Args:
-        command(str): Command to be executed.
-        cwd(Path): Path from pathlib object to be executed
-
-    Returns:
-        str: Stdout of the command
-        str: Stderr of the command
-        int: exit code of command
-    """
-    try:
-        process = Popen(shlex.split(command),
-                        cwd=cwd,
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        universal_newlines=True)
-        stdout, stderr = process.communicate()
-    except OSError as e:
-        return '', str(e), 1
-
-    return stdout, stderr, process.returncode
+from demisto_sdk.commands.common.tools import print_error, print_warning, run_command_os, get_content_path
 
 
 class ReadMeValidator:
@@ -67,45 +20,59 @@ class ReadMeValidator:
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
 
-    def is_valid_file(self):
+    def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
+
+        Returns:
+            bool: True if env configured else Fale.
         """
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
-            is_readme_valid = all([
-                self.is_mdx_file(),
-            ])
-            return is_readme_valid
+            return self.is_mdx_file()
         else:
             return True
 
     def is_mdx_file(self) -> bool:
-        ready, is_valid = self.are_modules_installed_for_verify()
-        if ready:
+        valid = self.are_modules_installed_for_verify()
+        if valid:
             mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
             # run the java script mdx parse validator
-            _, stderr, exit_code = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path)
-            if exit_code:
+            _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path)
+            if is_valid:
                 print_error(f'Failed verifying README.md, Path: {self.file_path}. Error Message is: {stderr}')
-                is_valid = False
-        return is_valid
+                return False
+        return True
 
-    def are_modules_installed_for_verify(self) -> Tuple[bool, bool]:
-        is_valid = True
-        ready = True
-        try:
-            # check if requiring modules in node exist
-            _, stderr, exit_code = run_command_os('node -v', cwd=self.pack_path)
-            if exit_code:
-                print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}')
-                ready = False
+    def are_modules_installed_for_verify(self) -> bool:
+        """ Check the following:
+            1. npm packages installed - see packs var for specific pack details.
+            2. node interperter exists.
+
+        Returns:
+            bool: True If all req ok else False
+        """
+        valid = True
+        # Check node exist
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=self.content_path)
+        if exit_code:
+            print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
+            valid = False
+        else:
+            # Check npm modules exsits
+            missing_packs = False
             packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
             for pack in packs:
                 stdout, stderr, exit_code = run_command_os(f'npm ls {pack}', cwd=self.content_path)
                 if exit_code:
-                    ready = False
-                    print_warning(f"The npm module: {pack} is not installed in the, Test Skipped - {stderr}, {stdout}")
-        except Exception as err:
-            print_error(f'Failed while verifying README.md, Path: {self.file_path}. Error Message is: {err}')
-            is_valid = False
+                    missing_packs = True
+                    print_warning(f"The npm module: {pack} is not installed.")
 
-        return ready, is_valid
+            # Install node modules
+            if missing_packs:
+                stdout, stderr, exit_code = run_command_os(f'npm install .', cwd=self.content_path)
+                if not exit_code:
+                    print(f"The npm modules: Installed succesfully")
+                else:
+                    print(f"The npm modules: Installation failed")
+                    valid = False
+
+        return valid

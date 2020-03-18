@@ -189,16 +189,16 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
     return yaml_output
 
 
-def json_to_outputs(command, infile, prefix, outfile=None, verbose=False, interactive=False):
+def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False):
     """
     This script parses JSON to Demisto Outputs YAML format
 
     Args:
         command: the name of the command that this output is belong like xdr-get-incidents
-        infile: full path to valid JSON file - the JSON file should contain API response from the service
+        input: full path to valid JSON file - the JSON file should contain API response from the service
         prefix: The prefix of the context, this prefix will appear for each output field - VirusTotal.IP,
             CortexXDR.Incident
-        outfile: Full path to output file where to save the YAML
+        output: Full path to output file where to save the YAML
         verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
@@ -206,8 +206,8 @@ def json_to_outputs(command, infile, prefix, outfile=None, verbose=False, intera
     Returns:
     """
     try:
-        if infile:
-            with open(infile, 'r') as json_file:
+        if input:
+            with open(input, 'r') as json_file:
                 input_json = json_file.read()
         else:
             print("Dump your JSON here:")
@@ -215,11 +215,11 @@ def json_to_outputs(command, infile, prefix, outfile=None, verbose=False, intera
 
         yaml_output = parse_json(input_json, command, prefix, verbose, interactive)
 
-        if outfile:
-            with open(outfile, 'w') as yf:
+        if output:
+            with open(output, 'w') as yf:
                 yf.write(yaml_output)
 
-                print_color(f'Outputs file was saved to :\n{outfile}', LOG_COLORS.GREEN)
+                print_color(f'Outputs file was saved to :\n{output}', LOG_COLORS.GREEN)
         else:
             print_color("YAML Outputs\n\n", LOG_COLORS.GREEN)
             print(yaml_output)

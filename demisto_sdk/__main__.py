@@ -14,7 +14,6 @@ from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -27,8 +26,7 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import generate_scri
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 
 # Common tools
-from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version
-from demisto_sdk.commands.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
+from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
 
 
 class DemistoSDK:
@@ -115,19 +113,14 @@ def extract(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    '--infile', '-i',
+    '--input', '-i',
     help='The yml file to extract from',
     required=True
 )
 @click.option(
-    '--outfile', '-o',
+    '--output', '-o',
     required=True,
     help="The output file to write the code to"
-)
-@click.option(
-    '--yml-type', '-y',
-    help="Yaml type. If not specified will try to determine type based upon path.",
-    type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
     '--no-demisto-mock',
@@ -144,7 +137,11 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    extractor = Extractor(configuration=config.configuration, **kwargs)
+    file_type = find_type(kwargs.get('input'))
+    if file_type not in ["integration", "script"]:
+        print_error(F'File is not an Integration or Script.')
+        return 1
+    extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
 
 
@@ -460,18 +457,17 @@ def json_to_outputs_command(**kwargs):
     required=True,
     help='Specify test playbook name')
 @click.option(
-    '-t', '--file-type', default='integration',
-    type=click.Choice(["integration", "script"]),
-    required=False,
-    help='Specify integration or script. The default is integration')
-@click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
          'outputs to verify and which not')
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    generator = PlaybookTestsGenerator(**kwargs)
+    file_type = find_type(kwargs.get('input'))
+    if file_type not in ["integration", "script"]:
+        print_error(F'Generating test playbook is possible only for an Integration or a Script.')
+        return 1
+    generator = PlaybookTestsGenerator(file_type=file_type, **kwargs)
     generator.run()
 
 

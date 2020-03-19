@@ -7,7 +7,9 @@ import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
 from typing import Union, Optional, Tuple, Dict, List
-
+import git
+import shlex
+from pathlib import Path
 import urllib3
 import yaml
 import requests
@@ -595,3 +597,43 @@ def get_common_server_dir(env_dir):
 
 def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
+
+
+def get_content_path() -> str:
+    """ Get abs content path, from any CWD
+    Returns:
+        str: Absolute content path
+    """
+    git_repo = ""
+    try:
+        git_repo = git.Repo(os.getcwd(),
+                            search_parent_directories=True)
+        if 'content' not in git_repo.remote().urls.__next__():
+            raise git.InvalidGitRepositoryError
+    except (git.InvalidGitRepositoryError, git.NoSuchPathError):
+        print_error("Please run demisto-sdk lint in content repository - Aborting!")
+
+    return git_repo.working_dir
+
+
+def run_command_os(command: str, cwd: Path) -> Tuple[str, str, int]:
+    """ Run command in subprocess tty
+    Args:
+        command(str): Command to be executed.
+        cwd(Path): Path from pathlib object to be executed
+    Returns:
+        str: Stdout of the command
+        str: Stderr of the command
+        int: exit code of command
+    """
+    try:
+        process = Popen(shlex.split(command),
+                        cwd=cwd,
+                        stdout=PIPE,
+                        stderr=PIPE,
+                        universal_newlines=True)
+        stdout, stderr = process.communicate()
+    except OSError as e:
+        return '', str(e), 1
+
+    return stdout, stderr, process.returncode

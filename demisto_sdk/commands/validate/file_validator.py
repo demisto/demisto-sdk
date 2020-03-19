@@ -559,6 +559,9 @@ class FilesValidator:
                             _, file_path = get_yml_paths_in_dir(os.path.normpath(project_dir),
                                                                 Errors.no_yml_file(project_dir))
                             if file_path:
+                                # check if the file_path is part of test_data yml
+                                if get_matching_regex(file_path, TEST_REG):
+                                    continue
                                 print("Validating {}".format(file_path))
                                 structure_validator = StructureValidator(file_path)
                                 if not structure_validator.is_valid_scheme():
@@ -588,6 +591,7 @@ class FilesValidator:
                     project_dir = os.path.join(root, inner_dir)
                     _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
                     if file_path:
+                        # check if the file_path is part of test_data yml
                         if get_matching_regex(file_path, TEST_REG):
                             continue
                         print('Validating ' + file_path)

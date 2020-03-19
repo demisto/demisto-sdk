@@ -196,7 +196,7 @@ def get_child_files(directory):
 
 def get_last_remote_release_version():
     """
-    Get latest release tag (xx.xx.xx)
+    Get latest release tag from remote github page
 
     :return: tag
     """
@@ -426,7 +426,10 @@ def get_all_docker_images(script_obj) -> List[str]:
         List. A list of all docker images.
     """
     # this makes sure the first docker in the list is the main docker image.
-    imgs = [script_obj.get('dockerimage') or DEF_DOCKER]
+    def_docker_image = DEF_DOCKER
+    if script_obj.get('type') == TYPE_PWSH:
+        def_docker_image = DEF_DOCKER_PWSH
+    imgs = [script_obj.get('dockerimage') or def_docker_image]
 
     # get additional docker images
     for key in script_obj.keys():
@@ -478,7 +481,9 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     return "{}{}".format(envs_dirs_base, int(py_version))
 
 
-def print_v(msg, log_verbose=False):
+def print_v(msg, log_verbose=None):
+    if log_verbose is None:
+        log_verbose = LOG_VERBOSE
     if log_verbose:
         print(msg)
 
@@ -497,7 +502,7 @@ def get_dev_requirements(py_version, envs_dirs_base):
         string -- requirement required for the project
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    stderr_out = None if log_verbose else DEVNULL
+    stderr_out = None if LOG_VERBOSE else DEVNULL
     requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
                                 stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))

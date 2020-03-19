@@ -41,7 +41,7 @@ def get_test_modules(content_repo: git.Repo) -> dict:
     """
     modules = ["Tests/demistomock/demistomock.py",
                "Tests/scripts/dev_envs/pytest/conftest.py",
-               "Scripts/CommonServerPython/CommonServerPython.py"]
+               "Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"]
     modules_content = {}
     remote = content_repo.remote()
     for module in modules:

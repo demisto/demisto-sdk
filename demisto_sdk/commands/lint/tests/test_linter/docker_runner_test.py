@@ -192,32 +192,3 @@ class TestRunLintInContainer:
             linter_obj._docker_run_pytest.assert_called_once()
         elif not no_pylint:
             linter_obj._docker_run_pylint.assert_called_once()
-
-    @pytest.mark.parametrize(argnames="no_test, no_pylint",
-                             argvalues=[(True, True),
-                                        (False, True),
-                                        (True, False),
-                                        (False, False)])
-    def test_run_one_lint_test_image_not_created(self, mocker, linter_obj, lint_files, no_test: bool, no_pylint: bool):
-        mocker.patch.dict(linter_obj._facts, {
-            "images": [["image", "3.7"]],
-            "test": True,
-            "version_two": False,
-            "lint_files": lint_files,
-            "additional_requirements": []
-        })
-        mocker.patch.object(linter_obj, '_docker_image_create')
-        linter_obj._docker_image_create.return_value = ("", "errors")
-        mocker.patch.object(linter_obj, '_docker_run_pytest')
-        linter_obj._docker_run_pytest.return_value = (0b0, {})
-        mocker.patch.object(linter_obj, '_docker_run_pylint')
-        linter_obj._docker_run_pylint.return_value = (0b0, '')
-        linter_obj._run_lint_on_docker_image(no_pylint=no_pylint,
-                                             no_test=no_test,
-                                             test_xml="",
-                                             keep_container=False)
-        assert linter_obj._pkg_lint_status.get("exit_code") == 0b0
-        if not no_test:
-            linter_obj._docker_run_pytest.assert_called_once()
-        elif not no_pylint:
-            linter_obj._docker_run_pylint.assert_called_once()

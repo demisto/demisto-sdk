@@ -438,6 +438,10 @@ INTEGRATION_REGEX = r'{}{}/(integration-[^\\/]+)\.yml$'.format(CAN_START_WITH_DO
 INTEGRATION_README_REGEX = r'{}{}/([^\\/]+)/README.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_CHANGELOG_REGEX = r'{}{}/([^\\/]+)/CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 
+TEST_DATA_INTEGRATION_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
+TEST_DATA_SCRIPT_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
+
+
 PACKS_DIR_REGEX = r'^{}{}/'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_INTEGRATION_JS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
@@ -451,6 +455,7 @@ PACKS_INTEGRATION_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/([^.]+)\.yml'.format(CAN
                                                                              INTEGRATIONS_DIR)
 PACKS_INTEGRATION_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
 PACKS_SCRIPT_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
+
 PACKS_SCRIPT_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
 PACKS_SCRIPT_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                            SCRIPTS_DIR)
@@ -821,6 +826,11 @@ CODE_FILES_REGEX = [
     PACKS_INTEGRATION_JS_REGEX,
     PACKS_SCRIPT_PY_REGEX,
     PACKS_SCRIPT_JS_REGEX
+]
+
+TEST_REG = [
+    TEST_DATA_SCRIPT_YML_REGEX,
+    TEST_DATA_INTEGRATION_YML_REGEX
 ]
 
 SCRIPTS_REGEX_LIST = [SCRIPT_YML_REGEX, SCRIPT_PY_REGEX, SCRIPT_JS_REGEX, SCRIPT_PS_REGEX]

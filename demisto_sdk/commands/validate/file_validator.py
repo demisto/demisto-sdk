@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORM
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
     JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, \
-    JSON_ALL_INCIDENT_TYPES_REGEXES
+    JSON_ALL_INCIDENT_TYPES_REGEXES, TEST_REG
 from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
@@ -40,7 +40,7 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
 from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
-    get_yml_paths_in_dir, find_type
+    get_yml_paths_in_dir, find_type, get_matching_regex
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
 
@@ -573,7 +573,6 @@ class FilesValidator:
                     # skipping hidden files
                     if not file_name.endswith('.yml'):
                         continue
-
                     print('Validating ' + file_name)
                     structure_validator = StructureValidator(file_path)
                     if not structure_validator.is_valid_scheme():
@@ -589,6 +588,8 @@ class FilesValidator:
                     project_dir = os.path.join(root, inner_dir)
                     _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
                     if file_path:
+                        if get_matching_regex(file_path, TEST_REG):
+                            continue
                         print('Validating ' + file_path)
                         structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():

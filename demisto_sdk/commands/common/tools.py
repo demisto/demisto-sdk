@@ -70,13 +70,11 @@ def print_warning(warning_str):
 
 def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     """Run a bash command in the shell.
-
     Args:
         command (string): The string of the command you want to execute.
         is_silenced (bool): Whether to print command output.
         exit_on_error (bool): Whether to exit on command error.
         cwd (str): the path to the current working directory.
-
     Returns:
         string. The output of the command you are trying to execute.
     """
@@ -122,12 +120,10 @@ def get_remote_file(full_file_path, tag='master'):
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
     """
     Mark scripts/integrations that were removed and added as modifiied.
-
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
     :param removed_files: list of removed files in branch
     :param tag: tag of compared revision
-
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """
     # map IDs to removed files
@@ -197,7 +193,6 @@ def get_child_files(directory):
 def get_last_remote_release_version():
     """
     Get latest release tag from remote github page
-
     :return: tag
     """
     try:
@@ -342,12 +337,9 @@ def checked_type(file_path, compared_regexes=None, return_regex=False):
 
 def server_version_compare(v1, v2):
     """compare Demisto versions
-
     Args:
         v1 (string): string representing Demisto version (first comparable)
         v2 (string): string representing Demisto version (second comparable)
-
-
     Returns:
         int.
         0 for equal versions.
@@ -366,7 +358,6 @@ def server_version_compare(v1, v2):
 def run_threads_list(threads_list):
     """
     Start a list of threads and wait for completion (join)
-
     Arguments:
         threads_list (list of threads) -- list of threads to start and wait for join
     """
@@ -380,7 +371,6 @@ def run_threads_list(threads_list):
 
 def get_dockerimage45(script_object):
     """Get the docker image used up to 4.5 (including).
-
     Arguments:
         script_object {dict} -- [script object containing the dockerimage configuration]
     """
@@ -405,11 +395,9 @@ def pack_name_to_path(pack_name):
 def get_matching_regex(string_to_match, regexes):
     # type: (str, Union[list, str]) -> Optional[str]
     """Gets a string and find id the regexes list matches the string. if do, return regex else None.
-
     Args:
         string_to_match: String to find matching regex
         regexes: regexes to check.
-
     Returns:
         matching regex if exists, else None
     """
@@ -418,10 +406,8 @@ def get_matching_regex(string_to_match, regexes):
 
 def get_all_docker_images(script_obj) -> List[str]:
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
-
     Args:
         script_obj (dict): A yml dict.
-
     Returns:
         List. A list of all docker images.
     """
@@ -491,13 +477,10 @@ def print_v(msg, log_verbose=None):
 def get_dev_requirements(py_version, envs_dirs_base):
     """
     Get the requirements for the specified py version.
-
     Arguments:
         py_version {float} -- python version as float (2.7, 3.7)
-
     Raises:
         ValueError -- If can't detect python version
-
     Returns:
         string -- requirement required for the project
     """
@@ -512,10 +495,8 @@ def get_dev_requirements(py_version, envs_dirs_base):
 def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
-
     Arguments:
         path - a path to the file
-
     Returns:
         dict representation of the file, and the file_type, either .yml ot .json
     """
@@ -530,10 +511,8 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
 def find_type(path: str):
     """
     returns the content file type
-
     Arguments:
         path - a path to the file
-
     Returns:
         string representing the content file type
     """

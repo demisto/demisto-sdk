@@ -171,10 +171,11 @@ class PackUniqueFilesValidator:
 
     def validate_pack_unique_files(self):
         """Main Execution Method"""
+        self.validate_secrets_file()
+        self.validate_pack_ignore_file()
+        self.validate_readme_file()
+        # We don't want to check the metadata file for this pack
         if 'ApiModules' not in self.pack:
-            self.validate_secrets_file()
-            self.validate_pack_ignore_file()
             self.validate_pack_meta_file()
-            self.validate_readme_file()
 
         return self.get_errors()

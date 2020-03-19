@@ -13,7 +13,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
   b) Check that the Test Playbooks have started running successfully, and that no erorrs occurred when setting the Demisto server instance.
   c) Cancel the build as we do not want to run all the nightly test playbooks.
   d) Download the artifacts and check that the amount of content items for the release is ok, open a few and see that they are      not corruptted. e.g: have `omap!!` string inside or any unexpected fields.
-10) Run hthe regular build again or force merge your PR to the Content repository.
+10) Run the regular build again or force merge your PR to the Content repository.
 11) Announce regarding the SDK release in the content-team slack channel.
 
 Your release was completed successsfully!

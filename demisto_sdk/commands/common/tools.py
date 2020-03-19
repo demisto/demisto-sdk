@@ -611,7 +611,7 @@ def get_content_path() -> str:
         if 'content' not in git_repo.remote().urls.__next__():
             raise git.InvalidGitRepositoryError
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_error("Please run demisto-sdk lint in content repository - Aborting!")
+        print_error("Please run demisto-sdk in content repository - Aborting!")
 
     return git_repo.working_dir
 

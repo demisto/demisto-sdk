@@ -48,6 +48,7 @@ class ReadMeValidator:
         Returns:
             bool: True If all req ok else False
         """
+        missing_module = []
         valid = True
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=self.content_path)
@@ -56,21 +57,13 @@ class ReadMeValidator:
             valid = False
         else:
             # Check npm modules exsits
-            missing_packs = False
             packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
             for pack in packs:
                 stdout, stderr, exit_code = run_command_os(f'npm ls {pack}', cwd=self.content_path)
                 if exit_code:
-                    missing_packs = True
-                    print_warning(f"The npm module: {pack} is not installed.")
-
-            # Install node modules
-            if missing_packs:
-                stdout, stderr, exit_code = run_command_os(f'npm install .', cwd=self.content_path)
-                if not exit_code:
-                    print(f"The npm modules: Installed succesfully")
-                else:
-                    print(f"The npm modules: Installation failed")
-                    valid = False
+                    missing_module.append(pack)
+        if missing_module:
+            valid = False
+            print_warning(f"The npm modules: {missing_module} are not installed. please use 'npm ins'")
 
         return valid

@@ -12,4 +12,6 @@ In order to release a new version of `demisto-sdk` to the public follow these st
   a) Check that the unit-tests containter is sucessfull.
   b) Check that the Test Playbooks have started running successfully.
   c) Download the artifacts and check that the amount of content items for the release is ok, open a few and see that they are      not corruptted. e.g: have `omap!!` string inside or any unexpected fields.
-10)merge your PR to the Content repository. Your release was completed successsfully!
+10) merge your PR to the Content repository and announce regarding the release in the content-team slack channel.
+
+Your release was completed successsfully!

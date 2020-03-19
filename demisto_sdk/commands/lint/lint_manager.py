@@ -60,7 +60,8 @@ class LintManager:
             "content_repo": None,
             "requirements_3": None,
             "requirements_2": None,
-            "test_modules": None
+            "test_modules": None,
+            "docker_engine": True
         }
         # Get content repo object
         try:
@@ -104,8 +105,9 @@ class LintManager:
         if not daemon_connection:
             print_error("Can't communicate with Docker daemon - check your docker Engine is ON - Aborting!")
             logger.critical(f"demisto-sdk-lint - Can't communicate with Docker daemon")
-            sys.exit(1)
-        logger.info(f"lint - Docker daemon test passed")
+            facts["docker_engine"] = False
+        else:
+            logger.info(f"lint - Docker daemon test passed")
 
         return facts
 
@@ -208,12 +210,18 @@ class LintManager:
             "fail_packs_pytest": [],
             "fail_packs_image": [],
         }
+
         # Detailed packages status
         pkgs_status = {}
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             return_exit_code: int = 0
             results = []
+            # Disable docker pylint and pytest if unable to communicate with docker engine
+            if not self._facts["docker_engine"]:
+                no_test = True
+                no_pylint = True
+            # Executing lint checks in diffrent threads
             for pack in self._pkgs:
                 print_v(f"Permform lint on {Colors.Fg.cyan}{pack}{Colors.reset}", log_verbose=self._verbose)
                 linter: Linter = Linter(pack_dir=pack,
@@ -244,8 +252,8 @@ class LintManager:
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code)
-        LintManager._create_report(pkgs_status=pkgs_status,
-                                   path=json_report)
+        self._create_report(pkgs_status=pkgs_status,
+                            path=json_report)
 
         return return_exit_code
 

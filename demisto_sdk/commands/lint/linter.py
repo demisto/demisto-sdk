@@ -324,7 +324,7 @@ class Linter:
                 # Creating image if pylint specifie or found tests and tests specified
                 image_id, errors = self._docker_image_create(docker_base_image=image,
                                                              no_test=no_test)
-                if image_id:
+                if image_id and not errors:
                     # Set image creation status
                     for check in ["pylint", "pytest"]:
                         # Perform pylint
@@ -347,7 +347,7 @@ class Linter:
                                 if exit_code in [3, 4]:
                                     need_to_retry = True
                 elif trial == 0:
-                    need_to_retry = True
+                    continue
                 elif trial == 1:
                     status["image_errors"] = str(errors)
                     self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES["image"]
@@ -406,7 +406,7 @@ class Linter:
             except (docker.errors.BuildError, docker.errors.APIError) as e:
                 logger.critical(f"{self._pack_name} - Image build - errors occured {e}")
                 if trial == 1:
-                    errors = e
+                    errors = str(e)
 
         if test_image_id:
             logger.info(f"{self._pack_name} - Image build -  Image {test_image_id} created succefully")
@@ -475,7 +475,7 @@ class Linter:
                         f"{self._pack_name} - Pylint - Image {test_image} - Unable to delete container - {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{self._pack_name} - Pylint - Image {test_image} - Unable to run pylint - {e}")
-            return 2, container_log
+            return 2, str(e)
 
         if container_exit_code:
             logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Finished errors found")
@@ -538,8 +538,10 @@ class Linter:
                     if test_json['report']["tests"][i]["call"].get("longrepr"):
                         test_json['report']["tests"][i]["call"]["longrepr"] = test_json['report']["tests"][i]["call"][
                             "longrepr"].split('\n')
-                if container_exit_code == 5:
+                if container_exit_code in [0, 5]:
                     container_exit_code = 0
+                else:
+                    container_exit_code = 1
             elif container_exit_code in [3, 4]:
                 # 3-Internal error happened while executing tests
                 # 4-pytest command line usage error

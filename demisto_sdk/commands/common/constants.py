@@ -436,6 +436,7 @@ INTEGRATION_PS_REGEX = r'{}{}/([^\\/]+)/\1.ps1$'.format(CAN_START_WITH_DOT_SLASH
 INTEGRATION_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_REGEX = r'{}{}/(integration-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_README_REGEX = r'{}{}/([^\\/]+)/README.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
+INTEGRATION_CHANGELOG_REGEX = r'{}{}/([^\\/]+)/CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 
 PACKS_DIR_REGEX = r'^{}{}/'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_INTEGRATION_JS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
@@ -468,6 +469,8 @@ PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
+PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
+
 PACKS_PACKAGE_META_REGEX = r'{}{}/([^/]+)/package-meta\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 
 BETA_SCRIPT_REGEX = r'{}{}/(script-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, BETA_INTEGRATIONS_DIR)
@@ -491,19 +494,22 @@ MISC_REGEX = r'{}{}.*reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_D
 REPUTATION_REGEX = r'{}{}/reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
 REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
 MISC_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, MISC_DIR)
+README_REGEX = r'{}{}/readme.*\.md$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_FIELDS_DIR)
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
     'script'
 ]
 ID_IN_ROOT = [  # entities in which 'id' key is in the root
-    'playbook'
+    'playbook',
+    'dashboard',
+    'incident_type'
 ]
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
-PACKS_PACK_META_FILE_NAME = 'metadata.json'
+PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
 
 PYTHON_TEST_REGEXES = [
@@ -698,7 +704,13 @@ CHECKED_TYPES_REGEXES = [
     INCIDENT_TYPE_REGEX,
     MISC_REGEX,
     REPORT_REGEX,
-    REPUTATION_REGEX
+    REPUTATION_REGEX,
+    # changelog
+    PACKS_CHANGELOG_REGEX,
+    # ReadMe,
+    INTEGRATION_README_REGEX,
+    PACKS_README_REGEX,
+    PACKS_README_REGEX_INNER,
 ]
 
 CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in
@@ -793,12 +805,16 @@ SCRIPTS_REGEX_LIST = [SCRIPT_YML_REGEX, SCRIPT_PY_REGEX, SCRIPT_JS_REGEX, SCRIPT
 # All files that have related yml file
 REQUIRED_YML_FILE_TYPES = [SCRIPT_PY_REGEX, INTEGRATION_PY_REGEX, PACKS_INTEGRATION_PY_REGEX, PACKS_SCRIPT_PY_REGEX,
                            SCRIPT_JS_REGEX, INTEGRATION_JS_REGEX, PACKS_SCRIPT_JS_REGEX, PACKS_INTEGRATION_JS_REGEX,
-                           PACKS_README_REGEX, INTEGRATION_README_REGEX]
+                           PACKS_README_REGEX, INTEGRATION_README_REGEX, INTEGRATION_CHANGELOG_REGEX]
+
+TYPE_PWSH = 'powershell'
+TYPE_PYTHON = 'python'
+TYPE_JS = 'javascript'
 
 TYPE_TO_EXTENSION = {
-    'python': '.py',
-    'javascript': '.js',
-    'powershell': '.ps1'
+    TYPE_PYTHON: '.py',
+    TYPE_JS: '.js',
+    TYPE_PWSH: '.ps1'
 }
 
 FILE_TYPES_FOR_TESTING = [
@@ -814,6 +830,7 @@ PYTHON_SUBTYPES = {'python3', 'python2'}
 # github repository url
 CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
 CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
+SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
@@ -861,7 +878,7 @@ SCHEMA_TO_REGEX = {
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': [INCIDENT_TYPE_REGEX],
     'image': [IMAGE_REGEX],
-    'reputation': [REPUTATION_REGEX],
+    'reputation': [REPUTATION_REGEX]
 }
 
 FILE_TYPES_PATHS_TO_VALIDATE = {
@@ -871,6 +888,7 @@ FILE_TYPES_PATHS_TO_VALIDATE = {
 }
 
 DEF_DOCKER = 'demisto/python:1.3-alpine'
+DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 SCRIPT_PREFIX = 'script'
 INTEGRATION_PREFIX = 'integration'
 

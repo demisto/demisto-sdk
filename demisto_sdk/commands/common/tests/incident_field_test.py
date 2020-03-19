@@ -290,15 +290,15 @@ class TestIncidentFieldsValidator:
                                                           f' returns {not is_valid}.'
 
     data_is_changed_type = [
-        ('shortText', 'shortText', True),
-        ('shortText', 'longText', False),
-        ('number', 'number', True),
-        ('shortText', 'number', False),
-        ('timer', 'timer', True),
-        ('timer', 'number', False),
-        ('timer', 'shortText', False),
-        ('singleSelect', 'singleSelect', True),
-        ('singleSelect', 'shortText', False)
+        ('shortText', 'shortText', False),
+        ('shortText', 'longText', True),
+        ('number', 'number', False),
+        ('shortText', 'number', True),
+        ('timer', 'timer', False),
+        ('timer', 'number', True),
+        ('timer', 'shortText', True),
+        ('singleSelect', 'singleSelect', False),
+        ('singleSelect', 'shortText', True)
     ]
 
     @pytest.mark.parametrize('current_type, old_type, is_valid', data_is_changed_type)

@@ -3,13 +3,35 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.4
+* Added a validator for IncidentTypes (incidenttype-*.json).
+* Fixed an issue where the -p flag in the validate was not working.
+* Added a validator for README.md files.
+* Release notes validator will now run on: incident fields, indicator fields, incident types, dashboard and reputations.
+* Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
+* Removed the *yml_type* argument in the *split-yml*, *extract-code* commands.
+* Removed the *file_type* argument in the *generate-test-playbook* command.
+* Fixed the --insecure argument in *upload*
+* Added the --insecure argument in *run-playbook*
+* Standardise the -i --input, -o --output to demisto-sdk commands.
 
-### 0.4.0
+### 0.4.3
+* Fixed an issue where the incident and indicator field BC check failed.
+* Support for linting and unit testing PowerShell integrations.
+
+### 0.4.2
+* Fixed an issue where validate failed on Windows.
+* Added a validator to verify all branches are handled in conditional task in a playbook.
+* Added a warning message when not running the latest sdk version.
+* Added a validator to check that the root is connected to all tasks in the playbook.
+* Added a validator for Dashboards (dashboard-*.json).
 * Added a validator for Indicator Types (reputation-*.json).
 * Added a BC validation for changing incident field type.
 * Fixed an issue where init command would generate an invalid yml for scripts.
 * Fixed an issue in misleading error message in v2 validation hook.
 * Fixed an issue in v2 hook which now is set only on newly added scripts.
+* Added more indicative message for errors in yaml files.
+* Disabled pykwalify info log prints.
 
 ### 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
@@ -28,6 +50,7 @@
 * Added the fields: elasticcommonfields, quiet, quietmode to the Playbook schema.
 * Fixed an issue where *validate* failed on integration commands without outputs.
 * Added a new hook for naming of v2 integrations and scripts.
+
 
 ### 0.3.8
 * Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.

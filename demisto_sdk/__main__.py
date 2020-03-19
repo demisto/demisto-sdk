@@ -24,11 +24,9 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
-from demisto_sdk.validation.type_file.find_type import find_type
 
 # Common tools
-from demisto_sdk.commands.common.tools import print_error
-from demisto_sdk.commands.common.constants import SCRIPT_PREFIX, INTEGRATION_PREFIX
+from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
 
 
 class DemistoSDK:
@@ -57,6 +55,11 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 @pass_config
 def main(config, version, env_dir):
     config.configuration = Configuration()
+    cur_version = get_distribution('demisto-sdk').version
+    last_release = get_last_remote_release_version()
+    if last_release and cur_version != last_release:
+        print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
+                      f'You should consider upgrading via "pip install --upgrade demisto-sdk" command.')
     if version:
         version = get_distribution('demisto-sdk').version
         print(version)
@@ -74,19 +77,11 @@ def main(config, version, env_dir):
     '-h', '--help'
 )
 @click.option(
-    '--infile', '-i',
-    help='The yml file to extract from',
-    required=True
+    '-i', '--input', help='The yml file to extract from', required=True
 )
 @click.option(
-    '--outfile', '-o',
-    required=True,
+    '-o', '--output', required=True,
     help="The output dir to write the extracted code/description/image to."
-)
-@click.option(
-    '--yml-type', '-y',
-    help="Yaml type. If not specified will try to determine type based upon path.",
-    type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
     '--no-demisto-mock',
@@ -103,7 +98,11 @@ def main(config, version, env_dir):
 )
 @pass_config
 def extract(config, **kwargs):
-    extractor = Extractor(configuration=config.configuration, **kwargs)
+    file_type = find_type(kwargs.get('input'))
+    if file_type not in ["integration", "script"]:
+        print_error(F'File is not an Integration or Script.')
+        return 1
+    extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_to_package_format()
 
 
@@ -114,19 +113,14 @@ def extract(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    '--infile', '-i',
+    '--input', '-i',
     help='The yml file to extract from',
     required=True
 )
 @click.option(
-    '--outfile', '-o',
+    '--output', '-o',
     required=True,
     help="The output file to write the code to"
-)
-@click.option(
-    '--yml-type', '-y',
-    help="Yaml type. If not specified will try to determine type based upon path.",
-    type=click.Choice([SCRIPT_PREFIX, INTEGRATION_PREFIX])
 )
 @click.option(
     '--no-demisto-mock',
@@ -143,7 +137,11 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    extractor = Extractor(configuration=config.configuration, **kwargs)
+    file_type = find_type(kwargs.get('input'))
+    if file_type not in ["integration", "script"]:
+        print_error(F'File is not an Integration or Script.')
+        return 1
+    extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
 
 
@@ -154,10 +152,10 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--indir", help="The path to the files to unify", required=True
+    "-i", "--input", help="The path to the files to unify", required=True
 )
 @click.option(
-    "-o", "--outdir", help="The output dir to write the unified yml to", required=False
+    "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
     "--force", help="Forcefully overwrites the preexisting yml if one exists",
@@ -197,7 +195,7 @@ def unify(**kwargs):
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
 @click.option(
-    '-p', '--path', help='Path of file to validate specifically.'
+    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
 )
 @pass_config
 def validate(config, **kwargs):
@@ -360,7 +358,7 @@ def format_yml(use_git=False, file_type=None, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--path", help="The path of an integration file or a package directory to upload", required=True)
+    "-i", "--input", help="The path of an integration file or a package directory to upload", required=True)
 @click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
@@ -380,7 +378,7 @@ def upload(**kwargs):
 @click.option(
     "-q", "--query", help="The query to run", required=True)
 @click.option(
-    "-k", "--insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
@@ -422,6 +420,8 @@ def run(**kwargs):
     show_default=True,
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
 def run_playbook(**kwargs):
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
@@ -437,13 +437,13 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
 @click.option(
     "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
 @click.option(
-    "-i", "--infile", help="Valid JSON file path. If not specified then script will wait for user input in the "
-                           "terminal", required=False)
+    "-i", "--input", help="Valid JSON file path. If not specified then script will wait for user input in the terminal",
+    required=False)
 @click.option(
     "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
                            "script generates", required=True)
 @click.option(
-    "-o", "--outfile", help="Output file path, if not specified then will print to stdout", required=False)
+    "-o", "--output", help="Output file path, if not specified then will print to stdout", required=False)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
@@ -460,11 +460,11 @@ def json_to_outputs_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-i', '--infile',
+    '-i', '--input',
     required=True,
     help='Specify integration/script yml path')
 @click.option(
-    '-o', '--outdir',
+    '-o', '--output',
     required=False,
     help='Specify output directory')
 @click.option(
@@ -472,18 +472,17 @@ def json_to_outputs_command(**kwargs):
     required=True,
     help='Specify test playbook name')
 @click.option(
-    '-t', '--file-type', default='integration',
-    type=click.Choice(["integration", "script"]),
-    required=False,
-    help='Specify integration or script. The default is integration')
-@click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
          'outputs to verify and which not')
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    generator = PlaybookTestsGenerator(**kwargs)
+    file_type = find_type(kwargs.get('input'))
+    if file_type not in ["integration", "script"]:
+        print_error(F'Generating test playbook is possible only for an Integration or a Script.')
+        return 1
+    generator = PlaybookTestsGenerator(file_type=file_type, **kwargs)
     generator.run()
 
 
@@ -502,8 +501,8 @@ def generate_test_playbook(**kwargs):
     "--id", help="The id used in the yml file of the integration or script"
 )
 @click.option(
-    "-o", "--output-dir", help="The output dir to write the object into. The default one is the current working "
-                               "directory.")
+    "-o", "--output", help="The output dir to write the object into. The default one is the current working "
+    "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(

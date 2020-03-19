@@ -12,6 +12,7 @@ class ReputationValidator(BaseValidator):
         """Check whether the reputation file is valid or not
         """
         is_reputation_valid = all([
+            super().is_valid_file(validate_rn),
             self.is_valid_version(),
             self.is_valid_expiration()
         ])
@@ -20,7 +21,7 @@ class ReputationValidator(BaseValidator):
         if not self.old_file:
             is_reputation_valid = all([
                 is_reputation_valid,
-                self.is_id_equals_name()
+                self.is_id_equals_details()
             ])
 
         return is_reputation_valid
@@ -54,18 +55,15 @@ class ReputationValidator(BaseValidator):
             print_error(error_msg)
         return is_valid
 
-    def is_id_equals_name(self):
+    def is_id_equals_details(self):
         # type: () -> bool
-        """Validate that the id equal name."""
-        error_msg = None
+        """Validate that the id equal details."""
         is_valid = True
 
         id_ = self.current_file.get('id', None)
-        name = self.current_file.get('name', None)
-        if not id_ or not name or id_ != name:
-            error_msg = f'{self.file_path}: id and name fields are not equal.'
+        details = self.current_file.get('details', None)
+        if not id_ or not details or id_ != details:
+            print_error(f'{self.file_path}: id and details fields are not equal.')
             is_valid = False
 
-        if error_msg:
-            print_error(error_msg)
         return is_valid

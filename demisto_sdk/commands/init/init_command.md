@@ -7,7 +7,7 @@ This command is used to ease the initial creation of a pack, integration or a sc
 **Arguments**:
 * **-n, --name** The name given to the files and directories of new pack/integration/script being created
 * **--id** The id used for the yml file of the integration/script
-* **-o, --outdir** The directory to which the created object will be saved.
+* **-o, --output** The output directory to which the created object will be saved.
 * **--integration** Create an integration
 * **--script** Create a script
 * **--pack** Create a pack
@@ -20,10 +20,10 @@ A pack, integration or script can not be created without a given `name`.
 * If no `id` will be given and an integration or script is being created, a prompt will show asking for and input.
 You can choose to use the `name` parameter as the `id` for the yml file, or give a different identifier.
 * The `id` parameter *can* have spaces (' ') in it.
-* If activated from content repository and no `outdir` given - A pack will be created in the "Packs" directory.
-* If activated from content repo or within a pack directory and no `outdir` given -
+* If activated from content repository and no `output` given - A pack will be created in the "Packs" directory.
+* If activated from content repo or within a pack directory and no `output` given -
 An integration will be created in the "Integrations" directory and a script will be created in the "Scripts" repository.
-* If no `outdir` given and the command is not activated from content repo nor a pack directory -
+* If no `output` given and the command is not activated from content repo nor a pack directory -
 The pack/integration/script will be created in your current working directory.
 * The templates are based on "Integrations/HelloWorld" and "Scripts/HelloWorldScript" found in content repo.
 

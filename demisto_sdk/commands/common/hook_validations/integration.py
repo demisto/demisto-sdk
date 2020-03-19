@@ -564,8 +564,7 @@ class IntegrationValidator(BaseValidator):
                 return False
             return True
 
-    def is_all_params_not_hidden(self):
-        # type: () -> bool
+    def is_all_params_not_hidden(self) -> bool:
         """
         Verify there are no hidden integration parameters.
         Returns:

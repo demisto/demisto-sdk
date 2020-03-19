@@ -575,5 +575,5 @@ class IntegrationValidator(BaseValidator):
         for int_parameter in conf:
             if int_parameter.get('hidden'):
                 ans = False
-                print_error(Errors.found_hidden_param(int_parameter))
+                print_error(Errors.found_hidden_param(int_parameter.get('name')))
         return ans

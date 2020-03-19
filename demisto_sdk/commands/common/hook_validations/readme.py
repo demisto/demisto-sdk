@@ -65,6 +65,5 @@ class ReadMeValidator:
         if missing_module:
             valid = False
             print_warning(f"The npm modules: {missing_module} are not installed, Test Skipped, use "
-                          f"'npm install <module>' to install required")
-
+                          f"'npm install <module>' to install all required node dependencies")
         return valid

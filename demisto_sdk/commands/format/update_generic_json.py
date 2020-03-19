@@ -122,8 +122,6 @@ class BaseUpdateJSON:
     def initiate_file_validator(self, validator_type):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
 
-        # structure = StructureValidator(file_path=str(self.output_file_name),
-        #                                predefined_scheme=scheme_type)
         old_file_path = None
         if isinstance(self.source_file, tuple):
             old_file_path, file_path = self.source_file

@@ -1,7 +1,7 @@
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
-
+import yaml
 
 DEFAULT_JSON_VERSION = -1
 
@@ -23,6 +23,12 @@ class LayoutJSONFormat(BaseUpdateJSON):
         print(F'Setting JSON version to default: {self.DEFAULT_JSON_VERSION}')
         self.json_data['layout']['version'] = self.DEFAULT_JSON_VERSION  # ?  ?????
 
+    def remove_unnecessary_keys(self):
+        print(F'Removing Unnecessary fields from file')
+        for key in self.arguments_to_remove:
+            print(F'Removing Unnecessary fields from file, key {key}')
+            self.json_data['layout'].pop(key, None)
+
     def format_file(self):
         """Manager function for the integration YML updater."""
 
@@ -37,3 +43,19 @@ class LayoutJSONFormat(BaseUpdateJSON):
                     LOG_COLORS.YELLOW)
 
         return self.initiate_file_validator(LayoutValidator)
+
+    def arguments_to_remove(self):
+        arguments_to_remove = []
+        with open(self.path, 'r') as file_obj:
+            a = yaml.safe_load(file_obj)
+        out_schema_fields = a.get('mapping').keys()
+        out_file_fields = self.json_data.keys()
+        for field in out_file_fields:
+            if field not in out_schema_fields:
+                arguments_to_remove.append(field)
+        out_schema_fields = a.get('mapping').get('layout').get('mapping').keys()
+        out_file_fields = self.json_data['layout'].keys()
+        for field in out_file_fields:
+            if field not in out_schema_fields:
+                arguments_to_remove.append(field)
+        return arguments_to_remove

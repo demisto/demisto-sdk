@@ -509,21 +509,34 @@ def init(**kwargs):
     "-i", "--input", help="Path of the yml file.", required=True)
 @click.option(
     "-o", "--output", help="The output dir to write the documentation file into,"
-                           " documentation file name is README.md.", required=True)
+                           " documentation file name is README.md. If not specified, will be in the yml dir.",
+    required=False)
 @click.option(
-    "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file.", required=False)
+    "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
+    required=False)
 @click.option(
-    "-e", "--examples", help="For integration - Path for file containing command or script examples."
+    "-e", "--examples", help="Path for file containing command or script examples."
                              " Each Command should be in a separate line."
                              " For script - the script example surrounded by double quotes.")
 @click.option(
+    "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
+    required=True, default='none')
+@click.option(
+    "-cp", "--command_permissions", help="Path for file containing commands permissions"
+                                         " Each command permissions should be in a separate line."
+                                         " (i.e. '!command-name Administrator READ-WRITE')", required=False)
+@click.option(
+    "-l", "--limitations", help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')", required=False)
+@click.option(
     "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
+    "--insecure", help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+@click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
-def generate_doc(file_type, **kwargs):
-    input_path = kwargs['input']
-    output_path = kwargs['output']
+def generate_doc(**kwargs):
+    input_path = kwargs.get('input')
+    output_path = kwargs.get('output')
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -538,10 +551,12 @@ def generate_doc(file_type, **kwargs):
         print_error(F'Output directory {output_path} was not found.')
         return 1
 
-    if not file_type:
-        file_type = find_type(kwargs.get('input', ''))
+    file_type = find_type(kwargs.get('input', ''))
+    if file_type not in ["integration", "script", "playbook"]:
+        print_error(F'File is not an Integration, Script or a Playbook.')
+        return 1
 
-    print(f'Start generate {file_type} documentation...')
+    print(f'Start generating {file_type} documentation...')
     if file_type == 'integration':
         return generate_integration_doc(**kwargs)
     elif file_type == 'script':

@@ -22,6 +22,17 @@ def test_generate_list_section_empty():
     assert section == expected_section
 
 
+def test_generate_numbered_section():
+    from demisto_sdk.commands.generate_docs.common import generate_numbered_section
+
+    section = generate_numbered_section('Use Cases', '* Drink coffee. * Write code.')
+
+    expected_section = [
+        '## Use Cases', '1. Drink coffee.', '2. Write code.']
+
+    assert section == expected_section
+
+
 def test_generate_list_section():
     from demisto_sdk.commands.generate_docs.common import generate_list_section
 
@@ -196,7 +207,7 @@ def test_generate_commands_section():
         }
     }
 
-    section, errors = generate_commands_section(yml_data, {})
+    section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={})
 
     expected_section = [
         '## Commands',
@@ -204,6 +215,36 @@ def test_generate_commands_section():
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
         '**FILL IN REQUIRED PERMISSIONS HERE**', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
+        'There are no input arguments for this command.', '', '##### Context Output', '',
+        'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
+        '##### Human Readable Output', '', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+def test_generate_commands_with_permissions_section():
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
+
+    yml_data = {
+        'script': {
+            'commands': [
+                {'deprecated': True,
+                 'name': 'deprecated-cmd'},
+                {'deprecated': False,
+                 'name': 'non-deprecated-cmd'}
+            ]
+        }
+    }
+
+    section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
+                                                'non-deprecated-cmd': 'SUPERUSER'})
+
+    expected_section = [
+        '## Commands',
+        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+        '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
+        'SUPERUSER', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
         'There are no input arguments for this command.', '', '##### Context Output', '',
         'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
         '##### Human Readable Output', '', '']

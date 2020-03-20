@@ -172,9 +172,7 @@ def execute_command(command_example, insecure: bool):
     md_example = ''
     cmd = command_example
     try:
-        runner = Runner('')
-        if insecure:
-            runner.set_insecure(insecure)
+        runner = Runner('', insecure=insecure)
         res, raw_context = runner.execute_command(command_example)
         if not res:
             raise RuntimeError('something went wrong with your command: {}'.format(command_example))

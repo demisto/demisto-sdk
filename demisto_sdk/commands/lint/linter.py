@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.tools import get_all_docker_images
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
     build_pylint_command, build_flake8_command, build_vulture_command
 from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image, \
-    run_command_os, create_tmp_lint_files, FAIL_EXIT_CODES
+    run_command_os, create_tmp_lint_files, EXIT_CODES
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -26,11 +26,12 @@ class Linter:
 
         Attributes:
             pack_dir(Path): Pack to run lint on.
-            req_2(list): requirements for docker using python2
-            req_3(list): requirements for docker using python3
+            req_2(list): requirements for docker using python2.
+            req_3(list): requirements for docker using python3.
+            docker_engine(bool):  Wheter docker engine detected by docker-sdk.
     """
 
-    def __init__(self, pack_dir: Path, content_path: Path, req_3: list, req_2: list):
+    def __init__(self, pack_dir: Path, content_path: Path, req_3: list, req_2: list, docker_engine: bool):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_path = content_path
@@ -42,10 +43,12 @@ class Linter:
         # Facts gathered regarding pack lint and test
         self._facts = {
             "images": [],
+            "python_version": 0,
             "test": False,
             "version_two": False,
             "lint_files": [],
-            "additional_requirements": []
+            "additional_requirements": [],
+            "docker_engine": docker_engine
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status = {
@@ -92,7 +95,7 @@ class Linter:
                                    pack_path=self._pack_abs_dir,
                                    lint_files=self._facts["lint_files"],
                                    modules=modules,
-                                   version_two=self._facts["version_two"]) as lint_files:
+                                   python_version=self._facts["python_version"]) as lint_files:
             # If temp files created for lint check - replace them
             self._facts["lint_files"]: List[Path] = lint_files
             # Run lint check on host - flake8, bandit, mypy
@@ -131,6 +134,7 @@ class Linter:
             if isinstance(yml_obj, dict):
                 script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
             pack_type = script_obj.get('type')
+            self._facts["python_version"] = 3.7 if "3" in script_obj.get('subtype').split('python') else 2.7
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
             return True
@@ -142,12 +146,11 @@ class Linter:
         logger.info(f"{self._pack_name} - Facts - Python package")
 
         # Getting python version from docker image - verfying if not valid docker image configured
-        for image in get_all_docker_images(script_obj=script_obj):
-            py_num: float = get_python_version_from_image(image=image)
-            self._facts["images"].append([image, py_num])
-            logger.info(f"{self._pack_name} - Facts - {image} - Python {py_num}")
-            if py_num < 3:
-                self._facts["version_two"] = True
+        if self._facts["docker_engine"]:
+            for image in get_all_docker_images(script_obj=script_obj):
+                py_num: float = get_python_version_from_image(image=image)
+                self._facts["images"].append([image, py_num])
+                logger.info(f"{self._pack_name} - Facts - {image} - Python {py_num}")
 
         # Checking wheter *test* exsits in package
         self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None) else False
@@ -193,13 +196,17 @@ class Linter:
                     exit_code, output = self._run_flake8(lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
-                elif lint_check == "mypy" and not no_mypy and self._facts["images"][0]:
-                    exit_code, output = self._run_mypy(py_num=self._facts["images"][0][1],
-                                                       lint_files=self._facts["lint_files"])
+                elif lint_check == "mypy" and not no_mypy:
+                    if self._facts["docker_engine"]:
+                        exit_code, output = self._run_mypy(py_num=self._facts["images"][0][1],
+                                                           lint_files=self._facts["lint_files"])
+                    else:
+                        exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
+                                                           lint_files=self._facts["lint_files"])
                 elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(lint_files=self._facts["lint_files"])
                 if exit_code:
-                    self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES[lint_check]
+                    self._pkg_lint_status["exit_code"] += EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
 
     def _run_flake8(self, lint_files: List[Path]) -> Tuple[int, str]:
@@ -332,7 +339,7 @@ class Linter:
                             exit_code, output = self._docker_run_pylint(test_image=image_id,
                                                                         keep_container=keep_container)
                             if exit_code:
-                                self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES["pylint"]
+                                self._pkg_lint_status["exit_code"] += EXIT_CODES["pylint"]
                                 status[f"{check}_errors"] = output
                                 if exit_code in [32]:
                                     need_to_retry = True
@@ -343,14 +350,14 @@ class Linter:
                                                                            test_xml=test_xml)
                             status["pytest_json"]: dict = test_json
                             if exit_code:
-                                self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES["pytest"]
+                                self._pkg_lint_status["exit_code"] += EXIT_CODES["pytest"]
                                 if exit_code in [3, 4]:
                                     need_to_retry = True
                 elif trial == 0:
                     continue
                 elif trial == 1:
                     status["image_errors"] = str(errors)
-                    self._pkg_lint_status["exit_code"] += FAIL_EXIT_CODES["image"]
+                    self._pkg_lint_status["exit_code"] += EXIT_CODES["image"]
 
                 if not need_to_retry:
                     self._pkg_lint_status["images"].append(status)

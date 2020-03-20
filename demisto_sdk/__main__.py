@@ -271,7 +271,8 @@ def secrets(config, **kwargs):
                          "the folder (package) structure. Will lookup up what docker image to use and will setup the "
                          "dev dependencies and file in the target folder. ")
 @click.help_option('-h', '--help')
-@click.option("-d", "--dir-pack", help="Specify directory of integration/script", type=click.Path(exists=True))
+@click.option("-d", "--dir-pack", help="Specify directory of integration/script", type=click.Path(exists=True,
+                                                                                                  resolve_path=True))
 @click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvvvvv",
@@ -284,9 +285,9 @@ def secrets(config, **kwargs):
 @click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True))
-@click.option("--json-report", help="Path to store json results", type=click.Path(exists=True))
-@click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True))
+@click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
+@click.option("--json-report", help="Path to store json results", type=click.Path(exists=True, resolve_path=True))
+@click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True, resolve_path=True))
 def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, keep_container: bool,
          test_xml: str, json_report: str, log_path: str):

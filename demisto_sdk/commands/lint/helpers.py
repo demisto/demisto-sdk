@@ -18,15 +18,43 @@ import docker
 from docker.models.containers import Container
 
 # Define check exit code if failed
-FAIL_EXIT_CODES = {
+EXIT_CODES = {
     "flake8": 0b1,
     "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000000,
     "pytest": 0b1000,
     "pylint": 0b10000,
-    "image": 0b100000
+    "image": 0b100000,
 }
+
+
+def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                            no_test: bool, docker_engine: bool) -> bool:
+    """
+    no_flake8(bool): Whether to skip flake8.
+    no_bandit(bool): Whether to skip bandit.
+    no_mypy(bool): Whether to skip mypy.
+    no_vulture(bool): Whether to skip vulture
+    no_pylint(bool): Whether to skip pylint.
+    no_test(bool): Whether to skip pytest.
+    docker_engine(bool): docker engine exists.
+    """
+    skipped_code = 0b0
+    if no_flake8:
+        skipped_code |= EXIT_CODES["flake8"]
+    if no_bandit:
+        skipped_code |= EXIT_CODES["bandit"]
+    if no_mypy:
+        skipped_code |= EXIT_CODES["mypy"]
+    if no_vulture:
+        skipped_code |= EXIT_CODES["vulture"]
+    if no_pylint or not docker_engine:
+        skipped_code |= EXIT_CODES["pylint"]
+    if no_test or not docker_engine:
+        skipped_code |= EXIT_CODES["pytest"]
+
+    return skipped_code
 
 
 def get_test_modules(content_repo: git.Repo) -> dict:
@@ -54,8 +82,7 @@ def get_test_modules(content_repo: git.Repo) -> dict:
 
 
 @contextmanager
-def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[Path], modules: dict,
-                          version_two: bool):
+def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[Path], modules: dict, python_version: float):
     """ LintFiles is context manager to mandatory files for lint and test
             1. Entrance - download missing files to pack.
             2. Closing - Remove downloaded files from pack.
@@ -65,7 +92,7 @@ def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[
             lint_files(list): file to execute lint - for adding typing in python 2.7
             modules(dict): modules content to locate in pack path
             content_path(Path): content absolute path
-            version_two(bool): wheter package support Python version 2
+            python_version(float): The package python version.
 
         Raises:
             IOError: if can't write to files due permissions or other reasons
@@ -102,7 +129,7 @@ def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[
                 added_modules.append(cur_path)
 
         # Add typing import if needed to python version 2 packages
-        if version_two:
+        if python_version < 3:
             for lint_file in lint_files:
                 with open(file=lint_file) as f:
                     s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)

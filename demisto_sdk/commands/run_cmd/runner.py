@@ -31,9 +31,6 @@ class Runner:
         if self.debug:
             self.query += ' debug-mode="true"'
 
-    def set_insecure(self, insecure):
-        self.client = demisto_client.configure(verify_ssl=not insecure)
-
     def run(self):
         """Runs an integration command on Demisto and prints the result.
         """

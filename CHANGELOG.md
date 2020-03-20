@@ -3,6 +3,9 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.5
+* Added support for env var: *DEMISTO_SDK_SKIP_VERSION_CHECK*. When set version checks are skipped.
+
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).
 * Fixed an issue where the -p flag in the validate was not working.

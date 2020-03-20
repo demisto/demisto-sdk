@@ -285,7 +285,7 @@ def secrets(config, **kwargs):
 @click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True))
-@click.option("--json-report", help="Path to store pytest xml results", type=click.Path(exists=True))
+@click.option("--json-report", help="Path to store json results", type=click.Path(exists=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True))
 def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, keep_container: bool,

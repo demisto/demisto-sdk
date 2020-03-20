@@ -172,7 +172,8 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to git using branch {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset}")
+        print(f"Comparing to {Colors.Fg.cyan}origin/master{Colors.reset} using branch {Colors.Fg.cyan}"
+              f"{content_repo.active_branch}{Colors.reset}")
         untracked_files = [Path(item) for item in content_repo.untracked_files]
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}

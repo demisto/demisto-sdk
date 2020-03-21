@@ -2,9 +2,7 @@
 from pathlib import Path
 from typing import List
 import os
-
 # Third party packages
-
 # Local imports
 
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
@@ -100,7 +98,7 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     return command
 
 
-def build_vulture_command(files: List[Path], pack_path: Path) -> str:
+def build_vulture_command(files: List[Path], pack_path: Path, version: float) -> str:
     """ Build command to execute with pylint module
         https://github.com/jendrikseipp/vulture
     Args:
@@ -110,7 +108,11 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     Returns:
        str: vulture command
     """
-    command = "python3 -m vulture"
+    if version < 3:
+        version = ""
+    else:
+        version = 3
+    command = f"python{version} -m vulture"
     # Excluded files
     command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
     # File to be excluded when performing lints check
@@ -163,14 +165,48 @@ def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
     Returns:
         str: pytest command
     """
-    command = "pytest"
-    # One line per failure
-    command += " -q"
+    command = "python -m pytest"
     # Generating junit-xml report - used in circle ci
     if test_xml:
         command += f" --junitxml=/devwork/report_pytest.xml"
     # Generating json report
     if json:
         command += f" --json=/devwork/report_pytest.json"
+
+    return command
+
+
+def build_pwsh_analyze_command(files: List[Path]) -> str:
+    """ Build command for powershell analyze
+
+    Args:
+        files(List[Path]): files to execute lint
+
+    Returns:
+       str: pylint command
+    """
+    command = "Invoke-ScriptAnalyzer"
+    # Return exit code when finished
+    command += " -EnableExit"
+    # Files to analyze
+    files = [file.name for file in files]
+    command += f" -Path={' '.join(files)}"
+    # Wrap with quotes
+    command = f'\"{command}\"'
+
+    return command
+
+
+def build_pwsh_test_command() -> str:
+    """ Build command for powershell test
+
+    Returns:
+       str: pylint command
+    """
+    command = "Invoke-Pester"
+    # Return exit code when finished
+    command += " -EnableExit"
+    # Wrap with quotes
+    command = f'\"{command}\"'
 
     return command

@@ -48,9 +48,9 @@ def test_build_vulture_command(files, mocker):
     from demisto_sdk.commands.lint import commands_builder
     mocker.patch.object(commands_builder, 'os')
     commands_builder.os.environ.get.return_value = 20
-    output = build_vulture_command(files, Path('~/dev/content/'))
+    output = build_vulture_command(files, Path('~/dev/content/'), 2.7)
     files = [str(item) for item in files]
-    expected = f"python3 -m vulture --min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
+    expected = f"python -m vulture --min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
                f"CommonServerUserPython.py,conftest.py,venv {' '.join(files)}"
     assert expected == output
 
@@ -70,13 +70,13 @@ def test_build_pylint_command(files):
 def test_build_pytest_command_1():
     """Build Pytest command without json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "pytest -q --junitxml=/devwork/report_pytest.xml"
+    command = "python -m pytest --junitxml=/devwork/report_pytest.xml"
     assert command == build_pytest_command(test_xml="test")
 
 
 def test_build_pytest_command_2():
     """Build Pytest command with json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "pytest -q --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
+    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
     assert command == build_pytest_command(test_xml="test",
                                            json=True)

@@ -10,13 +10,16 @@ import git
 import re
 # Third party packages
 import docker
+import docker.errors
 import requests.exceptions
 import urllib3.exceptions
 from wcmatch.pathlib import Path
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import print_v, print_error
-from demisto_sdk.commands.lint.helpers import get_test_modules, EXIT_CODES, build_skipped_exit_code
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.lint.helpers import get_test_modules, EXIT_CODES, build_skipped_exit_code,\
+    test_internet_connection, PWSH_CHECKS, PY_CHCEKS
 from demisto_sdk.commands.lint.linter import Linter
 
 logger: logging.Logger
@@ -77,10 +80,10 @@ class LintManager:
             print_error("You are running demisto-sdk lint not in content repositorty!")
             logger.info(f"demisto-sdk-lint - can't locate content repo {e}")
         # Get global requirements file
-        pipfile_dir = Path(__file__).parent / 'dev_envs'
+        pipfile_dir = Path(__file__).parent / 'resources'
         try:
             for py_num in ['2', '3']:
-                pipfile_lock_path = pipfile_dir / f'default_python{py_num}/Pipfile.lock'
+                pipfile_lock_path = pipfile_dir / f'pipfile_python{py_num}/Pipfile.lock'
                 with open(file=pipfile_lock_path) as f:
                     lock_file: dict = json.load(fp=f)["develop"]
                     facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in lock_file.items()]
@@ -107,13 +110,16 @@ class LintManager:
         docker_client: docker.DockerClient = docker.from_env()
         try:
             docker_client.ping()
-        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError):
+        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError):
+            facts["docker_engine"] = False
             print_error("Can't communicate with Docker daemon - check your docker Engine is ON - Skiping lint, "
                         "test which require docker!")
             logger.info(f"demisto-sdk-lint - Can't communicate with Docker daemon")
+        if not test_internet_connection():
             facts["docker_engine"] = False
-        else:
-            logger.info(f"lint - Docker daemon test passed")
+            print_error("No internet connection - check your docker Engine is ON - Skiping lint, "
+                        "test which require docker!")
+        logger.info(f"lint - Docker daemon test passed")
 
         return facts
 
@@ -135,15 +141,13 @@ class LintManager:
         else:
             pkgs = [Path(item) for item in dir_packs.split(',')]
         total_found = len(pkgs)
-        print(f"Total content packages found {Colors.Fg.cyan}{total_found}{Colors.reset}")
         if git:
             pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
                                                         pkgs=pkgs)
             for pkg in pkgs:
                 print_v(f"Package added after comparing to git {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
-        print(f"Execute lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} "
-              f"packages")
+        print(f"Execute lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} packages")
 
         return pkgs
 
@@ -191,20 +195,23 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
-                         no_vulture: bool, no_test: bool, keep_container: bool, test_xml: str, json_report: str) -> int:
+                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, keep_container: bool,
+                         test_xml: str, json_report: str) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
-            parallel(int): Whether to run command on multiple threads.
-            no_flake8(bool): Whether to skip flake8.
-            no_bandit(bool): Whether to skip bandit.
-            no_mypy(bool): Whether to skip mypy.
+            parallel(int): Whether to run command on multiple threads
+            no_flake8(bool): Whether to skip flake8
+            no_bandit(bool): Whether to skip bandit
+            no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
-            no_pylint(bool): Whether to skip pylint.
-            no_test(bool): Whether to skip pytest.
-            keep_container(bool): Whether to keep the test container.
-            test_xml(str): Path for saving pytest xml results.
-            json_report(str): Path for store json report.
+            no_pylint(bool): Whether to skip pylint
+            no_test(bool): Whether to skip pytest
+            no_pwsh_analyze(bool): Whether to skip powershell code analyzing
+            no_pwsh_test(bool): whether to skip powershell tests
+            keep_container(bool): Whether to keep the test container
+            test_xml(str): Path for saving pytest xml results
+            json_report(str): Path for store json report
 
         Returns:
             int: exit code by falil exit codes by var EXIT_CODES
@@ -216,23 +223,27 @@ class LintManager:
             "fail_packs_vulture": [],
             "fail_packs_pylint": [],
             "fail_packs_pytest": [],
+            "fail_packs_pwsh_analyze": [],
+            "fail_packs_pwsh_test": [],
             "fail_packs_image": [],
         }
+
+        # Python or powershell or both
+        pkgs_type = []
 
         # Detailed packages status
         pkgs_status = {}
 
         # Skiped lint and test codes
         skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy, no_vulture=no_vulture,
-                                               no_pylint=no_pylint, no_test=no_test,
-                                               docker_engine=self._facts["docker_engine"])
+                                               no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
+                                               no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             return_exit_code: int = 0
             results = []
             # Executing lint checks in diffrent threads
             for pack in self._pkgs:
-                print_v(f"Permform lint on {Colors.Fg.cyan}{pack}{Colors.reset}", log_verbose=self._verbose)
                 linter: Linter = Linter(pack_dir=pack,
                                         content_repo=self._facts["content_repo"],
                                         req_2=self._facts["requirements_2"],
@@ -245,39 +256,48 @@ class LintManager:
                                                no_vulture=no_vulture,
                                                no_pylint=no_pylint,
                                                no_test=no_test,
+                                               no_pwsh_analyze=no_pwsh_analyze,
+                                               no_pwsh_test=no_pwsh_test,
                                                modules=self._facts["test_modules"],
                                                keep_container=keep_container,
                                                test_xml=test_xml))
 
             for future in concurrent.futures.as_completed(results):
-                exit_code, pkg_status = future.result()
+                pkg_status = future.result()
                 pkgs_status[pkg_status["pkg"]] = pkg_status
-                if exit_code:
+                if pkg_status["exit_code"]:
                     for check, code in EXIT_CODES.items():
-                        if exit_code & code:
+                        if pkg_status["exit_code"] & code:
                             lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
-                    if not return_exit_code & exit_code:
-                        return_exit_code += exit_code
+                    if not return_exit_code & pkg_status["exit_code"]:
+                        return_exit_code += pkg_status["exit_code"]
+                if pkg_status["pack_type"] not in pkgs_type:
+                    pkgs_type.append(pkg_status["pack_type"])
 
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code,
-                             skipped_code=skipped_code)
+                             skipped_code=skipped_code,
+                             pkgs_type=pkgs_type)
         self._create_report(pkgs_status=pkgs_status,
                             path=json_report)
 
         return return_exit_code
 
-    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int):
+    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int, pkgs_type: list):
         """ Log report to console
 
         Args:
             lint_status(dict): Overall lint status
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
+            skipped_code(int): skipped test code
+            pkgs_type(list): list determine which pack type exits.
+
      """
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
-                                     skipped_code=skipped_code)
+                                     skipped_code=skipped_code,
+                                     pkgs_type=pkgs_type)
         self.report_failed_lint_checks(return_exit_code=return_exit_code,
                                        pkgs_status=pkgs_status,
                                        lint_status=lint_status)
@@ -289,21 +309,26 @@ class LintManager:
                                           lint_status=lint_status)
 
     @staticmethod
-    def report_pass_lint_checks(return_exit_code: int, skipped_code: int):
+    def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
         """ Log PASS/FAIL on each lint/test
 
         Args:
             return_exit_code(int): exit code will indicate which lint or test failed
             skipped_code(int): skipped test code.
+            pkgs_type(list): list determine which pack type exits.
          """
-        for lint in ["flake8", "bandit", "mypy", "vulture", "pylint", "pytest"]:
-            spacing = 7 - len(lint)
-            if EXIT_CODES[lint] & skipped_code:
-                print(f"{lint} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
-            elif not EXIT_CODES[lint] & return_exit_code:
-                print(f"{lint} {' ' * spacing}- {Colors.Bg.green}[PASS]{Colors.reset}")
-            else:
-                print(f"{lint} {' ' * spacing}- {Colors.Bg.red}[FAIL]{Colors.reset}")
+        longest_check_key = len(max(EXIT_CODES.keys(), key=len))
+        for check, code in EXIT_CODES.items():
+            spacing = longest_check_key - len(check)
+            if (check in PY_CHCEKS and TYPE_PYTHON in pkgs_type) or (check in PWSH_CHECKS and TYPE_PWSH in pkgs_type):
+                if code & skipped_code:
+                    print(f"{check.capitalize()} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
+                elif code & return_exit_code:
+                    print(f"{check} {' ' * spacing}- {Colors.Bg.red}[FAIL]{Colors.reset}")
+                else:
+                    print(f"{check.capitalize()} {' ' * spacing}- {Colors.Bg.green}[PASS]{Colors.reset}")
+            elif check != 'image':
+                print(f"{check} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
 
     @staticmethod
     def report_failed_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
@@ -314,24 +339,25 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for lint in ["flake8", "bandit", "mypy", "vulture"]:
-            if EXIT_CODES[lint] & return_exit_code:
-                sentence = f" {lint.capitalize()} errors "
+        for check in ["flake8", "bandit", "mypy", "vulture"]:
+            if EXIT_CODES[check] & return_exit_code:
+                sentence = f" {check.capitalize()} errors "
                 print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
                 print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
                 print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
-                for fail_pack in lint_status[f"fail_packs_{lint}"]:
+                for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.cyan}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
-                    print(pkgs_status[fail_pack][f"{lint}_errors"])
+                    print(pkgs_status[fail_pack][f"{check}_errors"])
 
-        if EXIT_CODES["pylint"] & return_exit_code:
-            sentence = f" Pylint errors "
-            print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
-            print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
-            print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
-            for fail_pack in lint_status[f"fail_packs_pylint"]:
-                print(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}")
-                print(pkgs_status[fail_pack]["images"][0]["pylint_errors"])
+        for check in ["pylint", "powershell analyze", "powershell test"]:
+            if EXIT_CODES[check] & return_exit_code:
+                sentence = f" {check.capitalize()} errors "
+                print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+                print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
+                print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+                for fail_pack in lint_status[f"fail_packs_pylint"]:
+                    print(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}")
+                    print(pkgs_status[fail_pack]["images"][0][f"{check}_errors"])
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """ Log failed unit-tests , if verbosity specified will log also success unit-tests

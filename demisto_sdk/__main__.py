@@ -277,38 +277,43 @@ def secrets(config, **kwargs):
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvvvvv",
               type=click.IntRange(0, 6, clamp=True))
-@click.option("-p", "--parallel", default=1, help="Run tests in parallel")
+@click.option("-p", "--parallel", default=1, help="Run tests in parallel",
+              type=click.IntRange(0, 15, clamp=True))
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
 @click.option("--no-vulture", is_flag=True, help="Do NOT run mypy static type checking")
 @click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
+@click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
+@click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--json-report", help="Path to store json results", type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True, resolve_path=True))
 def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int, no_flake8: bool,
-         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, keep_container: bool,
-         test_xml: str, json_report: str, log_path: str):
+         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
+         no_pwsh_test: bool, keep_container: bool, test_xml: str, json_report: str, log_path: str):
     """ Run lints and unit-tests on Demisto packages
 
     Args:
-        dir_pack(str): packs to run lint on.
-        git(bool): Perform lint and test only on chaged packs.
-        all_packs(bool): Whether to run on all packages.
-        verbose(int): Whether to output a detailed response.
-        parallel(int): Whether to run command on multiple threads.
-        no_flake8(bool): Whether to skip flake8.
-        no_bandit(bool): Whether to skip bandit.
-        no_mypy(bool): Whether to skip mypy.
+        dir_pack(str): packs to run lint on
+        git(bool): Perform lint and test only on chaged packs
+        all_packs(bool): Whether to run on all packages
+        verbose(int): Whether to output a detailed response
+        parallel(int): Whether to run command on multiple threads
+        no_flake8(bool): Whether to skip flake8
+        no_bandit(bool): Whether to skip bandit
+        no_mypy(bool): Whether to skip mypy
         no_vulture(bool): Whether to skip vulture
-        no_pylint(bool): Whether to skip pylint.
-        no_test(bool): Whether to skip pytest.
-        keep_container(bool): Whether to keep the test container.
-        test_xml(str): Path or store pytest xmls.
-        json_report(str): Path for store json report.
-        log_path(str): Path to all levels of logs.
+        no_pylint(bool): Whether to skip pylint
+        no_test(bool): Whether to skip pytest
+        no_pwsh_analyze(bool): Whether to skip powershell code analyze
+        no_pwsh_test(bool): whether to skip powershell tests
+        keep_container(bool): Whether to keep the test container
+        test_xml(str): Path or store pytest xmls
+        json_report(str): Path for store json report
+        log_path(str): Path to all levels of logs
 
     Returns:
         int: 0 on success and 1 if any package failed
@@ -325,6 +330,8 @@ def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int,
                                          no_vulture=no_vulture,
                                          no_pylint=no_pylint,
                                          no_test=no_test,
+                                         no_pwsh_analyze=no_pwsh_analyze,
+                                         no_pwsh_test=no_pwsh_test,
                                          keep_container=keep_container,
                                          test_xml=test_xml,
                                          json_report=json_report)

@@ -3,6 +3,7 @@ from demisto_sdk.commands.lint import linter
 from unittest.mock import DEFAULT
 import pytest
 import docker.errors
+from unittest.mock import MagicMock
 
 
 class TestCreateImage:
@@ -27,7 +28,7 @@ class TestCreateImage:
         assert act_errors == exp_errors
         assert linter_obj._docker_client.images.build.call_count == 1
 
-    def test_run_pylint_with_docker_build_exception(self, mocker, linter_obj: Linter):
+    def test_build_docker_build_exception(self, mocker, linter_obj: Linter):
         import docker.errors
         # Expected returns
         exp_test_image_id = ''
@@ -45,7 +46,7 @@ class TestCreateImage:
         act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, 3.7],
                                                                         no_test=False)
 
-    def test_run_pylint_with_docker_api_exception(self, mocker, linter_obj: Linter):
+    def test_build_with_docker_api_exception(self, mocker, linter_obj: Linter):
         # Expected returns
         exp_test_image_id = ''
         exp_errors = "my_error"
@@ -74,7 +75,7 @@ class TestPylint:
 
         # Docker client mocking
         mocker.patch.object(linter_obj, '_docker_client')
-        linter_obj._docker_client.containers.run().wait().get.return_value = exp_container_exit_code
+        linter_obj._docker_client.containers.run.return_value = exp_container_log
 
         act_container_exit_code, act_container_log = linter_obj._docker_run_pylint(test_image='test-image',
                                                                                    keep_container=False)
@@ -93,8 +94,13 @@ class TestPylint:
                                     exp_exit_code: int, exp_log: str):
         # Docker client mocking
         mocker.patch.object(linter_obj, '_docker_client')
-        linter_obj._docker_client.containers.run().wait().get.return_value = exp_container_exit_code
-        linter_obj._docker_client.containers.run().logs.return_value = exp_container_log.encode('utf-8')
+        linter_obj._docker_client.containers.run.return_value = exp_container_log
+        linter_obj._docker_client.containers.run.side_effect = docker.errors.ContainerError(container=MagicMock(),
+                                                                                            exit_status=exp_container_exit_code,
+                                                                                            command=MagicMock(),
+                                                                                            image=MagicMock(),
+                                                                                            stderr=MagicMock())
+        linter_obj._docker_client.containers.run.side_effect.container.logs.return_value = exp_container_log.encode('utf-8')
 
         act_container_exit_code, act_container_log = linter_obj._docker_run_pylint(test_image='test-image',
                                                                                    keep_container=False)
@@ -130,7 +136,12 @@ class TestPytest:
 
         # Docker client mocking
         mocker.patch.object(linter_obj, '_docker_client')
-        linter_obj._docker_client.containers.run().wait().get.return_value = exp_container_exit_code
+        if exp_container_exit_code:
+            linter_obj._docker_client.containers.run.side_effect = docker.errors.ContainerError(container=MagicMock(),
+                                                                                                exit_status=exp_container_exit_code,
+                                                                                                command=MagicMock(),
+                                                                                                image=MagicMock(),
+                                                                                                stderr=MagicMock())
 
         # Docker related mocking
         mocker.patch.object(linter, 'json')

@@ -252,7 +252,7 @@ class TestRunLintInHost:
     @pytest.mark.usefixtures("linter_obj", "mocker", "lint_files")
     def test_run_one_lint_check_fail(self, mocker, linter_obj, lint_files, no_flake8: bool, no_bandit: bool,
                                      no_mypy: bool, no_vulture: bool):
-        from demisto_sdk.commands.lint.linter import FAIL_EXIT_CODES
+        from demisto_sdk.commands.lint.linter import EXIT_CODES
         mocker.patch.dict(linter_obj._facts, {
             "images": [["image", "3.7"]],
             "test": False,
@@ -275,23 +275,23 @@ class TestRunLintInHost:
         if not no_flake8:
             linter_obj._run_flake8.assert_called_once()
             assert linter_obj._pkg_lint_status.get("flake8_errors") == 'Error'
-            assert linter_obj._pkg_lint_status.get("exit_code") == FAIL_EXIT_CODES['flake8']
+            assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['flake8']
         elif not no_bandit:
             linter_obj._run_bandit.assert_called_once()
             assert linter_obj._pkg_lint_status.get("bandit_errors") == 'Error'
-            assert linter_obj._pkg_lint_status.get("exit_code") == FAIL_EXIT_CODES['bandit']
+            assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['bandit']
         elif not no_mypy:
             linter_obj._run_mypy.assert_called_once()
             assert linter_obj._pkg_lint_status.get("mypy_errors") == 'Error'
-            assert linter_obj._pkg_lint_status.get("exit_code") == FAIL_EXIT_CODES['mypy']
+            assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['mypy']
         elif not no_vulture:
             linter_obj._run_vulture.assert_called_once()
             assert linter_obj._pkg_lint_status.get("vulture_errors") == 'Error'
-            assert linter_obj._pkg_lint_status.get("exit_code") == FAIL_EXIT_CODES['vulture']
+            assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['vulture']
 
     @pytest.mark.usefixtures("linter_obj", "mocker", "lint_files")
     def test_run_all_lint_fail_all(self, mocker, linter_obj, lint_files):
-        from demisto_sdk.commands.lint.linter import FAIL_EXIT_CODES
+        from demisto_sdk.commands.lint.linter import EXIT_CODES
         mocker.patch.dict(linter_obj._facts, {
             "images": [["image", "3.7"]],
             "test": False,
@@ -319,8 +319,8 @@ class TestRunLintInHost:
         assert linter_obj._pkg_lint_status.get("mypy_errors") == 'Error'
         linter_obj._run_vulture.assert_called_once()
         assert linter_obj._pkg_lint_status.get("vulture_errors") == 'Error'
-        assert linter_obj._pkg_lint_status.get("exit_code") == FAIL_EXIT_CODES['flake8'] + FAIL_EXIT_CODES['bandit'] + \
-            FAIL_EXIT_CODES['mypy'] + FAIL_EXIT_CODES['vulture']
+        assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['flake8'] + EXIT_CODES['bandit'] + \
+            EXIT_CODES['mypy'] + EXIT_CODES['vulture']
 
     def test_no_lint_files(self, mocker, linter_obj):
         """No lint files exsits - not running any lint check"""

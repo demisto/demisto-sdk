@@ -2,15 +2,17 @@ from wcmatch.pathlib import Path
 from typing import List, Callable, Optional
 import pytest
 from ruamel.yaml import YAML
+from unittest.mock import MagicMock
 from demisto_sdk.commands.lint.linter import Linter
 
 
 @pytest.fixture
 def linter_obj() -> Linter:
     return Linter(pack_dir=Path(__file__).parent / 'data' / 'Integration' / 'intergration_sample',
-                  content_path=Path(__file__).parent / 'test_data',
+                  content_repo=MagicMock(),
                   req_3=["pytest==3.0"],
-                  req_2=["pytest==2.0"])
+                  req_2=["pytest==2.0"],
+                  docker_engine=True)
 
 
 @pytest.fixture(scope='session')
@@ -30,7 +32,10 @@ def demisto_content() -> Callable:
         (content_path / dir_n).mkdir(parents=True)
         (content_path / 'Packs' / 'Sample' / dir_n).mkdir(parents=True)
 
-    yield content_path
+    content_repo = MagicMock()
+    content_repo.working_dir = content_path
+
+    yield content_repo
 
     shutil.rmtree(content_path)
 

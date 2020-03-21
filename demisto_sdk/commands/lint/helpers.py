@@ -7,10 +7,11 @@ from functools import lru_cache
 import io
 from pathlib import Path
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import shlex
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
+import requests
 # Third party packages
 import git
 import docker.errors
@@ -57,7 +58,7 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     return skipped_code
 
 
-def get_test_modules(content_repo: git.Repo) -> dict:
+def get_test_modules(content_repo: Optional[git.Repo]) -> dict:
     """ Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py
     2. Tests/scripts/dev_envs/pytest/conftest.py
@@ -71,10 +72,16 @@ def get_test_modules(content_repo: git.Repo) -> dict:
                "Tests/scripts/dev_envs/pytest/conftest.py",
                "Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"]
     modules_content = {}
-    remote = content_repo.remote()
-    for module in modules:
-        modules_content[os.path.basename(module)] = content_repo.commit(f'{remote.name}/master').tree[
-            module].data_stream.read()
+    if content_repo:
+        remote = content_repo.remote()
+        for module in modules:
+            modules_content[os.path.basename(module)] = content_repo.commit(f'{remote.name}/master').tree[
+                module].data_stream.read()
+    else:
+        for module in modules:
+            url = f'https://raw.githubusercontent.com/demisto/content/master/{module}'
+            modules_content[os.path.basename(module)] = requests.get(url=url,
+                                                                     verify=False).content
 
     modules_content["CommonServerUserPython.py"] = b''
 
@@ -82,7 +89,7 @@ def get_test_modules(content_repo: git.Repo) -> dict:
 
 
 @contextmanager
-def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[Path], modules: dict, python_version: float):
+def create_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List[Path], modules: dict, python_version: float):
     """ LintFiles is context manager to mandatory files for lint and test
             1. Entrance - download missing files to pack.
             2. Closing - Remove downloaded files from pack.
@@ -91,7 +98,7 @@ def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[
             pack_path(Path): abs path of pack
             lint_files(list): file to execute lint - for adding typing in python 2.7
             modules(dict): modules content to locate in pack path
-            content_path(Path): content absolute path
+            content_repo(Path): Repo object
             python_version(float): The package python version.
 
         Raises:
@@ -122,10 +129,18 @@ def create_tmp_lint_files(content_path: Path, pack_path: Path, lint_files: List[
             if module_match:
                 module_name = module_match.group(1)
             if module_name:
-                module_path = content_path / 'Packs/ApiModules/Scripts' / module_name / f'{module_name}.py'
+                rel_api_path = Path('Packs/ApiModules/Scripts') / module_name / f'{module_name}.py'
                 cur_path = pack_path / f'{module_name}.py'
-                shutil.copy(src=module_path,
-                            dst=cur_path)
+                if content_repo:
+                    module_path = content_repo.working_dir / rel_api_path
+                    shutil.copy(src=module_path,
+                                dst=cur_path)
+                else:
+                    url = f'https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}'
+                    api_content = requests.get(url=url,
+                                               verify=False).content
+                    cur_path.write_bytes(api_content)
+
                 added_modules.append(cur_path)
 
         # Add typing import if needed to python version 2 packages
@@ -168,13 +183,8 @@ def get_python_version_from_image(image: str) -> float:
         try:
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
-            container_obj: Container = docker_client.containers.run(image=image,
-                                                                    command=shlex.split(command),
-                                                                    detach=True)
-            # Wait for container to finish
-            container_obj.wait(condition="exited")
-            # Get python version
-            py_num = container_obj.logs()
+            py_num: Container = docker_client.containers.run(image=image,
+                                                             command=shlex.split(command))
             if isinstance(py_num, bytes):
                 py_num = float(py_num)
                 break

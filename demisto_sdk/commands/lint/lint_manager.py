@@ -74,9 +74,8 @@ class LintManager:
             facts["content_repo"] = git_repo
             logger.info(f"lint - Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
-            print_error("Please run demisto-sdk lint in content repository - Aborting!")
-            logger.critical(f"demisto-sdk-lint - can't locate content repo {e}")
-            sys.exit(1)
+            print_error("You are running demisto-sdk lint not in content repositorty!")
+            logger.info(f"demisto-sdk-lint - can't locate content repo {e}")
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / 'dev_envs'
         try:
@@ -96,10 +95,13 @@ class LintManager:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"])
             logger.info(f"lint - Test mandatory modules successfully collected")
         except git.GitCommandError as e:
+            print_error("Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
+            logger.info(f"demisto-sdk-lint - unable to get mandatory test-modules demisto-mock.py etc {e}")
+            sys.exit(1)
+        except (requests.exceptions.ConnectionError, urllib3.exceptions.NewConnectionError) as e:
             print_error("Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
                         "connection)")
-            logger.critical(f"demisto-sdk-lint - unable to get mandatory test-modules demisto-mock.py etc {e}",
-                            exc_info=False)
+            logger.info(f"demisto-sdk-lint - unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         # Validating docker engine connection
         docker_client: docker.DockerClient = docker.from_env()
@@ -107,7 +109,7 @@ class LintManager:
             docker_client.ping()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError):
             print_error("Can't communicate with Docker daemon - check your docker Engine is ON - Skiping lint, "
-                        "test which required docker!")
+                        "test which require docker!")
             logger.info(f"demisto-sdk-lint - Can't communicate with Docker daemon")
             facts["docker_engine"] = False
         else:
@@ -232,7 +234,7 @@ class LintManager:
             for pack in self._pkgs:
                 print_v(f"Permform lint on {Colors.Fg.cyan}{pack}{Colors.reset}", log_verbose=self._verbose)
                 linter: Linter = Linter(pack_dir=pack,
-                                        content_path=Path(self._facts["content_repo"].working_dir),
+                                        content_repo=self._facts["content_repo"],
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
                                         docker_engine=self._facts["docker_engine"])
@@ -292,6 +294,7 @@ class LintManager:
 
         Args:
             return_exit_code(int): exit code will indicate which lint or test failed
+            skipped_code(int): skipped test code.
          """
         for lint in ["flake8", "bandit", "mypy", "vulture", "pylint", "pytest"]:
             spacing = 7 - len(lint)

@@ -31,13 +31,12 @@ class Linter:
             docker_engine(bool):  Wheter docker engine detected by docker-sdk.
     """
 
-    def __init__(self, pack_dir: Path, content_path: Path, req_3: list, req_2: list, docker_engine: bool):
+    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool):
         self._req_3 = req_3
         self._req_2 = req_2
-        self._content_path = content_path
-        self._pack_rel_dir = pack_dir
-        self._pack_abs_dir = self._content_path / pack_dir
-        self._pack_name = pack_dir.name
+        self._content_repo = content_repo
+        self._pack_abs_dir = pack_dir
+        self._pack_name = None
         # Docker client init
         self._docker_client: docker.DockerClient = docker.from_env()
         # Facts gathered regarding pack lint and test
@@ -52,8 +51,8 @@ class Linter:
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status = {
-            "pkg": self._pack_name,
-            "path": str(self._pack_rel_dir),
+            "pkg": None,
+            "path": self._pack_abs_dir,
             "errors": [],
             "images": [],
             "flake8_errors": None,
@@ -91,7 +90,7 @@ class Linter:
             return 0b0, self._pkg_lint_status
 
         # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-        with create_tmp_lint_files(content_path=self._content_path,
+        with create_tmp_lint_files(content_repo=self._content_repo,
                                    pack_path=self._pack_abs_dir,
                                    lint_files=self._facts["lint_files"],
                                    modules=modules,
@@ -120,11 +119,17 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Loooking for pkg yaml
-        yml_file: Optional[Path] = next(self._pack_abs_dir.glob(rf'{self._pack_name}.{{yml,yaml}}', flags=BRACE), None)
+        yml_file: Optional[Path] = next(self._pack_abs_dir.glob(rf'*.{{yml,yaml}}', flags=BRACE), None)
         if not yml_file:
-            logger.info(f"{self._pack_name} - Facts - Skiping no yaml file found {yml_file}")
+            logger.info(f"{self._pack_abs_dir} - Facts - Skiping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')
             return True
+
+        # Get file name
+        self._pack_name = yml_file.stem
+        self._pkg_lint_status["pkg"] = yml_file.stem
+
+        # Getting package name
         logger.info(f"{self._pack_name} - Facts -  Using yaml file {yml_file}")
 
         # Parsing pack yaml - inorder to verify if check needed
@@ -134,7 +139,6 @@ class Linter:
             if isinstance(yml_obj, dict):
                 script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
             pack_type = script_obj.get('type')
-            self._facts["python_version"] = 3.7 if "3" in script_obj.get('subtype').split('python') else 2.7
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
             return True
@@ -143,6 +147,9 @@ class Linter:
         if not pack_type == 'python':
             logger.info(f"{self._pack_name} - Facts - Not Python package")
             return True
+
+        # Subtype from yml
+        self._facts["python_version"] = 3.7 if "3" in script_obj.get('subtype', '') else 2.7
         logger.info(f"{self._pack_name} - Facts - Python package")
 
         # Getting python version from docker image - verfying if not valid docker image configured
@@ -229,7 +236,6 @@ class Linter:
             return 0, ""
 
         logger.info(f"{self._pack_name} - Flake8 - Finshed Finshed errors found")
-        logger.debug(f"{self._pack_name} - Flake8 - Finshed  errors - {stdout}")
 
         return 1, stdout
 
@@ -254,7 +260,6 @@ class Linter:
             return 0, ""
 
         logger.info(f"{self._pack_name} - Bandit - Finshed Finshed errors found")
-        logger.debug(f"{self._pack_name} - Bandit - Finshed  errors - {stdout}")
 
         return 1, stdout
 
@@ -279,7 +284,6 @@ class Linter:
             return 0, ""
 
         logger.info(f"{self._pack_name} - Mypy - Finshed Finshed errors found")
-        logger.debug(f"{self._pack_name} - Mypy - Finshed  errors - {stdout}")
 
         return 1, stdout
 
@@ -376,7 +380,7 @@ class Linter:
             no_test(bool): wheter to run tests or not - will install required packages if True.
 
         Returns:
-            str: image short uniq ID
+            string. image name to use
         """
         test_image_id = ""
         logger.info(f"{self._pack_name} - Image build - Creating image based on {docker_base_image[0]}")
@@ -393,7 +397,7 @@ class Linter:
                                          pypi_packs=requirements + self._facts["additional_requirements"],
                                          project_dir=str(self._pack_abs_dir),
                                          circle_ci=os.getenv("CI", False),
-                                         no_test=(self._facts["test"] and no_test))
+                                         no_test=(self._facts["test"] and no_test), )
         except exceptions.TemplateError as e:
             return test_image_id, str(e)
         # Try 3 times creating image - error occures with communicating with docker API
@@ -407,7 +411,8 @@ class Linter:
                     test_image = self._docker_client.images.build(path=str(self._pack_abs_dir),
                                                                   dockerfile=fp.name,
                                                                   tag=docker_base_image[0] + "-test",
-                                                                  rm=True)
+                                                                  quiet=True)
+
                     test_image_id = test_image[0].short_id
                 break
             except (docker.errors.BuildError, docker.errors.APIError) as e:
@@ -434,30 +439,32 @@ class Linter:
         logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Start")
         pylint_command: str = build_pylint_command(self._facts["lint_files"])
         # Check if previous run left container a live if it do, we remove it
+        container_name = f"{self._pack_name}-pylint"
         container_obj: docker.models.containers.Container
         try:
-            container_obj = self._docker_client.containers.get(f"{self._pack_name}-pylint")
+            container_obj = self._docker_client.containers.get(container_name)
             container_obj.remove(force=True)
         except docker.errors.NotFound:
             pass
 
         # Run container
+        container_exit_code = 0
         container_log = ""
         try:
-            container_obj = self._docker_client.containers.run(name=f"{self._pack_name}-pylint",
+            container_log = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=[pylint_command],
-                                                               detach=True,
-                                                               user=f"{os.getuid()}:4000")
-            # wait for container to finish
-            container_status = container_obj.wait(condition="exited")
+                                                               user=f"{os.getuid()}:4000",
+                                                               auto_remove=False)
+        except docker.errors.ContainerError as e:
             # Get container exit code
-            container_exit_code = container_status.get("StatusCode")
+            container_obj = e.container
+            container_exit_code = e.exit_status
             if container_exit_code in [1, 2]:
                 # 1-fatal message issued
                 # 2-Error message issued
                 logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Finshed errors found")
-                container_log = container_obj.logs().decode("utf-8")
+                container_log = container_obj.logs().decode('utf-8')
                 container_exit_code = 1
             elif container_exit_code in [4, 8, 16]:
                 # 4-Warning message issued
@@ -484,9 +491,7 @@ class Linter:
             logger.critical(f"{self._pack_name} - Pylint - Image {test_image} - Unable to run pylint - {e}")
             return 2, str(e)
 
-        if container_exit_code:
-            logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Finished errors found")
-        else:
+        if not container_exit_code:
             logger.info(f"{self._pack_name} - Pylint - Image {test_image} - Finished success")
 
         return container_exit_code, container_log
@@ -507,9 +512,11 @@ class Linter:
         pytest_command: str = build_pytest_command(test_xml=test_xml,
                                                    json=True)
         # Check if previous run left container a live if it does, Remove it
+        container_name = f"{self._pack_name}-pytest"
+        container_exit_code = 0
         container_obj: docker.models.containers.Container
         try:
-            container_obj = self._docker_client.containers.get(f"{self._pack_name}-pytest")
+            container_obj = self._docker_client.containers.get(container_name)
             container_obj.remove(force=True)
         except docker.errors.NotFound:
             pass
@@ -517,16 +524,16 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
-            container_obj = self._docker_client.containers.run(name=f"{self._pack_name}-pytest",
-                                                               image=test_image,
-                                                               command=[pytest_command],
-                                                               user=f"{os.getuid()}:4000",
-                                                               detach=True)
-            # Waiting for container to be finished
-            container_status: dict = container_obj.wait(condition="exited")
-            # Getting container exit code
-            container_exit_code: int = container_status.get("StatusCode")
-            if container_exit_code in [0, 1, 2, 5]:
+            self._docker_client.containers.run(name=container_name,
+                                               image=test_image,
+                                               command=[pytest_command],
+                                               user=f"{os.getuid()}:4000",
+                                               auto_remove=False)
+        except docker.errors.ContainerError as e:
+            # Get container exit code
+            container_obj = self._docker_client.containers.get(container_name)
+            container_exit_code: int = e.exit_status
+            if container_exit_code in [1, 2, 5]:
                 # 0-All tests passed
                 # 1-Tests were collected and run but some of the tests failed
                 # 2-Test execution was interrupted by the user
@@ -537,15 +544,7 @@ class Linter:
                     xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)
-
-                test_json: dict = json.loads(get_file_from_container(container_obj=container_obj,
-                                                                     container_path="/devwork/report_pytest.json",
-                                                                     encoding="utf-8"))
-                for i in range(len(test_json.get('report', {}).get("tests"))):
-                    if test_json['report']["tests"][i]["call"].get("longrepr"):
-                        test_json['report']["tests"][i]["call"]["longrepr"] = test_json['report']["tests"][i]["call"][
-                            "longrepr"].split('\n')
-                if container_exit_code in [0, 5]:
+                if container_exit_code == 5:
                     container_exit_code = 0
                 else:
                     container_exit_code = 1
@@ -554,22 +553,30 @@ class Linter:
                 # 4-pytest command line usage error
                 logger.critical(f"{self._pack_name} - Pytest - Image {test_image} - Usage error")
                 return 2, test_xml
-            # Remove container if not needed
-            if keep_container:
-                print(f"{self._pack_name} - Pytest - Image {test_image} - conatiner name "
-                      f"{self._pack_name}-pytest")
-            else:
-                try:
-                    container_obj.remove(force=True)
-                except docker.errors.NotFound as e:
-                    logger.critical(f"{self._pack_name} - Pytest - Image {test_image} - Unable to remove container {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{self._pack_name} - Pytest - Image {test_image} - Unable to run pytest container {e}")
             return 2, test_json
 
-        if container_exit_code:
-            logger.info(f"{self._pack_name} - Pytest - Image {test_image} - Finished errors found")
+        container_obj = self._docker_client.containers.get(container_name)
+        test_json: dict = json.loads(get_file_from_container(container_obj=container_obj,
+                                                             container_path="/devwork/report_pytest.json",
+                                                             encoding="utf-8"))
+        for test in test_json.get('report', {}).get("tests"):
+            if test.get("call", {}).get("longrepr"):
+                test["call"]["longrepr"] = test.get("call", {}).get("longrepr").split('\n')
+            elif test.get("setup", {}).get("longrepr"):
+                test["setup"]["longrepr"] = test.get("setup", {}).get("longrepr").split('\n')
+
+        # Remove container if not needed
+        if keep_container:
+            print(f"{self._pack_name} - Pytest - Image {test_image} - conatiner name {container_name}")
         else:
+            try:
+                container_obj.remove(force=True)
+            except docker.errors.NotFound as e:
+                logger.critical(f"{self._pack_name} - Pytest - Image {test_image} - Unable to remove container {e}")
+
+        if not container_exit_code:
             logger.info(f"{self._pack_name} - Pytest - Image {test_image} - Finished success")
 
         return container_exit_code, test_json

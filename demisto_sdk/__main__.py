@@ -59,7 +59,7 @@ def main(config, version, env_dir):
     last_release = get_last_remote_release_version()
     if last_release and cur_version != last_release:
         print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
-                      f'You should consider upgrading via "pip install --upgrade demisto-sdk" command.')
+                      f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
     if version:
         version = get_distribution('demisto-sdk').version
         print(version)

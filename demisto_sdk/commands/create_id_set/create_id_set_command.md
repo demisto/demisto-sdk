@@ -1,5 +1,5 @@
 
-## create-content-artifacts
+## create-id-set
 Create the content dependency tree by ids.
 
 **Use-Cases**:

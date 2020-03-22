@@ -6,7 +6,7 @@ Create the content dependency tree by ids.
 This command is primarily intended for internal use. During our CI/CD build process, this command creates a dependency tree containing integrations, scripts and playbooks. The `id_set.json` file is created with the outputs.
 
 **Arguments**:
-* **-o OUTPUT, --artifacts_path OUTPUT**
+* **-o OUTPUT, --output OUTPUT**
 The path of the directory in which you want to save the created id set
 
 **Examples**:

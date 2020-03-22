@@ -13,19 +13,20 @@
 * Fixed an issue in which the CHANGELOG files did not match our scheme.
 * Added a validator to verify that there are no hidden integration parameters.
 * Fixed an issue where the *validate* command ran on test files.
+* Removed the *env-dir* argument from the demisto-sdk.
 
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).
-* Fixed an issue where the -p flag in the validate was not working.
+* Fixed an issue where the -p flag in the *validate* command was not working.
 * Added a validator for README.md files.
 * Release notes validator will now run on: incident fields, indicator fields, incident types, dashboard and reputations.
 * Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
 * Fixed an issue where the validator attempted validating non-existing files after deletions or name refactoring.
 * Removed the *yml_type* argument in the *split-yml*, *extract-code* commands.
 * Removed the *file_type* argument in the *generate-test-playbook* command.
-* Fixed the --insecure argument in *upload*
-* Added the --insecure argument in *run-playbook*
-* Standardise the -i --input, -o --output to demisto-sdk commands.
+* Fixed the *insecure* argument in *upload*.
+* Added the *insecure* argument in *run-playbook*.
+* Standardise the *-i --input*, *-o --output* to demisto-sdk commands.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

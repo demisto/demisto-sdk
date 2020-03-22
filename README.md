@@ -12,9 +12,9 @@ The library uses python 3.7+.
 
 ### Installation
 
-1. **Install** - `pip install demisto-sdk`
+1. **Install** - `pip3 install demisto-sdk`
 
-2. **Upgrade** - `pip install --upgrade demisto-sdk`
+2. **Upgrade** - `pip3 install --upgrade demisto-sdk`
 
 3. **Demisto server demisto-sdk integration** - In order that demisto-sdk and Demisto server communicate, perfrom the following steps:
 
@@ -338,7 +338,7 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
 
 4) Install `tox`:
     ```
-    pip install tox
+    pip3 install tox
     ```
     Then setup dev virtual envs for python 3 (will also install all necessary requirements):
     ```

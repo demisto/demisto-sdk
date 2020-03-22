@@ -14,6 +14,9 @@
 * Added a validator to verify that there are no hidden integration parameters.
 * Fixed an issue where the *validate* command ran on test files.
 * Removed the *env-dir* argument from the demisto-sdk.
+* README files which are html files will now be skipped in the *validate* command.
+* Added support for env var: *DEMISTO_README_VALIDATOR*. When not set the readme validation will not run.
+
 
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).

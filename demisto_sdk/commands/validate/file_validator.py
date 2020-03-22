@@ -403,7 +403,7 @@ class FilesValidator:
                 readme_validator = ReadMeValidator(file_path)
                 if not readme_validator.is_valid_file():
                     self._is_valid = False
-                    continue
+                continue
 
             structure_validator = StructureValidator(file_path, is_new_file=True, predefined_scheme=file_type)
             if not structure_validator.is_valid_file():

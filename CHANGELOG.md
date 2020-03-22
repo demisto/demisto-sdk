@@ -3,6 +3,9 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.6
+* Added a new command to create the id set - the content dependency tree by file IDs.
+
 ### 0.4.5
 * generate-docs command:
     * Added the *use_cases*, *permissions*, *command_permissions* and *limitations*.

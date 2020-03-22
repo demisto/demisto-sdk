@@ -10,6 +10,7 @@
     * Removed the -t argument, the file type will be inferred.
     * The -o argument is no longer mandatory, default value will be the input file directory.
 * Added support for env var: *DEMISTO_SDK_SKIP_VERSION_CHECK*. When set version checks are skipped.
+* Fixed an issue in which the CHANGELOG files did not match our scheme.
 
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).

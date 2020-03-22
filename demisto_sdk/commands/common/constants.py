@@ -235,6 +235,10 @@ class Errors:
         return f"The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
                f" e.g: DBotTrainTextClassifierV2"
 
+    @staticmethod
+    def found_hidden_param(parameter_name):
+        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'

@@ -5,6 +5,7 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 ### 0.4.6
 * Fixed an issue where the *validate* command did not identify CHANGELOG in packs.
+* Added a new command, *id-set* to create the id set - the content dependency tree by file IDs.
 
 ### 0.4.5
 * generate-docs command:

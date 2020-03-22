@@ -3,7 +3,7 @@
 To add functionality to the SDK you would need to perform the following steps:
 
 ### Create a new class
-You will need to create a new directory under the `commands` filder which will contain the files relevant to your contribution.
+You will need to create a new directory under the `commands` folder which will contain the files relevant to your contribution.
 Then, in a dedicated method, you will create an instance of your class in the SDK core class (in `__main__.py`) with the relevant arguments,
 then invoke the command according to the user request.
 

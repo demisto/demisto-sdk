@@ -202,20 +202,21 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    try:
-        releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
-        releases_request.raise_for_status()
-        releases = releases_request.json()
-        if isinstance(releases, list) and isinstance(releases[0], dict):
-            latest_release = releases[0].get('tag_name')
-            if isinstance(latest_release, str):
-                # remove v prefix
-                return latest_release[1:]
-    except Exception as exc:
-        exc_msg = str(exc)
-        if isinstance(exc, requests.exceptions.ConnectionError):
-            exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\nThis may happen if you are not connected to the internet.'
-        print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+    if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
+        try:
+            releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
+            releases_request.raise_for_status()
+            releases = releases_request.json()
+            if isinstance(releases, list) and isinstance(releases[0], dict):
+                latest_release = releases[0].get('tag_name')
+                if isinstance(latest_release, str):
+                    # remove v prefix
+                    return latest_release[1:]
+        except Exception as exc:
+            exc_msg = str(exc)
+            if isinstance(exc, requests.exceptions.ConnectionError):
+                exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\nThis may happen if you are not connected to the internet.'
+            print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
     return ''
 
 

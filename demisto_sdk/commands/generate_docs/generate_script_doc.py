@@ -2,22 +2,26 @@ import os
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error,\
     get_from_version, get_json
-from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
-    generate_list_section, build_example_dict
+from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD, \
+    generate_list_section, build_example_dict, generate_section, generate_numbered_section
 
 
-def generate_script_doc(input, output, examples, id_set='', verbose=False):
+def generate_script_doc(input, examples, id_set='', output: str = None, permissions: str = None,
+                        limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc = []
         errors = []
         used_in = []
         example_section = []
 
+        if not output:  # default output dir will be the dir of the input file
+            output = os.path.dirname(os.path.realpath(input))
+
         if examples:
             if not examples.startswith('!'):
                 examples = f'!{examples}'
 
-            example_dict, build_errors = build_example_dict([examples])
+            example_dict, build_errors = build_example_dict([examples], insecure)
             script_name = examples.split(' ')[0][1:]
             example_section, example_errors = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
@@ -65,6 +69,10 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
             doc.extend(generate_list_section('Dependencies', dependencies, True,
                                              text='This script uses the following commands and scripts.'))
 
+        # Script global permissions
+        if permissions == 'general':
+            doc.extend(generate_section('Permissions', ''))
+
         if used_in:
             doc.extend(generate_list_section('Used In', used_in, True,
                                              text='This script is used in the following playbooks and scripts.'))
@@ -75,6 +83,10 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
 
         if example_section:
             doc.extend(example_section)
+
+        # Known limitations
+        if limitations:
+            doc.extend(generate_numbered_section('Known Limitations', limitations))
 
         doc_text = '\n'.join(doc)
 
@@ -192,8 +204,6 @@ def get_used_in(id_set_path, script_id):
 
 def generate_script_example(script_name, example=None):
     errors = []
-    context_example = None
-    md_example = ''
     if example:
         script_example = example[script_name][0]
         md_example = example[script_name][1]

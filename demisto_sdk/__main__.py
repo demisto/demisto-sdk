@@ -46,14 +46,11 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
     '-h', '--help'
 )
 @click.option(
-    '-d', '--env-dir', help='Specify a working directory.'
-)
-@click.option(
     '-v', '--version', help='Get the demisto-sdk version.',
     is_flag=True, default=False, show_default=True
 )
 @pass_config
-def main(config, version, env_dir):
+def main(config, version):
     config.configuration = Configuration()
     cur_version = get_distribution('demisto-sdk').version
     last_release = get_last_remote_release_version()
@@ -63,9 +60,6 @@ def main(config, version, env_dir):
     if version:
         version = get_distribution('demisto-sdk').version
         print(version)
-
-    if env_dir:
-        config.configuration.env_dir = env_dir
 
 
 # ====================== extract ====================== #

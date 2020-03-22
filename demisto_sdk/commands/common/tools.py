@@ -148,6 +148,9 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     updated_added_files = set()
     for file_path in added_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
+            if "README.md" in file_path:
+                updated_added_files.add(file_path)
+                continue
             with open(file_path) as f:
                 details = yaml.safe_load(f.read())
 

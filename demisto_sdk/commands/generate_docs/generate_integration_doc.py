@@ -4,7 +4,7 @@ from demisto_sdk.commands.generate_docs.common import build_example_dict, add_li
     save_output, generate_table_section, stringEscapeMD, generate_numbered_section
 
 
-def generate_integration_doc(input, examples, id_set, output: str = None, use_cases: str = None,
+def generate_integration_doc(input, examples, output: str = None, use_cases: str = None,
                              permissions: str = None, command_permissions: str = None,
                              limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:

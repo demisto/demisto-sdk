@@ -1,9 +1,9 @@
 import os
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, get_json
 from demisto_sdk.commands.common.git_tools import git_path
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-FAKE_ID_SET = os.path.join(FILES_PATH, 'fake_id_set.json')
+FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 

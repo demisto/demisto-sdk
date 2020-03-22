@@ -24,6 +24,7 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -172,9 +173,6 @@ def unify(**kwargs):
 @click.option(
     '-j', '--conf-json', is_flag=True,
     default=False, show_default=True, help='Validate the conf.json file.')
-@click.option(
-    '-i', '--id-set', is_flag=True,
-    default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
@@ -522,8 +520,6 @@ def init(**kwargs):
 @click.option(
     "-l", "--limitations", help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')", required=False)
 @click.option(
-    "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
-@click.option(
     "--insecure", help="Skip certificate validation to run the commands in order to generate the docs.",
     is_flag=True)
 @click.option(
@@ -560,6 +556,18 @@ def generate_doc(**kwargs):
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1
+
+
+@main.command(name="create-id-set",
+              short_help='''Create the content dependency tree by ids.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-o", "--output", help="Output file path, the default is the Tests directory.", required=False)
+def id_set_command(**kwargs):
+    id_set_creator = IDSetCreator(**kwargs)
+    id_set_creator.create_id_set()
 
 
 @main.resultcallback()

@@ -24,6 +24,8 @@ Make any other changes you want in the content repository and push - this will m
 * For common tools and constants we have the `common` directory. Before you add a constant or a tool, check if it already exists there.
 * We use flake8 for lint. Before you commit you can run `flake8 demisto_sdk` to check your code.
 * Whenever adding a functionality to the `validate` command, consider to add the possibility to the `format` command accordingly.
+* Try to ask the user for the minimal amount of arguments possible. e.g: Do not ask for the file type, infer it using the `find_type` command from `tools.py`.
+* Follow the arguments convention. e.g: `-i --input`, `-o --output`, `--insecure`.
 * When adding a functionality, update the `.md` file of the command accordingly.
 
 ### Good Luck!

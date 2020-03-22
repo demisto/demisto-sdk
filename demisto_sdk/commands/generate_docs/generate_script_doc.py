@@ -7,7 +7,7 @@ from demisto_sdk.commands.generate_docs.common import save_output, generate_tabl
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
-def generate_script_doc(input, examples, id_set='', output: str = None, permissions: str = None,
+def generate_script_doc(input, examples, output: str = None, permissions: str = None,
                         limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc = []
@@ -40,11 +40,10 @@ def generate_script_doc(input, examples, id_set='', output: str = None, permissi
         # get script dependencies
         dependencies, _ = get_depends_on(script)
 
-        if not id_set:
-            id_set_creator = IDSetCreator()
-            id_set = id_set_creator.create_id_set()
-        else:
-            used_in = get_used_in(id_set, script_id)
+        # get the script usages by the id set
+        id_set_creator = IDSetCreator()
+        id_set = id_set_creator.create_id_set()
+        used_in = get_used_in(id_set, script_id)
 
         description = script.get('comment', '')
         deprecated = script.get('deprecated', False)

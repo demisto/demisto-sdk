@@ -397,7 +397,7 @@ def get_test_playbooks_paths():
     return test_playbook_files
 
 
-def re_create_id_set():
+def re_create_id_set(output='./Tests/id_set.json'):
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -434,14 +434,17 @@ def re_create_id_set():
     new_ids_dict['integrations'] = sort(integration_list)
     new_ids_dict['TestPlaybooks'] = sort(testplaybooks_list)
 
-    with open('./Tests/id_set.json', 'w') as id_set_file:
-        json.dump(new_ids_dict, id_set_file, indent=4)
+    if output:
+        with open(output, 'w') as id_set_file:
+            json.dump(new_ids_dict, id_set_file, indent=4)
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
 
     duplicates = find_duplicates(new_ids_dict)
     if any(duplicates):
         print_error('The following duplicates were found: {}'.format(duplicates))
+
+    return new_ids_dict
 
 
 def find_duplicates(id_set):

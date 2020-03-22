@@ -24,6 +24,7 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -560,6 +561,18 @@ def generate_doc(**kwargs):
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1
+
+
+@main.command(name="create-id-set",
+              short_help='''Create the content dependency tree by ids.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-o", "--output", help="Output file path, the default is the Tests directory.", required=False)
+def id_set_command(**kwargs):
+    id_set_creator = IDSetCreator(**kwargs)
+    id_set_creator.create_id_set()
 
 
 @main.resultcallback()

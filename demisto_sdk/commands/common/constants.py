@@ -867,6 +867,12 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: '.ps1'
 }
 
+TESTS_DIRECTORIES = [
+    'testdata',
+    'test_data',
+    'data_test'
+]
+
 FILE_TYPES_FOR_TESTING = [
     '.py',
     '.js',

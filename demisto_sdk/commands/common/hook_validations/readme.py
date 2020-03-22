@@ -2,6 +2,9 @@ from pathlib import Path
 import os
 from demisto_sdk.commands.common.tools import print_error, print_warning, run_command_os, get_content_path
 
+NO_HTML = '<!-- NOT_HTML_DOC -->'
+YES_HTML = '<!-- HTML_DOC -->'
+
 
 class ReadMeValidator:
     """ReadMeValidator is a validator for readme.md files
@@ -32,8 +35,9 @@ class ReadMeValidator:
             return True
 
     def is_mdx_file(self) -> bool:
+        html = self.is_html_doc()
         valid = self.are_modules_installed_for_verify()
-        if valid:
+        if valid and not html:
             mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path)
@@ -70,3 +74,14 @@ class ReadMeValidator:
             print_warning(f"The npm modules: {missing_module} are not installed, Test Skipped, use "
                           f"'npm install <module>' to install all required node dependencies")
         return valid
+
+    def is_html_doc(self) -> bool:
+        txt = ''
+        with open(self.file_path, 'r') as f:
+            txt = f.read()
+        if txt.startswith(NO_HTML):
+            return False
+        if txt.startswith(YES_HTML):
+            return True
+        # use some heuristics to try to figure out if this is html
+        return txt.startswith('<p>') or ('<thead>' in txt and '<tbody>' in txt)

@@ -208,7 +208,7 @@ class StructureValidator:
                     loaded_file_data = load_function(file_obj)  # type: ignore
                     return loaded_file_data
 
-            # Ignore loading image
+            # Ignore loading image and markdown
             elif file_extension in ['.png', '.md']:
                 return {}
 

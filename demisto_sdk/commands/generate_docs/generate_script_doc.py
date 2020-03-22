@@ -1,9 +1,10 @@
 import os
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error,\
-    get_from_version, get_json
+    get_from_version
 from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD, \
     generate_list_section, build_example_dict, generate_section, generate_numbered_section
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 def generate_script_doc(input, examples, id_set='', output: str = None, permissions: str = None,
@@ -40,9 +41,8 @@ def generate_script_doc(input, examples, id_set='', output: str = None, permissi
         dependencies, _ = get_depends_on(script)
 
         if not id_set:
-            errors.append(f'id_set.json file is missing')
-        elif not os.path.isfile(id_set):
-            errors.append(f'id_set.json file {id_set} was not found')
+            id_set_creator = IDSetCreator()
+            id_set = id_set_creator.create_id_set()
         else:
             used_in = get_used_in(id_set, script_id)
 
@@ -177,14 +177,13 @@ def get_outputs(script):
     return outputs, errors
 
 
-def get_used_in(id_set_path, script_id):
+def get_used_in(id_set, script_id):
     """
     Gets the integrations, scripts and playbooks that used the input script, without test playbooks.
-    :param id_set_path: updated id_set.json file path.
+    :param id_set: updated id_set object.
     :param script_id: the script id.
     :return: list of integrations, scripts and playbooks that used the input script
     """
-    id_set = get_json(id_set_path)
     used_in_list = set()
 
     id_set_sections = list(id_set.keys())

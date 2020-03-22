@@ -3,6 +3,9 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.6
+* Fixed an issue where the *validate* command did not identify CHANGELOG in packs.
+
 ### 0.4.5
 * generate-docs command:
     * Added the *use_cases*, *permissions*, *command_permissions* and *limitations*.
@@ -16,7 +19,6 @@
 * Removed the *env-dir* argument from the demisto-sdk.
 * README files which are html files will now be skipped in the *validate* command.
 * Added support for env var: *DEMISTO_README_VALIDATOR*. When not set the readme validation will not run.
-
 
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).

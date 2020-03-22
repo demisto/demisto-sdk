@@ -617,11 +617,12 @@ def get_content_path() -> str:
     return git_repo.working_dir
 
 
-def run_command_os(command: str, cwd: Path) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
         cwd(Path): Path from pathlib object to be executed
+        env: Enviorment variables for the execution
     Returns:
         str: Stdout of the command
         str: Stderr of the command
@@ -630,6 +631,7 @@ def run_command_os(command: str, cwd: Path) -> Tuple[str, str, int]:
     try:
         process = Popen(shlex.split(command),
                         cwd=cwd,
+                        env=env,
                         stdout=PIPE,
                         stderr=PIPE,
                         universal_newlines=True)

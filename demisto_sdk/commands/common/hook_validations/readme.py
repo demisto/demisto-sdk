@@ -19,6 +19,7 @@ class ReadMeValidator:
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
+        self.node_modules_path = self.content_path / Path('node_modules')
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -34,8 +35,10 @@ class ReadMeValidator:
         valid = self.are_modules_installed_for_verify()
         if valid:
             mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
+            # add to env var the directory of node modules
+            os.environ['NODE_PATH'] = str(self.node_modules_path)
             # run the java script mdx parse validator
-            _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path)
+            _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path, env=os.environ)
             if is_valid:
                 print_error(f'Failed verifying README.md, Path: {self.file_path}. Error Message is: {stderr}')
                 return False

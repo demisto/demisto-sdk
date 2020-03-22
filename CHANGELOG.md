@@ -5,13 +5,14 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 ### 0.4.5
 * generate-docs command:
-    * Added the use_cases, global_permissions, command_permissions, additional_info, limitations and troubleshooting arguments.
-    * Added the --insecure argument to support running the script and integration command in Demisto.
-    * Removed the -t argument, the file type will be inferred.
-    * The -o argument is no longer mandatory, default value will be the input file directory.
+    * Added the *use_cases*, *permissions*, *command_permissions* and *limitations*.
+    * Added the *--insecure* argument to support running the script and integration command in Demisto.
+    * Removed the *-t yml_type* argument, the file type will be inferred.
+    * The *-o --output* argument is no longer mandatory, default value will be the input file directory.
 * Added support for env var: *DEMISTO_SDK_SKIP_VERSION_CHECK*. When set version checks are skipped.
 * Fixed an issue in which the CHANGELOG files did not match our scheme.
-* Verify there are no hidden integration parameters.
+* Added a validator to verify that there are no hidden integration parameters.
+* Fixed an issue where the *validate* command ran on test files.
 
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).

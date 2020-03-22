@@ -174,9 +174,6 @@ def unify(**kwargs):
     '-j', '--conf-json', is_flag=True,
     default=False, show_default=True, help='Validate the conf.json file.')
 @click.option(
-    '-i', '--id-set', is_flag=True,
-    default=False, show_default=True, help='Create the id_set.json file.')
-@click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
@@ -523,8 +520,6 @@ def init(**kwargs):
 @click.option(
     "-l", "--limitations", help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')", required=False)
 @click.option(
-    "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
-@click.option(
     "--insecure", help="Skip certificate validation to run the commands in order to generate the docs.",
     is_flag=True)
 @click.option(
@@ -557,6 +552,7 @@ def generate_doc(**kwargs):
     elif file_type == 'script':
         return generate_script_doc(**kwargs)
     elif file_type == 'playbook':
+        return generate_playbook_doc(**kwargs)
         return generate_playbook_doc(**kwargs)
     else:
         print_error(f'File type {file_type} is not supported.')

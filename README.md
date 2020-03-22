@@ -68,6 +68,7 @@ Supported commands:
 12. [Generate-docs](#generate-docs)
 13. [Generate-test-playbook](#generate-test-playbook)
 14. [Json-to-outputs](#json-to-outputs)
+15. [Create-id-set](#create-id-set)
 
 ---
 

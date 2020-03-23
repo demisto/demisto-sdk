@@ -32,5 +32,10 @@ class TestIDSetCreator:
     def test_create_id_set_no_output(self):
         id_set_creator = IDSetCreator()
 
-        id_set_creator.create_id_set()
+        id_set = id_set_creator.create_id_set()
         assert not os.path.exists(self.file_path)
+        assert id_set is not None
+        assert 'scripts' in id_set.keys()
+        assert 'integrations' in id_set.keys()
+        assert 'playbooks' in id_set.keys()
+        assert 'TestPlaybooks' in id_set.keys()

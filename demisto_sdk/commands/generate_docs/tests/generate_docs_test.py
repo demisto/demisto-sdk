@@ -193,20 +193,6 @@ def test_get_used_in():
 # integration tests
 
 
-def test_generate_integration_general_section():
-    docs = []  # type: list
-    yml_data = {'name': 'my-integration'}
-    docs.extend('This integration was integrated and tested with version xx of {}'.format(yml_data['name']))
-    expected_section = 'This integration was integrated and tested with version xx of my-integration'
-
-    # docs is a long list
-    assert docs != expected_section
-
-    # docs is a now a string
-    str_docs = "".join(docs)
-    assert str_docs == expected_section
-
-
 def test_generate_commands_section():
     from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
 

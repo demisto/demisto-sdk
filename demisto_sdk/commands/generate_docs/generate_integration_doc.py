@@ -37,7 +37,7 @@ def generate_integration_doc(input, examples, output: str = None, use_cases: str
 
         docs = []  # type: list
         docs.extend(add_lines(yml_data.get('description')))
-        docs.extend('This integration was integrated and tested with version xx of {}'.format(yml_data['name']))
+        docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
 
         # Integration use cases
         if use_cases:

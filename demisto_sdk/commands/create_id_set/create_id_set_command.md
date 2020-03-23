@@ -1,4 +1,3 @@
-
 ## create-id-set
 Create the content dependency tree by ids.
 
@@ -7,7 +6,7 @@ This command is primarily intended for internal use. During our CI/CD build proc
 
 **Arguments**:
 * **-o OUTPUT, --output OUTPUT**
-The path of the directory in which you want to save the created id set
+The path of the directory in which you want to save the created id set.
 
 **Examples**:
 `demisto-sdk create-id-set -o .`

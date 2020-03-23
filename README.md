@@ -65,8 +65,10 @@ Supported commands:
 9. [Run](#run)
 10. [Run-playbook](#run-playbook)
 11. [Upload](#upload)
-12. [Generate-test-playbook](#generate-test-playbook)
-13. [Json-to-outputs](#json-to-outputs)
+12. [Generate-docs](#generate-docs)
+13. [Generate-test-playbook](#generate-test-playbook)
+14. [Json-to-outputs](#json-to-outputs)
+15. [Create-id-set](#create-id-set)
 
 ---
 
@@ -298,6 +300,17 @@ This will generate documentation file to Tanium V2 integration in /Users/Documen
 
 `demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Scripts/script-PrintErrorEntry.yml -id /demisto/content/Tests/id_set.json -e "!PrintErrorEntry message=Hi"`
 This will generate documentation file to PrintErrorEntry script in /Users/Documentations/README.md. id_set.json should be updated to gets all the integration that uses this script.
+
+## create-id-set
+Create the content dependency tree by ids.
+
+**Arguments**:
+* **-o, --output**
+The path of the directory in which you want to save the created id set.
+
+**Examples**:
+`demisto-sdk create-id-set -o .`
+This will create the id set in the current directory.
 
 ## In the code
 You can import the SDK core class in your python code as follows:

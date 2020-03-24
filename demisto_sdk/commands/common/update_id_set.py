@@ -1,4 +1,3 @@
-# !/usr/bin/env python
 import itertools
 import os
 import glob
@@ -12,9 +11,14 @@ import time
 from demisto_sdk.commands.common.constants import INTEGRATION_REGEX, INTEGRATION_YML_REGEX, \
     PACKS_INTEGRATION_REGEX, SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PLAYBOOK_REGEX, TEST_PLAYBOOK_REGEX, \
     PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, SCRIPTS_REGEX_LIST, BETA_INTEGRATION_REGEX, \
-    BETA_PLAYBOOK_REGEX, TEST_SCRIPT_REGEX, PACKS_INTEGRATION_YML_REGEX
-from demisto_sdk.commands.common.tools import get_yaml, get_to_version, get_from_version, collect_ids, \
-    get_script_or_integration_id, LOG_COLORS, print_color, print_error, print_warning, run_command
+    BETA_PLAYBOOK_REGEX, TEST_SCRIPT_REGEX, PACKS_INTEGRATION_YML_REGEX, PACKS_CLASSIFIERS_REGEX, CLASSIFIER_REGEX, \
+    SCRIPTS_DIR, WIDGETS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, \
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, LAYOUTS_DIR, REPORTS_DIR, DASHBOARD_REGEX, PACKS_DASHBOARDS_REGEX, \
+    INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX, INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPES_REGEX, \
+    INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_FIELDS_REGEX, LAYOUT_REGEX, PACKS_LAYOUTS_REGEX, REPORT_REGEX,\
+    PACKS_REPORTS_REGEX, WIDGETS_REGEX, PACKS_WIDGETS_REGEX
+from demisto_sdk.commands.common.tools import get_yaml, get_to_version, get_from_version, collect_ids, get_json, \
+    get_script_or_integration_id, LOG_COLORS, print_color, print_error, print_warning, run_command, get_pack_name
 from demisto_sdk.commands.unify.unifier import Unifier
 
 CHECKED_TYPES_REGEXES = (
@@ -30,14 +34,11 @@ CHECKED_TYPES_REGEXES = (
     PLAYBOOK_REGEX,
     TEST_PLAYBOOK_REGEX,
     PACKS_PLAYBOOK_YML_REGEX,
-    PACKS_TEST_PLAYBOOKS_REGEX
+    PACKS_TEST_PLAYBOOKS_REGEX,
+    # Classifiers
+    PACKS_CLASSIFIERS_REGEX,
+    CLASSIFIER_REGEX
 )
-
-INTEGRATIONS_PATH_LIST = [
-    ['Integrations', '*'],
-    ['Beta_Integrations', '*'],
-    ['Packs', '*', 'Integrations', '*']
-]
 
 
 def checked_type(file_path, regex_list=CHECKED_TYPES_REGEXES):
@@ -128,14 +129,21 @@ def get_commmands_from_playbook(data_dict):
 def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
-    id = data_dictionary.get('commonfields', {}).get('id', '-')
+    id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
 
+    deprecated = data_dictionary.get('deprecated', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
     commands = data_dictionary.get('script', {}).get('commands', [])
     cmd_list = [command.get('name') for command in commands]
+    pack = get_pack_name(file_path)
+
+    deprecated_commands = []
+    for command in commands:
+        if command.get('deprecated', False):
+            deprecated_commands.append(command.get('name'))
 
     integration_data['name'] = name
     integration_data['file_path'] = file_path
@@ -147,22 +155,29 @@ def get_integration_data(file_path):
         integration_data['commands'] = cmd_list
     if tests:
         integration_data['tests'] = tests
-
-    return {id: integration_data}
+    if deprecated:
+        integration_data['deprecated'] = deprecated
+    if deprecated_commands:
+        integration_data['deprecated_commands'] = deprecated_commands
+    if pack:
+        integration_data['pack'] = pack
+    return {id_: integration_data}
 
 
 def get_playbook_data(file_path):
     playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
-    id = data_dictionary.get('id', '-')
+    id_ = data_dictionary.get('id', '-')
     name = data_dictionary.get('name', '-')
 
+    deprecated = data_dictionary.get('deprecated', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
     implementing_scripts = get_task_ids_from_playbook('scriptName', data_dictionary)
     implementing_playbooks = get_task_ids_from_playbook('playbookName', data_dictionary)
     command_to_integration = get_commmands_from_playbook(data_dictionary)
+    pack = get_pack_name(file_path)
 
     playbook_data['name'] = name
     playbook_data['file_path'] = file_path
@@ -178,14 +193,18 @@ def get_playbook_data(file_path):
         playbook_data['command_to_integration'] = command_to_integration
     if tests:
         playbook_data['tests'] = tests
+    if deprecated:
+        playbook_data['deprecated'] = deprecated
+    if pack:
+        playbook_data['pack'] = pack
 
-    return {id: playbook_data}
+    return {id_: playbook_data}
 
 
 def get_script_data(file_path, script_code=None):
     script_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
-    id = data_dictionary.get('commonfields', {}).get('id', '-')
+    id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     if script_code is None:
         script_code = data_dictionary.get('script', '')
 
@@ -193,10 +212,11 @@ def get_script_data(file_path, script_code=None):
 
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
-    deprecated = data_dictionary.get('deprecated')
+    deprecated = data_dictionary.get('deprecated', False)
     fromversion = data_dictionary.get('fromversion')
     depends_on, command_to_integration = get_depends_on(data_dictionary)
-    script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"]([\w-]+)['\"].*", script_code))))
+    script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"](\w+)['\"].*", script_code))))
+    pack = get_pack_name(file_path)
 
     script_data['name'] = name
     script_data['file_path'] = file_path
@@ -214,13 +234,65 @@ def get_script_data(file_path, script_code=None):
         script_data['command_to_integration'] = command_to_integration
     if tests:
         script_data['tests'] = tests
+    if pack:
+        script_data['pack'] = pack
 
-    return {id: script_data}
+    return {id_: script_data}
+
+
+def get_layout_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+    layout = json_data.get('layout')
+    name = layout.get('name', '-')
+    id_ = layout.get('id', '-')
+    type_ = json_data.get('typeId')
+    type_name = json_data.get('TypeName')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    if type_:
+        data['typeID'] = type_
+    if type_name:
+        data['typename'] = type_name
+    data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+
+    return {id_: data}
+
+
+def get_general_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    brandname = json_data.get('brandName', '')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    if brandname:  # for classifiers
+        data['name'] = brandname
+    if name:  # for the rest
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+
+    return {id_: data}
 
 
 def get_depends_on(data_dict):
     depends_on = data_dict.get('dependson', {}).get('must', [])
-    depends_on_list = list(set([cmd.split('|')[-1] for cmd in depends_on]))
+    depends_on_list = list(set(cmd.split('|')[-1] for cmd in depends_on))
     command_to_integration = {}
     for cmd in depends_on:
         splitted_cmd = cmd.split('|')
@@ -240,7 +312,7 @@ def update_object_in_id_set(obj_id, obj_data, file_path, instances_set):
 
     updated = False
     for instance in instances_set:
-        instance_id = instance.keys()[0]
+        instance_id = list(instance.keys())[0]
         integration_to_version = instance[instance_id].get('toversion', '99.99.99')
         integration_from_version = instance[instance_id].get('fromversion', '0.0.0')
 
@@ -256,16 +328,15 @@ def update_object_in_id_set(obj_id, obj_data, file_path, instances_set):
         add_new_object_to_id_set(obj_id, obj_data, instances_set)
 
 
-def add_new_object_to_id_set(obj_id: str, obj_data: OrderedDict, instances_set: list):
+def add_new_object_to_id_set(obj_id, obj_data, instances_set):
     obj_in_set = False
 
-    obj_data_list = list(obj_data.values())
-    dict_value = obj_data_list[0]
+    dict_value = obj_data.values()[0]
     file_to_version = dict_value.get('toversion', '99.99.99')
     file_from_version = dict_value.get('fromversion', '0.0.0')
 
     for instance in instances_set:
-        instance_id = list(instance.keys())[0]
+        instance_id = instance.keys()[0]
         integration_to_version = instance[instance_id].get('toversion', '99.99.99')
         integration_from_version = instance[instance_id].get('fromversion', '0.0.0')
         if obj_id == instance_id and file_from_version == integration_from_version and \
@@ -300,6 +371,7 @@ def process_integration(file_path):
             # locally, might have leftover dirs without committed files
             print("adding {0} to id_set".format(file_path))
             res.append(get_integration_data(file_path))
+
     return res
 
 
@@ -324,6 +396,134 @@ def process_playbook(file_path):
     if checked_type(file_path, (PACKS_PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX, BETA_PLAYBOOK_REGEX)):
         print('adding {0} to id_set'.format(file_path))
         res.append(get_playbook_data(file_path))
+    return res
+
+
+def process_classifier(file_path):
+    """
+    Process a classifier JSON file
+    Args:
+        file_path: The file path from Classifiers folder
+
+    Returns:
+        a list of classifier data.
+    """
+    res = []
+    if checked_type(file_path, (CLASSIFIER_REGEX, PACKS_CLASSIFIERS_REGEX)):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
+def process_dashboards(file_path):
+    """
+    Process a dashboard JSON file
+    Args:
+        file_path: The file path from Dashboard folder
+
+    Returns:
+        a list of dashboard data.
+    """
+    res = []
+    if checked_type(file_path, (DASHBOARD_REGEX, PACKS_DASHBOARDS_REGEX)):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
+def process_incident_fields(file_path):
+    """
+    Process a incident_fields JSON file
+    Args:
+        file_path: The file path from incident field folder
+
+    Returns:
+        a list of incident field data.
+    """
+    res = []
+    if checked_type(file_path, (INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX)):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
+def process_incident_types(file_path):
+    """
+    Process a incident_fields JSON file
+    Args:
+        file_path: The file path from incident field folder
+
+    Returns:
+        a list of incident field data.
+    """
+    res = []
+    if checked_type(file_path, (INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPES_REGEX)):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
+def process_indicator_fields(file_path):
+    """
+    Process a indicator fields JSON file
+    Args:
+        file_path: The file path from indicator field folder
+
+    Returns:
+        a list of indicator field data.
+    """
+    res = []
+    if checked_type(file_path, [INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_FIELDS_REGEX]):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
+def process_layouts(file_path):
+    """
+    Process a Layouts JSON file
+    Args:
+        file_path: The file path from layout folder
+
+    Returns:
+        a list of layout data.
+    """
+    res = []
+    if checked_type(file_path, (LAYOUT_REGEX, PACKS_LAYOUTS_REGEX)):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_layout_data(file_path))
+    return res
+
+
+def process_reports(file_path):
+    """
+    Process a report JSON file
+    Args:
+        file_path: The file path from report folder
+
+    Returns:
+        a list of report data.
+    """
+    res = []
+    if checked_type(file_path, [REPORT_REGEX, PACKS_REPORTS_REGEX]):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
+def process_widgets(file_path):
+    """
+    Process a widgets JSON file
+    Args:
+        file_path: The file path from widgets folder
+
+    Returns:
+        a list of widgets data.
+    """
+    res = []
+    if checked_type(file_path, [WIDGETS_REGEX, PACKS_WIDGETS_REGEX]):
+        print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
     return res
 
 
@@ -352,23 +552,16 @@ def process_test_playbook_path(file_path):
 
 
 def get_integrations_paths():
+    path_list = [
+        ['Integrations', '*'],
+        ['Beta_Integrations', '*'],
+        ['Packs', '*', 'Integrations', '*']
+    ]
     integration_files = list()
-    for path in INTEGRATIONS_PATH_LIST:
+    for path in path_list:
         integration_files.extend(glob.glob(os.path.join(*path)))
 
     return integration_files
-
-
-def get_scripts_paths():
-    path_list = [
-        ['Scripts', '*'],
-        ['Packs', '*', 'Scripts', '*']
-    ]
-    script_files = list()
-    for path in path_list:
-        script_files.extend(glob.glob(os.path.join(*path)))
-
-    return script_files
 
 
 def get_playbooks_paths():
@@ -385,46 +578,102 @@ def get_playbooks_paths():
     return playbook_files
 
 
-def get_test_playbooks_paths():
+def get_general_paths(path):
     path_list = [
-        ['TestPlaybooks', '*'],
-        ['Packs', '*', 'TestPlaybooks', '*.yml']
+        [path, '*'],
+        ['Packs', '*', path, '*']
     ]
-    test_playbook_files = list()
+    files = list()
     for path in path_list:
-        test_playbook_files.extend(glob.glob(os.path.join(*path)))
+        files.extend(glob.glob(os.path.join(*path)))
 
-    return test_playbook_files
+    return files
 
 
-def re_create_id_set(output='./Tests/id_set.json'):
+def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None):
+    if objects_to_create is None:
+        objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
+                             'Dashboards', 'IncidentFields', 'IndicatorFields', 'Layouts', 'Reports', 'Widgets']
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
     integration_list = []
     testplaybooks_list = []
 
+    classifiers_list = []
+    dashboards_list = []
+    incident_fields_list = []
+    incident_type_list = []
+    indicator_fields_list = []
+    layouts_list = []
+    reports_list = []
+    widgets_list = []
+
     pool = Pool(processes=cpu_count() * 2)
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
-    print_color("Starting iterating over Integrations", LOG_COLORS.GREEN)
-    for arr in pool.map(process_integration, get_integrations_paths()):
-        integration_list.extend(arr)
+    if 'Integrations' in objects_to_create:
+        print_color("Starting iterating over Integrations", LOG_COLORS.GREEN)
+        for arr in pool.map(process_integration, get_integrations_paths()):
+            integration_list.extend(arr)
 
-    print_color("Starting iterating over Playbooks", LOG_COLORS.GREEN)
-    for arr in pool.map(process_playbook, get_playbooks_paths()):
-        playbooks_list.extend(arr)
+    if 'Playbooks' in objects_to_create:
+        print_color("Starting iterating over Playbooks", LOG_COLORS.GREEN)
+        for arr in pool.map(process_playbook, get_playbooks_paths()):
+            playbooks_list.extend(arr)
 
-    print_color("Starting iterating over Scripts", LOG_COLORS.GREEN)
-    for arr in pool.map(process_script, get_scripts_paths()):
-        scripts_list.extend(arr)
+    if 'Scripts' in objects_to_create:
+        print_color("Starting iterating over Scripts", LOG_COLORS.GREEN)
+        for arr in pool.map(process_script, get_general_paths(SCRIPTS_DIR)):
+            scripts_list.extend(arr)
 
-    print_color("Starting iterating over TestPlaybooks", LOG_COLORS.GREEN)
-    for pair in pool.map(process_test_playbook_path, get_test_playbooks_paths()):
-        if pair[0]:
-            testplaybooks_list.append(pair[0])
-        if pair[1]:
-            scripts_list.append(pair[1])
+    if 'TestPlaybooks' in objects_to_create:
+        print_color("Starting iterating over TestPlaybooks", LOG_COLORS.GREEN)
+        for pair in pool.map(process_test_playbook_path, get_general_paths(TEST_PLAYBOOKS_DIR)):
+            if pair[0]:
+                testplaybooks_list.append(pair[0])
+            if pair[1]:
+                scripts_list.append(pair[1])
+
+    if 'Classifiers' in objects_to_create:
+        print_color("Starting iterating over Classifiers", LOG_COLORS.GREEN)
+        for arr in pool.map(process_classifier, get_general_paths(CLASSIFIERS_DIR)):
+            classifiers_list.extend(arr)
+
+    if 'Dashboards' in objects_to_create:
+        print_color("Starting iterating over Dashboards", LOG_COLORS.GREEN)
+        for arr in pool.map(process_dashboards, get_general_paths(DASHBOARDS_DIR)):
+            dashboards_list.extend(arr)
+
+    if 'IncidentFields' in objects_to_create:
+        print_color("Starting iterating over Incident Fields", LOG_COLORS.GREEN)
+        for arr in pool.map(process_incident_fields, get_general_paths(INCIDENT_FIELDS_DIR)):
+            incident_fields_list.extend(arr)
+
+    if 'IncidentTypes' in objects_to_create:
+        print_color("Starting iterating over Incident Types", LOG_COLORS.GREEN)
+        for arr in pool.map(process_incident_types, get_general_paths(INCIDENT_TYPES_DIR)):
+            incident_type_list.extend(arr)
+
+    if 'IndicatorFields' in objects_to_create:
+        print_color("Starting iterating over Indicator Fields", LOG_COLORS.GREEN)
+        for arr in pool.map(process_indicator_fields, get_general_paths(INDICATOR_FIELDS_DIR)):
+            indicator_fields_list.extend(arr)
+
+    if 'Layouts' in objects_to_create:
+        print_color("Starting iterating over Layouts", LOG_COLORS.GREEN)
+        for arr in pool.map(process_layouts, get_general_paths(LAYOUTS_DIR)):
+            layouts_list.extend(arr)
+
+    if 'Reports' in objects_to_create:
+        print_color("Starting iterating over Reports", LOG_COLORS.GREEN)
+        for arr in pool.map(process_reports, get_general_paths(REPORTS_DIR)):
+            reports_list.extend(arr)
+
+    if 'Widgets' in objects_to_create:
+        print_color("Starting iterating over Widgets", LOG_COLORS.GREEN)
+        for arr in pool.map(process_widgets, get_general_paths(WIDGETS_DIR)):
+            widgets_list.extend(arr)
 
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
@@ -433,9 +682,17 @@ def re_create_id_set(output='./Tests/id_set.json'):
     new_ids_dict['playbooks'] = sort(playbooks_list)
     new_ids_dict['integrations'] = sort(integration_list)
     new_ids_dict['TestPlaybooks'] = sort(testplaybooks_list)
+    new_ids_dict['Classifiers'] = sort(classifiers_list)
+    new_ids_dict['Dashboards'] = sort(dashboards_list)
+    new_ids_dict['IncidentFields'] = sort(incident_fields_list)
+    new_ids_dict['IncidentTypes'] = sort(incident_type_list)
+    new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
+    new_ids_dict['Layouts'] = sort(layouts_list)
+    new_ids_dict['Reports'] = sort(reports_list)
+    new_ids_dict['Widgets'] = sort(widgets_list)
 
-    if output:
-        with open(output, 'w') as id_set_file:
+    if id_set_path:
+        with open(id_set_path, 'w+') as id_set_file:
             json.dump(new_ids_dict, id_set_file, indent=4)
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
@@ -448,42 +705,36 @@ def re_create_id_set(output='./Tests/id_set.json'):
 
 
 def find_duplicates(id_set):
-    scripts = id_set['scripts']
-    script_ids = set(list(script.keys())[0] for script in scripts)
+    lists_to_return = []
 
-    scripts_list = []
-    for script_id in script_ids:
-        if has_duplicate(scripts, script_id):
-            scripts_list.append(script_id)
+    objects_to_check = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers', 'Dashboards',
+                        'Layouts', 'Reports', 'Widgets']
+    for object_type in objects_to_check:
+        print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
+        objects = id_set.get(object_type)
+        ids = set(list(specific_item.keys())[0] for specific_item in objects)
 
-    integrations = id_set['integrations']
-    integration_ids = set(list(integration.keys())[0] for integration in integrations)
+        dup_list = []
+        for id_to_check in ids:
+            if has_duplicate(objects, id_to_check, object_type):
+                dup_list.append(id_to_check)
+        lists_to_return.append(dup_list)
 
-    integration_list = []
-    for integration_id in integration_ids:
-        if has_duplicate(integrations, integration_id):
-            integration_list.append(integration_id)
+    print_color("Checking diff for Incident and Idicator Fields", LOG_COLORS.GREEN)
 
-    playbooks = id_set['playbooks']
-    playbook_ids = set(list(playbook.keys())[0] for playbook in playbooks)
+    fields = id_set['IncidentFields'] + id_set['IndicatorFields']
+    field_ids = set(list(field.keys())[0] for field in fields)
 
-    playbooks_list = []
-    for playbook_id in playbook_ids:
-        if has_duplicate(playbooks, playbook_id):
-            integration_list.append(playbook_id)
+    field_list = []
+    for field_to_check in field_ids:
+        if has_duplicate(fields, field_to_check, 'Indicator and Incident Fields'):
+            field_list.append(field_to_check)
+    lists_to_return.append(field_list)
 
-    test_playbooks = id_set['TestPlaybooks']
-    test_playbook_ids = set(list(test_playbook.keys())[0] for test_playbook in test_playbooks)
-
-    test_playbooks_list = []
-    for test_playbook_id in test_playbook_ids:
-        if has_duplicate(test_playbooks, test_playbook_id):
-            test_playbooks_list.append(test_playbook_id)
-
-    return scripts_list, integration_list, playbooks_list, test_playbooks_list
+    return lists_to_return
 
 
-def has_duplicate(id_set, id_to_check):
+def has_duplicate(id_set, id_to_check, object_type=None):
     duplicates = [duplicate for duplicate in id_set if duplicate.get(id_to_check)]
 
     if len(duplicates) < 2:
@@ -498,18 +749,18 @@ def has_duplicate(id_set, id_to_check):
         dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
 
         if dict1['name'] != dict2['name']:
-            print_warning('The following objects has the same ID but different names: '
-                          '"{}", "{}".'.format(dict1['name'], dict2['name']))
+            print_warning('The following {} have the same ID ({}) but different names: '
+                          '"{}", "{}".'.format(object_type, id_to_check, dict1['name'], dict2['name']))
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0
         # C: 3.5.2 - 3.5.4
         # D: 4.5.0 - 99.99.99
         if any([
-            dict1_from_version <= dict2_from_version < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
-            dict1_from_version < dict2_to_version <= dict1_to_version,  # will catch (B, C), (A, C)
-            dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
-            dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
+                dict1_from_version <= dict2_from_version < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
+                dict1_from_version < dict2_to_version <= dict1_to_version,  # will catch (B, C), (A, C)
+                dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
+                dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
             return True
 
@@ -582,26 +833,26 @@ def update_id_set():
         for file_path in modified_files:
             if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
-                id = get_script_or_integration_id(file_path)
+                id_ = get_script_or_integration_id(file_path)
                 integration_data = get_integration_data(file_path)
-                update_object_in_id_set(id, integration_data, file_path, integration_set)
-                print("updated {0} in id_set".format(id))
+                update_object_in_id_set(id_, integration_data, file_path, integration_set)
+                print("updated {0} in id_set".format(id_))
             if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE) or re.match(TEST_SCRIPT_REGEX,
                                                                             file_path, re.IGNORECASE):
-                id = get_script_or_integration_id(file_path)
+                id_ = get_script_or_integration_id(file_path)
                 script_data = get_script_data(file_path)
-                update_object_in_id_set(id, script_data, file_path, script_set)
-                print("updated {0} in id_set".format(id))
+                update_object_in_id_set(id_, script_data, file_path, script_set)
+                print("updated {0} in id_set".format(id_))
             if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                id = collect_ids(file_path)
+                id_ = collect_ids(file_path)
                 playbook_data = get_playbook_data(file_path)
-                update_object_in_id_set(id, playbook_data, file_path, playbook_set)
-                print("updated {0} in id_set".format(id))
+                update_object_in_id_set(id_, playbook_data, file_path, playbook_set)
+                print("updated {0} in id_set".format(id_))
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                id = collect_ids(file_path)
+                id_ = collect_ids(file_path)
                 playbook_data = get_playbook_data(file_path)
-                update_object_in_id_set(id, playbook_data, file_path, test_playbook_set)
-                print("updated {0} in id_set".format(id))
+                update_object_in_id_set(id_, playbook_data, file_path, test_playbook_set)
+                print("updated {0} in id_set".format(id_))
 
     if added_scripts:
         for added_script_package in added_scripts:

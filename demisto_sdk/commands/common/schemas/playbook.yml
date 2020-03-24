@@ -159,6 +159,8 @@ mapping:
                 allowempty: True
               exitCondition:
                 type: str
+              max:
+                type: int
               wait:
                 type: int
           conditions:

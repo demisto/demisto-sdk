@@ -3,6 +3,9 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.8
+* Added the *max* field to the Playbook schema, allowing to define it in tasks loop.
+
 ### 0.4.7
 * Added the *slareminder* field to the Playbook schema.
 * Added the *common_server*, *demisto_mock* arguments to the *init* command.

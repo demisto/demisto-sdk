@@ -8,4 +8,4 @@
 # E999 Invalid Syntax
 ignore = W293, W504, F405, F403
 max-line-length = 160
-max-complexity = 25
+max-complexity = 30

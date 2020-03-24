@@ -3,8 +3,14 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.8
+* Added the *max* field to the Playbook schema, allowing to define it in tasks loop.
+
 ### 0.4.7
+* Added the *slareminder* field to the Playbook schema.
+* Added the *common_server*, *demisto_mock* arguments to the *init* command.
 * Fixed an issue in *generate-docs* where the general section was not being generated correctly.
+* Fixed an issue in *validate* where Incident type validation failed.
 
 ### 0.4.6
 * Fixed an issue where the *validate* command did not identify CHANGELOG in packs.

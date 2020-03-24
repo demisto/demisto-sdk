@@ -151,12 +151,12 @@ class IntegrationValidator(BaseValidator):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url)
             has the correct DBotScore outputs according to the context standard
-            https://github.com/demisto/content/blob/master/docs/context_standards/README.MD
+            https://xsoar.pan.dev/docs/integrations/context-standards
 
         Returns:
             bool. Whether a reputation command holds valid outputs
         """
-        context_standard = "https://github.com/demisto/content/blob/master/docs/context_standards/README.MD"
+        context_standard = "https://xsoar.pan.dev/docs/integrations/context-standards"
         commands = self.current_file.get('script', {}).get('commands', [])
         output_for_reputation_valid = True
         for command in commands:

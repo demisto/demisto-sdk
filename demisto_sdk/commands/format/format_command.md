@@ -55,3 +55,33 @@ this will format the given yml file and save it in content repo under the specif
 demisto-sdk format -i Packs/CortexXDR -fv 9.9.9
 ```
 this will format all yml/json files under Pack CortexXDR and change fromversion key in all to '9.9.9'
+
+```
+demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -fv 9.9.9
+```
+This will go through the integration file, format it:
+if the file had fromversion key before than it will be overwrited to '9.9.9'
+if the file did not have fromversion key before than it will be added and set to '9.9.9'
+
+```
+demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -o Integrations/Pwned-V2/Pwned-V2-formatted-file.yml -fv 9.9.9
+```
+This will go through the integration file, format it:
+if the specified output path already exists in content repo than:
+the output file in content had fromversion key before than it will be overwrited to '9.9.9'
+if the file did not have fromversion key before than it will be added and set to '9.9.9'
+
+```
+demisto-sdk format
+```
+this will go through all
+if the file is a old file which means that it is only modified by your branch:
+    if YAML file:
+        if fromversion key in file than it will not change.
+        if fromversion key is not in file than it will set it to '1.0.0'
+    if JSON file:
+        if fromversion key in file than it will not change.
+        if fromversion key is not in file than it will set it to '5.0.0'
+if the file is not an old file, which means that it is added by you branch:
+    if fromversion key in file than it will not change.
+    if fromversion key is not in file than it will set it to '5.0.0'

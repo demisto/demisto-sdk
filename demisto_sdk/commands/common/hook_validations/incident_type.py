@@ -101,7 +101,7 @@ class IncidentTypeValidator(BaseValidator):
         # type: () -> bool
         """Check if including required fields, only from 5.0.0.
         Returns:
-            bool. Whether the included fields are of type int.
+            bool. Whether the included fields have a positive integer value.
         """
         is_valid = True
         fields_to_include = ['hours', 'days', 'weeks', 'hoursR', 'daysR', 'weeksR']
@@ -113,7 +113,7 @@ class IncidentTypeValidator(BaseValidator):
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
                         is_valid = False
-                        print_error(f'{self.file_path}: the field {field} needs to be included as an integer.'
+                        print_error(f'{self.file_path}: the field {field} needs to be a positive integer.'
                                     f' Please add it.\n')
         except (AttributeError, ValueError):
             print_error(f'{self.file_path}: "fromVersion" has an invalid value.')

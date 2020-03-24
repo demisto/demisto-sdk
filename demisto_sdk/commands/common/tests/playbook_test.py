@@ -71,7 +71,7 @@ class TestPlaybookValidator:
     CONDITION_EXIST_FULL_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
                                      "tasks":
                                      {'1': {'type': 'condition',
-                                      'conditions': [{'label': 'YES'}],
+                                            'conditions': [{'label': 'YES'}],
                                             'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
     CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS = {"id": "Intezer - scan host", "version": -1,
                                             "tasks":
@@ -98,7 +98,7 @@ class TestPlaybookValidator:
     CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
                                                      "tasks":
                                                      {'1': {'type': 'condition',
-                                                      'message': {'replyOptions': ['yes']},
+                                                            'message': {'replyOptions': ['yes']},
                                                             'nexttasks': {'YES': ['1']}}}}
     CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
                                                 "tasks":

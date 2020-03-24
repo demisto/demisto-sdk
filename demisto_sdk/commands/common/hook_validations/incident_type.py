@@ -111,7 +111,7 @@ class IncidentTypeValidator(BaseValidator):
             if LooseVersion(from_version) >= LooseVersion("5.0.0"):
                 for field in fields_to_include:
                     int_field = self.current_file.get(field, -1)
-                    if int_field < 0 or not isinstance(int_field, int):
+                    if not isinstance(int_field, int) or int_field < 0:
                         is_valid = False
                         print_error(f'{self.file_path}: the field {field} needs to be included as an integer.'
                                     f' Please add it.\n')

@@ -103,22 +103,26 @@ class PlaybookValidator(BaseValidator):
             bool. if the task handles all condition branches correctly.
         """
         is_all_condition_branches_handled: bool = True
+        # ADD all possible conditions to task_condition_labels (UPPER)
         # #default# condition should always exist in a builtin condition
-        task_condition_labels = {'#default#'}
+        task_condition_labels = {'#DEFAULT#'}
         for condition in task.get('conditions', []):
             label = condition.get('label')
             if label:
-                task_condition_labels.add(label)
+                task_condition_labels.add(label.upper())
+
+        # REMOVE all used condition branches from task_condition_labels (UPPWE)
         next_tasks: Dict = task.get('nexttasks', {})
-        for next_task_branch, next_task_ids in next_tasks.items():
+        for next_task_branch in next_tasks.keys():
             try:
-                if next_task_ids:
-                    task_condition_labels.remove(next_task_branch)
+                if next_task_branch:
+                    task_condition_labels.remove(next_task_branch.upper())
             except KeyError:
                 print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
                             f'next task condition "{next_task_branch}". Please remove this task or add '
                             f'this condition to condition task with id:{task.get("id")}.')
                 self.is_valid = is_all_condition_branches_handled = False
+
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
             try:
@@ -147,17 +151,22 @@ class PlaybookValidator(BaseValidator):
         # if default is handled, then it means all branches are being handled
         if '#default#' in next_tasks:
             return is_all_condition_branches_handled
-        unhandled_reply_options = set(task.get('message', {}).get('replyOptions'))
+
+        # ADD all replyOptions to unhandled_reply_options (UPPER)
+        unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
+
+        # Remove all nexttasks from unhandled_reply_options (UPPER)
         next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch, next_task_id in next_tasks.items():
             try:
                 if next_task_id:
-                    unhandled_reply_options.remove(next_task_branch)
+                    unhandled_reply_options.remove(next_task_branch.upper())
             except KeyError:
                 print_error(f'Playbook conditional Ask task with id:{task.get("id")} has task with unreachable '
                             f'next task condition "{next_task_branch}". Please remove this task or add '
                             f'this condition to condition task with id:{task.get("id")}.')
                 self.is_valid = is_all_condition_branches_handled = False
+
         if unhandled_reply_options:
             print_error(f'Playbook conditional Ask task with id:{task.get("id")} has unhandled condition: '
                         f'{",".join(map(lambda x: f"{str(x)}", unhandled_reply_options))}')

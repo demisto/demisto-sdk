@@ -99,7 +99,7 @@ class TestPlaybookValidator:
                                                      "tasks":
                                                      {'1': {'type': 'condition',
                                                       'message': {'replyOptions': ['yes']},
-                                                            'nexttasks': {'yes': ['1']}}}}
+                                                            'nexttasks': {'YES': ['1']}}}}
     CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
                                                 "tasks":
                                                 {'1': {'type': 'condition',

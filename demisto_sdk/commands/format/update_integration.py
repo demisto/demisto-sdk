@@ -11,7 +11,6 @@ class IntegrationYMLFormat(BaseUpdateYML):
         Attributes:
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
-            yml_data (Dict): YML file data arranged in a Dict.
     """
     ARGUMENTS_DESCRIPTION = {
         'insecure': 'Trust any certificate (not secure)',
@@ -19,14 +18,14 @@ class IntegrationYMLFormat(BaseUpdateYML):
         'proxy': 'Use system proxy settings'
     }
 
-    def __init__(self, input='', output='', old_file='', path='', from_version=''):
-        super().__init__(input, output, old_file, path, from_version)
+    def __init__(self, input='', output='', path='', from_version=''):
+        super().__init__(input, output, path, from_version)
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
         print(F'Updating proxy and insecure/unsecure integration arguments description to default')
 
-        for integration_argument in self.yml_data.get('configuration', {}):
+        for integration_argument in self.data.get('configuration', {}):
             argument_name = integration_argument.get('name', '')
 
             if argument_name in self.ARGUMENTS_DESCRIPTION:
@@ -36,7 +35,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
         print(F'Updating reputation commands\' basic arguments to be True for default, isArray and required')
 
-        integration_commands = self.yml_data.get('script', {}).get('commands', [])
+        integration_commands = self.data.get('script', {}).get('commands', [])
 
         for command in integration_commands:
             command_name = command.get('name', '')
@@ -77,7 +76,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
         self.set_reputation_commands_basic_argument_as_needed()
         self.save_yml_to_destination_file()
 
-        print_color(F'========Finished updates for integration: {self.output_file_name}=======',
+        print_color(F'========Finished updates for integration: {self.output_file}=======',
                     LOG_COLORS.YELLOW)
 
         return self.initiate_file_validator(IntegrationValidator)

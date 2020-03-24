@@ -9,12 +9,10 @@ class ScriptYMLFormat(BaseUpdateYML):
         Attributes:
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
-            yml_data (Dict): YML file data arranged in a Dict.
-            id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
 
-    def __init__(self, input='', output='', old_file='', path='', from_version=''):
-        super().__init__(input, output, old_file, path, from_version)
+    def __init__(self, input='', output='', path='', from_version=''):
+        super().__init__(input, output, path, from_version)
 
     def format_file(self):
         """Manager function for the script YML updater."""
@@ -24,6 +22,6 @@ class ScriptYMLFormat(BaseUpdateYML):
 
         self.save_yml_to_destination_file()
 
-        print_color(F'========Finished updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+        print_color(F'========Finished updates for script: {self.output_file}=======', LOG_COLORS.YELLOW)
 
         return self.initiate_file_validator(ScriptValidator)

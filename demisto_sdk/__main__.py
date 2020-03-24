@@ -311,20 +311,16 @@ def lint(config, dir, **kwargs):
               short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
                          "incidenttype/indicatortype/layout/dashboard file. ")
 @click.help_option(
-    '-h', '--help'
-)
+    '-h', '--help')
 @click.option(
-    "-i", "--input", help="The path of the script yml file")
+    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
 @click.option(
-    "-o", "--output", help="The path where the formatted file will be saved to")
+    "-o", "--output", help="The path where the formatted file will be saved to",
+    type=click.Path(resolve_path=True))
 @click.option(
     "-fv", "--from-version", help="Specify fromversion of the pack")
-@click.option(
-    '-g', '--use-git', is_flag=True, show_default=True,
-    default=False, help='Format changed files using git'
-                        '- this will format your branch changes and will run only on them.')
-def format_yml(use_git=False, input=None, from_version=None, **kwargs):
-    return format_manager(use_git, input, from_version, **kwargs)
+def format_yml(input=None, output=None, from_version=None):
+    return format_manager(input, output, from_version)
 
 
 @main.command(name="upload",

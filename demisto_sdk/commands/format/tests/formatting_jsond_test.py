@@ -26,7 +26,7 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.mkdir(path)
         shutil.copyfile(source, target)
-        res = format_manager(use_git=False, input=target, output=target)
+        res = format_manager(input=target, output=target)
         os.remove(target)
         os.rmdir(path)
 

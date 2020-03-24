@@ -1,6 +1,7 @@
 ## Format
 
-**Format Integration/Script/Playbook YML files according to Demisto's standard.**
+**Format Integration/Script/Playbook/IncidentField/IncidentType/IndicatorField/IndicatorType/Layout/Dashboard
+        files according to Demisto's standard.**
 
 ### Use Cases
 This command is used in order to keep your new or modified YML file with Demisto's standard. This is useful especially
@@ -8,40 +9,49 @@ when developing a new integration/script/playbook, and you want to make sure you
 When done formatting, the **validate** command will run, to let you know of things the formatter could not fix.
 
 ### Arguments
-* **-t {integration, script, playbook}, --type {integration, script, playbook}**
+* **-i PATH_TO_FILE or PATH_TO_DIRECTORY, --input PATH_TO_FILE or PATH_TO_DIRECTORY**
 
-    The type of yml file to be formatted.
+    The path of the desired file to be formatted.
 
-* **-s PATH_TO_YML, --source-file PATH_TO_YML**
-
-    The path of the desired yml file to be formatted.
-
-* **-o DESIRED_OUTPUT_PATH, --output_file DESIRED_OUTPUT_PATH**
+* **-o DESIRED_OUTPUT_PATH, --output DESIRED_OUTPUT_PATH**
 
     The path where the formatted file will be saved to. (Default will be to override origin file)
 
-* **-g, --use-git**
-
-    Formatting changes using git - this will check your branch changes and will run only on them.
-
 ### Examples
 ```
-demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml
+demisto-sdk format
+```
+this will check your branch changes and will run only on them.
+```
+
+demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml
 ```
 This will go through the integration file, format it, and override the original file with the necessary changes.
 <br/><br/>
+
 ```
-demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml -o Integrations/Pwned-V2/formatted-Pwned-V2.yml
+demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -o Integrations/Pwned-V2/formatted-Pwned-V2.yml
 ```
 This will go through the integration file, format it, and save it to a new file
 (Integrations/Pwned-V2/formatted-Pwned-V2.yml) with the necessary changes, while keeping the origin file as it was.
 <br/><br/>
+
 ```
-demisto-sdk format -t script -s Scripts/FilterByList/FilterByList.yml
+demisto-sdk format -i Packs/CortexXDR
 ```
-This will go through the script file, format it, and override the original file with the necessary changes.
-<br/><br/>
+this will format all json/yml files under the Pack CortexXDR.
+
 ```
-demisto-sdk format -g
+demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
-this will check your branch changes and will run only on them.
+this will format the given yml file, however validation will not ran as this file is not part of content repo.
+
+```
+demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml -o Integrations/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
+```
+this will format the given yml file and save it in content repo under the specified directory.
+
+```
+demisto-sdk format -i Packs/CortexXDR -fv 9.9.9
+```
+this will format all yml/json files under Pack CortexXDR and change fromversion key in all to '9.9.9'

@@ -9,11 +9,10 @@ class DashboardJSONFormat(BaseUpdateJSON):
        Attributes:
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
-            json_data (Dict): YML file data arranged in a Dict.
     """
 
-    def __init__(self, input='', output='', old_file='', path='', from_version=''):
-        super().__init__(input, output, old_file, path, from_version)
+    def __init__(self, input='', output='', path='', from_version=''):
+        super().__init__(input, output, path, from_version)
 
     def format_file(self):
         """Manager function for the integration YML updater."""
@@ -23,7 +22,7 @@ class DashboardJSONFormat(BaseUpdateJSON):
 
         super().save_json_to_destination_file()
 
-        print_color(F'========Finished updates for dashboard: {self.output_file_name}=======',
+        print_color(F'========Finished updates for dashboard: {self.output_file}=======',
                     LOG_COLORS.YELLOW)
 
         return self.initiate_file_validator(DashboardValidator)

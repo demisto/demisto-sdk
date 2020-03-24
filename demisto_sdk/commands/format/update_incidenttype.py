@@ -17,8 +17,8 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input='', output='', old_file='', path='', from_version=''):
-        super().__init__(input, output, old_file, path, from_version)
+    def __init__(self, input='', output='', path='', from_version=''):
+        super().__init__(input, output, path, from_version)
 
     def format_file(self):
         """Manager function for the integration YML updater."""
@@ -29,7 +29,7 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
         super().set_default_values_as_needed(ARGUMENTS_DEFAULT_VALUES)
         super().save_json_to_destination_file()
 
-        print_color(F'========Finished updates for incident type: {self.output_file_name}=======', LOG_COLORS.YELLOW)
+        print_color(F'========Finished updates for incident type: {self.output_file}=======', LOG_COLORS.YELLOW)
 
 
 # no validator for incident type

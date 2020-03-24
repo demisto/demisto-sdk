@@ -81,7 +81,7 @@ class BaseUpdate:
                 else:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_FROMVERSION
 
-        # for modified files, set prefered fromVersion field, givven or default
+        # for modified files, set preferred fromVersion field, given or default
         else:
             if self.from_version_key not in self.data:
                 if from_version:

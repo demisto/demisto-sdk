@@ -6,7 +6,9 @@ import json
 from datetime import datetime
 from typing import Dict
 from distutils.dir_util import copy_tree
-from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS
+
+from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS, get_common_server_path, print_v
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, \
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, \
     CONNECTIONS_DIR, DASHBOARDS_DIR, MISC_DIR, REPORTS_DIR, WIDGETS_DIR, PACK_INITIAL_VERSION, INTEGRATION_CATEGORIES, \
@@ -26,13 +28,16 @@ class Initiator:
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
-                 pack: bool = False):
+                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
+        self.demisto_mock = demisto_mock
+        self.common_server = common_server
+        self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
         if not integration and not script and not pack:
@@ -154,7 +159,8 @@ class Initiator:
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
-                                         integration=True)
+                                         integration=True, common_server=self.common_server,
+                                         demisto_mock=self.demisto_mock)
             return integration_init.init()
 
         return True
@@ -232,6 +238,19 @@ class Initiator:
 
         return options_list[user_choice - 1]
 
+    @staticmethod
+    def get_yml_data_as_dict(file_path: str) -> Dict:
+        """Converts YML file data to Dict.
+
+        Args:
+            file_path (str): The path to the .yml file
+
+        Returns:
+            Dict. Data from YML.
+        """
+        with open(file_path) as f:
+            return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
 
@@ -262,6 +281,9 @@ class Initiator:
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION, integration=True)
             self.fix_test_file_import(name_to_change=self.HELLO_WORLD_INTEGRATION)
+
+        self.copy_common_server_python()
+        self.copy_demistotmock()
 
         print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
 
@@ -297,6 +319,9 @@ class Initiator:
             self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_SCRIPT)
             self.fix_test_file_import(name_to_change=self.HELLO_WORLD_SCRIPT)
+
+        self.copy_common_server_python()
+        self.copy_demistotmock()
 
         print_color(f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
 
@@ -365,18 +390,6 @@ class Initiator:
 
         return True
 
-    def get_yml_data_as_dict(self, file_path: str) -> Dict:
-        """Converts YML file data to Dict.
-
-        Args:
-            file_path (str): The path to the .yml file
-
-        Returns:
-            Dict. Data from YML.
-        """
-        with open(file_path) as f:
-            return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
-
     def fix_test_file_import(self, name_to_change: str):
         """Fixes the import statement in the _test.py file in the newly created initegration/script
 
@@ -390,3 +403,20 @@ class Initiator:
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
             fp.write(file_contents)
+
+    def copy_common_server_python(self):
+        """copy commonserverpython from the base pack"""
+        if self.common_server:
+            try:
+                common_server_path = get_common_server_path(self.configuration.env_dir)
+                shutil.copy(common_server_path, self.full_output_path)
+            except Exception as err:
+                print_v(f'Could not copy CommonServerPython: {str(err)}')
+
+    def copy_demistotmock(self):
+        """copy demistomock from content"""
+        if self.demisto_mock:
+            try:
+                shutil.copy(f'{self.configuration.env_dir}/Tests/demistomock/demistomock.py', self.full_output_path)
+            except Exception as err:
+                print_v(f'Could not copy demistomock: {str(err)}')

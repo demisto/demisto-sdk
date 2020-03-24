@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORM
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
     JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, \
-    JSON_ALL_INCIDENT_TYPES_REGEXES
+    JSON_ALL_INCIDENT_TYPES_REGEXES, TESTS_DIRECTORIES
 from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
@@ -403,7 +403,7 @@ class FilesValidator:
                 readme_validator = ReadMeValidator(file_path)
                 if not readme_validator.is_valid_file():
                     self._is_valid = False
-                    continue
+                continue
 
             structure_validator = StructureValidator(file_path, is_new_file=True, predefined_scheme=file_type)
             if not structure_validator.is_valid_file():
@@ -559,6 +559,9 @@ class FilesValidator:
                             _, file_path = get_yml_paths_in_dir(os.path.normpath(project_dir),
                                                                 Errors.no_yml_file(project_dir))
                             if file_path:
+                                # check if the file_path is part of test_data yml
+                                if any(test_file in file_path.lower() for test_file in TESTS_DIRECTORIES):
+                                    continue
                                 print("Validating {}".format(file_path))
                                 structure_validator = StructureValidator(file_path)
                                 if not structure_validator.is_valid_scheme():
@@ -573,7 +576,6 @@ class FilesValidator:
                     # skipping hidden files
                     if not file_name.endswith('.yml'):
                         continue
-
                     print('Validating ' + file_name)
                     structure_validator = StructureValidator(file_path)
                     if not structure_validator.is_valid_scheme():
@@ -589,6 +591,9 @@ class FilesValidator:
                     project_dir = os.path.join(root, inner_dir)
                     _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
                     if file_path:
+                        # check if the file_path is part of test_data yml
+                        if any(test_file in file_path.lower() for test_file in TESTS_DIRECTORIES):
+                            continue
                         print('Validating ' + file_path)
                         structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():

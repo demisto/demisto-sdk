@@ -73,6 +73,9 @@ mapping:
           sla:
             type: map
             allowempty: True
+          slareminder:
+            type: map
+            allowempty: True
           quietmode:
             type: int
           restrictedcompletion:
@@ -156,6 +159,8 @@ mapping:
                 allowempty: True
               exitCondition:
                 type: str
+              max:
+                type: int
               wait:
                 type: int
           conditions:

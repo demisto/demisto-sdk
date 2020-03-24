@@ -24,6 +24,7 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -46,14 +47,11 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
     '-h', '--help'
 )
 @click.option(
-    '-d', '--env-dir', help='Specify a working directory.'
-)
-@click.option(
     '-v', '--version', help='Get the demisto-sdk version.',
     is_flag=True, default=False, show_default=True
 )
 @pass_config
-def main(config, version, env_dir):
+def main(config, version):
     config.configuration = Configuration()
     cur_version = get_distribution('demisto-sdk').version
     last_release = get_last_remote_release_version()
@@ -63,9 +61,6 @@ def main(config, version, env_dir):
     if version:
         version = get_distribution('demisto-sdk').version
         print(version)
-
-    if env_dir:
-        config.configuration.env_dir = env_dir
 
 
 # ====================== extract ====================== #
@@ -178,9 +173,6 @@ def unify(**kwargs):
 @click.option(
     '-j', '--conf-json', is_flag=True,
     default=False, show_default=True, help='Validate the conf.json file.')
-@click.option(
-    '-i', '--id-set', is_flag=True,
-    default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
@@ -515,7 +507,14 @@ def generate_test_playbook(**kwargs):
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
-@click.option("--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    "--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    '--demisto_mock', is_flag=True,
+    help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
+@click.option(
+    '--common_server', is_flag=True,
+    help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
@@ -550,8 +549,6 @@ def init(**kwargs):
                                          " (i.e. '!command-name Administrator READ-WRITE')", required=False)
 @click.option(
     "-l", "--limitations", help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')", required=False)
-@click.option(
-    "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
 @click.option(
     "--insecure", help="Skip certificate validation to run the commands in order to generate the docs.",
     is_flag=True)
@@ -589,6 +586,18 @@ def generate_doc(**kwargs):
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1
+
+
+@main.command(name="create-id-set",
+              short_help='''Create the content dependency tree by ids.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-o", "--output", help="Output file path, the default is the Tests directory.", required=False)
+def id_set_command(**kwargs):
+    id_set_creator = IDSetCreator(**kwargs)
+    id_set_creator.create_id_set()
 
 
 @main.resultcallback()

@@ -484,7 +484,12 @@ def generate_test_playbook(**kwargs):
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
-@click.option("--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    "--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    '--demisto_mock', is_flag=True, help="Add the demisto mock. Relevant only for packs.")
+@click.option(
+    '--common_server', is_flag=True, help="Add the CommonServerPython. Relevant only for packs.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

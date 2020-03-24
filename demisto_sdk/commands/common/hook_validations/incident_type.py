@@ -101,7 +101,7 @@ class IncidentTypeValidator(BaseValidator):
         # type: () -> bool
         """Check if including required fields, only from 5.0.0.
         Returns:
-            bool. Whether the fields .
+            bool. Whether the included fields are of type int.
         """
         is_valid = True
         fields_to_include = ['hours', 'days', 'weeks', 'hoursR', 'daysR', 'weeksR']

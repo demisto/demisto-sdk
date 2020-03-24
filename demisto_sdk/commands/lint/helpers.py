@@ -40,16 +40,22 @@ PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
 RL = '\n'
 
 
-def test_internet_connection() -> bool:
+def test_internet_connection(url: str = 'http://www.google.com/', timeout: int = 4) -> bool:
     """ Test internet connection
+
+    Args:
+        url(str): URL to test with.
+        timeout(int): timeout in seconds
 
     Returns:
         bool: True if internet connection availble, else False.
     """
-    stdout, stderr, exit_code = run_command_os(command='ping -c 1 8.8.8.8', cwd=os.getcwd())
-    if exit_code or stderr:
-        return False
-    return True
+    try:
+        _ = requests.get(url, timeout=timeout)
+        return True
+    except requests.ConnectionError:
+        print("No internet connection available.")
+    return False
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,

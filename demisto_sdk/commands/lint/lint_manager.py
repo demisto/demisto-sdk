@@ -117,8 +117,7 @@ class LintManager:
             logger.info(f"demisto-sdk-lint - Can't communicate with Docker daemon")
         if not test_internet_connection():
             facts["docker_engine"] = False
-            print_error("No internet connection - check your docker Engine is ON - Skiping lint, "
-                        "test which require docker!")
+            print_error("No internet connection - Skiping lint, test which require docker!")
         logger.info(f"lint - Docker daemon test passed")
 
         return facts
@@ -184,12 +183,12 @@ class LintManager:
         """
         print(f"Comparing to {Colors.Fg.cyan}origin/master{Colors.reset} using branch {Colors.Fg.cyan}"
               f"{content_repo.active_branch}{Colors.reset}")
-        untracked_files = [Path(item) for item in content_repo.untracked_files]
+        untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}
         changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
                                content_repo.head.commit.diff('origin/master', paths=pkgs)}
-        all_changed = set(untracked_files).union(staged_files).union(changed_from_master)
+        all_changed = untracked_files.union(staged_files).union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 
         return list(pkgs_to_check)

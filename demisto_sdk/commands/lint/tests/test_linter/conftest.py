@@ -4,10 +4,12 @@ import pytest
 from ruamel.yaml import YAML
 from unittest.mock import MagicMock
 from demisto_sdk.commands.lint.linter import Linter
+from demisto_sdk.commands.lint import linter
 
 
 @pytest.fixture
-def linter_obj() -> Linter:
+def linter_obj(mocker) -> Linter:
+    mocker.patch.object(linter, 'docker')
     return Linter(pack_dir=Path(__file__).parent / 'data' / 'Integration' / 'intergration_sample',
                   content_repo=MagicMock(),
                   req_3=["pytest==3.0"],

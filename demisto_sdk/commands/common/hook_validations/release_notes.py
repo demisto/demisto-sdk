@@ -20,7 +20,7 @@ class ReleaseNotesValidator:
     COMMENT_FILLER_REGEX = r'- ?$'
     SINGLE_LINE_REAL_COMMENT_REGEX = r'[a-zA-Z0-9].*\.$'
     MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
-    LINK_TO_RELEASE_NOTES_STANDARD = 'https://github.com/demisto/content/blob/master/docs/release_notes/README.md'
+    LINK_TO_RELEASE_NOTES_STANDARD = 'https://xsoar.pan.dev/docs/integrations/changelog'
 
     def __init__(self, file_path):
         self.file_path = file_path

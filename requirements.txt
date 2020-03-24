@@ -4,11 +4,12 @@ click>=7.0
 dateparser>=0.7.2
 demisto-py>=2.0.7
 flake8>=3.7.9
+gitpython>=3.1.0
 mypy>=0.761
 pipenv==2018.11.26
 pykwalify>=1.7.0
 PyPDF2>=1.26.0
-PyYAML>=5.1.2
+PyYAML>=5.3.1
 requests>=2.22.0
 ruamel.yaml>=0.16.5
 vulture>=1.3

@@ -94,7 +94,7 @@ class StructureValidator:
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, 'image']:
+        if self.scheme_name in [None, 'image', 'readme', 'changelog']:
             return True
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
@@ -208,8 +208,8 @@ class StructureValidator:
                     loaded_file_data = load_function(file_obj)  # type: ignore
                     return loaded_file_data
 
-            # Ignore loading image
-            elif file_extension == '.png':
+            # Ignore loading image and markdown
+            elif file_extension in ['.png', '.md']:
                 return {}
 
         print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))

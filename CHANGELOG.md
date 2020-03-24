@@ -3,18 +3,39 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.4.7
+* Fixed an issue in *generate-docs* where the general section was not being generated correctly.
+
+### 0.4.6
+* Fixed an issue where the *validate* command did not identify CHANGELOG in packs.
+* Added a new command, *id-set* to create the id set - the content dependency tree by file IDs.
+
+### 0.4.5
+* generate-docs command:
+    * Added the *use_cases*, *permissions*, *command_permissions* and *limitations*.
+    * Added the *--insecure* argument to support running the script and integration command in Demisto.
+    * Removed the *-t yml_type* argument, the file type will be inferred.
+    * The *-o --output* argument is no longer mandatory, default value will be the input file directory.
+* Added support for env var: *DEMISTO_SDK_SKIP_VERSION_CHECK*. When set version checks are skipped.
+* Fixed an issue in which the CHANGELOG files did not match our scheme.
+* Added a validator to verify that there are no hidden integration parameters.
+* Fixed an issue where the *validate* command ran on test files.
+* Removed the *env-dir* argument from the demisto-sdk.
+* README files which are html files will now be skipped in the *validate* command.
+* Added support for env var: *DEMISTO_README_VALIDATOR*. When not set the readme validation will not run.
+
 ### 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).
-* Fixed an issue where the -p flag in the validate was not working.
+* Fixed an issue where the -p flag in the *validate* command was not working.
 * Added a validator for README.md files.
 * Release notes validator will now run on: incident fields, indicator fields, incident types, dashboard and reputations.
 * Fixed an issue where the validator of reputation(Indicator Type) did not check on the details field.
 * Fixed an issue where the validator attempted validating non-existing files after deletions or name refactoring.
 * Removed the *yml_type* argument in the *split-yml*, *extract-code* commands.
 * Removed the *file_type* argument in the *generate-test-playbook* command.
-* Fixed the --insecure argument in *upload*
-* Added the --insecure argument in *run-playbook*
-* Standardise the -i --input, -o --output to demisto-sdk commands.
+* Fixed the *insecure* argument in *upload*.
+* Added the *insecure* argument in *run-playbook*.
+* Standardise the *-i --input*, *-o --output* to demisto-sdk commands.
 
 ### 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.

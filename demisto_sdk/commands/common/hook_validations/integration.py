@@ -57,6 +57,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_feed(),
             self.is_valid_fetch(),
             self.is_valid_display_name(),
+            self.is_all_params_not_hidden(),
         ]
         return all(answers)
 
@@ -562,3 +563,17 @@ class IntegrationValidator(BaseValidator):
                 print_error(Errors.invalid_v2_integration_name(self.file_path))
                 return False
             return True
+
+    def is_all_params_not_hidden(self) -> bool:
+        """
+        Verify there are no hidden integration parameters.
+        Returns:
+            bool. True if there aren't hidden parameters False otherwise.
+        """
+        ans = True
+        conf = self.current_file.get('configuration', [])
+        for int_parameter in conf:
+            if int_parameter.get('hidden'):
+                ans = False
+                print_error(Errors.found_hidden_param(int_parameter.get('name')))
+        return ans

@@ -6,6 +6,7 @@
 ### 0.4.7
 * Added the *common_server*, *demisto_mock* arguments to the *init* command.
 * Fixed an issue in *generate-docs* where the general section was not being generated correctly.
+* Fixed an issue in *validate* where Incident type validation failed.
 
 ### 0.4.6
 * Fixed an issue where the *validate* command did not identify CHANGELOG in packs.

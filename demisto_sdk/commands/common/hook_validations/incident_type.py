@@ -37,7 +37,7 @@ class IncidentTypeValidator(BaseValidator):
             is_incident_type__valid = all([
                 is_incident_type__valid,
                 self.is_id_equals_name(),
-                self.is_including_fields()
+                self.is_including_int_fields()
             ])
 
         return is_incident_type__valid

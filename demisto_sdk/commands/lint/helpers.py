@@ -28,12 +28,12 @@ EXIT_CODES = {
     "pytest": 0b1000,
     "pylint": 0b10000,
     "image": 0b100000,
-    "powershell analyze": 0b10000000,
-    "powershell test": 0b100000000
+    "pwsh_analyze": 0b10000000,
+    "pwsh_test": 0b100000000
 }
 
 # Power shell checks
-PWSH_CHECKS = ["powershell analyze", "powershell test"]
+PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
 PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
@@ -83,9 +83,9 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     if no_test or not docker_engine:
         skipped_code |= EXIT_CODES["pytest"]
     if no_pwsh_analyze or not docker_engine:
-        skipped_code |= EXIT_CODES["powershell analyze"]
+        skipped_code |= EXIT_CODES["pwsh_analyze"]
     if no_pwsh_test or not docker_engine:
-        skipped_code |= EXIT_CODES["powershell test"]
+        skipped_code |= EXIT_CODES["pwsh_test"]
 
     return skipped_code
 

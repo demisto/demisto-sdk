@@ -319,15 +319,16 @@ class LintManager:
         longest_check_key = len(max(EXIT_CODES.keys(), key=len))
         for check, code in EXIT_CODES.items():
             spacing = longest_check_key - len(check)
+            check_str = check.capitalize().replace('_', ' ')
             if (check in PY_CHCEKS and TYPE_PYTHON in pkgs_type) or (check in PWSH_CHECKS and TYPE_PWSH in pkgs_type):
                 if code & skipped_code:
-                    print(f"{check.capitalize()} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
+                    print(f"{check_str} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
                 elif code & return_exit_code:
-                    print(f"{check} {' ' * spacing}- {Colors.Bg.red}[FAIL]{Colors.reset}")
+                    print(f"{check_str} {' ' * spacing}- {Colors.Bg.red}[FAIL]{Colors.reset}")
                 else:
-                    print(f"{check.capitalize()} {' ' * spacing}- {Colors.Bg.green}[PASS]{Colors.reset}")
+                    print(f"{check_str} {' ' * spacing}- {Colors.Bg.green}[PASS]{Colors.reset}")
             elif check != 'image':
-                print(f"{check} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
+                print(f"{check_str} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
 
     @staticmethod
     def report_failed_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
@@ -348,7 +349,7 @@ class LintManager:
                     print(f"{Colors.Fg.cyan}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
 
-        for check in ["pylint", "powershell analyze", "powershell test"]:
+        for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
                 print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")

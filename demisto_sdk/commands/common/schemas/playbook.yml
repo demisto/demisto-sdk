@@ -18,6 +18,8 @@ mapping:
   description:
     type: str
     required: true
+  hidden:
+    type: bool
   starttaskid:
     type: str
     required: true

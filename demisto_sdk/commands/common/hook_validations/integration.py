@@ -46,7 +46,7 @@ class IntegrationValidator(BaseValidator):
         # type: (bool) -> bool
         """Check whether the Integration is valid or not"""
         answers = [
-            super(IntegrationValidator, self).is_valid_file(validate_rn),
+            super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),
@@ -57,6 +57,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_feed(),
             self.is_valid_fetch(),
             self.is_valid_display_name(),
+            self.is_all_params_not_hidden(),
         ]
         return all(answers)
 
@@ -150,12 +151,12 @@ class IntegrationValidator(BaseValidator):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url)
             has the correct DBotScore outputs according to the context standard
-            https://github.com/demisto/content/blob/master/docs/context_standards/README.MD
+            https://xsoar.pan.dev/docs/integrations/context-standards
 
         Returns:
             bool. Whether a reputation command holds valid outputs
         """
-        context_standard = "https://github.com/demisto/content/blob/master/docs/context_standards/README.MD"
+        context_standard = "https://xsoar.pan.dev/docs/integrations/context-standards"
         commands = self.current_file.get('script', {}).get('commands', [])
         output_for_reputation_valid = True
         for command in commands:
@@ -562,3 +563,17 @@ class IntegrationValidator(BaseValidator):
                 print_error(Errors.invalid_v2_integration_name(self.file_path))
                 return False
             return True
+
+    def is_all_params_not_hidden(self) -> bool:
+        """
+        Verify there are no hidden integration parameters.
+        Returns:
+            bool. True if there aren't hidden parameters False otherwise.
+        """
+        ans = True
+        conf = self.current_file.get('configuration', [])
+        for int_parameter in conf:
+            if int_parameter.get('hidden'):
+                ans = False
+                print_error(Errors.found_hidden_param(int_parameter.get('name')))
+        return ans

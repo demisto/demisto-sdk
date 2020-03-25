@@ -18,12 +18,12 @@ from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, INTEGRATION
 
 class Unifier:
 
-    def __init__(self, indir: str, dir_name=INTEGRATIONS_DIR, outdir='',
+    def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
                  image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
         directory_name = ""
         for optional_dir_name in DIR_TO_PREFIX:
-            if optional_dir_name in indir:
+            if optional_dir_name in input:
                 directory_name = optional_dir_name
 
         if not directory_name:
@@ -31,12 +31,12 @@ class Unifier:
                         'should contain either Integrations or Scripts directories')
 
         self.image_prefix = image_prefix
-        self.package_path = indir
+        self.package_path = input
         self.use_force = force
         if self.package_path.endswith(os.sep):
             self.package_path = self.package_path.rstrip(os.sep)
 
-        self.dest_path = outdir
+        self.dest_path = output
 
         yml_paths, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
         for path in yml_paths:

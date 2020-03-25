@@ -12,9 +12,9 @@ The library uses python 3.7+.
 
 ### Installation
 
-1. **Install** - `pip install demisto-sdk`
+1. **Install** - `pip3 install demisto-sdk`
 
-2. **Upgrade** - `pip install --upgrade demisto-sdk`
+2. **Upgrade** - `pip3 install --upgrade demisto-sdk`
 
 3. **Demisto server demisto-sdk integration** - In order that demisto-sdk and Demisto server communicate, perfrom the following steps:
 
@@ -65,8 +65,10 @@ Supported commands:
 9. [Run](#run)
 10. [Run-playbook](#run-playbook)
 11. [Upload](#upload)
-12. [Generate-test-playbook](#generate-test-playbook)
-13. [Json-to-outputs](#json-to-outputs)
+12. [Generate-docs](#generate-docs)
+13. [Generate-test-playbook](#generate-test-playbook)
+14. [Json-to-outputs](#json-to-outputs)
+15. [Create-id-set](#create-id-set)
 
 ---
 
@@ -299,6 +301,17 @@ This will generate documentation file to Tanium V2 integration in /Users/Documen
 `demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Scripts/script-PrintErrorEntry.yml -id /demisto/content/Tests/id_set.json -e "!PrintErrorEntry message=Hi"`
 This will generate documentation file to PrintErrorEntry script in /Users/Documentations/README.md. id_set.json should be updated to gets all the integration that uses this script.
 
+## create-id-set
+Create the content dependency tree by ids.
+
+**Arguments**:
+* **-o, --output**
+The path of the directory in which you want to save the created id set.
+
+**Examples**:
+`demisto-sdk create-id-set -o .`
+This will create the id set in the current directory.
+
 ## In the code
 You can import the SDK core class in your python code as follows:
 
@@ -338,7 +351,7 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
 
 4) Install `tox`:
     ```
-    pip install tox
+    pip3 install tox
     ```
     Then setup dev virtual envs for python 3 (will also install all necessary requirements):
     ```

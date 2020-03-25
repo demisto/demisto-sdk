@@ -1,23 +1,28 @@
 import os
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error,\
-    get_from_version, get_json
-from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD,\
-    generate_list_section, build_example_dict
+    get_from_version
+from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD, \
+    generate_list_section, build_example_dict, generate_section, generate_numbered_section
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
-def generate_script_doc(input, output, examples, id_set='', verbose=False):
+def generate_script_doc(input, examples, output: str = None, permissions: str = None,
+                        limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc = []
         errors = []
         used_in = []
         example_section = []
 
+        if not output:  # default output dir will be the dir of the input file
+            output = os.path.dirname(os.path.realpath(input))
+
         if examples:
             if not examples.startswith('!'):
                 examples = f'!{examples}'
 
-            example_dict, build_errors = build_example_dict([examples])
+            example_dict, build_errors = build_example_dict([examples], insecure)
             script_name = examples.split(' ')[0][1:]
             example_section, example_errors = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
@@ -35,12 +40,10 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
         # get script dependencies
         dependencies, _ = get_depends_on(script)
 
-        if not id_set:
-            errors.append(f'id_set.json file is missing')
-        elif not os.path.isfile(id_set):
-            errors.append(f'id_set.json file {id_set} was not found')
-        else:
-            used_in = get_used_in(id_set, script_id)
+        # get the script usages by the id set
+        id_set_creator = IDSetCreator()
+        id_set = id_set_creator.create_id_set()
+        used_in = get_used_in(id_set, script_id)
 
         description = script.get('comment', '')
         deprecated = script.get('deprecated', False)
@@ -65,6 +68,10 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
             doc.extend(generate_list_section('Dependencies', dependencies, True,
                                              text='This script uses the following commands and scripts.'))
 
+        # Script global permissions
+        if permissions == 'general':
+            doc.extend(generate_section('Permissions', ''))
+
         if used_in:
             doc.extend(generate_list_section('Used In', used_in, True,
                                              text='This script is used in the following playbooks and scripts.'))
@@ -75,6 +82,10 @@ def generate_script_doc(input, output, examples, id_set='', verbose=False):
 
         if example_section:
             doc.extend(example_section)
+
+        # Known limitations
+        if limitations:
+            doc.extend(generate_numbered_section('Known Limitations', limitations))
 
         doc_text = '\n'.join(doc)
 
@@ -165,14 +176,13 @@ def get_outputs(script):
     return outputs, errors
 
 
-def get_used_in(id_set_path, script_id):
+def get_used_in(id_set, script_id):
     """
     Gets the integrations, scripts and playbooks that used the input script, without test playbooks.
-    :param id_set_path: updated id_set.json file path.
+    :param id_set: updated id_set object.
     :param script_id: the script id.
     :return: list of integrations, scripts and playbooks that used the input script
     """
-    id_set = get_json(id_set_path)
     used_in_list = set()
 
     id_set_sections = list(id_set.keys())
@@ -192,8 +202,6 @@ def get_used_in(id_set_path, script_id):
 
 def generate_script_example(script_name, example=None):
     errors = []
-    context_example = None
-    md_example = ''
     if example:
         script_example = example[script_name][0]
         md_example = example[script_name][1]

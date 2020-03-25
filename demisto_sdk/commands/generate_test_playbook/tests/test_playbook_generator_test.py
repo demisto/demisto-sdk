@@ -30,8 +30,9 @@ class TestGenerateTestPlaybook:
 
     def test_generate_test_playbook(self):
         generator = PlaybookTestsGenerator(
-            infile=f'{git_path()}/demisto_sdk/tests/test_files/fake_integration.yml',
-            outdir=TestGenerateTestPlaybook.TEMP_DIR,
+            input=f'{git_path()}/demisto_sdk/tests/test_files/fake_integration.yml',
+            file_type='integration',
+            output=TestGenerateTestPlaybook.TEMP_DIR,
             name='TestPlaybook'
         )
 

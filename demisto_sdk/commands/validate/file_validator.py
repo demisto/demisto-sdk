@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORM
     PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
     PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
     JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, \
-    JSON_ALL_INCIDENT_TYPES_REGEXES
+    JSON_ALL_INCIDENT_TYPES_REGEXES, TESTS_DIRECTORIES
 from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
@@ -36,6 +36,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
 from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
@@ -48,7 +49,6 @@ class FilesValidator:
     """FilesValidator is a class that's designed to validate all the changed files on your branch, and all files in case
     you are on master, this class will be used on your local env as the validation hook(pre-commit), and on CircleCi
     to make sure you did not bypass the hooks as a safety precaution.
-
     Attributes:
         is_backward_check (bool): Whether to check for backwards compatibility.
         prev_ver (str): If using git, holds the branch to compare the current one to. Default is origin/master.
@@ -140,16 +140,17 @@ class FilesValidator:
                 file_path = os.path.splitext(file_path)[0] + '.yml'
             elif file_path.endswith('.js') or file_path.endswith('.py'):
                 continue
-
-            if file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
+            if file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
+                deleted_files.add(file_path)
+            elif not os.path.isfile(file_path):
+                continue
+            elif file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     FilesValidator._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
             elif file_status.lower() == 'm' and checked_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
             elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.'):
                 added_files_list.add(file_path)
-            elif file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
-                deleted_files.add(file_path)
             elif file_status.lower().startswith('r') and checked_type(file_path):
                 # if a code file changed, take the associated yml file.
                 if checked_type(file_data[2], CODE_FILES_REGEX):
@@ -269,6 +270,12 @@ class FilesValidator:
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
+            elif 'README' in file_path:
+                readme_validator = ReadMeValidator(file_path)
+                if not readme_validator.is_valid_file():
+                    self._is_valid = False
+                continue
+
             structure_validator = StructureValidator(file_path, old_file_path=old_file_path)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
@@ -360,7 +367,7 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type():
+                if not incident_type_validator.is_valid_incident_type(validate_rn=True):
                     self._is_valid = False
                 if self.is_backward_check and not incident_type_validator.is_backward_compatible():
                     self._is_valid = False
@@ -390,6 +397,12 @@ class FilesValidator:
             print('Validating {}'.format(file_path))
 
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
+                continue
+
+            elif 'README' in file_path:
+                readme_validator = ReadMeValidator(file_path)
+                if not readme_validator.is_valid_file():
+                    self._is_valid = False
                 continue
 
             structure_validator = StructureValidator(file_path, is_new_file=True, predefined_scheme=file_type)
@@ -467,12 +480,12 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
                 dashboard_validator = DashboardValidator(structure_validator)
-                if not dashboard_validator.is_valid_dashboard():
+                if not dashboard_validator.is_valid_dashboard(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type():
+                if not incident_type_validator.is_valid_incident_type(validate_rn=not file_type):
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
@@ -546,6 +559,9 @@ class FilesValidator:
                             _, file_path = get_yml_paths_in_dir(os.path.normpath(project_dir),
                                                                 Errors.no_yml_file(project_dir))
                             if file_path:
+                                # check if the file_path is part of test_data yml
+                                if any(test_file in file_path.lower() for test_file in TESTS_DIRECTORIES):
+                                    continue
                                 print("Validating {}".format(file_path))
                                 structure_validator = StructureValidator(file_path)
                                 if not structure_validator.is_valid_scheme():
@@ -560,7 +576,6 @@ class FilesValidator:
                     # skipping hidden files
                     if not file_name.endswith('.yml'):
                         continue
-
                     print('Validating ' + file_name)
                     structure_validator = StructureValidator(file_path)
                     if not structure_validator.is_valid_scheme():
@@ -576,6 +591,9 @@ class FilesValidator:
                     project_dir = os.path.join(root, inner_dir)
                     _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
                     if file_path:
+                        # check if the file_path is part of test_data yml
+                        if any(test_file in file_path.lower() for test_file in TESTS_DIRECTORIES):
+                            continue
                         print('Validating ' + file_path)
                         structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():

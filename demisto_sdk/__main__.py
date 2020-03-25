@@ -25,6 +25,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import generate
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -479,7 +480,7 @@ def generate_test_playbook(**kwargs):
 )
 @click.option(
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
-    "directory.")
+                           "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
@@ -565,6 +566,7 @@ def generate_doc(**kwargs):
         return 1
 
 
+# ====================== create-id-set ====================== #
 @main.command(name="create-id-set",
               short_help='''Create the content dependency tree by ids.''')
 @click.help_option(
@@ -577,9 +579,26 @@ def id_set_command(**kwargs):
     id_set_creator.create_id_set()
 
 
+# ====================== TTTTTTT ====================== #
+@main.command(name="find-dependencies",
+              short_help='''##################''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--pack_folder_name", help="##############################", required=False)
+def id_set_command(**kwargs):
+    id_set_creator = IDSetCreator()
+    id_set = id_set_creator.create_id_set()
+    temp = PackDependencies.build_dependency_graph('ImpossibleTraveler', id_set, False)
+    result = PackDependencies.parse_for_pack_metadata(temp)
+    print(result)
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
 
 # todo: add download from demisto command
 

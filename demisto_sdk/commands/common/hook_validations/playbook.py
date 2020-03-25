@@ -111,7 +111,7 @@ class PlaybookValidator(BaseValidator):
             if label:
                 task_condition_labels.add(label.upper())
 
-        # REMOVE all used condition branches from task_condition_labels (UPPWE)
+        # REMOVE all used condition branches from task_condition_labels (UPPER)
         next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch in next_tasks.keys():
             try:

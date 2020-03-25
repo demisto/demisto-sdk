@@ -181,13 +181,13 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}origin/master{Colors.reset} using branch {Colors.Fg.cyan}"
+        print(f"Comparing to {Colors.Fg.cyan}master{Colors.reset} using branch {Colors.Fg.cyan}"
               f"{content_repo.active_branch}{Colors.reset}")
         untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}
         changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
-                               content_repo.head.commit.diff('origin/master', paths=pkgs)}
+                               content_repo.head.commit.diff('master', paths=pkgs)}
         all_changed = untracked_files.union(staged_files).union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 
@@ -350,8 +350,9 @@ class LintManager:
                     print(pkgs_status[fail_pack][f"{check}_errors"])
 
         for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
+            check_str = check.capitalize().replace('_', ' ')
             if EXIT_CODES[check] & return_exit_code:
-                sentence = f" {check.capitalize()} errors "
+                sentence = f" {check_str} errors "
                 print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
                 print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
                 print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
@@ -399,6 +400,8 @@ class LintManager:
         # Log passed unit-tests
         passed_printed = False
         for pkg, status in pkgs_status.items():
+            if not (EXIT_CODES["pytest"] & status["exit_code"]):
+                packs_with_tests += 1
             if status.get("images"):
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
                     if not passed_printed:
@@ -410,8 +413,6 @@ class LintManager:
                             tests = image.get("pytest_json", {}).get("report", {}).get("tests")
                             if tests:
                                 print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
-                                if not EXIT_CODES["pytest"] & status["exit_code"]:
-                                    packs_with_tests += 1
                                 for test_case in tests:
                                     if test_case.get("call", {}).get("outcome") != "failed":
                                         name = re.sub(pattern=r"\[.*\]",

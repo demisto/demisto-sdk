@@ -579,25 +579,25 @@ def id_set_command(**kwargs):
     id_set_creator.create_id_set()
 
 
-# ====================== TTTTTTT ====================== #
+# ====================== find-dependencies ====================== #
+@main.resultcallback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
+
+
 @main.command(name="find-dependencies",
-              short_help='''##################''')
+              short_help='''Find pack dependencies and update pack metadata''')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack_folder_name", help="##############################", required=False)
+    "-p", "--pack_folder_name", help="Pack folder name to", required=True)
+@click.option(
+    "-i", "--id_set_path", help="Path to id set json file", required=False)
 def id_set_command(**kwargs):
-    id_set_creator = IDSetCreator()
-    id_set = id_set_creator.create_id_set()
-    temp = PackDependencies.build_dependency_graph('ImpossibleTraveler', id_set, False)
-    result = PackDependencies.parse_for_pack_metadata(temp)
-    print(result)
-
-
-@main.resultcallback()
-def exit_from_program(result=0, **kwargs):
-    sys.exit(result)
+    pack_name = kwargs.get('pack_folder_name', '')
+    id_set_path = kwargs.get('id_set_path')
+    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
 
 
 # todo: add download from demisto command

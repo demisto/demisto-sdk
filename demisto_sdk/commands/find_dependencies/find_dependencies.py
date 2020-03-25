@@ -2,6 +2,7 @@ import networkx as nx
 import json
 import glob
 import click
+from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 PACK_FOLDER_NAME = "Packs"
@@ -125,18 +126,6 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def _parse_for_pack_metadata(dependency_graph):
-        parsed_result = {}
-        parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
-                                   dependency_graph.in_degree(k) > 0]
-
-        for dependency_id, additional_data in parsed_dependency_graph:
-            additional_data['display_name'] = find_pack_display_name(dependency_id)
-            parsed_result[dependency_id] = additional_data
-
-        return parsed_result
-
-    @staticmethod
     def build_dependency_graph(pack_id, id_set, build_all_levels=True):
         graph = nx.DiGraph()
         graph.add_node(pack_id)
@@ -169,15 +158,36 @@ class PackDependencies:
 
         dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set,
                                                                    build_all_levels=False)
-        parsed_dependency = PackDependencies._parse_for_pack_metadata(dependency_graph)
+        parsed_dependency = parse_for_pack_metadata(dependency_graph)
+        update_pack_metadata_with_dependencies(pack_name, parsed_dependency)
         # print the found pack dependency results
         dependency_result = json.dumps(parsed_dependency, indent=4)
         click.echo(click.style(dependency_result, bold=True))
 
 
-def find_pack_display_name(pack_folder_name):
+def parse_for_pack_metadata(dependency_graph):
+    parsed_result = {}
+    parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
+                               dependency_graph.in_degree(k) > 0]
+
+    for dependency_id, additional_data in parsed_dependency_graph:
+        additional_data['display_name'] = find_pack_display_name(dependency_id)
+        parsed_result[dependency_id] = additional_data
+
+    parsed_result['ignored'] = []
+
+    return parsed_result
+
+
+def find_pack_path(pack_folder_name):
     pack_metadata_path_search_regex = f'{PACK_FOLDER_NAME}/{pack_folder_name}/{USER_METADATA_PATH}'
     found_path_results = glob.glob(pack_metadata_path_search_regex)
+
+    return found_path_results
+
+
+def find_pack_display_name(pack_folder_name):
+    found_path_results = find_pack_path(pack_folder_name)
 
     if not found_path_results:
         return pack_folder_name
@@ -190,3 +200,21 @@ def find_pack_display_name(pack_folder_name):
     pack_display_name = pack_metadata.get('name') if pack_metadata.get('name') else pack_folder_name
 
     return pack_display_name
+
+
+def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
+    found_path_results = find_pack_path(pack_folder_name)
+
+    if not found_path_results:
+        print_error(f"{pack_folder_name} pack_metadata.json was not found")
+
+    pack_metadata_path = found_path_results[0]
+
+    with open(pack_metadata_path, 'r+') as pack_metadata_file:
+        pack_metadata = json.load(pack_metadata_file)
+        pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
+        pack_metadata['dependencies'] = parsed_dependency
+
+        pack_metadata_file.seek(0)
+        json.dump(pack_metadata, pack_metadata_file, indent=4)
+        pack_metadata_file.truncate()

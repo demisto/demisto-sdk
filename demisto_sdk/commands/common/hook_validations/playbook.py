@@ -95,6 +95,7 @@ class PlaybookValidator(BaseValidator):
 
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
+        NOTE: The function uses str.upper() on branches to be case insensitive
 
         Args:
             task (dict): task json loaded from a yaml
@@ -139,6 +140,7 @@ class PlaybookValidator(BaseValidator):
 
     def is_ask_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
+        NOTE: The function uses str.upper() on branches to be case insensitive
 
         Args:
             task (dict): task json loaded from a yaml

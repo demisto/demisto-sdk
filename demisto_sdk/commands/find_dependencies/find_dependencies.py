@@ -9,6 +9,61 @@ PACK_FOLDER_NAME = "Packs"
 USER_METADATA_PATH = "pack_metadata.json"
 
 
+def parse_for_pack_metadata(dependency_graph, graph_root):
+    parsed_result = {}
+    parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
+                               dependency_graph.has_edge(graph_root, k)]
+
+    for dependency_id, additional_data in parsed_dependency_graph:
+        additional_data['display_name'] = find_pack_display_name(dependency_id)
+        parsed_result[dependency_id] = additional_data
+
+    parsed_result['displayed_images'] = list(dependency_graph.nodes)
+
+    return parsed_result
+
+
+def find_pack_path(pack_folder_name):
+    pack_metadata_path_search_regex = f'{PACK_FOLDER_NAME}/{pack_folder_name}/{USER_METADATA_PATH}'
+    found_path_results = glob.glob(pack_metadata_path_search_regex)
+
+    return found_path_results
+
+
+def find_pack_display_name(pack_folder_name):
+    found_path_results = find_pack_path(pack_folder_name)
+
+    if not found_path_results:
+        return pack_folder_name
+
+    pack_metadata_path = found_path_results[0]
+
+    with open(pack_metadata_path, 'r') as pack_metadata_file:
+        pack_metadata = json.load(pack_metadata_file)
+
+    pack_display_name = pack_metadata.get('name') if pack_metadata.get('name') else pack_folder_name
+
+    return pack_display_name
+
+
+def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
+    found_path_results = find_pack_path(pack_folder_name)
+
+    if not found_path_results:
+        print_error(f"{pack_folder_name} pack_metadata.json was not found")
+
+    pack_metadata_path = found_path_results[0]
+
+    with open(pack_metadata_path, 'r+') as pack_metadata_file:
+        pack_metadata = json.load(pack_metadata_file)
+        pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
+        pack_metadata['dependencies'] = parsed_dependency
+
+        pack_metadata_file.seek(0)
+        json.dump(pack_metadata, pack_metadata_file, indent=4)
+        pack_metadata_file.truncate()
+
+
 class PackDependencies:
 
     @staticmethod
@@ -126,7 +181,7 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def build_dependency_graph(pack_id, id_set, build_all_levels=True):
+    def build_dependency_graph(pack_id, id_set):
         graph = nx.DiGraph()
         graph.add_node(pack_id)
         found_new_dependencies = True
@@ -144,7 +199,7 @@ class PackDependencies:
                             graph.add_node(dependency_name, mandatory=is_mandatory)
                             graph.add_edge(leaf, dependency_name)
 
-            found_new_dependencies = graph.number_of_nodes() > current_number_of_nodes and build_all_levels
+            found_new_dependencies = graph.number_of_nodes() > current_number_of_nodes
 
         return graph
 
@@ -156,65 +211,9 @@ class PackDependencies:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
 
-        dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set,
-                                                                   build_all_levels=False)
-        parsed_dependency = parse_for_pack_metadata(dependency_graph)
+        dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set)
+        parsed_dependency = parse_for_pack_metadata(dependency_graph, pack_name)
         update_pack_metadata_with_dependencies(pack_name, parsed_dependency)
         # print the found pack dependency results
         dependency_result = json.dumps(parsed_dependency, indent=4)
         click.echo(click.style(dependency_result, bold=True))
-
-
-def parse_for_pack_metadata(dependency_graph):
-    parsed_result = {}
-    parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
-                               dependency_graph.in_degree(k) > 0]
-
-    for dependency_id, additional_data in parsed_dependency_graph:
-        additional_data['display_name'] = find_pack_display_name(dependency_id)
-        parsed_result[dependency_id] = additional_data
-
-    parsed_result['ignored'] = []
-
-    return parsed_result
-
-
-def find_pack_path(pack_folder_name):
-    pack_metadata_path_search_regex = f'{PACK_FOLDER_NAME}/{pack_folder_name}/{USER_METADATA_PATH}'
-    found_path_results = glob.glob(pack_metadata_path_search_regex)
-
-    return found_path_results
-
-
-def find_pack_display_name(pack_folder_name):
-    found_path_results = find_pack_path(pack_folder_name)
-
-    if not found_path_results:
-        return pack_folder_name
-
-    pack_metadata_path = found_path_results[0]
-
-    with open(pack_metadata_path, 'r') as pack_metadata_file:
-        pack_metadata = json.load(pack_metadata_file)
-
-    pack_display_name = pack_metadata.get('name') if pack_metadata.get('name') else pack_folder_name
-
-    return pack_display_name
-
-
-def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
-    found_path_results = find_pack_path(pack_folder_name)
-
-    if not found_path_results:
-        print_error(f"{pack_folder_name} pack_metadata.json was not found")
-
-    pack_metadata_path = found_path_results[0]
-
-    with open(pack_metadata_path, 'r+') as pack_metadata_file:
-        pack_metadata = json.load(pack_metadata_file)
-        pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
-        pack_metadata['dependencies'] = parsed_dependency
-
-        pack_metadata_file.seek(0)
-        json.dump(pack_metadata, pack_metadata_file, indent=4)
-        pack_metadata_file.truncate()

@@ -19,11 +19,6 @@ class LayoutJSONFormat(BaseUpdateJSON):
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
 
-    def set_version_to_default(self):
-        """Replaces the version of the YML to default."""
-        print(F'Setting JSON version to default: {DEFAULT_VERSION}')
-        self.data['layout']['version'] = DEFAULT_VERSION
-
     def remove_unnecessary_keys(self):
         print(F'Removing Unnecessary fields from file')
         arguments_to_remove = self.arguments_to_remove()
@@ -64,7 +59,9 @@ class LayoutJSONFormat(BaseUpdateJSON):
         try:
             print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
             self.set_layout_key()
+            # version is both in layout key and in base dict
             self.set_version_to_default()
+            self.set_version_to_default(self.data['layout'])
             self.remove_unnecessary_keys()
             self.set_fromVersion(from_version=self.from_version)
             super().save_json_to_destination_file()

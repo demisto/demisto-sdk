@@ -4,10 +4,6 @@ from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 
-ARGUMENTS_DEFAULT_VALUES = {
-    'system': False
-}
-
 
 class IndicatorTypeJSONFormat(BaseUpdateJSON):
     """IndicatorTypeJSONFormat class is designed to update indicator type JSON file according to Demisto's convention.

@@ -60,11 +60,13 @@ class BaseUpdate:
         else:
             return output_file_path
 
-    def set_version_to_default(self):
+    def set_version_to_default(self, location=None):
         """Replaces the version of the YML to default."""
         print(F'Setting JSON version to default: {DEFAULT_VERSION}')
-
-        self.data['version'] = DEFAULT_VERSION
+        if location:
+            location['version'] = DEFAULT_VERSION
+        else:
+            self.data['version'] = DEFAULT_VERSION
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""

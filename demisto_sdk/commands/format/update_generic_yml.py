@@ -3,7 +3,6 @@ import yaml
 import yamlordereddictloader
 from ruamel.yaml import YAML
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-from demisto_sdk.commands.format.format_constants import DEFAULT_VERSION
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
@@ -24,7 +23,8 @@ class BaseUpdateYML(BaseUpdate):
         'PlaybookYMLFormat': '',
     }
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
@@ -42,11 +42,6 @@ class BaseUpdateYML(BaseUpdate):
         print(F'Updating YML ID to be the same as YML name')
         self.id_and_version_location['id'] = self.data['name']
 
-    def set_version_to_default(self):
-        """Replaces the version of the YML to default."""
-        print(F'Setting YML version to default: {DEFAULT_VERSION}')
-        self.id_and_version_location['version'] = DEFAULT_VERSION
-
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
         print(F'Saving output YML file to {self.output_file}')
@@ -57,6 +52,7 @@ class BaseUpdateYML(BaseUpdate):
             if '\n' in data:
                 return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
             return dumper.org_represent_str(data)
+
         yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
 
         with open(self.output_file, 'w') as f:
@@ -72,6 +68,6 @@ class BaseUpdateYML(BaseUpdate):
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.update_id_to_equal_name()
-        self.set_version_to_default()
+        self.set_version_to_default(self.id_and_version_location)
 
         print_color(F'=======Finished updates for file: {self.output_file}=======', LOG_COLORS.YELLOW)

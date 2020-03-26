@@ -1,5 +1,6 @@
 import networkx as nx
 import json
+import sys
 import glob
 import click
 from demisto_sdk.commands.common.tools import print_error
@@ -51,6 +52,7 @@ def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
 
     if not found_path_results:
         print_error(f"{pack_folder_name} pack_metadata.json was not found")
+        sys.exit(1)
 
     pack_metadata_path = found_path_results[0]
 

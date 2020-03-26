@@ -13,8 +13,6 @@ from __future__ import print_function
 
 import os
 import re
-import requests
-import yaml
 
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
@@ -63,7 +61,7 @@ class FilesValidator:
         configuration (Configuration): Configurations for IDSetValidator.
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
+    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
                  configuration=Configuration()):
         self.branch_name = ''
@@ -74,10 +72,6 @@ class FilesValidator:
             print(f'Running validation on branch {self.branch_name}')
 
         self.prev_ver = prev_ver
-        if not self.prev_ver:
-            # validate against master if no version was provided
-            self.prev_ver = 'origin/master'
-
         self._is_valid = True
         self.configuration = configuration
         self.is_backward_check = is_backward_check
@@ -637,13 +631,22 @@ class FilesValidator:
         Args:
             no_error (bool): If set to true will restore self._is_valid after run (will not return new errors)
         """
-        if self.prev_ver and self.prev_ver != 'master':
-            print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
-            modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
-            prev_self_valid = self._is_valid
-            self.validate_modified_files(modified_files)
-            if no_error:
-                self._is_valid = prev_self_valid
+        if not self.prev_ver:
+            content_release_branch_id = self.get_content_release_identifier()
+            if not content_release_branch_id:
+                print_warning('could\'t get content\'s release branch ID. Skipping validation.')
+                return
+            else:
+                self.prev_ver = content_release_branch_id
+
+        print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
+        modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
+        prev_self_valid = self._is_valid
+        self.validate_modified_files(modified_files)
+        if no_error:
+            self._is_valid = prev_self_valid
+
+
 
     # parser.add_argument('-t', '--test-filter', type=str2bool, default=False,
     #                     help='Check that tests are valid.')
@@ -667,6 +670,10 @@ class FilesValidator:
         return False
 
     def get_content_release_identifier(self):
-        file_content = get_remote_file('.circleci/config.yml')
-        return file_content['jobs']['build']['environment']['GIT_SHA1']
+        try:
+            file_content = get_remote_file('.circleci/config.yml')
+        except Exception as e:
+            return
+        else:
+            return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
 

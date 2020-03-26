@@ -4,7 +4,7 @@ from typing import Tuple
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_error
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE
+from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
 
 
 class PlaybookYMLFormat(BaseUpdateYML):
@@ -73,9 +73,9 @@ class PlaybookYMLFormat(BaseUpdateYML):
             self.update_playbook_task_name()
             self.save_yml_to_destination_file()
 
-            return 0
+            return SUCCESS_RETURN_CODE
         except Exception:
-            return 1
+            return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""

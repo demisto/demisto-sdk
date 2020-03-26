@@ -1,6 +1,6 @@
 from typing import List, Tuple
 from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES
-from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE
+from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 
@@ -73,9 +73,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.update_proxy_insecure_param_to_default()
             self.set_reputation_commands_basic_argument_as_needed()
             self.save_yml_to_destination_file()
-            return 0
+            return SUCCESS_RETURN_CODE
         except Exception:
-            return 1
+            return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""

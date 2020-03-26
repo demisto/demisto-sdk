@@ -22,7 +22,7 @@ class LayoutJSONFormat(BaseUpdateJSON):
     def set_version_to_default(self):
         """Replaces the version of the YML to default."""
         print(F'Setting JSON version to default: {DEFAULT_VERSION}')
-        self.data['layout']['version'] = DEFAULT_VERSION  # ?  ?????
+        self.data['layout']['version'] = DEFAULT_VERSION
 
     def remove_unnecessary_keys(self):
         print(F'Removing Unnecessary fields from file')

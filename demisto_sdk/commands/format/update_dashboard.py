@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE
+from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 
@@ -20,9 +20,9 @@ class DashboardJSONFormat(BaseUpdateJSON):
         try:
             super().update_json()
             super().save_json_to_destination_file()
-            return 0
+            return SUCCESS_RETURN_CODE
         except Exception:
-            return 1
+            return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""

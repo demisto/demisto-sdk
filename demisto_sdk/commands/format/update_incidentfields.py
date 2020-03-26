@@ -2,12 +2,7 @@ from typing import Tuple
 
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
-
-# ARGUMENTS_DEFAULT_VALUES = {
-#     'content': True,
-#     'system': False,
-#     'required': False,
-# }
+from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
 
 
 class IncidentFieldJSONFormat(BaseUpdateJSON):
@@ -26,14 +21,14 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             super().update_json()
             super().set_default_values_as_needed()
             super().save_json_to_destination_file()
-            return 0
+            return SUCCESS_RETURN_CODE
         except Exception:
-            return 1
+            return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
         format = self.run_format()
         if format:
-            return format, 2
+            return format, SKIP_RETURN_CODE
         else:
             return format, self.initiate_file_validator(IncidentFieldValidator)

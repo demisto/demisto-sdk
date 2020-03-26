@@ -13,6 +13,8 @@ from __future__ import print_function
 
 import os
 import re
+import requests
+import yaml
 
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
@@ -40,7 +42,7 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
 from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
     LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
-    get_yml_paths_in_dir, find_type
+    get_yml_paths_in_dir, find_type, get_remote_file
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
 
@@ -663,3 +665,8 @@ class FilesValidator:
             return True
 
         return False
+
+    def get_content_release_identifier(self):
+        file_content = get_remote_file('.circleci/config.yml')
+        return file_content['jobs']['build']['environment']['GIT_SHA1']
+

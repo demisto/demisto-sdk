@@ -19,10 +19,17 @@ class DashboardJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             super().update_json()
+            self.default_description()
             super().save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE
+
+    def default_description(self):
+        if not self.data.get("description", ""):
+            self.data["description"] = ""
+        if not self.data.get("isPredefined", ""):
+            self.data["isPredefined"] = True
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""

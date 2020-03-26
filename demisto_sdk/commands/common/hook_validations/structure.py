@@ -14,8 +14,6 @@ from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIO
     SCHEMA_TO_REGEX
 from pykwalify.core import Core
 
-OLD_FILE_DEFAULT_1_FROMVERSION = '1.0.0'
-
 
 class StructureValidator:
     """Structure validator is designed to validate the correctness of the file structure we enter to content repo.
@@ -28,6 +26,7 @@ class StructureValidator:
             file_type (str): equal to scheme_name if there's a scheme.
             current_file (dict): loaded json.
             old_file: (dict) loaded file from git.
+            fromversion (bool): Set True if fromversion was changed on file.
         """
     SCHEMAS_PATH = "schemas"
 
@@ -36,14 +35,15 @@ class StructureValidator:
         '.json': json.load,
     }
 
-    def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None,
+    def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration()):
-        # type: (str, Optional[bool], Optional[str], Optional[str], Configuration) -> None
+        # type: (str, Optional[bool], Optional[str], Optional[str], Configuration, Optional[bool]) -> None
         self.is_valid = True
         self.file_path = file_path.replace('\\', '/')
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
+        self.fromversion = fromversion
         if is_new_file or predefined_scheme:
             self.old_file = {}
         else:
@@ -186,8 +186,7 @@ class StructureValidator:
         from_version_new = self.current_file.get("fromversion") or self.current_file.get("fromVersion")
         from_version_old = self.old_file.get("fromversion") or self.old_file.get("fromVersion")
 
-        # format command sets fromversion key to 1.0.0 by design, only different fromversion value should cause failure
-        if from_version_new != OLD_FILE_DEFAULT_1_FROMVERSION and from_version_old != from_version_new:
+        if from_version_old != from_version_new:
             print_error(Errors.from_version_modified(self.file_path))
             self.is_valid = False
             return False

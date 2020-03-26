@@ -87,6 +87,10 @@ def print_warning(warning_str):
     print_color(warning_str, LOG_COLORS.YELLOW)
 
 
+def print_success(success_str):
+    print_color(success_str, LOG_COLORS.GREEN)
+
+
 def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     """Run a bash command in the shell.
 
@@ -585,7 +589,7 @@ def find_type(path: str):
             return 'reputation'
         elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
             return 'classifier'
-        elif 'layout' in _dict:
+        elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'
             else:

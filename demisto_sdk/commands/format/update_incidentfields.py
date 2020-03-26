@@ -1,12 +1,13 @@
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
+from typing import Tuple
+
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
 
-ARGUMENTS_DEFAULT_VALUES = {
-    'content': True,
-    'system': False,
-    'required': False,
-}
+# ARGUMENTS_DEFAULT_VALUES = {
+#     'content': True,
+#     'system': False,
+#     'required': False,
+# }
 
 
 class IncidentFieldJSONFormat(BaseUpdateJSON):
@@ -17,17 +18,22 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input='', output='', path='', from_version=''):
-        super().__init__(input, output, path, from_version)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+        super().__init__(input, output, path, from_version, no_validate)
 
-    def format_file(self):
+    def run_format(self) -> int:
+        try:
+            super().update_json()
+            super().set_default_values_as_needed()
+            super().save_json_to_destination_file()
+            return 0
+        except Exception:
+            return 1
+
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
-        super().update_json()
-
-        print_color(F'========Starting updates for incident field: {self.source_file}=======', LOG_COLORS.YELLOW)
-        super().set_default_values_as_needed(ARGUMENTS_DEFAULT_VALUES)
-        super().save_json_to_destination_file()
-        print_color(F'========Finished updates for incident field: {self.output_file}=======',
-                    LOG_COLORS.YELLOW)
-
-        return self.initiate_file_validator(IncidentFieldValidator)
+        format = self.run_format()
+        if format:
+            return format, 2
+        else:
+            return format, self.initiate_file_validator(IncidentFieldValidator)

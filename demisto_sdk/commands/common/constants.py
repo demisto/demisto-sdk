@@ -255,7 +255,7 @@ INCIDENT_TYPES_DIR = 'IncidentTypes'
 INDICATOR_FIELDS_DIR = 'IndicatorFields'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
-MISC_DIR = 'Misc'
+MISC_DIR = 'Packs/Base/Misc'
 CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
@@ -1053,7 +1053,3 @@ FETCH_REQUIRED_PARAMS = [
         'type': 8
     }
 ]
-DEFAULT_VERSION = -1
-NEW_FILE_DEFAULT_FROMVERSION = '5.0.0'
-OLD_FILE_DEFAULT_FROMVERSION = '1.0.0'
-SCHEMAS_PATH = "schemas"

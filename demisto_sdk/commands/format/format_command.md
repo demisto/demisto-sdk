@@ -4,9 +4,13 @@
         files according to Demisto's standard.**
 
 ### Use Cases
-This command is used in order to keep your new or modified YML file with Demisto's standard. This is useful especially
-when developing a new integration/script/playbook, and you want to make sure you are keeping up with our standards.
+This command is used in order to keep your new or modified files with Demisto's standard. This is useful especially
+when developing a new Integration/Script/Playbook/IncidentField/IncidentType/IndicatorField/IndicatorType/Layout/Dashboard,
+and you want to make sure you are keeping up with our standards.
 When done formatting, the **validate** command will run, to let you know of things the formatter could not fix.
+The main purpose of the command is to:
+1. Delete keys in your file that should not be in it , according to file schema.
+2. Update default values to specific keys as in demisto standards.
 
 ### Arguments
 * **-i PATH_TO_FILE or PATH_TO_DIRECTORY, --input PATH_TO_FILE or PATH_TO_DIRECTORY**
@@ -22,8 +26,8 @@ When done formatting, the **validate** command will run, to let you know of thin
 demisto-sdk format
 ```
 this will check your branch changes and will run only on them.
-```
 
+```
 demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml
 ```
 This will go through the integration file, format it, and override the original file with the necessary changes.
@@ -74,7 +78,11 @@ if the file did not have fromversion key before than it will be added and set to
 ```
 demisto-sdk format
 ```
-this will go through all
+Setting fromversion key in different kind of files:
+```
+demisto-sdk format
+```
+this will go through all modified files of your branch.
 if the file is a old file which means that it is only modified by your branch:
     if YAML file:
         if fromversion key in file than it will not change.
@@ -85,3 +93,13 @@ if the file is a old file which means that it is only modified by your branch:
 if the file is not an old file, which means that it is added by you branch:
     if fromversion key in file than it will not change.
     if fromversion key is not in file than it will set it to '5.0.0'
+```
+demisto-sdk format -fv 6.0.0
+```
+this will go through all modified files of your branch.
+if the file is a old file which means that it is only modified by your branch and will set fromversion key to '6.0.0'
+```
+demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -o Integrations/Pwned-V2/Pwned-V2-formatted-file.yml -fv 9.9.9
+```
+this will go through all modified files of your branch.
+if the file is a old file which means that it is only modified by your branch and will set fromversion key to '6.0.0'

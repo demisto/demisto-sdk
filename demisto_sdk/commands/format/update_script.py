@@ -1,4 +1,6 @@
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
+from typing import Tuple
+
+from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 
@@ -11,17 +13,21 @@ class ScriptYMLFormat(BaseUpdateYML):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input='', output='', path='', from_version=''):
-        super().__init__(input, output, path, from_version)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+        super().__init__(input, output, path, from_version, no_validate)
 
-    def format_file(self):
-        """Manager function for the script YML updater."""
-        super().update_yml()
+    def run_format(self) -> int:
+        try:
+            super().update_yml()
+            self.save_yml_to_destination_file()
+            return 0
+        except Exception:
+            return 1
 
-        print_color(F'========Starting updates for script: {self.source_file}=======', LOG_COLORS.YELLOW)
-
-        self.save_yml_to_destination_file()
-
-        print_color(F'========Finished updates for script: {self.output_file}=======', LOG_COLORS.YELLOW)
-
-        return self.initiate_file_validator(ScriptValidator)
+    def format_file(self) -> Tuple[int, int]:
+        """Manager function for the integration YML updater."""
+        format = self.run_format()
+        if format:
+            return format, SKIP_RETURN_CODE
+        else:
+            return format, self.initiate_file_validator(ScriptValidator)

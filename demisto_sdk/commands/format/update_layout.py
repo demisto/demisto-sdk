@@ -1,8 +1,11 @@
+from typing import Tuple
+
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
 import yaml
-DEFAULT_JSON_VERSION = -1
+from demisto_sdk.commands.format.format_constants import DEFAULT_VERSION, NEW_FILE_DEFAULT_5_FROMVERSION,\
+    SUCCESS_RETURN_CODE, ERROR_RETURN_CODE, SKIP_RETURN_CODE
 
 
 class LayoutJSONFormat(BaseUpdateJSON):
@@ -13,34 +16,20 @@ class LayoutJSONFormat(BaseUpdateJSON):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input='', output='', path='', from_version=''):
-        super().__init__(input, output, path, from_version)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+        super().__init__(input, output, path, from_version, no_validate)
 
     def set_version_to_default(self):
         """Replaces the version of the YML to default."""
-        print(F'Setting JSON version to default: {DEFAULT_JSON_VERSION}')
-        self.data['layout']['version'] = DEFAULT_JSON_VERSION  # ?  ?????
+        print(F'Setting JSON version to default: {DEFAULT_VERSION}')
+        self.data['layout']['version'] = DEFAULT_VERSION  # ?  ?????
 
     def remove_unnecessary_keys(self):
         print(F'Removing Unnecessary fields from file')
-        for key in self.arguments_to_remove:
+        arguments_to_remove = self.arguments_to_remove()
+        for key in arguments_to_remove:
             print(F'Removing Unnecessary fields {key} from file')
             self.data['layout'].pop(key, None)
-
-    def format_file(self):
-        """Manager function for the integration YML updater."""
-
-        print_color(F'========Starting updates for incident field: {self.source_file}=======', LOG_COLORS.YELLOW)
-
-        self.set_version_to_default()
-        self.remove_unnecessary_keys()
-        self.set_fromVersion(from_version=self.from_version)
-        super().save_json_to_destination_file()
-
-        print_color(F'========Finished updates for incident field: {self.output_file}=======',
-                    LOG_COLORS.YELLOW)
-
-        return self.initiate_file_validator(LayoutValidator)
 
     def arguments_to_remove(self):
         arguments_to_remove = []
@@ -57,3 +46,38 @@ class LayoutJSONFormat(BaseUpdateJSON):
             if field not in out_schema_fields:
                 arguments_to_remove.append(field)
         return arguments_to_remove
+
+    def set_layout_key(self):
+        if "layout" not in self.data.keys():
+            kind = self.data['kind']
+            id = self.data['id']
+            self.data = {
+                "typeId": id,
+                "version": DEFAULT_VERSION,
+                "TypeName": id,
+                "kind": kind,
+                "fromVersion": NEW_FILE_DEFAULT_5_FROMVERSION,
+                "layout": self.data
+            }
+
+    def run_format(self) -> int:
+        try:
+            print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
+            self.set_layout_key()
+            self.set_version_to_default()
+            self.remove_unnecessary_keys()
+            self.set_fromVersion(from_version=self.from_version)
+            super().save_json_to_destination_file()
+
+            print_color(F'=======Finished updates for files: {self.output_file}=======', LOG_COLORS.YELLOW)
+            return SUCCESS_RETURN_CODE
+        except Exception:
+            return ERROR_RETURN_CODE
+
+    def format_file(self) -> Tuple[int, int]:
+        """Manager function for the integration YML updater."""
+        format = self.run_format()
+        if format:
+            return format, SKIP_RETURN_CODE
+        else:
+            return format, self.initiate_file_validator(LayoutValidator)

@@ -1,7 +1,7 @@
 import json
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
-from demisto_sdk.commands.common.constants import DEFAULT_VERSION
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+from demisto_sdk.commands.format.format_constants import ARGUMENTS_DEFAULT_VALUES
 
 
 class BaseUpdateJSON(BaseUpdate):
@@ -12,20 +12,15 @@ class BaseUpdateJSON(BaseUpdate):
             data (Dict): JSON file data arranged in a Dict.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = ''):
-        super().__init__(input=input, output=output, path=path, from_version=from_version)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
 
-    def set_version_to_default(self):
-        """Replaces the version of the YML to default."""
-        print(F'Setting JSON version to default: {DEFAULT_VERSION}')
-
-        self.data['version'] = DEFAULT_VERSION
-
-    def set_default_values_as_needed(self, ARGUMENTS_DEFAULT_VALUES):
+    def set_default_values_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
         print(F'Updating required default values')
         for field in ARGUMENTS_DEFAULT_VALUES:
-            self.data[field] = ARGUMENTS_DEFAULT_VALUES[field]
+            if self.__class__.__name__ in ARGUMENTS_DEFAULT_VALUES[field][1]:
+                self.data[field] = ARGUMENTS_DEFAULT_VALUES[field][0]
 
     def save_json_to_destination_file(self):
         """Save formatted JSON data to destination file."""
@@ -35,13 +30,10 @@ class BaseUpdateJSON(BaseUpdate):
 
     def update_json(self):
         """Manager function for the generic JSON updates."""
-        print_color(F'=======Starting updates for JSON: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
 
         self.set_version_to_default()
         self.remove_unnecessary_keys()
         self.set_fromVersion(from_version=self.from_version)
 
-        print_color(F'=======Finished generic updates for JSON: {self.output_file}=======', LOG_COLORS.YELLOW)
-
-    def format_file(self):
-        pass
+        print_color(F'=======Finished updates for files: {self.output_file}=======', LOG_COLORS.YELLOW)

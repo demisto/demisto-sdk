@@ -319,8 +319,10 @@ def lint(config, dir, **kwargs):
     type=click.Path(resolve_path=True))
 @click.option(
     "-fv", "--from-version", help="Specify fromversion of the pack")
-def format_yml(input=None, output=None, from_version=None):
-    return format_manager(input, output, from_version)
+@click.option(
+    "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
+def format_yml(input=None, output=None, from_version=None, no_validate=None):
+    return format_manager(input, output, from_version, no_validate)
 
 
 @main.command(name="upload",

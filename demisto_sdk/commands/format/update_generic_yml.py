@@ -2,8 +2,8 @@ from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 import yaml
 import yamlordereddictloader
 from ruamel.yaml import YAML
-from demisto_sdk.commands.common.constants import DEFAULT_VERSION
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+from demisto_sdk.commands.format.format_constants import DEFAULT_VERSION
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
@@ -24,8 +24,8 @@ class BaseUpdateYML(BaseUpdate):
         'PlaybookYMLFormat': '',
     }
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = ''):
-        super().__init__(input=input, output=output, path=path, from_version=from_version)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def get_id_and_version_path_object(self):
@@ -36,16 +36,6 @@ class BaseUpdateYML(BaseUpdate):
         yml_type = self.__class__.__name__
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
         return self.data.get(path, self.data)
-
-    def remove_copy_and_dev_suffixes_from_name(self):
-        """Removes any _dev and _copy suffixes in the file.
-        When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
-        """
-        print(F'Removing _dev and _copy suffixes from name and display tags')
-
-        self.data['name'] = self.data.get('name', '').replace('_copy', '').replace('_dev', '')
-        if self.data.get('display'):
-            self.data['display'] = self.data.get('display', '').replace('_copy', '').replace('_dev', '')
 
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name."""
@@ -76,14 +66,12 @@ class BaseUpdateYML(BaseUpdate):
 
     def update_yml(self):
         """Manager function for the generic YML updates."""
-        print_color(F'=======Starting updates for YML: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
+
         self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.update_id_to_equal_name()
         self.set_version_to_default()
 
-        print_color(F'=======Finished generic updates for YML: {self.output_file}=======', LOG_COLORS.YELLOW)
-
-    def format_file(self):
-        pass
+        print_color(F'=======Finished updates for file: {self.output_file}=======', LOG_COLORS.YELLOW)

@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Tuple
 from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
+from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 
@@ -18,8 +18,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
         'proxy': 'Use system proxy settings'
     }
 
-    def __init__(self, input='', output='', path='', from_version=''):
-        super().__init__(input, output, path, from_version)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+        super().__init__(input, output, path, from_version, no_validate)
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
@@ -67,16 +67,20 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
                     command['arguments'] = argument_list
 
-    def format_file(self):
+    def run_format(self) -> int:
+        try:
+            super().update_yml()
+            self.update_proxy_insecure_param_to_default()
+            self.set_reputation_commands_basic_argument_as_needed()
+            self.save_yml_to_destination_file()
+            return 0
+        except Exception:
+            return 1
+
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
-        super().update_yml()
-
-        print_color(F'========Starting updates for integration: {self.source_file}=======', LOG_COLORS.YELLOW)
-        self.update_proxy_insecure_param_to_default()
-        self.set_reputation_commands_basic_argument_as_needed()
-        self.save_yml_to_destination_file()
-
-        print_color(F'========Finished updates for integration: {self.output_file}=======',
-                    LOG_COLORS.YELLOW)
-
-        return self.initiate_file_validator(IntegrationValidator)
+        format = self.run_format()
+        if format:
+            return format, SKIP_RETURN_CODE
+        else:
+            return format, self.initiate_file_validator(IntegrationValidator)

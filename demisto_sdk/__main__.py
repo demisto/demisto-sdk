@@ -580,11 +580,6 @@ def id_set_command(**kwargs):
 
 
 # ====================== find-dependencies ====================== #
-@main.resultcallback()
-def exit_from_program(result=0, **kwargs):
-    sys.exit(result)
-
-
 @main.command(name="find-dependencies",
               short_help='''Find pack dependencies and update pack metadata''')
 @click.help_option(
@@ -598,6 +593,11 @@ def id_set_command(**kwargs):
     pack_name = kwargs.get('pack_folder_name', '')
     id_set_path = kwargs.get('id_set_path')
     PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
+
+
+@main.resultcallback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
 
 
 # todo: add download from demisto command

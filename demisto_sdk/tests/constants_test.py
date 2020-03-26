@@ -84,8 +84,8 @@ DESTINATION_FORMAT_INDICATORFIELD_COPY = f"IndicatorFields/incidentfield-copy.js
 INDICATORFIELD_PATH = f"IndicatorFields"
 
 SOURCE_FORMAT_INDICATORTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatortype-copy.json"
-DESTINATION_FORMAT_INDICATORTYPE_COPY = f"Misc/reputation-copy.json"
-INDICATORTYPE_PATH = f"Misc"
+DESTINATION_FORMAT_INDICATORTYPE_COPY = f"Packs/Base/Misc/reputation-copy.json"
+INDICATORTYPE_PATH = f"Packs/Base/Misc"
 
 SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
 DESTINATION_FORMAT_LAYOUT_COPY = f"Layouts/layout-copy.json"

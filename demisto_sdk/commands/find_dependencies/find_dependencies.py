@@ -18,7 +18,7 @@ def parse_for_pack_metadata(dependency_graph, graph_root):
         additional_data['display_name'] = find_pack_display_name(dependency_id)
         parsed_result[dependency_id] = additional_data
 
-    parsed_result['displayed_images'] = list(dependency_graph.nodes)
+    parsed_result['displayed_images'] = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
 
     return parsed_result
 

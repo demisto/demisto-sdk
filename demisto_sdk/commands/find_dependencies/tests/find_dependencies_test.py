@@ -2,11 +2,13 @@ import pytest
 import json
 import os
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.common.git_tools import git_path
 
 
 @pytest.fixture(scope="module")
 def id_set():
-    id_set_path = os.path.join('test_data', 'id_set.json')
+    id_set_path = os.path.normpath(
+        os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
 
     with open(id_set_path, 'r') as id_set_file:
         id_set = json.load(id_set_file)

@@ -50,7 +50,7 @@ def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
     found_path_results = find_pack_path(pack_folder_name)
 
     if not found_path_results:
-        print_error("{} {} was not found".format(pack_folder_name, constants.PACKS_PACK_META_FILE_NAME))
+        print_error(f"{pack_folder_name} {constants.PACKS_PACK_META_FILE_NAME} was not found")
         sys.exit(1)
 
     pack_metadata_path = found_path_results[0]
@@ -123,7 +123,7 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._detect_optional_dependencies(pack_names)
                     dependencies_packs.update(pack_dependencies_data)
 
-                print("Pack not found for {} command or task.".format(command))
+                print(f"Pack not found for {command} command or task.")
 
         return dependencies_packs
 

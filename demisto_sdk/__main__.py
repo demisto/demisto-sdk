@@ -589,7 +589,7 @@ def id_set_command(**kwargs):
     "-p", "--pack_folder_name", help="Pack folder name to", required=True)
 @click.option(
     "-i", "--id_set_path", help="Path to id set json file", required=False)
-def id_set_command(**kwargs):
+def find_dependencies_command(**kwargs):
     pack_name = kwargs.get('pack_folder_name', '')
     id_set_path = kwargs.get('id_set_path')
     PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)

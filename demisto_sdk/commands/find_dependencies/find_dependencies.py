@@ -3,11 +3,10 @@ import json
 import sys
 import glob
 import click
+import os
+from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-
-PACK_FOLDER_NAME = "Packs"
-USER_METADATA_PATH = "pack_metadata.json"
 
 
 def parse_for_pack_metadata(dependency_graph, graph_root):
@@ -25,8 +24,8 @@ def parse_for_pack_metadata(dependency_graph, graph_root):
 
 
 def find_pack_path(pack_folder_name):
-    pack_metadata_path_search_regex = f'{PACK_FOLDER_NAME}/{pack_folder_name}/{USER_METADATA_PATH}'
-    found_path_results = glob.glob(pack_metadata_path_search_regex)
+    pack_metadata_path = os.path.join(constants.PACKS_DIR, pack_folder_name, constants.PACKS_PACK_META_FILE_NAME)
+    found_path_results = glob.glob(pack_metadata_path)
 
     return found_path_results
 
@@ -51,7 +50,7 @@ def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
     found_path_results = find_pack_path(pack_folder_name)
 
     if not found_path_results:
-        print_error(f"{pack_folder_name} pack_metadata.json was not found")
+        print_error("{} {} was not found".format(pack_folder_name, constants.PACKS_PACK_META_FILE_NAME))
         sys.exit(1)
 
     pack_metadata_path = found_path_results[0]
@@ -124,7 +123,7 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._detect_optional_dependencies(pack_names)
                     dependencies_packs.update(pack_dependencies_data)
 
-                print(f"Pack not found for {command} command or task.")
+                print("Pack not found for {} command or task.".format(command))
 
         return dependencies_packs
 

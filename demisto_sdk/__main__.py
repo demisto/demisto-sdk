@@ -534,6 +534,11 @@ def init(**kwargs):
 def generate_doc(**kwargs):
     input_path = kwargs.get('input')
     output_path = kwargs.get('output')
+    examples = kwargs.get('examples')
+    permissions = kwargs.get('permissions')
+    limitations = kwargs.get('limitations')
+    insecure = kwargs.get('insecure')
+    verbose = kwargs.get('verbose')
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -555,11 +560,18 @@ def generate_doc(**kwargs):
 
     print(f'Start generating {file_type} documentation...')
     if file_type == 'integration':
-        return generate_integration_doc(**kwargs)
+        use_cases = kwargs.get('use_cases')
+        command_permissions = kwargs.get('command_permissions')
+        return generate_integration_doc(input=input_path, output=output_path, use_cases=use_cases,
+                                        examples=examples, permissions=permissions,
+                                        command_permissions=command_permissions, limitations=limitations,
+                                        insecure=insecure, verbose=verbose)
     elif file_type == 'script':
-        return generate_script_doc(**kwargs)
+        return generate_script_doc(input=input_path, output=output_path, permissions=permissions,
+                                   limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == 'playbook':
-        return generate_playbook_doc(**kwargs)
+        return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
+                                     limitations=limitations, verbose=verbose)
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1

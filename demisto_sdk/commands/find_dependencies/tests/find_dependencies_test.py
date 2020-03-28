@@ -1,7 +1,6 @@
 import pytest
 import json
 import os
-import networkx
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 from demisto_sdk.commands.common.git_tools import git_path
 

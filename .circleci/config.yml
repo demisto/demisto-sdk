@@ -29,6 +29,7 @@ jobs:
             path: coverage_html_report
         - run:
             name: coveralls upload
+            command: |
               pip install coveralls
               coveralls
         - run:

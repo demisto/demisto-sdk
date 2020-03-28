@@ -28,6 +28,10 @@ jobs:
         - store_artifacts:
             path: coverage_html_report
         - run:
+            name: coveralls upload
+              pip install coveralls
+              coveralls
+        - run:
             name: deploy
             command: |
               ./demisto_sdk/utils/deploy.sh

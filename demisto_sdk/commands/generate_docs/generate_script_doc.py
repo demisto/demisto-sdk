@@ -12,7 +12,6 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
     try:
         doc = []
         errors = []
-        used_in = []
         example_section = []
 
         if not output:  # default output dir will be the dir of the input file

@@ -16,7 +16,8 @@ jobs:
             name: tox build
             command: |
               pip install tox
-              tox -v demisto_sdk
+              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
+              tox -e py38 -v
         - run:
             name: pre-commit
             command: |
@@ -24,6 +25,8 @@ jobs:
               pre-commit --version
               pre-commit run -a
               deactivate
+        - store_artifacts:
+            path: coverage_html_report
         - run:
             name: deploy
             command: |

@@ -567,7 +567,7 @@ def generate_doc(**kwargs):
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose)
     elif file_type == 'script':
-        return generate_script_doc(input=input_path, output=output_path, permissions=permissions,
+        return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == 'playbook':
         return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,

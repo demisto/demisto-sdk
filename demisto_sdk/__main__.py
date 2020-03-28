@@ -581,14 +581,14 @@ def id_set_command(**kwargs):
 
 # ====================== find-dependencies ====================== #
 @main.command(name="find-dependencies",
-              short_help='''Find pack dependencies and update pack metadata''')
+              short_help='''Find pack dependencies and update pack metadata.''')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack_folder_name", help="Pack folder name to", required=True)
+    "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
 @click.option(
-    "-i", "--id_set_path", help="Path to id set json file", required=False)
+    "-i", "--id_set_path", help="Path to id set json file.", required=False)
 def find_dependencies_command(**kwargs):
     pack_name = kwargs.get('pack_folder_name', '')
     id_set_path = kwargs.get('id_set_path')

@@ -10,6 +10,10 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 def parse_for_pack_metadata(dependency_graph, graph_root):
+    """
+    Parses calculated dependency graph and returns first level parsed dependency. Additionally returns list of displayed
+    pack images of all graph levels.
+    """
     parsed_result = {}
     parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
                                dependency_graph.has_edge(graph_root, k)]
@@ -24,6 +28,9 @@ def parse_for_pack_metadata(dependency_graph, graph_root):
 
 
 def find_pack_path(pack_folder_name):
+    """
+    Find pack path matching from content repo root directory.
+    """
     pack_metadata_path = os.path.join(constants.PACKS_DIR, pack_folder_name, constants.PACKS_PACK_META_FILE_NAME)
     found_path_results = glob.glob(pack_metadata_path)
 
@@ -31,6 +38,9 @@ def find_pack_path(pack_folder_name):
 
 
 def find_pack_display_name(pack_folder_name):
+    """
+    Returns pack display name from pack_metadata.json file.
+    """
     found_path_results = find_pack_path(pack_folder_name)
 
     if not found_path_results:
@@ -47,6 +57,9 @@ def find_pack_display_name(pack_folder_name):
 
 
 def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
+    """
+    Updates pack metadata with found parsed dependencies results.
+    """
     found_path_results = find_pack_path(pack_folder_name)
 
     if not found_path_results:
@@ -66,13 +79,22 @@ def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
 
 
 class PackDependencies:
+    """
+    Pack dependencies calculation class with relevant static methods.
+    """
 
     @staticmethod
     def _search_for_pack_items(pack_id, items_list):
+        """
+        Filtering of content items that belong to specific pack.
+        """
         return list(filter(lambda s: next(iter(s.values())).get('pack') == pack_id, items_list))
 
     @staticmethod
     def _search_packs_by_items_names(items_names, items_list):
+        """
+        Searches for implemented scrip/integration/playbook.
+        """
         if not isinstance(items_names, list):
             items_names = [items_names]
 
@@ -87,6 +109,9 @@ class PackDependencies:
 
     @staticmethod
     def _search_packs_by_integration_command(command, id_set):
+        """
+        Filters packs by implementing integration commands.
+        """
         integrations = list(
             filter(lambda i: command in list(i.values())[0].get('commands', []) and 'pack' in list(i.values())[0],
                    id_set['integrations']))
@@ -100,13 +125,20 @@ class PackDependencies:
 
     @staticmethod
     def _detect_optional_dependencies(pack_ids):
+        """
+        Detects mandatory/non mandatory pack dependencies.
+        """
         return [(p, False) if len(pack_ids) > 1 else (p, True) for p in pack_ids]
 
     @staticmethod
     def _collect_scripts_dependencies(pack_scripts, id_set):
+        """
+        Collects script pack dependencies.
+        """
         dependencies_packs = set()
 
-        for script in pack_scripts:
+        for script_mapping in pack_scripts:
+            script = next(iter(script_mapping.values()))
             dependencies_commands = script.get('depends_on', [])
 
             for command in dependencies_commands:
@@ -123,12 +155,13 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._detect_optional_dependencies(pack_names)
                     dependencies_packs.update(pack_dependencies_data)
 
-                print(f"Pack not found for {command} command or task.")
-
         return dependencies_packs
 
     @staticmethod
     def _collect_playbooks_dependencies(pack_playbooks, id_set):
+        """
+        Collects playbook pack dependencies.
+        """
         dependencies_packs = set()
 
         for playbook in pack_playbooks:
@@ -166,6 +199,9 @@ class PackDependencies:
 
     @staticmethod
     def _collect_pack_items(pack_id, id_set):
+        """
+        Collects script and playbook content items inside specific pack.
+        """
         pack_scripts = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
         pack_playbooks = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
 
@@ -173,6 +209,9 @@ class PackDependencies:
 
     @staticmethod
     def _find_pack_dependencies(pack_id, id_set):
+        """
+        Searches for specific pack dependencies.
+        """
         pack_scripts, pack_playbooks = PackDependencies._collect_pack_items(pack_id, id_set)
         scripts_dependencies = PackDependencies._collect_scripts_dependencies(pack_scripts, id_set)
         playbooks_dependencies = PackDependencies._collect_playbooks_dependencies(pack_playbooks, id_set)
@@ -183,6 +222,9 @@ class PackDependencies:
 
     @staticmethod
     def build_dependency_graph(pack_id, id_set):
+        """
+        Builds all level of dependencies and returns dependency graph.
+        """
         graph = nx.DiGraph()
         graph.add_node(pack_id)
         found_new_dependencies = True
@@ -206,6 +248,9 @@ class PackDependencies:
 
     @staticmethod
     def find_dependencies(pack_name, id_set_path=None):
+        """
+        Main function for dependencies search and pack metadata update.
+        """
         if not id_set_path:
             id_set = IDSetCreator(output=None, print_logs=False).create_id_set()
         else:
@@ -216,5 +261,6 @@ class PackDependencies:
         parsed_dependency = parse_for_pack_metadata(dependency_graph, pack_name)
         update_pack_metadata_with_dependencies(pack_name, parsed_dependency)
         # print the found pack dependency results
+        click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
         dependency_result = json.dumps(parsed_dependency, indent=4)
         click.echo(click.style(dependency_result, bold=True))

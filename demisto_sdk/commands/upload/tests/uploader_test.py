@@ -16,3 +16,7 @@ def test_upload(mocked_configure=None):
     script_yml_path = f'{git_path()}demisto_sdk/tests/test_files/content_repo_example/Scripts/script-Sleep.yml'
     script_yml_path_uploader = Uploader(input=script_yml_path, insecure=False, verbose=False)
     assert script_yml_path_uploader.upload() == 1
+
+    bad_integration_path = f'{git_path()}demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix_bad'
+    bad_integration_path_uploader = Uploader(input=bad_integration_path, insecure=False, verbose=False)
+    assert bad_integration_path_uploader.upload() == 1

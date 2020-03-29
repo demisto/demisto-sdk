@@ -93,11 +93,9 @@ def get_test_modules(content_repo: Optional[git.Repo]) -> Dict[Path, bytes]:
                Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1")]
     modules_content = {}
     if content_repo:
-        # Trying to get file from local repo before downloading from GitHub repo (Get it from remote/master branch), Last fetch
-        remote = content_repo.remote()
+        # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
         for module in modules:
-            modules_content[module] = content_repo.commit(f'{remote.name}/master').tree[
-                str(module)].data_stream.read()
+            modules_content[module] = (content_repo.working_dir / module).read_bytes()
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:

@@ -95,3 +95,4 @@ git_push.sh
 .pytest_cache
 .idea
 .mypy_cache
+coverage_html_report

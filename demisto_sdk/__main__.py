@@ -63,7 +63,7 @@ def main(config, version):
         print(version)
 
 
-# ====================== extract ====================== #
+# ====================== split-yml ====================== #
 @main.command(name="split-yml",
               short_help="Split the code, image and description files from a Demisto integration or script yaml file "
                          " to multiple files(To a package format - "
@@ -166,7 +166,6 @@ def unify(**kwargs):
 
 
 # ====================== validate ====================== #
-# TODO: add a configuration for conf.json and id_set.json
 @main.command(name="validate",
               short_help='Validate your content files.')
 @click.help_option(
@@ -209,7 +208,7 @@ def validate(config, **kwargs):
         return validator.run()
 
 
-# ====================== create ====================== #
+# ====================== create-content-artifacts ====================== #
 @main.command(
     name="create-content-artifacts",
     hidden=True,
@@ -332,6 +331,7 @@ def format_yml(use_git=False, file_type=None, **kwargs):
     return format_manager(use_git, file_type, **kwargs)
 
 
+# ====================== upload ====================== #
 @main.command(name="upload",
               short_help="Upload integration to Demisto instance. DEMISTO_BASE_URL environment variable should contain"
                          " the Demisto server base URL. DEMISTO_API_KEY environment variable should contain a valid "
@@ -350,6 +350,7 @@ def upload(**kwargs):
     return uploader.upload()
 
 
+# ====================== run ====================== #
 @main.command(name="run",
               short_help="Run integration command on remote Demisto instance in the playground. DEMISTO_BASE_URL "
                          "environment variable should contain the Demisto base URL. DEMISTO_API_KEY environment "
@@ -409,6 +410,7 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
+# ====================== json-to-outputs ====================== #
 @main.command(name="json-to-outputs",
               short_help='''Demisto integrations/scripts have a YAML file that defines them.
 Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -582,7 +584,9 @@ def generate_doc(**kwargs):
         return 1
 
 
+# ====================== create-id-set ====================== #
 @main.command(name="create-id-set",
+              hidden=True,
               short_help='''Create the content dependency tree by ids.''')
 @click.help_option(
     '-h', '--help'

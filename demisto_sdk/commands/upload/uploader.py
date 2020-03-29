@@ -1,7 +1,7 @@
 import demisto_client
 import os
 
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_v
+from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_v, print_error
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -32,7 +32,7 @@ class Uploader:
                     print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
                     return 1
                 except Exception as err:
-                    print_color(str(err), LOG_COLORS.RED)
+                    print_error(str(err))
                     return 1
             # Upload the file to Demisto
             result = self.client.integration_upload(file=self.path)
@@ -42,7 +42,7 @@ class Uploader:
             print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
-            print_color(str(err), LOG_COLORS.RED)
+            print_error(str(err))
             return 1
 
         finally:

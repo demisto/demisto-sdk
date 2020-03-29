@@ -4,9 +4,6 @@ import ast
 
 from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
 
-ERROR_ENTRY_TYPE = 4
-DEBUG_FILE_ENTRY_TYPE = 16
-
 
 class Runner:
     """Used to run a command on Demisto and print the results.
@@ -17,6 +14,8 @@ class Runner:
             debug_path (str): The path in which you will save the debug file.
             client (DefaultApi): Demisto-SDK client object.
         """
+    ERROR_ENTRY_TYPE = 4
+    DEBUG_FILE_ENTRY_TYPE = 16
     SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
@@ -91,13 +90,13 @@ class Runner:
                 print_color('### Command:', LOG_COLORS.YELLOW)
             if entry.contents:
                 print_color('## Readable Output', LOG_COLORS.YELLOW)
-                if entry.type == ERROR_ENTRY_TYPE:
+                if entry.type == self.ERROR_ENTRY_TYPE:
                     print_error(entry.contents + '\n')
                 else:
                     print(entry.contents + '\n')
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
-            if entry.type == DEBUG_FILE_ENTRY_TYPE:
+            if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
                 log_ids.append(entry.id)
 
         return log_ids

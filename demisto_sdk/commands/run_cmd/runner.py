@@ -22,7 +22,7 @@ class Runner:
 
     def __init__(self, query: str, insecure: bool = False, debug: str = None, debug_path: str = None,
                  verbose: bool = False):
-        self.query = query
+        self.query = query if query.startswith('!') else f'!{query}'
         self.log_verbose = verbose
         self.debug = debug
         self.debug_path = debug_path
@@ -36,7 +36,10 @@ class Runner:
         """
         playground_id = self._get_playground_id()
 
-        log_ids = self._run_query(playground_id)
+        try:
+            log_ids = self._run_query(playground_id)
+        except RuntimeError:
+            print_error('Command did not run, make sure it was written correctly.')
 
         if self.debug:
             if not log_ids:
@@ -48,15 +51,15 @@ class Runner:
         """Retrieves Playground ID from the remote Demisto instance.
         """
         playground_filter = {'filter': {'type': [9]}}
-        ans = self.client.search_investigations(filter=playground_filter)
+        answer = self.client.search_investigations(filter=playground_filter)
 
-        if ans.total != 1:
+        if answer.total != 1:
             raise RuntimeError(
                 f'Got unexpected amount of results in getPlaygroundInvestigationID. '
-                f'Response was: {ans.total}'
+                f'Response was: {answer.total}'
             )
 
-        result = ans.data[0].id
+        result = answer.data[0].id
 
         print_v(f'Playground ID: {result}', self.log_verbose)
 
@@ -75,15 +78,17 @@ class Runner:
             'investigationId': playground_id,
             'data': self.query
         }
-        ans = self.client.investigation_add_entries_sync(update_entry=update_entry)
+
+        answer = self.client.investigation_add_entries_sync(update_entry=update_entry)
+        if not answer:
+            raise RuntimeError
 
         log_ids = []
 
-        for entry in ans:
-            # ans should have entries with `contents` - the readable output of the command
+        for entry in answer:
+            # answer should have entries with `contents` - the readable output of the command
             if entry.parent_content:
                 print_color('### Command:', LOG_COLORS.YELLOW)
-                print(entry.parent_content)
             if entry.contents:
                 print_color('## Readable Output', LOG_COLORS.YELLOW)
                 if entry.type == ERROR_ENTRY_TYPE:
@@ -98,7 +103,7 @@ class Runner:
         return log_ids
 
     def _export_debug_log(self, log_ids: list):
-        """Retrieve & rexport debug mode log files
+        """Retrieve & export debug mode log files
 
         Args:
             log_ids (list): artifact ids of the log files

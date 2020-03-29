@@ -5,6 +5,7 @@
 [1]: https://pypi.org/project/demisto-sdk/#history
 ### 0.4.9
 * Fixed an issue in *generate-docs* where Playbooks and Scripts documentation failed.
+* Added a graceful error message when executing the *run" command with a misspelled command.
 
 ### 0.4.8
 * Added the *max* field to the Playbook schema, allowing to define it in tasks loop.

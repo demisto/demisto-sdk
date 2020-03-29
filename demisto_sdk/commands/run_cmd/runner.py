@@ -5,6 +5,11 @@ import ast
 from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
 
 
+class DemistoRunTimeError(RuntimeError):
+    """Demisto run time error"""
+    pass
+
+
 class Runner:
     """Used to run a command on Demisto and print the results.
         Attributes:
@@ -37,8 +42,8 @@ class Runner:
 
         try:
             log_ids = self._run_query(playground_id)
-        except RuntimeError:
-            print_error('Command did not run, make sure it was written correctly.')
+        except DemistoRunTimeError as err:
+            print_error(str(err))
 
         if self.debug:
             if not log_ids:
@@ -80,7 +85,7 @@ class Runner:
 
         answer = self.client.investigation_add_entries_sync(update_entry=update_entry)
         if not answer:
-            raise RuntimeError
+            raise DemistoRunTimeError('Command did not run, make sure it was written correctly.')
 
         log_ids = []
 

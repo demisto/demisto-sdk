@@ -6,9 +6,8 @@ from functools import lru_cache
 import io
 from pathlib import Path
 import re
-from typing import List, Tuple, Optional, Dict
+from typing import List, Optional, Dict
 import shlex
-from subprocess import Popen, PIPE
 from contextlib import contextmanager
 import requests
 # Local packages
@@ -32,30 +31,17 @@ EXIT_CODES = {
     "pwsh_test": 0b100000000
 }
 
+# Execution exit codes
+SUCCESS = 0b0
+FAIL = 0b1
+RERUN = 0b10
+
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
 PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
-
-
-def test_internet_connection(url: str = 'http://www.google.com/', timeout: int = 4) -> bool:
-    """ Test internet connection
-
-    Args:
-        url(str): URL to test with.
-        timeout(int): timeout in seconds
-
-    Returns:
-        bool: True if internet connection availble, else False.
-    """
-    try:
-        _ = requests.get(url, timeout=timeout)
-        return True
-    except requests.ConnectionError:
-        print("No internet connection available.")
-    return False
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
@@ -271,32 +257,6 @@ def get_python_version_from_image(image: str) -> float:
                 continue
 
     return py_num
-
-
-def run_command_os(command: str, cwd: Path) -> Tuple[str, str, int]:
-    """ Run command in subprocess tty
-
-    Args:
-        command(str): Command to be executed.
-        cwd(Path): Path from pathlib object to be executed
-
-    Returns:
-        str: Stdout of the command
-        str: Stderr of the command
-        int: exit code of command
-    """
-    try:
-        process = Popen(shlex.split(command),
-                        cwd=cwd,
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        universal_newlines=True)
-        process.wait()
-        stdout, stderr = process.communicate()
-    except OSError as e:
-        return '', str(e), 1
-
-    return stdout, stderr, process.returncode
 
 
 def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> str:

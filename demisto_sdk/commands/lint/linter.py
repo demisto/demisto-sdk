@@ -15,12 +15,12 @@ from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
 from wcmatch.pathlib import Path, BRACE, NEGATE
 # Local packages
-from demisto_sdk.commands.common.tools import get_all_docker_images
+from demisto_sdk.commands.common.tools import get_all_docker_images, run_command_os
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
     build_pylint_command, build_flake8_command, build_vulture_command, build_pwsh_analyze_command, build_pwsh_test_command
-from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image, \
-    run_command_os, add_tmp_lint_files, copy_dir_to_container, EXIT_CODES, add_typing_module, RL
+from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image,\
+    add_tmp_lint_files, copy_dir_to_container, EXIT_CODES, add_typing_module, RL, SUCCESS, FAIL, RERUN
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -66,7 +66,7 @@ class Linter:
             "bandit_errors": None,
             "mypy_errors": None,
             "vulture_errors": None,
-            "exit_code": 0
+            "exit_code": SUCCESS
         }
 
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
@@ -97,7 +97,7 @@ class Linter:
         skip = self._gather_facts(modules)
         # If not python pack - skip pack
         if skip:
-            return 0b0, self._pkg_lint_status
+            return SUCCESS, self._pkg_lint_status
 
         # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
         with add_tmp_lint_files(content_repo=self._content_repo,
@@ -215,7 +215,7 @@ class Linter:
         """
         if self._facts["lint_files"]:
             for lint_check in ["flake8", "bandit", "mypy", "vulture"]:
-                exit_code: int = 0b0
+                exit_code: int = SUCCESS
                 output: str = ""
                 if lint_check == "flake8" and not no_flake8:
                     exit_code, output = self._run_flake8(lint_files=self._facts["lint_files"])
@@ -251,13 +251,13 @@ class Linter:
         if stderr or exit_code:
             logger.info(f"{log_prompt}- Finshed Finshed errors found")
             if stderr:
-                return 1, stderr
+                return FAIL, stderr
             else:
-                return 1, stdout
+                return FAIL, stdout
 
         logger.info(f"{log_prompt} - Finshed success")
 
-        return 0, ""
+        return SUCCESS, ""
 
     def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run bandit in pack dir
@@ -279,13 +279,13 @@ class Linter:
         if stderr or exit_code:
             logger.info(f"{log_prompt}- Finshed Finshed errors found")
             if stderr:
-                return 1, stderr
+                return FAIL, stderr
             else:
-                return 1, stdout
+                return FAIL, stdout
 
         logger.info(f"{log_prompt} - Finshed success")
 
-        return 0, ""
+        return SUCCESS, ""
 
     def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
@@ -309,13 +309,13 @@ class Linter:
         if stderr or exit_code:
             logger.info(f"{log_prompt}- Finshed Finshed errors found")
             if stderr:
-                return 1, stderr
+                return FAIL, stderr
             else:
-                return 1, stdout
+                return FAIL, stdout
 
         logger.info(f"{log_prompt} - Finshed success")
 
-        return 0, ""
+        return SUCCESS, ""
 
     def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
@@ -340,13 +340,13 @@ class Linter:
         if stderr or exit_code:
             logger.info(f"{log_prompt}- Finshed Finshed errors found")
             if stderr:
-                return 1, stderr
+                return FAIL, stderr
             else:
-                return 1, stdout
+                return FAIL, stdout
 
         logger.info(f"{log_prompt} - Finshed success")
 
-        return 0, ""
+        return SUCCESS, ""
 
     def _run_lint_on_docker_image(self, no_pylint: list, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str):
@@ -383,7 +383,7 @@ class Linter:
             if image_id and not errors:
                 # Set image creation status
                 for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
-                    exit_code = 0b0
+                    exit_code = SUCCESS
                     output = ""
                     for trial in range(2):
                         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
@@ -407,11 +407,11 @@ class Linter:
                                 exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
                                                                                keep_container=keep_container)
 
-                        if (exit_code != 0b10 or trial == 2) and exit_code:
+                        if (exit_code != RERUN or trial == 2) and exit_code:
                             self._pkg_lint_status["exit_code"] += EXIT_CODES[check]
                             status[f"{check}_errors"] = output
                             break
-                        elif exit_code != 0b10:
+                        elif exit_code != RERUN:
                             break
             else:
                 status["image_errors"] = str(errors)
@@ -449,12 +449,11 @@ class Linter:
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""
         # Get requirements file for image
+        requirements = []
         if 2 < docker_base_image[1] < 3:
             requirements = self._req_2
         elif docker_base_image[1] > 3:
             requirements = self._req_3
-        else:
-            requirements = []
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
         env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True)
@@ -544,7 +543,7 @@ class Linter:
             pass
 
         # Run container
-        exit_code = 0b0
+        exit_code = SUCCESS
         output = ""
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
@@ -564,7 +563,7 @@ class Linter:
             if container_exit_code in [1, 2]:
                 # 1-fatal message issued
                 # 2-Error message issued
-                exit_code = 0b1
+                exit_code = FAIL
                 output = container_log
                 logger.info(f"{log_prompt} - Finished errors found")
             elif container_exit_code in [4, 8, 16]:
@@ -572,11 +571,11 @@ class Linter:
                 # 8-refactor message issued
                 # 16-convention message issued
                 logger.info(f"{log_prompt} - Finshed success - warnings found")
-                exit_code = 0b0
+                exit_code = SUCCESS
             elif container_exit_code == 32:
                 # 32-usage error
                 logger.critical(f"{log_prompt} - Finished - Usage error")
-                exit_code = 0b10
+                exit_code = RERUN
             else:
                 logger.info(f"{log_prompt} - Finished success")
             # Keeping container if needed or remove it
@@ -589,7 +588,7 @@ class Linter:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{log_prompt} - Unable to run pylint - {e}")
-            exit_code = 0b10
+            exit_code = RERUN
             output = str(e)
 
         return exit_code, output
@@ -617,7 +616,7 @@ class Linter:
         except docker.errors.NotFound:
             pass
         # Collect tests
-        exit_code = 0b0
+        exit_code = SUCCESS
         test_json = {}
         try:
             # Running pytest container
@@ -655,15 +654,15 @@ class Linter:
                         test["call"]["longrepr"] = test["call"]["longrepr"].split('\n')
                 if container_exit_code in [0, 5]:
                     logger.info(f"{log_prompt} - Finished success")
-                    exit_code = 0b0
+                    exit_code = SUCCESS
                 else:
                     logger.info(f"{log_prompt} - Finished errors found")
-                    exit_code = 0b1
+                    exit_code = FAIL
             elif container_exit_code in [3, 4]:
                 # 3-Internal error happened while executing tests
                 # 4-pytest command line usage error
                 logger.critical(f"{log_prompt} - Usage error")
-                exit_code = 0b10
+                exit_code = RERUN
             # Remove container if not needed
             if keep_container:
                 print(f"{log_prompt} - Conatiner name {container_name}")
@@ -674,7 +673,7 @@ class Linter:
                     logger.critical(f"{log_prompt} - Unable to remove container {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{log_prompt} - Unable to run pytest container {e}")
-            exit_code = 0b10
+            exit_code = RERUN
 
         return exit_code, test_json
 
@@ -701,7 +700,7 @@ class Linter:
             pass
 
         # Run container
-        exit_code = 0b0
+        exit_code = SUCCESS
         output = ""
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
@@ -723,7 +722,7 @@ class Linter:
                 # 2-Error message issued
                 logger.info(f"{log_prompt} - Finshed errors found")
                 output = container_log
-                exit_code = 0b1
+                exit_code = FAIL
             else:
                 logger.info(f"{log_prompt} - Finished success")
             # Keeping container if needed or remove it
@@ -736,7 +735,7 @@ class Linter:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
-            exit_code = 0b10
+            exit_code = RERUN
 
         return exit_code, output
 
@@ -763,7 +762,7 @@ class Linter:
             pass
 
         # Run container
-        exit_code = 0b0
+        exit_code = SUCCESS
         output = ""
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
@@ -785,7 +784,7 @@ class Linter:
                 # 2-Error message issued
                 logger.info(f"{log_prompt} - Finshed errors found")
                 output = container_log
-                exit_code = 0b1
+                exit_code = FAIL
             else:
                 logger.info(f"{log_prompt} - Finished success")
             # Keeping container if needed or remove it
@@ -798,6 +797,6 @@ class Linter:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
-            exit_code = 0b10
+            exit_code = RERUN
 
         return exit_code, output

@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 import textwrap
-from typing import List
+from typing import List, Dict, Any
 import git
 import re
 # Third party packages
@@ -16,10 +16,9 @@ import urllib3.exceptions
 from wcmatch.pathlib import Path
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
-from demisto_sdk.commands.common.tools import print_v, print_error
+from demisto_sdk.commands.common.tools import print_v, print_error, print_warning
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.lint.helpers import get_test_modules, EXIT_CODES, build_skipped_exit_code,\
-    test_internet_connection, PWSH_CHECKS, PY_CHCEKS
+from demisto_sdk.commands.lint.helpers import get_test_modules, EXIT_CODES, build_skipped_exit_code, PWSH_CHECKS, PY_CHCEKS
 from demisto_sdk.commands.lint.linter import Linter
 
 logger: logging.Logger
@@ -51,7 +50,7 @@ class LintManager:
                                                     all_packs=all_packs)
 
     @staticmethod
-    def _gather_facts():
+    def _gather_facts() -> Dict[str, Any]:
         """ Gather shared required facts for lint command execution - Also perform mandatory resource checkup.
             1. Content repo object.
             2. Requirements file for docker images.
@@ -77,7 +76,7 @@ class LintManager:
             facts["content_repo"] = git_repo
             logger.info(f"lint - Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
-            print_error("You are running demisto-sdk lint not in content repositorty!")
+            print_warning("You are running demisto-sdk lint not in content repositorty!")
             logger.info(f"demisto-sdk-lint - can't locate content repo {e}")
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / 'resources'
@@ -112,12 +111,9 @@ class LintManager:
             docker_client.ping()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError):
             facts["docker_engine"] = False
-            print_error("Can't communicate with Docker daemon - check your docker Engine is ON - Skiping lint, "
-                        "test which require docker!")
+            print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skiping lint, "
+                          "test which require docker!")
             logger.info(f"demisto-sdk-lint - Can't communicate with Docker daemon")
-        if not test_internet_connection():
-            facts["docker_engine"] = False
-            print_error("No internet connection - Skiping lint, test which require docker!")
         logger.info(f"lint - Docker daemon test passed")
 
         return facts
@@ -234,7 +230,8 @@ class LintManager:
         pkgs_status = {}
 
         # Skiped lint and test codes
-        skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy, no_vulture=no_vulture,
+        skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy,
+                                               no_vulture=no_vulture,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 

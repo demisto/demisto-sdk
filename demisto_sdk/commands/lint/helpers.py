@@ -93,15 +93,24 @@ def get_test_modules(content_repo: Optional[git.Repo]) -> Dict[Path, bytes]:
                Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1")]
     modules_content = {}
     if content_repo:
+        # Trying to get file from local repo before downloading from GitHub repo (Get it from remote/master branch), Last fetch
         remote = content_repo.remote()
         for module in modules:
             modules_content[module] = content_repo.commit(f'{remote.name}/master').tree[
                 str(module)].data_stream.read()
     else:
+        # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:
             url = f'https://raw.githubusercontent.com/demisto/content/master/{module}'
-            modules_content[module] = requests.get(url=url,
-                                                   verify=False).content
+            for trial in range(2):
+                res = requests.get(url=url,
+                                   verify=False)
+                if res.ok:
+                    # ok - not 4XX or 5XX
+                    modules_content[module] = res.content
+                    break
+                elif trial == 2:
+                    raise requests.exceptions.ConnectionError
 
     modules_content[Path("CommonServerUserPython.py")] = b''
 

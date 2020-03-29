@@ -631,6 +631,7 @@ class FilesValidator:
         Args:
             no_error (bool): If set to true will restore self._is_valid after run (will not return new errors)
         """
+        compared_branch_name = self.prev_ver
         if not self.prev_ver:
             content_release_branch_id = self.get_content_release_identifier()
             if not content_release_branch_id:
@@ -638,8 +639,9 @@ class FilesValidator:
                 return
             else:
                 self.prev_ver = content_release_branch_id
+                compared_branch_name = 'release branch'
 
-        print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
+        print_color('Starting validation against {}'.format(compared_branch_name), LOG_COLORS.GREEN)
         modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
         prev_self_valid = self._is_valid
         self.validate_modified_files(modified_files)
@@ -676,13 +678,3 @@ class FilesValidator:
             return
         else:
             return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
-
-    def is_release_branch(self: None) -> typing.Union[None, str]:
-        """Check if we are working on a release branch.
-
-        Returns:
-            (bool): is release branch
-        """
-        import datetime
-        now = datetime.datetime.now()
-        return re.search('{year}.0{month}.'.format(year=str(now.year)[-2:], month=now.month), self.branch_name)

@@ -58,8 +58,8 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
 
 
 # print srt in the given color
-def print_color(str, color):
-    print(color + str + LOG_COLORS.NATIVE)
+def print_color(obj, color):
+    print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
 def print_error(error_str):

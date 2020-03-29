@@ -440,7 +440,7 @@ class ContentCreator:
                               'copied over to the artifacts directory')
             if os.path.exists('beta-release-notes.md'):
                 print('copying beta-release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
-                shutil.copyfile('beta-release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+                shutil.copyfile('beta-release-notes.md', os.path.join(self.artifacts_path, 'beta-release-notes.md'))
             else:
                 print_warning('beta-release-notes.md was not found in the content directory and therefore not '
                               'copied over to the artifacts directory')

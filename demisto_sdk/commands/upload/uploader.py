@@ -49,7 +49,7 @@ class Uploader:
             if self.unify and os.path.exists(self.path):  # Remove the temporary file
                 try:
                     os.remove(self.path)
-                except PermissionError:
+                except (PermissionError, IsADirectoryError):
                     pass
 
         return 0

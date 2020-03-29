@@ -8,7 +8,8 @@ from demisto_sdk.commands.upload.uploader import Uploader
 def test_upload(mocked_configure=None):
     mocked_configure.return_value = ""
 
-    test_playbook_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/TestPlaybooks'
+    test_playbook_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/TestPlaybooks/' \
+                         f'script-Sleep-for-testplaybook.yml'
     test_playbook_uploader = Uploader(input=test_playbook_path, insecure=False, verbose=False)
     assert test_playbook_uploader.upload() == 1
 

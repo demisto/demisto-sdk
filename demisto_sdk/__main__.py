@@ -102,8 +102,10 @@ def extract(config, **kwargs):
 
 
 # ====================== extract-code ====================== #
-@main.command(name="extract-code",
-              short_help="Extract code from a Demisto integration or script yaml file.")
+@main.command(
+    name="extract-code",
+    hidden=True,
+    short_help="Extract code from a Demisto integration or script yaml file.")
 @click.help_option(
     '-h', '--help'
 )
@@ -208,10 +210,13 @@ def validate(config, **kwargs):
 
 
 # ====================== create ====================== #
-@main.command(name="create-content-artifacts",
-              short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-                         'upload to your server in order to upload a whole new content version to your Demisto '
-                         'instance.')
+@main.command(
+    name="create-content-artifacts",
+    hidden=True,
+    short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
+    'upload to your server in order to upload a whole new content version to your Demisto '
+    'instance.',
+)
 @click.help_option(
     '-h', '--help'
 )

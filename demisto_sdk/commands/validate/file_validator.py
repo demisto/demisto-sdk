@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import os
 import re
+import typing
 
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
@@ -609,7 +610,6 @@ class FilesValidator:
                                                  not self.branch_name.startswith('20.')):
                 print('Validates only committed files')
                 self.validate_committed_files()
-                self.validate_against_previous_version(no_error=True)
             else:
                 self.validate_against_previous_version(no_error=True)
                 print('Validates all of Content repo directories according to their schemas')
@@ -677,3 +677,12 @@ class FilesValidator:
         else:
             return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
 
+    def is_release_branch(self: None) -> typing.Union[None, str]:
+        """Check if we are working on a release branch.
+
+        Returns:
+            (bool): is release branch
+        """
+        import datetime
+        now = datetime.datetime.now()
+        return re.search('{year}.0{month}.'.format(year=str(now.year)[-2:], month=now.month), self.branch_name)

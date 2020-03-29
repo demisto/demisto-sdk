@@ -31,7 +31,9 @@ class Uploader:
                 except IndexError:
                     print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
                     return 1
-
+                except Exception as err:
+                    print_color(str(err), LOG_COLORS.RED)
+                    return 1
             # Upload the file to Demisto
             result = self.client.integration_upload(file=self.path)
 
@@ -44,6 +46,9 @@ class Uploader:
 
         finally:
             if self.unify and os.path.exists(self.path):  # Remove the temporary file
-                os.remove(self.path)
+                try:
+                    os.remove(self.path)
+                except PermissionError:
+                    pass
 
         return 0

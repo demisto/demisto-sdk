@@ -6,17 +6,13 @@ from demisto_sdk.commands.upload.uploader import Uploader
 
 @patch('demisto_client.configure')
 def test_upload(mocked_configure=None):
-    mocked_configure.return_value = ""
+    mocked_configure.return_value = "object"
 
-    test_playbook_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/TestPlaybooks/' \
-                         f'script-Sleep-for-testplaybook.yml'
-    test_playbook_uploader = Uploader(input=test_playbook_path, insecure=False, verbose=False)
-    assert test_playbook_uploader.upload() == 1
+    script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Scripts/'
+    script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
+    assert script_dir_uploader.upload() == 1
 
-    script_yml_path = f'{git_path()}demisto_sdk/tests/test_files/content_repo_example/Scripts/script-Sleep.yml'
-    script_yml_path_uploader = Uploader(input=script_yml_path, insecure=False, verbose=False)
-    assert script_yml_path_uploader.upload() == 1
-
-    bad_integration_path = f'{git_path()}demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix_bad'
-    bad_integration_path_uploader = Uploader(input=bad_integration_path, insecure=False, verbose=False)
-    assert bad_integration_path_uploader.upload() == 1
+    integration_pckg_path = f'{git_path()}demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
+    integration_pckg_uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
+    with patch.object(integration_pckg_uploader, 'client', return_value='ok'):
+        assert integration_pckg_uploader.upload() == 0

@@ -32,14 +32,16 @@ class LintManager:
         git(bool): Perform lint and test only on chaged packs.
         all_packs(bool): Whether to run on all packages.
         verbose(int): Whether to output a detailed response.
+        quiet(bool): Whether to output a quiet response.
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, verbose: bool, log_path: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: bool, log_path: str):
         self._verbose = verbose
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
+                               quiet=quiet,
                                log_path=log_path)
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
@@ -133,6 +135,8 @@ class LintManager:
         pkgs: list
         if all_packs or git:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
+        elif not all_packs and not git and not input:
+            pkgs = [Path().cwd()]
         else:
             pkgs = [Path(item) for item in input.split(',')]
         total_found = len(pkgs)
@@ -183,7 +187,7 @@ class LintManager:
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}
         changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
-                               content_repo.head.commit.diff('origin/master', paths=pkgs)}
+                               content_repo.head.commit.diff('...origin/master', paths=pkgs)}
         all_changed = untracked_files.union(staged_files).union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 
@@ -397,9 +401,9 @@ class LintManager:
         # Log passed unit-tests
         passed_printed = False
         for pkg, status in pkgs_status.items():
-            if not (EXIT_CODES["pytest"] & status["exit_code"]):
-                packs_with_tests += 1
             if status.get("images"):
+                if not (EXIT_CODES["pytest"] & status["exit_code"]):
+                    packs_with_tests += 1
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
                     if not passed_printed:
                         print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)

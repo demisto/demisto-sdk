@@ -2,20 +2,23 @@ import logging
 import os
 
 
-def logging_setup(verbose: int, log_path: str) -> logging.Logger:
+def logging_setup(verbose: int, quiet: bool, log_path: str) -> logging.Logger:
     """ Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
 
     Args:
-        verbose(int) verosity level - 1-6
+        verbose(int) verosity level - 1-3
+        quiet(bool): Whether to output a quiet response.
         log_path(str): Path to save log of all levels
 
     Returns:
         logging.Logger: logger object
     """
+    if quiet:
+        verbose = 0
     logger: logging.Logger = logging.getLogger('demisto-sdk')
     logger.setLevel(logging.DEBUG)
-    log_level = logging.getLevelName((6 - verbose) * 10)
+    log_level = logging.getLevelName((6 - 2 * verbose) * 10)
     fmt = logging.Formatter('%(levelname)s - %(message)s')
 
     if verbose:

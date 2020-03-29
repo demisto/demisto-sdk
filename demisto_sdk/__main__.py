@@ -213,8 +213,8 @@ def validate(config, **kwargs):
     name="create-content-artifacts",
     hidden=True,
     short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-    'upload to your server in order to upload a whole new content version to your Demisto '
-    'instance.',
+               'upload to your server in order to upload a whole new content version to your Demisto '
+               'instance.',
 )
 @click.help_option(
     '-h', '--help'
@@ -267,8 +267,8 @@ def secrets(config, **kwargs):
                          "the folder (package) structure. Will lookup up what docker image to use and will setup the "
                          "dev dependencies and file in the target folder. ")
 @click.help_option('-h', '--help')
-@click.option("-d", "--dir-pack", help="Specify directory of integration/script", type=click.Path(exists=True,
-                                                                                                  resolve_path=True))
+@click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
+                                                                                               resolve_path=True))
 @click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvvvvv",
@@ -287,13 +287,13 @@ def secrets(config, **kwargs):
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--json-report", help="Path to store json results", type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True, resolve_path=True))
-def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int, no_flake8: bool,
+def lint(input: str, git: bool, all_packs: bool, verbose: int, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, test_xml: str, json_report: str, log_path: str):
     """ Run lints and unit-tests on Demisto packages
 
     Args:
-        dir_pack(str): packs to run lint on
+        input(str): packs to run lint on
         git(bool): Perform lint and test only on chaged packs
         all_packs(bool): Whether to run on all packages
         verbose(int): Whether to output a detailed response
@@ -314,7 +314,7 @@ def lint(dir_pack: str, git: bool, all_packs: bool, verbose: int, parallel: int,
     Returns:
         int: 0 on success and 1 if any package failed
     """
-    lint_manager = LintManager(dir_packs=dir_pack,
+    lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,
                                verbose=verbose,
@@ -509,7 +509,7 @@ def generate_test_playbook(**kwargs):
 )
 @click.option(
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
-    "directory.")
+                           "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(

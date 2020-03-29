@@ -29,14 +29,14 @@ class LintManager:
     """ LintManager used to activate lint command using Linters in a single or multi thread.
 
     Attributes:
-        dir_packs(Path): Directories to run lint on.
+        input(str): Directories to run lint on.
         git(bool): Perform lint and test only on chaged packs.
         all_packs(bool): Whether to run on all packages.
         verbose(int): Whether to output a detailed response.
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, dir_packs: str, git: bool, all_packs: bool, verbose: bool, log_path: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, verbose: bool, log_path: str):
         self._verbose = verbose
         # Set logging level and file handler if required
         global logger
@@ -46,7 +46,7 @@ class LintManager:
         self._facts: dict = self._gather_facts()
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
-                                                    dir_packs=dir_packs,
+                                                    input=input,
                                                     git=git,
                                                     all_packs=all_packs)
 
@@ -122,12 +122,12 @@ class LintManager:
 
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, dir_packs: str, git: bool, all_packs: bool) -> List[Path]:
+    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool) -> List[Path]:
         """ Get packages paths to run lint command.
 
         Args:
             content_repo(git.Repo): Content repository object.
-            dir_packs(str): dir packs list specified as argument.
+            input(str): dir pack specified as argument.
             git(bool): Perform lint and test only on chaged packs.
             all_packs(bool): Whether to run on all packages.
 
@@ -138,7 +138,7 @@ class LintManager:
         if all_packs or git:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
         else:
-            pkgs = [Path(item) for item in dir_packs.split(',')]
+            pkgs = [Path(item) for item in input.split(',')]
         total_found = len(pkgs)
         if git:
             pkgs = LintManager._filter_changed_packages(content_repo=content_repo,

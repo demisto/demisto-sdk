@@ -41,8 +41,9 @@ class Uploader:
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
             print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
 
-        except Exception as ex:
-            raise ex
+        except Exception as err:
+            print_color(str(err), LOG_COLORS.RED)
+            return 1
 
         finally:
             if self.unify and os.path.exists(self.path):  # Remove the temporary file

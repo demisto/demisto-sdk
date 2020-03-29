@@ -10,6 +10,7 @@ import requests.exceptions
 # 3-rd party packages
 import docker.errors
 import docker.models.containers
+import git
 import docker
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
@@ -30,12 +31,13 @@ class Linter:
 
         Attributes:
             pack_dir(Path): Pack to run lint on.
+            content_repo(git.Repo): Git repo object of content repo.
             req_2(list): requirements for docker using python2.
             req_3(list): requirements for docker using python3.
             docker_engine(bool):  Wheter docker engine detected by docker-sdk.
     """
 
-    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool):
+    def __init__(self, pack_dir: Path, content_repo: git.Repo, req_3: list, req_2: list, docker_engine: bool):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
@@ -244,7 +246,7 @@ class Linter:
         log_prompt = f"{self._pack_name} - Flake8"
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files),
-                                                   cwd=self._pack_abs_dir)
+                                                   cwd=self._content_repo.working_dir)
         logger.debug(f"{log_prompt} - Finshed exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finshed stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finshed stderr: {RL if stderr else ''}{stderr}")

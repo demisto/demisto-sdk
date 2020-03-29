@@ -10,10 +10,7 @@ def test_build_flak8_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_flake8_command
     output = build_flake8_command(files)
     files = [str(file) for file in files]
-    expected = f"python3 -m flake8 --max-line-length 130 " \
-        f"--ignore=W293,W504,W291,W605,F405,F403,E999,W503,F841,E302,C901," \
-        f"F821,E402 --exclude=CommonServerPython.py,demistomock.py,CommonServerUserPython.py,conftest.py,venv " \
-        f"{' '.join(files)}"
+    expected = f"python3 -m flake8 {' '.join(files)}"
     assert output == expected
 
 

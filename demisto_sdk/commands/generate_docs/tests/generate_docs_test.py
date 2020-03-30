@@ -11,6 +11,16 @@ TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 # common tests
 
 
+def test_stringEscapeMD():
+    from demisto_sdk.commands.generate_docs.common import stringEscapeMD
+    res = stringEscapeMD('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
+    assert '<' not in res
+    assert '>' not in res
+    res = stringEscapeMD("new line test \n", escape_multiline=True)
+    assert '\n' not in res
+    assert '<br/>' in res
+
+
 def test_generate_list_section_empty():
     from demisto_sdk.commands.generate_docs.common import generate_list_section
 

@@ -5,7 +5,8 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX
-from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type, get_dict_from_file
+from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type,\
+    get_dict_from_file, LOG_COLORS, get_last_release_version
 from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
     VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
     INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH
@@ -134,3 +135,22 @@ def test_pascal_case():
     assert res == "GoodLife"
     res = tools.pascal_case("good_life-here v2")
     assert res == "GoodLifeHereV2"
+
+
+class TestPrintColor:
+    def test_print_color(self, mocker):
+        mocker.patch('builtins.print')
+
+        tools.print_color('test', LOG_COLORS.GREEN)
+
+        print_args = print.call_args[0][0]
+        assert print_args == u'{}{}{}'.format(LOG_COLORS.GREEN, 'test', LOG_COLORS.NATIVE)
+
+
+class TestReleaseVersion:
+    def test_get_last_release(self, mocker):
+        mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value='1.2.3\n4.5.6\n3.2.1\n20.0.0')
+
+        tag = get_last_release_version()
+
+        assert tag == '20.0.0'

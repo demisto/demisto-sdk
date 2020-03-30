@@ -58,8 +58,8 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
 
 
 # print srt in the given color
-def print_color(str, color):
-    print(color + str + LOG_COLORS.NATIVE)
+def print_color(obj, color):
+    print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
 def print_error(error_str):
@@ -662,3 +662,16 @@ def pascal_case(st: str) -> str:
     """
     words = re.findall(r'[a-zA-Z0-9]+', st)
     return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
+
+
+def get_last_release_version():
+    """
+    Get latest release tag (xx.xx.xx)
+
+    :return: tag
+    """
+    tags = run_command('git tag').split('\n')
+    tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
+    tags.sort(key=LooseVersion, reverse=True)
+
+    return tags[0]

@@ -84,7 +84,7 @@ Create a pack, integration or script template. If `--integration` and `--script`
    demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/init/init_command.md)
+For detailed command usage press [here](demisto_sdk/commands/init/README.md)
 
 ---
 
@@ -106,7 +106,7 @@ Makes sure your content repository files are in order and have valid yml file sc
    demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/validate/validate_command.md)
+For detailed command usage press [here](demisto_sdk/commands/validate/README.md)
 
 ---
 
@@ -123,7 +123,7 @@ pylint and pytest will run within all the docker images of an integration/script
    demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/lint/lint_command.md)
+For detailed command usage press [here](demisto_sdk/commands/lint/README.md)
 
 ---
 
@@ -139,7 +139,7 @@ Run Secrets validator to catch sensitive data before exposing your code to publi
    demisto-sdk secrets
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/secrets/secrets_command.md)
+For detailed command usage press [here](demisto_sdk/commands/secrets/README.md)
 
 ---
 
@@ -156,7 +156,7 @@ Unify the code, image and description files to a single Demisto yaml file.
    demisto-sdk unify -i Integrations/MyInt -o Integrations
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/unify/unify_command.md)
+For detailed command usage press [here](demisto_sdk/commands/unify/README.md)
 
 ---
 
@@ -194,7 +194,7 @@ Create content artifacts.
    demisto-sdk create -a .
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/create_artifacts/create_command.md)
+For detailed command usage press [here](demisto_sdk/commands/create_artifacts/README.md)
 
 ---
 
@@ -210,7 +210,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
    demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/format/format_command.md)
+For detailed command usage press [here](demisto_sdk/commands/format/README.md)
 
 ---
 
@@ -228,7 +228,7 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
    demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/run_cmd/run_command.md)
+For detailed command usage press [here](demisto_sdk/commands/run_cmd/README.md)
 
 ---
 
@@ -246,7 +246,7 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
    DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/run_playbook/run_playbook_command.md)
+For detailed command usage press [here](demisto_sdk/commands/run_playbook/README.md)
 
 ---
 
@@ -374,7 +374,7 @@ Generate Test Playbook from integration/script yml
    demisto-sdk generate-test-playbook -i Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml -n TestXDRPlaybook -t integration -o TestPlaybooks`
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/generate_test_playbook/generate_test_playbook_command.md)
+For detailed command usage press [here](demisto_sdk/commands/generate_test_playbook/README.md)
 
 ---
 
@@ -416,7 +416,7 @@ Convert JSON format to demisto entry context yaml format.
      type: Date
    ````
 
-For detailed command usage press [here](demisto_sdk/commands/json_to_outputs/json_to_outputs_command.md)
+For detailed command usage press [here](demisto_sdk/commands/json_to_outputs/README.md)
 
 ---
 
@@ -427,7 +427,7 @@ In the Demisto-SDK repository while on the git branch you want to activate and r
  ```
 or this command to use python 3.8:
 
-For detailed command usage press [here](demisto_sdk/commands/upload/upload_command.md)
+For detailed command usage press [here](demisto_sdk/commands/upload/README.md)
 
 ---
 

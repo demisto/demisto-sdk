@@ -14,7 +14,7 @@ import git
 import docker
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
-from wcmatch.pathlib import Path, BRACE, NEGATE
+from wcmatch.pathlib import Path, NEGATE
 # Local packages
 from demisto_sdk.commands.common.tools import get_all_docker_images, run_command_os
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
@@ -134,7 +134,8 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Loooking for pkg yaml
-        yml_file: Optional[Path] = next(self._pack_abs_dir.glob(rf'*.{{yml,yaml}}', flags=BRACE), None)
+        yml_file: Optional[Path] = set(self._pack_abs_dir.glob(["*.py", "!*unified*.py"],
+                                                               flags=NEGATE))
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skiping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')
@@ -517,7 +518,8 @@ class Linter:
                 copy_dir_to_container(container_obj=container_obj,
                                       host_path=self._pack_abs_dir,
                                       container_path=Path('/devwork'))
-                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and self._pkg_lint_status[
+                        "pack_type"] == TYPE_PWSH:
                     copy_dir_to_container(container_obj=container_obj,
                                           host_path=Path(__file__).parent / 'resources' / 'certificates',
                                           container_path=Path('/usr/local/share/ca-certificates/'))

@@ -261,18 +261,20 @@ class LintManager:
                                                modules=self._facts["test_modules"],
                                                keep_container=keep_container,
                                                test_xml=test_xml))
-
-            for future in concurrent.futures.as_completed(results):
-                pkg_status = future.result()
-                pkgs_status[pkg_status["pkg"]] = pkg_status
-                if pkg_status["exit_code"]:
-                    for check, code in EXIT_CODES.items():
-                        if pkg_status["exit_code"] & code:
-                            lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
-                    if not return_exit_code & pkg_status["exit_code"]:
-                        return_exit_code += pkg_status["exit_code"]
-                if pkg_status["pack_type"] not in pkgs_type:
-                    pkgs_type.append(pkg_status["pack_type"])
+            try:
+                for future in concurrent.futures.as_completed(results):
+                    pkg_status = future.result()
+                    pkgs_status[pkg_status["pkg"]] = pkg_status
+                    if pkg_status["exit_code"]:
+                        for check, code in EXIT_CODES.items():
+                            if pkg_status["exit_code"] & code:
+                                lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+                        if not return_exit_code & pkg_status["exit_code"]:
+                            return_exit_code += pkg_status["exit_code"]
+                    if pkg_status["pack_type"] not in pkgs_type:
+                        pkgs_type.append(pkg_status["pack_type"])
+            except KeyboardInterrupt:
+                executor.shutdown(wait=False)
 
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,

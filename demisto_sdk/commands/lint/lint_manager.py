@@ -440,6 +440,7 @@ class LintManager:
                                             test_case.get("call", {}).get("longrepr")[i]))
                                     else:
                                         print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
+                                print('\n')
 
         # Log unit-tests summary
         print(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}")

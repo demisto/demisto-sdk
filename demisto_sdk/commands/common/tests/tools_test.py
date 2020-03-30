@@ -125,3 +125,12 @@ class TestServerVersionCompare:
     @pytest.mark.parametrize("left, right, answer", INPUTS)
     def test_server_version_compare(self, left, right, answer):
         assert server_version_compare(left, right) == answer
+
+
+def test_pascal_case():
+    res = tools.pascal_case("PowerShell Remoting")
+    assert res == "PowerShellRemoting"
+    res = tools.pascal_case("good life")
+    assert res == "GoodLife"
+    res = tools.pascal_case("good_life-here v2")
+    assert res == "GoodLifeHereV2"

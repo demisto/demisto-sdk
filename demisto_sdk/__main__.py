@@ -91,6 +91,12 @@ def main(config, version):
     is_flag=True,
     show_default=True
 )
+@click.option(
+    '--no-auto-create-dir',
+    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts.",
+    is_flag=True,
+    show_default=True
+)
 @pass_config
 def extract(config, **kwargs):
     file_type = find_type(kwargs.get('input'))

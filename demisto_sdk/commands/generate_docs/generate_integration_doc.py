@@ -86,7 +86,7 @@ def generate_setup_section(yaml_data: dict):
     for conf in yaml_data['configuration']:
         access_data.append(
             {'Parameter': conf.get('name', ''),
-             'Description': conf.get('display', ''),
+             'Description': stringEscapeMD(conf.get('display', '')),
              'Required': conf.get('required', '')})
 
     section.extend(generate_table_section(access_data, '', horizontal_rule=False))
@@ -176,7 +176,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
                                                                                            cmd['name']))
             section.append(
                 '| {} | {} | {} | '.format(output['contextPath'], output.get('type', 'unknown'),
-                                           output.get('description')))
+                                           stringEscapeMD(output.get('description'))))
         section.append('')
 
     # Raw output:

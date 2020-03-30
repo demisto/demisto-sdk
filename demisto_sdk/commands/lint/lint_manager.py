@@ -325,7 +325,7 @@ class LintManager:
                 if code & skipped_code:
                     print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
                 elif code & return_exit_code:
-                    print(f"{check_str} {' ' * spacing}- {Colors.Bg.red}[FAIL]{Colors.reset}")
+                    print(f"{check_str} {' ' * spacing}- {Colors.Fg.red}[FAIL]{Colors.reset}")
                 else:
                     print(f"{check_str} {' ' * spacing}- {Colors.Fg.green}[PASS]{Colors.reset}")
             elif check != 'image':

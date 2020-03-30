@@ -476,7 +476,7 @@ class Linter:
         test_image_name = f'devtest{docker_base_image[0]}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
         test_image = None
         try:
-            logger.info(f"{log_prompt} - trying to pull existing image {test_image_name}")
+            logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
             test_image = docker_client.images(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
@@ -507,10 +507,10 @@ class Linter:
                             except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
                                 logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
                 except (docker.errors.BuildError, docker.errors.APIError) as e:
-                    logger.critical(f"{log_prompt} - build errors occured {e}")
+                    logger.critical(f"{log_prompt} - Build errors occured {e}")
                     errors = str(e)
         else:
-            logger.info(f"{log_prompt} - found existing image {test_image_name}")
+            logger.info(f"{log_prompt} - Found existing image {test_image_name}")
 
         for trial in range(2):
             try:

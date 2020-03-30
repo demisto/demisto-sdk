@@ -183,12 +183,12 @@ class LintManager:
         """
         print(f"Comparing to {Colors.Fg.cyan}master{Colors.reset} using branch {Colors.Fg.cyan}"
               f"{content_repo.active_branch}{Colors.reset}")
-        untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
+        # untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}
         changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
                                content_repo.head.commit.diff('...origin/master', paths=pkgs)}
-        all_changed = untracked_files.union(staged_files).union(changed_from_master)
+        all_changed = staged_files.union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 
         return list(pkgs_to_check)

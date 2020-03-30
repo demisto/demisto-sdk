@@ -517,12 +517,12 @@ class Linter:
                 copy_dir_to_container(container_obj=container_obj,
                                       host_path=self._pack_abs_dir,
                                       container_path=Path('/devwork'))
-                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes":
+                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                     copy_dir_to_container(container_obj=container_obj,
                                           host_path=Path(__file__).parent / 'resources' / 'certificates',
                                           container_path=Path('/usr/local/share/ca-certificates/'))
-                container_obj.start()
-                container_obj.wait()
+                    container_obj.start()
+                    container_obj.wait()
                 test_image_id = container_obj.commit().short_id
                 container_obj.remove()
             except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError) as e:

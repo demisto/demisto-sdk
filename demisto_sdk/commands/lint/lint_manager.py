@@ -448,7 +448,7 @@ class LintManager:
         print(f"Packages with unit-tests: {packs_with_tests}")
         print(f"Packages failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
         if lint_status['fail_packs_pytest']:
-            print(f"Failed packages:")
+            print(f"{Colors.Fg.red}Failed packages:")
             preferred_width = 100
             fail_pack_indent = 3
             fail_pack_prefix = " " * fail_pack_indent + "- "
@@ -456,6 +456,7 @@ class LintManager:
                                                      subsequent_indent=' ' * len(fail_pack_prefix))
             for fail_pack in lint_status["fail_packs_pytest"]:
                 print(wrapper_fail_pack.fill(fail_pack))
+        print(f'{Colors.reset}')
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):

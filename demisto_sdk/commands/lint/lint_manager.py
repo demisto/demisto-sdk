@@ -323,13 +323,13 @@ class LintManager:
             check_str = check.capitalize().replace('_', ' ')
             if (check in PY_CHCEKS and TYPE_PYTHON in pkgs_type) or (check in PWSH_CHECKS and TYPE_PWSH in pkgs_type):
                 if code & skipped_code:
-                    print(f"{check_str} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
+                    print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
                 elif code & return_exit_code:
                     print(f"{check_str} {' ' * spacing}- {Colors.Bg.red}[FAIL]{Colors.reset}")
                 else:
-                    print(f"{check_str} {' ' * spacing}- {Colors.Bg.green}[PASS]{Colors.reset}")
+                    print(f"{check_str} {' ' * spacing}- {Colors.Fg.green}[PASS]{Colors.reset}")
             elif check != 'image':
-                print(f"{check_str} {' ' * spacing}- {Colors.Bg.cyan}[SKIPPED]{Colors.reset}")
+                print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
 
     @staticmethod
     def report_failed_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
@@ -395,7 +395,7 @@ class LintManager:
                                                  subsequent_indent=' ' * len(error_sec_prefix))
         # Log unit-tests
         sentence = " Unit Tests "
-        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+        print(f"\n{Colors.Fg.red}{'#' * len(sentence)}")
         print(f"{sentence}")
         print(f"{'#' * len(sentence)}{Colors.reset}")
         # Log passed unit-tests
@@ -405,7 +405,7 @@ class LintManager:
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
                     packs_with_tests += 1
                     if not passed_printed:
-                        print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
+                        print_v(f"\n{Colors.Fg.orange}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
                         passed_printed = True
                     print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
                     for image in status["images"]:
@@ -422,7 +422,7 @@ class LintManager:
 
         # Log failed unit-tests
         if EXIT_CODES["pytest"] & return_exit_code:
-            print(f"\n{Colors.Fg.blue}Failed Unit-tests:{Colors.reset}")
+            print(f"\n{Colors.Fg.orange}Failed Unit-tests:{Colors.reset}")
             for fail_pack in lint_status["fail_packs_pytest"]:
                 packs_with_tests += 1
                 print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
@@ -443,7 +443,7 @@ class LintManager:
                                         print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
 
         # Log unit-tests summary
-        print(f"\n{Colors.Fg.blue}Summary:{Colors.reset}")
+        print(f"\n{Colors.Fg.blue}Unit-tests summary:{Colors.reset}")
         print(f"Packages: {len(pkgs_status)}")
         print(f"Packages with unit-tests: {packs_with_tests}")
         print(f"   Pass: {Colors.Fg.green}{packs_with_tests - len(lint_status['fail_packs_pytest'])}"

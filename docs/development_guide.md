@@ -16,7 +16,7 @@ Also make sure your methods work from the CLI by running `python demisto_sdk <yo
 ### How to run your unreleased demisto-sdk branch locally
 There are 2 options:
 1. Run `pip install -e .` in the terminal of your demisto-sdk repository. This will automatically sync your venev until deactivating it.
-1. Run `tox -e py37` in the terminal of your demisto-sdk repository. This will update the changes you have made in your branch unitl now.
+2. Run `tox -e py37` in the terminal of your demisto-sdk repository. This will update the changes you have made in your branch until now.
 
 Now, Switch to your content repo and run commands from your unreleased demisto-sdk branch.
 

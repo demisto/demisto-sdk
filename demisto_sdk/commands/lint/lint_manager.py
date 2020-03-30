@@ -395,7 +395,7 @@ class LintManager:
                                                  subsequent_indent=' ' * len(error_sec_prefix))
         # Log unit-tests
         sentence = " Unit Tests "
-        print(f"\n{Colors.Fg.red}{'#' * len(sentence)}")
+        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
         print(f"{sentence}")
         print(f"{'#' * len(sentence)}{Colors.reset}")
         # Log passed unit-tests

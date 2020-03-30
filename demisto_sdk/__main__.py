@@ -262,10 +262,10 @@ def secrets(config, **kwargs):
 
 # ====================== lint ====================== #
 @main.command(name="lint",
-              short_help="Run lintings (flake8, mypy, pylint, bandit) and pytest. pylint and pytest will run within the"
-                         "docker image of an integration/script. Meant to be used with integrations/scripts that use "
-                         "the folder (package) structure. Will lookup up what docker image to use and will setup the "
-                         "dev dependencies and file in the target folder. ")
+              short_help="Lint command will perform:\n 1. Package in host checks - flake8, bandit, mypy, vulture.\n 2. "
+                         "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
+                         "Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what"
+                         "docker image to use and will setup the dev dependencies and file in the target folder. ")
 @click.help_option('-h', '--help')
 @click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
                                                                                                resolve_path=True))

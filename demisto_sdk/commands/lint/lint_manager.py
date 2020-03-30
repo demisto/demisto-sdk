@@ -76,10 +76,10 @@ class LintManager:
             if 'content' not in git_repo.remote().urls.__next__():
                 raise git.InvalidGitRepositoryError
             facts["content_repo"] = git_repo
-            logger.info(f"lint - Content path {git_repo.working_dir}")
+            logger.info(f"Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
             print_warning("You are running demisto-sdk lint not in content repositorty!")
-            logger.info(f"demisto-sdk-lint - can't locate content repo {e}")
+            logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / 'resources'
         try:
@@ -88,24 +88,24 @@ class LintManager:
                 with open(file=pipfile_lock_path) as f:
                     lock_file: dict = json.load(fp=f)["develop"]
                     facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in lock_file.items()]
-                    logger.info(f"lint - Test requirement successfully collected for python {py_num}")
-                    logger.debug(f"lint - Test requirement are {facts[f'requirements_{py_num}']}")
+                    logger.info(f"Test requirement successfully collected for python {py_num}")
+                    logger.debug(f"Test requirement are {facts[f'requirements_{py_num}']}")
         except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
             print_error("Can't parse pipfile.lock - Aborting!")
-            logger.critical(f"demisto-sdk-lint - can't parse pipfile.lock {e}")
+            logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"])
-            logger.info(f"lint - Test mandatory modules successfully collected")
+            logger.info(f"Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error("Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
-            logger.info(f"demisto-sdk-lint - unable to get mandatory test-modules demisto-mock.py etc {e}")
+            logger.info(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         except (requests.exceptions.ConnectionError, urllib3.exceptions.NewConnectionError) as e:
             print_error("Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
                         "connection)")
-            logger.info(f"demisto-sdk-lint - unable to get mandatory test-modules demisto-mock.py etc {e}")
+            logger.info(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         # Validating docker engine connection
         docker_client: docker.DockerClient = docker.from_env()
@@ -115,8 +115,8 @@ class LintManager:
             facts["docker_engine"] = False
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skiping lint, "
                           "test which require docker!")
-            logger.info(f"demisto-sdk-lint - Can't communicate with Docker daemon")
-        logger.info(f"lint - Docker daemon test passed")
+            logger.info(f"demisto-sdk-Can't communicate with Docker daemon")
+        logger.info(f"Docker daemon test passed")
 
         return facts
 
@@ -357,7 +357,7 @@ class LintManager:
                 print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
                 print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
                 print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
-                for fail_pack in lint_status[f"fail_packs_pylint"]:
+                for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}")
                     print(pkgs_status[fail_pack]["images"][0][f"{check}_errors"])
 
@@ -402,9 +402,8 @@ class LintManager:
         passed_printed = False
         for pkg, status in pkgs_status.items():
             if status.get("images"):
-                if not (EXIT_CODES["pytest"] & status["exit_code"]):
-                    packs_with_tests += 1
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
+                    packs_with_tests += 1
                     if not passed_printed:
                         print_v(f"\n{Colors.Fg.blue}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
                         passed_printed = True

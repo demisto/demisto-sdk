@@ -59,7 +59,7 @@ def test_build_pylint_command(files):
     output = build_pylint_command(files)
     files = [str(file) for file in files]
     expected = "python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E -d duplicate-string-formatting-argument --msg-template='{path} ({line}): {msg}'" \
+               "conftest.py,venv -E -d duplicate-string-formatting-argument" \
                f" --generated-members=requests.packages.urllib3,requests.codes.ok {' '.join(files)}"
     assert expected == output
 

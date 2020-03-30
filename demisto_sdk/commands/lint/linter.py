@@ -20,8 +20,9 @@ from demisto_sdk.commands.common.tools import get_all_docker_images, run_command
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
     build_pylint_command, build_flake8_command, build_vulture_command, build_pwsh_analyze_command, build_pwsh_test_command
-from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image,\
-    add_tmp_lint_files, copy_dir_to_container, EXIT_CODES, add_typing_module, RL, SUCCESS, FAIL, RERUN
+from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image, \
+    add_tmp_lint_files, copy_dir_to_container, EXIT_CODES, add_typing_module, RL, SUCCESS, FAIL, RERUN,\
+    stream_docker_container_output
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -450,6 +451,7 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""
+        docker_client = docker.APIClient(base_url='unix://var/run/docker.sock')
         # Get requirements file for image
         requirements = []
         if 2 < docker_base_image[1] < 3:
@@ -464,9 +466,7 @@ class Linter:
             dockerfile = template.render(image=docker_base_image[0],
                                          pypi_packs=requirements + self._facts["additional_requirements"],
                                          no_test=(self._facts["test"] and no_test),
-                                         pack_type=self._pkg_lint_status["pack_type"],
-                                         update_certs=True if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes"
-                                         else False)
+                                         pack_type=self._pkg_lint_status["pack_type"])
         except exceptions.TemplateError as e:
             logger.debug(f"{log_prompt} - Error when build image - {e.message()}")
             return test_image_id, str(e)
@@ -476,7 +476,11 @@ class Linter:
         test_image = None
         try:
             logger.info(f"{log_prompt} - trying to pull existing image {test_image_name}")
-            test_image = self._docker_client.images.pull(test_image_name)
+            test_image = docker_client.pull(test_image_name,
+                                            stream=True,
+                                            decode=True)
+            for chunk in test_image:
+                logger.info(f"\t{chunk.get('status')}")
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -487,12 +491,18 @@ class Linter:
                 fp.write(dockerfile.encode("utf-8"))
                 fp.seek(0)
                 try:
-                    test_image = self._docker_client.images.build(path=str(certificate_path),
-                                                                  dockerfile=fp.name,
-                                                                  tag=test_image_name,
-                                                                  forcerm=True,
-                                                                  quiet=True)
-                    if self._docker_hub_login and test_image:
+                    streamer = docker_client.build(path=str(certificate_path),
+                                                   dockerfile=fp.name,
+                                                   tag=test_image_name,
+                                                   forcerm=True,
+                                                   decode=True)
+                    for chunk in streamer:
+                        if 'stream' in chunk:
+                            for line in chunk['stream'].splitlines():
+                                if 'sha256' not in line:
+                                    logger.info(f"\t{line.strip()}")
+
+                    if self._docker_hub_login:
                         for trial in range(2):
                             try:
                                 self._docker_client.images.push(test_image_name,
@@ -507,10 +517,16 @@ class Linter:
 
         for trial in range(2):
             try:
-                container_obj = self._docker_client.containers.create(image=test_image_name)
+                container_obj = self._docker_client.containers.create(image=test_image_name, command="update-ca-certificates")
                 copy_dir_to_container(container_obj=container_obj,
                                       host_path=self._pack_abs_dir,
                                       container_path=Path('/devwork'))
+                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes":
+                    copy_dir_to_container(container_obj=container_obj,
+                                          host_path=Path(__file__).parent / 'resources' / 'certificates',
+                                          container_path=Path('/usr/local/share/ca-certificates/'))
+                container_obj.start()
+                container_obj.wait()
                 test_image_id = container_obj.commit().short_id
                 container_obj.remove()
             except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError) as e:
@@ -554,14 +570,14 @@ class Linter:
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
+            container_obj.logs(stream=True)
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
             container_log = container_obj.logs().decode("utf-8")
-            logger.debug(f"{log_prompt} - exit-code: {container_exit_code}")
-            logger.debug(f"{log_prompt} - container output:{RL if container_log else ''}{container_log}")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code in [1, 2]:
                 # 1-fatal message issued
                 # 2-Error message issued
@@ -596,7 +612,7 @@ class Linter:
         return exit_code, output
 
     def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str]:
-        """ Run Pylint in container based to created test image
+        """ Run Pytest in container based to created test image
 
         Args:
             test_image(str): Test image id/name
@@ -628,14 +644,13 @@ class Linter:
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
+            stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
             # Getting container exit code
             container_exit_code: int = container_status.get("StatusCode")
             # Getting container logs
-            container_log = container_obj.logs().decode("utf-8")
-            logger.debug(f"{log_prompt} - exit-code: {container_exit_code}")
-            logger.debug(f"{log_prompt} - container output: {RL if container_log else ''}{container_log}")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code in [0, 1, 2, 5]:
                 # 0-All tests passed
                 # 1-Tests were collected and run but some of the tests failed
@@ -707,18 +722,18 @@ class Linter:
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=[build_pwsh_analyze_command(self._facts["lint_files"])],
+                                                               command=build_pwsh_analyze_command(),
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
+            stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
             container_log = container_obj.logs().decode("utf-8")
-            logger.debug(f"{log_prompt} - exit-code: {container_exit_code}")
-            logger.debug(f"{log_prompt} - container output:{RL if container_log else ''}{container_log}")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code:
                 # 1-fatal message issued
                 # 2-Error message issued
@@ -769,18 +784,18 @@ class Linter:
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=[build_pwsh_test_command()],
+                                                               command=build_pwsh_test_command(),
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
+            stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
             container_log = container_obj.logs().decode("utf-8")
-            logger.debug(f"{log_prompt} - exit-code: {container_exit_code}")
-            logger.debug(f"{log_prompt} - container output:{RL if container_log else ''}{container_log}")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code:
                 # 1-fatal message issued
                 # 2-Error message issued

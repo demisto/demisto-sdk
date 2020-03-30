@@ -4,11 +4,6 @@ FROM {{ image }}
 RUN mkdir -p /devwork/
 {# Define workir #}
 WORKDIR /devwork
-{#  Update certificates if run without variable #}
-{% if update_certs %}
-COPY . /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-{% endif %}
 {# Build for python based image #}
 {% if pack_type == 'python' %}
 {# Install build base packages if required on alpine docker image #}
@@ -28,9 +23,8 @@ ENTRYPOINT ["/bin/sh", "-c"]
 {# Build for python based image #}
 {% elif pack_type == "powershell" %}
 {#  Install powershell requirements for analyze and tests  #}
-RUN /bin/sh -c pwsh -Command Set-PSRepository -name PSGallery -installationpolicy trusted
-RUN /bin/sh -c pwsh -Command 'Install-Module -Name Pester -Scope AllUsers; Invoke-Pester -? | Out-Null'
-RUN /bin/sh -c pwsh -Command 'Install-Module -Name PSScriptAnalyzer -Scope AllUsers; Invoke-ScriptAnalyzer -? |Out-Null'
+RUN pwsh -Command Set-PSRepository -name PSGallery -installationpolicy trusted
+RUN pwsh -Command Install-Module -Name Pester -Scope AllUsers -Force
+RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force
 {# Container entry point (Every command will start with /bin/sh) #}
-ENTRYPOINT ["/bin/sh", "-c", "pwsh", "-Command"]
 {% endif %}

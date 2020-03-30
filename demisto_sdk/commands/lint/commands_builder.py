@@ -133,8 +133,6 @@ def build_pylint_command(files: List[Path]) -> str:
     command += " -E"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
-    # Message format
-    command += " --msg-template='{path} ({line}): {msg}'"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger
     # E1101 when accessed.
     command += " --generated-members=requests.packages.urllib3,requests.codes.ok"
@@ -166,25 +164,20 @@ def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
     return command
 
 
-def build_pwsh_analyze_command(files: List[Path]) -> str:
+def build_pwsh_analyze_command() -> str:
     """ Build command for powershell analyze
-
-    Args:
-        files(List[Path]): files to execute lint
 
     Returns:
        str: pylint command
     """
-    command = "Invoke-ScriptAnalyzer"
+    # Get file to analyze
+    command = "Get-ChildItem -Recurse -Exclude demistomock.ps1 | "
+    # Invoke script analyzer
+    command += "Invoke-ScriptAnalyzer"
     # Return exit code when finished
     command += " -EnableExit"
-    # Files to analyze
-    files = [file.name for file in files]
-    command += f" -Path={' '.join(files)}"
-    # Wrap with quotes
-    command = f'\"{command}\"'
 
-    return command
+    return f"pwsh -Command {command}"
 
 
 def build_pwsh_test_command() -> str:
@@ -196,7 +189,5 @@ def build_pwsh_test_command() -> str:
     command = "Invoke-Pester"
     # Return exit code when finished
     command += " -EnableExit"
-    # Wrap with quotes
-    command = f'\"{command}\"'
 
-    return command
+    return f"pwsh -Command {command}"

@@ -272,10 +272,10 @@ def secrets(config, **kwargs):
 @click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
-              type=click.IntRange(0, 3, clamp=True),
-              default=3)
+              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
-@click.option("-p", "--parallel", default=1, help="Run tests in parallel", type=click.IntRange(0, 15, clamp=True))
+@click.option("-p", "--parallel", default=1, help="Run tests in parallel", type=click.IntRange(0, 15, clamp=True),
+              show_default=True)
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
@@ -291,31 +291,11 @@ def secrets(config, **kwargs):
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, test_xml: str, json_report: str, log_path: str):
-    """ Run lints and unit-tests on Demisto packages
-
-    Args:
-        input(str): packs to run lint on
-        git(bool): Perform lint and test only on chaged packs
-        all_packs(bool): Whether to run on all packages
-        verbose(int): Whether to output a detailed response
-        quiet(bool): Whether to output a quiet response
-        parallel(int): Whether to run command on multiple threads
-        no_flake8(bool): Whether to skip flake8
-        no_bandit(bool): Whether to skip bandit
-        no_mypy(bool): Whether to skip mypy
-        no_vulture(bool): Whether to skip vulture
-        no_pylint(bool): Whether to skip pylint
-        no_test(bool): Whether to skip pytest
-        no_pwsh_analyze(bool): Whether to skip powershell code analyze
-        no_pwsh_test(bool): whether to skip powershell tests
-        keep_container(bool): Whether to keep the test container
-        test_xml(str): Path or store pytest xmls
-        json_report(str): Path for store json report
-        log_path(str): Path to all levels of logs
-
-    Returns:
-        int: 0 on success and 1 if any package failed
-    """
+    """Lint command will perform:\n
+        1. Package in host checks - flake8, bandit, mypy, vulture.\n
+        2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
+    Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
+    docker image to use and will setup the dev dependencies and file in the target folder."""
     lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,

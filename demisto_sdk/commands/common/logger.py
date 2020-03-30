@@ -19,7 +19,7 @@ def logging_setup(verbose: int, quiet: bool, log_path: str) -> logging.Logger:
     logger: logging.Logger = logging.getLogger('demisto-sdk')
     logger.setLevel(logging.DEBUG)
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)
-    fmt = logging.Formatter('%(levelname)s - %(message)s')
+    fmt = logging.Formatter('%(message)s')
 
     if verbose:
         console_handler = logging.StreamHandler()

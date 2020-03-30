@@ -6,10 +6,12 @@ from functools import lru_cache
 import io
 from pathlib import Path
 import re
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Generator
 import shlex
 from contextlib import contextmanager
 import requests
+import textwrap
+import logging
 # Local packages
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 # Third party packages
@@ -42,6 +44,8 @@ PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
+
+logger = logging.getLogger('demisto-sdk')
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
@@ -315,3 +319,16 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
 
     container_obj.put_archive(path=container_path,
                               data=file_like_object.getvalue())
+
+
+def stream_docker_container_output(streamer: Generator) -> None:
+    """ Stream container logs
+
+    Args:
+        streamer(Generator): Generator created by docker-sdk
+    """
+    wrapper = textwrap.TextWrapper(initial_indent='\t',
+                                   subsequent_indent='\t',
+                                   width=150)
+    for chunk in streamer:
+        logger.info(wrapper.fill(str(chunk.decode('utf-8'))))

@@ -347,18 +347,18 @@ class LintManager:
                 print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
                 print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
-                    print(f"{Colors.Fg.cyan}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
+                    print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
 
         for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
             check_str = check.capitalize().replace('_', ' ')
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check_str} errors "
-                print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
-                print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
-                print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+                print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
+                print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
+                print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
-                    print(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}")
+                    print(f"{Colors.Fg.red}{fail_pack}{Colors.reset}")
                     print(pkgs_status[fail_pack]["images"][0][f"{check}_errors"])
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):

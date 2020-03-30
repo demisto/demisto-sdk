@@ -343,9 +343,9 @@ class LintManager:
         for check in ["flake8", "bandit", "mypy", "vulture"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
-                print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
-                print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
-                print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+                print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
+                print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
+                print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.cyan}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
@@ -407,7 +407,7 @@ class LintManager:
                     if not passed_printed:
                         print_v(f"\n{Colors.Fg.orange}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
                         passed_printed = True
-                    print_v(wrapper_pack.fill(f"{Colors.Fg.cyan}{pkg}{Colors.reset}"), log_verbose=self._verbose)
+                    print_v(wrapper_pack.fill(f"{Colors.Fg.green}{pkg}{Colors.reset}"), log_verbose=self._verbose)
                     for image in status["images"]:
                         if not image.get("image_errors"):
                             tests = image.get("pytest_json", {}).get("report", {}).get("tests")
@@ -425,7 +425,7 @@ class LintManager:
             print(f"\n{Colors.Fg.orange}Failed Unit-tests:{Colors.reset}")
             for fail_pack in lint_status["fail_packs_pytest"]:
                 packs_with_tests += 1
-                print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
+                print(wrapper_pack.fill(f"{Colors.Fg.red}{fail_pack}{Colors.reset}"))
                 for image in pkgs_status[fail_pack]["images"]:
                     tests = image.get("pytest_json", {}).get("report", {}).get("tests")
                     for test_case in tests:
@@ -443,7 +443,7 @@ class LintManager:
                                         print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
 
         # Log unit-tests summary
-        print(f"\n{Colors.Fg.blue}Unit-tests summary:{Colors.reset}")
+        print(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}")
         print(f"Packages: {len(pkgs_status)}")
         print(f"Packages with unit-tests: {packs_with_tests}")
         print(f"   Pass: {Colors.Fg.green}{packs_with_tests - len(lint_status['fail_packs_pytest'])}"

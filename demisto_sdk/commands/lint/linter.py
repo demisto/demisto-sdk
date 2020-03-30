@@ -1,7 +1,7 @@
 # STD python packages
 import logging
 from typing import Tuple, List, Optional
-from io import BytesIO
+import io
 import os
 import json
 import hashlib
@@ -265,7 +265,7 @@ class Linter:
             else:
                 return FAIL, stdout
 
-        logger.info(f"{log_prompt} - Finshed success")
+        logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
 
@@ -293,7 +293,7 @@ class Linter:
             else:
                 return FAIL, stdout
 
-        logger.info(f"{log_prompt} - Finshed success")
+        logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
 
@@ -323,7 +323,7 @@ class Linter:
             else:
                 return FAIL, stdout
 
-        logger.info(f"{log_prompt} - Finshed success")
+        logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
 
@@ -354,7 +354,7 @@ class Linter:
             else:
                 return FAIL, stdout
 
-        logger.info(f"{log_prompt} - Finshed success")
+        logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
 
@@ -429,6 +429,10 @@ class Linter:
 
             # Add image status to images
             self._pkg_lint_status["images"].append(status)
+            try:
+                self._docker_client.images.remove(image_id)
+            except (docker.errors.ImageNotFound, docker.errors.APIError):
+                pass
 
     def _docker_login(self) -> bool:
         docker_user = os.getenv('DOCKERHUB_USER')
@@ -490,7 +494,7 @@ class Linter:
         if not test_image:
             logger.info(f"{log_prompt} - Creating image based on {docker_base_image[0]}")
             try:
-                with BytesIO() as f:
+                with io.BytesIO() as f:
                     f.write(dockerfile.encode('utf-8'))
                     f.seek(0)
                     streamer = docker_client.build(fileobj=f,
@@ -518,7 +522,8 @@ class Linter:
 
         for trial in range(2):
             try:
-                container_obj = self._docker_client.containers.create(image=test_image_name, command="update-ca-certificates")
+                container_obj = self._docker_client.containers.create(image=test_image_name,
+                                                                      command="update-ca-certificates")
                 copy_dir_to_container(container_obj=container_obj,
                                       host_path=self._pack_abs_dir,
                                       container_path=Path('/devwork'))
@@ -531,6 +536,7 @@ class Linter:
                     container_obj.wait()
                 test_image_id = container_obj.commit().short_id
                 container_obj.remove()
+                break
             except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError) as e:
                 logger.info(f"{log_prompt} - errors occured when copy pack dir {e}")
                 if trial == 2:
@@ -572,7 +578,7 @@ class Linter:
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
-            container_obj.logs(stream=True)
+            stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
             # Get container exit code
@@ -590,7 +596,7 @@ class Linter:
                 # 4-Warning message issued
                 # 8-refactor message issued
                 # 16-convention message issued
-                logger.info(f"{log_prompt} - Finshed success - warnings found")
+                logger.info(f"{log_prompt} - Successfully finished - warnings found")
                 exit_code = SUCCESS
             elif container_exit_code == 32:
                 # 32-usage error

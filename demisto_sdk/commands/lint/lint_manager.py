@@ -163,9 +163,9 @@ class LintManager:
                                                              'Beta_Integrations/*/']))
         # Get packages from packs path
         packs_dir: Path = Path(content_dir) / 'Packs'
-        content_packs_pkgs: set = set(packs_dir.rglob(['Integrations/*/',
-                                                       'Scripts/*/',
-                                                       'Beta_Integrations/*/']))
+        content_packs_pkgs: set = set(packs_dir.glob(['*/Integrations/*/',
+                                                      '*/Scripts/*/',
+                                                      '*/Beta_Integrations/*/']))
         all_pkgs = content_packs_pkgs.union(content_main_pkgs)
 
         return list(all_pkgs)
@@ -187,7 +187,7 @@ class LintManager:
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}
         changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
-                               content_repo.head.commit.diff('...origin/master', paths=pkgs)}
+                               content_repo.head.commit.diff('origin/master...', paths=pkgs)}
         all_changed = staged_files.union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 

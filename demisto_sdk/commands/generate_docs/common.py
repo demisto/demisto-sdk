@@ -1,6 +1,7 @@
 import json
 import os.path
 import re
+import html
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.run_cmd.runner import Runner
 
@@ -136,7 +137,7 @@ def add_lines(line):
     return output if output else [line]
 
 
-def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
+def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
     """
        Escape any chars that might break a markdown string
 
@@ -149,13 +150,20 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
        :type escape_multiline: ``bool``
        :param escape_multiline: Whether convert line-ending characters (optional)
 
+       :type escape_html: ``bool``
+       :param escape_multiline: Whether to escape html (<,>,&) (default: True). Set to false if the string contains
+            html tags. Otherwise this should be true to support MDX complaint docs.
+
        :return: A modified string
        :rtype: ``str``
     """
+    if escape_html:
+        st = html.escape(st)
+
     if escape_multiline:
-        st = st.replace('\r\n', '<br>')  # Windows
-        st = st.replace('\r', '<br>')  # old Mac
-        st = st.replace('\n', '<br>')  # Unix
+        st = st.replace('\r\n', '<br/>')  # Windows
+        st = st.replace('\r', '<br/>')  # old Mac
+        st = st.replace('\n', '<br/>')  # Unix
 
     if minimal_escaping:
         for c in '|':

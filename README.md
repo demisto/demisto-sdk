@@ -178,7 +178,7 @@ Extract code, image and description files from a demisto integration or script y
    demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/split_yml/split_yml_command.md)
+For detailed command usage press [here](demisto_sdk/commands/split_yml/README.md)
 
 ---
 

@@ -86,8 +86,7 @@ def main(config, version):
 )
 @click.option(
     '--no-common-server',
-    help="Don't add an import for CommonServerPython."
-         "If not specified will import unless this is CommonServerPython",
+    help="Don't add an import for CommonServerPython.",
     is_flag=True,
     show_default=True
 )

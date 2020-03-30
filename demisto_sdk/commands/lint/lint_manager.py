@@ -405,7 +405,7 @@ class LintManager:
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
                     packs_with_tests += 1
                     if not passed_printed:
-                        print_v(f"\n{Colors.Fg.orange}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
+                        print_v(f"\n{Colors.Fg.green}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
                         passed_printed = True
                     print_v(wrapper_pack.fill(f"{Colors.Fg.green}{pkg}{Colors.reset}"), log_verbose=self._verbose)
                     for image in status["images"]:
@@ -422,7 +422,7 @@ class LintManager:
 
         # Log failed unit-tests
         if EXIT_CODES["pytest"] & return_exit_code:
-            print(f"\n{Colors.Fg.orange}Failed Unit-tests:{Colors.reset}")
+            print(f"\n{Colors.Fg.red}Failed Unit-tests:{Colors.reset}")
             for fail_pack in lint_status["fail_packs_pytest"]:
                 packs_with_tests += 1
                 print(wrapper_pack.fill(f"{Colors.Fg.red}{fail_pack}{Colors.reset}"))

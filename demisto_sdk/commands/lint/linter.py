@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
     build_pylint_command, build_flake8_command, build_vulture_command, build_pwsh_analyze_command, build_pwsh_test_command
 from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image, \
-    add_tmp_lint_files, copy_dir_to_container, EXIT_CODES, add_typing_module, RL, SUCCESS, FAIL, RERUN,\
+    add_tmp_lint_files, copy_dir_to_container, EXIT_CODES, add_typing_module, RL, SUCCESS, FAIL, RERUN, \
     stream_docker_container_output
 
 logger = logging.getLogger('demisto-sdk')
@@ -476,11 +476,7 @@ class Linter:
         test_image = None
         try:
             logger.info(f"{log_prompt} - trying to pull existing image {test_image_name}")
-            test_image = docker_client.pull(test_image_name,
-                                            stream=True,
-                                            decode=True)
-            for chunk in test_image:
-                logger.info(f"\t{chunk.get('status')}")
+            test_image = docker_client.images(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found

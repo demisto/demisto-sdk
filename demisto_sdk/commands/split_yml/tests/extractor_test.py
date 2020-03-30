@@ -83,3 +83,27 @@ def test_get_output_path():
                           output=out)
     res = extractor.get_output_path()
     assert res == out + "/Zoom"
+
+
+def test_extract_to_package_format_pwsh(tmpdir):
+    out = tmpdir.join('Integrations')
+    extractor = Extractor(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml',
+                          output=str(out), file_type='integration')
+    assert extractor.extract_to_package_format() == 0
+    # check code
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.ps1'), 'r', encoding='utf-8') as f:
+        file_data = f.read()
+        assert '. $PSScriptRoot\\CommonServerPowerShell.ps1\n' in file_data
+        assert file_data[-1] == '\n'
+    # check description
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH_description.md'), 'r') as f:
+        file_data = f.read()
+        assert 'Username and password are both associated with the user in the target machine' in file_data
+    # check changelog
+    with open(out.join('PowerShellRemotingOverSSH').join('CHANGELOG.md'), 'r') as f:
+        file_data = f.read()
+        assert '## [Unreleased]' in file_data
+    # check readme
+    with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
+        file_data = f.read()
+        assert 'This is a sample test README' in file_data

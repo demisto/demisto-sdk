@@ -68,7 +68,7 @@ class Extractor:
         print("Starting migration of: {} to dir: {}".format(self.input, output_path))
         os.makedirs(output_path, exist_ok=True)
         base_name = os.path.basename(output_path)
-        code_file = "{}/{}.py".format(output_path, base_name)
+        code_file = "{}/{}".format(output_path, base_name)  # extract_code will add the file extension
         self.extract_code(code_file)
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
@@ -85,53 +85,6 @@ class Extractor:
             del yaml_obj['image']
             if 'detaileddescription' in yaml_obj:
                 del yaml_obj['detaileddescription']
-
-        if script_obj['type'] != 'python':
-            print('Script is not of type "python". Found type: {}. Nothing to do.'.format(script_obj['type']))
-            return 1
-        script_obj['script'] = SingleQuotedScalarString('')
-        with open(yaml_out, 'w') as yf:
-            ryaml.dump(yaml_obj, yf)
-        print("Running autopep8 on file: {} ...".format(code_file))
-
-        try:
-            subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
-        except FileNotFoundError:
-            print_color("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
-                        "Make sure to install it with: pip install autopep8.\n"
-                        "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
-
-        print("Detecting python version and setting up pipenv files ...")
-        docker = get_all_docker_images(script_obj)[0]
-        py_ver = get_python_version(docker, self.config.log_verbose)
-        pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
-        print("Copying pipenv files from: {}".format(pip_env_dir))
-        shutil.copy("{}/Pipfile".format(pip_env_dir), output_path)
-        shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
-        try:
-            subprocess.call(["pipenv", "install", "--dev"], cwd=output_path)
-            print("Installing all py requirements from docker: [{}] into pipenv".format(docker))
-            requirements = subprocess.check_output(["docker", "run", "--rm", docker,
-                                                    "pip", "freeze", "--disable-pip-version-check"],
-                                                   universal_newlines=True, stderr=subprocess.DEVNULL).strip()
-            fp = tempfile.NamedTemporaryFile(delete=False)
-            fp.write(requirements.encode('utf-8'))
-            fp.close()
-
-            try:
-                subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
-
-            except Exception:
-                print_color("Failed installing requirements in pipenv.\n "
-                            "Please try installing manually after extract ends\n", LOG_COLORS.RED)
-
-            os.unlink(fp.name)
-            print("Installing flake8 for linting")
-            subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
-        except FileNotFoundError:
-            print_color("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
-                        "Make sure to install it with: pip3 install pipenv.\n"
-                        "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
         # check if there is a README
         yml_readme = os.path.splitext(self.input)[0] + '_README.md'
         readme = output_path + '/README.md'
@@ -145,11 +98,56 @@ class Extractor:
         else:
             with open(changelog, 'wt', encoding='utf-8') as changelog_file:
                 changelog_file.write("## [Unreleased]\n-\n")
+        script_obj['script'] = SingleQuotedScalarString('')
+        with open(yaml_out, 'w') as yf:
+            ryaml.dump(yaml_obj, yf)
+        # Python code formatting and dev env setup
+        code_type = script_obj['type']
+        if code_type == TYPE_PYTHON:
+            print("Running autopep8 on file: {} ...".format(code_file))
+            try:
+                subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
+            except FileNotFoundError:
+                print_color("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
+                            "Make sure to install it with: pip install autopep8.\n"
+                            "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
+
+            print("Detecting python version and setting up pipenv files ...")
+            docker = get_all_docker_images(script_obj)[0]
+            py_ver = get_python_version(docker, self.config.log_verbose)
+            pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
+            print("Copying pipenv files from: {}".format(pip_env_dir))
+            shutil.copy("{}/Pipfile".format(pip_env_dir), output_path)
+            shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
+            try:
+                subprocess.call(["pipenv", "install", "--dev"], cwd=output_path)
+                print("Installing all py requirements from docker: [{}] into pipenv".format(docker))
+                requirements = subprocess.check_output(["docker", "run", "--rm", docker,
+                                                        "pip", "freeze", "--disable-pip-version-check"],
+                                                       universal_newlines=True, stderr=subprocess.DEVNULL).strip()
+                fp = tempfile.NamedTemporaryFile(delete=False)
+                fp.write(requirements.encode('utf-8'))
+                fp.close()
+
+                try:
+                    subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+
+                except Exception:
+                    print_color("Failed installing requirements in pipenv.\n "
+                                "Please try installing manually after extract ends\n", LOG_COLORS.RED)
+
+                os.unlink(fp.name)
+                print("Installing flake8 for linting")
+                subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
+            except FileNotFoundError:
+                print_color("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
+                            "Make sure to install it with: pip3 install pipenv.\n"
+                            "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
         arg_path = os.path.relpath(output_path)
         print_color("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
         print("Next steps: \n",
               "* Install additional py packages for unit testing (if needed): cd {}; pipenv install <package>\n".format(
-                  arg_path),
+                  arg_path) if code_type == TYPE_PYTHON else '',
               "* Create unit tests\n",
               "* Check linting and unit tests by running: demisto-sdk lint -d {}\n".format(
                   arg_path),

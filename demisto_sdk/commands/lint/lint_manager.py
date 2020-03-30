@@ -356,7 +356,7 @@ class LintManager:
                 sentence = f" {check_str} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
                 print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
-                print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
+                print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.red}{fail_pack}{Colors.reset}")
                     print(pkgs_status[fail_pack]["images"][0][f"{check}_errors"])

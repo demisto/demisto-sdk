@@ -11,20 +11,20 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 def parse_for_pack_metadata(dependency_graph, graph_root):
     """
-    Parses calculated dependency graph and returns first level parsed dependency. Additionally returns list of displayed
-    pack images of all graph levels.
+    Parses calculated dependency graph and returns first and all level parsed dependency.
+    Additionally returns list of displayed pack images of all graph levels.
     """
-    parsed_result = {}
+    first_level_dependencies = {}
     parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
                                dependency_graph.has_edge(graph_root, k)]
 
     for dependency_id, additional_data in parsed_dependency_graph:
         additional_data['display_name'] = find_pack_display_name(dependency_id)
-        parsed_result[dependency_id] = additional_data
+        first_level_dependencies[dependency_id] = additional_data
 
-    parsed_result['displayed_images'] = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
+    all_level_dependencies = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
 
-    return parsed_result
+    return first_level_dependencies, all_level_dependencies
 
 
 def find_pack_path(pack_folder_name):
@@ -56,7 +56,7 @@ def find_pack_display_name(pack_folder_name):
     return pack_display_name
 
 
-def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
+def update_pack_metadata_with_dependencies(pack_folder_name, first_level_dependencies, all_level_dependencies):
     """
     Updates pack metadata with found parsed dependencies results.
     """
@@ -71,7 +71,8 @@ def update_pack_metadata_with_dependencies(pack_folder_name, parsed_dependency):
     with open(pack_metadata_path, 'r+') as pack_metadata_file:
         pack_metadata = json.load(pack_metadata_file)
         pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
-        pack_metadata['dependencies'] = parsed_dependency
+        pack_metadata['dependencies'] = first_level_dependencies
+        pack_metadata['displayedImages'] = all_level_dependencies
 
         pack_metadata_file.seek(0)
         json.dump(pack_metadata, pack_metadata_file, indent=4)
@@ -258,9 +259,9 @@ class PackDependencies:
                 id_set = json.load(id_set_file)
 
         dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set)
-        parsed_dependency = parse_for_pack_metadata(dependency_graph, pack_name)
-        update_pack_metadata_with_dependencies(pack_name, parsed_dependency)
+        first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(dependency_graph, pack_name)
+        update_pack_metadata_with_dependencies(pack_name, first_level_dependencies, all_level_dependencies)
         # print the found pack dependency results
         click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
-        dependency_result = json.dumps(parsed_dependency, indent=4)
+        dependency_result = json.dumps(first_level_dependencies, indent=4)
         click.echo(click.style(dependency_result, bold=True))

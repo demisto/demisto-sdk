@@ -8,21 +8,18 @@ code.
 In turn those validation helps us maintain a more stable code base.
 
 **Arguments**:
-* **-i INFILE, --input INFILE**
+* **-i, --input**
 The yml file to extract from
-* **-o OUTFILE, --output OUTFILE**
-The output file or dir (if doing migrate) to write the code to
-* **-m, --migrate**
-Migrate an integration to package format. Pass to -o option a directory in this case.
-* **-d {True,False}, --demistomock {True,False}**
-Add an import for demisto mock, true by default
-* **-c {True,False}, --commonserver {True,False}**
-Add an import for CommonServerPython. If not specified will import unless this is CommonServerPython
+* **-o, --output**
+The output dir to write the extracted code/description/image to
+* **---no-demisto-mock {True,False}**
+Don't add an import for demisto mock, false by default
+**--no-common-server {True,False}**
+Don't add an import for CommonServerPython, false by default
 
 **Examples**
-`demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt -m`
+1. `demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt`
 This will split the yml file to a directory with the integration components (code, image, description, pipfile etc.)
-</br></br>
 
-`demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt -m`
+2. `demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt`
 This will split the yml file to a directory with the script components (code, description, pipfile etc.)

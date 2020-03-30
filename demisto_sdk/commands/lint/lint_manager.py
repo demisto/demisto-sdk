@@ -446,7 +446,7 @@ class LintManager:
         print(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}")
         print(f"Packages: {len(pkgs_status)}")
         print(f"Packages with unit-tests: {packs_with_tests}")
-        print(f"   Failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
+        print(f"Packages failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
         if lint_status['fail_packs_pytest']:
             print(f"Failed packages:")
             preferred_width = 100

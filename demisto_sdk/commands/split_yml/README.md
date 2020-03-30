@@ -1,6 +1,6 @@
 ## split-yml
 Split a Demisto downloaded yml file(Of an integration or a script) and split it into multiple files so it will be in
-the package format - https://demisto.pan.dev/docs/package-dir
+the package format - https://xsoar.pan.dev/docs/integrations/package-dir
 
 **Use-Cases**
 Our work in the Content repository is done in the package format, which enables us to preform more validations on our
@@ -12,10 +12,14 @@ In turn those validation helps us maintain a more stable code base.
 The yml file to extract from
 * **-o, --output**
 The output dir to write the extracted code/description/image to
-* **---no-demisto-mock {True,False}**
-Don't add an import for demisto mock, false by default
-**--no-common-server {True,False}**
-Don't add an import for CommonServerPython, false by default
+* **---no-demisto-mock**
+Don't add an import for demisto mock
+**--no-common-server**
+Don't add an import for CommonServerPython or CommonServerPowerShell
+**--no-auto-create-dir**
+Don't auto create the directory if the target directory ends with
+*Integrations/*Scripts. The auto directory created will be named according to the
+Integration/Script name.
 
 **Examples**
 1. `demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt`
@@ -23,3 +27,6 @@ This will split the yml file to a directory with the integration components (cod
 
 2. `demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt`
 This will split the yml file to a directory with the script components (code, description, pipfile etc.)
+
+3. `demisto-sdk split-yml -i Integrations/integration-powershell_ssh_remote.yml -o Packs/PowerShellRemoting/Integrations/`
+Split a PowerShell integration. Output is specifying just the `Integrations` dir, thus the target dir will be auto created.

@@ -13,6 +13,13 @@ When this command is called, an instance of `Iniator` is created and the command
 All tests are run from the `tests` folder within the correlating command folder. They also run in the CircleCI build.
 Also make sure your methods work from the CLI by running `python demisto_sdk <your_method>` in your local environment.
 
+### How to run your unreleased demisto-sdk branch locally
+There are 2 options:
+1. Run `pip install -e .` in the terminal of your demisto-sdk repository. This will automatically sync your venev until deactivating it.
+1. Run `tox -e py37` in the terminal of your demisto-sdk repository. This will update the changes you have made in your branch unitl now.
+
+Now, Switch to your content repo and run commands from your unreleased demisto-sdk branch.
+
 ### How to run build using an unreleased demisto-sdk version
 Push your branch and create a PR in demisto-sdk repository.
 In your IDE go to content repository on a local branch.

@@ -1,7 +1,7 @@
 # STD python packages
 import logging
 from typing import Tuple, List, Optional
-import tempfile
+from io import BytesIO
 import os
 import json
 import hashlib
@@ -134,13 +134,14 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Loooking for pkg yaml
-        yml_file: Optional[Path] = Path(next(self._pack_abs_dir.glob(["*.yml", "!*unified*.yml"],
-                                                                     flags=NEGATE)))
+        yml_file: Optional[Path] = self._pack_abs_dir.glob(["*.yml", "!*unified*.yml"],
+                                                           flags=NEGATE)
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skiping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')
             return True
         # Get pack name
+        yml_file = Path(next(yml_file))
         self._pack_name = yml_file.stem
         log_prompt = f"{self._pack_name} - Facts"
         self._pkg_lint_status["pkg"] = yml_file.stem
@@ -483,13 +484,11 @@ class Linter:
         # Creatng new image if existing image isn't found
         if not test_image:
             logger.info(f"{log_prompt} - Creating image based on {docker_base_image[0]}")
-            certificate_path = Path(__file__).parent / 'resources' / 'certificates'
-            with tempfile.NamedTemporaryFile(dir=certificate_path, suffix=".Dockerfile") as fp:
-                fp.write(dockerfile.encode("utf-8"))
-                fp.seek(0)
-                try:
-                    streamer = docker_client.build(path=str(certificate_path),
-                                                   dockerfile=fp.name,
+            try:
+                with BytesIO() as f:
+                    f.write(dockerfile.encode('utf-8'))
+                    f.seek(0)
+                    streamer = docker_client.build(fileobj=f,
                                                    tag=test_image_name,
                                                    forcerm=True,
                                                    decode=True)
@@ -506,9 +505,9 @@ class Linter:
                                                                 stream=False)
                             except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
                                 logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
-                except (docker.errors.BuildError, docker.errors.APIError) as e:
-                    logger.critical(f"{log_prompt} - Build errors occured {e}")
-                    errors = str(e)
+            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+                logger.critical(f"{log_prompt} - Build errors occured {e}")
+                errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
 
@@ -518,8 +517,8 @@ class Linter:
                 copy_dir_to_container(container_obj=container_obj,
                                       host_path=self._pack_abs_dir,
                                       container_path=Path('/devwork'))
-                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and self._pkg_lint_status[
-                        "pack_type"] == TYPE_PWSH:
+                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and\
+                        self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                     copy_dir_to_container(container_obj=container_obj,
                                           host_path=Path(__file__).parent / 'resources' / 'certificates',
                                           container_path=Path('/usr/local/share/ca-certificates/'))
@@ -593,7 +592,7 @@ class Linter:
                 logger.critical(f"{log_prompt} - Finished - Usage error")
                 exit_code = RERUN
             else:
-                logger.info(f"{log_prompt} - Finished success")
+                logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
@@ -668,7 +667,7 @@ class Linter:
                     if test.get("call", {}).get("longrepr"):
                         test["call"]["longrepr"] = test["call"]["longrepr"].split('\n')
                 if container_exit_code in [0, 5]:
-                    logger.info(f"{log_prompt} - Finished success")
+                    logger.info(f"{log_prompt} - Successfully finished")
                     exit_code = SUCCESS
                 else:
                     logger.info(f"{log_prompt} - Finished errors found")
@@ -739,7 +738,7 @@ class Linter:
                 output = container_log
                 exit_code = FAIL
             else:
-                logger.info(f"{log_prompt} - Finished success")
+                logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
@@ -801,7 +800,7 @@ class Linter:
                 output = container_log
                 exit_code = FAIL
             else:
-                logger.info(f"{log_prompt} - Finished success")
+                logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")

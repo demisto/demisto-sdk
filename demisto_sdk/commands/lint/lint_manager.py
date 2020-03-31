@@ -517,7 +517,8 @@ class LintManager:
         print(f"Packages: {len(self._pkgs)}")
         print(f"Packages PASS: {Colors.Fg.green}{len(self._pkgs) - len(failed)}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
-        print(f"Failed packages:")
+        if failed:
+            print(f"Failed packages:")
         for fail_pack in failed:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 

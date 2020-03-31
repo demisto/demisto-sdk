@@ -168,6 +168,7 @@ class Linter:
             return True
         # Docker images
         if self._facts["docker_engine"]:
+            logger.info(f"{log_prompt} - Pulling docker images, can take up to 1-2 minutes if not exists locally ")
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
             # Gather enviorment variables for docker execution
             self._facts["env_vars"] = {

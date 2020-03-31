@@ -174,6 +174,8 @@ class Linter:
                 "CI": os.getenv("CI", False),
                 "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes")
             }
+        lint_files = set()
+        # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verfying if not valid docker image configured
@@ -201,16 +203,16 @@ class Linter:
             # Get lint files
             lint_files = set(self._pack_abs_dir.glob(["*.py", "!*_test.py", "!test_*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
-            test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
-            lint_files = lint_files.difference(test_modules)
-            self._facts["lint_files"] = list(lint_files)
-            for lint_file in lint_files:
-                logger.info(f"{log_prompt} - Lint file {lint_file}")
+        # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             # Get lint files
-            self._facts["lint_files"] = list(self._pack_abs_dir.glob(["*.ps1"], flags=NEGATE))
-            for lint_file in self._facts["lint_files"]:
-                logger.info(f"{log_prompt} - Lint files {lint_file}")
+            lint_files = set(self._pack_abs_dir.glob(["*.ps1"]))
+
+        test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
+        lint_files = lint_files.difference(test_modules)
+        self._facts["lint_files"] = list(lint_files)
+        for lint_file in lint_files:
+            logger.info(f"{log_prompt} - Lint file {lint_file}")
 
         return False
 
@@ -728,7 +730,7 @@ class Linter:
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=build_pwsh_analyze_command(),
+                                                               command=build_pwsh_analyze_command(self._facts["lint_files"]),
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])

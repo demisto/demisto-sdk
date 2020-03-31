@@ -94,21 +94,22 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     return command
 
 
-def build_vulture_command(files: List[Path], pack_path: Path, version: float) -> str:
+def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> str:
     """ Build command to execute with pylint module
         https://github.com/jendrikseipp/vulture
     Args:
+        py_num(float): The python version in use
         files(List[Path]): files to execute lint
         pack_path(Path): Package path
 
     Returns:
        str: vulture command
     """
-    if version < 3:
-        version = ""
+    if py_num < 3:
+        py_num = ""
     else:
-        version = 3
-    command = f"python{version} -m vulture"
+        py_num = 3
+    command = f"python{py_num} -m vulture"
     # Excluded files
     command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
     # File to be excluded when performing lints check
@@ -170,18 +171,22 @@ def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
     return command
 
 
-def build_pwsh_analyze_command() -> str:
+def build_pwsh_analyze_command(files: List[Path]) -> str:
     """ Build command for powershell analyze
 
+    Args:
+        files(List[Path]): files to execute lint
+
     Returns:
-       str: pylint command
+       str: powershell analyze command
     """
-    # Get file to analyze
-    command = "Get-ChildItem -Recurse -Exclude demistomock.ps1 | "
     # Invoke script analyzer
-    command += "Invoke-ScriptAnalyzer"
+    command = "Invoke-ScriptAnalyzer"
     # Return exit code when finished
     command += " -EnableExit"
+    # Lint Files paths
+    files = [file.name for file in files]
+    command += f" -Path {' '.join(files)}"
 
     return f"pwsh -Command {command}"
 
@@ -190,7 +195,7 @@ def build_pwsh_test_command() -> str:
     """ Build command for powershell test
 
     Returns:
-       str: pylint command
+       str: powershell test command
     """
     command = "Invoke-Pester"
     # Return exit code when finished

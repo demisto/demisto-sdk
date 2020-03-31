@@ -8,7 +8,7 @@ values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
 def test_build_flak8_command(files):
     """Build flake8 command"""
     from demisto_sdk.commands.lint.commands_builder import build_flake8_command
-    output = build_flake8_command(files)
+    output = build_flake8_command(files, 3.8)
     files = [str(file) for file in files]
     expected = f"python3 -m flake8 {' '.join(files)}"
     assert output == expected

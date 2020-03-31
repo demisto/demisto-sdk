@@ -118,10 +118,6 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     Returns:
        str: vulture command
     """
-    if py_num < 3:
-        py_num = ""
-    else:
-        py_num = 3
     command = f"{get_python_exec(py_num)} -m vulture"
     # Excluded files
     command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"

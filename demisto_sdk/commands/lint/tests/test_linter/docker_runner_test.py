@@ -26,8 +26,7 @@ class TestCreateImage:
                 "DEMISTO_LINT_UPDATE_CERTS": "yes"
             }
         })
-        # Tempfile pack mocking
-        mocker.patch.object(linter, 'tempfile')
+        mocker.patch.object(linter, 'io')
         # Docker client mocking
         mocker.patch.object(linter_obj, '_docker_client')
         docker_build_response = mocker.MagicMock()

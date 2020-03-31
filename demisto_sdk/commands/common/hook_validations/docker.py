@@ -52,16 +52,10 @@ class DockerImageValidator(object):
             return self.is_latest_tag
 
         server_version = LooseVersion(self.from_version)
-        # Case of a modified file with version >= 5.0.0
-        if self.is_modified_file and server_version >= '5.0.0':
-            if self.docker_image_latest_tag != self.docker_image_tag and not \
-                    'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
-                # If docker image name are different and if the docker image isn't the default one
-                self.is_latest_tag = False
-        # Case of an added file
-        elif not self.is_modified_file:
-            if self.docker_image_latest_tag != self.docker_image_tag:
-                self.is_latest_tag = False
+        if self.docker_image_latest_tag != self.docker_image_tag and not \
+                'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
+            # If docker image name are different and if the docker image isn't the default one
+            self.is_latest_tag = False
 
         if not self.is_latest_tag:
             print_error('The docker image tag is not the latest, please update it.\n'
@@ -169,6 +163,7 @@ class DockerImageValidator(object):
     @staticmethod
     def find_latest_tag_by_date(tags):
         """Get the latest tags by datetime comparison.
+            as long as it's not labeled 'latest'
 
         Args:
             tags(list): List of dictionaries representing the docker image tags
@@ -180,10 +175,11 @@ class DockerImageValidator(object):
         latest_tag_date = datetime.now() - timedelta(days=400000)
         for tag in tags:
             tag_date = datetime.strptime(tag.get('last_updated'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            if tag_date >= latest_tag_date:
+            if tag_date >= latest_tag_date and tag.get('name') != 'latest':
                 latest_tag_date = tag_date
                 latest_tag_name = tag.get('name')
-
+        if latest_tag_name == 'latest':
+            print_error('The docker image tag is labeled "latest" please create a valid docker image tag')
         return latest_tag_name
 
     @staticmethod

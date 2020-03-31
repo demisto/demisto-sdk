@@ -158,6 +158,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     packagify_diff = {}  # type: dict
     for file_path in removed_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
+            if "README.md" in file_path:
+                continue
             details = get_remote_file(file_path, tag)
             if details:
                 uniq_identifier = '_'.join([

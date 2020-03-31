@@ -2,11 +2,27 @@
 from pathlib import Path
 from typing import List
 import os
-import math
 # Third party packages
 # Local imports
 
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
+
+
+def get_python_exec(py_num: float) -> str:
+    """ Get python executable
+
+    Args:
+        py_num(float): Python version X.Y
+
+    Returns:
+        str: python executable
+    """
+    if py_num < 3:
+        py_num = ""
+    else:
+        py_num = 3
+
+    return f"python{py_num}"
 
 
 def build_flake8_command(files: List[Path], py_num: float) -> str:
@@ -19,11 +35,8 @@ def build_flake8_command(files: List[Path], py_num: float) -> str:
     Returns:
         str: flake8 command
     """
-    if py_num < 3:
-        py_num = ""
-    else:
-        py_num = 3
-    command = f"python{int(math.floor(py_num))} -m flake8"
+
+    command = f"{get_python_exec(py_num)} -m flake8"
     # Generating file pattrens - path1,path2,path3,..
     files = [str(file) for file in files]
     command += ' ' + ' '.join(files)
@@ -109,7 +122,7 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
         py_num = ""
     else:
         py_num = 3
-    command = f"python{py_num} -m vulture"
+    command = f"{get_python_exec(py_num)} -m vulture"
     # Excluded files
     command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
     # File to be excluded when performing lints check

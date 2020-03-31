@@ -449,20 +449,20 @@ class LintManager:
                                 print('\n')
 
         # Log unit-tests summary
-        print_v(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}", self._verbose)
-        print_v(f"Packages: {len(pkgs_status)}", self._verbose)
-        print_v(f"Packages with unit-tests: {Colors.Fg.green}{packs_with_tests}{Colors.reset}", self._verbose)
-        print_v(f"Packages failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}", self._verbose)
+        print(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}")
+        print(f"Packages: {len(pkgs_status)}")
+        print(f"Packages with unit-tests: {Colors.Fg.green}{packs_with_tests}{Colors.reset}")
+        print(f"Packages failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
         if lint_status['fail_packs_pytest']:
-            print_v(f"Failed packages:{Colors.Fg.red}", self._verbose)
+            print(f"Failed packages:{Colors.Fg.red}")
             preferred_width = 100
             fail_pack_indent = 3
             fail_pack_prefix = " " * fail_pack_indent + "- "
             wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
                                                      subsequent_indent=' ' * len(fail_pack_prefix))
             for fail_pack in lint_status["fail_packs_pytest"]:
-                print_v(wrapper_fail_pack.fill(fail_pack), self._verbose)
-        print_v(f'{Colors.reset}', self._verbose)
+                print(wrapper_fail_pack.fill(fail_pack))
+        print(f'{Colors.reset}')
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):

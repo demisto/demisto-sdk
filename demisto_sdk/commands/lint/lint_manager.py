@@ -38,14 +38,13 @@ class LintManager:
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: bool, log_path: str):
-        self._verbose = verbose
         # Set logging level and file handler if required
         global logger
-        if quiet:
-            verbose = 0
         logger = logging_setup(verbose=verbose,
                                quiet=quiet,
                                log_path=log_path)
+        # Verbosity level
+        self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         # Filter packages to lint and test check
@@ -384,7 +383,6 @@ class LintManager:
             return_exit_code(int): exit code will indicate which lint or test failed
         """
         # Indentation config
-        packs_with_tests = 0
         preferred_width = 100
         pack_indent = 2
         pack_prefix = " " * pack_indent + "- Package: "
@@ -414,14 +412,13 @@ class LintManager:
         for pkg, status in pkgs_status.items():
             if status.get("images"):
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
-                    if not headline_printed:
+                    if (not headline_printed and self._verbose) or (EXIT_CODES["pytest"] & return_exit_code):
                         # Log unit-tests
                         sentence = " Unit Tests "
                         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
                         print(f"{sentence}")
                         print(f"{'#' * len(sentence)}{Colors.reset}")
                         headline_printed = True
-                    packs_with_tests += 1
                     if not passed_printed:
                         print_v(f"\n{Colors.Fg.green}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
                         passed_printed = True

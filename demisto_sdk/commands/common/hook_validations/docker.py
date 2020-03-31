@@ -51,7 +51,6 @@ class DockerImageValidator(object):
             self.is_latest_tag = False
             return self.is_latest_tag
 
-        server_version = LooseVersion(self.from_version)
         if self.docker_image_latest_tag != self.docker_image_tag and not \
                 'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
             # If docker image name are different and if the docker image isn't the default one

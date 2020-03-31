@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
 from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
     SCHEMA_TO_REGEX
+from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
 from pykwalify.core import Core
 
 
@@ -185,6 +186,10 @@ class StructureValidator:
 
         from_version_new = self.current_file.get("fromversion") or self.current_file.get("fromVersion")
         from_version_old = self.old_file.get("fromversion") or self.old_file.get("fromVersion")
+
+        # if in old file there was no fromversion ,format command will add from version key with 1.0.0
+        if not from_version_old and from_version_new == OLD_FILE_DEFAULT_1_FROMVERSION:
+            return True
 
         if from_version_old != from_version_new:
             print_error(Errors.from_version_modified(self.file_path))

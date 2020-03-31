@@ -57,6 +57,11 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
     return yml_files, yml_files[0]
 
 
+# print srt in the given color
+def print_color(obj, color):
+    print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
+
+
 def get_files_in_dir(project_dir: str, file_ending: Tuple[str, str]) -> List[str]:
     """
     Gets the project directory and returns the path of all yml and json files in it
@@ -72,11 +77,6 @@ def get_files_in_dir(project_dir: str, file_ending: Tuple[str, str]) -> List[str
     for file_type in file_ending:
         files.extend([f for f in glob.glob(project_dir + '/**/*.' + file_type, recursive=True)])
     return files
-
-
-def print_color(str, color):
-    """print str in the given color"""
-    print(color + str + LOG_COLORS.NATIVE)
 
 
 def print_error(error_str):
@@ -669,6 +669,19 @@ def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str
         return '', str(e), 1
 
     return stdout, stderr, process.returncode
+
+
+def get_last_release_version():
+    """
+    Get latest release tag (xx.xx.xx)
+
+    :return: tag
+    """
+    tags = run_command('git tag').split('\n')
+    tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
+    tags.sort(key=LooseVersion, reverse=True)
+
+    return tags[0]
 
 
 def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:

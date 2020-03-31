@@ -63,7 +63,7 @@ def main(config, version):
         print(version)
 
 
-# ====================== extract ====================== #
+# ====================== split-yml ====================== #
 @main.command(name="split-yml",
               short_help="Split the code, image and description files from a Demisto integration or script yaml file "
                          " to multiple files(To a package format - "
@@ -86,8 +86,7 @@ def main(config, version):
 )
 @click.option(
     '--no-common-server',
-    help="Don't add an import for CommonServerPython."
-         "If not specified will import unless this is CommonServerPython",
+    help="Don't add an import for CommonServerPython.",
     is_flag=True,
     show_default=True
 )
@@ -102,8 +101,10 @@ def extract(config, **kwargs):
 
 
 # ====================== extract-code ====================== #
-@main.command(name="extract-code",
-              short_help="Extract code from a Demisto integration or script yaml file.")
+@main.command(
+    name="extract-code",
+    hidden=True,
+    short_help="Extract code from a Demisto integration or script yaml file.")
 @click.help_option(
     '-h', '--help'
 )
@@ -164,7 +165,6 @@ def unify(**kwargs):
 
 
 # ====================== validate ====================== #
-# TODO: add a configuration for conf.json and id_set.json
 @main.command(name="validate",
               short_help='Validate your content files.')
 @click.help_option(
@@ -207,11 +207,14 @@ def validate(config, **kwargs):
         return validator.run()
 
 
-# ====================== create ====================== #
-@main.command(name="create-content-artifacts",
-              short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-                         'upload to your server in order to upload a whole new content version to your Demisto '
-                         'instance.')
+# ====================== create-content-artifacts ====================== #
+@main.command(
+    name="create-content-artifacts",
+    hidden=True,
+    short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
+    'upload to your server in order to upload a whole new content version to your Demisto '
+    'instance.',
+)
 @click.help_option(
     '-h', '--help'
 )
@@ -325,6 +328,7 @@ def format_yml(input=None, output=None, from_version=None, no_validate=None):
     return format_manager(input, output, from_version, no_validate)
 
 
+# ====================== upload ====================== #
 @main.command(name="upload",
               short_help="Upload integration to Demisto instance. DEMISTO_BASE_URL environment variable should contain"
                          " the Demisto server base URL. DEMISTO_API_KEY environment variable should contain a valid "
@@ -343,6 +347,7 @@ def upload(**kwargs):
     return uploader.upload()
 
 
+# ====================== run ====================== #
 @main.command(name="run",
               short_help="Run integration command on remote Demisto instance in the playground. DEMISTO_BASE_URL "
                          "environment variable should contain the Demisto base URL. DEMISTO_API_KEY environment "
@@ -402,6 +407,7 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
+# ====================== json-to-outputs ====================== #
 @main.command(name="json-to-outputs",
               short_help='''Demisto integrations/scripts have a YAML file that defines them.
 Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -532,6 +538,11 @@ def init(**kwargs):
 def generate_doc(**kwargs):
     input_path = kwargs.get('input')
     output_path = kwargs.get('output')
+    examples = kwargs.get('examples')
+    permissions = kwargs.get('permissions')
+    limitations = kwargs.get('limitations')
+    insecure = kwargs.get('insecure')
+    verbose = kwargs.get('verbose')
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -553,17 +564,26 @@ def generate_doc(**kwargs):
 
     print(f'Start generating {file_type} documentation...')
     if file_type == 'integration':
-        return generate_integration_doc(**kwargs)
+        use_cases = kwargs.get('use_cases')
+        command_permissions = kwargs.get('command_permissions')
+        return generate_integration_doc(input=input_path, output=output_path, use_cases=use_cases,
+                                        examples=examples, permissions=permissions,
+                                        command_permissions=command_permissions, limitations=limitations,
+                                        insecure=insecure, verbose=verbose)
     elif file_type == 'script':
-        return generate_script_doc(**kwargs)
+        return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
+                                   limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == 'playbook':
-        return generate_playbook_doc(**kwargs)
+        return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
+                                     limitations=limitations, verbose=verbose)
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1
 
 
+# ====================== create-id-set ====================== #
 @main.command(name="create-id-set",
+              hidden=True,
               short_help='''Create the content dependency tree by ids.''')
 @click.help_option(
     '-h', '--help'

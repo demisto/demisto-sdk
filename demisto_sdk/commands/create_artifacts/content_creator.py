@@ -209,6 +209,12 @@ class ContentCreator:
             if dir_name in ['IndicatorFields', 'IncidentFields']:
                 if not dpath.startswith('incidentfield-'):
                     dpath = f'incidentfield-{dpath}'
+            if dir_name == 'Dashboards':
+                if not dpath.startswith('dashboard-'):
+                    dpath = f'dashboard-{dpath}'
+            if dir_name == 'Layouts':
+                if not dpath.startswith('layout-'):
+                    dpath = f'layout-{dpath}'
             new_path = dpath
             if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
                 new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')

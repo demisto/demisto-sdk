@@ -318,23 +318,21 @@ def lint(config, dir, **kwargs):
 
 # ====================== format ====================== #
 @main.command(name="format",
-              short_help="Run formatter on a given script/playbook/integration yml file. ")
+              short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
+                         "incidenttype/indicatortype/layout/dashboard file. ")
 @click.help_option(
-    '-h', '--help'
-)
+    '-h', '--help')
 @click.option(
-    "-t", "--file-type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file to be formatted.")
+    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
 @click.option(
-    "-s", "--source-file", help="The path of the script yml file")
+    "-o", "--output", help="The path where the formatted file will be saved to",
+    type=click.Path(resolve_path=True))
 @click.option(
-    "-o", "--output-file-name", help="The path where the formatted file will be saved to")
+    "-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(
-    '-g', '--use-git', is_flag=True, show_default=True,
-    default=False, help='Format changed files using git'
-                        '- this will format your branch changes and will run only on them.')
-def format_yml(use_git=False, file_type=None, **kwargs):
-    return format_manager(use_git, file_type, **kwargs)
+    "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
+def format_yml(input=None, output=None, from_version=None, no_validate=None):
+    return format_manager(input, output, from_version, no_validate)
 
 
 # ====================== upload ====================== #

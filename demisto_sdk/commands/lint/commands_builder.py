@@ -2,22 +2,28 @@
 from pathlib import Path
 from typing import List
 import os
+import math
 # Third party packages
 # Local imports
 
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
 
 
-def build_flake8_command(files: List[Path]) -> str:
+def build_flake8_command(files: List[Path], py_num: float) -> str:
     """ Build command for executing flake8 lint check
         https://flake8.pycqa.org/en/latest/user/invocation.html
     Args:
         files(List[Path]): files to execute lint
+        py_num(float): The python version in use
 
     Returns:
         str: flake8 command
     """
-    command = "python3 -m flake8"
+    if py_num < 3:
+        py_num = ""
+    else:
+        py_num = 3
+    command = f"python{int(math.floor(py_num))} -m flake8"
     # Generating file pattrens - path1,path2,path3,..
     files = [str(file) for file in files]
     command += ' ' + ' '.join(files)

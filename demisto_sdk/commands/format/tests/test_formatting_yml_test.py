@@ -123,15 +123,15 @@ def test_playbook_sourceplaybookid(source_path):
 
 
 EQUAL_TEST = [
-    (EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_PATH, 'playbook'),
+    (EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_PATH),
 ]
 
 
-@pytest.mark.parametrize('input, output, path, file_type', EQUAL_TEST)
-def test_eqaul_value_in_file(input, output, path, file_type):
+@pytest.mark.parametrize('input, output, path', EQUAL_TEST)
+def test_eqaul_value_in_file(input, output, path):
     os.mkdir(path)
     shutil.copyfile(input, output)
-    format = format_manager(file_type=file_type, source_file=output, output_file_name=output)
+    format = format_manager(input=output)
     check = True
     with open(output, 'r') as f:
         if 'simple: =' in f:

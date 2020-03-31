@@ -25,6 +25,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import generate
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -491,7 +492,7 @@ def generate_test_playbook(**kwargs):
 )
 @click.option(
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
-    "directory.")
+                           "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
@@ -603,9 +604,26 @@ def id_set_command(**kwargs):
     id_set_creator.create_id_set()
 
 
+# ====================== find-dependencies ====================== #
+@main.command(name="find-dependencies",
+              short_help='''Find pack dependencies and update pack metadata.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
+@click.option(
+    "-i", "--id_set_path", help="Path to id set json file.", required=False)
+def find_dependencies_command(**kwargs):
+    pack_name = kwargs.get('pack_folder_name', '')
+    id_set_path = kwargs.get('id_set_path')
+    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
 
 # todo: add download from demisto command
 

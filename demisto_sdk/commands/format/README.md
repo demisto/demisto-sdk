@@ -72,21 +72,21 @@ this will format the given yml file and save it in content repo under the specif
 
 #### Run without fromVersion flag
 
-#### If the source file name already exist in content repo:
+**If the source file name already exist in content repo:**
 
-**If fromversion key exists already in current file -> fromversion key will not change.**
+* If fromversion key exists already in current file -> fromversion key will not change.
 
-**If fromversion key does not exist in current file:**
-* If fromversion key exist in old file in content repo -> set fromverion key as in old file
-* If fromversion key does not exist in old file -> set fromversion key to default 1.0.0
+* If fromversion key does not exist in current file:
+    * If fromversion key exist in old file in content repo -> set fromverion key as in old file
+    * If fromversion key does not exist in old file -> set fromversion key to default 1.0.0
 
-####If the source file name does not exist in content repo:
+**If the source file name does not exist in content repo:**
 
-**If fromversion key exists already in current file -> fromversion key will not change.**
-**If fromversion key does not exist in current file -> is not in file than it will set it to '5.0.0'**
+* If fromversion key exists already in current file -> fromversion key will not change.
+* If fromversion key does not exist in current file -> is not in file than it will set it to '5.0.0'
 
 
 #### Run with fromVersion flag
 
-**If fromversion exist already in current file -> will be set to requested fromversion.**
-**If fromversion does not exist in current file -> add key and set to requested fromversion.**
+* If fromversion exist already in current file -> will be set to requested fromversion.
+* If fromversion does not exist in current file -> add key and set to requested fromversion.

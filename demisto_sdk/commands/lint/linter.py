@@ -503,10 +503,12 @@ class Linter:
                     if self._docker_hub_login:
                         for trial in range(2):
                             try:
-                                self._docker_client.images.push(test_image_name,
-                                                                stream=False)
-                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
+                                self._docker_client.images.push(test_image_name)
                                 logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
+                                break
+                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
+                                logger.info(f"{log_prompt} - Unable to push image {test_image_name} to repository")
+
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 logger.critical(f"{log_prompt} - Build errors occured {e}")
                 errors = str(e)
@@ -515,6 +517,7 @@ class Linter:
 
         for trial in range(2):
             try:
+                logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
                 container_obj = self._docker_client.containers.create(image=test_image_name,
                                                                       command="update-ca-certificates")
                 copy_dir_to_container(container_obj=container_obj,

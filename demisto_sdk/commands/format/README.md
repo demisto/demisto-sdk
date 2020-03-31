@@ -31,7 +31,7 @@ When done formatting, the **validate** command will run, to let you know of thin
 ```
 demisto-sdk format
 ```
-this will check your branch changes and will run only on them.
+This will check your branch changes and will run only on them.
 <br/><br/>
 
 ```
@@ -50,20 +50,21 @@ This will go through the integration file, format it, and save it to a new file
 ```
 demisto-sdk format -i Packs/CortexXDR --from-version 10.10.10
 ```
-this will format all json/yml files under the Pack CortexXDR.
+This will format all json/yml files under the Pack CortexXDR.
 This will also set the fromversion key in all files to '10.10.10'
 <br/><br/>
 
 ```
 demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
-this will format the given yml file, however validation will not ran as this file is not part of content repo.
+This will format the given yml file, however validation will not ran as this file is not part of content repo.
 <br/><br/>
 
 ```
 demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml -o Integrations/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
-this will format the given yml file and save it in content repo under the specified directory.
+This will format the given yml file and save it in content repo under the specified directory.
+Also validation will run as the output file is in content repo.
 <br/><br/>
 
 

@@ -1,13 +1,17 @@
 import os
+import shutil
+
 import pytest
 
 from demisto_sdk.tests.constants_test import SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, \
     SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_PLAYBOOK_COPY, \
-    DESTINATION_FORMAT_PLAYBOOK_COPY
+    DESTINATION_FORMAT_PLAYBOOK_COPY, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION,\
+    EQUAL_VAL_PATH
 
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
+from demisto_sdk.commands.format.format_module import format_manager
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
@@ -116,3 +120,23 @@ def test_playbook_sourceplaybookid(source_path):
     base_yml.delete_sourceplaybookid()
 
     assert 'sourceplaybookid' not in base_yml.data
+
+
+EQUAL_TEST = [
+    (EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_PATH),
+]
+
+
+@pytest.mark.parametrize('input, output, path', EQUAL_TEST)
+def test_eqaul_value_in_file(input, output, path):
+    os.mkdir(path)
+    shutil.copyfile(input, output)
+    format = format_manager(input=output)
+    check = True
+    with open(output, 'r') as f:
+        if 'simple: =' in f:
+            check = False
+    os.remove(output)
+    os.rmdir(path)
+    assert check
+    assert not format

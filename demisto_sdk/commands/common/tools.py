@@ -1,3 +1,4 @@
+import io
 import re
 import os
 import sys
@@ -248,8 +249,12 @@ def get_file(method, file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
+            read_file = f.read()
+            replaced = read_file.replace("simple: =", "simple: '='")
+            # revert str to stream for loader
+            stream = io.StringIO(replaced)
             try:
-                data_dictionary = method(f)
+                data_dictionary = method(stream)
             except Exception as e:
                 print_error(
                     "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))

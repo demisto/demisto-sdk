@@ -17,21 +17,22 @@ When done formatting, the **validate** command will run, to let you know of thin
 
 * **-o DESIRED_OUTPUT_PATH, --output DESIRED_OUTPUT_PATH**
 
-    The path where the formatted file will be saved to. (Default will be to override origin file)
+    The path where the formatted file will be saved to. (Default will be to override origin file).
 
 * **-fv DESIRED_FROM_VERSION_KEY, --from-version DESIRED_FROM_VERSION_KEY**
 
-    The path where the formatted file will be saved to. (Default will be to override origin file)
+    The path where the formatted file will be saved to. (Default will be to override origin file).
 
 * **-nv ,--no-validate**
 
-   Add the flag --no-validate when no validation on file is needed.
+   When no validation on file is needed.
 
 ### Examples
 ```
 demisto-sdk format
 ```
 this will check your branch changes and will run only on them.
+<br/><br/>
 
 ```
 demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml
@@ -47,65 +48,45 @@ This will go through the integration file, format it, and save it to a new file
 <br/><br/>
 
 ```
-demisto-sdk format -i Packs/CortexXDR
+demisto-sdk format -i Packs/CortexXDR --from-version 10.10.10
 ```
 this will format all json/yml files under the Pack CortexXDR.
+This will also set the fromversion key in all files to '10.10.10'
+<br/><br/>
 
 ```
 demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
 this will format the given yml file, however validation will not ran as this file is not part of content repo.
+<br/><br/>
 
 ```
 demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml -o Integrations/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
 this will format the given yml file and save it in content repo under the specified directory.
+<br/><br/>
 
-```
-demisto-sdk format -i Packs/CortexXDR -fv 9.9.9
-```
-this will format all yml/json files under Pack CortexXDR and change fromversion key in all to '9.9.9'
 
-```
-demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -fv 9.9.9
-```
-This will go through the integration file, format it:
-if the file had fromversion key before than it will be overwrited to '9.9.9'
-if the file did not have fromversion key before than it will be added and set to '9.9.9'
 
-```
-demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -o Integrations/Pwned-V2/Pwned-V2-formatted-file.yml -fv 9.9.9
-```
-This will go through the integration file, format it:
-if the specified output path already exists in content repo than:
-the output file in content had fromversion key before than it will be overwrited to '9.9.9'
-if the file did not have fromversion key before than it will be added and set to '9.9.9'
+### Setting fromVersion key in different kind of files:
 
-```
-demisto-sdk format
-```
-Setting fromversion key in different kind of files:
-```
-demisto-sdk format
-```
-this will go through all modified files of your branch.
-if the file is a old file which means that it is only modified by your branch:
-    if YAML file:
-        if fromversion key in file than it will not change.
-        if fromversion key is not in file than it will set it to '1.0.0'
-    if JSON file:
-        if fromversion key in file than it will not change.
-        if fromversion key is not in file than it will set it to '5.0.0'
-if the file is not an old file, which means that it is added by you branch:
-    if fromversion key in file than it will not change.
-    if fromversion key is not in file than it will set it to '5.0.0'
-```
-demisto-sdk format -fv 6.0.0
-```
-this will go through all modified files of your branch.
-if the file is a old file which means that it is only modified by your branch and will set fromversion key to '6.0.0'
-```
-demisto-sdk format -i Integrations/Pwned-V2/Pwned-V2.yml -o Integrations/Pwned-V2/Pwned-V2-formatted-file.yml -fv 9.9.9
-```
-this will go through all modified files of your branch.
-if the file is a old file which means that it is only modified by your branch and will set fromversion key to '6.0.0'
+#### Run without fromVersion flag
+
+#### If the source file name already exist in content repo:
+
+**If fromversion key exists already in current file -> fromversion key will not change.**
+
+**If fromversion key does not exist in current file:**
+* If fromversion key exist in old file in content repo -> set fromverion key as in old file
+* If fromversion key does not exist in old file -> set fromversion key to default 1.0.0
+
+####If the source file name does not exist in content repo:
+
+**If fromversion key exists already in current file -> fromversion key will not change.**
+**If fromversion key does not exist in current file -> is not in file than it will set it to '5.0.0'**
+
+
+#### Run with fromVersion flag
+
+**If fromversion exist already in current file -> will be set to requested fromversion.**
+**If fromversion does not exist in current file -> add key and set to requested fromversion.**

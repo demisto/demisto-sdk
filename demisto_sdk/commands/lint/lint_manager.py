@@ -187,7 +187,7 @@ class LintManager:
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}
         changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
-                               content_repo.head.commit.diff('origin/master...', paths=pkgs)}
+                               content_repo.head.commit.diff('...origin/master', paths=pkgs)}
         all_changed = staged_files.union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 

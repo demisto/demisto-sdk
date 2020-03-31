@@ -207,12 +207,14 @@ class Linter:
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             # Get lint files
-            lint_files = set(self._pack_abs_dir.glob(["*.ps1"]))
-
-        test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
-        lint_files = lint_files.difference(test_modules)
-        self._facts["lint_files"] = list(lint_files)
-        for lint_file in lint_files:
+            lint_files = set(self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1"], flags=NEGATE))
+        if 'commonserver' in self._pack_abs_dir.name.lower() and self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+            self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+        else:
+            test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
+            lint_files = lint_files.difference(test_modules)
+            self._facts["lint_files"] = list(lint_files)
+        for lint_file in self._facts["lint_files"]:
             logger.info(f"{log_prompt} - Lint file {lint_file}")
 
         return False
@@ -347,7 +349,7 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(command=build_vulture_command(files=lint_files,
                                                                                  pack_path=self._pack_abs_dir,
-                                                                                 version=py_num),
+                                                                                 py_num=py_num),
                                                    cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finshed exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finshed stdout: {RL if stdout else ''}{stdout}")
@@ -414,7 +416,7 @@ class Linter:
                                 status["pytest_json"]: dict = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                             # Perform powershell analyze
-                            if not no_pwsh_analyze and check == "pwsh_analyze":
+                            if not no_pwsh_analyze and check == "pwsh_analyze" and self._facts["lint_files"]:
                                 exit_code, output = self._docker_run_pwsh_analyze(test_image=image_id,
                                                                                   keep_container=keep_container)
                             # Perform powershell test
@@ -731,7 +733,8 @@ class Linter:
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=build_pwsh_analyze_command(self._facts["lint_files"]),
+                                                               command=build_pwsh_analyze_command(
+                                                                   self._facts["lint_files"][0]),
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])

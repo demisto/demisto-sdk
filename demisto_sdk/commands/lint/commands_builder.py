@@ -184,11 +184,11 @@ def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
     return command
 
 
-def build_pwsh_analyze_command(files: List[Path]) -> str:
+def build_pwsh_analyze_command(file: Path) -> str:
     """ Build command for powershell analyze
 
     Args:
-        files(List[Path]): files to execute lint
+        file(Path): files to execute lint
 
     Returns:
        str: powershell analyze command
@@ -198,8 +198,7 @@ def build_pwsh_analyze_command(files: List[Path]) -> str:
     # Return exit code when finished
     command += " -EnableExit"
     # Lint Files paths
-    files = [file.name for file in files]
-    command += f" -Path {' '.join(files)}"
+    command += f" -Path {file.name}"
 
     return f"pwsh -Command {command}"
 

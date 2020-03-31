@@ -449,20 +449,20 @@ class LintManager:
                                 print('\n')
 
         # Log unit-tests summary
-        print(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}")
-        print(f"Packages: {len(pkgs_status)}")
-        print(f"Packages with unit-tests: {packs_with_tests}")
-        print(f"Packages failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
+        print_v(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}", self._verbose)
+        print_v(f"Packages: {len(pkgs_status)}", self._verbose)
+        print_v(f"Packages with unit-tests: {Colors.Fg.green}{packs_with_tests}{Colors.reset}", self._verbose)
+        print_v(f"Packages failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}", self._verbose)
         if lint_status['fail_packs_pytest']:
-            print(f"{Colors.Fg.red}Failed packages:")
+            print_v(f"Failed packages:{Colors.Fg.red}", self._verbose)
             preferred_width = 100
             fail_pack_indent = 3
             fail_pack_prefix = " " * fail_pack_indent + "- "
             wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
                                                      subsequent_indent=' ' * len(fail_pack_prefix))
             for fail_pack in lint_status["fail_packs_pytest"]:
-                print(wrapper_fail_pack.fill(fail_pack))
-        print(f'{Colors.reset}')
+                print_v(wrapper_fail_pack.fill(fail_pack), self._verbose)
+        print_v(f'{Colors.reset}', self._verbose)
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):
@@ -490,9 +490,9 @@ class LintManager:
         # Log failed images creation
         if EXIT_CODES["image"] & return_exit_code:
             sentence = f" Image creation errors "
-            print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
-            print(f"{Colors.Fg.cyan}{sentence}{Colors.reset}")
-            print(f"{Colors.Fg.cyan}{'#' * len(sentence)}{Colors.reset}")
+            print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
+            print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
+            print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
             for fail_pack in lint_status["fail_packs_image"]:
                 print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
                 for image in pkgs_status[fail_pack]["images"]:

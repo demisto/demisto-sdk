@@ -462,8 +462,6 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""
-        docker_client = docker.APIClient()
-        print(docker_client.ping())
         # Get requirements file for image
         requirements = []
         if 2 < docker_base_image[1] < 3:
@@ -498,15 +496,9 @@ class Linter:
                 with io.BytesIO() as f:
                     f.write(dockerfile.encode('utf-8'))
                     f.seek(0)
-                    streamer = docker_client.build(fileobj=f,
-                                                   tag=test_image_name,
-                                                   forcerm=True,
-                                                   decode=True)
-                    for chunk in streamer:
-                        if 'stream' in chunk:
-                            for line in chunk['stream'].splitlines():
-                                if 'sha256' not in line:
-                                    logger.info(f"\t{line.strip()}")
+                    self._docker_client.images.build(fileobj=f,
+                                                     tag=test_image_name,
+                                                     forcerm=True)
 
                     if self._docker_hub_login:
                         for trial in range(2):

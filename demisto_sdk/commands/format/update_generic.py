@@ -80,22 +80,34 @@ class BaseUpdate:
         Args:
             from_version: The specific from_version value.
         """
-        # if output path is in content repo already than check fromversion in it, otherwise check current file
+        # If there is no existing file in content repo
         if not self.old_file:
             print(F'Setting fromVersion field')
+            # If current file does not have fromversion key
             if self.from_version_key not in self.data:
+
+                # If user entered specific from version key to be set
                 if from_version:
                     self.data[self.from_version_key] = from_version
+
+                # Otherwise add fromversion key to current file and set to default 5.0.0
                 else:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_FROMVERSION
 
-        # for modified files, set preferred fromVersion field, given or default
+        # If there is an existing file in content repo
         else:
+            # If current file does not have fromversion key
             if self.from_version_key not in self.data:
+
+                # If user entered specific from version key to be set
                 if from_version:
                     self.data[self.from_version_key] = from_version
+
+                # If existing file already have a fromversion key, copy its value to current file
                 elif self.from_version_key in self.old_file:
                     self.data[self.from_version_key] = self.old_file[self.from_version_key]
+
+                # Otherwise add fromversion key to current file and set to default 1.0.0
                 else:
                     self.data[self.from_version_key] = OLD_FILE_DEFAULT_1_FROMVERSION
 

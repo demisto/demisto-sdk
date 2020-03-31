@@ -8,9 +8,7 @@ This command is used in order to keep your new or modified files with Demisto's 
 when developing a new Integration/Script/Playbook/IncidentField/IncidentType/IndicatorField/IndicatorType/Layout/Dashboard,
 and you want to make sure you are keeping up with our standards.
 When done formatting, the **validate** command will run, to let you know of things the formatter could not fix.
-The main purpose of the command is to:
-1. Delete keys in your file that should not be in it , according to file schema.
-2. Update default values to specific keys as in demisto standards.
+
 
 ### Arguments
 * **-i PATH_TO_FILE or PATH_TO_DIRECTORY, --input PATH_TO_FILE or PATH_TO_DIRECTORY**
@@ -20,6 +18,14 @@ The main purpose of the command is to:
 * **-o DESIRED_OUTPUT_PATH, --output DESIRED_OUTPUT_PATH**
 
     The path where the formatted file will be saved to. (Default will be to override origin file)
+
+* **-fv DESIRED_FROM_VERSION_KEY, --from-version DESIRED_FROM_VERSION_KEY**
+
+    The path where the formatted file will be saved to. (Default will be to override origin file)
+
+* **-nv ,--no-validate**
+
+   Add the flag --no-validate when no validation on file is needed.
 
 ### Examples
 ```

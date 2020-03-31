@@ -60,6 +60,13 @@ class BaseUpdateYML(BaseUpdate):
                 self.data,
                 f)
 
+    def copy_tests_from_old_file(self):
+        """Copy the tests key from old file if exists.
+        """
+        if self.old_file:
+            if not self.data.get('tests', '') and self.old_file.get('tests', ''):
+                self.data['tests'] = self.old_file['tests']
+
     def update_yml(self):
         """Manager function for the generic YML updates."""
         print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
@@ -69,5 +76,6 @@ class BaseUpdateYML(BaseUpdate):
         self.remove_unnecessary_keys()
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
+        self.copy_tests_from_old_file()
 
         print_color(F'=======Finished updates for file: {self.output_file}=======', LOG_COLORS.YELLOW)

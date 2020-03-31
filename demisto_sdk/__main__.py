@@ -87,8 +87,13 @@ def main(config, version):
 )
 @click.option(
     '--no-common-server',
-    help="Don't add an import for CommonServerPython."
-         "If not specified will import unless this is CommonServerPython",
+    help="Don't add an import for CommonServerPython.",
+    is_flag=True,
+    show_default=True
+)
+@click.option(
+    '--no-auto-create-dir',
+    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts.",
     is_flag=True,
     show_default=True
 )

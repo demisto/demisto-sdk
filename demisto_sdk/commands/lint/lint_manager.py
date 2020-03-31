@@ -41,6 +41,8 @@ class LintManager:
         self._verbose = verbose
         # Set logging level and file handler if required
         global logger
+        if quiet:
+            verbose = 0
         logger = logging_setup(verbose=verbose,
                                quiet=quiet,
                                log_path=log_path)
@@ -70,7 +72,7 @@ class LintManager:
             "test_modules": None,
             "docker_engine": True
         }
-        # Check env requirements satisfied
+        # Check env requirements satisfied - bootstrap in use
         validate_env()
         # Get content repo object
         try:

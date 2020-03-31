@@ -14,8 +14,6 @@ def logging_setup(verbose: int, quiet: bool, log_path: str) -> logging.Logger:
     Returns:
         logging.Logger: logger object
     """
-    if quiet:
-        verbose = 0
     logger: logging.Logger = logging.getLogger('demisto-sdk')
     logger.setLevel(logging.DEBUG)
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)

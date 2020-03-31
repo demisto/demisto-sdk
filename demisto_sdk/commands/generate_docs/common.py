@@ -1,6 +1,7 @@
+import json
 import os.path
 import re
-import json
+import html
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 from demisto_sdk.commands.run_cmd.runner import Runner
 
@@ -41,6 +42,26 @@ def generate_section(title, data=''):
     ]
     if data:
         section.extend(add_lines(data))
+    return section
+
+
+def generate_numbered_section(title: str, data: str = ''):
+    """
+    Generate numbered section in markdown format.
+    :param title: The section title.
+    :param data: The section text.
+    :return: array of strings contains the section lines in markdown format.
+    """
+    section = [
+        '## {}'.format(title)
+    ]
+
+    list_data = data.split('* ')
+    if list_data:
+        for i, item in enumerate(list_data):
+            if item:
+                section.append(f'{i}. {item.rstrip()}')
+
     return section
 
 
@@ -104,7 +125,7 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
     for item in data:
         tmp_item = '|'
         for key in item:
-            tmp_item += f" {item.get(key,'')} |"
+            tmp_item += f" {item.get(key, '')} |"
         section.append(tmp_item)
 
     section.append('')
@@ -116,7 +137,7 @@ def add_lines(line):
     return output if output else [line]
 
 
-def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
+def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
     """
        Escape any chars that might break a markdown string
 
@@ -129,13 +150,20 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
        :type escape_multiline: ``bool``
        :param escape_multiline: Whether convert line-ending characters (optional)
 
+       :type escape_html: ``bool``
+       :param escape_multiline: Whether to escape html (<,>,&) (default: True). Set to false if the string contains
+            html tags. Otherwise this should be true to support MDX complaint docs.
+
        :return: A modified string
        :rtype: ``str``
     """
+    if escape_html:
+        st = html.escape(st)
+
     if escape_multiline:
-        st = st.replace('\r\n', '<br>')  # Windows
-        st = st.replace('\r', '<br>')  # old Mac
-        st = st.replace('\n', '<br>')  # Unix
+        st = st.replace('\r\n', '<br/>')  # Windows
+        st = st.replace('\r', '<br/>')  # old Mac
+        st = st.replace('\n', '<br/>')  # Unix
 
     if minimal_escaping:
         for c in '|':
@@ -146,13 +174,13 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False):
     return st
 
 
-def execute_command(command_example):
+def execute_command(command_example, insecure: bool):
     errors = []
     context = {}
     md_example = ''
     cmd = command_example
     try:
-        runner = Runner('')
+        runner = Runner('', insecure=insecure)
         res, raw_context = runner.execute_command(command_example)
         if not res:
             raise RuntimeError('something went wrong with your command: {}'.format(command_example))
@@ -206,7 +234,7 @@ def is_error(execute_command_result):
     return execute_command_result.type == entryTypes['error']
 
 
-def build_example_dict(command_examples):
+def build_example_dict(command_examples: list, insecure: bool):
     """
     gets an array of command examples, run them one by one and return a map of
         {base command -> (example command, markdown, outputs)}
@@ -215,7 +243,7 @@ def build_example_dict(command_examples):
     examples = {}  # type: dict
     errors = []  # type: list
     for example in command_examples:
-        cmd, md_example, context_example, cmd_errors = execute_command(example)
+        cmd, md_example, context_example, cmd_errors = execute_command(example, insecure)
         if 'playbookQuery' in context_example:
             del context_example['playbookQuery']
 

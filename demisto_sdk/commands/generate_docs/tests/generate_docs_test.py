@@ -1,14 +1,24 @@
 import os
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, get_json
 from demisto_sdk.commands.common.git_tools import git_path
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-FAKE_ID_SET = os.path.join(FILES_PATH, 'fake_id_set.json')
+FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 
 
 # common tests
+
+
+def test_stringEscapeMD():
+    from demisto_sdk.commands.generate_docs.common import stringEscapeMD
+    res = stringEscapeMD('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
+    assert '<' not in res
+    assert '>' not in res
+    res = stringEscapeMD("new line test \n", escape_multiline=True)
+    assert '\n' not in res
+    assert '<br/>' in res
 
 
 def test_generate_list_section_empty():
@@ -18,6 +28,17 @@ def test_generate_list_section_empty():
 
     expected_section = [
         '## Inputs', 'No inputs found.', '']
+
+    assert section == expected_section
+
+
+def test_generate_numbered_section():
+    from demisto_sdk.commands.generate_docs.common import generate_numbered_section
+
+    section = generate_numbered_section('Use Cases', '* Drink coffee. * Write code.')
+
+    expected_section = [
+        '## Use Cases', '1. Drink coffee.', '2. Write code.']
 
     assert section == expected_section
 
@@ -196,7 +217,7 @@ def test_generate_commands_section():
         }
     }
 
-    section, errors = generate_commands_section(yml_data, {})
+    section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={})
 
     expected_section = [
         '## Commands',
@@ -204,6 +225,36 @@ def test_generate_commands_section():
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
         '**FILL IN REQUIRED PERMISSIONS HERE**', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
+        'There are no input arguments for this command.', '', '##### Context Output', '',
+        'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
+        '##### Human Readable Output', '', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+def test_generate_commands_with_permissions_section():
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
+
+    yml_data = {
+        'script': {
+            'commands': [
+                {'deprecated': True,
+                 'name': 'deprecated-cmd'},
+                {'deprecated': False,
+                 'name': 'non-deprecated-cmd'}
+            ]
+        }
+    }
+
+    section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
+                                                'non-deprecated-cmd': 'SUPERUSER'})
+
+    expected_section = [
+        '## Commands',
+        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+        '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
+        'SUPERUSER', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
         'There are no input arguments for this command.', '', '##### Context Output', '',
         'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
         '##### Human Readable Output', '', '']

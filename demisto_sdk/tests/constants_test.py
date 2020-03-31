@@ -71,3 +71,5 @@ INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-c
 EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-invalid-equal.yml"
 EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION = f"Playbooks/playbook-invalid-equal.yml"
 EQUAL_VAL_PATH = f'Playbooks'
+INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid-no-hidden-params.yml"
+VALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid-no-hidden-params.yml"

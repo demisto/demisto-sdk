@@ -18,6 +18,8 @@ mapping:
   description:
     type: str
     required: true
+  hidden:
+    type: bool
   starttaskid:
     type: str
     required: true
@@ -71,6 +73,9 @@ mapping:
             type: map
             allowempty: True
           sla:
+            type: map
+            allowempty: True
+          slareminder:
             type: map
             allowempty: True
           quietmode:
@@ -156,6 +161,8 @@ mapping:
                 allowempty: True
               exitCondition:
                 type: str
+              max:
+                type: int
               wait:
                 type: int
           conditions:

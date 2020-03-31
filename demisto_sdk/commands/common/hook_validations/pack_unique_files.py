@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (PACKS_WHITELIST_FILE_NAME, PA
                                                    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
                                                    PACK_METADATA_FIELDS, PACK_METADATA_DEPENDENCIES,
                                                    PACK_METADATA_PRICE, PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS,
-                                                   PACK_METADATA_CATEGORIES, PACK_METADATA_USE_CASES)
+                                                   PACK_METADATA_CATEGORIES, PACK_METADATA_USE_CASES, API_MODULES_PACK)
 
 
 class PackUniqueFilesValidator:
@@ -133,6 +133,9 @@ class PackUniqueFilesValidator:
                 self._add_error('Pack metadata is empty.')
                 return False
             metadata = json.loads(pack_meta_file_content)
+            if not isinstance(metadata, dict):
+                self._add_error('Pack metadata should be a dictionary.')
+                return False
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
                 self._add_error('Missing fields in the pack metadata: {}'.format(missing_fields))
@@ -173,6 +176,9 @@ class PackUniqueFilesValidator:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
-        self.validate_pack_meta_file()
         self.validate_readme_file()
+        # We don't want to check the metadata file for this pack
+        if API_MODULES_PACK not in self.pack:
+            self.validate_pack_meta_file()
+
         return self.get_errors()

@@ -24,6 +24,8 @@ from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import 
 from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -46,29 +48,23 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
     '-h', '--help'
 )
 @click.option(
-    '-d', '--env-dir', help='Specify a working directory.'
-)
-@click.option(
     '-v', '--version', help='Get the demisto-sdk version.',
     is_flag=True, default=False, show_default=True
 )
 @pass_config
-def main(config, version, env_dir):
+def main(config, version):
     config.configuration = Configuration()
     cur_version = get_distribution('demisto-sdk').version
     last_release = get_last_remote_release_version()
     if last_release and cur_version != last_release:
         print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
-                      f'You should consider upgrading via "pip install --upgrade demisto-sdk" command.')
+                      f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
     if version:
         version = get_distribution('demisto-sdk').version
         print(version)
 
-    if env_dir:
-        config.configuration.env_dir = env_dir
 
-
-# ====================== extract ====================== #
+# ====================== split-yml ====================== #
 @main.command(name="split-yml",
               short_help="Split the code, image and description files from a Demisto integration or script yaml file "
                          " to multiple files(To a package format - "
@@ -91,8 +87,13 @@ def main(config, version, env_dir):
 )
 @click.option(
     '--no-common-server',
-    help="Don't add an import for CommonServerPython."
-         "If not specified will import unless this is CommonServerPython",
+    help="Don't add an import for CommonServerPython.",
+    is_flag=True,
+    show_default=True
+)
+@click.option(
+    '--no-auto-create-dir',
+    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts.",
     is_flag=True,
     show_default=True
 )
@@ -107,8 +108,10 @@ def extract(config, **kwargs):
 
 
 # ====================== extract-code ====================== #
-@main.command(name="extract-code",
-              short_help="Extract code from a Demisto integration or script yaml file.")
+@main.command(
+    name="extract-code",
+    hidden=True,
+    short_help="Extract code from a Demisto integration or script yaml file.")
 @click.help_option(
     '-h', '--help'
 )
@@ -169,7 +172,6 @@ def unify(**kwargs):
 
 
 # ====================== validate ====================== #
-# TODO: add a configuration for conf.json and id_set.json
 @main.command(name="validate",
               short_help='Validate your content files.')
 @click.help_option(
@@ -178,9 +180,6 @@ def unify(**kwargs):
 @click.option(
     '-j', '--conf-json', is_flag=True,
     default=False, show_default=True, help='Validate the conf.json file.')
-@click.option(
-    '-i', '--id-set', is_flag=True,
-    default=False, show_default=True, help='Create the id_set.json file.')
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
@@ -215,11 +214,14 @@ def validate(config, **kwargs):
         return validator.run()
 
 
-# ====================== create ====================== #
-@main.command(name="create-content-artifacts",
-              short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-                         'upload to your server in order to upload a whole new content version to your Demisto '
-                         'instance.')
+# ====================== create-content-artifacts ====================== #
+@main.command(
+    name="create-content-artifacts",
+    hidden=True,
+    short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
+    'upload to your server in order to upload a whole new content version to your Demisto '
+    'instance.',
+)
 @click.help_option(
     '-h', '--help'
 )
@@ -335,6 +337,7 @@ def format_yml(use_git=False, file_type=None, **kwargs):
     return format_manager(use_git, file_type, **kwargs)
 
 
+# ====================== upload ====================== #
 @main.command(name="upload",
               short_help="Upload integration to Demisto instance. DEMISTO_BASE_URL environment variable should contain"
                          " the Demisto server base URL. DEMISTO_API_KEY environment variable should contain a valid "
@@ -353,6 +356,7 @@ def upload(**kwargs):
     return uploader.upload()
 
 
+# ====================== run ====================== #
 @main.command(name="run",
               short_help="Run integration command on remote Demisto instance in the playground. DEMISTO_BASE_URL "
                          "environment variable should contain the Demisto base URL. DEMISTO_API_KEY environment "
@@ -412,6 +416,7 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
+# ====================== json-to-outputs ====================== #
 @main.command(name="json-to-outputs",
               short_help='''Demisto integrations/scripts have a YAML file that defines them.
 Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -487,12 +492,19 @@ def generate_test_playbook(**kwargs):
 )
 @click.option(
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
-    "directory.")
+                           "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
-@click.option("--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    "--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    '--demisto_mock', is_flag=True,
+    help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
+@click.option(
+    '--common_server', is_flag=True,
+    help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
@@ -509,21 +521,37 @@ def init(**kwargs):
     "-i", "--input", help="Path of the yml file.", required=True)
 @click.option(
     "-o", "--output", help="The output dir to write the documentation file into,"
-                           " documentation file name is README.md.", required=True)
+                           " documentation file name is README.md. If not specified, will be in the yml dir.",
+    required=False)
 @click.option(
-    "-t", "--file_type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file.", required=False)
+    "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
+    required=False)
 @click.option(
-    "-e", "--examples", help="For integration - Path for file containing command or script examples."
+    "-e", "--examples", help="Path for file containing command or script examples."
                              " Each Command should be in a separate line."
                              " For script - the script example surrounded by double quotes.")
 @click.option(
-    "-id", "--id_set", help="Path of updated id_set.json file.", required=False)
+    "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
+    required=True, default='none')
+@click.option(
+    "-cp", "--command_permissions", help="Path for file containing commands permissions"
+                                         " Each command permissions should be in a separate line."
+                                         " (i.e. '!command-name Administrator READ-WRITE')", required=False)
+@click.option(
+    "-l", "--limitations", help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')", required=False)
+@click.option(
+    "--insecure", help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
-def generate_doc(file_type, **kwargs):
-    input_path = kwargs['input']
-    output_path = kwargs['output']
+def generate_doc(**kwargs):
+    input_path = kwargs.get('input')
+    output_path = kwargs.get('output')
+    examples = kwargs.get('examples')
+    permissions = kwargs.get('permissions')
+    limitations = kwargs.get('limitations')
+    insecure = kwargs.get('insecure')
+    verbose = kwargs.get('verbose')
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -538,24 +566,64 @@ def generate_doc(file_type, **kwargs):
         print_error(F'Output directory {output_path} was not found.')
         return 1
 
-    if not file_type:
-        file_type = find_type(kwargs.get('input', ''))
+    file_type = find_type(kwargs.get('input', ''))
+    if file_type not in ["integration", "script", "playbook"]:
+        print_error(F'File is not an Integration, Script or a Playbook.')
+        return 1
 
-    print(f'Start generate {file_type} documentation...')
+    print(f'Start generating {file_type} documentation...')
     if file_type == 'integration':
-        return generate_integration_doc(**kwargs)
+        use_cases = kwargs.get('use_cases')
+        command_permissions = kwargs.get('command_permissions')
+        return generate_integration_doc(input=input_path, output=output_path, use_cases=use_cases,
+                                        examples=examples, permissions=permissions,
+                                        command_permissions=command_permissions, limitations=limitations,
+                                        insecure=insecure, verbose=verbose)
     elif file_type == 'script':
-        return generate_script_doc(**kwargs)
+        return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
+                                   limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == 'playbook':
-        return generate_playbook_doc(**kwargs)
+        return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
+                                     limitations=limitations, verbose=verbose)
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1
 
 
+# ====================== create-id-set ====================== #
+@main.command(name="create-id-set",
+              hidden=True,
+              short_help='''Create the content dependency tree by ids.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-o", "--output", help="Output file path, the default is the Tests directory.", required=False)
+def id_set_command(**kwargs):
+    id_set_creator = IDSetCreator(**kwargs)
+    id_set_creator.create_id_set()
+
+
+# ====================== find-dependencies ====================== #
+@main.command(name="find-dependencies",
+              short_help='''Find pack dependencies and update pack metadata.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
+@click.option(
+    "-i", "--id_set_path", help="Path to id set json file.", required=False)
+def find_dependencies_command(**kwargs):
+    pack_name = kwargs.get('pack_folder_name', '')
+    id_set_path = kwargs.get('id_set_path')
+    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
 
 # todo: add download from demisto command
 

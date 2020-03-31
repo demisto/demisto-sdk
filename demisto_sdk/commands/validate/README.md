@@ -2,6 +2,16 @@
 
 Makes sure your content repository files are in order and have valid yml file scheme.
 
+**Notes**
+In order to run the README validator:
+- Node should be installed on you machine
+- The modules '@mdx-js/mdx', 'fs-extra', 'commander' should be installed in node-modules folder.
+    If not installed, the validator will print a warning with the relevant module that is missing.
+    please install it using "npm install *missing_module_name*"
+- 'DEMISTO_README_VALIDATION' environment variable should be set to True.
+    To set the environment variables, run the following shell commands:
+    export DEMISTO_README_VALIDATION=True
+
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.
 This is used in our validation process both locally and in Circle CI.

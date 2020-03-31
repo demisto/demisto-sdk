@@ -27,7 +27,7 @@ from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_P
     INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, \
     VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_ID_PATH, \
     INVALID_PLAYBOOK_CONDITION_1, INVALID_PLAYBOOK_CONDITION_2, VALID_PLAYBOOK_CONDITION, VALID_INTEGRATION_ID_PATH, \
-    INVALID_INTEGRATION_ID_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT
+    INVALID_INTEGRATION_ID_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT, VALID_NO_HIDDEN_PARAMS, INVALID_NO_HIDDEN_PARAMS
 
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
@@ -233,3 +233,15 @@ class TestValidators:
             assert validator.is_root_connected_to_all_tasks() is answer
         finally:
             os.remove(PLAYBOOK_TARGET)
+
+    IS_ALL_PARAMS_NOT_HIDDEN_INPUTS = [
+        (VALID_NO_HIDDEN_PARAMS, True),
+        (INVALID_NO_HIDDEN_PARAMS, False),
+    ]
+
+    @pytest.mark.parametrize("source, answer", IS_ALL_PARAMS_NOT_HIDDEN_INPUTS)
+    def test_is_all_params_not_hidden(self, source, answer):
+        # type: (str, str) -> None
+        structure = StructureValidator(source)
+        validator = IntegrationValidator(structure)
+        assert validator.is_all_params_not_hidden() is answer

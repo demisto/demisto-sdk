@@ -1,7 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/demisto-sdk.svg)](https://badge.fury.io/py/demisto-sdk)
 [![CircleCI](https://circleci.com/gh/demisto/demisto-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/demisto/demisto-sdk/tree/master)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/ppwwyyxx/OpenPano.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/demisto/demisto-sdk/context:python)
-
+[![Coverage Status](https://coveralls.io/repos/github/demisto/demisto-sdk/badge.svg)](https://coveralls.io/github/demisto/demisto-sdk)
 
 # Demisto SDK
 
@@ -12,9 +12,9 @@ The library uses python 3.7+.
 
 ### Installation
 
-1. **Install** - `pip install demisto-sdk`
+1. **Install** - `pip3 install demisto-sdk`
 
-2. **Upgrade** - `pip install --upgrade demisto-sdk`
+2. **Upgrade** - `pip3 install --upgrade demisto-sdk`
 
 3. **Demisto server demisto-sdk integration** - In order that demisto-sdk and Demisto server communicate, perfrom the following steps:
 
@@ -65,8 +65,10 @@ Supported commands:
 9. [Run](#run)
 10. [Run-playbook](#run-playbook)
 11. [Upload](#upload)
-12. [Generate-test-playbook](#generate-test-playbook)
-13. [Json-to-outputs](#json-to-outputs)
+12. [Generate-docs](#generate-docs)
+13. [Generate-test-playbook](#generate-test-playbook)
+14. [Json-to-outputs](#json-to-outputs)
+15. [Create-id-set](#create-id-set)
 
 ---
 
@@ -82,7 +84,7 @@ Create a pack, integration or script template. If `--integration` and `--script`
    demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/init/init_command.md)
+For detailed command usage press [here](demisto_sdk/commands/init/README.md)
 
 ---
 
@@ -104,7 +106,7 @@ Makes sure your content repository files are in order and have valid yml file sc
    demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/validate/validate_command.md)
+For detailed command usage press [here](demisto_sdk/commands/validate/README.md)
 
 ---
 
@@ -121,7 +123,7 @@ pylint and pytest will run within all the docker images of an integration/script
    demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/lint/lint_command.md)
+For detailed command usage press [here](demisto_sdk/commands/lint/README.md)
 
 ---
 
@@ -137,7 +139,7 @@ Run Secrets validator to catch sensitive data before exposing your code to publi
    demisto-sdk secrets
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/secrets/secrets_command.md)
+For detailed command usage press [here](demisto_sdk/commands/secrets/README.md)
 
 ---
 
@@ -154,7 +156,7 @@ Unify the code, image and description files to a single Demisto yaml file.
    demisto-sdk unify -i Integrations/MyInt -o Integrations
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/unify/unify_command.md)
+For detailed command usage press [here](demisto_sdk/commands/unify/README.md)
 
 ---
 
@@ -176,7 +178,7 @@ Extract code, image and description files from a demisto integration or script y
    demisto-sdk split-yml -i Scripts/script-MyInt.yml -o Scripts/MyInt
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/split_yml/split_yml_command.md)
+For detailed command usage press [here](demisto_sdk/commands/split_yml/README.md)
 
 ---
 
@@ -192,7 +194,7 @@ Create content artifacts.
    demisto-sdk create -a .
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/create_artifacts/create_command.md)
+For detailed command usage press [here](demisto_sdk/commands/create_artifacts/README.md)
 
 ---
 
@@ -208,7 +210,7 @@ Format your integration/script/playbook yml file according to Demisto's standard
    demisto-sdk format -t integration -s Integrations/Pwned-V2/Pwned-V2.yml
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/format/format_command.md)
+For detailed command usage press [here](demisto_sdk/commands/format/README.md)
 
 ---
 
@@ -226,7 +228,7 @@ In order to run the command, `DEMISTO_BASE_URL` environment variable should cont
    demisto-sdk run -q '!gct-translate-text text="ciao" target="iw"
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/run_cmd/run_command.md)
+For detailed command usage press [here](demisto_sdk/commands/run_cmd/README.md)
 
 ---
 
@@ -244,7 +246,7 @@ You can either specify a URL as an environment variable named: DEMISTO_BASE_URL,
    DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'playbook_name' -u 'https://demisto.local'
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/run_playbook/run_playbook_command.md)
+For detailed command usage press [here](demisto_sdk/commands/run_playbook/README.md)
 
 ---
 
@@ -299,6 +301,17 @@ This will generate documentation file to Tanium V2 integration in /Users/Documen
 `demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Scripts/script-PrintErrorEntry.yml -id /demisto/content/Tests/id_set.json -e "!PrintErrorEntry message=Hi"`
 This will generate documentation file to PrintErrorEntry script in /Users/Documentations/README.md. id_set.json should be updated to gets all the integration that uses this script.
 
+## create-id-set
+Create the content dependency tree by ids.
+
+**Arguments**:
+* **-o, --output**
+The path of the directory in which you want to save the created id set.
+
+**Examples**:
+`demisto-sdk create-id-set -o .`
+This will create the id set in the current directory.
+
 ## In the code
 You can import the SDK core class in your python code as follows:
 
@@ -338,7 +351,7 @@ We build for python 3.7 and 3.8. We use [tox](https://github.com/tox-dev/tox) fo
 
 4) Install `tox`:
     ```
-    pip install tox
+    pip3 install tox
     ```
     Then setup dev virtual envs for python 3 (will also install all necessary requirements):
     ```
@@ -361,7 +374,7 @@ Generate Test Playbook from integration/script yml
    demisto-sdk generate-test-playbook -i Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml -n TestXDRPlaybook -t integration -o TestPlaybooks`
    ```
 
-For detailed command usage press [here](demisto_sdk/commands/generate_test_playbook/generate_test_playbook_command.md)
+For detailed command usage press [here](demisto_sdk/commands/generate_test_playbook/README.md)
 
 ---
 
@@ -403,7 +416,7 @@ Convert JSON format to demisto entry context yaml format.
      type: Date
    ````
 
-For detailed command usage press [here](demisto_sdk/commands/json_to_outputs/json_to_outputs_command.md)
+For detailed command usage press [here](demisto_sdk/commands/json_to_outputs/README.md)
 
 ---
 
@@ -414,7 +427,7 @@ In the Demisto-SDK repository while on the git branch you want to activate and r
  ```
 or this command to use python 3.8:
 
-For detailed command usage press [here](demisto_sdk/commands/upload/upload_command.md)
+For detailed command usage press [here](demisto_sdk/commands/upload/README.md)
 
 ---
 

@@ -313,6 +313,7 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
+        self.report_summary(lint_status=lint_status)
 
     @staticmethod
     def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
@@ -399,16 +400,20 @@ class LintManager:
                                                    subsequent_indent=' ' * len(error_first_prefix))
         wrapper_sec_error = textwrap.TextWrapper(initial_indent=error_sec_prefix, width=preferred_width,
                                                  subsequent_indent=' ' * len(error_sec_prefix))
-        # Log unit-tests
-        sentence = " Unit Tests "
-        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
-        print(f"{sentence}")
-        print(f"{'#' * len(sentence)}{Colors.reset}")
+
         # Log passed unit-tests
+        headline_printed = False
         passed_printed = False
         for pkg, status in pkgs_status.items():
             if status.get("images"):
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
+                    if not headline_printed:
+                        # Log unit-tests
+                        sentence = " Unit Tests "
+                        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+                        print(f"{sentence}")
+                        print(f"{'#' * len(sentence)}{Colors.reset}")
+                        headline_printed = True
                     packs_with_tests += 1
                     if not passed_printed:
                         print_v(f"\n{Colors.Fg.green}Passed Unit-tests:{Colors.reset}", log_verbose=self._verbose)
@@ -428,6 +433,12 @@ class LintManager:
 
         # Log failed unit-tests
         if EXIT_CODES["pytest"] & return_exit_code:
+            if not headline_printed:
+                # Log unit-tests
+                sentence = " Unit Tests "
+                print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+                print(f"{sentence}")
+                print(f"{'#' * len(sentence)}{Colors.reset}")
             print(f"\n{Colors.Fg.red}Failed Unit-tests:{Colors.reset}")
             for fail_pack in lint_status["fail_packs_pytest"]:
                 print(wrapper_pack.fill(f"{Colors.Fg.red}{fail_pack}{Colors.reset}"))
@@ -447,22 +458,6 @@ class LintManager:
                                     else:
                                         print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
                                 print('\n')
-
-        # Log unit-tests summary
-        print(f"\n{Colors.Fg.orange}Unit-tests summary:{Colors.reset}")
-        print(f"Packages: {len(pkgs_status)}")
-        print(f"Packages with unit-tests: {Colors.Fg.green}{packs_with_tests}{Colors.reset}")
-        print(f"Packages failed: {Colors.Fg.red}{len(lint_status['fail_packs_pytest'])}{Colors.reset}")
-        if lint_status['fail_packs_pytest']:
-            print(f"Failed packages:{Colors.Fg.red}")
-            preferred_width = 100
-            fail_pack_indent = 3
-            fail_pack_prefix = " " * fail_pack_indent + "- "
-            wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
-                                                     subsequent_indent=' ' * len(fail_pack_prefix))
-            for fail_pack in lint_status["fail_packs_pytest"]:
-                print(wrapper_fail_pack.fill(fail_pack))
-        print(f'{Colors.reset}')
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):
@@ -498,6 +493,33 @@ class LintManager:
                 for image in pkgs_status[fail_pack]["images"]:
                     print(wrapper_image.fill(image["image"]))
                     print(wrapper_error.fill(image["image_errors"]))
+
+    def report_summary(self, lint_status: dict):
+        """ Log failed image creation if occured
+
+        Args:
+            lint_status(dict): Overall lint status
+     """
+        preferred_width = 100
+        fail_pack_indent = 3
+        fail_pack_prefix = " " * fail_pack_indent + "- "
+        wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
+                                                 subsequent_indent=' ' * len(fail_pack_prefix))
+        # intersection of all failed packages
+        failed = set()
+        for packs in lint_status.values():
+            failed = failed.union(packs)
+        # Log unit-tests summary
+        sentence = " Summary "
+        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+        print(f"{sentence}")
+        print(f"{'#' * len(sentence)}{Colors.reset}")
+        print(f"Packages: {len(self._pkgs)}")
+        print(f"Packages PASS: {Colors.Fg.green}{len(self._pkgs) - len(failed)}{Colors.reset}")
+        print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
+        print(f"Failed packages:")
+        for fail_pack in failed:
+            print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod
     def _create_report(pkgs_status: dict, path: str):

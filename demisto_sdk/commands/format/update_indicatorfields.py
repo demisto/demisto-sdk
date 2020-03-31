@@ -1,12 +1,12 @@
 from typing import Tuple
 
+from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
 from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
-from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 
 
-class ScriptYMLFormat(BaseUpdateYML):
-    """ScriptYMLFormat class is designed to update script YML file according to Demisto's convention.
+class IndicatorFieldJSONFormat(BaseUpdateJSON):
+    """IndicatorFieldJSONFormat class is designed to update indicator fields JSON file according to Demisto's convention.
 
         Attributes:
             input (str): the path to the file we are updating at the moment.
@@ -18,8 +18,9 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            super().update_yml()
-            self.save_yml_to_destination_file()
+            super().update_json()
+            super().set_default_values_as_needed()
+            super().save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE
@@ -30,4 +31,4 @@ class ScriptYMLFormat(BaseUpdateYML):
         if format:
             return format, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(ScriptValidator)
+            return format, self.initiate_file_validator(IncidentFieldValidator)

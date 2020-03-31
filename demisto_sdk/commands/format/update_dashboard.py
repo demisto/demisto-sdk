@@ -1,14 +1,14 @@
 from typing import Tuple
 
 from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
-from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 
 
-class ScriptYMLFormat(BaseUpdateYML):
-    """ScriptYMLFormat class is designed to update script YML file according to Demisto's convention.
+class DashboardJSONFormat(BaseUpdateJSON):
+    """DashboardJSONFormat class is designed to update dashboard JSON file according to Demisto's convention.
 
-        Attributes:
+       Attributes:
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
     """
@@ -18,11 +18,18 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            super().update_yml()
-            self.save_yml_to_destination_file()
+            super().update_json()
+            self.default_description()
+            super().save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE
+
+    def default_description(self):
+        if not self.data.get("description", ""):
+            self.data["description"] = ""
+        if not self.data.get("isPredefined", ""):
+            self.data["isPredefined"] = True
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
@@ -30,4 +37,4 @@ class ScriptYMLFormat(BaseUpdateYML):
         if format:
             return format, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(ScriptValidator)
+            return format, self.initiate_file_validator(DashboardValidator)

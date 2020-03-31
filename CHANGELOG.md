@@ -7,6 +7,12 @@
 * Fixed an issue in *generate-docs* where Playbooks and Scripts documentation failed.
 * Added a graceful error message when executing the *run" command with a misspelled command.
 * Added more informative errors upon failures of the *upload* command.
+* format command:
+    * Added format for json files: IncidentField, IncidentType, IndicatorField, IndicatorType, Layout, Dashboard.
+    * Added the *-fv --from-version*, *-nv --no-validation* arguments.
+    * Removed the *-t yml_type* argument, the file type will be inferred.
+    * Removed the *-g use_git* argument, running format without arguments will run automatically on git diff.
+* Fixed an issue in loading playbooks with '=' character.
 
 ### 0.4.8
 * Added the *max* field to the Playbook schema, allowing to define it in tasks loop.

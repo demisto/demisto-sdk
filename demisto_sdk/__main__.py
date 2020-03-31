@@ -25,6 +25,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import generate
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -317,23 +318,21 @@ def lint(config, dir, **kwargs):
 
 # ====================== format ====================== #
 @main.command(name="format",
-              short_help="Run formatter on a given script/playbook/integration yml file. ")
+              short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
+                         "incidenttype/indicatortype/layout/dashboard file. ")
 @click.help_option(
-    '-h', '--help'
-)
+    '-h', '--help')
 @click.option(
-    "-t", "--file-type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file to be formatted.")
+    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
 @click.option(
-    "-s", "--source-file", help="The path of the script yml file")
+    "-o", "--output", help="The path where the formatted file will be saved to",
+    type=click.Path(resolve_path=True))
 @click.option(
-    "-o", "--output-file-name", help="The path where the formatted file will be saved to")
+    "-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(
-    '-g', '--use-git', is_flag=True, show_default=True,
-    default=False, help='Format changed files using git'
-                        '- this will format your branch changes and will run only on them.')
-def format_yml(use_git=False, file_type=None, **kwargs):
-    return format_manager(use_git, file_type, **kwargs)
+    "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
+def format_yml(input=None, output=None, from_version=None, no_validate=None):
+    return format_manager(input, output, from_version, no_validate)
 
 
 # ====================== upload ====================== #
@@ -491,7 +490,7 @@ def generate_test_playbook(**kwargs):
 )
 @click.option(
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
-    "directory.")
+                           "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
@@ -603,9 +602,26 @@ def id_set_command(**kwargs):
     id_set_creator.create_id_set()
 
 
+# ====================== find-dependencies ====================== #
+@main.command(name="find-dependencies",
+              short_help='''Find pack dependencies and update pack metadata.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
+@click.option(
+    "-i", "--id_set_path", help="Path to id set json file.", required=False)
+def find_dependencies_command(**kwargs):
+    pack_name = kwargs.get('pack_folder_name', '')
+    id_set_path = kwargs.get('id_set_path')
+    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
 
 # todo: add download from demisto command
 

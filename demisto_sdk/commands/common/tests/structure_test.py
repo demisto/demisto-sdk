@@ -41,7 +41,7 @@ class TestStructureValidator:
         for directory in DIR_LIST:
             if not os.path.exists(directory):
                 cls.CREATED_DIRS.append(directory)
-                os.mkdir(directory)
+                os.makedirs(directory)
 
     @classmethod
     def teardown_class(cls):

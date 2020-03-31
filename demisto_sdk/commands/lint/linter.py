@@ -462,7 +462,8 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""
-        docker_client = docker.APIClient(base_url='unix://var/run/docker.sock')
+        docker_client = docker.APIClient()
+        print(docker_client.ping())
         # Get requirements file for image
         requirements = []
         if 2 < docker_base_image[1] < 3:
@@ -487,7 +488,7 @@ class Linter:
         test_image = None
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
-            test_image = docker_client.images(test_image_name)
+            test_image = self._docker_client.images.pull(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found

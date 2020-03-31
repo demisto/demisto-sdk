@@ -671,6 +671,20 @@ def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str
     return stdout, stderr, process.returncode
 
 
+def pascal_case(st: str) -> str:
+    """Convert a string to pascal case. Will simply remove spaces and make sure the first
+    character is capitalized
+
+    Arguments:
+        st {str} -- string to convert
+
+    Returns:
+        str -- converted string
+    """
+    words = re.findall(r'[a-zA-Z0-9]+', st)
+    return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
+
+
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)

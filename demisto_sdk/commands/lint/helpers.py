@@ -12,13 +12,17 @@ from contextlib import contextmanager
 import requests
 import textwrap
 import logging
-# Local packages
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 # Third party packages
 import git
 import docker.errors
 import docker
 from docker.models.containers import Container
+# Local packages
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.tools import run_command_os, print_warning
+
+# Python2 requirements
+PYTHON2_REQ = ["flake8", "vulture"]
 
 # Define check exit code if failed
 EXIT_CODES = {
@@ -46,6 +50,21 @@ PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
 RL = '\n'
 
 logger = logging.getLogger('demisto-sdk')
+
+
+def validate_env() -> None:
+    """Packs which use python2 will need to be run inside virtual enviorment including python2 as main and the specified req"""
+    command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
+    stdout, stderr, exit_code = run_command_os(command, cwd=Path().cwd())
+    if "2" not in stdout:
+        print_warning('Demsito-sdk lint not in virtual enviorment, Python2 lints will failed, use "source '
+                      '.hooks/bootstrap.sh" to create the virtual enviorment')
+    else:
+        stdout, stderr, exit_code = run_command_os("pip3 freeze", cwd=Path().cwd())
+        for req in PYTHON2_REQ:
+            if req not in stdout:
+                print_warning('Demsito-sdk lint not in virtual enviorment, Python2 lints will failed, use "source '
+                              '.hooks/bootstrap.sh" to create the virtual enviorment')
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,

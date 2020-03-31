@@ -327,8 +327,11 @@ def stream_docker_container_output(streamer: Generator) -> None:
     Args:
         streamer(Generator): Generator created by docker-sdk
     """
-    wrapper = textwrap.TextWrapper(initial_indent='\t',
-                                   subsequent_indent='\t',
-                                   width=150)
-    for chunk in streamer:
-        logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
+    try:
+        wrapper = textwrap.TextWrapper(initial_indent='\t',
+                                       subsequent_indent='\t',
+                                       width=150)
+        for chunk in streamer:
+            logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
+    except Exception:
+        pass

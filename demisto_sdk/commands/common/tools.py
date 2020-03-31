@@ -62,12 +62,33 @@ def print_color(obj, color):
     print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
+def get_files_in_dir(project_dir: str, file_ending: Tuple[str, str]) -> List[str]:
+    """
+    Gets the project directory and returns the path of all yml and json files in it
+    Args:
+        project_dir: string path to the project_dir
+        file_ending: list of file endings to search for in given directory
+    :return: the path of all yml and json files in it
+
+    """
+    files = []
+    if project_dir.endswith(file_ending):
+        return [project_dir]
+    for file_type in file_ending:
+        files.extend([f for f in glob.glob(project_dir + '/**/*.' + file_type, recursive=True)])
+    return files
+
+
 def print_error(error_str):
     print_color(error_str, LOG_COLORS.RED)
 
 
 def print_warning(warning_str):
     print_color(warning_str, LOG_COLORS.YELLOW)
+
+
+def print_success(success_str):
+    print_color(success_str, LOG_COLORS.GREEN)
 
 
 def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
@@ -568,7 +589,7 @@ def find_type(path: str):
             return 'reputation'
         elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
             return 'classifier'
-        elif 'layout' in _dict:
+        elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'
             else:
@@ -675,3 +696,24 @@ def get_last_release_version():
     tags.sort(key=LooseVersion, reverse=True)
 
     return tags[0]
+
+
+def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
+    """ Chech if an absolute file_path is part of content repo.
+    Args:
+        file_path (str): The file path which is checked.
+    Returns:
+        bool: if file is part of content repo.
+        str: relative path of file in content repo.
+    """
+    git_repo = git.Repo(os.getcwd(),
+                        search_parent_directories=True)
+    if 'content' not in git_repo.remote().urls.__next__():
+        return False, ''
+    content_path_parts = Path(git_repo.working_dir).parts
+    input_path_parts = Path(file_path).parts
+    input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
+    if content_path_parts == input_path_parts_prefix:
+        return True, '/'.join(input_path_parts[len(content_path_parts):])
+    else:
+        return False, ''

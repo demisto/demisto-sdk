@@ -228,7 +228,8 @@ class Linter:
                 exit_code: int = SUCCESS
                 output: str = ""
                 if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(lint_files=self._facts["lint_files"])
+                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                                                         lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
                 elif lint_check == "mypy" and not no_mypy and self._facts["docker_engine"]:
@@ -241,10 +242,11 @@ class Linter:
                     self._pkg_lint_status["exit_code"] += EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
 
-    def _run_flake8(self, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
         Args:
+            py_num(float): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -253,7 +255,7 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Flake8"
         logger.info(f"{log_prompt} - Start")
-        stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files),
+        stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files, py_num),
                                                    cwd=self._content_repo.working_dir)
         logger.debug(f"{log_prompt} - Finshed exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finshed stdout: {RL if stdout else ''}{stdout}")

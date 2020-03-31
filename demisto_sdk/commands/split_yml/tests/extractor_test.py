@@ -4,6 +4,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.split_yml.extractor import Extractor
 import os
 import base64
+import yaml
 
 
 def test_extract_long_description(tmpdir):
@@ -107,3 +108,7 @@ def test_extract_to_package_format_pwsh(tmpdir):
     with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
         file_data = f.read()
         assert 'This is a sample test README' in file_data
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.yml'), 'r') as f:
+        yaml_obj = yaml.safe_load(f)
+        assert yaml_obj['fromversion'] == '5.5.0'
+        assert not yaml_obj['script']['script']

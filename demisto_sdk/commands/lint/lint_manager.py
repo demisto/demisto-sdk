@@ -443,6 +443,7 @@ class LintManager:
                 print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
                 print(f"{sentence}")
                 print(f"{'#' * len(sentence)}{Colors.reset}")
+                headline_printed = True
             print(f"\n{Colors.Fg.red}Failed Unit-tests:{Colors.reset}")
             for fail_pack in lint_status["fail_packs_pytest"]:
                 print(wrapper_pack.fill(f"{Colors.Fg.red}{fail_pack}{Colors.reset}"))

@@ -61,7 +61,7 @@ class Linter:
         self._pkg_lint_status = {
             "pkg": None,
             "pack_type": None,
-            "path": str(self._pack_abs_dir.relative_to(self._content_repo)),
+            "path": str(self._content_repo),
             "errors": [],
             "images": [],
             "flake8_errors": None,

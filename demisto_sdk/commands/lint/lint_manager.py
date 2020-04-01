@@ -280,7 +280,7 @@ class LintManager:
                         pkgs_type.append(pkg_status["pack_type"])
             except KeyboardInterrupt:
                 print_warning("Stop demisto-sdk lint - Due to 'Ctrl' + 'C' signal")
-                executor.shutdown(wait=False)
+                executor.shutdown()
                 return 1
             except Exception as e:
                 executor.shutdown(wait=False)

@@ -227,7 +227,7 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
                     rel_api_path = Path('Packs/ApiModules/Scripts') / module_name / f'{module_name}.py'
                     cur_path = pack_path / f'{module_name}.py'
                     if content_repo:
-                        module_path = content_repo.working_dir / rel_api_path
+                        module_path = content_repo / rel_api_path
                         shutil.copy(src=module_path,
                                     dst=cur_path)
                     else:

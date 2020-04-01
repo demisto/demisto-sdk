@@ -249,7 +249,8 @@ class LintManager:
             # Executing lint checks in diffrent threads
             for pack in self._pkgs:
                 linter: Linter = Linter(pack_dir=pack,
-                                        content_repo=self._facts["content_repo"],
+                                        content_repo="" if not self._facts["content_repo"] else
+                                        Path(self._facts["content_repo"].working_dir),
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
                                         docker_engine=self._facts["docker_engine"])

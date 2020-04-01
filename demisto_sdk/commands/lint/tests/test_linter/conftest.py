@@ -2,7 +2,6 @@ from wcmatch.pathlib import Path
 from typing import List, Callable, Optional
 import pytest
 from ruamel.yaml import YAML
-from unittest.mock import MagicMock
 from demisto_sdk.commands.lint.linter import Linter
 from demisto_sdk.commands.lint import linter
 
@@ -11,7 +10,7 @@ from demisto_sdk.commands.lint import linter
 def linter_obj(mocker) -> Linter:
     mocker.patch.object(linter, 'docker')
     return Linter(pack_dir=Path(__file__).parent / 'data' / 'Integration' / 'intergration_sample',
-                  content_repo=MagicMock(),
+                  content_repo=Path(__file__).parent / 'data',
                   req_3=["pytest==3.0"],
                   req_2=["pytest==2.0"],
                   docker_engine=True)
@@ -34,10 +33,7 @@ def demisto_content() -> Callable:
         (content_path / dir_n).mkdir(parents=True)
         (content_path / 'Packs' / 'Sample' / dir_n).mkdir(parents=True)
 
-    content_repo = MagicMock()
-    content_repo.working_dir = content_path
-
-    yield content_repo
+    yield content_path
 
     shutil.rmtree(content_path)
 
@@ -71,7 +67,7 @@ def create_integration(mocker) -> Callable:
             Path: Path to tmp integration
         """
         integration_name = 'Sample_integration'
-        integration_path = content_path / path / integration_name
+        integration_path = Path(content_path / path / integration_name)
         integration_path.mkdir()
         files_ext = ['.py', '.yml', '_description.md', '_image.png', '_test.py']
         for ext in files_ext:

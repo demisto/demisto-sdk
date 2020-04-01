@@ -5,7 +5,7 @@ class TestYamlParse:
     def test_valid_yaml_key_script_is_dict(self, demisto_content, create_integration: Callable):
         from demisto_sdk.commands.lint import linter
         from wcmatch.pathlib import Path
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     type_script_key=True)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -17,7 +17,7 @@ class TestYamlParse:
     def test_valid_yaml_key_script_is_not_dict(self, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter
         from wcmatch.pathlib import Path
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     type_script_key=False)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -29,7 +29,7 @@ class TestYamlParse:
     def test_not_valid_yaml(self, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter
         from wcmatch.pathlib import Path
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     yml=True)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -43,7 +43,7 @@ class TestPythonPack:
     def test_package_is_python_pack(self, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter
         from wcmatch.pathlib import Path
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     js_type=False)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -55,7 +55,7 @@ class TestPythonPack:
     def test_package_is_not_python_pack(self, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter
         from wcmatch.pathlib import Path
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     js_type=True)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -73,7 +73,7 @@ class TestDockerImagesCollection:
         exp_py_num = 2.7
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     image=exp_image,
                                                     image_py_num=exp_py_num)
         runner = linter.Linter(content_repo=demisto_content,
@@ -93,7 +93,7 @@ class TestDockerImagesCollection:
         exp_py_num = 2.7
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     image="",
                                                     image_py_num=exp_py_num)
         runner = linter.Linter(content_repo=demisto_content,
@@ -114,7 +114,7 @@ class TestTestsCollection:
         from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_tests=False)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -129,7 +129,7 @@ class TestTestsCollection:
         from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_tests=True)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -146,7 +146,7 @@ class TestLintFilesCollection:
         from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_lint_file=False)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,
@@ -161,7 +161,7 @@ class TestLintFilesCollection:
         from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(content_path=demisto_content.working_dir,
+        integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_lint_file=True)
         runner = linter.Linter(content_repo=demisto_content,
                                pack_dir=integration_path,

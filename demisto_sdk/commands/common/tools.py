@@ -17,7 +17,7 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX
+    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, PACKS_README_FILE_NAME
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -158,6 +158,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     packagify_diff = {}  # type: dict
     for file_path in removed_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
+            if PACKS_README_FILE_NAME in file_path:
+                continue
             details = get_remote_file(file_path, tag)
             if details:
                 uniq_identifier = '_'.join([
@@ -170,7 +172,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     updated_added_files = set()
     for file_path in added_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
-            if "README.md" in file_path:
+            if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:

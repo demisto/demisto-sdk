@@ -498,7 +498,8 @@ class Linter:
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
         if not test_image:
-            logger.info(f"{log_prompt} - Creating image based on {docker_base_image[0]}")
+            logger.info(f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
+                        f"time")
             try:
                 with io.BytesIO() as f:
                     f.write(dockerfile.encode('utf-8'))

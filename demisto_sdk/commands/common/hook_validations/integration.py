@@ -1,5 +1,5 @@
 from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
-    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS
+    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
@@ -58,6 +58,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_fetch(),
             self.is_valid_display_name(),
             self.is_all_params_not_hidden(),
+            self.is_valid_pwsh(),
         ]
         return all(answers)
 
@@ -512,6 +513,14 @@ class IntegrationValidator(BaseValidator):
                 valid_from_version = False
             valid_feed_params = self.all_feed_params_exist()
         return valid_from_version and valid_feed_params
+
+    def is_valid_pwsh(self) -> bool:
+        if self.current_file.get("script", {}).get("type") == TYPE_PWSH:
+            from_version = self.current_file.get("fromversion", "0.0.0")
+            if not from_version or server_version_compare("5.5.0", from_version) > 0:
+                print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                return False
+        return True
 
     def is_valid_fetch(self) -> bool:
         """

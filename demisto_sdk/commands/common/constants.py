@@ -11,6 +11,11 @@ class Errors:
             .format(file_path, given_fromversion, needed_from_version)
 
     @staticmethod
+    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
+        return (f'{file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
+                f' Found version: {given_fromversion}')
+
+    @staticmethod
     def not_used_display_name(file_path, field_name):
         return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
             field_name, file_path)

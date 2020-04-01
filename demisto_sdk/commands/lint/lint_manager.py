@@ -279,12 +279,18 @@ class LintManager:
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
             except KeyboardInterrupt:
-                print_warning("Stop demisto-sdk lint - Due to 'Ctrl' + 'C' signal")
-                executor.shutdown()
+                print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
+                try:
+                    executor.shutdown(wait=False)
+                except Exception:
+                    pass
                 return 1
             except Exception as e:
-                executor.shutdown(wait=False)
-                print_error(f"Stop demisto-sdk lint - Due to the following exception: {e}")
+                print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
+                try:
+                    executor.shutdown(wait=False)
+                except Exception:
+                    pass
                 return 1
 
         self._report_results(lint_status=lint_status,

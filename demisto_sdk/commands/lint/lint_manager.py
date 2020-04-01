@@ -80,7 +80,7 @@ class LintManager:
             if 'content' not in git_repo.remote().urls.__next__():
                 raise git.InvalidGitRepositoryError
             facts["content_repo"] = git_repo
-            logger.info(f"Content path {git_repo.working_dir}")
+            logger.debug(f"Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
             print_warning("You are running demisto-sdk lint not in content repositorty!")
             logger.warning(f"can't locate content repo {e}")
@@ -92,8 +92,8 @@ class LintManager:
                 with open(file=pipfile_lock_path) as f:
                     lock_file: dict = json.load(fp=f)["develop"]
                     facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in lock_file.items()]
-                    logger.info(f"Test requirement successfully collected for python {py_num}")
-                    logger.debug(f"Test requirement are {facts[f'requirements_{py_num}']}")
+                    logger.debug(f"Test requirements successfully collected for python {py_num}:\n"
+                                 f" {facts[f'requirements_{py_num}']}")
         except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
             print_error("Can't parse pipfile.lock - Aborting!")
             logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
@@ -101,15 +101,15 @@ class LintManager:
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"])
-            logger.info(f"Test mandatory modules successfully collected")
+            logger.debug(f"Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error("Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
-            logger.info(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
+            logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         except (requests.exceptions.ConnectionError, urllib3.exceptions.NewConnectionError) as e:
             print_error("Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
                         "connection)")
-            logger.info(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
+            logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         # Validating docker engine connection
         docker_client: docker.DockerClient = docker.from_env()

@@ -206,7 +206,7 @@ class Linter:
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             # Get lint files
-            lint_files = set(self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1"], flags=NEGATE))
+            lint_files = set(self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"], flags=NEGATE))
         if 'commonserver' in self._pack_abs_dir.name.lower() and self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
         else:

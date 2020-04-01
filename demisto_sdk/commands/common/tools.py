@@ -1,3 +1,4 @@
+import io
 import re
 import os
 import sys
@@ -16,7 +17,7 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX
+    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, PACKS_README_FILE_NAME
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -62,12 +63,33 @@ def print_color(obj, color):
     print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
+def get_files_in_dir(project_dir: str, file_ending: Tuple[str, str]) -> List[str]:
+    """
+    Gets the project directory and returns the path of all yml and json files in it
+    Args:
+        project_dir: string path to the project_dir
+        file_ending: list of file endings to search for in given directory
+    :return: the path of all yml and json files in it
+
+    """
+    files = []
+    if project_dir.endswith(file_ending):
+        return [project_dir]
+    for file_type in file_ending:
+        files.extend([f for f in glob.glob(project_dir + '/**/*.' + file_type, recursive=True)])
+    return files
+
+
 def print_error(error_str):
     print_color(error_str, LOG_COLORS.RED)
 
 
 def print_warning(warning_str):
     print_color(warning_str, LOG_COLORS.YELLOW)
+
+
+def print_success(success_str):
+    print_color(success_str, LOG_COLORS.GREEN)
 
 
 def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
@@ -136,6 +158,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     packagify_diff = {}  # type: dict
     for file_path in removed_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
+            if PACKS_README_FILE_NAME in file_path:
+                continue
             details = get_remote_file(file_path, tag)
             if details:
                 uniq_identifier = '_'.join([
@@ -148,7 +172,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     updated_added_files = set()
     for file_path in added_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
-            if "README.md" in file_path:
+            if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
@@ -227,8 +251,12 @@ def get_file(method, file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
+            read_file = f.read()
+            replaced = read_file.replace("simple: =", "simple: '='")
+            # revert str to stream for loader
+            stream = io.StringIO(replaced)
             try:
-                data_dictionary = method(f)
+                data_dictionary = method(stream)
             except Exception as e:
                 print_error(
                     "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
@@ -568,7 +596,7 @@ def find_type(path: str):
             return 'reputation'
         elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
             return 'classifier'
-        elif 'layout' in _dict:
+        elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'
             else:
@@ -650,6 +678,20 @@ def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str
     return stdout, stderr, process.returncode
 
 
+def pascal_case(st: str) -> str:
+    """Convert a string to pascal case. Will simply remove spaces and make sure the first
+    character is capitalized
+
+    Arguments:
+        st {str} -- string to convert
+
+    Returns:
+        str -- converted string
+    """
+    words = re.findall(r'[a-zA-Z0-9]+', st)
+    return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
+
+
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)
@@ -661,3 +703,24 @@ def get_last_release_version():
     tags.sort(key=LooseVersion, reverse=True)
 
     return tags[0]
+
+
+def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
+    """ Chech if an absolute file_path is part of content repo.
+    Args:
+        file_path (str): The file path which is checked.
+    Returns:
+        bool: if file is part of content repo.
+        str: relative path of file in content repo.
+    """
+    git_repo = git.Repo(os.getcwd(),
+                        search_parent_directories=True)
+    if 'content' not in git_repo.remote().urls.__next__():
+        return False, ''
+    content_path_parts = Path(git_repo.working_dir).parts
+    input_path_parts = Path(file_path).parts
+    input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
+    if content_path_parts == input_path_parts_prefix:
+        return True, '/'.join(input_path_parts[len(content_path_parts):])
+    else:
+        return False, ''

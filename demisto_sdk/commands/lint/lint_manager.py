@@ -413,7 +413,7 @@ class LintManager:
         for pkg, status in pkgs_status.items():
             if status.get("images"):
                 if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
-                    if (not headline_printed and self._verbose) or (EXIT_CODES["pytest"] & return_exit_code):
+                    if (not headline_printed and self._verbose) and (EXIT_CODES["pytest"] & return_exit_code):
                         # Log unit-tests
                         sentence = " Unit Tests "
                         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
@@ -444,7 +444,6 @@ class LintManager:
                 print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
                 print(f"{sentence}")
                 print(f"{'#' * len(sentence)}{Colors.reset}")
-                headline_printed = True
             print(f"\n{Colors.Fg.red}Failed Unit-tests:{Colors.reset}")
             for fail_pack in lint_status["fail_packs_pytest"]:
                 print(wrapper_pack.fill(f"{Colors.Fg.red}{fail_pack}{Colors.reset}"))

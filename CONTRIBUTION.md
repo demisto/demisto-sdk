@@ -33,7 +33,7 @@ git clone https://github.com/demisto/demisto-sdk.git
    pip3 uninstall demisto-sdk
    ```
 
-2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/):
+2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs):
 
    ```shell
    pip3 install -e .
@@ -58,7 +58,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 
 ### 3. Pre-commit hooks setup
 We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:
-1. Install hook to be performed as a hook before commiting changes - `pre-commit install`
+1. Install hook to be performed as a hook before commiting changes - `pip3 pre-commit install`
 2. Enable auto update of pre-commit hooks - `pre-commit autoupdate`
 3. In order to run pre-commit without commiting - `pre-commit run -a` (on all files), `pre-commit run` (on staged files)
 

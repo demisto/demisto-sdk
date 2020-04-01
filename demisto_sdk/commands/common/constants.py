@@ -164,6 +164,7 @@ class Errors:
     @staticmethod
     def display_param(param_name, param_display):
         return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
+        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
     @staticmethod
     def wrong_file_extension(file_extension, accepted_extensions):
@@ -255,7 +256,7 @@ INCIDENT_TYPES_DIR = 'IncidentTypes'
 INDICATOR_FIELDS_DIR = 'IndicatorFields'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
-MISC_DIR = 'Packs/Base/Misc'
+MISC_DIR = 'Misc'
 CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'

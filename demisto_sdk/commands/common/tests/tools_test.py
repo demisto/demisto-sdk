@@ -5,11 +5,11 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX
-from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type,\
-    get_dict_from_file, LOG_COLORS, get_last_release_version
+from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type, \
+    get_dict_from_file, LOG_COLORS, get_last_release_version, filter_packagify_changes
 from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
     VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
-    INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH
+    INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH, VALID_MD
 
 
 class TestGenericFunctions:
@@ -63,6 +63,17 @@ class TestGenericFunctions:
     def test_find_type(self, path, _type):
         output = find_type(str(path))
         assert output == _type, f'find_type({path}) returns: {output} instead {_type}'
+
+    test_path_md = [
+        VALID_MD
+    ]
+
+    @pytest.mark.parametrize('path', test_path_md)
+    def test_filter_packagify_changes(self, path):
+        modified, added, removed = filter_packagify_changes(modified_files=[], added_files=[], removed_files=[path])
+        assert modified == []
+        assert added == set()
+        assert removed == [VALID_MD]
 
 
 class TestGetRemoteFile:

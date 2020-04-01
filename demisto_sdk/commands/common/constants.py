@@ -164,7 +164,6 @@ class Errors:
     @staticmethod
     def display_param(param_name, param_display):
         return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
-        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
     @staticmethod
     def wrong_file_extension(file_extension, accepted_extensions):

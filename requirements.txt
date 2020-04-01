@@ -16,6 +16,6 @@ PyYAML>=5.3.1
 requests>=2.22.0
 ruamel.yaml>=0.16.5
 urllib3==1.25.7
-vulture>=1.4
+vulture>=1.3
 wcmatch>=5.1
 yamlordereddictloader>=0.4.0

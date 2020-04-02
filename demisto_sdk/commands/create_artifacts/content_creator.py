@@ -229,6 +229,30 @@ class ContentCreator:
 
             shutil.copyfile(path, os.path.join(bundle, dpath))
 
+    def copy_dir_md(self, dir_path, bundle):
+        """
+        Copy the md files inside a directory to a bundle.
+
+        :param dir_path: source directory
+        :param bundle: destination bundle
+        :return: None
+        """
+        # handle *.md files
+        dir_name = os.path.basename(dir_path)
+        scan_files = glob.glob(os.path.join(dir_path, '*.md'))
+        for path in scan_files:
+            new_path = os.path.basename(path)
+            if dir_name == 'ReleaseNotes':
+                if os.path.isfile(os.path.join(bundle, new_path)):
+                    raise NameError(
+                        f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
+                    )
+
+            if len(new_path) >= self.file_name_max_size:
+                self.long_file_names.append(os.path.basename(new_path))
+
+            shutil.copyfile(path, os.path.join(bundle, new_path))
+
     def copy_dir_files(self, *args):
         """
         Copy the yml and json files from inside a directory to a bundle.
@@ -240,6 +264,8 @@ class ContentCreator:
         self.copy_dir_json(*args)
         # handle *.yml files
         self.copy_dir_yml(*args)
+        # handle *.md files
+        self.copy_dir_md(*args)
 
     def copy_test_files(self, test_playbooks_dir=TEST_PLAYBOOKS_DIR):
         """

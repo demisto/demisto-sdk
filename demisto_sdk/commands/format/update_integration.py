@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES
+from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES, TYPE_PWSH
 from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
@@ -20,6 +20,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
+        if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
+            self.from_version = '5.5.0'
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""

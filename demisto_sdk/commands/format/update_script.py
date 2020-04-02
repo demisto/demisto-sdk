@@ -3,6 +3,7 @@ from typing import Tuple
 from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.common.constants import TYPE_PWSH
 
 
 class ScriptYMLFormat(BaseUpdateYML):
@@ -15,6 +16,8 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
+        if not from_version and self.data.get("type") == TYPE_PWSH:
+            self.from_version = '5.5.0'
 
     def run_format(self) -> int:
         try:

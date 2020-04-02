@@ -29,12 +29,12 @@ EXIT_CODES = {
     "flake8": 0b1,
     "bandit": 0b10,
     "mypy": 0b100,
-    "vulture": 0b1000000,
-    "pytest": 0b1000,
-    "pylint": 0b10000,
-    "image": 0b100000,
-    "pwsh_analyze": 0b10000000,
-    "pwsh_test": 0b100000000
+    "vulture": 0b1000,
+    "pytest": 0b10000,
+    "pylint": 0b100000,
+    "pwsh_analyze": 0b1000000,
+    "pwsh_test": 0b10000000,
+    "image": 0b100000000,
 }
 
 # Execution exit codes
@@ -68,7 +68,7 @@ def validate_env() -> None:
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
-                            no_test: bool, no_pwsh_analyze, no_pwsh_test, docker_engine: bool) -> bool:
+                            no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> bool:
     """
     no_flake8(bool): Whether to skip flake8.
     no_bandit(bool): Whether to skip bandit.

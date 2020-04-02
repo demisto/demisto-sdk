@@ -1,7 +1,15 @@
 import pytest
 from pathlib import Path
+from unittest.mock import MagicMock
 
 values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
+
+
+@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[(3.7, 'python3'), (2.7, 'python')])
+def test_get_python_exec(py_num, expected_exec):
+    """Get python exec"""
+    from demisto_sdk.commands.lint.commands_builder import get_python_exec
+    assert expected_exec == get_python_exec(py_num)
 
 
 @pytest.mark.parametrize(argnames="files", argvalues=values)
@@ -77,3 +85,18 @@ def test_build_pytest_command_2():
     command = "python -m pytest --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
     assert command == build_pytest_command(test_xml="test",
                                            json=True)
+
+
+def test_build_pwsh_analyze():
+    """Build Pytest command with json"""
+    from demisto_sdk.commands.lint.commands_builder import build_pwsh_analyze_command
+    file = MagicMock()
+    command = f"pwsh -Command Invoke-ScriptAnalyzer -EnableExit -Path {file.name}"
+    assert command == build_pwsh_analyze_command(file)
+
+
+def test_build_pwsh_test():
+    """Build Pytest command with json"""
+    from demisto_sdk.commands.lint.commands_builder import build_pwsh_test_command
+    command = "pwsh -Command Invoke-Pester -EnableExit"
+    assert command == build_pwsh_test_command()

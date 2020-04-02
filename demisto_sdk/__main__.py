@@ -285,7 +285,7 @@ def secrets(config, **kwargs):
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
-@click.option("--no-vulture", is_flag=True, help="Do NOT run mypy static type checking")
+@click.option("--no-vulture", is_flag=True, help="Do NOT run vulture linter")
 @click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
 @click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
 @click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")

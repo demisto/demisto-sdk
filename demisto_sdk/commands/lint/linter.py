@@ -207,14 +207,18 @@ class Linter:
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             # Get lint files
             lint_files = set(self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"], flags=NEGATE))
-        if 'commonserver' in self._pack_abs_dir.name.lower() and self._pkg_lint_status["pack_type"] == TYPE_PWSH:
-            self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+        if 'commonserver' in self._pack_abs_dir.name.lower():
+            if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
         else:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)
             self._facts["lint_files"] = list(lint_files)
-        for lint_file in self._facts["lint_files"]:
-            logger.info(f"{log_prompt} - Lint file {lint_file}")
+        if self._facts["lint_files"]:
+            for lint_file in self._facts["lint_files"]:
+                logger.info(f"{log_prompt} - Lint file {lint_file}")
+        else:
+            logger.info(f"{log_prompt} - Lint files not found")
 
         return False
 
@@ -424,7 +428,7 @@ class Linter:
                                                                                keep_container=keep_container)
 
                         if (exit_code != RERUN or trial == 2) and exit_code:
-                            self._pkg_lint_status["exit_code"] += EXIT_CODES[check]
+                            self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
                             status[f"{check}_errors"] = output
                             break
                         elif exit_code != RERUN:

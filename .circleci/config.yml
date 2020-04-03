@@ -16,8 +16,8 @@ jobs:
             name: tox build
             command: |
               pip install tox
-              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
-              tox -e py38 -v
+              tox -e py37 -vv -- --cov=demisto_sdk --cov-report=html
+              tox -e py38 -vv
         - run:
             name: pre-commit
             command: |

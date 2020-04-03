@@ -127,4 +127,4 @@ def test_extract_to_package_format_py(tmpdir, mocker):
         file_data = f.read()
         # check imports are sorted
         assert 'import datetime\nimport json\nimport shutil\nfrom zipfile import ZipFile\n\nimport jwt\n' \
-               'import requests\n\nimport demistomock as demisto\nfrom CommonServerPython import *\n\nif' in file_data
+               'import requests\n\nimport demistomock as demisto\nfrom CommonServerPython import *\n' in file_data

@@ -110,7 +110,7 @@ def test_extract_to_package_format_pwsh(tmpdir):
         assert 'This is a sample test README' in file_data
 
 
-def test_sorted_imports(tmpdir):
+def test_extract_to_package_format_py(tmpdir):
     out = tmpdir.join('Integrations')
     config = Configuration()
     config.envs_dirs_base = os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python')

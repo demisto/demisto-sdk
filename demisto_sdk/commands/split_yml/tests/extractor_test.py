@@ -112,6 +112,10 @@ def test_extract_to_package_format_pwsh(tmpdir):
 
 def test_extract_to_package_format_py(tmpdir, mocker):
     mocker.patch(
+        'demisto_sdk.commands.split_yml.extractor.get_python_version',
+        return_value='2.7'
+    )
+    mocker.patch(
         'demisto_sdk.commands.split_yml.extractor.get_pipenv_dir',
         return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
     )

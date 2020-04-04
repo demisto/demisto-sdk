@@ -3,6 +3,7 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
+import json
 
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -15,6 +16,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.validate.file_validator import FilesValidator
 
 from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
     VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
@@ -27,7 +29,8 @@ from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_P
     INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, \
     VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_ID_PATH, \
     INVALID_PLAYBOOK_CONDITION_1, INVALID_PLAYBOOK_CONDITION_2, VALID_PLAYBOOK_CONDITION, VALID_INTEGRATION_ID_PATH, \
-    INVALID_INTEGRATION_ID_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT, VALID_NO_HIDDEN_PARAMS, INVALID_NO_HIDDEN_PARAMS
+    INVALID_INTEGRATION_ID_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT, VALID_NO_HIDDEN_PARAMS, INVALID_NO_HIDDEN_PARAMS,\
+    GIT_HAVE_MODIFIED_AND_NEW_FILES
 
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
@@ -245,3 +248,23 @@ class TestValidators:
         structure = StructureValidator(source)
         validator = IntegrationValidator(structure)
         assert validator.is_all_params_not_hidden() is answer
+
+
+    with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
+        tests_params = json.load(test_params_file)
+    params = [
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']) , '123456', True),
+        ('origin/master', tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '', True),
+        (None, tuple(set(i) for i in tests_params['data']['params_without_data']), '123456', True),
+    ]
+
+    @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer", params)
+    def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer, mocker):
+        file_validator = FilesValidator(validate_conf_json=False, prev_ver=prev_var)
+        mocker.patch.object(FilesValidator, 'get_modified_and_added_files', return_value=get_modified_and_added_files)
+        mocker.patch.object(FilesValidator, 'get_content_release_identifier', return_value=release_iden)
+        mocker.patch.object(FilesValidator, 'validate_modified_files', return_value=None)
+
+        assert file_validator.validate_against_previous_version() is None
+        assert file_validator._is_valid is answer

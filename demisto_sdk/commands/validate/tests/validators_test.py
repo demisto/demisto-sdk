@@ -249,11 +249,10 @@ class TestValidators:
         validator = IntegrationValidator(structure)
         assert validator.is_all_params_not_hidden() is answer
 
-
     with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
         tests_params = json.load(test_params_file)
     params = [
-        (None, tuple(set(i) for i in tests_params['data']['params_with_data']) , '123456', True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True),
         ('origin/master', tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True),
         (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '', True),
         (None, tuple(set(i) for i in tests_params['data']['params_without_data']), '123456', True),

@@ -98,4 +98,3 @@ DESTINATION_FORMAT_DASHBOARD_COPY = f"Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = f"Dashboards"
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
-

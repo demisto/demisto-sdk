@@ -13,7 +13,6 @@ from __future__ import print_function
 
 import os
 import re
-import typing
 
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
@@ -672,7 +671,7 @@ class FilesValidator:
     def get_content_release_identifier(self):
         try:
             file_content = get_remote_file('.circleci/config.yml')
-        except Exception as e:
+        except Exception:
             return
         else:
             return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')

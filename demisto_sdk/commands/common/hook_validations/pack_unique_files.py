@@ -133,6 +133,9 @@ class PackUniqueFilesValidator:
                 self._add_error('Pack metadata is empty.')
                 return False
             metadata = json.loads(pack_meta_file_content)
+            if not isinstance(metadata, dict):
+                self._add_error('Pack metadata should be a dictionary.')
+                return False
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
                 self._add_error('Missing fields in the pack metadata: {}'.format(missing_fields))

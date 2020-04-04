@@ -209,6 +209,12 @@ class ContentCreator:
             if dir_name in ['IndicatorFields', 'IncidentFields']:
                 if not dpath.startswith('incidentfield-'):
                     dpath = f'incidentfield-{dpath}'
+            if dir_name == 'Dashboards':
+                if not dpath.startswith('dashboard-'):
+                    dpath = f'dashboard-{dpath}'
+            if dir_name == 'Layouts':
+                if not dpath.startswith('layout-'):
+                    dpath = f'layout-{dpath}'
             new_path = dpath
             if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
                 new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
@@ -440,7 +446,7 @@ class ContentCreator:
                               'copied over to the artifacts directory')
             if os.path.exists('beta-release-notes.md'):
                 print('copying beta-release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
-                shutil.copyfile('beta-release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
+                shutil.copyfile('beta-release-notes.md', os.path.join(self.artifacts_path, 'beta-release-notes.md'))
             else:
                 print_warning('beta-release-notes.md was not found in the content directory and therefore not '
                               'copied over to the artifacts directory')

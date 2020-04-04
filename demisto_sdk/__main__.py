@@ -25,6 +25,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import generate
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -63,7 +64,7 @@ def main(config, version):
         print(version)
 
 
-# ====================== extract ====================== #
+# ====================== split-yml ====================== #
 @main.command(name="split-yml",
               short_help="Split the code, image and description files from a Demisto integration or script yaml file "
                          " to multiple files(To a package format - "
@@ -86,8 +87,13 @@ def main(config, version):
 )
 @click.option(
     '--no-common-server',
-    help="Don't add an import for CommonServerPython."
-         "If not specified will import unless this is CommonServerPython",
+    help="Don't add an import for CommonServerPython.",
+    is_flag=True,
+    show_default=True
+)
+@click.option(
+    '--no-auto-create-dir',
+    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts.",
     is_flag=True,
     show_default=True
 )
@@ -102,8 +108,10 @@ def extract(config, **kwargs):
 
 
 # ====================== extract-code ====================== #
-@main.command(name="extract-code",
-              short_help="Extract code from a Demisto integration or script yaml file.")
+@main.command(
+    name="extract-code",
+    hidden=True,
+    short_help="Extract code from a Demisto integration or script yaml file.")
 @click.help_option(
     '-h', '--help'
 )
@@ -164,7 +172,6 @@ def unify(**kwargs):
 
 
 # ====================== validate ====================== #
-# TODO: add a configuration for conf.json and id_set.json
 @main.command(name="validate",
               short_help='Validate your content files.')
 @click.help_option(
@@ -207,11 +214,14 @@ def validate(config, **kwargs):
         return validator.run()
 
 
-# ====================== create ====================== #
-@main.command(name="create-content-artifacts",
-              short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-                         'upload to your server in order to upload a whole new content version to your Demisto '
-                         'instance.')
+# ====================== create-content-artifacts ====================== #
+@main.command(
+    name="create-content-artifacts",
+    hidden=True,
+    short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
+               'upload to your server in order to upload a whole new content version to your Demisto '
+               'instance.',
+)
 @click.help_option(
     '-h', '--help'
 )
@@ -258,75 +268,80 @@ def secrets(config, **kwargs):
 
 # ====================== lint ====================== #
 @main.command(name="lint",
-              short_help="Run lintings (flake8, mypy, pylint, bandit, vulture) and pytest. pylint and pytest will run "
-                         "within the docker image of an integration/script. Meant to be used with integrations/scripts "
-                         "that use the folder (package) structure. Will lookup up what docker image to use and will "
-                         "setup the dev dependencies and file in the target folder. ")
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    "-d", "--dir", help="Specify directory of integration/script")
-@click.option(
-    "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
-@click.option(
-    "--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
-@click.option(
-    "--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
-@click.option(
-    "--no-bandit", is_flag=True, help="Do NOT run bandit linter")
-@click.option(
-    "--no-vulture", is_flag=True, help="Do NOT run vulture linter")
-@click.option(
-    "--no-test", is_flag=True, help="Do NOT test (skip pytest)")
-@click.option(
-    "-r", "--root", is_flag=True, help="Run pytest container with root user")
-@click.option(
-    "-k", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
-@click.option(
-    "--cpu-num",
-    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs)",
-    default=0)
-@click.option(
-    "-p", "--parallel", is_flag=True, help="Run tests in parallel")
-@click.option(
-    "-m", "--max-workers", type=int, help="How many threads to run in parallel")
-@click.option(
-    "-g", "--git", is_flag=True, help="Will run only on changed packages")
-@click.option(
-    "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
-@click.option(
-    "--outfile", help="Save failing packages to a file"
-)
-@pass_config
-def lint(config, dir, **kwargs):
-    linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
-    return linter.run_dev_packages()
+              short_help="Lint command will perform:\n 1. Package in host checks - flake8, bandit, mypy, vulture.\n 2. "
+                         "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
+                         "Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what"
+                         "docker image to use and will setup the dev dependencies and file in the target folder. ")
+@click.help_option('-h', '--help')
+@click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
+                                                                                               resolve_path=True))
+@click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
+@click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-p", "--parallel", default=1, help="Run tests in parallel", type=click.IntRange(0, 15, clamp=True),
+              show_default=True)
+@click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
+@click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
+@click.option("--no-vulture", is_flag=True, help="Do NOT run vulture linter")
+@click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
+@click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
+@click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
+@click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
+@click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
+@click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
+@click.option("--json-report", help="Path to store json results", type=click.Path(exists=True, resolve_path=True))
+@click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True, resolve_path=True))
+def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
+         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
+         no_pwsh_test: bool, keep_container: bool, test_xml: str, json_report: str, log_path: str):
+    """Lint command will perform:\n
+        1. Package in host checks - flake8, bandit, mypy, vulture.\n
+        2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
+    Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
+    docker image to use and will setup the dev dependencies and file in the target folder."""
+    lint_manager = LintManager(input=input,
+                               git=git,
+                               all_packs=all_packs,
+                               verbose=verbose,
+                               quiet=quiet,
+                               log_path=log_path)
+    return lint_manager.run_dev_packages(parallel=parallel,
+                                         no_flake8=no_flake8,
+                                         no_bandit=no_bandit,
+                                         no_mypy=no_mypy,
+                                         no_vulture=no_vulture,
+                                         no_pylint=no_pylint,
+                                         no_test=no_test,
+                                         no_pwsh_analyze=no_pwsh_analyze,
+                                         no_pwsh_test=no_pwsh_test,
+                                         keep_container=keep_container,
+                                         test_xml=test_xml,
+                                         json_report=json_report)
 
 
 # ====================== format ====================== #
 @main.command(name="format",
-              short_help="Run formatter on a given script/playbook/integration yml file. ")
+              short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
+                         "incidenttype/indicatortype/layout/dashboard file. ")
 @click.help_option(
-    '-h', '--help'
-)
+    '-h', '--help')
 @click.option(
-    "-t", "--file-type", type=click.Choice(["integration", "script", "playbook"]),
-    help="The type of yml file to be formatted.")
+    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
 @click.option(
-    "-s", "--source-file", help="The path of the script yml file")
+    "-o", "--output", help="The path where the formatted file will be saved to",
+    type=click.Path(resolve_path=True))
 @click.option(
-    "-o", "--output-file-name", help="The path where the formatted file will be saved to")
+    "-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(
-    '-g', '--use-git', is_flag=True, show_default=True,
-    default=False, help='Format changed files using git'
-                        '- this will format your branch changes and will run only on them.')
-def format_yml(use_git=False, file_type=None, **kwargs):
-    return format_manager(use_git, file_type, **kwargs)
+    "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
+def format_yml(input=None, output=None, from_version=None, no_validate=None):
+    return format_manager(input, output, from_version, no_validate)
 
 
+# ====================== upload ====================== #
 @main.command(name="upload",
               short_help="Upload integration to Demisto instance. DEMISTO_BASE_URL environment variable should contain"
                          " the Demisto server base URL. DEMISTO_API_KEY environment variable should contain a valid "
@@ -345,6 +360,7 @@ def upload(**kwargs):
     return uploader.upload()
 
 
+# ====================== run ====================== #
 @main.command(name="run",
               short_help="Run integration command on remote Demisto instance in the playground. DEMISTO_BASE_URL "
                          "environment variable should contain the Demisto base URL. DEMISTO_API_KEY environment "
@@ -404,6 +420,7 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
+# ====================== json-to-outputs ====================== #
 @main.command(name="json-to-outputs",
               short_help='''Demisto integrations/scripts have a YAML file that defines them.
 Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -479,7 +496,7 @@ def generate_test_playbook(**kwargs):
 )
 @click.option(
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
-    "directory.")
+                           "directory.")
 @click.option(
     '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
 @click.option(
@@ -534,6 +551,11 @@ def init(**kwargs):
 def generate_doc(**kwargs):
     input_path = kwargs.get('input')
     output_path = kwargs.get('output')
+    examples = kwargs.get('examples')
+    permissions = kwargs.get('permissions')
+    limitations = kwargs.get('limitations')
+    insecure = kwargs.get('insecure')
+    verbose = kwargs.get('verbose')
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -555,17 +577,26 @@ def generate_doc(**kwargs):
 
     print(f'Start generating {file_type} documentation...')
     if file_type == 'integration':
-        return generate_integration_doc(**kwargs)
+        use_cases = kwargs.get('use_cases')
+        command_permissions = kwargs.get('command_permissions')
+        return generate_integration_doc(input=input_path, output=output_path, use_cases=use_cases,
+                                        examples=examples, permissions=permissions,
+                                        command_permissions=command_permissions, limitations=limitations,
+                                        insecure=insecure, verbose=verbose)
     elif file_type == 'script':
-        return generate_script_doc(**kwargs)
+        return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
+                                   limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == 'playbook':
-        return generate_playbook_doc(**kwargs)
+        return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
+                                     limitations=limitations, verbose=verbose)
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1
 
 
+# ====================== create-id-set ====================== #
 @main.command(name="create-id-set",
+              hidden=True,
               short_help='''Create the content dependency tree by ids.''')
 @click.help_option(
     '-h', '--help'
@@ -577,9 +608,26 @@ def id_set_command(**kwargs):
     id_set_creator.create_id_set()
 
 
+# ====================== find-dependencies ====================== #
+@main.command(name="find-dependencies",
+              short_help='''Find pack dependencies and update pack metadata.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
+@click.option(
+    "-i", "--id_set_path", help="Path to id set json file.", required=False)
+def find_dependencies_command(**kwargs):
+    pack_name = kwargs.get('pack_folder_name', '')
+    id_set_path = kwargs.get('id_set_path')
+    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
 
 # todo: add download from demisto command
 

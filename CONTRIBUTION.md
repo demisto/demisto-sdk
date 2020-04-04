@@ -7,12 +7,12 @@ We build `demisto-sdk` to support python 3.7 and 3.8.
 
 1. [Clone demisto-sdk repository](#1-Clone-demisto-sdk-repository)
 2. [Install demisto-sdk as editable versions](#2-Install-demisto-sdk-as-editable-version)
-3. [Pre-commit hooks setup](3-Pre-commit-hooks-setup)
-4. [Develop new command](4-Develop-new-command)
+3. [Pre-commit hooks setup](#3-Pre-commit-hooks-setup)
+4. [Develop new command](#4-Develop-new-command)
 5. [Running unit-tests using tox](#5-running-unit-tests-using-tox)
-6. [Push changes to GitHub (Relevant only for Exernal PRs)](6-push-changes-to-gitHu- (relevant-only-for-Exernal-PRs))
-7. [Review Process](7-review-process)
-8. [Contributor License Agreement (Relevant only for Exernal PRs)](8-contributor-license-agreement-relevant-only-for-exernal-prs)
+6. [Push changes to GitHub (Exernal PRs)](#6-push-changes-to-github-relevant-only-for-exernal-prs)
+7. [Review Process](#7-review-process)
+8. [Contributor License Agreement (Exernal PRs)](#8-contributor-license-agreement-relevant-only-for-exernal-prs)
 
 ---
 
@@ -33,7 +33,7 @@ git clone https://github.com/demisto/demisto-sdk.git
    pip3 uninstall demisto-sdk
    ```
 
-2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/):
+2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs):
 
    ```shell
    pip3 install -e .
@@ -51,7 +51,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 4. Install dev-requirements -
 
    ```shell
-   pip3 install <repo>/resources/utils/requirements-dev.txt
+   pip3 install <repo>/requirements-dev.txt
    ```
 
 ---

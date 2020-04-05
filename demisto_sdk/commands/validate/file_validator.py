@@ -490,7 +490,9 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                self.is_valid_release_notes(file_path)
+                release_notes_validator = ReleaseNotesValidator(file_path)
+                if not release_notes_validator.is_file_valid():
+                    self._is_valid = False
                 continue
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):

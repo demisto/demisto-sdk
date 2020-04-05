@@ -668,7 +668,7 @@ class FilesValidator:
 
     def get_content_release_identifier(self):
         try:
-            file_content = get_remote_file('.circleci/config.yml')
+            file_content = get_remote_file('.circleci/config.yml', tag=self.branch_name)
         except Exception:
             return
         else:

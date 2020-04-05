@@ -252,15 +252,17 @@ class TestValidators:
     with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
         tests_params = json.load(test_params_file)
     params = [
-        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True),
-        ('origin/master', tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True),
-        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '', True),
-        (None, tuple(set(i) for i in tests_params['data']['params_without_data']), '123456', True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        ('origin/master', tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_without_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', False, False),
     ]
 
-    @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer", params)
-    def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer, mocker):
+    @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer, is_valid", params)
+    def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer, is_valid, mocker):
         file_validator = FilesValidator(validate_conf_json=False, prev_ver=prev_var)
+        file_validator._is_valid = is_valid
         mocker.patch.object(FilesValidator, 'get_modified_and_added_files', return_value=get_modified_and_added_files)
         mocker.patch.object(FilesValidator, 'get_content_release_identifier', return_value=release_iden)
         mocker.patch.object(FilesValidator, 'validate_modified_files', return_value=None)

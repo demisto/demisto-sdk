@@ -1,4 +1,5 @@
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import print_error
 
 

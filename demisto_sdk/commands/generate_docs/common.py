@@ -1,8 +1,9 @@
+import html
 import json
 import os.path
 import re
-import html
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
+
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 STRING_TYPES = (str, bytes)  # type: ignore

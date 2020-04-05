@@ -1,8 +1,10 @@
-import pytest
 import io
 import os
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+
+import pytest
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
+    PackUniqueFilesValidator
 
 
 class TestPackMetadataValidator:

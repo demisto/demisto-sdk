@@ -1,18 +1,32 @@
+import json
 import os
 import shutil
+from datetime import datetime
+from distutils.dir_util import copy_tree
+from typing import Dict
+
 import yaml
 import yamlordereddictloader
-import json
-from datetime import datetime
-from typing import Dict
-from distutils.dir_util import copy_tree
-
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS, get_common_server_path, print_v
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, \
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, \
-    CONNECTIONS_DIR, DASHBOARDS_DIR, MISC_DIR, REPORTS_DIR, WIDGETS_DIR, PACK_INITIAL_VERSION, INTEGRATION_CATEGORIES, \
-    PACK_SUPPORT_OPTIONS
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+                                                   CONNECTIONS_DIR,
+                                                   DASHBOARDS_DIR,
+                                                   INCIDENT_FIELDS_DIR,
+                                                   INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR,
+                                                   INTEGRATION_CATEGORIES,
+                                                   INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR, MISC_DIR,
+                                                   PACK_INITIAL_VERSION,
+                                                   PACK_SUPPORT_OPTIONS,
+                                                   PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   WIDGETS_DIR)
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               get_common_server_path,
+                                               print_color, print_error,
+                                               print_v)
 
 
 class Initiator:

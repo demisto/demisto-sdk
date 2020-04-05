@@ -1,9 +1,10 @@
-import os
 import io
+import os
 import shutil
 
-from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
+    PlaybookTestsGenerator
 
 
 def load_file_from_test_dir(filename):

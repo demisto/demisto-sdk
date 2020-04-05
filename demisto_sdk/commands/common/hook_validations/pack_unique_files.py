@@ -1,17 +1,24 @@
 """
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
-import os
 import io
-import re
 import json
+import os
+import re
 
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
+                                                   PACK_METADATA_CATEGORIES,
+                                                   PACK_METADATA_DEPENDENCIES,
+                                                   PACK_METADATA_FIELDS,
+                                                   PACK_METADATA_KEYWORDS,
+                                                   PACK_METADATA_PRICE,
+                                                   PACK_METADATA_TAGS,
+                                                   PACK_METADATA_USE_CASES,
+                                                   PACKS_PACK_IGNORE_FILE_NAME,
+                                                   PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME,
+                                                   PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.tools import pack_name_to_path
-from demisto_sdk.commands.common.constants import (PACKS_WHITELIST_FILE_NAME, PACKS_PACK_IGNORE_FILE_NAME,
-                                                   PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-                                                   PACK_METADATA_FIELDS, PACK_METADATA_DEPENDENCIES,
-                                                   PACK_METADATA_PRICE, PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS,
-                                                   PACK_METADATA_CATEGORIES, PACK_METADATA_USE_CASES, API_MODULES_PACK)
 
 
 class PackUniqueFilesValidator:

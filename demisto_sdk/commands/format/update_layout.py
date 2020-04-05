@@ -1,11 +1,12 @@
 from typing import Tuple
 
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
-from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
 import yaml
-from demisto_sdk.commands.format.format_constants import DEFAULT_VERSION, NEW_FILE_DEFAULT_5_FROMVERSION,\
-    SUCCESS_RETURN_CODE, ERROR_RETURN_CODE, SKIP_RETURN_CODE
+from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+from demisto_sdk.commands.format.format_constants import (
+    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
+    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
 class LayoutJSONFormat(BaseUpdateJSON):

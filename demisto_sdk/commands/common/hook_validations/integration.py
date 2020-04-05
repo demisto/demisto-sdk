@@ -1,10 +1,18 @@
-from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
-    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   DBOT_SCORES_DICT,
+                                                   FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   INTEGRATION_CATEGORIES,
+                                                   IOC_OUTPUTS_DICT,
+                                                   PYTHON_SUBTYPES, Errors)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.tools import (get_dockerimage45, print_error,
+                                               print_warning,
+                                               server_version_compare)
 
 
 class IntegrationValidator(BaseValidator):

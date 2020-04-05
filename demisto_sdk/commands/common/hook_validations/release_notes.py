@@ -122,8 +122,8 @@ class ReleaseNotesValidator:
         """
         # checks that release notes file exists and contains text
         if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
-        #     print_error(F'File {self.file_path} is missing release notes, '
-        #                 F'Please add it under {self.release_notes_path}')
+            print_error(F'File {self.file_path} is missing release notes, '
+                        F'Please add it under {self.release_notes_path}')
             return False
 
         return True

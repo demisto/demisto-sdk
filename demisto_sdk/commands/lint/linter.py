@@ -247,7 +247,7 @@ class Linter:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
                 if exit_code:
-                    self._pkg_lint_status["exit_code"] += EXIT_CODES[lint_check]
+                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
 
     def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:

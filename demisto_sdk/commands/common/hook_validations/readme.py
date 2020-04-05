@@ -1,6 +1,8 @@
-from pathlib import Path
 import os
-from demisto_sdk.commands.common.tools import print_error, print_warning, run_command_os, get_content_path
+from pathlib import Path
+
+from demisto_sdk.commands.common.tools import (get_content_path, print_error,
+                                               print_warning, run_command_os)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'

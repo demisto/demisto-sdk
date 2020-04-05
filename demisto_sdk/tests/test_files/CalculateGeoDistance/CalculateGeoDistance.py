@@ -1,7 +1,7 @@
 import demistomock as demisto
+import geopy.distance
 from CommonServerPython import *
 from CommonServerUserPython import *
-import geopy.distance
 
 requests.packages.urllib3.disable_warnings()
 

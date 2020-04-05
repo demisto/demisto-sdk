@@ -1,15 +1,27 @@
-import os
 import glob
-import pytest
+import os
 
-from demisto_sdk.commands.common.git_tools import git_path
+import pytest
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX
-from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type, \
-    get_dict_from_file, LOG_COLORS, get_last_release_version, filter_packagify_changes
-from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
-    VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
-    INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH, VALID_MD
+from demisto_sdk.commands.common.constants import (PACKS_PLAYBOOK_YML_REGEX,
+                                                   PACKS_TEST_PLAYBOOKS_REGEX)
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               filter_packagify_changes,
+                                               find_type, get_dict_from_file,
+                                               get_last_release_version,
+                                               get_matching_regex,
+                                               server_version_compare)
+from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+                                              VALID_DASHBOARD_PATH,
+                                              VALID_INCIDENT_FIELD_PATH,
+                                              VALID_INCIDENT_TYPE_PATH,
+                                              VALID_INTEGRATION_TEST_PATH,
+                                              VALID_LAYOUT_PATH, VALID_MD,
+                                              VALID_PLAYBOOK_ID_PATH,
+                                              VALID_REPUTATION_FILE,
+                                              VALID_SCRIPT_PATH,
+                                              VALID_WIDGET_PATH)
 
 
 class TestGenericFunctions:

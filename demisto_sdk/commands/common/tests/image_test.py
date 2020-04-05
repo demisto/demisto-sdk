@@ -1,6 +1,7 @@
 import os
-from demisto_sdk.commands.common.hook_validations import image
+
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations import image
 
 
 def test_is_not_default_image():

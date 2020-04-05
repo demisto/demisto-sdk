@@ -1,6 +1,7 @@
-from demisto_sdk.commands.common.constants import TYPE_PYTHON, TYPE_PWSH
-import pytest
 from unittest.mock import patch
+
+import pytest
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 
 
 @patch('builtins.print')

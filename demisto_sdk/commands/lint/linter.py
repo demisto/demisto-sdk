@@ -1,27 +1,35 @@
 # STD python packages
-import logging
-from typing import Tuple, List, Optional
-import io
-import os
-import json
 import hashlib
-import urllib3.exceptions
-import requests.exceptions
+import io
+import json
+import logging
+import os
+from typing import List, Optional, Tuple
+
+import docker
 # 3-rd party packages
 import docker.errors
 import docker.models.containers
-import docker
+import requests.exceptions
+import urllib3.exceptions
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+# Local packages
+from demisto_sdk.commands.common.tools import (get_all_docker_images,
+                                               run_command_os)
+from demisto_sdk.commands.lint.commands_builder import (
+    build_bandit_command, build_flake8_command, build_mypy_command,
+    build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
+    build_pytest_command, build_vulture_command)
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
+                                               SUCCESS, add_tmp_lint_files,
+                                               add_typing_module,
+                                               copy_dir_to_container,
+                                               get_file_from_container,
+                                               get_python_version_from_image,
+                                               stream_docker_container_output)
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
-from wcmatch.pathlib import Path, NEGATE
-# Local packages
-from demisto_sdk.commands.common.tools import get_all_docker_images, run_command_os
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.lint.commands_builder import build_mypy_command, build_bandit_command, build_pytest_command, \
-    build_pylint_command, build_flake8_command, build_vulture_command, build_pwsh_analyze_command, build_pwsh_test_command
-from demisto_sdk.commands.lint.helpers import get_file_from_container, get_python_version_from_image, \
-    add_tmp_lint_files, copy_dir_to_container, EXIT_CODES, add_typing_module, RL, SUCCESS, FAIL, RERUN, \
-    stream_docker_container_output
+from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 

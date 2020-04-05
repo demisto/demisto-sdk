@@ -1,9 +1,10 @@
-import os
-from demisto_sdk.commands.secrets.secrets import SecretsValidator
 import io
-import shutil
 import json
+import os
+import shutil
+
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 
 def create_whitelist_secrets_file(file_path, urls=[], ips=[], files=[], generic_strings=[]):

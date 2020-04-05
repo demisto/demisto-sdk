@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Dict, Tuple, Optional, List, Callable, Any
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import urllib3
-
 from CommonServerPython import *
 
 # Disable insecure warnings

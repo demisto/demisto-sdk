@@ -1,6 +1,7 @@
 import os
-from demisto_sdk.commands.common.tools import get_yaml, get_json
+
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))

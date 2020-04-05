@@ -1,11 +1,14 @@
-import pytest
-from mock import patch
-from typing import Optional
 from copy import deepcopy
+from typing import Optional
 
-from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+import pytest
+from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS)
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
+from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):

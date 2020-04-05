@@ -1,19 +1,24 @@
 import io
-import os
-import math
 import json
+import math
+import os
 import string
+
 import PyPDF2
-
 from bs4 import BeautifulSoup
-from demisto_sdk.commands.common.constants import re, REQUIRED_YML_FILE_TYPES, PACKS_DIR, PACKS_WHITELIST_FILE_NAME, \
-    INTEGRATION_README_REGEX, EXTERNAL_PR_REGEX
-from demisto_sdk.commands.common.tools import run_command, print_error, print_color, LOG_COLORS, checked_type, \
-    is_file_path_in_pack, get_pack_name, print_warning
-
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import (EXTERNAL_PR_REGEX,
+                                                   INTEGRATION_README_REGEX,
+                                                   PACKS_DIR,
+                                                   PACKS_WHITELIST_FILE_NAME,
+                                                   REQUIRED_YML_FILE_TYPES, re)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
+                                               get_pack_name,
+                                               is_file_path_in_pack,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']

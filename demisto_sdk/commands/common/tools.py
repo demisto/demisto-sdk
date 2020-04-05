@@ -1,23 +1,25 @@
-import io
-import re
-import os
-import sys
-import json
-import glob
 import argparse
-from subprocess import Popen, PIPE, DEVNULL, check_output
-from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple, Dict, List
-import git
+import glob
+import io
+import json
+import os
+import re
 import shlex
+import sys
+from distutils.version import LooseVersion
 from pathlib import Path
+from subprocess import DEVNULL, PIPE, Popen, check_output
+from typing import Dict, List, Optional, Tuple, Union
+
+import git
+import requests
 import urllib3
 import yaml
-import requests
-
-from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
-    CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, PACKS_README_FILE_NAME
+from demisto_sdk.commands.common.constants import (
+    CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
+    PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
+    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER)
 
 # disable insecure warnings
 urllib3.disable_warnings()

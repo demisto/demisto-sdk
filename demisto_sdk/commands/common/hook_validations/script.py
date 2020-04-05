@@ -1,8 +1,11 @@
 from demisto_sdk.commands.common.constants import PYTHON_SUBTYPES, Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.tools import print_error, server_version_compare, get_dockerimage45
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
+from demisto_sdk.commands.common.tools import (get_dockerimage45, print_error,
+                                               server_version_compare)
 
 
 class ScriptValidator(BaseValidator):

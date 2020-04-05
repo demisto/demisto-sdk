@@ -1,6 +1,7 @@
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock
+
+import pytest
 
 values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
 

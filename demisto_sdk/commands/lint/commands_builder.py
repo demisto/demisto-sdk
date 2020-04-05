@@ -1,7 +1,8 @@
 # STD python packages
+import os
 from pathlib import Path
 from typing import List
-import os
+
 # Third party packages
 # Local imports
 

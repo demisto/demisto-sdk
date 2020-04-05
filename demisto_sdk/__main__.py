@@ -1,34 +1,42 @@
 # Site packages
 import os
-from pkg_resources import get_distribution
 import sys
+
+from pkg_resources import get_distribution
 
 # Third party packages
 import click
-
+from demisto_sdk.commands.common.configuration import Configuration
+# Common tools
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_last_remote_release_version,
+                                               print_error, print_warning)
+from demisto_sdk.commands.create_artifacts.content_creator import \
+    ContentCreator
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
+from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+    generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
+    generate_playbook_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import \
+    generate_script_doc
+from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
+    PlaybookTestsGenerator
+from demisto_sdk.commands.init.initiator import Initiator
+from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
+    json_to_outputs
+from demisto_sdk.commands.lint.lint_manager import LintManager
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
-from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
+from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.init.initiator import Initiator
-from demisto_sdk.commands.split_yml.extractor import Extractor
-from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.lint.lint_manager import LintManager
-from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.validate.file_validator import FilesValidator
-from demisto_sdk.commands.create_artifacts.content_creator import ContentCreator
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import json_to_outputs
-from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
-from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
-from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
-from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-
-# Common tools
-from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
 
 
 class DemistoSDK:

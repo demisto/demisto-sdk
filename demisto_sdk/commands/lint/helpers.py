@@ -1,25 +1,26 @@
 # STD python packages
+import io
+import logging
 import os
+import re
+import shlex
 import shutil
 import tarfile
-from functools import lru_cache
-import io
-from pathlib import Path
-import re
-from typing import List, Optional, Dict, Generator
-import shlex
-from contextlib import contextmanager
-import requests
 import textwrap
-import logging
+from contextlib import contextmanager
+from functools import lru_cache
+from pathlib import Path
+from typing import Dict, Generator, List, Optional
+
+import docker
+import docker.errors
 # Third party packages
 import git
-import docker.errors
-import docker
-from docker.models.containers import Container
+import requests
 # Local packages
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.common.tools import run_command_os, print_warning
+from demisto_sdk.commands.common.tools import print_warning, run_command_os
+from docker.models.containers import Container
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]

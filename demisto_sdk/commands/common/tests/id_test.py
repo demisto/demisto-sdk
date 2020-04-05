@@ -1,5 +1,6 @@
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
+
 CONFIG = Configuration()
 
 

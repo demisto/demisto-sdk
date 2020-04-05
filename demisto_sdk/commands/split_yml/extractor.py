@@ -6,13 +6,16 @@ import tempfile
 from io import open
 
 import yaml
+from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
+                                                   TYPE_TO_EXTENSION)
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               get_all_docker_images,
+                                               get_pipenv_dir,
+                                               get_python_version, pascal_case,
+                                               print_color, print_error)
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
-
-from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, get_python_version, \
-    get_pipenv_dir, get_all_docker_images, print_error, pascal_case
-from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, TYPE_PYTHON, TYPE_PWSH
 
 
 class Extractor:
@@ -104,6 +107,7 @@ class Extractor:
         # Python code formatting and dev env setup
         code_type = script_obj['type']
         if code_type == TYPE_PYTHON:
+            code_file += '.py'
             print("Running autopep8 on file: {} ...".format(code_file))
             try:
                 subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
@@ -111,6 +115,14 @@ class Extractor:
                 print_color("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
                             "Make sure to install it with: pip install autopep8.\n"
                             "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
+
+            print("Running isort on file: {} ...".format(code_file))
+            try:
+                subprocess.call(["isort", code_file])
+            except FileNotFoundError:
+                print_color("isort skipped! It doesn't seem you have isort installed.\n"
+                            "Make sure to install it with: pip install isort.\n"
+                            "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
 
             print("Detecting python version and setting up pipenv files ...")
             docker = get_all_docker_images(script_obj)[0]

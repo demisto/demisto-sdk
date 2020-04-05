@@ -1,9 +1,10 @@
+import base64
+import os
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.split_yml.extractor import Extractor
-import os
-import base64
 
 
 def test_extract_long_description(tmpdir):
@@ -107,3 +108,23 @@ def test_extract_to_package_format_pwsh(tmpdir):
     with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
         file_data = f.read()
         assert 'This is a sample test README' in file_data
+
+
+def test_extract_to_package_format_py(tmpdir, mocker):
+    mocker.patch(
+        'demisto_sdk.commands.split_yml.extractor.get_python_version',
+        return_value='2.7'
+    )
+    mocker.patch(
+        'demisto_sdk.commands.split_yml.extractor.get_pipenv_dir',
+        return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
+    )
+    out = tmpdir.join('Integrations')
+    extractor = Extractor(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+                          output=str(out), file_type='integration')
+    extractor.extract_to_package_format()
+    with open(out.join('Zoom').join('Zoom.py'), 'r', encoding='utf-8') as f:
+        file_data = f.read()
+        # check imports are sorted
+        assert 'import datetime\nimport json\nimport shutil\nfrom zipfile import ZipFile\n\nimport requests\n\n' \
+               'import demistomock as demisto\nimport jwt\nfrom CommonServerPython import *\n' in file_data

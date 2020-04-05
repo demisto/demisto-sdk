@@ -1,8 +1,12 @@
 from typing import List, Tuple
+
 from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES
-from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 
 
 class IntegrationYMLFormat(BaseUpdateYML):

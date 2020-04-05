@@ -1,6 +1,6 @@
 import pytest
-
-from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import \
+    ReleaseNotesValidator
 
 
 def get_validator(file_path='', diff=''):

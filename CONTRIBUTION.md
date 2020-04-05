@@ -51,7 +51,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 4. Install dev-requirements -
 
    ```shell
-   pip3 install <repo>/requirements-dev.txt
+   pip3 install -r <repo>/requirements-dev.txt
    ```
 
 ---

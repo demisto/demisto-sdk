@@ -62,14 +62,9 @@ class BaseValidator:
 
             # check release_notes file exists and contain text
             if release_notes is None:
-                added_files = run_command('git ls-files -o  --exclude-standard --full-name')
-                if self.file_path in added_files:
-                    print(f'Skipping validation for new files')
-                    return True
-                else:
-                    self.is_valid = False
-                    print_error("Missing release notes for: {}".format(self.file_path))
-                    return False
+                self.is_valid = False
+                print_error("Missing release notes for: {}".format(self.file_path))
+                return False
         return True
 
     @staticmethod

@@ -434,7 +434,7 @@ class FilesValidator:
                     self._is_valid = False
 
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_file(validate_rn=not file_type):
+                if not integration_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
@@ -444,7 +444,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
 
-                if not script_validator.is_valid_file(validate_rn=not file_type):
+                if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
@@ -466,7 +466,7 @@ class FilesValidator:
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
-                if not incident_field_validator.is_valid_file(validate_rn=not file_type):
+                if not incident_field_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
@@ -486,7 +486,7 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type(validate_rn=not file_type):
+                if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:

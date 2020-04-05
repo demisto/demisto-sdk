@@ -14,53 +14,35 @@ from __future__ import print_function
 import os
 import re
 
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
-    CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, IGNORED_TYPES_REGEXES,
-    IMAGE_REGEX, INTEGRATION_REGEX, JSON_ALL_DASHBOARDS_REGEXES,
-    JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
-    JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
-    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, REPUTATION_REGEX, SCHEMA_REGEX,
-    SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TESTS_DIRECTORIES,
-    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES, Errors)
-from demisto_sdk.commands.common.hook_validations.conf_json import \
-    ConfJsonValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
+from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, \
+    KNOWN_FILE_STATUSES, IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, \
+    SCRIPT_REGEX, IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
+    PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
+    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
+    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, \
+    JSON_ALL_INCIDENT_TYPES_REGEXES, TESTS_DIRECTORIES
+from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.incident_type import \
-    IncidentTypeValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.reputation import \
-    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
-                                               filter_packagify_changes,
-                                               find_type, get_pack_name,
-                                               get_yaml, get_yml_paths_in_dir,
-                                               is_file_path_in_pack,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+
+from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
+    LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
+    get_yml_paths_in_dir, find_type
 from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
 
 
 class FilesValidator:
@@ -508,9 +490,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                release_notes_validator = ReleaseNotesValidator(file_path)
-                if not release_notes_validator.is_file_valid():
-                    self._is_valid = False
+                self.is_valid_release_notes(file_path)
                 continue
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):

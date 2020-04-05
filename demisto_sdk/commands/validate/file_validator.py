@@ -374,7 +374,6 @@ class FilesValidator:
 
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
-                continue
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
@@ -491,7 +490,6 @@ class FilesValidator:
 
             elif 'CHANGELOG' in file_path:
                 self.is_valid_release_notes(file_path)
-                continue
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass

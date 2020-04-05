@@ -26,6 +26,7 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import generate_scri
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.sync.content_synchronizer import ContentSynchronizer
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -352,6 +353,25 @@ def format_yml(input=None, output=None, from_version=None, no_validate=None):
 def upload(**kwargs):
     uploader = Uploader(**kwargs)
     return uploader.upload()
+
+
+# ====================== sync ====================== #
+@main.command(name="sync",
+              short_help="Sync custom content from Demisto instance. DEMISTO_BASE_URL environment variable should"
+                         " contain the Demisto server base URL. DEMISTO_API_KEY environment variable should contain"
+                         " a valid Demisto API Key.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="The path of a package directory to upload", required=True)
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
+def sync(**kwargs):
+    content_synchronizer = ContentSynchronizer(**kwargs)
+    return content_synchronizer.sync()
 
 
 # ====================== run ====================== #

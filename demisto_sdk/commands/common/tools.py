@@ -17,7 +17,8 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX
+    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, INTEGRATIONS_DIR, \
+    SCRIPTS_DIR, BETA_INTEGRATIONS_DIR, CONTENT_PREFIXES
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -42,7 +43,7 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str = '',) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -63,20 +64,21 @@ def print_color(obj, color):
     print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
-def get_files_in_dir(project_dir: str, file_ending: Tuple[str, str]) -> List[str]:
-    """
+def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
+    """TODO: add unit test
     Gets the project directory and returns the path of all yml and json files in it
     Args:
-        project_dir: string path to the project_dir
-        file_ending: list of file endings to search for in given directory
-    :return: the path of all yml and json files in it
-
+        project_dir: String path to the project_dir
+        file_endings: List of file endings to search for in a given directory
+        recursive: Indicates whether search should be recursive or not
+    :return: The path of files with file_endings in the current dir
     """
     files = []
-    if project_dir.endswith(file_ending):
-        return [project_dir]
-    for file_type in file_ending:
-        files.extend([f for f in glob.glob(project_dir + '/**/*.' + file_type, recursive=True)])
+    pattern: str = '/**/*.' if recursive else '/*.'
+    for file_type in file_endings:
+        if project_dir.endswith(file_type):
+            return [project_dir]
+        files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
     return files
 
 
@@ -272,12 +274,38 @@ def get_json(file_path):
     return get_file(json.load, file_path, 'json')
 
 
+def get_file_data(file_path: str, file_type: str):
+    """
+    Retrieves the file data depending on it's type
+    :param file_path: The file path
+    :param file_type: The file type
+    :return: The file data
+    """
+    if file_type == 'yml':
+        return get_yaml(file_path)
+    elif file_type == 'json':
+        return get_yaml(file_type)
+    else:
+        with open(file_path, 'r') as file:
+            data = file.read()
+        return data
+
+
 def get_script_or_integration_id(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
         commonfields = data_dictionary.get('commonfields', {})
         return commonfields.get('id', ['-', ])
+
+
+def get_id_by_content_entity(data: dict, content_entity: str):
+    """TODO: add docs, add unit test
+    """
+    if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
+        return data.get('commonfields', {}).get('id', '')
+    else:
+        return data.get('id', '')
 
 
 def collect_ids(file_path):
@@ -722,3 +750,39 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return True, '/'.join(input_path_parts[len(content_path_parts):])
     else:
         return False, ''
+
+
+def remove_trailing_backslash(file_path: str) -> str:
+    """TODO: add unit test
+    Removes backslash from the end of the path
+    :param file_path: The file path
+    :return: The file path without the backslah
+    """
+    return file_path.strip('/')
+
+
+def retrieve_file_ending(file_path: str) -> str:
+    """TODO: add unit test
+    Retrieves the file ending (without the dot)
+    :param file_path: The file path
+    :return: The file ending
+    """
+    os_split: tuple = os.path.splitext(file_path)
+    if os_split:
+        file_ending: str = os_split[1]
+        if file_ending and '.' in file_ending:
+            return file_ending[:1]
+
+
+def retrieve_module_from_file(file_path: str, file_type) -> str:
+    """TODO: add unit test
+    Retrieves module name file path
+    :param file_path: The file path
+    :param file_type: The content file type (e.g. integration, script,...)
+    :return: The module name
+    """
+    base_name = os.path.basename(file_path)
+    module = str(os.path.splitext(base_name))
+    for prefix in CONTENT_PREFIXES:
+        if f'{prefix}-' in module:
+            return module.split(f'{prefix}-')[1]

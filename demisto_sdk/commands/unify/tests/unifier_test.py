@@ -1,14 +1,14 @@
-import os
-import copy
-import pytest
-from mock import patch
-import shutil
-import yaml
 import base64
-from demisto_sdk.commands.common.git_tools import git_path
-import yamlordereddictloader
+import copy
+import os
+import shutil
 
+import pytest
+import yaml
+import yamlordereddictloader
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
+from mock import patch
 
 TEST_VALID_CODE = '''import demistomock as demisto
 from CommonServerPython import *

@@ -1,7 +1,8 @@
-import demisto_client
 import os
 
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_v, print_error
+import demisto_client
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+                                               print_error, print_v)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 

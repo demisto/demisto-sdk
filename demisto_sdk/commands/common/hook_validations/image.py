@@ -1,9 +1,14 @@
-import glob
 import base64
+import glob
 
-from demisto_sdk.commands.common.tools import re, print_error, os, get_yaml, checked_type
-from demisto_sdk.commands.common.constants import IMAGE_REGEX, INTEGRATION_REGEX, DEFAULT_IMAGE_BASE64, \
-    DEFAULT_DBOT_IMAGE_BASE64, INTEGRATION_REGXES, YML_INTEGRATION_REGEXES
+from demisto_sdk.commands.common.constants import (DEFAULT_DBOT_IMAGE_BASE64,
+                                                   DEFAULT_IMAGE_BASE64,
+                                                   IMAGE_REGEX,
+                                                   INTEGRATION_REGEX,
+                                                   INTEGRATION_REGXES,
+                                                   YML_INTEGRATION_REGEXES)
+from demisto_sdk.commands.common.tools import (checked_type, get_yaml, os,
+                                               print_error, re)
 
 
 class ImageValidator:

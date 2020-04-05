@@ -1,7 +1,9 @@
 import json
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
+
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+from demisto_sdk.commands.format.format_constants import \
+    ARGUMENTS_DEFAULT_VALUES
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-from demisto_sdk.commands.format.format_constants import ARGUMENTS_DEFAULT_VALUES
 
 
 class BaseUpdateJSON(BaseUpdate):

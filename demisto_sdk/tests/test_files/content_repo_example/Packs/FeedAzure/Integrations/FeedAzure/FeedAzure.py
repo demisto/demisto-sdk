@@ -1,7 +1,7 @@
 import re
-import urllib3
 from typing import Dict, List, Tuple
 
+import urllib3
 from CommonServerPython import *
 
 # disable insecure warnings

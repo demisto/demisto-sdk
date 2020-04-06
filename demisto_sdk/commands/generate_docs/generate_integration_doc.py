@@ -1,27 +1,25 @@
 import os.path
 import re
-from typing import Optional
+from typing import Optional, Tuple
 from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error, LOG_COLORS, print_color
 from demisto_sdk.commands.generate_docs.common import build_example_dict, add_lines, generate_section, \
     save_output, generate_table_section, stringEscapeMD, generate_numbered_section
 
 
-def append_or_replace_command_in_docs(output: str, new_str: str, command_name: str):
-    regexp = rf'(### {command_name}).+?((?=(\n#{1, 3}\s))|\Z)'
+def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name: str) -> Tuple[str, list]:
+    regexp = rf'(?:###\s{command_name}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
     # Read doc content
     errs = list()
-    with open(output) as file:
-        existing_str = file.read()
-    if re.fullmatch(regexp, existing_str, flags=re.DOTALL):
-        new_docs = re.sub(regexp, new_str, existing_str, flags=re.DOTALL)
+    if re.fullmatch(regexp, old_docs, flags=re.DOTALL):
+        new_docs = re.sub(regexp, new_str, old_docs, flags=re.DOTALL)
         print_color('New command docs has been replaced in file.', LOG_COLORS.GREEN)
     else:
-        new_docs = existing_str + '\n' + new_str if existing_str.endswith("\n") else ("\n\n" + new_str)
-        if command_name in existing_str:
+        new_docs = old_docs + '\n' + new_str if old_docs.endswith("\n") else ("\n" + new_str)
+        if command_name in old_docs:
             errs.append('Could not replace the command in the file although it is presented in the file.'
                         'Copy and paste it in the appropriate spot.')
         print_color('New command docs has been appended to file.', LOG_COLORS.GREEN)
-    return errs, new_docs
+    return new_docs, errs
 
 
 def generate_integration_doc(input, examples, output: str = None, use_cases: str = None,
@@ -61,7 +59,8 @@ def generate_integration_doc(input, examples, output: str = None, use_cases: str
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             command_section_str = '\n'.join(command_section)
-            err, doc_text = append_or_replace_command_in_docs(output, command_section_str, command)
+            with open(output) as f:
+                doc_text, err = append_or_replace_command_in_docs(f.read(), command_section_str, command)
             errors.extend(err)
         else:
             docs = []  # type: list

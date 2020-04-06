@@ -1,10 +1,10 @@
 import os
 
 import pytest
+
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
-from demisto_sdk.commands.generate_docs.generate_integration_doc import \
-    append_or_replace_command_in_docs
+from demisto_sdk.commands.generate_docs.generate_integration_doc import append_or_replace_command_in_docs
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))

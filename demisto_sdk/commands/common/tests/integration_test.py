@@ -304,7 +304,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         validator.old_file = old
-        assert validator.is_valid_beta_integration() is answer
+        assert validator.is_valid_beta() is answer
 
     PROXY_VALID = [{"name": "proxy", "type": 8, "display": "Use system proxy settings", "required": False}]
     PROXY_WRONG_TYPE = [{"name": "proxy", "type": 9, "display": "Use system proxy settings", "required": False}]

@@ -584,6 +584,20 @@ class IntegrationValidator(BaseValidator):
                 return False
             return True
 
+    def is_all_params_not_hidden(self) -> bool:
+        """
+        Verify there are no hidden integration parameters.
+        Returns:
+            bool. True if there aren't hidden parameters False otherwise.
+        """
+        ans = True
+        conf = self.current_file.get('configuration', [])
+        for int_parameter in conf:
+            if int_parameter.get('hidden'):
+                ans = False
+                print_error(Errors.found_hidden_param(int_parameter.get('name')))
+        return ans
+
     def is_valid_image(self) -> bool:
         """Verifies integration image/logo is valid.
 

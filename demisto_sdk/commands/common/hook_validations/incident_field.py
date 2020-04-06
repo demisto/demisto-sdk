@@ -1,12 +1,14 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
-from distutils.version import LooseVersion
-from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.tools import print_error
-from enum import Enum, IntEnum
 import re
+from distutils.version import LooseVersion
+from enum import Enum, IntEnum
+
+from demisto_sdk.commands.common.constants import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.tools import print_error
 
 
 class TypeFields(Enum):

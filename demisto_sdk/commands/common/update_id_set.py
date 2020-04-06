@@ -1,24 +1,36 @@
-import itertools
-import os
 import glob
+import itertools
 import json
+import os
 import re
-from collections import OrderedDict
-from multiprocessing import Pool, cpu_count
-from distutils.version import LooseVersion
 import time
+from collections import OrderedDict
+from distutils.version import LooseVersion
+from functools import partial
+from multiprocessing import Pool, cpu_count
 
-from demisto_sdk.commands.common.constants import INTEGRATION_REGEX, INTEGRATION_YML_REGEX, \
-    PACKS_INTEGRATION_REGEX, SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PLAYBOOK_REGEX, TEST_PLAYBOOK_REGEX, \
-    PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, SCRIPTS_REGEX_LIST, BETA_INTEGRATION_REGEX, \
-    BETA_PLAYBOOK_REGEX, TEST_SCRIPT_REGEX, PACKS_INTEGRATION_YML_REGEX, PACKS_CLASSIFIERS_REGEX, CLASSIFIER_REGEX, \
-    SCRIPTS_DIR, WIDGETS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, \
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, LAYOUTS_DIR, REPORTS_DIR, DASHBOARD_REGEX, PACKS_DASHBOARDS_REGEX, \
-    INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX, INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPES_REGEX, \
-    INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_FIELDS_REGEX, LAYOUT_REGEX, PACKS_LAYOUTS_REGEX, REPORT_REGEX,\
-    PACKS_REPORTS_REGEX, WIDGETS_REGEX, PACKS_WIDGETS_REGEX
-from demisto_sdk.commands.common.tools import get_yaml, get_to_version, get_from_version, collect_ids, get_json, \
-    get_script_or_integration_id, LOG_COLORS, print_color, print_error, print_warning, run_command, get_pack_name
+import click
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_REGEX, BETA_PLAYBOOK_REGEX, CLASSIFIER_REGEX,
+    CLASSIFIERS_DIR, DASHBOARD_REGEX, DASHBOARDS_DIR, INCIDENT_FIELD_REGEX,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPE_REGEX, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_FIELDS_REGEX, INTEGRATION_REGEX,
+    INTEGRATION_YML_REGEX, LAYOUT_REGEX, LAYOUTS_DIR, PACKS_CLASSIFIERS_REGEX,
+    PACKS_DASHBOARDS_REGEX, PACKS_INCIDENT_FIELDS_REGEX,
+    PACKS_INCIDENT_TYPES_REGEX, PACKS_INDICATOR_FIELDS_REGEX,
+    PACKS_INTEGRATION_REGEX, PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUTS_REGEX,
+    PACKS_PLAYBOOK_YML_REGEX, PACKS_REPORTS_REGEX, PACKS_SCRIPT_YML_REGEX,
+    PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX, PLAYBOOK_REGEX,
+    REPORT_REGEX, REPORTS_DIR, SCRIPT_REGEX, SCRIPTS_DIR, SCRIPTS_REGEX_LIST,
+    TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TEST_SCRIPT_REGEX, WIDGETS_DIR,
+    WIDGETS_REGEX)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, collect_ids,
+                                               get_from_version, get_json,
+                                               get_pack_name,
+                                               get_script_or_integration_id,
+                                               get_to_version, get_yaml,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 CHECKED_TYPES_REGEXES = (
@@ -348,12 +360,13 @@ def add_new_object_to_id_set(obj_id, obj_data, instances_set):
         instances_set.append(obj_data)
 
 
-def process_integration(file_path):
+def process_integration(file_path, print_logs):
     """
     Process integration dir or file
 
     Arguments:
         file_path {string} -- file path to integration file
+        print_logs {bool} -- whether to print logs to stdout
 
     Returns:
         list -- integration data list (may be empty)
@@ -361,7 +374,8 @@ def process_integration(file_path):
     res = []
     if os.path.isfile(file_path):
         if checked_type(file_path, (INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, PACKS_INTEGRATION_REGEX)):
-            print("adding {0} to id_set".format(file_path))
+            if print_logs:
+                print("adding {0} to id_set".format(file_path))
             res.append(get_integration_data(file_path))
     else:
         # package integration
@@ -369,175 +383,196 @@ def process_integration(file_path):
         file_path = os.path.join(file_path, '{}.yml'.format(package_name))
         if os.path.isfile(file_path):
             # locally, might have leftover dirs without committed files
-            print("adding {0} to id_set".format(file_path))
+            if print_logs:
+                print("adding {0} to id_set".format(file_path))
             res.append(get_integration_data(file_path))
 
     return res
 
 
-def process_script(file_path):
+def process_script(file_path, print_logs):
     res = []
     if os.path.isfile(file_path):
         if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX)):
-            print("adding {0} to id_set".format(file_path))
+            if print_logs:
+                print("adding {0} to id_set".format(file_path))
             res.append(get_script_data(file_path))
     else:
         # package script
         unifier = Unifier(file_path)
         yml_path, code = unifier.get_script_package_data()
-        print("adding {0} to id_set".format(file_path))
+        if print_logs:
+            print("adding {0} to id_set".format(file_path))
         res.append(get_script_data(yml_path, script_code=code))
 
     return res
 
 
-def process_playbook(file_path):
+def process_playbook(file_path, print_logs):
     res = []
     if checked_type(file_path, (PACKS_PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX, BETA_PLAYBOOK_REGEX)):
-        print('adding {0} to id_set'.format(file_path))
+        if print_logs:
+            print('adding {0} to id_set'.format(file_path))
         res.append(get_playbook_data(file_path))
     return res
 
 
-def process_classifier(file_path):
+def process_classifier(file_path, print_logs):
     """
     Process a classifier JSON file
     Args:
         file_path: The file path from Classifiers folder
-
+        print_logs: Whether to print logs to stdout
     Returns:
         a list of classifier data.
     """
     res = []
     if checked_type(file_path, (CLASSIFIER_REGEX, PACKS_CLASSIFIERS_REGEX)):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
     return res
 
 
-def process_dashboards(file_path):
+def process_dashboards(file_path, print_logs):
     """
     Process a dashboard JSON file
     Args:
         file_path: The file path from Dashboard folder
+        print_logs: Whether to print logs to stdout
 
     Returns:
         a list of dashboard data.
     """
     res = []
     if checked_type(file_path, (DASHBOARD_REGEX, PACKS_DASHBOARDS_REGEX)):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
     return res
 
 
-def process_incident_fields(file_path):
+def process_incident_fields(file_path, print_logs):
     """
     Process a incident_fields JSON file
     Args:
         file_path: The file path from incident field folder
+        print_logs: Whether to print logs to stdout.
 
     Returns:
         a list of incident field data.
     """
     res = []
     if checked_type(file_path, (INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX)):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
     return res
 
 
-def process_incident_types(file_path):
+def process_incident_types(file_path, print_logs):
     """
     Process a incident_fields JSON file
     Args:
         file_path: The file path from incident field folder
+        print_logs: Whether to print logs to stdout
 
     Returns:
         a list of incident field data.
     """
     res = []
     if checked_type(file_path, (INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPES_REGEX)):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
     return res
 
 
-def process_indicator_fields(file_path):
+def process_indicator_fields(file_path, print_logs):
     """
     Process a indicator fields JSON file
     Args:
         file_path: The file path from indicator field folder
+        print_logs: Whether to print logs to stdout
 
     Returns:
         a list of indicator field data.
     """
     res = []
     if checked_type(file_path, [INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_FIELDS_REGEX]):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
     return res
 
 
-def process_layouts(file_path):
+def process_layouts(file_path, print_logs):
     """
     Process a Layouts JSON file
     Args:
         file_path: The file path from layout folder
+        print_logs: Whether to print logs to stdout
 
     Returns:
         a list of layout data.
     """
     res = []
     if checked_type(file_path, (LAYOUT_REGEX, PACKS_LAYOUTS_REGEX)):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_layout_data(file_path))
     return res
 
 
-def process_reports(file_path):
+def process_reports(file_path, print_logs):
     """
     Process a report JSON file
     Args:
         file_path: The file path from report folder
+        print_logs: Whether to print logs to stdout
 
     Returns:
         a list of report data.
     """
     res = []
     if checked_type(file_path, [REPORT_REGEX, PACKS_REPORTS_REGEX]):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
     return res
 
 
-def process_widgets(file_path):
+def process_widgets(file_path, print_logs):
     """
     Process a widgets JSON file
     Args:
         file_path: The file path from widgets folder
+        print_logs: Whether to print logs to stdout
 
     Returns:
         a list of widgets data.
     """
     res = []
     if checked_type(file_path, [WIDGETS_REGEX, PACKS_WIDGETS_REGEX]):
-        print("adding {} to id_set".format(file_path))
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
     return res
 
 
-def process_test_playbook_path(file_path):
+def process_test_playbook_path(file_path, print_logs):
     """
     Process a yml file in the testplyabook dir. Maybe either a script or playbook
 
     Arguments:
         file_path {string} -- path to yaml file
+        print_logs {bool} -- whether to print logs to stdoud
 
     Returns:
         pair -- first element is a playbook second is a script. each may be None
     """
-    print("adding {0} to id_set".format(file_path))
+    if print_logs:
+        print("adding {0} to id_set".format(file_path))
     script = None
     playbook = None
     if checked_type(file_path, (TEST_SCRIPT_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, TEST_PLAYBOOK_REGEX)):
@@ -590,7 +625,7 @@ def get_general_paths(path):
     return files
 
 
-def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None):
+def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, print_logs=True):
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                              'Dashboards', 'IncidentFields', 'IndicatorFields', 'Layouts', 'Reports', 'Widgets']
@@ -612,68 +647,98 @@ def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None):
     pool = Pool(processes=cpu_count() * 2)
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
-    if 'Integrations' in objects_to_create:
-        print_color("Starting iterating over Integrations", LOG_COLORS.GREEN)
-        for arr in pool.map(process_integration, get_integrations_paths()):
-            integration_list.extend(arr)
 
-    if 'Playbooks' in objects_to_create:
-        print_color("Starting iterating over Playbooks", LOG_COLORS.GREEN)
-        for arr in pool.map(process_playbook, get_playbooks_paths()):
-            playbooks_list.extend(arr)
+    with click.progressbar(length=12, label="Progress of id set creation") as progress_bar:
+        if 'Integrations' in objects_to_create:
+            print_color("\nStarting iterating over Integrations", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
+                integration_list.extend(arr)
 
-    if 'Scripts' in objects_to_create:
-        print_color("Starting iterating over Scripts", LOG_COLORS.GREEN)
-        for arr in pool.map(process_script, get_general_paths(SCRIPTS_DIR)):
-            scripts_list.extend(arr)
+        progress_bar.update(1)
 
-    if 'TestPlaybooks' in objects_to_create:
-        print_color("Starting iterating over TestPlaybooks", LOG_COLORS.GREEN)
-        for pair in pool.map(process_test_playbook_path, get_general_paths(TEST_PLAYBOOKS_DIR)):
-            if pair[0]:
-                testplaybooks_list.append(pair[0])
-            if pair[1]:
-                scripts_list.append(pair[1])
+        if 'Playbooks' in objects_to_create:
+            print_color("\nStarting iterating over Playbooks", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_playbook, print_logs=print_logs), get_playbooks_paths()):
+                playbooks_list.extend(arr)
 
-    if 'Classifiers' in objects_to_create:
-        print_color("Starting iterating over Classifiers", LOG_COLORS.GREEN)
-        for arr in pool.map(process_classifier, get_general_paths(CLASSIFIERS_DIR)):
-            classifiers_list.extend(arr)
+        progress_bar.update(1)
 
-    if 'Dashboards' in objects_to_create:
-        print_color("Starting iterating over Dashboards", LOG_COLORS.GREEN)
-        for arr in pool.map(process_dashboards, get_general_paths(DASHBOARDS_DIR)):
-            dashboards_list.extend(arr)
+        if 'Scripts' in objects_to_create:
+            print_color("\nStarting iterating over Scripts", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_script, print_logs=print_logs), get_general_paths(SCRIPTS_DIR)):
+                scripts_list.extend(arr)
 
-    if 'IncidentFields' in objects_to_create:
-        print_color("Starting iterating over Incident Fields", LOG_COLORS.GREEN)
-        for arr in pool.map(process_incident_fields, get_general_paths(INCIDENT_FIELDS_DIR)):
-            incident_fields_list.extend(arr)
+        progress_bar.update(1)
 
-    if 'IncidentTypes' in objects_to_create:
-        print_color("Starting iterating over Incident Types", LOG_COLORS.GREEN)
-        for arr in pool.map(process_incident_types, get_general_paths(INCIDENT_TYPES_DIR)):
-            incident_type_list.extend(arr)
+        if 'TestPlaybooks' in objects_to_create:
+            print_color("\nStarting iterating over TestPlaybooks", LOG_COLORS.GREEN)
+            for pair in pool.map(partial(process_test_playbook_path, print_logs=print_logs),
+                                 get_general_paths(TEST_PLAYBOOKS_DIR)):
+                if pair[0]:
+                    testplaybooks_list.append(pair[0])
+                if pair[1]:
+                    scripts_list.append(pair[1])
 
-    if 'IndicatorFields' in objects_to_create:
-        print_color("Starting iterating over Indicator Fields", LOG_COLORS.GREEN)
-        for arr in pool.map(process_indicator_fields, get_general_paths(INDICATOR_FIELDS_DIR)):
-            indicator_fields_list.extend(arr)
+        progress_bar.update(1)
 
-    if 'Layouts' in objects_to_create:
-        print_color("Starting iterating over Layouts", LOG_COLORS.GREEN)
-        for arr in pool.map(process_layouts, get_general_paths(LAYOUTS_DIR)):
-            layouts_list.extend(arr)
+        if 'Classifiers' in objects_to_create:
+            print_color("\nStarting iterating over Classifiers", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_classifier, print_logs=print_logs), get_general_paths(CLASSIFIERS_DIR)):
+                classifiers_list.extend(arr)
 
-    if 'Reports' in objects_to_create:
-        print_color("Starting iterating over Reports", LOG_COLORS.GREEN)
-        for arr in pool.map(process_reports, get_general_paths(REPORTS_DIR)):
-            reports_list.extend(arr)
+        progress_bar.update(1)
 
-    if 'Widgets' in objects_to_create:
-        print_color("Starting iterating over Widgets", LOG_COLORS.GREEN)
-        for arr in pool.map(process_widgets, get_general_paths(WIDGETS_DIR)):
-            widgets_list.extend(arr)
+        if 'Dashboards' in objects_to_create:
+            print_color("\nStarting iterating over Dashboards", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_dashboards, print_logs=print_logs), get_general_paths(DASHBOARDS_DIR)):
+                dashboards_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'IncidentFields' in objects_to_create:
+            print_color("\nStarting iterating over Incident Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_incident_fields, print_logs=print_logs),
+                                get_general_paths(INCIDENT_FIELDS_DIR)):
+                incident_fields_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'IncidentTypes' in objects_to_create:
+            print_color("\nStarting iterating over Incident Types", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_incident_types, print_logs=print_logs),
+                                get_general_paths(INCIDENT_TYPES_DIR)):
+                incident_type_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'IndicatorFields' in objects_to_create:
+            print_color("\nStarting iterating over Indicator Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_indicator_fields, print_logs=print_logs),
+                                get_general_paths(INDICATOR_FIELDS_DIR)):
+                indicator_fields_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'Layouts' in objects_to_create:
+            print_color("\nStarting iterating over Layouts", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_layouts, print_logs=print_logs), get_general_paths(LAYOUTS_DIR)):
+                layouts_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'Reports' in objects_to_create:
+            print_color("\nStarting iterating over Reports", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_reports, print_logs=print_logs), get_general_paths(REPORTS_DIR)):
+                reports_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'Widgets' in objects_to_create:
+            print_color("\nStarting iterating over Widgets", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_widgets, print_logs=print_logs), get_general_paths(WIDGETS_DIR)):
+                widgets_list.extend(arr)
+
+        progress_bar.update(1)
 
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
@@ -697,44 +762,46 @@ def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None):
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
 
-    duplicates = find_duplicates(new_ids_dict)
-    if any(duplicates):
+    duplicates = find_duplicates(new_ids_dict, print_logs)
+    if any(duplicates) and print_logs:
         print_error('The following duplicates were found: {}'.format(duplicates))
 
     return new_ids_dict
 
 
-def find_duplicates(id_set):
+def find_duplicates(id_set, print_logs):
     lists_to_return = []
 
     objects_to_check = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers', 'Dashboards',
                         'Layouts', 'Reports', 'Widgets']
     for object_type in objects_to_check:
-        print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
+        if print_logs:
+            print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)
         ids = set(list(specific_item.keys())[0] for specific_item in objects)
 
         dup_list = []
         for id_to_check in ids:
-            if has_duplicate(objects, id_to_check, object_type):
+            if has_duplicate(objects, id_to_check, object_type, print_logs):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
 
-    print_color("Checking diff for Incident and Idicator Fields", LOG_COLORS.GREEN)
+    if print_logs:
+        print_color("Checking diff for Incident and Idicator Fields", LOG_COLORS.GREEN)
 
     fields = id_set['IncidentFields'] + id_set['IndicatorFields']
     field_ids = set(list(field.keys())[0] for field in fields)
 
     field_list = []
     for field_to_check in field_ids:
-        if has_duplicate(fields, field_to_check, 'Indicator and Incident Fields'):
+        if has_duplicate(fields, field_to_check, 'Indicator and Incident Fields', print_logs):
             field_list.append(field_to_check)
     lists_to_return.append(field_list)
 
     return lists_to_return
 
 
-def has_duplicate(id_set, id_to_check, object_type=None):
+def has_duplicate(id_set, id_to_check, object_type=None, print_logs=True):
     duplicates = [duplicate for duplicate in id_set if duplicate.get(id_to_check)]
 
     if len(duplicates) < 2:
@@ -748,7 +815,7 @@ def has_duplicate(id_set, id_to_check, object_type=None):
         dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
         dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
 
-        if dict1['name'] != dict2['name']:
+        if print_logs and dict1['name'] != dict2['name']:
             print_warning('The following {} have the same ID ({}) but different names: '
                           '"{}", "{}".'.format(object_type, id_to_check, dict1['name'], dict2['name']))
 
@@ -757,10 +824,10 @@ def has_duplicate(id_set, id_to_check, object_type=None):
         # C: 3.5.2 - 3.5.4
         # D: 4.5.0 - 99.99.99
         if any([
-                dict1_from_version <= dict2_from_version < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
-                dict1_from_version < dict2_to_version <= dict1_to_version,  # will catch (B, C), (A, C)
-                dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
-                dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
+            dict1_from_version <= dict2_from_version < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
+            dict1_from_version < dict2_to_version <= dict1_to_version,  # will catch (B, C), (A, C)
+            dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
+            dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
             return True
 

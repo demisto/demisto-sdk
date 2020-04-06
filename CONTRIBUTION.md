@@ -33,7 +33,7 @@ git clone https://github.com/demisto/demisto-sdk.git
    pip3 uninstall demisto-sdk
    ```
 
-2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/):
+2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs):
 
    ```shell
    pip3 install -e .
@@ -51,7 +51,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 4. Install dev-requirements -
 
    ```shell
-   pip3 install <repo>/resources/utils/requirements-dev.txt
+   pip3 install -r <repo>/requirements-dev.txt
    ```
 
 ---

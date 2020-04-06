@@ -1,10 +1,12 @@
 import os
+
+from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
+                                               print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import get_depends_on
-from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error,\
-    get_from_version
-from demisto_sdk.commands.generate_docs.common import save_output, generate_table_section, stringEscapeMD, \
-    generate_list_section, build_example_dict, generate_section, generate_numbered_section
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.generate_docs.common import (
+    build_example_dict, generate_list_section, generate_numbered_section,
+    generate_section, generate_table_section, save_output, stringEscapeMD)
 
 
 def generate_script_doc(input, examples, output: str = None, permissions: str = None,

@@ -1,11 +1,12 @@
+import urllib.parse
+
 import demistomock as demisto
+import requests
 from CommonServerPython import *
 from CommonServerUserPython import *
 
 ''' IMPORTS '''
 
-import requests
-import urllib.parse
 
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()

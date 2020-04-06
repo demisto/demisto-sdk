@@ -68,5 +68,34 @@ INVALID_INTEGRATION_YML_3 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integratio
 INVALID_INTEGRATION_YML_4 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml4.yml"
 VALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-valid.json"
 INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-invalid.json"
+EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-invalid-equal.yml"
+EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION = f"Playbooks/playbook-invalid-equal.yml"
+EQUAL_VAL_PATH = f'Playbooks'
 INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid-no-hidden-params.yml"
 VALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid-no-hidden-params.yml"
+
+
+SOURCE_FORMAT_INCIDENTFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidentfield-copy.json"
+DESTINATION_FORMAT_INCIDENTFIELD_COPY = f"IncidentFields/incidentfield-copy.json"
+INCIDENTFIELD_PATH = f"IncidentFields"
+SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidenttype-copy.json"
+DESTINATION_FORMAT_INCIDENTTYPE_COPY = f"IncidentTypes/incidenttype-copy.json"
+INCIDENTTYPE_PATH = f"IncidentTypes"
+
+SOURCE_FORMAT_INDICATORFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatorfield-copy.json"
+DESTINATION_FORMAT_INDICATORFIELD_COPY = f"IndicatorFields/incidentfield-copy.json"
+INDICATORFIELD_PATH = f"IndicatorFields"
+
+SOURCE_FORMAT_INDICATORTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatortype-copy.json"
+DESTINATION_FORMAT_INDICATORTYPE_COPY = f"Packs/Base/Misc/reputation-copy.json"
+INDICATORTYPE_PATH = f"Packs/Base/Misc"
+
+SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
+DESTINATION_FORMAT_LAYOUT_COPY = f"Layouts/layout-copy.json"
+LAYOUT_PATH = f"Layouts"
+
+SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_dashboard-copy.json"
+DESTINATION_FORMAT_DASHBOARD_COPY = f"Dashboards/dashboard-copy.json"
+DASHBOARD_PATH = f"Dashboards"
+VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
+INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'

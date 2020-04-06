@@ -14,10 +14,12 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
         new_docs = re.sub(regexp, new_str, old_docs, flags=re.DOTALL)
         print_color('New command docs has been replaced in file.', LOG_COLORS.GREEN)
     else:
-        new_docs = old_docs + '\n' + new_str if old_docs.endswith("\n") else ("\n" + new_str)
         if command_name in old_docs:
             errs.append('Could not replace the command in the file although it is presented in the file.'
                         'Copy and paste it in the appropriate spot.')
+        if old_docs.endswith('\n'):
+            old_docs = old_docs[:-1]
+        new_docs = f'{old_docs}\n{new_str}'
         print_color('New command docs has been appended to file.', LOG_COLORS.GREEN)
     return new_docs, errs
 

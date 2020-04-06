@@ -1,10 +1,13 @@
 import os.path
-
 import re
 from typing import Optional, Tuple
-from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error, LOG_COLORS, print_color
-from demisto_sdk.commands.generate_docs.common import build_example_dict, add_lines, generate_section, \
-    save_output, generate_table_section, stringEscapeMD, generate_numbered_section
+
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
+                                               print_color, print_error,
+                                               print_warning)
+from demisto_sdk.commands.generate_docs.common import (
+    add_lines, build_example_dict, generate_numbered_section, generate_section,
+    generate_table_section, save_output, stringEscapeMD)
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name: str) -> Tuple[str, list]:
@@ -128,7 +131,12 @@ def generate_setup_section(yaml_data: dict):
 
 
 # Commands
-def generate_commands_section(yaml_data: dict, example_dict: dict, command_permissions_dict, command: Optional[str]):
+def generate_commands_section(
+        yaml_data: dict,
+        example_dict: dict,
+        command_permissions_dict,
+        command: Optional[str] = None
+):
     """Generate the commands section the the README.md file.
 
     Arguments:

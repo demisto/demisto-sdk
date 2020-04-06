@@ -436,7 +436,7 @@ class FilesValidator:
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
                 playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook():
+                if not playbook_validator.is_valid_playbook(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
@@ -471,7 +471,7 @@ class FilesValidator:
                     self._is_valid = False
 
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_beta_integration():
+                if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
@@ -480,6 +480,7 @@ class FilesValidator:
                     self._is_valid = False
 
             # incident fields and indicator fields are using the same scheme.
+            # TODO: add validation for classification(21630) and set validate_rn to False after issue #23398 is fixed.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
@@ -493,12 +494,13 @@ class FilesValidator:
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
                 layout_validator = LayoutValidator(structure_validator)
+                # TODO: set validate_rn to False after issue #23398 is fixed.
                 if not layout_validator.is_valid_layout(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
                 dashboard_validator = DashboardValidator(structure_validator)
-                if not dashboard_validator.is_valid_dashboard(validate_rn=not file_type):
+                if not dashboard_validator.is_valid_dashboard(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):

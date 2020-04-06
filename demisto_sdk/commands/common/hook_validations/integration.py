@@ -76,7 +76,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_display_name(),
             self.is_all_params_not_hidden(),
             self.is_valid_image(),
-            self.is_valid_description(beta_integration=False)
+            self.is_valid_description(beta_integration=False),
         ]
         return all(answers)
 
@@ -86,7 +86,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_default_arguments(),
             self.is_valid_beta(),
             self.is_valid_image(),
-            self.is_valid_description(beta_integration=True)
+            self.is_valid_description(beta_integration=True),
         ]
         return all(answers)
 
@@ -599,7 +599,7 @@ class IntegrationValidator(BaseValidator):
         """Verifies integration description is valid.
 
         Returns:
-            bool: True if description image/logo is valid, False otherwise.
+            bool: True if description is valid, False otherwise.
         """
         description_validator = DescriptionValidator(self.file_path)
         if beta_integration:

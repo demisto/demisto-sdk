@@ -514,6 +514,9 @@ def init(**kwargs):
     "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
     required=False)
 @click.option(
+    "-c", "--command", help="A specific command to generate doc for, will ignore the rest of the commands.", required=False
+)
+@click.option(
     "-e", "--examples", help="Path for file containing command or script examples."
                              " Each Command should be in a separate line."
                              " For script - the script example surrounded by double quotes.")
@@ -534,6 +537,7 @@ def init(**kwargs):
 def generate_doc(**kwargs):
     input_path = kwargs.get('input')
     output_path = kwargs.get('output')
+    command = kwargs.get('command')
     examples = kwargs.get('examples')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
@@ -553,6 +557,12 @@ def generate_doc(**kwargs):
         print_error(F'Output directory {output_path} was not found.')
         return 1
 
+    if command:
+        if output_path and not os.path.isfile(os.path.join(output_path, "README.md"))\
+                or not output_path and not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "README.md")):
+            print_error(f"`The `command` argument must be presented with existing `README.md` docs.")
+            return 1
+
     file_type = find_type(kwargs.get('input', ''))
     if file_type not in ["integration", "script", "playbook"]:
         print_error(F'File is not an Integration, Script or a Playbook.')
@@ -565,13 +575,15 @@ def generate_doc(**kwargs):
         return generate_integration_doc(input=input_path, output=output_path, use_cases=use_cases,
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
-                                        insecure=insecure, verbose=verbose)
+                                        insecure=insecure, verbose=verbose, command=command)
     elif file_type == 'script':
         return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
-                                   limitations=limitations, insecure=insecure, verbose=verbose)
-    elif file_type == 'playbook':
+                                   limitations=limitations, insecure=insecure, verbose=verbose, command=command)
+    elif file_type == 'playbook' and not command:
         return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose)
+    elif file_type == 'playbook' and command:
+        print_error(f'`command` has been supplied with playbook which is not supported.')
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1

@@ -1,18 +1,38 @@
 import os.path
-from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error
+import re
+from typing import Optional
+from demisto_sdk.commands.common.tools import get_yaml, print_warning, print_error, LOG_COLORS, print_color
 from demisto_sdk.commands.generate_docs.common import build_example_dict, add_lines, generate_section, \
     save_output, generate_table_section, stringEscapeMD, generate_numbered_section
 
 
+def append_or_replace_command_in_docs(output: str, new_str: str, command_name: str):
+    regexp = rf'(### {command_name}).+?((?=(\n#{1, 3}\s))|\Z)'
+    # Read doc content
+    errs = list()
+    with open(output) as file:
+        existing_str = file.read()
+    if re.fullmatch(regexp, existing_str, flags=re.DOTALL):
+        new_docs = re.sub(regexp, new_str, existing_str, flags=re.DOTALL)
+        print_color('New command docs has been replaced in file.', LOG_COLORS.GREEN)
+    else:
+        new_docs = existing_str + '\n' + new_str if existing_str.endswith("\n") else ("\n\n" + new_str)
+        if command_name in existing_str:
+            errs.append('Could not replace the command in the file although it is presented in the file.'
+                        'Copy and paste it in the appropriate spot.')
+        print_color('New command docs has been appended to file.', LOG_COLORS.GREEN)
+    return errs, new_docs
+
+
 def generate_integration_doc(input, examples, output: str = None, use_cases: str = None,
                              permissions: str = None, command_permissions: str = None,
-                             limitations: str = None, insecure: bool = False, verbose: bool = False):
+                             limitations: str = None, insecure: bool = False, verbose: bool = False,
+                             command: Optional[str] = None):
     try:
         yml_data = get_yaml(input)
 
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input))
-
         errors = []
         example_dict = {}
         if examples and os.path.isfile(examples):
@@ -34,30 +54,40 @@ def generate_integration_doc(input, examples, output: str = None, use_cases: str
                 errors.append(f'Command permissions was not found {command_permissions}.')
         else:  # permissions in ['none', 'general']
             command_permissions_dict = None
+        if command:
+            print(f'Generating docs only for command `{command}`')
+            output = os.path.join(output, 'README.md')
+            # Do only this
+            command_section, command_errors = generate_commands_section(yml_data, example_dict,
+                                                                        command_permissions_dict, command=command)
+            command_section_str = '\n'.join(command_section)
+            err, doc_text = append_or_replace_command_in_docs(output, command_section_str, command)
+            errors.extend(err)
+        else:
+            docs = []  # type: list
+            docs.extend(add_lines(yml_data.get('description')))
+            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
 
-        docs = []  # type: list
-        docs.extend(add_lines(yml_data.get('description')))
-        docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
+            # Integration use cases
+            if use_cases:
+                docs.extend(generate_numbered_section('Use Cases', use_cases))
+            # Integration general permissions
+            if permissions == 'general':
+                docs.extend(generate_section('Permissions', ''))
+            # Setup integration to work with Demisto
+            docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
+            # Setup integration on Demisto
+            docs.extend(generate_setup_section(yml_data))
+            # Commands
+            command_section, command_errors = generate_commands_section(yml_data, example_dict,
+                                                                        command_permissions_dict, command=command)
+            docs.extend(command_section)
+            errors.extend(command_errors)
+            # Known limitations
+            if limitations:
+                docs.extend(generate_numbered_section('Known Limitations', limitations))
 
-        # Integration use cases
-        if use_cases:
-            docs.extend(generate_numbered_section('Use Cases', use_cases))
-        # Integration general permissions
-        if permissions == 'general':
-            docs.extend(generate_section('Permissions', ''))
-        # Setup integration to work with Demisto
-        docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
-        # Setup integration on Demisto
-        docs.extend(generate_setup_section(yml_data))
-        # Commands
-        command_section, command_errors = generate_commands_section(yml_data, example_dict, command_permissions_dict)
-        docs.extend(command_section)
-        errors.extend(command_errors)
-        # Known limitations
-        if limitations:
-            docs.extend(generate_numbered_section('Known Limitations', limitations))
-
-        doc_text = '\n'.join(docs)
+            doc_text = '\n'.join(docs)
 
         save_output(output, 'README.md', doc_text)
 
@@ -96,7 +126,18 @@ def generate_setup_section(yaml_data: dict):
 
 
 # Commands
-def generate_commands_section(yaml_data: dict, example_dict: dict, command_permissions_dict):
+def generate_commands_section(yaml_data: dict, example_dict: dict, command_permissions_dict, command: Optional[str]):
+    """Generate the commands section the the README.md file.
+
+    Arguments:
+        yaml_data {dict} -- The data of the .yml file (integration or script)
+        example_dict {dict} -- Examples of running commands.
+        command_permissions_dict {[type]} -- Permission needed per command
+        command {Optional[str]} -- A specific command to run on. will return the command itself without the section header.
+
+    Returns:
+        [str, str] -- [section, errors]
+    """
     errors = []  # type: list
     section = [
         '## Commands',
@@ -105,8 +146,15 @@ def generate_commands_section(yaml_data: dict, example_dict: dict, command_permi
     ]
     commands = filter(lambda cmd: not cmd.get('deprecated', False), yaml_data['script']['commands'])
     command_sections = []
-
-    for i, cmd in enumerate(commands):
+    if command:
+        # for specific command, return it only.
+        try:
+            command_dict = list(filter(lambda cmd: cmd['name'] == command, commands))[0]
+        except IndexError:
+            print_error(f'Could not find the command `{command}` in the .yml file.')
+            return
+        return generate_single_command_section(command_dict, example_dict, command_permissions_dict)
+    for cmd in commands:
         cmd_section, cmd_errors = generate_single_command_section(cmd, example_dict, command_permissions_dict)
         command_sections.extend(cmd_section)
         errors.extend(cmd_errors)

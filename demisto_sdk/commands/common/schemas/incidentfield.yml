@@ -10,6 +10,8 @@ mapping:
     required: True
   version:
     type: number
+  modified:
+    type: str
   name:
     type: str
     required: True

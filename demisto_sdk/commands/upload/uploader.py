@@ -7,9 +7,9 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 
 class Uploader:
-    """Upload the files specified in self.infile to the remote Demisto instance.
+    """Upload a pack specified in self.infile to the remote Demisto instance.
         Attributes:
-            path (str): The path of an file or a package directory to upload.
+            path (str): The path of a pack directory to upload.
             verbose (bool): Whether to output a detailed response.
             client (DefaultApi): Demisto-SDK client object.
         """
@@ -27,7 +27,7 @@ class Uploader:
             if f'{self.path}/pack_metadata.json' in list_files_in_dir:
                 self.peck_uploader(self.path)
         else:
-            print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
+            print_error(f'Error: Path input is not a valid package directory. Check the given input path: {self.path}.')
         return 0
 
     def peck_uploader(self, path):
@@ -40,60 +40,60 @@ class Uploader:
                 for integration in list_integrations:
                     self.integration_uploader(integration)
 
-            if directory.endswith(constants.SCRIPTS_DIR):
+            elif directory.endswith(constants.SCRIPTS_DIR):
                 list_script = get_child_directories(directory)
                 for script in list_script:
                     self.script_uploader(script)
 
-            if directory.endswith(f'/{constants.PLAYBOOKS_DIR}'):
+            elif directory.endswith(f'/{constants.PLAYBOOKS_DIR}'):
                 list_playbooks = get_child_files(directory)
                 for playbook in list_playbooks:
                     if playbook.endswith('.yml'):
                         self.playbook_uploader(playbook)
 
-            if directory.endswith(constants.INCIDENT_FIELDS_DIR):
+            elif directory.endswith(constants.INCIDENT_FIELDS_DIR):
                 list_incident_fields = get_child_files(directory)
                 for incident_field in list_incident_fields:
                     if incident_field.endswith('.json'):
                         self.incident_field_uploader(incident_field)
 
-            if directory.endswith(constants.WIDGETS_DIR):
+            elif directory.endswith(constants.WIDGETS_DIR):
                 list_widgets = get_child_files(directory)
                 for widget in list_widgets:
                     if widget.endswith('.json'):
                         self.widget_uploader(widget)
 
-            if directory.endswith(constants.DASHBOARDS_DIR):
+            elif directory.endswith(constants.DASHBOARDS_DIR):
                 list_dashboards = get_child_files(directory)
                 for dashboard in list_dashboards:
                     if dashboard.endswith('.json'):
                         self.dashboard_uploader(dashboard)
 
-            if directory.endswith(constants.LAYOUTS_DIR):
+            elif directory.endswith(constants.LAYOUTS_DIR):
                 list_layouts = get_child_files(directory)
                 for layout in list_layouts:
                     if layout.endswith('.json'):
                         self.layout_uploader(layout)
 
-            if directory.endswith(constants.INDICATOR_FIELDS_DIR):
+            elif directory.endswith(constants.INDICATOR_FIELDS_DIR):
                 list_indicator_fields = get_child_files(directory)
                 for indicator_field in list_indicator_fields:
                     if indicator_field.endswith('.json'):
                         self.indicator_field_uploader(indicator_field)
 
-            if directory.endswith(constants.INCIDENT_TYPES_DIR):
+            elif directory.endswith(constants.INCIDENT_TYPES_DIR):
                 list_incident_types = get_child_files(directory)
                 for incident_type in list_incident_types:
                     if incident_type.endswith('.json'):
                         self.incident_type_uploader(incident_type)
 
-            if directory.endswith(constants.INCIDENT_TYPES_DIR):
+            elif directory.endswith(constants.INDICATOR_TYPE_DIR):
                 list_indicator_types = get_child_files(directory)
                 for indicator_type in list_indicator_types:
                     if indicator_type.endswith('.json'):
                         self.indicator_type_uploader(indicator_type)
 
-            if directory.endswith(constants.CLASSIFIERS_DIR):
+            elif directory.endswith(constants.CLASSIFIERS_DIR):
                 list_classifiers = get_child_files(directory)
                 for classifiers in list_classifiers:
                     if classifiers.endswith('.json'):
@@ -106,7 +106,9 @@ class Uploader:
                     unifier = Unifier(input=path, output=path)
                     path = unifier.merge_script_package_to_yml()[0]
                 except IndexError:
-                    print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
+                    print_error(f'Error uploading integration from pack. /'
+                                f'Check that the given integration path conatinas a valid integraion: {path}.')
+
                     return 1
                 except Exception as err:
                     print_error(str(err))
@@ -138,7 +140,8 @@ class Uploader:
                     unifier = Unifier(input=path, output=path)
                     path = unifier.merge_script_package_to_yml()[0]
                 except IndexError:
-                    print_color('Error: Path input is not a valid package directory.', LOG_COLORS.RED)
+                    print_error(f'Error uploading script from pack. /
+                    Check that the given script path conatinas a valid script: {path}.')
                     return 1
                 except Exception as err:
                     print_error(str(err))

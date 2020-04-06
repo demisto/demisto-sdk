@@ -124,7 +124,7 @@ class Uploader:
 
         finally:
             # Remove the temporary file
-            if self.unify and os.path.exists(path):
+            if os.path.isdir(self.path) and os.path.exists(path):
                 try:
                     os.remove(path)
                 except (PermissionError, IsADirectoryError):

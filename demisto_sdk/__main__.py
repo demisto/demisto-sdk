@@ -533,7 +533,7 @@ def init(**kwargs):
     "-i", "--input", help="Path of the yml file.", required=True)
 @click.option(
     "-o", "--output", help="The output dir to write the documentation file into,"
-                           " documentation file name is fake_README.md. If not specified, will be in the yml dir.",
+                           " documentation file name is README.md. If not specified, will be in the yml dir.",
     required=False)
 @click.option(
     "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
@@ -584,8 +584,9 @@ def generate_doc(**kwargs):
 
     if command:
         if output_path and (not os.path.isfile(os.path.join(output_path, "README.md")))\
-                or (not output_path) and (not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "fake_README.md"))):
-            print_error("The `command` argument must be presented with existing `fake_README.md` docs.")
+                or (not output_path)\
+                and (not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "README.md"))):
+            print_error("The `command` argument must be presented with existing `README.md` docs.")
             return 1
 
     file_type = find_type(kwargs.get('input', ''))

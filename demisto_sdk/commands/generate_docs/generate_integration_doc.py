@@ -12,7 +12,7 @@ from demisto_sdk.commands.generate_docs.common import (
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name: str) -> Tuple[str, list]:
-    """ Replacing a command in a fake_README.md file with a new string.
+    """ Replacing a command in a README.md file with a new string.
 
     Args:
         old_docs: the old docs string
@@ -27,7 +27,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
     errs = list()
     if re.fullmatch(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_str, old_docs, flags=re.DOTALL)
-        print_color('New command docs has been replaced in fake_README.md.', LOG_COLORS.GREEN)
+        print_color('New command docs has been replaced in README.md.', LOG_COLORS.GREEN)
     else:
         if command_name in old_docs:
             errs.append('Could not replace the command in the file although it is presented in the file.'
@@ -36,7 +36,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f'{old_docs}\n{new_str}'
-        print_color('New command docs has been added to the fake_README.md.', LOG_COLORS.GREEN)
+        print_color('New command docs has been added to the README.md.', LOG_COLORS.GREEN)
     return new_docs, errs
 
 
@@ -94,7 +94,7 @@ def generate_integration_doc(
             command_permissions_dict = None
         if command:
             print(f'Generating docs only for command `{command}`')
-            output = os.path.join(output, 'fake_README.md')
+            output = os.path.join(output, 'README.md')
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             command_section_str = '\n'.join(command_section)
@@ -170,7 +170,7 @@ def generate_commands_section(
         command_permissions_dict: dict,
         command: Optional[str] = None
 ) -> Tuple[list, list]:
-    """Generate the commands section the the fake_README.md file.
+    """Generate the commands section the the README.md file.
 
     Arguments:
         yaml_data (dict): The data of the .yml file (integration or script)
@@ -332,8 +332,7 @@ def get_command_examples(commands_file_path):
         print('failed to open command file')
         commands = commands_file_path.split('\n')
 
-    commands = map(command_example_filter, commands)
-    commands = list(filter(None, commands))
+    commands = list(filter(None, map(command_example_filter, commands)))
 
     print('found the following commands:\n{}'.format('\n '.join(commands)))
     return commands

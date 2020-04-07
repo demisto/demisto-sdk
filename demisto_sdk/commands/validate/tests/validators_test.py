@@ -2,9 +2,8 @@ import os
 from shutil import copyfile
 from typing import Any, Type
 
-from demisto_sdk.commands.validate.file_validator import FilesValidator
-
 import pytest
+
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -25,6 +24,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET, INCIDENT_FIELD_TARGET, INTEGRATION_RELEASE_NOTES_TARGET,
     INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INCIDENT_FIELD_PATH,

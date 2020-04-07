@@ -141,6 +141,7 @@ def get_remote_file(full_file_path, tag='master'):
         details = json.loads(res.content)
     elif full_file_path.endswith('yml'):
         details = yaml.safe_load(res.content)
+    # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
     return details

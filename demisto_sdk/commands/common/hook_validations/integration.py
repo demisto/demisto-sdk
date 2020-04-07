@@ -80,13 +80,14 @@ class IntegrationValidator(BaseValidator):
         ]
         return all(answers)
 
-    def is_valid_beta_integration(self) -> bool:
+    def is_valid_beta_integration(self, validate_rn=True):
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that"""
         answers = [
+            super().is_valid_file(validate_rn),
             self.is_valid_default_arguments(),
             self.is_valid_beta(),
             self.is_valid_image(),
-            self.is_valid_description(beta_integration=True),
+            self.is_valid_description(beta_integration=True)
         ]
         return all(answers)
 

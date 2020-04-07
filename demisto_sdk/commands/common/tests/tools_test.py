@@ -95,7 +95,7 @@ class TestGetRemoteFile:
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_origin(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'master')
+        gmail_yml = tools.get_remote_file('Packs/Legacy/Integrations/Gmail/Gmail.yml', 'master')
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 

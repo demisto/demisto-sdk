@@ -299,7 +299,8 @@ class TestGenerateIntegrationDoc:
 
     @classmethod
     def teardown_class(cls):
-        cls.rm_readme()
+        pass
+        #cls.rm_readme()
 
     def test_generate_integration_doc(self):
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')

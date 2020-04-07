@@ -90,7 +90,7 @@ class TestGenericFunctions:
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml')
+        gmail_yml = tools.get_remote_file('Packs/Legacy/Integrations/Gmail/Gmail.yml')
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 

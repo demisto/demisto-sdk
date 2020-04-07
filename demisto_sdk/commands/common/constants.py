@@ -1054,3 +1054,5 @@ FETCH_REQUIRED_PARAMS = [
         'type': 8
     }
 ]
+
+DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'

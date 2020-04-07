@@ -2,6 +2,7 @@ import os.path
 import re
 from typing import Optional, Tuple
 
+from demisto_sdk.commands.common.constants import DOCS_COMMAND_SECTION_REGEX
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -11,20 +12,31 @@ from demisto_sdk.commands.generate_docs.common import (
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name: str) -> Tuple[str, list]:
-    regexp = rf'(?:###\s{command_name}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
+    """ Replacing a command in a README.md file with a new string.
+
+    Args:
+        old_docs: the old docs string
+        new_str: the new string to replace
+        command_name: the command name itself
+
+    Returns:
+        str: The whole documentation.
+    """
+    regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name)
     # Read doc content
     errs = list()
     if re.fullmatch(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_str, old_docs, flags=re.DOTALL)
-        print_color('New command docs has been replaced in file.', LOG_COLORS.GREEN)
+        print_color('New command docs has been replaced in README.md.', LOG_COLORS.GREEN)
     else:
         if command_name in old_docs:
             errs.append('Could not replace the command in the file although it is presented in the file.'
                         'Copy and paste it in the appropriate spot.')
         if old_docs.endswith('\n'):
+            # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f'{old_docs}\n{new_str}'
-        print_color('New command docs has been appended to file.', LOG_COLORS.GREEN)
+        print_color('New command docs has been added to the README.md.', LOG_COLORS.GREEN)
     return new_docs, errs
 
 
@@ -32,6 +44,21 @@ def generate_integration_doc(input, examples, output: str = None, use_cases: str
                              permissions: str = None, command_permissions: str = None,
                              limitations: str = None, insecure: bool = False, verbose: bool = False,
                              command: Optional[str] = None):
+    """ Generate integration documentation.
+
+    Args:
+        input: path to the yaml integration
+        examples: path to the command examples
+        output: path to the output documentation
+        use_cases: use cases string
+        permissions:
+        command_permissions:
+        limitations: limitations description
+        insecure: should use insecure
+        verbose:
+        command: specific command to generate docs for
+
+    """
     try:
         yml_data = get_yaml(input)
 
@@ -61,7 +88,6 @@ def generate_integration_doc(input, examples, output: str = None, use_cases: str
         if command:
             print(f'Generating docs only for command `{command}`')
             output = os.path.join(output, 'README.md')
-            # Do only this
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             command_section_str = '\n'.join(command_section)
@@ -134,19 +160,19 @@ def generate_setup_section(yaml_data: dict):
 def generate_commands_section(
         yaml_data: dict,
         example_dict: dict,
-        command_permissions_dict,
+        command_permissions_dict: dict,
         command: Optional[str] = None
-):
+) -> Tuple[list, list]:
     """Generate the commands section the the README.md file.
 
     Arguments:
-        yaml_data {dict} -- The data of the .yml file (integration or script)
-        example_dict {dict} -- Examples of running commands.
-        command_permissions_dict {[type]} -- Permission needed per command
-        command {Optional[str]} -- A specific command to run on. will return the command itself without the section header.
+        yaml_data (dict): The data of the .yml file (integration or script)
+        example_dict (dict): Examples of running commands.
+        command_permissions_dict (dict): Permission needed per command
+        command (Optional[str]): A specific command to run on. will return the command itself without the section header.
 
     Returns:
-        [str, str] -- [section, errors]
+        [str, str] -- [commands section, errors]
     """
     errors = []  # type: list
     section = [
@@ -161,8 +187,9 @@ def generate_commands_section(
         try:
             command_dict = list(filter(lambda cmd: cmd['name'] == command, commands))[0]
         except IndexError:
-            print_error(f'Could not find the command `{command}` in the .yml file.')
-            return
+            err = f'Could not find the command `{command}` in the .yml file.'
+            print_error(err)
+            raise IndexError(err)
         return generate_single_command_section(command_dict, example_dict, command_permissions_dict)
     for cmd in commands:
         cmd_section, cmd_errors = generate_single_command_section(cmd, example_dict, command_permissions_dict)

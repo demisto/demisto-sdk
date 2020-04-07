@@ -583,14 +583,14 @@ def generate_doc(**kwargs):
         return 1
 
     if command:
-        if output_path and not os.path.isfile(os.path.join(output_path, "README.md"))\
-                or not output_path and not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "README.md")):
-            print_error(f"`The `command` argument must be presented with existing `README.md` docs.")
+        if output_path and (not os.path.isfile(os.path.join(output_path, "README.md")))\
+                or (not output_path) and (not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "README.md"))):
+            print_error("`The `command` argument must be presented with existing `README.md` docs.")
             return 1
 
     file_type = find_type(kwargs.get('input', ''))
     if file_type not in ["integration", "script", "playbook"]:
-        print_error(F'File is not an Integration, Script or a Playbook.')
+        print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
     print(f'Start generating {file_type} documentation...')

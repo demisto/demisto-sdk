@@ -2,6 +2,8 @@ import os
 from shutil import copyfile
 from typing import Any, Type
 
+from demisto_sdk.commands.validate.file_validator import FilesValidator
+
 import pytest
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -257,3 +259,20 @@ class TestValidators:
         structure = StructureValidator(source)
         validator = IntegrationValidator(structure)
         assert validator.is_all_params_not_hidden() is answer
+
+    INPUTS_RELEASE_NOTES_VALIDATION = [
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET),
+        (VALID_SCRIPT_PATH, SCRIPT_TARGET),
+        (VALID_DASHBOARD_PATH, DASHBOARD_TARGET),
+        (VALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET),
+        (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET)
+    ]
+
+    @pytest.mark.parametrize('source, target', INPUTS_RELEASE_NOTES_VALIDATION)
+    def test_is_file_valid_rn(self, source, target):
+        # type: (str, str) -> None
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False).is_valid_structure()
+        finally:
+            os.remove(target)

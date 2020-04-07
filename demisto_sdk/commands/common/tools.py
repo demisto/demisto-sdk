@@ -139,9 +139,10 @@ def get_remote_file(full_file_path, tag='master'):
 
     if full_file_path.endswith('json'):
         details = json.loads(res.content)
-    else:
+    elif full_file_path.endswith('yml'):
         details = yaml.safe_load(res.content)
-
+    else:
+        details = {}
     return details
 
 

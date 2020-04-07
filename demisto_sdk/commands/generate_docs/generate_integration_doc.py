@@ -12,7 +12,7 @@ from demisto_sdk.commands.generate_docs.common import (
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name: str) -> Tuple[str, list]:
-    """ Replacing a command in a README.md file with a new string.
+    """ Replacing a command in a fake_README.md file with a new string.
 
     Args:
         old_docs: the old docs string
@@ -27,7 +27,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
     errs = list()
     if re.fullmatch(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_str, old_docs, flags=re.DOTALL)
-        print_color('New command docs has been replaced in README.md.', LOG_COLORS.GREEN)
+        print_color('New command docs has been replaced in fake_README.md.', LOG_COLORS.GREEN)
     else:
         if command_name in old_docs:
             errs.append('Could not replace the command in the file although it is presented in the file.'
@@ -36,14 +36,21 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f'{old_docs}\n{new_str}'
-        print_color('New command docs has been added to the README.md.', LOG_COLORS.GREEN)
+        print_color('New command docs has been added to the fake_README.md.', LOG_COLORS.GREEN)
     return new_docs, errs
 
 
-def generate_integration_doc(input, examples, output: str = None, use_cases: str = None,
-                             permissions: str = None, command_permissions: str = None,
-                             limitations: str = None, insecure: bool = False, verbose: bool = False,
-                             command: Optional[str] = None):
+def generate_integration_doc(
+        input: str,
+        examples: Optional[str] = None,
+        output: Optional[str] = None,
+        use_cases: Optional[str] = None,
+        permissions: Optional[str] = None,
+        command_permissions: Optional[str] = None,
+        limitations: Optional[str] = None,
+        insecure: bool = False,
+        verbose: bool = False,
+        command: Optional[str] = None):
     """ Generate integration documentation.
 
     Args:
@@ -87,7 +94,7 @@ def generate_integration_doc(input, examples, output: str = None, use_cases: str
             command_permissions_dict = None
         if command:
             print(f'Generating docs only for command `{command}`')
-            output = os.path.join(output, 'README.md')
+            output = os.path.join(output, 'fake_README.md')
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             command_section_str = '\n'.join(command_section)
@@ -163,7 +170,7 @@ def generate_commands_section(
         command_permissions_dict: dict,
         command: Optional[str] = None
 ) -> Tuple[list, list]:
-    """Generate the commands section the the README.md file.
+    """Generate the commands section the the fake_README.md file.
 
     Arguments:
         yaml_data (dict): The data of the .yml file (integration or script)

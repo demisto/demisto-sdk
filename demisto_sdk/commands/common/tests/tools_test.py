@@ -121,6 +121,10 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
         assert not invalid_yml
 
+    def test_get_remote_md_file_origin(self):
+        hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
+        assert hello_world_readme == {}
+
 
 class TestGetMatchingRegex:
     INPUTS = [

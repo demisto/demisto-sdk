@@ -30,8 +30,6 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
@@ -299,14 +297,6 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES):
-                image_validator = ImageValidator(file_path)
-                if not image_validator.is_valid():
-                    self._is_valid = False
-
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid():
-                    self._is_valid = False
-
                 integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
@@ -315,14 +305,6 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
-                image_validator = ImageValidator(file_path)
-                if not image_validator.is_valid():
-                    self._is_valid = False
-
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid_beta_description():
-                    self._is_valid = False
-
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
@@ -436,16 +418,6 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
-                image_validator = ImageValidator(file_path)
-                # if file_type(non git path) the image is not in a separate path
-                image_validator.file_path = file_path if file_type else image_validator.file_path
-                if not image_validator.is_valid():
-                    self._is_valid = False
-
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid():
-                    self._is_valid = False
-
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_file(validate_rn=not file_type):
                     self._is_valid = False
@@ -462,10 +434,6 @@ class FilesValidator:
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid_beta_description():
-                    self._is_valid = False
-
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False

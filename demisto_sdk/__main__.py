@@ -583,7 +583,7 @@ def generate_doc(**kwargs):
         return 1
 
     if command:
-        if output_path and (not os.path.isfile(os.path.join(output_path, "fake_README.md")))\
+        if output_path and (not os.path.isfile(os.path.join(output_path, "README.md")))\
                 or (not output_path) and (not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "fake_README.md"))):
             print_error("The `command` argument must be presented with existing `fake_README.md` docs.")
             return 1

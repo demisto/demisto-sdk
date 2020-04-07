@@ -3,24 +3,28 @@ import concurrent.futures
 import json
 import logging
 import os
+import re
 import sys
 import textwrap
-from typing import List, Dict, Any
-import git
-import re
+from typing import Any, Dict, List
+
 # Third party packages
 import docker
 import docker.errors
+import git
 import requests.exceptions
 import urllib3.exceptions
-from wcmatch.pathlib import Path
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
-from demisto_sdk.commands.common.tools import print_v, print_error, print_warning
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.lint.helpers import get_test_modules, EXIT_CODES, build_skipped_exit_code, PWSH_CHECKS, PY_CHCEKS,\
-    validate_env
+from demisto_sdk.commands.common.tools import (print_error, print_v,
+                                               print_warning)
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, PWSH_CHECKS,
+                                               PY_CHCEKS,
+                                               build_skipped_exit_code,
+                                               get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
+from wcmatch.pathlib import Path
 
 logger: logging.Logger
 
@@ -190,8 +194,10 @@ class LintManager:
         # untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.index.diff(None, paths=pkgs)}
-        changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
-                               content_repo.remote().refs.master.commit.diff(content_repo.active_branch, paths=pkgs)}
+        last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                     content_repo.remote().refs.master)
+        changed_from_master = {content_repo.working_dir / Path(item.b_path).parent for item in
+                               content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 

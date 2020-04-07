@@ -1,11 +1,16 @@
-import pytest
-from mock import patch
-from typing import Optional
+import os
 from copy import deepcopy
+from typing import Optional
 
-from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+import pytest
+from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS)
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
+from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -299,7 +304,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         validator.old_file = old
-        assert validator.is_valid_beta_integration() is answer
+        assert validator.is_valid_beta() is answer
 
     PROXY_VALID = [{"name": "proxy", "type": 8, "display": "Use system proxy settings", "required": False}]
     PROXY_WRONG_TYPE = [{"name": "proxy", "type": 9, "display": "Use system proxy settings", "required": False}]
@@ -438,6 +443,26 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
+
+    def test_is_valid_image_positive(self, monkeypatch):
+        integration_path = os.path.normpath(
+            os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')
+        )
+        structure = mock_structure(file_path=integration_path)
+        monkeypatch.setattr(
+            'demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGXES',
+            [integration_path]
+        )
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_image() is True
+
+    def test_is_valid_description_positive(self):
+        integration_path = os.path.normpath(
+            os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')
+        )
+        structure = mock_structure(file_path=integration_path)
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_description() is True
 
 
 class TestIsFetchParamsExist:

@@ -1,3 +1,4 @@
+# isort:skip_file
 import os
 from shutil import copyfile
 from typing import Any, Type

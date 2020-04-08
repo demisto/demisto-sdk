@@ -194,8 +194,10 @@ class LintManager:
         # untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
-                               content_repo.remote().refs.master.commit.diff(content_repo.active_branch, paths=pkgs)}
+        last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                     content_repo.remote().refs.master)
+        changed_from_master = {content_repo.working_dir / Path(item.b_path).parent for item in
+                               content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_master)
         pkgs_to_check = all_changed.intersection(pkgs)
 

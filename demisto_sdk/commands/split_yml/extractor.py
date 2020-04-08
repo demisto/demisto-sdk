@@ -88,6 +88,13 @@ class Extractor:
             del yaml_obj['image']
             if 'detaileddescription' in yaml_obj:
                 del yaml_obj['detaileddescription']
+        script_obj['script'] = SingleQuotedScalarString('')
+        code_type = script_obj['type']
+        if code_type == TYPE_PWSH and not yaml_obj.get('fromversion'):
+            print("Setting fromversion for PowerShell to: 5.5.0")
+            yaml_obj['fromversion'] = "5.5.0"
+        with open(yaml_out, 'w') as yf:
+            ryaml.dump(yaml_obj, yf)
         # check if there is a README
         yml_readme = os.path.splitext(self.input)[0] + '_README.md'
         readme = output_path + '/README.md'
@@ -101,11 +108,7 @@ class Extractor:
         else:
             with open(changelog, 'wt', encoding='utf-8') as changelog_file:
                 changelog_file.write("## [Unreleased]\n-\n")
-        script_obj['script'] = SingleQuotedScalarString('')
-        with open(yaml_out, 'w') as yf:
-            ryaml.dump(yaml_obj, yf)
         # Python code formatting and dev env setup
-        code_type = script_obj['type']
         if code_type == TYPE_PYTHON:
             code_file += '.py'
             print("Running autopep8 on file: {} ...".format(code_file))

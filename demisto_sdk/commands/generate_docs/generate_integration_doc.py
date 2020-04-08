@@ -30,7 +30,8 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
         print_color('New command docs has been replaced in README.md.', LOG_COLORS.GREEN)
     else:
         if command_name in old_docs:
-            errs.append('Could not replace the command in the file although it is presented in the file.'
+            errs.append(f'Could not replace the command `{command_name}` in the file although it'
+                        f' is presented in the file.'
                         'Copy and paste it in the appropriate spot.')
         if old_docs.endswith('\n'):
             # Remove trailing '\n'
@@ -93,14 +94,19 @@ def generate_integration_doc(
         else:  # permissions in ['none', 'general']
             command_permissions_dict = None
         if command:
-            print(f'Generating docs only for command `{command}`')
-            output = os.path.join(output, 'README.md')
-            command_section, command_errors = generate_commands_section(yml_data, example_dict,
-                                                                        command_permissions_dict, command=command)
-            command_section_str = '\n'.join(command_section)
-            with open(output) as f:
-                doc_text, err = append_or_replace_command_in_docs(f.read(), command_section_str, command)
-            errors.extend(err)
+            specific_commands = command.split(',')
+            readme_path = os.path.join(output, 'README.md')
+            with open(readme_path) as f:
+                doc_text = f.read()
+            for specific_command in specific_commands:
+                print(f'Generating docs for command `{command}`')
+                command_section, command_errors = generate_commands_section(
+                    yml_data, example_dict,
+                    command_permissions_dict, command=specific_command
+                )
+                command_section_str = '\n'.join(command_section)
+                doc_text, err = append_or_replace_command_in_docs(doc_text, command_section_str, specific_command)
+                errors.extend(err)
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))

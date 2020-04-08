@@ -539,7 +539,9 @@ def init(**kwargs):
     "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
     required=False)
 @click.option(
-    "-c", "--command", help="A specific command to generate doc for, will ignore the rest of the commands.", required=False
+    "-c", "--command", help="A comma-separated command names to generate doc for, will ignore the rest of the commands."
+                            "e.g (xdr-get-incidents,xdr-update-incident",
+    required=False
 )
 @click.option(
     "-e", "--examples", help="Path for file containing command or script examples."

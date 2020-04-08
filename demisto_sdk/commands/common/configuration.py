@@ -17,4 +17,4 @@ class Configuration:
         self.log_verbose = log_verbose
         self.sdk_env_dir = os.path.dirname(os.path.dirname(os.path.join(__file__)))
         self.env_dir = os.getcwd()
-        self.envs_dirs_base = os.path.join(self.sdk_env_dir, 'lint', 'dev_envs', 'default_python')
+        self.envs_dirs_base = os.path.join(self.sdk_env_dir, 'lint', 'resources', 'pipfile_python')

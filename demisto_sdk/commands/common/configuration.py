@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 
 class Configuration:
@@ -15,6 +15,6 @@ class Configuration:
     def __init__(self, log_verbose=False, logging_level=logging.INFO):
         logging.basicConfig(level=logging_level)
         self.log_verbose = log_verbose
-        self.sdk_env_dir = os.path.dirname(os.path.dirname(os.path.join(__file__)))
-        self.env_dir = os.getcwd()
-        self.envs_dirs_base = os.path.join(self.sdk_env_dir, 'lint', 'resources', 'pipfile_python')
+        self.sdk_env_dir = str(Path(__file__).parent.parent)  # /Users/grabin/dev/demisto/demisto-sdk/demisto_sdk/commands
+        self.env_dir = str(Path().cwd())
+        self.envs_dirs_base = str(Path(self.sdk_env_dir) / 'lint' / 'resources' / 'pipfile_python')

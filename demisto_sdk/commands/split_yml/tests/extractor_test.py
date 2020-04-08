@@ -1,6 +1,7 @@
 import base64
 import os
 
+import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_tools import git_path
@@ -108,6 +109,10 @@ def test_extract_to_package_format_pwsh(tmpdir):
     with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
         file_data = f.read()
         assert 'This is a sample test README' in file_data
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.yml'), 'r') as f:
+        yaml_obj = yaml.safe_load(f)
+        assert yaml_obj['fromversion'] == '5.5.0'
+        assert not yaml_obj['script']['script']
 
 
 def test_extract_to_package_format_py(tmpdir, mocker):

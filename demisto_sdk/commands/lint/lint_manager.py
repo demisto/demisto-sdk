@@ -191,7 +191,6 @@ class LintManager:
         """
         print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/master{Colors.reset} using branch {Colors.Fg.cyan}"
               f"{content_repo.active_branch}{Colors.reset}")
-        # untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
         last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,

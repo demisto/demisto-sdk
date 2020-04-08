@@ -193,7 +193,7 @@ class LintManager:
               f"{content_repo.active_branch}{Colors.reset}")
         # untracked_files = {content_repo.working_dir / Path(item).parent for item in content_repo.untracked_files}
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
-                        content_repo.index.diff(None, paths=pkgs)}
+                        content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
         changed_from_master = {content_repo.working_dir / Path(item.a_path).parent for item in
                                content_repo.remote().refs.master.commit.diff(content_repo.active_branch, paths=pkgs)}
         all_changed = staged_files.union(changed_from_master)

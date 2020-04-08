@@ -346,3 +346,21 @@ class TestScriptValidator:
         validator = get_validator()
         validator.current_file = current
         assert validator.is_valid_name() is answer
+
+    @pytest.mark.parametrize("script_type, fromversion, res", [
+        ('powershell', None, False),
+        ('powershell', '4.5.0', False),
+        ('powershell', '5.5.0', True),
+        ('powershell', '5.5.1', True),
+        ('powershell', '6.0.0', True),
+        ('python', '', True),
+        ('python', '4.5.0', True),
+    ])
+    def test_valid_pwsh(self, script_type, fromversion, res):
+        current = {
+            "type": script_type,
+            "fromversion": fromversion,
+        }
+        validator = get_validator()
+        validator.current_file = current
+        assert validator.is_valid_pwsh() == res

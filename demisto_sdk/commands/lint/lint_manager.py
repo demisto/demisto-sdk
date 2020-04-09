@@ -124,7 +124,7 @@ class LintManager:
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skiping lint, "
                           "test which require docker!")
             logger.info(f"demisto-sdk-Can't communicate with Docker daemon")
-        logger.info(f"Docker daemon test passed")
+        logger.debug(f"Docker daemon test passed")
 
         return facts
 
@@ -152,7 +152,7 @@ class LintManager:
             pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
                                                         pkgs=pkgs)
             for pkg in pkgs:
-                print_v(f"Package added after comparing to git {Colors.Fg.cyan}{pkg}{Colors.reset}",
+                print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
         print(f"Execute lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} packages")
 

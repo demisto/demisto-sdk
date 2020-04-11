@@ -180,7 +180,15 @@ class Initiator:
         return True
 
     @staticmethod
-    def create_metadata(fill_manually):
+    def create_metadata(fill_manually: bool) -> Dict:
+        """Builds pack metadata JSON content.
+
+        Args:
+            fill_manually (bool): Whether to interact with the user to fill in metadata details or not.
+
+        Returns:
+            Dict. Pack metadata JSON content.
+        """
         metadata = {
             'name': '## FILL OUT MANUALLY ##',
             'description': '## FILL OUT MANUALLY ##',

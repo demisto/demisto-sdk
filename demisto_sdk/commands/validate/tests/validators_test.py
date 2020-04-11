@@ -4,12 +4,14 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
+from mock import patch
 
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -25,6 +27,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET, INCIDENT_FIELD_TARGET, INTEGRATION_RELEASE_NOTES_TARGET,
@@ -262,7 +265,7 @@ class TestValidators:
         validator = IntegrationValidator(structure)
         assert validator.is_all_params_not_hidden() is answer
 
-    INPUTS_RELEASE_NOTES_VALIDATION = [
+    INPUTS_STRUCTURE_VALIDATION = [
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET),
         (VALID_SCRIPT_PATH, SCRIPT_TARGET),
         (VALID_DASHBOARD_PATH, DASHBOARD_TARGET),
@@ -274,11 +277,62 @@ class TestValidators:
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_RELEASE_NOTES_TARGET)
     ]
 
-    @pytest.mark.parametrize('source, target', INPUTS_RELEASE_NOTES_VALIDATION)
-    def test_is_file_valid_rn(self, source, target):
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_file_structure(self, source, target):
         # type: (str, str) -> None
         try:
             copyfile(source, target)
             assert FilesValidator(validate_conf_json=False).is_valid_structure()
         finally:
             os.remove(target)
+
+    @staticmethod
+    def mock_get_diff():
+        return None
+
+    @staticmethod
+    def mock_structure_validator():
+        return True
+
+    FILE_PATHS = [
+        ([VALID_INTEGRATION_TEST_PATH], 'integration'),
+        ([VALID_TEST_PLAYBOOK_PATH], 'playbook'),
+        ([VALID_DASHBOARD_PATH], 'dashboard'),
+        ([VALID_INCIDENT_FIELD_PATH], 'incidentfield'),
+        ([VALID_REPUTATION_PATH], 'reputation')
+    ]
+
+    @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
+    def test_is_valid_rn(self, mocker, file_path, file_type):
+        mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_diff)
+        mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_description', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_version', return_value=True)
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(DashboardValidator, 'is_id_equals_name', return_value=True)
+        mocker.patch.object(ReputationValidator, 'is_id_equals_details', return_value=True)
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.validate_added_files(file_path, file_type)
+        assert file_validator._is_valid
+
+    FILE_PATH = [
+        ([VALID_SCRIPT_PATH], 'script')
+    ]
+
+    @staticmethod
+    def mock_unifier():
+        def get_script_package_data_mock(*args, **kwargs):
+            return VALID_SCRIPT_PATH, ''
+        with patch.object(Unifier, '__init__', lambda a, b: None):
+            Unifier.get_script_package_data = get_script_package_data_mock
+            return Unifier('')
+
+    @pytest.mark.parametrize('file_path, file_type', FILE_PATH)
+    def test_script_valid_rn(self, mocker, file_path, file_type):
+        mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
+        self.mock_unifier()
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.validate_added_files(file_path, file_type)
+        assert file_validator._is_valid

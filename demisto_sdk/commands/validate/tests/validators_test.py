@@ -290,7 +290,9 @@ class TestValidators:
         ([VALID_TEST_PLAYBOOK_PATH], 'playbook'),
         ([VALID_DASHBOARD_PATH], 'dashboard'),
         ([VALID_INCIDENT_FIELD_PATH], 'incidentfield'),
-        ([VALID_REPUTATION_PATH], 'reputation')
+        ([VALID_REPUTATION_PATH], 'reputation'),
+        ([VALID_INCIDENT_TYPE_PATH], 'incidenttype'),
+        ([VALID_INTEGRATION_TEST_PATH], 'betaintegration')
     ]
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
@@ -304,6 +306,7 @@ class TestValidators:
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch.object(DashboardValidator, 'is_id_equals_name', return_value=True)
         mocker.patch.object(ReputationValidator, 'is_id_equals_details', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid

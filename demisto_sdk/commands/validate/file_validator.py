@@ -437,7 +437,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
+                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
@@ -471,7 +471,7 @@ class FilesValidator:
                 if not dashboard_validator.is_valid_dashboard(validate_rn=False):
                     self._is_valid = False
 
-            elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
+            elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) or file_type == 'incidenttype':
                 incident_type_validator = IncidentTypeValidator(structure_validator)
                 if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False

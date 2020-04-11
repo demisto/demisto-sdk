@@ -82,7 +82,7 @@ class IntegrationValidator(BaseValidator):
         ]
         return all(answers)
 
-    def is_valid_beta_integration(self, validate_rn: bool = True):
+    def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.

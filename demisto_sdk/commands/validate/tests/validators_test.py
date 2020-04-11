@@ -286,14 +286,6 @@ class TestValidators:
         finally:
             os.remove(target)
 
-    @staticmethod
-    def mock_get_diff():
-        return None
-
-    @staticmethod
-    def mock_structure_validator():
-        return True
-
     FILE_PATHS = [
         ([VALID_INTEGRATION_TEST_PATH], 'integration'),
         ([VALID_TEST_PLAYBOOK_PATH], 'playbook'),
@@ -304,7 +296,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
     def test_is_valid_rn(self, mocker, file_path, file_type):
-        mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_diff)
+        mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', sreturn_value=None)
         mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)

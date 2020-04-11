@@ -607,11 +607,9 @@ def generate_doc(**kwargs):
     elif file_type == 'script':
         return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose, command=command)
-    elif file_type == 'playbook' and not command:
+    elif file_type == 'playbook':
         return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose)
-    elif file_type == 'playbook' and command:
-        print_error('`command` has been supplied with playbook which is not supported.')
     else:
         print_error(f'File type {file_type} is not supported.')
         return 1

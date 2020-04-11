@@ -11,12 +11,12 @@ from demisto_sdk.commands.generate_docs.common import (
     generate_table_section, save_output, stringEscapeMD)
 
 
-def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name: str) -> Tuple[str, list]:
+def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, command_name: str) -> Tuple[str, list]:
     """ Replacing a command in a README.md file with a new string.
 
     Args:
         old_docs: the old docs string
-        new_str: the new string to replace
+        new_doc_section: the new string to replace
         command_name: the command name itself
 
     Returns:
@@ -25,8 +25,8 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
     regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name)
     # Read doc content
     errs = list()
-    if re.fullmatch(regexp, old_docs, flags=re.DOTALL):
-        new_docs = re.sub(regexp, new_str, old_docs, flags=re.DOTALL)
+    if re.findall(regexp, old_docs, flags=re.DOTALL):
+        new_docs = re.sub(regexp, new_doc_section, old_docs, flags=re.DOTALL)
         print_color('New command docs has been replaced in README.md.', LOG_COLORS.GREEN)
     else:
         if command_name in old_docs:
@@ -36,7 +36,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_str: str, command_name:
         if old_docs.endswith('\n'):
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
-        new_docs = f'{old_docs}\n{new_str}'
+        new_docs = f'{old_docs}\n{new_doc_section}'
         print_color('New command docs has been added to the README.md.', LOG_COLORS.GREEN)
     return new_docs, errs
 
@@ -59,11 +59,11 @@ def generate_integration_doc(
         examples: path to the command examples
         output: path to the output documentation
         use_cases: use cases string
-        permissions:
-        command_permissions:
+        permissions: global permissions for the docs
+        command_permissions: permissions per command
         limitations: limitations description
         insecure: should use insecure
-        verbose:
+        verbose: verbose (debug mode)
         command: specific command to generate docs for
 
     """

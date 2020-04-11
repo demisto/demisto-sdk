@@ -4,6 +4,7 @@ repos:
     rev: v2.4.0
     hooks:
     -   id: trailing-whitespace
+        exclude: demisto_sdk/tests/test_files/*
     -   id: end-of-file-fixer
     -   id: check-docstring-first
         exclude: demisto_sdk/tests/test_files/*

@@ -561,3 +561,21 @@ class TestIsFeedParamsExist:
         structure = mock_structure(current_file=current)
         validator = IntegrationValidator(structure)
         assert validator.is_all_params_not_hidden() is answer
+
+    @pytest.mark.parametrize("script_type, fromversion, res", [
+        ('powershell', None, False),
+        ('powershell', '4.5.0', False),
+        ('powershell', '5.5.0', True),
+        ('powershell', '5.5.1', True),
+        ('powershell', '6.0.0', True),
+        ('python', '', True),
+        ('python', '4.5.0', True),
+    ])
+    def test_valid_pwsh(self, script_type, fromversion, res):
+        current = {
+            "script": {"type": script_type},
+            "fromversion": fromversion,
+        }
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_pwsh() == res

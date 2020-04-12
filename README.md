@@ -309,6 +309,9 @@ This will generate documentation file to Tanium V2 integration in /Users/Documen
 `demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Scripts/script-PrintErrorEntry.yml -id /demisto/content/Tests/id_set.json -e "!PrintErrorEntry message=Hi"`
 This will generate documentation file to PrintErrorEntry script in /Users/Documentations/README.md. id_set.json should be updated to gets all the integration that uses this script.
 
+`demisto-sdk generate-docs -i /demisto/content/Integrations/Tanium_v2/Tanium_v2.yml -c tn-get-package`
+This will generate the command section for `tn-get-package` and will replace it in the README.md file located in /demisto/content/Integrations/Tanium_v2/.
+
 ## create-id-set
 Create the content dependency tree by ids.
 

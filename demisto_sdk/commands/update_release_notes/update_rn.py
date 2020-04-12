@@ -18,17 +18,12 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
-        print(self.pack_path)
         # if self._does_pack_metadata_exist(self.pack_meta_file):
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
-        print(self.metadata_path)
 
     @staticmethod
     def get_master_diff():
         a, b, c, packs = FilesValidator(use_git=True).get_modified_and_added_files()
-        print(a)
-        print(b)
-        print(c)
 
         return a
 
@@ -49,9 +44,7 @@ class UpdateRN:
     def format_filename(file_path):
         raw_name = os.path.basename(file_path)
         _raw_name = str(raw_name).split('.')
-        print(_raw_name)
         file_name = _raw_name[0].replace('_', ' ')
-        print(file_name)
         return file_name
 
     def ident_changed_file_type(self, file_path):
@@ -115,7 +108,6 @@ class UpdateRN:
                     raise
 
     def build_rn_template(self, changed_items: dict):
-        print(changed_items)
         rn_string = f'''<details>\n<summary>{self.pack}</summary>\n'''
         integration_header = False
         playbook_header = False

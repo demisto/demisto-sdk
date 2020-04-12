@@ -17,7 +17,7 @@ PACK_AUTHOR = 'PackAuthor'
 PACK_URL = 'https://www.github.com/pack'
 PACK_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
-PACK_PRICE = '0'
+# PACK_PRICE = '0'
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ def test_create_metadata(monkeypatch, initiator):
         'certification': 'certified',
         'useCases': [],
         'keywords': [],
-        'price': '0',
+        # 'price': '0',
         'dependencies': {},
     }
 
@@ -92,7 +92,8 @@ def test_create_metadata(monkeypatch, initiator):
         generate_multiple_inputs(
             deque([
                 PACK_NAME, PACK_DESC, '1', PACK_SERVER_MIN_VERSION, PACK_AUTHOR,
-                PACK_URL, PACK_EMAIL, '1', PACK_TAGS, PACK_PRICE
+                PACK_URL, PACK_EMAIL, '1', PACK_TAGS
+                # PACK_PRICE
             ])
         )
     )
@@ -109,7 +110,7 @@ def test_create_metadata(monkeypatch, initiator):
         'email': PACK_EMAIL,
         'keywords': [],
         'name': PACK_NAME,
-        'price': PACK_PRICE,
+        # 'price': PACK_PRICE,
         'serverMinVersion': PACK_SERVER_MIN_VERSION,
         'support': PACK_SUPPORT_OPTIONS[0],
         'tags': ['Tag1', 'Tag2'],

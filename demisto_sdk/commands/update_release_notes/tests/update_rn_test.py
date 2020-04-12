@@ -7,7 +7,8 @@ def test_build_rn_template():
     release_notes = update_rn.build_rn_template(changed_items)
     assert expected_result == release_notes
 
-def test_build_rn_template():
+
+def test_format_filename():
     expected_result = "sample test"
     from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
     update_rn = UpdateRN(pack="HelloWorld", update_type='minor')

@@ -1,5 +1,5 @@
 # Changelog
-
+* Fixed secretes validations for files with the same name in a different directory
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history

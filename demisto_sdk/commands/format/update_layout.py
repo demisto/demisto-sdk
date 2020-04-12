@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import yaml
+
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (

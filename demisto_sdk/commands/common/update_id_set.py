@@ -10,6 +10,7 @@ from functools import partial
 from multiprocessing import Pool, cpu_count
 
 import click
+
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_PLAYBOOK_REGEX, CLASSIFIER_REGEX,
     CLASSIFIERS_DIR, DASHBOARD_REGEX, DASHBOARDS_DIR, INCIDENT_FIELD_REGEX,

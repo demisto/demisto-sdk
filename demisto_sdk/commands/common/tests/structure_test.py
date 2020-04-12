@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 import pytest
 import yaml
+
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator

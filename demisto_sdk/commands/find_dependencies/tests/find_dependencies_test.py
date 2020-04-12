@@ -2,6 +2,7 @@ import json
 import os
 
 import pytest
+
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies

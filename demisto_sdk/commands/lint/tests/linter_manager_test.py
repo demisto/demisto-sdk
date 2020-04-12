@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 
 

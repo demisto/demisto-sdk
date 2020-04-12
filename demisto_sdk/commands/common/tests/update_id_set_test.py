@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 import pytest
+
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (find_duplicates,
                                                        get_integration_data,

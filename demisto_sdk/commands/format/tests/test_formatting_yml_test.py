@@ -3,6 +3,7 @@ import shutil
 
 import pytest
 import yaml
+
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat

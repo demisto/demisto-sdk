@@ -1,9 +1,10 @@
 from typing import Callable, List, Optional
 
 import pytest
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
-from ruamel.yaml import YAML
 from wcmatch.pathlib import Path
 
 

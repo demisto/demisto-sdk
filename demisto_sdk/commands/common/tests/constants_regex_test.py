@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
     BETA_SCRIPT_REGEX, INCIDENT_TYPE_REGEX, INDICATOR_FIELDS_REGEX,

@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
 
 V2_VALID_1 = {"display": "integrationname v2", "name": "integrationname v2", "id": "integrationname v2"}

@@ -2,13 +2,15 @@
 This script is used to create a release notes template
 """
 
-import os
-import json
 import errno
-from demisto_sdk.commands.validate.file_validator import FilesValidator
-from demisto_sdk.commands.common.tools import pack_name_to_path, get_json
-from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS
+import json
+import os
+
 from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
+                                               pack_name_to_path, print_color,
+                                               print_error)
+from demisto_sdk.commands.validate.file_validator import FilesValidator
 
 
 class UpdateRN:

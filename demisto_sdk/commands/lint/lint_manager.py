@@ -8,12 +8,13 @@ import sys
 import textwrap
 from typing import Any, Dict, List
 
-# Third party packages
-import docker
-import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
+
+# Third party packages
+import docker
+import docker.errors
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup

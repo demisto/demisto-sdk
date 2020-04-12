@@ -6,9 +6,10 @@ import shutil
 import pytest
 import yaml
 import yamlordereddictloader
+from mock import patch
+
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from mock import patch
 
 TEST_VALID_CODE = '''import demistomock as demisto
 from CommonServerPython import *

@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 

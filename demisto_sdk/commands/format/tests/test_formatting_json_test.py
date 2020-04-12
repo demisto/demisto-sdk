@@ -2,6 +2,7 @@ import os
 import shutil
 
 import pytest
+
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_PATH, DESTINATION_FORMAT_DASHBOARD_COPY,

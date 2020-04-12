@@ -284,6 +284,14 @@ Generate documentation file for integration, playbook or script from yaml file.
     Each Command should be in a separate line. **For script** - the script example surrounded by double quotes.
     When the argument is empty, the documentation will be generate without examples.
 
+* **-c, --command**
+    **For integration only** - A comma-separated value of commands to replace (e.g `panorama-get-address,panorama-create-address`).
+    It can be used only with an existing README.md file.
+    If any new command is presented - the new command will be added to the end of the docs file.
+    For an existing command, it will try to replace the existing command in the README.md file. If it will fail, it will
+    add it to the end of the file as well.
+
+
 * **-id, --id_set**
     Path of updated id_set.json file, used for generates script documentation.
      When the argument is empty, the documentation will be generate without `Used In` section.
@@ -300,6 +308,9 @@ This will generate documentation file to Tanium V2 integration in /Users/Documen
 
 `demisto-sdk generate-docs -o /Users/Documentations -i /demisto/content/Scripts/script-PrintErrorEntry.yml -id /demisto/content/Tests/id_set.json -e "!PrintErrorEntry message=Hi"`
 This will generate documentation file to PrintErrorEntry script in /Users/Documentations/README.md. id_set.json should be updated to gets all the integration that uses this script.
+
+`demisto-sdk generate-docs -i /demisto/content/Integrations/Tanium_v2/Tanium_v2.yml -c tn-get-package`
+This will generate the command section for `tn-get-package` and will replace it in the README.md file located in /demisto/content/Integrations/Tanium_v2/.
 
 ## create-id-set
 Create the content dependency tree by ids.

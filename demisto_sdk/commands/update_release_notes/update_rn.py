@@ -2,32 +2,13 @@
 This script is used to create a release notes template
 """
 
-import re
 import os
 import json
 import errno
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.common.tools import pack_name_to_path, get_json
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    get_release_notes_file_path, \
-    get_latest_release_notes_text
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
-from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, \
-    print_warning, \
-    print_color, \
-    LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
-    get_yml_paths_in_dir, find_type
-from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME, OLD_YML_FORMAT_FILE, \
-    SCHEMA_REGEX, \
-    KNOWN_FILE_STATUSES, IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, \
-    BETA_INTEGRATION_YML_REGEX, \
-    SCRIPT_REGEX, IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
-    PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, \
-    YML_INTEGRATION_REGEXES, \
-    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, \
-    JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, \
-    JSON_ALL_INCIDENT_TYPES_REGEXES, TESTS_DIRECTORIES
+from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS
+from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
 
 
 class UpdateRN:
@@ -79,7 +60,7 @@ class UpdateRN:
         if self.pack in file_path:
             _file_name = os.path.basename(file_path)
             file_name = self.format_filename(_file_name)
-            if 'Playbooks' in file_path and not 'TestPlaybooks' in file_path:
+            if 'Playbooks' in file_path and ('TestPlaybooks' not in file_path):
                 _file_type = 'Playbook'
             elif 'Integration' in file_path:
                 _file_type = 'Integration'
@@ -184,6 +165,7 @@ class UpdateRN:
         rn_string += '</details>'
         return rn_string
 
-    def create_markdown(self, release_notes_path: str, rn_string: str):
+    @staticmethod
+    def create_markdown(release_notes_path: str, rn_string: str):
         with open(release_notes_path, 'w') as fp:
             fp.write(rn_string)

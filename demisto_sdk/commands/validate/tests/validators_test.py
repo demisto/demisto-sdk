@@ -268,7 +268,6 @@ class TestValidators:
         validator = IntegrationValidator(structure)
         assert validator.is_all_params_not_hidden() is answer
 
-
     with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
         tests_params = json.load(test_params_file)
     params = [
@@ -357,4 +356,3 @@ class TestValidators:
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
-

@@ -33,5 +33,3 @@ def test_return_release_notes_path():
     input_version = '1.1.1'
     result = update_rn.return_release_notes_path(input_version)
     assert expected_result == result
-
-

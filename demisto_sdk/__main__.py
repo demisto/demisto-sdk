@@ -1,5 +1,6 @@
 # Site packages
 import os
+import re
 import sys
 
 from pkg_resources import get_distribution

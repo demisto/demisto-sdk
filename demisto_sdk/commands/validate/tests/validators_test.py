@@ -1,3 +1,4 @@
+import json
 import os
 from shutil import copyfile
 from typing import Any, Type
@@ -27,8 +28,9 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
-    BETA_INTEGRATION_TARGET, DASHBOARD_TARGET, INCIDENT_FIELD_TARGET,
-    INCIDENT_TYPE_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
+    BETA_INTEGRATION_TARGET, DASHBOARD_TARGET, GIT_HAVE_MODIFIED_AND_NEW_FILES,
+    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET,
+    INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_INCIDENT_FIELD_PATH,
     INVALID_INTEGRATION_ID_PATH, INVALID_LAYOUT_PATH,
     INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
@@ -263,6 +265,28 @@ class TestValidators:
         structure = StructureValidator(source)
         validator = IntegrationValidator(structure)
         assert validator.is_all_params_not_hidden() is answer
+
+    with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
+        tests_params = json.load(test_params_file)
+    params = [
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        ('origin/master', tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_without_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', False, False),
+    ]
+
+    @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer, is_valid", params)
+    def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer,
+                                               is_valid, mocker):
+        file_validator = FilesValidator(validate_conf_json=False, prev_ver=prev_var)
+        file_validator._is_valid = is_valid
+        mocker.patch.object(FilesValidator, 'get_modified_and_added_files', return_value=get_modified_and_added_files)
+        mocker.patch.object(FilesValidator, 'get_content_release_identifier', return_value=release_iden)
+        mocker.patch.object(FilesValidator, 'validate_modified_files', return_value=None)
+
+        assert file_validator.validate_against_previous_version() is None
+        assert file_validator._is_valid is answer
 
     INPUTS_STRUCTURE_VALIDATION = [
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET),

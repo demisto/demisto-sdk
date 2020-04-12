@@ -54,7 +54,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,
-                                               get_yaml, get_yml_paths_in_dir,
+                                               get_remote_file, get_yaml,
+                                               get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
                                                print_warning, run_command)
@@ -77,7 +78,7 @@ class FilesValidator:
         configuration (Configuration): Configurations for IDSetValidator.
     """
 
-    def __init__(self, is_backward_check=True, prev_ver='origin/master', use_git=False, is_circle=False,
+    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
                  configuration=Configuration()):
         self.branch_name = ''
@@ -88,10 +89,6 @@ class FilesValidator:
             print(f'Running validation on branch {self.branch_name}')
 
         self.prev_ver = prev_ver
-        if not self.prev_ver:
-            # validate against master if no version was provided
-            self.prev_ver = 'origin/master'
-
         self._is_valid = True
         self.configuration = configuration
         self.is_backward_check = is_backward_check
@@ -601,7 +598,6 @@ class FilesValidator:
                                                  not self.branch_name.startswith('20.')):
                 print('Validates only committed files')
                 self.validate_committed_files()
-                self.validate_against_previous_version(no_error=True)
             else:
                 self.validate_against_previous_version(no_error=True)
                 print('Validates all of Content repo directories according to their schemas')
@@ -623,17 +619,24 @@ class FilesValidator:
         Args:
             no_error (bool): If set to true will restore self._is_valid after run (will not return new errors)
         """
-        if self.prev_ver and self.prev_ver != 'master':
-            print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
-            modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
-            prev_self_valid = self._is_valid
-            self.validate_modified_files(modified_files)
-            if no_error:
-                self._is_valid = prev_self_valid
+        if not self.prev_ver:
+            content_release_branch_id = self.get_content_release_identifier()
+            if not content_release_branch_id:
+                print_warning('could\'t get content\'s release branch ID. Skipping validation.')
+                return
+            else:
+                self.prev_ver = content_release_branch_id
+
+        print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
+        modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
+        prev_self_valid = self._is_valid
+        self.validate_modified_files(modified_files)
+        if no_error:
+            self._is_valid = prev_self_valid
 
     # parser.add_argument('-t', '--test-filter', type=str2bool, default=False,
     #                     help='Check that tests are valid.')
-    # TODO: after validation there was a step to run the configure_tests script to check that each changed file
+    # TODO: after validation there was a step to run the configure_tests script to check each changed file
     #  had a relevant test - was used as part of the hooks.
 
     @staticmethod
@@ -651,3 +654,11 @@ class FilesValidator:
             return True
 
         return False
+
+    def get_content_release_identifier(self):
+        try:
+            file_content = get_remote_file('.circleci/config.yml', tag=self.branch_name)
+        except Exception:
+            return
+        else:
+            return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')

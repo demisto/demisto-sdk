@@ -206,7 +206,7 @@ class SecretsValidator(object):
             if high_entropy_strings or secrets_found_with_regex:
                 # uniquify identical matches between lists
                 file_secrets = list(set(high_entropy_strings + secrets_found_with_regex))
-                secrets_found[file_name] = file_secrets
+                secrets_found[file_path] = file_secrets
 
         return secrets_found
 

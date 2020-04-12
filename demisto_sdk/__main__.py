@@ -1,12 +1,12 @@
 # Site packages
 import os
-import re
 import sys
+import re
+
+from pkg_resources import get_distribution
 
 # Third party packages
 import click
-from pkg_resources import get_distribution
-
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
@@ -36,9 +36,9 @@ from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.file_validator import FilesValidator
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
 class DemistoSDK:

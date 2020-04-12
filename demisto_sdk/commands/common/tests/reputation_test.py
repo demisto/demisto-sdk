@@ -1,5 +1,4 @@
 import pytest
-
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \

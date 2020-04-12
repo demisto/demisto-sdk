@@ -6,9 +6,6 @@ import os
 import re
 from typing import Tuple
 
-from ruamel.yaml import YAML
-from ruamel.yaml.scalarstring import FoldedScalarString
-
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
@@ -19,6 +16,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
+from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import FoldedScalarString
 
 
 class Unifier:

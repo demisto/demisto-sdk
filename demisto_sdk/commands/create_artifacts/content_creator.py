@@ -7,8 +7,6 @@ import shutil
 import zipfile
 from typing import List
 
-from ruamel.yaml import YAML
-
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
@@ -31,6 +29,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_yml_paths_in_dir,
                                                print_error, print_warning)
 from demisto_sdk.commands.unify.unifier import Unifier
+from ruamel.yaml import YAML
 
 
 class ContentCreator:

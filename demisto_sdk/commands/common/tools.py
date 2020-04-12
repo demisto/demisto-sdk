@@ -15,7 +15,6 @@ import git
 import requests
 import urllib3
 import yaml
-
 from demisto_sdk.commands.common.constants import (
     CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,

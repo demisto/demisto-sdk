@@ -6,9 +6,6 @@ import tempfile
 from io import open
 
 import yaml
-from ruamel.yaml import YAML
-from ruamel.yaml.scalarstring import SingleQuotedScalarString
-
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    TYPE_TO_EXTENSION)
@@ -17,6 +14,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
+from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
 
 class Extractor:

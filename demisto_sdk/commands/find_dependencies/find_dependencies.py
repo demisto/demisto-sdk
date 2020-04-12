@@ -5,7 +5,6 @@ import sys
 
 import click
 import networkx as nx
-
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator

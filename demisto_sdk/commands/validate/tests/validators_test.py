@@ -3,8 +3,6 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-from mock import patch
-
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -49,6 +47,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PLAYBOOK_CONDITION,
     VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH, WIDGET_TARGET)
+from mock import patch
 
 
 class TestValidators:

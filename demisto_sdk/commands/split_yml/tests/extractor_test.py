@@ -2,7 +2,6 @@ import base64
 import os
 
 import yaml
-
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_tools import git_path

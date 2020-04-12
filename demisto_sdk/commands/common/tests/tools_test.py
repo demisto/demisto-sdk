@@ -2,7 +2,6 @@ import glob
 import os
 
 import pytest
-
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACKS_PLAYBOOK_YML_REGEX,
                                                    PACKS_TEST_PLAYBOOKS_REGEX)

@@ -76,7 +76,6 @@ import sys
 
 import dateparser
 import yaml
-
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 

@@ -12,12 +12,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Generator, List, Optional
 
+import docker
+import docker.errors
 # Third party packages
 import git
 import requests
-
-import docker
-import docker.errors
 # Local packages
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.common.tools import print_warning, run_command_os

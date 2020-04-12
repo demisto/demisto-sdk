@@ -6,15 +6,12 @@ import logging
 import os
 from typing import List, Optional, Tuple
 
-import requests.exceptions
-import urllib3.exceptions
-from jinja2 import Environment, FileSystemLoader, exceptions
-from ruamel.yaml import YAML
-
 import docker
 # 3-rd party packages
 import docker.errors
 import docker.models.containers
+import requests.exceptions
+import urllib3.exceptions
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
@@ -30,6 +27,8 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                get_file_from_container,
                                                get_python_version_from_image,
                                                stream_docker_container_output)
+from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
 from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')

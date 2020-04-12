@@ -2,8 +2,6 @@ import os
 from typing import List, Union
 
 import yaml
-from ruamel.yaml import YAML
-
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
@@ -13,6 +11,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True

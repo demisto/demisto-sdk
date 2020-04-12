@@ -26,7 +26,7 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import generate_scri
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-from demisto_sdk.commands.sync.content_synchronizer import ContentSynchronizer
+from demisto_sdk.commands.download.downloader import Downloader
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -354,24 +354,29 @@ def upload(**kwargs):
     uploader = Uploader(**kwargs)
     return uploader.upload()
 
+# ====================== download ====================== #
 
-# ====================== sync ====================== #
-@main.command(name="sync",
-              short_help="Sync custom content from Demisto instance. DEMISTO_BASE_URL environment variable should"
+
+@main.command(name="download",
+              short_help="Download custom content from Demisto instance. DEMISTO_BASE_URL environment variable should"
                          " contain the Demisto server base URL. DEMISTO_API_KEY environment variable should contain"
                          " a valid Demisto API Key.")
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The path of a package directory to upload", required=True)
+    "-o", "--output", help="The path of a package directory to upload", required=True)
+@click.option(
+    "-i", "--input", help="Comma separated names of custom content files", required=True)
 @click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
-def sync(**kwargs):
-    content_synchronizer = ContentSynchronizer(**kwargs)
-    return content_synchronizer.sync()
+@click.option(
+    "-f", "--force", help="Whether to merge existing files or not", is_flag=True)
+def download(**kwargs):
+    downloader: Downloader = Downloader(**kwargs)
+    return downloader.download()
 
 
 # ====================== run ====================== #

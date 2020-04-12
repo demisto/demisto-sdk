@@ -112,9 +112,9 @@ class Extractor:
             else:
                 with open(changelog, 'wt', encoding='utf-8') as changelog_file:
                     changelog_file.write("## [Unreleased]\n-\n")
-            script_obj['script'] = SingleQuotedScalarString('')
-            with open(yaml_out, 'w') as yf:
-                ryaml.dump(yaml_obj, yf)
+        script_obj['script'] = SingleQuotedScalarString('')
+        with open(yaml_out, 'w') as yf:
+            ryaml.dump(yaml_obj, yf)
         # Python code formatting and dev env setup
         code_type = script_obj['type']
         if code_type == TYPE_PYTHON:
@@ -191,7 +191,7 @@ class Extractor:
         ext = TYPE_TO_EXTENSION[lang_type]
         if not code_file_path.endswith(ext):
             code_file_path += ext
-        print("Extracting code to: {} ...".format(code_file_path))
+        self.print_logs("Extracting code to: {} ...".format(code_file_path), log_color=LOG_COLORS.NATIVE)
         with open(code_file_path, 'wt') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
                 code_file.write("import demistomock as demisto\n")
@@ -213,7 +213,7 @@ class Extractor:
         """
         if self.file_type == 'script':
             return 0  # no image in script type
-        print("Extracting image to: {} ...".format(output_path))
+        self.print_logs("Extracting image to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
         image_b64 = self.yml_data['image'].split(',')[1]
         with open(output_path, 'wb') as image_file:
             image_file.write(base64.decodebytes(image_b64.encode('utf-8')))
@@ -229,7 +229,7 @@ class Extractor:
             return 0  # no long description in script type
         long_description = self.yml_data.get('detaileddescription')
         if long_description:
-            print("Extracting long description to: {} ...".format(output_path))
+            self.print_logs("Extracting long description to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as desc_file:
                 desc_file.write(long_description)
         return 0
@@ -239,7 +239,7 @@ class Extractor:
         Prints the logging message if logging is enabled
         :param log_msg: The logging message
         :param log_color: The printing color
-        :return: None 
+        :return: None
         """
         if self.logging:
             print_color(log_msg, log_color)

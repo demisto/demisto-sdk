@@ -18,7 +18,7 @@ import requests
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
     DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, INTEGRATIONS_DIR, \
-    SCRIPTS_DIR, BETA_INTEGRATIONS_DIR, CONTENT_PREFIXES
+    SCRIPTS_DIR, BETA_INTEGRATIONS_DIR, LAYOUTS_DIR
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -281,14 +281,16 @@ def get_file_data(file_path: str, file_type: str):
     :param file_type: The file type
     :return: The file data
     """
+    open_mode: str = 'r'
     if file_type == 'yml':
         return get_yaml(file_path)
     elif file_type == 'json':
         return get_yaml(file_type)
-    else:
-        with open(file_path, 'r') as file:
-            data = file.read()
-        return data
+    elif file_type == 'png':
+        open_mode = 'rb'
+    with open(file_path, open_mode) as file:
+        data = file.read()
+    return data
 
 
 def get_script_or_integration_id(file_path):
@@ -304,8 +306,19 @@ def get_id_by_content_entity(data: dict, content_entity: str):
     """
     if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
         return data.get('commonfields', {}).get('id', '')
+    elif content_entity == LAYOUTS_DIR:
+        return data.get('typeId', '')
     else:
         return data.get('id', '')
+
+
+def get_name_by_content_entity(data: dict, content_entity: str):
+    """TODO: add docs, add unit test
+    """
+    if content_entity == LAYOUTS_DIR:
+        return data.get('typeId', '')
+    else:
+        return data.get('name', '')
 
 
 def collect_ids(file_path):
@@ -592,8 +605,8 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     return {}, None
 
 
-def find_type(path: str):
-    """
+def find_type(path: str = '', _dict=None, file_type: str = ''):
+    """TODO: modify unit tests
     returns the content file type
 
     Arguments:
@@ -602,7 +615,8 @@ def find_type(path: str):
     Returns:
         string representing the content file type
     """
-    _dict, file_type = get_dict_from_file(path)
+    if not _dict and not file_type:
+        _dict, file_type = get_dict_from_file(path)
     if file_type == 'yml':
         if 'category' in _dict:
             return 'integration'
@@ -771,18 +785,42 @@ def retrieve_file_ending(file_path: str) -> str:
     if os_split:
         file_ending: str = os_split[1]
         if file_ending and '.' in file_ending:
-            return file_ending[:1]
+            return file_ending[1:]
 
 
-def retrieve_module_from_file(file_path: str, file_type) -> str:
+# def retrieve_module_from_file(file_path: str, file_type) -> str:
+#     """TODO: add unit test
+#     Retrieves module name file path
+#     :param file_path: The file path
+#     :param file_type: The content file type (e.g. integration, script,...)
+#     :return: The module name
+#     """
+#     base_name = os.path.basename(file_path)
+#     module = str(os.path.splitext(base_name)[0])
+#     for prefix in CONTENT_PREFIXES:
+#         if f'{prefix}-' in module:
+#             return module.split(f'{prefix}-')[1]
+
+
+def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
     """TODO: add unit test
-    Retrieves module name file path
-    :param file_path: The file path
-    :param file_type: The content file type (e.g. integration, script,...)
-    :return: The module name
+       Converts a string representation of args to a python list
+
+       :type arg: ``str`` or ``list``
+       :param arg: Args to be converted (required)
+
+       :type separator: ``str``
+       :param separator: A string separator to separate the strings, the default is a comma.
+
+       :return: A python list of args
+       :rtype: ``list``
     """
-    base_name = os.path.basename(file_path)
-    module = str(os.path.splitext(base_name))
-    for prefix in CONTENT_PREFIXES:
-        if f'{prefix}-' in module:
-            return module.split(f'{prefix}-')[1]
+    if not arg:
+        return []
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, (str, bytes)):
+        if arg[0] == '[' and arg[-1] == ']':
+            return json.loads(arg)
+        return [s.strip() for s in arg.split(separator)]
+    return arg

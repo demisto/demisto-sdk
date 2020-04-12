@@ -199,7 +199,7 @@ class Initiator:
             'certification': 'certified',
             'useCases': [],
             'keywords': [],
-            'price': '0',
+            # 'price': '0',
             'dependencies': {},
         }
 
@@ -225,8 +225,8 @@ class Initiator:
         tags_list = [t.strip() for t in tags.split(',')]
         metadata['tags'] = tags_list
 
-        price = input("\nThe price of the pack: ")
-        metadata['price'] = price
+        # price = input("\nThe price of the pack: ")
+        # metadata['price'] = price
 
         return metadata
 

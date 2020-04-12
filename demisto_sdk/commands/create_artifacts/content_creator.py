@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, MISC_DIR,
                                                    PACKS_DIR, PLAYBOOKS_DIR,
+                                                   RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, WIDGETS_DIR)
@@ -256,7 +257,7 @@ class ContentCreator:
         scan_files = glob.glob(os.path.join(dir_path, '*.md'))
         for path in scan_files:
             new_path = os.path.basename(path)
-            if dir_name == 'ReleaseNotes':
+            if dir_name == RELEASE_NOTES_DIR:
                 if os.path.isfile(os.path.join(bundle, new_path)):
                     raise NameError(
                         f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'

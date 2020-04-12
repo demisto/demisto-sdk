@@ -1,21 +1,35 @@
-import os
-import io
-import re
 import glob
+import io
 import json
+import os
+import re
 import shutil
 import zipfile
 from typing import List
-from ruamel.yaml import YAML
 
-from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.common.tools import get_child_directories, get_child_files, print_warning, \
-    get_yml_paths_in_dir, print_error, find_type, get_common_server_path
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
+                                                   CLASSIFIERS_DIR,
+                                                   CONNECTIONS_DIR,
+                                                   DASHBOARDS_DIR,
+                                                   DIR_TO_PREFIX,
+                                                   INCIDENT_FIELDS_DIR,
+                                                   INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR,
+                                                   INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR, MISC_DIR,
+                                                   PACKS_DIR, PLAYBOOKS_DIR,
+                                                   REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, MISC_DIR, PLAYBOOKS_DIR, REPORTS_DIR,\
-    DASHBOARDS_DIR, WIDGETS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR, CONNECTIONS_DIR, \
-    BETA_INTEGRATIONS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, TEST_PLAYBOOKS_DIR, PACKS_DIR, DIR_TO_PREFIX, \
-    TOOLS_DIR
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_child_directories,
+                                               get_child_files,
+                                               get_common_server_path,
+                                               get_yml_paths_in_dir,
+                                               print_error, print_warning)
+from demisto_sdk.commands.unify.unifier import Unifier
+from ruamel.yaml import YAML
 
 
 class ContentCreator:

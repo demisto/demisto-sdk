@@ -1,8 +1,10 @@
-import re
-import demisto_client
 import ast
+import re
 
-from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS, print_v, print_warning
+import demisto_client
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+                                               print_error, print_v,
+                                               print_warning)
 
 
 class DemistoRunTimeError(RuntimeError):

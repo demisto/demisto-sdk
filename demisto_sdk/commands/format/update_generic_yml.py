@@ -1,8 +1,8 @@
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
 import yaml
 import yamlordereddictloader
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True

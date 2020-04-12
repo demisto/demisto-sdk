@@ -1,18 +1,25 @@
-from typing import List, Tuple
-from demisto_sdk.commands.common.git_tools import get_changed_files
 import os
-from demisto_sdk.commands.common.tools import print_error, find_type, get_files_in_dir, print_success, print_warning
+from typing import List, Tuple
+
+from demisto_sdk.commands.common.git_tools import get_changed_files
+from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
+                                               print_error, print_success,
+                                               print_warning)
+from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
+from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat
+from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
+from demisto_sdk.commands.format.update_incidentfields import \
+    IncidentFieldJSONFormat
+from demisto_sdk.commands.format.update_incidenttype import \
+    IncidentTypesJSONFormat
+from demisto_sdk.commands.format.update_indicatorfields import \
+    IndicatorFieldJSONFormat
+from demisto_sdk.commands.format.update_indicatortype import \
+    IndicatorTypeJSONFormat
+from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
+from demisto_sdk.commands.format.update_layout import LayoutJSONFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
-from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_incidentfields import IncidentFieldJSONFormat
-from demisto_sdk.commands.format.update_incidenttype import IncidentTypesJSONFormat
-from demisto_sdk.commands.format.update_indicatorfields import IndicatorFieldJSONFormat
-from demisto_sdk.commands.format.update_indicatortype import IndicatorTypeJSONFormat
-from demisto_sdk.commands.format.update_layout import LayoutJSONFormat
-from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
-from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat
-from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,

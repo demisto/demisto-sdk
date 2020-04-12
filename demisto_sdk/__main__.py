@@ -1,23 +1,42 @@
 # Site packages
 import os
-from pkg_resources import get_distribution
 import sys
 import re
 
+from pkg_resources import get_distribution
+
 # Third party packages
 import click
-
+from demisto_sdk.commands.common.configuration import Configuration
+# Common tools
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_last_remote_release_version,
+                                               print_error, print_warning)
+from demisto_sdk.commands.create_artifacts.content_creator import \
+    ContentCreator
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
+from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+    generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
+    generate_playbook_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import \
+    generate_script_doc
+from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
+    PlaybookTestsGenerator
+from demisto_sdk.commands.init.initiator import Initiator
+from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
+    json_to_outputs
+from demisto_sdk.commands.lint.lint_manager import LintManager
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
-from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
+from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.init.initiator import Initiator
-from demisto_sdk.commands.split_yml.extractor import Extractor
-from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.lint.lint_manager import LintManager
-from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.create_artifacts.content_creator import ContentCreator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import json_to_outputs
@@ -82,7 +101,7 @@ def main(config, version):
                       f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
     if version:
         version = get_distribution('demisto-sdk').version
-        print(version)
+        print(f'demisto-sdk {version}')
 
 
 # ====================== split-yml ====================== #
@@ -240,8 +259,8 @@ def validate(config, **kwargs):
     name="create-content-artifacts",
     hidden=True,
     short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-    'upload to your server in order to upload a whole new content version to your Demisto '
-    'instance.',
+               'upload to your server in order to upload a whole new content version to your Demisto '
+               'instance.',
 )
 @click.help_option(
     '-h', '--help'
@@ -289,52 +308,58 @@ def secrets(config, **kwargs):
 
 # ====================== lint ====================== #
 @main.command(name="lint",
-              short_help="Run lintings (flake8, mypy, pylint, bandit, vulture) and pytest. pylint and pytest will run "
-                         "within the docker image of an integration/script. Meant to be used with integrations/scripts "
-                         "that use the folder (package) structure. Will lookup up what docker image to use and will "
-                         "setup the dev dependencies and file in the target folder. ")
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    "-d", "--dir", help="Specify directory of integration/script")
-@click.option(
-    "--no-pylint", is_flag=True, help="Do NOT run pylint linter")
-@click.option(
-    "--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
-@click.option(
-    "--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
-@click.option(
-    "--no-bandit", is_flag=True, help="Do NOT run bandit linter")
-@click.option(
-    "--no-vulture", is_flag=True, help="Do NOT run vulture linter")
-@click.option(
-    "--no-test", is_flag=True, help="Do NOT test (skip pytest)")
-@click.option(
-    "-r", "--root", is_flag=True, help="Run pytest container with root user")
-@click.option(
-    "-k", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
-@click.option(
-    "--cpu-num",
-    help="Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs)",
-    default=0)
-@click.option(
-    "-p", "--parallel", is_flag=True, help="Run tests in parallel")
-@click.option(
-    "-m", "--max-workers", type=int, help="How many threads to run in parallel")
-@click.option(
-    "-g", "--git", is_flag=True, help="Will run only on changed packages")
-@click.option(
-    "-a", "--run-all-tests", is_flag=True, help="Run lint on all directories in content repo")
-@click.option(
-    "--outfile", help="Save failing packages to a file"
-)
-@pass_config
-def lint(config, dir, **kwargs):
-    linter = LintManager(configuration=config.configuration, project_dir_list=dir, **kwargs)
-    return linter.run_dev_packages()
+              short_help="Lint command will perform:\n 1. Package in host checks - flake8, bandit, mypy, vulture.\n 2. "
+                         "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
+                         "Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what"
+                         "docker image to use and will setup the dev dependencies and file in the target folder. ")
+@click.help_option('-h', '--help')
+@click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
+                                                                                               resolve_path=True))
+@click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
+@click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-p", "--parallel", default=1, help="Run tests in parallel", type=click.IntRange(0, 15, clamp=True),
+              show_default=True)
+@click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
+@click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
+@click.option("--no-vulture", is_flag=True, help="Do NOT run vulture linter")
+@click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
+@click.option("--no-test", is_flag=True, help="Do NOT test (skip pytest)")
+@click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
+@click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
+@click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
+@click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
+@click.option("--json-report", help="Path to store json results", type=click.Path(exists=True, resolve_path=True))
+@click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True, resolve_path=True))
+def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
+         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
+         no_pwsh_test: bool, keep_container: bool, test_xml: str, json_report: str, log_path: str):
+    """Lint command will perform:\n
+        1. Package in host checks - flake8, bandit, mypy, vulture.\n
+        2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
+    Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
+    docker image to use and will setup the dev dependencies and file in the target folder."""
+    lint_manager = LintManager(input=input,
+                               git=git,
+                               all_packs=all_packs,
+                               verbose=verbose,
+                               quiet=quiet,
+                               log_path=log_path)
+    return lint_manager.run_dev_packages(parallel=parallel,
+                                         no_flake8=no_flake8,
+                                         no_bandit=no_bandit,
+                                         no_mypy=no_mypy,
+                                         no_vulture=no_vulture,
+                                         no_pylint=no_pylint,
+                                         no_test=no_test,
+                                         no_pwsh_analyze=no_pwsh_analyze,
+                                         no_pwsh_test=no_pwsh_test,
+                                         keep_container=keep_container,
+                                         test_xml=test_xml,
+                                         json_report=json_report)
 
 
 # ====================== format ====================== #

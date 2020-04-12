@@ -14,35 +14,51 @@ from __future__ import print_function
 import os
 import re
 
-from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
-from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import CODE_FILES_REGEX, OLD_YML_FORMAT_FILE, SCHEMA_REGEX, \
-    KNOWN_FILE_STATUSES, IGNORED_TYPES_REGEXES, INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, \
-    SCRIPT_REGEX, IMAGE_REGEX, TEST_PLAYBOOK_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, \
-    PACKAGE_SUPPORTING_DIRECTORIES, YML_BETA_INTEGRATIONS_REGEXES, PACKAGE_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, \
-    PACKS_DIR, PACKS_DIRECTORIES, Errors, PLAYBOOKS_REGEXES_LIST, JSON_INDICATOR_AND_INCIDENT_FIELDS, PLAYBOOK_REGEX, \
-    JSON_ALL_LAYOUT_REGEXES, REPUTATION_REGEX, CHECKED_TYPES_REGEXES, JSON_ALL_DASHBOARDS_REGEXES, \
-    JSON_ALL_INCIDENT_TYPES_REGEXES, TESTS_DIRECTORIES
-from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
-from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
+    CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, IGNORED_TYPES_REGEXES,
+    IMAGE_REGEX, INTEGRATION_REGEX, JSON_ALL_DASHBOARDS_REGEXES,
+    JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
+    JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
+    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
+    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, REPUTATION_REGEX, SCHEMA_REGEX,
+    SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TESTS_DIRECTORIES,
+    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES, Errors)
+from demisto_sdk.commands.common.hook_validations.conf_json import \
+    ConfJsonValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import \
+    DashboardValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
-from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import \
+    IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import \
+    IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
+    PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.playbook import \
+    PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-
-from demisto_sdk.commands.common.tools import checked_type, run_command, print_error, print_warning, print_color, \
-    LOG_COLORS, get_yaml, filter_packagify_changes, get_pack_name, is_file_path_in_pack, \
-    get_yml_paths_in_dir, find_type
+from demisto_sdk.commands.common.hook_validations.release_notes import \
+    ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.reputation import \
+    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
+from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
+                                               filter_packagify_changes,
+                                               find_type, get_pack_name,
+                                               get_yaml, get_yml_paths_in_dir,
+                                               is_file_path_in_pack,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
 
 
 class FilesValidator:
@@ -285,14 +301,6 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES):
-                image_validator = ImageValidator(file_path)
-                if not image_validator.is_valid():
-                    self._is_valid = False
-
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid():
-                    self._is_valid = False
-
                 integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
@@ -301,14 +309,6 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
-                image_validator = ImageValidator(file_path)
-                if not image_validator.is_valid():
-                    self._is_valid = False
-
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid_beta_description():
-                    self._is_valid = False
-
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
@@ -418,22 +418,12 @@ class FilesValidator:
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
                 playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook():
+                if not playbook_validator.is_valid_playbook(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
-                image_validator = ImageValidator(file_path)
-                # if file_type(non git path) the image is not in a separate path
-                image_validator.file_path = file_path if file_type else image_validator.file_path
-                if not image_validator.is_valid():
-                    self._is_valid = False
-
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid():
-                    self._is_valid = False
-
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_file(validate_rn=not file_type):
+                if not integration_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
@@ -443,17 +433,13 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
 
-                if not script_validator.is_valid_file(validate_rn=not file_type):
+                if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
-                description_validator = DescriptionValidator(file_path)
-                if not description_validator.is_valid_beta_description():
-                    self._is_valid = False
-
+                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_beta_integration():
+                if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
@@ -462,30 +448,32 @@ class FilesValidator:
                     self._is_valid = False
 
             # incident fields and indicator fields are using the same scheme.
+            # TODO: add validation for classification(21630) and set validate_rn to False after issue #23398 is fixed.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
-                if not incident_field_validator.is_valid_file(validate_rn=not file_type):
+                if not incident_field_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
                 reputation_validator = ReputationValidator(structure_validator)
-                if not reputation_validator.is_valid_file(validate_rn=not file_type):
+                if not reputation_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
                 layout_validator = LayoutValidator(structure_validator)
+                # TODO: set validate_rn to False after issue #23398 is fixed.
                 if not layout_validator.is_valid_layout(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
                 dashboard_validator = DashboardValidator(structure_validator)
-                if not dashboard_validator.is_valid_dashboard(validate_rn=not file_type):
+                if not dashboard_validator.is_valid_dashboard(validate_rn=False):
                     self._is_valid = False
 
-            elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
+            elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) or file_type == 'incidenttype':
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type(validate_rn=not file_type):
+                if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:

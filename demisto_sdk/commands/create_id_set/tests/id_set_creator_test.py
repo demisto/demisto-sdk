@@ -2,8 +2,8 @@ import os
 import shutil
 from tempfile import mkdtemp
 
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 class TestIDSetCreator:

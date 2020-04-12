@@ -1,3 +1,4 @@
+import os
 from collections import deque
 from datetime import datetime
 from typing import Callable
@@ -28,6 +29,10 @@ def generate_multiple_inputs(inputs: deque) -> Callable:
     def next_input(_):
         return inputs.popleft()
     return next_input
+
+
+def raise_file_exists_error():
+    raise FileExistsError
 
 
 def test_get_created_dir_name(monkeypatch, initiator):
@@ -113,3 +118,28 @@ def test_create_metadata(monkeypatch, initiator):
         'url': PACK_URL,
         'useCases': []
     }
+
+
+def test_get_valid_user_input(monkeypatch, initiator):
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['InvalidInput', '100', '1'])))
+    user_choice = initiator.get_valid_user_input(INTEGRATION_CATEGORIES, 'Choose category')
+    assert user_choice == INTEGRATION_CATEGORIES[0]
+
+
+def test_create_new_directory(mocker, monkeypatch, initiator):
+    full_output_path = 'path'
+    initiator.full_output_path = full_output_path
+
+    # create new dir successfully
+    mocker.patch.object(os, 'mkdir', return_value=None)
+    assert initiator.create_new_directory()
+
+    mocker.patch.object(os, 'mkdir', side_effect=FileExistsError())
+    # override dir successfully
+    monkeypatch.setattr('builtins.input', lambda _: 'Y')
+    with pytest.raises(FileExistsError):
+        assert initiator.create_new_directory()
+
+    # fail to create pack cause of existing dir without overriding it
+    monkeypatch.setattr('builtins.input', lambda _: 'N')
+    assert initiator.create_new_directory() is False

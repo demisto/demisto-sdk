@@ -3,7 +3,7 @@ import os
 import shutil
 from datetime import datetime
 from distutils.dir_util import copy_tree
-from typing import Dict
+from typing import Dict, List
 
 import yaml
 import yamlordereddictloader
@@ -239,7 +239,16 @@ class Initiator:
         return metadata
 
     @staticmethod
-    def get_valid_user_input(options_list, option_message):
+    def get_valid_user_input(options_list: List[str], option_message: str) -> str:
+        """Gets user input from a list of options, by integer represents the choice.
+
+        Args:
+            options_list (List[str]): List of options for the user to choose from.
+            option_message (str): The message to show the user along with the list of options.
+
+        Returns:
+            str. The chosen option.
+        """
         for index, option in enumerate(options_list, start=1):
             option_message += f"[{index}] {option}\n"
         option_message += "\nEnter option: "

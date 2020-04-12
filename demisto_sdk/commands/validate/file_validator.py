@@ -636,7 +636,7 @@ class FilesValidator:
 
     # parser.add_argument('-t', '--test-filter', type=str2bool, default=False,
     #                     help='Check that tests are valid.')
-    # TODO: after validation there was a step to run the configure_tests script to check that each changed file
+    # TODO: after validation there was a step to run the configure_tests script to check each changed file
     #  had a relevant test - was used as part of the hooks.
 
     @staticmethod

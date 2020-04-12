@@ -6,6 +6,7 @@ repos:
     -   id: trailing-whitespace
         exclude: demisto_sdk/tests/test_files/*
     -   id: end-of-file-fixer
+        exclude: demisto_sdk/tests/test_files/*
     -   id: check-docstring-first
         exclude: demisto_sdk/tests/test_files/*
     -   id: check-json

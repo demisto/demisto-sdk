@@ -3,6 +3,9 @@
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
+### 0.5.0
+* Added *-c, --command* option in *generate-docs* to generate specific command from integration.
+
 ### 0.4.9
 * Fixed an issue in *generate-docs* where Playbooks and Scripts documentation failed.
 * Added a graceful error message when executing the *run" command with a misspelled command.

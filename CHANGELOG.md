@@ -1,4 +1,4 @@
-#changelog
+# Changelog
 * Added *-c, --command* option in *generate-docs* to generate specific command from integration.
 * Fixed an issue in getting a README/CHANGELOG files from git and loading it.
 * Removed release notes validation for new content.

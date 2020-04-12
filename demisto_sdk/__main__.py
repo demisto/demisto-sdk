@@ -1,14 +1,13 @@
 # Site packages
 import os
-import re
 import sys
+
+from pkg_resources import get_distribution
 
 # Third party packages
 import click
-from pkg_resources import get_distribution
-
-# Common tools
 from demisto_sdk.commands.common.configuration import Configuration
+# Common tools
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                print_error, print_warning)

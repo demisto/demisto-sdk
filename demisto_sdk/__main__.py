@@ -2,6 +2,7 @@
 import os
 from pkg_resources import get_distribution
 import sys
+import re
 
 # Third party packages
 import click
@@ -26,6 +27,7 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import generate_scri
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 # Common tools
 from demisto_sdk.commands.common.tools import print_error, print_warning, get_last_remote_release_version, find_type
@@ -38,6 +40,25 @@ class DemistoSDK:
 
     def __init__(self):
         self.configuration = None
+
+
+class RNUpdate(click.ParamType):
+    name = 'update_type'
+
+    def validate_rn_input(self, value, param, ctx):
+        if re.match(r'(?i)(?<=|^)major(?= |$)', value):
+            update_type = 'major'
+        elif re.match(r'(?i)(?<=|^)minor(?= |$)', value):
+            update_type = 'minor'
+        elif re.match(r'(?i)(?<=|^)revision(?= |$)', value):
+            update_type = 'revision'
+        else:
+            self.fail(
+                f'{value} is not a valid option. Please select: major, minor, revision',
+                param,
+                ctx,
+            )
+        return update_type
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -600,6 +621,38 @@ def generate_doc(**kwargs):
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()
+
+
+# ====================== update-release-notes =================== #
+@main.command(name="update-release-notes",
+              short_help='''Auto-increment pack version and generate release notes template.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--pack", help="Name of the pack."
+)
+@click.option(
+    '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
+    type=RNUpdate()
+)
+def update_pack_releasenotes(**kwargs):
+    pack = kwargs.get('pack')
+    update_type = kwargs.get('update_type')
+    update_pack_rn = UpdateRN(pack=pack, update_type=update_type)
+    new_version = update_pack_rn.bump_version_number()
+    rn_path = update_pack_rn.return_release_notes_path(new_version)
+    update_pack_rn.check_rn_dir(rn_path)
+    packfiles = update_pack_rn.get_master_diff()
+    if len(packfiles) < 1:
+        print_warning('No changes were detected.')
+    else:
+        changed_files = {}
+        for packfile in packfiles:
+            fn, ft = update_pack_rn.ident_changed_file_type(packfile)
+            changed_files[fn] = ft
+        rn_string = update_pack_rn.build_rn_template(changed_files)
+        update_pack_rn.create_markdown(rn_path, rn_string)
 
 
 # ====================== find-dependencies ====================== #

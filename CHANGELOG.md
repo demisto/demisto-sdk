@@ -1,5 +1,11 @@
 # Changelog
-* Fixed secretes validations for files with the same name in a different directory
+* Added *-c, --command* option in *generate-docs* to generate specific command from integration.
+* Fixed an issue in getting a README/CHANGELOG files from git and loading it.
+* Removed release notes validation for new content.
+* Fixed secretes validations for files with the same name in a different directory.
+
+
+#### 0.5.0
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
@@ -14,7 +20,6 @@
     * Removed the *-g use_git* argument, running format without arguments will run automatically on git diff.
 * Fixed an issue in loading playbooks with '=' character.
 * Fixed an issue in *validate* failed on deleted README files.
-* Fixed an issue in getting a README/CHANGELOG files from git and loading it.
 
 ### 0.4.8
 * Added the *max* field to the Playbook schema, allowing to define it in tasks loop.

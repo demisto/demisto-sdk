@@ -1,10 +1,10 @@
+import json
 import os
 from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-import json
-
+from mock import patch
 
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -27,12 +27,12 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
-
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
-    BETA_INTEGRATION_TARGET, DASHBOARD_TARGET, INCIDENT_FIELD_TARGET,
-    INCIDENT_TYPE_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
+    BETA_INTEGRATION_TARGET, DASHBOARD_TARGET, GIT_HAVE_MODIFIED_AND_NEW_FILES,
+    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET,
+    INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_INCIDENT_FIELD_PATH,
     INVALID_INTEGRATION_ID_PATH, INVALID_LAYOUT_PATH,
     INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
@@ -50,8 +50,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_NO_HIDDEN_PARAMS, VALID_ONE_LINE_CHANGELOG_PATH,
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PLAYBOOK_CONDITION,
     VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET, GIT_HAVE_MODIFIED_AND_NEW_FILES)
-from mock import patch
+    VALID_WIDGET_PATH, WIDGET_TARGET)
 
 
 class TestValidators:

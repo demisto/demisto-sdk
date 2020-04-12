@@ -54,10 +54,11 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,
-                                               get_yaml, get_yml_paths_in_dir,
+                                               get_remote_file, get_yaml,
+                                               get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command, get_remote_file)
+                                               print_warning, run_command)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 

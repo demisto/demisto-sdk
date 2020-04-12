@@ -3,10 +3,10 @@ import os
 import re
 import sys
 
-# Third party packages
-import click
 from pkg_resources import get_distribution
 
+# Third party packages
+import click
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,

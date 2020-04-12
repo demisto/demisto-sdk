@@ -120,6 +120,7 @@ class TestValidators:
         (INVALID_REPUTATION_PATH, False, ReputationValidator),
     ]
 
+
     @pytest.mark.parametrize('source, answer, validator', INPUTS_LOCKED_PATHS)
     def test_is_valid_version_locked_paths(self, source, answer, validator):
         """Tests locked path (as reputations.json) so we won't override the file"""

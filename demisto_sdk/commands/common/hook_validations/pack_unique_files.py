@@ -144,7 +144,6 @@ class PackUniqueFilesValidator:
             if not isinstance(dependencies_field, dict):
                 self._add_error('The dependencies field in the pack must be a dictionary.')
                 return False
-            # TODO: add it back after #23546 is ready.
             price_field = metadata.get(PACK_METADATA_PRICE)
             if price_field:
                 try:

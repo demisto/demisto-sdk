@@ -346,7 +346,6 @@ class ContentCreator:
                                 else:
                                     print_warning('{} Only unified yml found in the package directory'.format(msg))
                                 continue
-                            package_dir_name = os.path.basename(package_dir)
                             unifier = Unifier(package_dir, dir_name, dest_dir)
                             unifier.merge_script_package_to_yml()
 

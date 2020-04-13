@@ -1,3 +1,4 @@
+import fnmatch
 import glob
 import io
 import json
@@ -5,7 +6,6 @@ import os
 import re
 import shutil
 import zipfile
-import fnmatch
 from typing import List
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
@@ -349,10 +349,10 @@ class ContentCreator:
                             unifier = Unifier(package_dir, dir_name, dest_dir)
                             unifier.merge_script_package_to_yml()
 
-                    non_split_yml_files = [f for f in os.listdir(content_dir) if
-                                           os.path.isfile(os.path.join(content_dir, f))
-                                           and (fnmatch.fnmatch(f, 'integration-*.yml')
-                                                or fnmatch.fnmatch(f, 'script-*.yml'))]
+                    non_split_yml_files = [f for f in os.listdir(content_dir)
+                                           if os.path.isfile(os.path.join(content_dir, f)) and
+                                           (fnmatch.fnmatch(f, 'integration-*.yml') or
+                                            fnmatch.fnmatch(f, 'script-*.yml'))]
 
                     if non_split_yml_files:  # old format non split yml files
                         for yml_file in non_split_yml_files:

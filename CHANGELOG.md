@@ -3,7 +3,11 @@
 * Fixed an issue in getting a README/CHANGELOG files from git and loading it.
 * Removed release notes validation for new content.
 * Fixed secretes validations for files with the same name in a different directory.
-
+* demisto-sdk lint - parralel working with specify the number of workers.
+* demisto-sdk lint - logging levels output, 3 levels.
+* demisto-sdk lint - json report, structured error reports in json format.
+* demisto-sdk lint - xml junit report for unit-tests.
+* demisto-sdk lint - New packages used in order to excellarate execution time.
 
 #### 0.5.0
 [PyPI History][1]

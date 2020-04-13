@@ -64,6 +64,7 @@ def test_get_object_id(monkeypatch, initiator):
     assert initiator.id == 'SomeIntegrationID'
 
 
+# TODO: add the validation for price after #23546 is ready.
 def test_create_metadata(monkeypatch, initiator):
     # test create_metadata without user filling manually
     pack_metadata = initiator.create_metadata(False)

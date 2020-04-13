@@ -232,7 +232,7 @@ class Initiator:
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',')]
         metadata['tags'] = tags_list
-
+        # TODO: add it back after #23546 is ready.
         # price = input("\nThe price of the pack: ")
         # metadata['price'] = price
 

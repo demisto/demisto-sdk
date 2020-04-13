@@ -355,8 +355,6 @@ def upload(**kwargs):
     return uploader.upload()
 
 # ====================== download ====================== #
-
-
 @main.command(name="download",
               short_help="Download custom content from Demisto instance. DEMISTO_BASE_URL environment variable should"
                          " contain the Demisto server base URL. DEMISTO_API_KEY environment variable should contain"
@@ -365,7 +363,7 @@ def upload(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-o", "--output", help="The path of a package directory to upload", required=True)
+    "-o", "--output", help="The path of a package directory to download custom content to", required=True)
 @click.option(
     "-i", "--input", help="Comma separated names of custom content files", required=True)
 @click.option(
@@ -373,7 +371,7 @@ def upload(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
-    "-f", "--force", help="Whether to merge existing files or not", is_flag=True)
+    "-f", "--force", help="Whether to download existing files or not", is_flag=True)
 def download(**kwargs):
     downloader: Downloader = Downloader(**kwargs)
     return downloader.download()

@@ -824,3 +824,16 @@ def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
             return json.loads(arg)
         return [s.strip() for s in arg.split(separator)]
     return arg
+
+
+def depth(data) -> int:
+    """TODO: add unit test
+    Returns the depth of a data object
+    :param data: The json data
+    :return: The json depth
+    """
+    if data and isinstance(data, dict):
+        return 1 + max(depth(data[a]) for a in data)
+    if data and isinstance(data, list):
+        return 1 + max(depth(a) for a in data)
+    return 0

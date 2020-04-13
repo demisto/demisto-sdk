@@ -6,13 +6,16 @@ import os
 import ast
 import io
 import shutil
+import json
+from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_child_directories, get_yml_paths_in_dir, \
     get_id_by_content_entity, get_yaml, get_child_files, get_json, remove_trailing_backslash, \
-    retrieve_file_ending, arg_to_list, get_dict_from_file, find_type, get_name_by_content_entity
+    retrieve_file_ending, arg_to_list, get_dict_from_file, find_type, get_name_by_content_entity, depth
 from demisto_sdk.commands.split_yml.extractor import Extractor
-from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS, \
-    INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR, BETA_INTEGRATIONS_DIR, ENTITY_TYPE_TO_DIR
+from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS, ENTITY_NAME_SEPARATORS, \
+    INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR, BETA_INTEGRATIONS_DIR, ENTITY_TYPE_TO_DIR, \
+    DELETED_YML_FIELDS_BY_DEMISTO, DELETED_JSON_FIELDS_BY_DEMISTO
 
 
 class Downloader:
@@ -26,7 +29,12 @@ class Downloader:
         self.log_verbose = verbose
         self.client = demisto_client.configure(verify_ssl=not insecure)
         self.custom_content_temp_dir = mkdtemp()
+        self.temp_dirs = list()
+        self.temp_dirs.append(self.custom_content_temp_dir)
+        self.files_not_downloaded = list()
         self.custom_content = list()
+        self.ryaml = YAML()
+        self.ryaml.preserve_quotes = True
         self.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
         self.SPECIAL_ENTITIES = {TEST_PLAYBOOKS_DIR: PLAYBOOKS_DIR, BETA_INTEGRATIONS_DIR: INTEGRATIONS_DIR}
 
@@ -74,7 +82,6 @@ class Downloader:
                 'name': main_name,
                 'id': main_id,
                 'path': file_path,
-                'data': main_data if main_file_path == file_path else {},
                 'file_ending': retrieve_file_ending(file_path)
             })
 
@@ -158,6 +165,7 @@ class Downloader:
         file_entity: str = ENTITY_TYPE_TO_DIR.get(file_type)
         file_id: str = get_id_by_content_entity(file_data, file_entity)
         file_name: str = get_name_by_content_entity(file_data, file_entity)
+
         return {
             'id': file_id,
             'name': file_name,
@@ -165,19 +173,7 @@ class Downloader:
             'entity': file_entity,
             'type': file_type,
             'file_ending': file_ending,
-            'data': file_data
         }
-
-    @staticmethod
-    def get_artificial_file_name(file_path: str) -> str:
-        """TODO: add unit test
-        Retrieves the artificial file name of the temporary file
-        :param file_path: The original file path
-        :return: The artificial file name
-        """
-        path: str = os.path.basename(file_path)
-        split: list = path.split('###')
-        return split[0] + split[2]
 
     def update_pack_hierarchy(self) -> None:
         """TODO: add unit test
@@ -186,9 +182,11 @@ class Downloader:
         :return: None
         """
         for custom_content_object in self.custom_content:
+
             file_entity: str = custom_content_object['entity']
             file_name: str = custom_content_object['name']
             entity_path: str = os.path.join(self.output_pack_path, file_entity)
+
             if not os.path.isdir(entity_path):
                 os.mkdir(entity_path)
             entity_instance_path: str = os.path.join(entity_path, self.create_dir_name(file_name))
@@ -202,8 +200,7 @@ class Downloader:
         :return: The dir name corresponding to the file name
         """
         dir_name: str = file_name
-        name_separators: list = [' ', '_', '-']
-        for separator in name_separators:
+        for separator in ENTITY_NAME_SEPARATORS:
             dir_name = dir_name.replace(separator, '')
         return dir_name
 
@@ -211,34 +208,196 @@ class Downloader:
         """TODO: add docs, add unit test, add logging
         """
         for custom_content_object in self.custom_content:
+
             file_entity: str = custom_content_object['entity']
-            file_path: str = custom_content_object['path']
-            if custom_content_object['exist_in_pack']:
-                if file_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-                    pass
-                else:
-                    pass
-            else:
-                output_path: str = os.path.join(self.output_pack_path, file_entity)
-                if file_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-                    file_name: str = custom_content_object['name']
-                    dir_name: str = self.create_dir_name(file_name)
-                    output_path: str = os.path.join(output_path, dir_name)
-                    file_type: str = custom_content_object['type']
+            exist_in_pack: bool = custom_content_object['exist_in_pack']
+            file_name: str = custom_content_object['name']
+            file_ending: str = custom_content_object['file_ending']
+
+            if exist_in_pack:
+                if self.force:
                     if file_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-                        extractor = Extractor(input=file_path, output=output_path, file_type=file_type,
-                                              base_name=dir_name, no_auto_create_dir=True, no_logging=True)
-                        extractor.extract_to_package_format()
+                        self.merge_and_extract_old_integration_or_script_file(custom_content_object)
+                    elif file_entity == PLAYBOOKS_DIR:
+                        self.merge_old_file(custom_content_object, file_ending)
+                    else:
+                        self.merge_old_file(custom_content_object, file_ending)
                 else:
-                    file_name: str = os.path.basename(file_path)
-                    output_path: str = os.path.join(output_path, file_name)
-                    shutil.move(src=file_path, dst=output_path)
+                    self.files_not_downloaded.append(file_name)
+            else:
+                if file_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+                    self.merge_and_extract_new_file(custom_content_object)
+                else:
+                    self.merge_new_file(custom_content_object)
+
+    def merge_and_extract_old_integration_or_script_file(self, custom_content_object: dict) -> None:
+        """TODO: add docs, add unit test, add logging
+        :param custom_content_object: The custom content object to merge into the pack
+        :return: None
+        """
+        file_path: str = custom_content_object['path']
+        file_name: str = custom_content_object['name']
+        file_type: str = custom_content_object['type']
+        base_name: str = self.create_dir_name(file_name)
+
+        temp_dir = mkdtemp()
+        self.temp_dirs.append(temp_dir)
+
+        extractor = Extractor(input=file_path, output=temp_dir, file_type=file_type,
+                              base_name=base_name, no_logging=True, no_changelog=True, no_pipenv=True,
+                              no_readme=True, no_auto_create_dir=True, no_common_server=True,
+                              no_demisto_mock=True)
+        extractor.extract_to_package_format()
+
+        extracted_file_paths: list = get_child_files(temp_dir)
+        corresponding_pack_object: dict = self.get_corresponding_pack_content_object(custom_content_object)
+
+        for ex_file_path in extracted_file_paths:
+            ex_file_ending: str = retrieve_file_ending(ex_file_path)
+            ex_file_detail: str = self.get_extracted_file_detail(ex_file_ending)
+            searched_basename: str = self.get_searched_basename(file_name, ex_file_ending, ex_file_detail)
+            corresponding_pack_file_object: dict = self.get_corresponding_pack_file_object(searched_basename,
+                                                                                           corresponding_pack_object)
+            corresponding_pack_file_path: str = corresponding_pack_file_object['path']
+            if ex_file_ending == 'yml':
+                self.update_yml_data(ex_file_path, corresponding_pack_file_path)
+            shutil.move(src=ex_file_path, dst=corresponding_pack_file_path)
+
+    def merge_old_file(self, custom_content_object: dict, file_ending: str) -> None:
+        """TODO: add docs, add unit test, add logging
+        :param custom_content_object: The custom content object to merge into the pack
+        :param file_ending: The file ending
+        :return: None
+        """
+        file_path: str = custom_content_object['path']
+        file_name: str = custom_content_object['name']
+
+        corresponding_pack_object: dict = self.get_corresponding_pack_content_object(custom_content_object)
+        corresponding_pack_file_object: dict = corresponding_pack_object[file_name][0]
+        corresponding_pack_file_path: str = corresponding_pack_file_object['path']
+
+        if file_ending == 'yml':
+            self.update_yml_data(file_path, corresponding_pack_file_path)
+        else:
+            self.update_json_data(file_path, corresponding_pack_file_path)
+
+        shutil.move(file_path, corresponding_pack_file_path)
+
+    def merge_and_extract_new_file(self, custom_content_object: dict) -> None:
+        """TODO: add docs, add unit test, add logging
+        :param custom_content_object: The custom content object to merge into the pack
+        :return: None
+        """
+        file_entity: str = custom_content_object['entity']
+        file_path: str = custom_content_object['path']
+        file_type: str = custom_content_object['type']
+        file_name: str = custom_content_object['name']
+
+        output_path: str = os.path.join(self.output_pack_path, file_entity)
+        dir_name: str = self.create_dir_name(file_name)
+        output_path: str = os.path.join(output_path, dir_name)
+
+        extractor = Extractor(input=file_path, output=output_path, file_type=file_type, base_name=dir_name,
+                              no_auto_create_dir=True, no_logging=True)
+        extractor.extract_to_package_format()
+
+    def merge_new_file(self, custom_content_object: dict) -> None:
+        """TODO: add docs, add unit test, add logging
+        :param custom_content_object: The custom content object to merge into the pack
+        :return: None
+        """
+        file_entity: str = custom_content_object['entity']
+        file_path: str = custom_content_object['path']
+
+        output_path: str = os.path.join(self.output_pack_path, file_entity)
+        file_name: str = os.path.basename(file_path)
+        output_path: str = os.path.join(output_path, file_name)
+        shutil.move(src=file_path, dst=output_path)
+
+    def get_corresponding_pack_content_object(self, custom_content_object: dict) -> dict:
+        """TODO: add docs, add unit test
+        :param custom_content_object: The custom content object to merge into the pack
+        :return: None
+        """
+        file_entity: str = custom_content_object['entity']
+        file_name: str = custom_content_object['name']
+        pack_entity_instances: list = self.pack_content[file_entity]
+
+        for pack_entity_instance in pack_entity_instances:
+            if file_name in pack_entity_instance:
+                return pack_entity_instance
+        return {}
+
+    @staticmethod
+    def get_corresponding_pack_file_object(searched_basename: str, pack_content_object: dict) -> dict:
+        """TODO: add docs, add unit test
+        :param searched_basename: The basename to look for
+        :param pack_content_object: The pack content object
+        :return: The pack file object
+        """
+        for _, file_objects in pack_content_object.items():
+            for file_object in file_objects:
+                if file_object['path'].endswith(searched_basename):
+                    return file_object
+        return {}
+
+    def update_yml_data(self, file_path: str, corresponding_pack_file_path: str) -> None:
+        corresponding_pack_file_data: dict = get_yaml(corresponding_pack_file_path)
+        preserved_data: dict = {k: corresponding_pack_file_data.get(k, '') for k in DELETED_YML_FIELDS_BY_DEMISTO}
+        preserved_data: dict = {k: v for k, v in preserved_data.items() if v}
+
+        with open(file_path, 'r') as yf:
+            file_yaml_object = self.ryaml.load(yf)
+        file_yaml_object.update(preserved_data)
+        with open(file_path, 'w') as yf:
+            self.ryaml.dump(file_yaml_object, yf)
+
+    @staticmethod
+    def update_json_data(file_path: str, corresponding_pack_file_path: str) -> None:
+        corresponding_pack_file_data: dict = get_json(corresponding_pack_file_path)
+        preserved_data: dict = {k: corresponding_pack_file_data.get(k, '') for k in DELETED_JSON_FIELDS_BY_DEMISTO}
+        preserved_data: dict = {k: v for k, v in preserved_data.items() if v}
+        file_data: dict = get_json(file_path)
+
+        file_data.update(preserved_data)
+        json_depth: int = depth(file_data)
+        with open(file_path, 'w') as jf:
+            json.dump(obj=file_data, fp=jf, indent=json_depth)
+
+    @staticmethod
+    def get_extracted_file_detail(file_ending: str) -> str:
+        """TODO: add docs, add unit test
+        :param file_ending: The file ending
+        :return: The file type
+        """
+        if file_ending == 'py':
+            return 'py'
+        elif file_ending == 'md':
+            return 'description'
+        elif file_ending == 'yml':
+            return 'yml'
+        elif file_ending == 'png':
+            return 'image'
+        return ''
+
+    def get_searched_basename(self, file_name: str, file_ending: str, file_detail: str) -> str:
+        """TODO: add docs, add unit test
+        :param file_name: The file name
+        :param file_ending: The file ending
+        :param file_detail: The file type
+        :return: The searched basename
+        """
+        if file_detail in ('py', 'yml'):
+            return f'{self.create_dir_name(file_name)}.{file_ending}'
+        else:
+            return f'{self.create_dir_name(file_name)}_{file_detail}.{file_ending}'
 
     def remove_traces(self):
         """TODO: add unit test
         Removes (recursively) all temporary files & directories used across the module
         """
-        shutil.rmtree(self.custom_content_temp_dir, ignore_errors=True)
+        for temp_dir in self.temp_dirs:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
     def log_to_user(self) -> None:
         """TODO: add docs

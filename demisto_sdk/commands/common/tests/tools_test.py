@@ -67,14 +67,18 @@ class TestGenericFunctions:
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml')
-        assert gmail_yml
-        assert gmail_yml['commonfields']['id'] == 'Gmail'
+        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
+        assert hello_world_yml
+        assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_origin(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'master')
-        assert gmail_yml
-        assert gmail_yml['commonfields']['id'] == 'Gmail'
+        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
+        assert hello_world_yml
+        assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
+
+    def test_get_remote_md_file_origin(self):
+        hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
+        assert hello_world_readme == {}
 
     def test_get_remote_file_tag(self):
         gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', '19.10.0')

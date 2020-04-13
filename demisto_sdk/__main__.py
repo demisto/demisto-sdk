@@ -204,6 +204,9 @@ def unify(**kwargs):
 @click.option(
     '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
 )
+@click.option(
+    '-i', '--input', help='Path of file to validate specifically, outside of a git directory.'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)

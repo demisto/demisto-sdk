@@ -58,7 +58,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command)
+                                               print_warning, run_command, get_files_in_dir)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -590,6 +590,8 @@ class FilesValidator:
         Returns:
             (bool). Whether the structure is valid or not.
         """
+        if self.file_path:
+            files = get_files_in_dir(self.file_path, ("json", "yml", "md"))
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False

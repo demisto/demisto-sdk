@@ -590,8 +590,6 @@ class FilesValidator:
         Returns:
             (bool). Whether the structure is valid or not.
         """
-        if self.file_path:
-            files = get_files_in_dir(self.file_path, ("json", "yml", "md"))
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False

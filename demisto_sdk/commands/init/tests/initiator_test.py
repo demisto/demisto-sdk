@@ -1,9 +1,12 @@
 import os
-from collections import deque
+from collections import OrderedDict, deque
 from datetime import datetime
+from pathlib import Path
 from typing import Callable
 
 import pytest
+import yaml
+import yamlordereddictloader
 from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS)
@@ -17,7 +20,7 @@ PACK_AUTHOR = 'PackAuthor'
 PACK_URL = 'https://www.github.com/pack'
 PACK_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
-PACK_PRICE = '0'
+# PACK_PRICE = '0'
 
 
 @pytest.fixture
@@ -61,6 +64,7 @@ def test_get_object_id(monkeypatch, initiator):
     assert initiator.id == 'SomeIntegrationID'
 
 
+# TODO: add the validation for price after #23546 is ready.
 def test_create_metadata(monkeypatch, initiator):
     # test create_metadata without user filling manually
     pack_metadata = initiator.create_metadata(False)
@@ -82,7 +86,7 @@ def test_create_metadata(monkeypatch, initiator):
         'certification': 'certified',
         'useCases': [],
         'keywords': [],
-        'price': '0',
+        # 'price': '0',
         'dependencies': {},
     }
 
@@ -92,7 +96,8 @@ def test_create_metadata(monkeypatch, initiator):
         generate_multiple_inputs(
             deque([
                 PACK_NAME, PACK_DESC, '1', PACK_SERVER_MIN_VERSION, PACK_AUTHOR,
-                PACK_URL, PACK_EMAIL, '1', PACK_TAGS, PACK_PRICE
+                PACK_URL, PACK_EMAIL, '1', PACK_TAGS
+                # PACK_PRICE
             ])
         )
     )
@@ -109,7 +114,7 @@ def test_create_metadata(monkeypatch, initiator):
         'email': PACK_EMAIL,
         'keywords': [],
         'name': PACK_NAME,
-        'price': PACK_PRICE,
+        # 'price': PACK_PRICE,
         'serverMinVersion': PACK_SERVER_MIN_VERSION,
         'support': PACK_SUPPORT_OPTIONS[0],
         'tags': ['Tag1', 'Tag2'],
@@ -143,3 +148,37 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
     # fail to create pack cause of existing dir without overriding it
     monkeypatch.setattr('builtins.input', lambda _: 'N')
     assert initiator.create_new_directory() is False
+
+
+def test_yml_reformatting(tmp_path, initiator):
+    integration_id = 'HelloWorld'
+    initiator.id = integration_id
+    d = tmp_path / integration_id
+    d.mkdir()
+    full_output_path = Path(d)
+    initiator.full_output_path = full_output_path
+
+    p = d / f'{integration_id}.yml'
+    with p.open(mode='w') as f:
+        yaml.dump(
+            {
+                'commonfields': {
+                    'id': ''
+                },
+                'name': '',
+                'display': ''
+            },
+            f
+        )
+    dir_name = 'HelloWorldTest'
+    initiator.dir_name = dir_name
+    initiator.yml_reformatting(current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True)
+    with open(full_output_path / f'{dir_name}.yml', 'r') as f:
+        yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+        assert yml_dict == OrderedDict({
+            'commonfields': OrderedDict({
+                'id': 'HelloWorld'
+            }),
+            'display': 'HelloWorld',
+            'name': 'HelloWorld'
+        })

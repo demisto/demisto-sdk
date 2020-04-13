@@ -80,8 +80,11 @@ class Extractor:
         self.print_logs("Starting migration of: {} to dir: {}".format(self.input, output_path), log_color=LOG_COLORS.NATIVE)
         os.makedirs(output_path, exist_ok=True)
         base_name = os.path.basename(output_path) if not self.base_name else self.base_name
-        code_file = "{}/{}".format(output_path, base_name)  # extract_code will add the file extension
+        code_file = "{}/{}".format(output_path, base_name)
         self.extract_code(code_file)
+        script = self.yml_data['script']
+        lang_type: str = script['type'] if self.file_type == 'integration' else self.yml_data['type']
+        code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)
@@ -103,6 +106,9 @@ class Extractor:
             readme = output_path + '/README.md'
             if os.path.exists(yml_readme):
                 shutil.copy(yml_readme, readme)
+            else:
+                with open(readme, 'w') as readme_file:
+                    pass
         # check if there is a changelog
         if self.changelog:
             yml_changelog = os.path.splitext(self.input)[0] + '_CHANGELOG.md'

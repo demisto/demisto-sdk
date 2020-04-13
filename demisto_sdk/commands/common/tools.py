@@ -7,7 +7,7 @@ import glob
 import argparse
 from subprocess import Popen, PIPE, DEVNULL, check_output
 from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple, Dict, List
+from typing import Union, Optional, Tuple, Dict, List, Any
 import git
 import shlex
 from pathlib import Path
@@ -274,25 +274,6 @@ def get_json(file_path):
     return get_file(json.load, file_path, 'json')
 
 
-def get_file_data(file_path: str, file_type: str):
-    """
-    Retrieves the file data depending on it's type
-    :param file_path: The file path
-    :param file_type: The file type
-    :return: The file data
-    """
-    open_mode: str = 'r'
-    if file_type == 'yml':
-        return get_yaml(file_path)
-    elif file_type == 'json':
-        return get_yaml(file_type)
-    elif file_type == 'png':
-        open_mode = 'rb'
-    with open(file_path, open_mode) as file:
-        data = file.read()
-    return data
-
-
 def get_script_or_integration_id(file_path):
     data_dictionary = get_yaml(file_path)
 
@@ -302,7 +283,11 @@ def get_script_or_integration_id(file_path):
 
 
 def get_id_by_content_entity(data: dict, content_entity: str):
-    """TODO: add docs, add unit test
+    """TODO: add unit test
+    Returns the id of the file by it's content entity
+    :param data: The data of the file
+    :param content_entity: The content entity
+    :return: The file id
     """
     if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
         return data.get('commonfields', {}).get('id', '')
@@ -313,7 +298,11 @@ def get_id_by_content_entity(data: dict, content_entity: str):
 
 
 def get_name_by_content_entity(data: dict, content_entity: str):
-    """TODO: add docs, add unit test
+    """TODO: add unit test
+    Returns the name of the file by it's content entity
+    :param data: The data of the file
+    :param content_entity: The content entity
+    :return: The file name
     """
     if content_entity == LAYOUTS_DIR:
         return data.get('typeId', '')
@@ -766,15 +755,6 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return False, ''
 
 
-def remove_trailing_backslash(file_path: str) -> str:
-    """TODO: add unit test
-    Removes backslash from the end of the path
-    :param file_path: The file path
-    :return: The file path without the backslah
-    """
-    return file_path.strip('/')
-
-
 def retrieve_file_ending(file_path: str) -> str:
     """TODO: add unit test
     Retrieves the file ending (without the dot)
@@ -786,20 +766,6 @@ def retrieve_file_ending(file_path: str) -> str:
         file_ending: str = os_split[1]
         if file_ending and '.' in file_ending:
             return file_ending[1:]
-
-
-# def retrieve_module_from_file(file_path: str, file_type) -> str:
-#     """TODO: add unit test
-#     Retrieves module name file path
-#     :param file_path: The file path
-#     :param file_type: The content file type (e.g. integration, script,...)
-#     :return: The module name
-#     """
-#     base_name = os.path.basename(file_path)
-#     module = str(os.path.splitext(base_name)[0])
-#     for prefix in CONTENT_PREFIXES:
-#         if f'{prefix}-' in module:
-#             return module.split(f'{prefix}-')[1]
 
 
 def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
@@ -826,11 +792,11 @@ def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
     return arg
 
 
-def depth(data) -> int:
+def depth(data: Any) -> int:
     """TODO: add unit test
     Returns the depth of a data object
-    :param data: The json data
-    :return: The json depth
+    :param data: The data
+    :return: The depth of the data object
     """
     if data and isinstance(data, dict):
         return 1 + max(depth(data[key]) for key in data)

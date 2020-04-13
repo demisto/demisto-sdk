@@ -1015,7 +1015,7 @@ DIR_TO_PREFIX = {
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
 
-DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'dockerimage4.5', 'tests']
+DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'script.dockerimage45', 'tests']
 
 DELETED_JSON_FIELDS_BY_DEMISTO = ['fromVersion', 'toVersion']
 

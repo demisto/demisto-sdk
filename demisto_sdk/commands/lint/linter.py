@@ -1,533 +1,850 @@
-import os
-import io
-import sys
-import yaml
-import time
-import shutil
+# STD python packages
 import hashlib
-import threading
-import subprocess
-from datetime import datetime
-import requests
-from typing import List
+import io
+import json
+import logging
+import os
+from typing import List, Optional, Tuple
 
-from demisto_sdk.commands.common.constants import Errors, TYPE_TO_EXTENSION, TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import print_v, get_all_docker_images, get_python_version, \
-    print_error, print_color, LOG_COLORS, get_yml_paths_in_dir, run_command, get_log_verbose, \
-    print_warning, get_common_server_path, get_common_server_path_pwsh
+# 3-rd party packages
+import docker
+import docker.errors
+import docker.models.containers
+import requests.exceptions
+import urllib3.exceptions
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+# Local packages
+from demisto_sdk.commands.common.tools import (get_all_docker_images,
+                                               run_command_os)
+from demisto_sdk.commands.lint.commands_builder import (
+    build_bandit_command, build_flake8_command, build_mypy_command,
+    build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
+    build_pytest_command, build_vulture_command)
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
+                                               SUCCESS, add_tmp_lint_files,
+                                               add_typing_module,
+                                               copy_dir_to_container,
+                                               get_file_from_container,
+                                               get_python_version_from_image,
+                                               stream_docker_container_output)
+from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
+from wcmatch.pathlib import NEGATE, Path
+
+logger = logging.getLogger('demisto-sdk')
 
 
 class Linter:
-    """Linter used to activate lint command.
+    """ Linter used to activate lint command on single package
 
         Attributes:
-            project_dir (str): The directory to run lint on.
-            no_test (bool): Whether to skip pytest.
-            no_pylint (bool): Whether to skip pylint.
-            no_flake8 (bool): Whether to skip flake8.
-            no_mypy (bool): Whether to skip mypy.
-            verbose (bool): Whether to output a detailed response.
-            root (bool): Whether to run pytest container with root user.
-            keep_container (bool): Whether to keep the test container.
-            cpu_num (int): Number of CPUs to run pytest on.
-            configuration (Configuration): The system configuration.
-            lock (threading.Lock): A mutex lock to be used for multi-thread lint.
-        """
-    common_server_target_path = "CommonServerPython.py"
-    common_server_pack_remote_path = "https://raw.githubusercontent.com/demisto/content/master/Packs/Base/Scripts/" \
-                                     "CommonServerPython/CommonServerPython.py"
+            pack_dir(Path): Pack to run lint on.
+            content_repo(Path): Git repo object of content repo.
+            req_2(list): requirements for docker using python2.
+            req_3(list): requirements for docker using python3.
+            docker_engine(bool):  Wheter docker engine detected by docker-sdk.
+    """
 
-    def __init__(self, project_dir: str, no_test: bool = False, no_pylint: bool = False, no_flake8: bool = False,
-                 no_mypy: bool = False, root: bool = False, keep_container: bool = False,
-                 cpu_num: int = 0, configuration: Configuration = Configuration(),
-                 lock: threading.Lock = threading.Lock(), no_bandit: bool = False, no_pslint: bool = False,
-                 requirements_3: str = '',
-                 requirements_2: str = '', no_vulture: bool = False):
-
-        if no_test and no_pylint and no_flake8 and no_mypy and no_bandit and no_vulture:
-            raise ValueError("Nothing to run as all --no-* options specified.")
-
-        self.configuration = configuration
-        dev_scripts_dir = os.path.join(self.configuration.sdk_env_dir, 'common', 'dev_sh_scripts')
-        self.run_dev_tasks_script_name = 'run_dev_tasks.sh'
-        self.run_dev_tasks_script_pwsh_name = 'run_dev_tasks_pwsh.sh'
-        self.run_mypy_script_name = 'run_mypy.sh'
-        self.container_setup_script_name = 'pkg_dev_container_setup.sh'
-        self.container_setup_script_pwsh_name = 'pkg_dev_container_setup_pwsh.sh'
-        self.cert_file = os.path.join(dev_scripts_dir, 'panw-cert.crt')
-        self.run_dev_tasks_script = os.path.join(dev_scripts_dir, self.run_dev_tasks_script_name)
-        self.run_dev_tasks_script_pwsh = os.path.join(dev_scripts_dir, self.run_dev_tasks_script_pwsh_name)
-        self.container_setup_script = os.path.join(dev_scripts_dir, self.container_setup_script_name)
-        self.container_setup_script_pwsh = os.path.join(dev_scripts_dir, self.container_setup_script_pwsh_name)
-        self.run_mypy_script = os.path.join(dev_scripts_dir, self.run_mypy_script_name)
-        self.docker_login_completed = False
-        self.project_dir = os.path.abspath(os.path.join(self.configuration.env_dir, project_dir))
-        if self.project_dir[-1] != os.sep:
-            self.project_dir = os.path.join(self.project_dir, '')
-
-        self.root = root
-        self.keep_container = keep_container
-        self.cpu_num = cpu_num
-        self.common_server_created = False
-        self.run_args = {
-            'pylint': not no_pylint,
-            'flake8': not no_flake8,
-            'mypy': not no_mypy,
-            'bandit': not no_bandit,
-            'tests': not no_test,
-            'pslint': not no_pslint,
-            'vulture': not no_vulture,
+    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool):
+        self._req_3 = req_3
+        self._req_2 = req_2
+        self._content_repo = content_repo
+        self._pack_abs_dir = pack_dir
+        self._pack_name = None
+        # Docker client init
+        if docker_engine:
+            self._docker_client: docker.DockerClient = docker.from_env()
+            self._docker_hub_login = self._docker_login()
+        # Facts gathered regarding pack lint and test
+        self._facts = {
+            "images": [],
+            "python_version": 0,
+            "env_vars": {},
+            "test": False,
+            "lint_files": [],
+            "additional_requirements": [],
+            "docker_engine": docker_engine
         }
-        self.lock = lock
-        self.requirements_3 = requirements_3
-        self.requirements_2 = requirements_2
-        # load yaml
-        _, yml_path = get_yml_paths_in_dir(self.project_dir, Errors.no_yml_file(self.project_dir))
-        if not yml_path:
-            raise ValueError(f'yml path failed for: {self.project_dir}')
-        print_v('Using yaml file: {}'.format(yml_path))
-        with open(yml_path, 'r') as yml_file:
-            yml_data = yaml.safe_load(yml_file)
-        self.script_obj = yml_data
-        if isinstance(self.script_obj.get('script'), dict):
-            self.script_obj = self.script_obj.get('script')
-        self.script_type = self.script_obj.get('type')
+        # Pack lint status object - visualize it
+        self._pkg_lint_status = {
+            "pkg": None,
+            "pack_type": None,
+            "path": str(self._content_repo),
+            "errors": [],
+            "images": [],
+            "flake8_errors": None,
+            "bandit_errors": None,
+            "mypy_errors": None,
+            "vulture_errors": None,
+            "exit_code": SUCCESS
+        }
 
-    def get_common_server_python(self) -> bool:
-        """Getting common server python in not exists changes self.common_server_created to True if needed.
-
-        Returns:
-            bool. True if exists/created, else False
-        """
-        # If not CommonServerPython is dir
-        if not os.path.isfile(os.path.join(self.project_dir, self.common_server_target_path)):
-            # Get file from git
-            try:
-                res = requests.get(self.common_server_pack_remote_path, verify=False, timeout=10)
-                with open(os.path.join(self.project_dir, self.common_server_target_path), "w+") as f:
-                    f.write(res.text)
-                    self.common_server_created = True
-            except requests.exceptions.RequestException:
-                print_error(Errors.no_common_server_python(self.common_server_pack_remote_path))
-                return False
-        return True
-
-    def remove_common_server_python(self):
-        """checking if file exists and removing it."""
-        if self.common_server_created:
-            os.remove(os.path.join(self.project_dir, self.common_server_target_path))
-
-    def run_py_non_docker_tasks(self, dockers: List[str]) -> int:
-        return_code = 0
-        py_num = get_python_version(dockers[0])
-        self._setup_dev_files_py(py_num)
-        if self.run_args['flake8']:
-            result_val = self.run_flake8(py_num)
-            if result_val:
-                return_code = result_val
-
-        if self.run_args['mypy']:
-            result_val = self.run_mypy(py_num)
-            if result_val:
-                return_code = result_val
-
-        if self.run_args['bandit']:
-            result_val = self.run_bandit(py_num)
-            if result_val:
-                return_code = result_val
-
-        if self.run_args['vulture']:
-            result_val = self.run_vulture(py_num)
-            if result_val:
-                return_code = result_val
-
-        return return_code
-
-    def run_dev_packages(self) -> int:
-        return_code = 0
-        supported_types = (TYPE_PYTHON, TYPE_PWSH)
-        if self.script_type not in supported_types:
-            print_warning(f'Script is not of types: {supported_types}. Found type: {self.script_type}. Nothing to do.')
-            return 0
-
-        dockers = get_all_docker_images(self.script_obj)
-        print_color("============ Starting process for: {} ============\n".format(self.project_dir),
-                    LOG_COLORS.YELLOW)
-        if self.script_type == TYPE_PYTHON:
-            return_code = self.run_py_non_docker_tasks(dockers)
-        if self.script_type == TYPE_PWSH:
-            self._setup_dev_files_pwsh()
-
-        for docker in dockers:
-            for try_num in (1, 2):
-                print_v("Using docker image: {}".format(docker))
-
-                try:
-                    if self.run_args['tests'] or self.run_args['pylint']:
-                        docker_image_created = self._docker_image_create(docker)
-                        output, status_code = self._docker_run(docker_image_created)
-                        with self.lock:
-                            print_color("\n========== Running tests/pylint for: {} =========".format(self.project_dir),
-                                        LOG_COLORS.YELLOW)
-                            if status_code == 1:
-                                raise subprocess.CalledProcessError(*output)
-                            else:
-                                print(output)
-                                print_color("============ Finished process for: {}  "
-                                            "with docker: {} ============\n".format(self.project_dir, docker),
-                                            LOG_COLORS.GREEN)
-
-                    break  # all is good no need to retry
-                except subprocess.CalledProcessError as ex:
-                    with self.lock:
-                        if ex.output:
-                            print_color("=========================== ERROR IN {}==========================="
-                                        "\n{}\n".format(self.project_dir, ex.output), LOG_COLORS.RED)
-                        else:
-                            print_color("========= Test Failed on {}, Look at the error/s above ========\n".format(
-                                self.project_dir), LOG_COLORS.RED)
-                            return_code = 1
-
-                        if not get_log_verbose():
-                            sys.stderr.write("Need a more detailed log? try running with the -v options as so: \n{} -v\n\n"
-                                             .format(" ".join(sys.argv[:])))
-
-                        # circle ci docker setup sometimes fails on
-                        if try_num > 1 or not ex.output or 'read: connection reset by peer' not in ex.output:
-                            return 2
-                        else:
-                            sys.stderr.write("Retrying as failure seems to be docker communication related...\n")
-
-                finally:
-                    sys.stdout.flush()
-                    sys.stderr.flush()
-
-        return return_code
-
-    def run_flake8(self, py_num) -> int:
-        """Runs flake8
+    def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                         no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict, keep_container: bool,
+                         test_xml: str) -> dict:
+        """ Run lint and tests on single package
+        Perfroming the follow:
+            1. Run the lint on OS - flake8, bandit, mypy.
+            2. Run in package docker - pylint, pytest.
 
         Args:
-            py_num (int): The python version in use
+            no_flake8(bool): Whether to skip flake8
+            no_bandit(bool): Whether to skip bandit
+            no_mypy(bool): Whether to skip mypy
+            no_vulture(bool): Whether to skip vulture
+            no_pylint(bool): Whether to skip pylint
+            no_test(bool): Whether to skip pytest
+            no_pwsh_analyze(bool): Whether to skip powershell code analyzing
+            no_pwsh_test(bool): whether to skip powershell tests
+            modules(dict): Mandatory modules to locate in pack path (CommonServerPython.py etc)
+            keep_container(bool): Whether to keep the test container
+            test_xml(str): Path for saving pytest xml results
 
         Returns:
-            int. 0 if flake8 is successful, 1 otherwise.
+            dict: lint and test all status, pkg status)
         """
-        lint_files = self._get_lint_files()
-        python_exe = 'python2' if py_num < 3 else 'python3'
-        print_v('Using: {} to run flake8'.format(python_exe))
-        output = run_command(f'{python_exe} -m flake8 {self.project_dir}', cwd=self.configuration.env_dir)
-        with self.lock:
-            print("\n========= Running flake8 on: {}===============".format(lint_files))
-            if len(output) == 0:
-                print_color("flake8 completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-                return 0
-            else:
-                print_error(output)
-                return 1
+        # Gather information for lint check information
+        skip = self._gather_facts(modules)
+        # If not python pack - skip pack
+        if skip:
+            return self._pkg_lint_status
 
-    def run_mypy(self, py_num) -> int:
-        """Runs mypy
+        # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
+        with add_tmp_lint_files(content_repo=self._content_repo,
+                                pack_path=self._pack_abs_dir,
+                                lint_files=self._facts["lint_files"],
+                                modules=modules,
+                                pack_type=self._pkg_lint_status["pack_type"]):
+            # Run lint check on host - flake8, bandit, mypy
+            if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                self._run_lint_in_host(no_flake8=no_flake8,
+                                       no_bandit=no_bandit,
+                                       no_mypy=no_mypy,
+                                       no_vulture=no_vulture)
+            # Run lint and test check on pack docker image
+            if self._facts["docker_engine"]:
+                self._run_lint_on_docker_image(no_pylint=no_pylint,
+                                               no_test=no_test,
+                                               no_pwsh_analyze=no_pwsh_analyze,
+                                               no_pwsh_test=no_pwsh_test,
+                                               keep_container=keep_container,
+                                               test_xml=test_xml)
 
+        return self._pkg_lint_status
+
+    def _gather_facts(self, modules: dict) -> bool:
+        """ Gathering facts about the package - python version, docker images, vaild docker image, yml parsing
         Args:
-            py_num: The python version in use
+            modules(dict): Test mandatory modules to be ignore in lint check
 
         Returns:
-            int. 0 on successful mypy run, 1 otherwise.
+            bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
-        self.get_common_server_python()
-        lint_files = self._get_lint_files()
-        sys.stdout.flush()
-        script_path = os.path.abspath(os.path.join(self.configuration.sdk_env_dir, self.run_mypy_script))
-        output = run_command(' '.join(['bash', script_path, str(py_num), lint_files]), cwd=self.project_dir)
-        with self.lock:
-            print("========= Running mypy on: {} ===============".format(lint_files))
-            if 'Success: no issues found in 1 source file' in output:
-                print(output)
-                print_color("mypy completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-                self.remove_common_server_python()
-                return 0
-            else:
-                print_error(output)
-                self.remove_common_server_python()
-                return 1
+        # Loooking for pkg yaml
+        yml_file: Optional[Path] = self._pack_abs_dir.glob([rf'*.yaml', rf'*.yml', r'!*unified*.yml'],
+                                                           flags=NEGATE)
 
-    def run_bandit(self, py_num) -> int:
-        """Run bandit
-
-        Args:
-            py_num: The python version in use
-
-        Returns:
-            int. 0 on successful bandit run, 1 otherwise.
-        """
-        lint_files = self._get_lint_files()
-        python_exe = 'python2' if py_num < 3 else 'python3'
-        output = run_command(' '.join([python_exe, '-m', 'bandit', '-lll', '-iii', '-q', lint_files]),
-                             cwd=self.project_dir)
-        with self.lock:
-            print("========= Running bandit on: {} ===============".format(lint_files))
-            print_v('Using: {} to run bandit'.format(python_exe))
-            if len(output) == 0:
-                print_color("bandit completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-                return 0
-            else:
-                print_error(output)
-                return 1
-
-    def run_vulture(self, py_num) -> int:
-        """Run vulture
-
-        Args:
-            py_num: The python version in use
-
-        Returns:
-            int. 0 on successful vulture run, 1 otherwise.
-        """
-        lint_files = self._get_lint_files()
-        python_exe = 'python2' if py_num < 3 else 'python3'
-        cmd_args = [python_exe, '-m', 'vulture', lint_files, '--min-confidence',
-                    os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')]
-        vulture_whitelist_path = os.path.join(self.project_dir, '.vulture_whitelist.py')
-        if os.path.isfile(vulture_whitelist_path):
-            cmd_args.insert(4, vulture_whitelist_path)
-        output = run_command(' '.join(cmd_args), cwd=self.project_dir)
-        self.lock.acquire()
-        print("========= Running vulture on: {} ===============".format(lint_files))
-        print_v('Using: {} to run vulture'.format(python_exe))
-        if len(output) == 0:
-            print_color("vulture completed for: {}\n".format(lint_files), LOG_COLORS.GREEN)
-            if self.lock.locked():
-                self.lock.release()
-            return 0
-
-        else:
-            print_error(output)
-            if self.lock.locked():
-                self.lock.release()
-            return 1
-
-    def _docker_login(self):
-        if self.docker_login_completed:
+        if not yml_file:
+            logger.info(f"{self._pack_abs_dir} - Skiping no yaml file found {yml_file}")
+            self._pkg_lint_status["errors"].append('Unable to find yml file in package')
             return True
-        docker_user = os.getenv('DOCKERHUB_USER', None)
-        if not docker_user:
-            print_v('DOCKERHUB_USER not set. Not trying to login to dockerhub')
-            return False
-        docker_pass = os.getenv('DOCKERHUB_PASSWORD', None)
-        # pass is optional for local testing scenario. allowing password to be passed via stdin
-        cmd = ['docker', 'login', '-u', docker_user]
-        if docker_pass:
-            cmd.append('--password-stdin')
-        res = subprocess.run(cmd, input=docker_pass, capture_output=True, text=True)
-        if res.returncode != 0:
-            print("Failed docker login: {}".format(res.stderr))
-            return False
-        print_v("Completed docker login")
-        self.docker_login_completed = True
-        return True
+        else:
+            try:
+                yml_file = next(yml_file)
+            except StopIteration:
+                return True
+        # Get pack name
+        self._pack_name = yml_file.stem
+        log_prompt = f"{self._pack_name} - Facts"
+        self._pkg_lint_status["pkg"] = yml_file.stem
+        logger.info(f"{log_prompt} - Using yaml file {yml_file}")
+        # Parsing pack yaml - inorder to verify if check needed
+        try:
+            script_obj: dict = {}
+            yml_obj: dict = YAML().load(yml_file)
+            if isinstance(yml_obj, dict):
+                script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
+            self._pkg_lint_status["pack_type"] = script_obj.get('type')
+        except (FileNotFoundError, IOError, KeyError):
+            self._pkg_lint_status["errors"].append('Unable to parse package yml')
+            return True
+        # return no check needed if not python pack
+        if self._pkg_lint_status["pack_type"] not in (TYPE_PYTHON, TYPE_PWSH):
+            logger.info(f"{log_prompt} - Skippring due to not Python, Powershell package - Pack is"
+                        f" {self._pkg_lint_status['pack_type']}")
+            return True
+        # Docker images
+        if self._facts["docker_engine"]:
+            logger.info(f"{log_prompt} - Pulling docker images, can take up to 1-2 minutes if not exists locally ")
+            self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
+            # Gather enviorment variables for docker execution
+            self._facts["env_vars"] = {
+                "CI": os.getenv("CI", False),
+                "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes")
+            }
+        lint_files = set()
+        # Facts for python pack
+        if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+            if self._facts["docker_engine"]:
+                # Getting python version from docker image - verfying if not valid docker image configured
+                for image in self._facts["images"]:
+                    py_num: float = get_python_version_from_image(image=image[0])
+                    image[1] = py_num
+                    logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
+                    if not self._facts["python_version"]:
+                        self._facts["python_version"] = py_num
+                # Checking wheter *test* exsits in package
+                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None) else False
+                if self._facts["test"]:
+                    logger.info(f"{log_prompt} - Tests found")
+                else:
+                    logger.info(f"{log_prompt} - Tests not found")
+                # Gather package requirements embeded test-requirements.py file
+                test_requirements = self._pack_abs_dir / 'test-requirements.txt'
+                if test_requirements.exists():
+                    try:
+                        additional_req = test_requirements.read_text(encoding='utf-8')
+                        self._facts["additinal_requirements"].extend(additional_req)
+                        logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
+                    except (FileNotFoundError, IOError):
+                        self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
+            # Get lint files
+            lint_files = set(self._pack_abs_dir.glob(["*.py", "!*_test.py", "!test_*.py", "!__init__.py", "!*.tmp"],
+                                                     flags=NEGATE))
+        # Facts for Powershell pack
+        elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+            # Get lint files
+            lint_files = set(
+                self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"],
+                                        flags=NEGATE))
+        if 'commonserver' in self._pack_abs_dir.name.lower():
+            if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+        else:
+            test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
+            lint_files = lint_files.difference(test_modules)
+            self._facts["lint_files"] = list(lint_files)
+        if self._facts["lint_files"]:
+            for lint_file in self._facts["lint_files"]:
+                logger.info(f"{log_prompt} - Lint file {lint_file}")
+        else:
+            logger.info(f"{log_prompt} - Lint files not found")
 
-    def _docker_image_create(self, docker_base_image):
-        """Create the docker image with dev dependencies. Will check if already existing.
-        Uses a hash of the requirements to determine the image tag
+        return False
 
-        Arguments:
-            docker_base_image (string): docker image to use as base for installing dev deps
+    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
+        """ Run lint check on host
+
+        Args:
+            no_flake8(bool): Whether to skip flake8.
+            no_bandit(bool): Whether to skip bandit.
+            no_mypy(bool): Whether to skip mypy.
+            no_vulture(bool): Whether to skip Vulture.
+        """
+        if self._facts["lint_files"]:
+            for lint_check in ["flake8", "bandit", "mypy", "vulture"]:
+                exit_code: int = SUCCESS
+                output: str = ""
+                if lint_check == "flake8" and not no_flake8:
+                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                                                         lint_files=self._facts["lint_files"])
+                elif lint_check == "bandit" and not no_bandit:
+                    exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
+                elif lint_check == "mypy" and not no_mypy and self._facts["docker_engine"]:
+                    exit_code, output = self._run_mypy(py_num=self._facts["images"][0][1],
+                                                       lint_files=self._facts["lint_files"])
+                elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
+                    exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
+                                                          lint_files=self._facts["lint_files"])
+                if exit_code:
+                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                    self._pkg_lint_status[f"{lint_check}_errors"] = output
+
+    def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Runs flake8 in pack dir
+
+        Args:
+            py_num(float): The python version in use
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int:  0 on successful else 1, errors
+           str: Bandit errors
+        """
+        log_prompt = f"{self._pack_name} - Flake8"
+        logger.info(f"{log_prompt} - Start")
+        stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files, py_num),
+                                                   cwd=self._content_repo)
+        logger.debug(f"{log_prompt} - Finshed exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finshed stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finshed stderr: {RL if stderr else ''}{stderr}")
+        if stderr or exit_code:
+            logger.info(f"{log_prompt}- Finshed Finshed errors found")
+            if stderr:
+                return FAIL, stderr
+            else:
+                return FAIL, stdout
+
+        logger.info(f"{log_prompt} - Successfully finished")
+
+        return SUCCESS, ""
+
+    def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Run bandit in pack dir
+
+        Args:
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int:  0 on successful else 1, errors
+           str: Bandit errors
+        """
+        log_prompt = f"{self._pack_name} - Bandit"
+        logger.info(f"{log_prompt} - Start")
+        stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),
+                                                   cwd=self._pack_abs_dir)
+        logger.debug(f"{log_prompt} - Finshed exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finshed stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finshed stderr: {RL if stderr else ''}{stderr}")
+        if stderr or exit_code:
+            logger.info(f"{log_prompt}- Finshed Finshed errors found")
+            if stderr:
+                return FAIL, stderr
+            else:
+                return FAIL, stdout
+
+        logger.info(f"{log_prompt} - Successfully finished")
+
+        return SUCCESS, ""
+
+    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Run mypy in pack dir
+
+        Args:
+            py_num(float): The python version in use
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int:  0 on successful else 1, errors
+           str: Bandit errors
+        """
+        log_prompt = f"{self._pack_name} - Mypy"
+        logger.info(f"{log_prompt} - Start")
+        with add_typing_module(lint_files=lint_files, python_version=py_num):
+            stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
+                                                       cwd=self._pack_abs_dir)
+        logger.debug(f"{log_prompt} - Finshed exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finshed stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finshed stderr: {RL if stderr else ''}{stderr}")
+        if stderr or exit_code:
+            logger.info(f"{log_prompt}- Finshed Finshed errors found")
+            if stderr:
+                return FAIL, stderr
+            else:
+                return FAIL, stdout
+
+        logger.info(f"{log_prompt} - Successfully finished")
+
+        return SUCCESS, ""
+
+    def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Run mypy in pack dir
+
+        Args:
+            py_num(float): The python version in use
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int: 0 on successful else 1, errors
+           str: Vulture errors
+        """
+        log_prompt = f"{self._pack_name} - Vulture"
+        logger.info(f"{log_prompt} - Start")
+        stdout, stderr, exit_code = run_command_os(command=build_vulture_command(files=lint_files,
+                                                                                 pack_path=self._pack_abs_dir,
+                                                                                 py_num=py_num),
+                                                   cwd=self._pack_abs_dir)
+        logger.debug(f"{log_prompt} - Finshed exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finshed stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finshed stderr: {RL if stderr else ''}{stderr}")
+        if stderr or exit_code:
+            logger.info(f"{log_prompt}- Finshed Finshed errors found")
+            if stderr:
+                return FAIL, stderr
+            else:
+                return FAIL, stdout
+
+        logger.info(f"{log_prompt} - Successfully finished")
+
+        return SUCCESS, ""
+
+    def _run_lint_on_docker_image(self, no_pylint: list, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+                                  keep_container: bool, test_xml: str):
+        """ Run lint check on docker image
+
+        Args:
+            no_pylint(bool): Whether to skip pylint
+            no_test(bool): Whether to skip pytest
+            no_pwsh_analyze(bool): Whether to skip powershell code analyzing
+            no_pwsh_test(bool): whether to skip powershell tests
+            keep_container(bool): Whether to keep the test container
+            test_xml(str): Path for saving pytest xml results
+        """
+        for image in self._facts["images"]:
+            # Docker image status - visualize
+            status = {
+                "image": image[0],
+                "image_errors": "",
+                "pylint_errors": "",
+                "pytest_errors": "",
+                "pytest_json": {},
+                "pwsh_analyze_errors": "",
+                "pwsh_test_errors": ""
+            }
+            # Creating image if pylint specifie or found tests and tests specified
+            image_id = ""
+            errors = ""
+            for trial in range(2):
+                image_id, errors = self._docker_image_create(docker_base_image=image)
+                if not errors:
+                    break
+
+            if image_id and not errors:
+                # Set image creation status
+                for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                    exit_code = SUCCESS
+                    output = ""
+                    for trial in range(2):
+                        if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                            # Perform pylint
+                            if not no_pylint and check == "pylint" and self._facts["lint_files"]:
+                                exit_code, output = self._docker_run_pylint(test_image=image_id,
+                                                                            keep_container=keep_container)
+                            # Perform pytest
+                            elif not no_test and self._facts["test"] and check == "pytest":
+                                exit_code, test_json = self._docker_run_pytest(test_image=image_id,
+                                                                               keep_container=keep_container,
+                                                                               test_xml=test_xml)
+                                status["pytest_json"]: dict = test_json
+                        elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                            # Perform powershell analyze
+                            if not no_pwsh_analyze and check == "pwsh_analyze" and self._facts["lint_files"]:
+                                exit_code, output = self._docker_run_pwsh_analyze(test_image=image_id,
+                                                                                  keep_container=keep_container)
+                            # Perform powershell test
+                            elif not no_pwsh_test and check == "pwsh_test":
+                                exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
+                                                                               keep_container=keep_container)
+
+                        if (exit_code != RERUN or trial == 2) and exit_code:
+                            self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
+                            status[f"{check}_errors"] = output
+                            break
+                        elif exit_code != RERUN:
+                            break
+            else:
+                status["image_errors"] = str(errors)
+                self._pkg_lint_status["exit_code"] += EXIT_CODES["image"]
+
+            # Add image status to images
+            self._pkg_lint_status["images"].append(status)
+            try:
+                self._docker_client.images.remove(image_id)
+            except (docker.errors.ImageNotFound, docker.errors.APIError):
+                pass
+
+    def _docker_login(self) -> bool:
+        """ Login to docker-hub using enviorment varaibles:
+                1. DOCKERHUB_USER - User for docker hub.
+                2. DOCKERHUB_PASSWORD - Password for docker-hub.
+            Used in Circle-CI for pushing into repo devtestdemisto
+
+        Returns:
+            bool: True if logged in successfully.
+        """
+        docker_user = os.getenv('DOCKERHUB_USER')
+        docker_pass = os.getenv('DOCKERHUB_PASSWORD')
+        try:
+            self._docker_client.login(username=docker_user,
+                                      password=docker_pass,
+                                      registry="https://index.docker.io/v1")
+            return self._docker_client.ping()
+        except docker.errors.APIError:
+            return False
+
+    def _docker_image_create(self, docker_base_image: str) -> str:
+        """ Create docker image:
+            1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
+            2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
+               installed, packages which being install can be found in path demisto_sdk/commands/lint/dev_envs
+            3. The docker image build done by Dockerfile template located in
+                demisto_sdk/commands/lint/templates/dockerfile.jinja2
+
+        Args:
+            docker_base_image(str): docker image to use as base for installing dev deps..
 
         Returns:
             string. image name to use
         """
-        if ':' not in docker_base_image:
-            docker_base_image += ':latest'
-        setup_script = self.container_setup_script
-        setup_script_name = self.container_setup_script_name
-        if self.script_type == TYPE_PWSH:
-            setup_script = self.container_setup_script_pwsh
-            setup_script_name = self.container_setup_script_pwsh_name
-            docker_input = None
-        else:
-            py_num = get_python_version(docker_base_image)
-            if py_num == 2.7:
-                requirements = self.requirements_2
-            else:
-                requirements = self.requirements_3
-            docker_input = requirements
-
-        with open(setup_script, "rb") as f:
-            setup_script_data = f.read()
-        if self.script_type == TYPE_PYTHON:
-            md5 = hashlib.md5(requirements.encode('utf-8') + setup_script_data).hexdigest()
-        else:
-            md5 = hashlib.md5(setup_script_data).hexdigest()
-        target_image = 'devtest' + docker_base_image + '-' + md5
-        lock_file = ".lock-" + target_image.replace("/", "-")
+        log_prompt = f"{self._pack_name} - Image create"
+        test_image_id = ""
+        # Get requirements file for image
+        requirements = []
+        if 2 < docker_base_image[1] < 3:
+            requirements = self._req_2
+        elif docker_base_image[1] > 3:
+            requirements = self._req_3
+        # Using DockerFile template
+        file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
+        env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True)
+        template = env.get_template('dockerfile.jinja2')
         try:
-            if (time.time() - os.path.getctime(lock_file)) > (60 * 5):
-                print("{}: Deleting old lock file: {}".format(datetime.now(), lock_file))
-                os.remove(lock_file)
-        except Exception as ex:
-            print_v("Failed check and delete for lock file: {}. Error: {}".format(lock_file, ex))
-        wait_print = True
-        for x in range(60):
-            images_ls = run_command(' '.join(['docker', 'image', 'ls', '--format', '{{.Repository}}:{{.Tag}}',
-                                              target_image])).strip()
-            if images_ls == target_image:
-                print('{}: Using already existing docker image: {}'.format(datetime.now(), target_image))
-                return target_image
-            if wait_print:
-                print("{}: Existing image: {} not found will obtain lock file or wait for image".format(datetime.now(),
-                                                                                                        target_image))
-                wait_print = False
-            print_v("Trying to obtain lock file: " + lock_file)
+            dockerfile = template.render(image=docker_base_image[0],
+                                         pypi_packs=requirements + self._facts["additional_requirements"],
+                                         pack_type=self._pkg_lint_status["pack_type"])
+        except exceptions.TemplateError as e:
+            logger.debug(f"{log_prompt} - Error when build image - {e.message()}")
+            return test_image_id, str(e)
+        # Trying to pull image based on dockerfile hash, will check if something changed
+        errors = ""
+        test_image_name = f'devtest{docker_base_image[0]}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
+        test_image = None
+        try:
+            logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
+            test_image = self._docker_client.images.pull(test_image_name)
+        except (docker.errors.APIError, docker.errors.ImageNotFound):
+            logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
+        # Creatng new image if existing image isn't found
+        if not test_image:
+            logger.info(f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
+                        f"time")
             try:
-                f = open(lock_file, "x")
-                f.close()
-                print("{}: Obtained lock file: {}".format(datetime.now(), lock_file))
+                with io.BytesIO() as f:
+                    f.write(dockerfile.encode('utf-8'))
+                    f.seek(0)
+                    self._docker_client.images.build(fileobj=f,
+                                                     tag=test_image_name,
+                                                     forcerm=True)
+
+                    if self._docker_hub_login:
+                        for trial in range(2):
+                            try:
+                                self._docker_client.images.push(test_image_name)
+                                logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
+                                break
+                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
+                                logger.info(f"{log_prompt} - Unable to push image {test_image_name} to repository")
+
+            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+                logger.critical(f"{log_prompt} - Build errors occured {e}")
+                errors = str(e)
+        else:
+            logger.info(f"{log_prompt} - Found existing image {test_image_name}")
+
+        for trial in range(2):
+            try:
+                logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
+                container_obj = self._docker_client.containers.create(image=test_image_name,
+                                                                      command="update-ca-certificates")
+                copy_dir_to_container(container_obj=container_obj,
+                                      host_path=self._pack_abs_dir,
+                                      container_path=Path('/devwork'))
+                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and \
+                        self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                    copy_dir_to_container(container_obj=container_obj,
+                                          host_path=Path(__file__).parent / 'resources' / 'certificates',
+                                          container_path=Path('/usr/local/share/ca-certificates/'))
+                    container_obj.start()
+                    container_obj.wait()
+                test_image_id = container_obj.commit().short_id
+                container_obj.remove()
                 break
-            except Exception as ex:
-                print_v("Failed getting lock. Will wait {}".format(str(ex)))
-                time.sleep(5)
-        try:
-            # try doing a pull
-            try:
-                print("{}: Trying to pull image: {}".format(datetime.now(), target_image))
-                pull_res = subprocess.check_output(['docker', 'pull', target_image],
-                                                   stderr=subprocess.STDOUT, universal_newlines=True)
-                print("Pull succeeded with output: {}".format(pull_res))
-                return target_image
-            except subprocess.CalledProcessError as cpe:
-                print_v("Failed docker pull (will create image) with status: {}. Output: {}".format(cpe.returncode,
-                                                                                                    cpe.output))
-            print("{}: Creating docker image: {} (this may take a minute or two...)".format(datetime.now(),
-                                                                                            target_image))
-            update_cert = os.getenv('DEMISTO_LINT_UPDATE_CERTS', 'yes')
-            docker_create = ['docker', 'create', '-e', f'DEMISTO_LINT_UPDATE_CERTS={update_cert}', '-i',
-                             docker_base_image, 'sh', '/' + setup_script_name]
-            print_v(f'running: {docker_create}')
-            container_id = subprocess.check_output(docker_create, universal_newlines=True).strip()
-            print_v(f'created container with id: {container_id}')
-            subprocess.check_call(['docker', 'cp', setup_script,
-                                   container_id + ':/' + setup_script_name])
-            if self.script_type == TYPE_PWSH:
-                if update_cert == 'yes':
-                    subprocess.check_call(['docker', 'cp', self.cert_file,
-                                           container_id + ':/usr/local/share/ca-certificates/custom.crt'])
-            print_v(subprocess.check_output(['docker', 'start', '-a', '-i', container_id],
-                                            input=docker_input, stderr=subprocess.STDOUT,
-                                            universal_newlines=True))
-            print_v(subprocess.check_output(['docker', 'commit', container_id, target_image], stderr=subprocess.STDOUT,
-                                            universal_newlines=True))
-            print_v(subprocess.check_output(['docker', 'rm', container_id], stderr=subprocess.STDOUT,
-                                            universal_newlines=True))
-            if self._docker_login():
-                print("{}: Pushing image: {} to docker hub".format(datetime.now(), target_image))
-                print_v(subprocess.check_output(['docker', 'push', target_image], stderr=subprocess.STDOUT,
-                                                universal_newlines=True))
-        except subprocess.CalledProcessError as err:
-            print("Failed executing command with  error: {} Output: \n{}".format(err, err.output))
-            raise err
-        finally:
-            try:
-                os.remove(lock_file)
-            except Exception as ex:
-                print("{}: Error removing file: {}".format(datetime.now(), ex))
-        print('{}: Done creating docker image: {}'.format(datetime.now(), target_image))
-        return target_image
+            except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError) as e:
+                logger.info(f"{log_prompt} - errors occured when copy pack dir {e}")
+                if trial == 2:
+                    errors = str(e)
+        if test_image_id:
+            logger.info(f"{log_prompt} - Image {test_image_id} created succefully")
 
-    def _docker_run(self, docker_image):
-        workdir = '/devwork'  # this is setup in CONTAINER_SETUP_SCRIPT
-        lint_files = os.path.basename(self._get_lint_files())
+        return test_image_id, errors
 
-        run_params = ['docker', 'create', '-w', workdir,
-                      '-e', 'PYLINT_FILES={}'.format(lint_files)]
-        run_params.extend(['-e', f'PS_LINT_FILES={lint_files}'])
-        if not self.root:
-            run_params.extend(['-u', '{}:4000'.format(os.getuid())])
-        if not self.run_args['tests']:
-            run_params.extend(['-e', 'PYTEST_SKIP=1'])
-            run_params.extend(['-e', 'PS_TEST_SKIP=1'])
-        if not self.run_args['pylint']:
-            run_params.extend(['-e', 'PYLINT_SKIP=1'])
-        if not self.run_args['pslint']:
-            run_params.extend(['-e', 'PS_LINT_SKIP=1'])
-        run_params.extend(['-e', 'CPU_NUM={}'.format(self.cpu_num)])
-        run_params.extend(['-e', 'CI={}'.format(os.getenv("CI", "false"))])
-        run_script_name = self.run_dev_tasks_script_name if self.script_type == TYPE_PYTHON else self.run_dev_tasks_script_pwsh_name
-        run_script = self.run_dev_tasks_script if self.script_type == TYPE_PYTHON else self.run_dev_tasks_script_pwsh
-        run_params.extend([docker_image, 'sh', './{}'.format(run_script_name)])
-        print_v(f'container create: {run_params}')
-        output = subprocess.check_output(run_params, stderr=subprocess.STDOUT, universal_newlines=True)
-        container_id = output.strip()
+    def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
+        """ Run Pylint in created test image
+
+        Args:
+            test_image(str): test image id/name
+            keep_container(bool): True if to keep container after excution finished
+
+        Returns:
+            int: 0 on successful, errors 1, neet to retry 2
+            str: Container log
+        """
+        log_prompt = f'{self._pack_name} - Pylint - Image {test_image}'
+        logger.info(f"{log_prompt} - Start")
+        container_name = f"{self._pack_name}-pylint"
+        # Check if previous run left container a live if it do, we remove it
+        container_obj: docker.models.containers.Container
         try:
-            output = output + '\n' + subprocess.check_output(['docker', 'cp', self.project_dir + '/.', container_id +
-                                                              ':' + workdir], stderr=subprocess.STDOUT, universal_newlines=True)
-            output = output + '\n' + subprocess.check_output(['docker', 'cp', run_script, container_id +
-                                                              ':' + workdir], universal_newlines=True, stderr=subprocess.STDOUT)
-            output = output + '\n' + subprocess.check_output(['docker', 'start', '-a', container_id],
-                                                             stderr=subprocess.STDOUT,
-                                                             universal_newlines=True)
-            return output, 0
-        finally:
-            if not self.keep_container:
-                run_command(f'docker rm {container_id}')
+            container_obj = self._docker_client.containers.get(container_name)
+            container_obj.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+
+        # Run container
+        exit_code = SUCCESS
+        output = ""
+        try:
+            container_obj = self._docker_client.containers.run(name=container_name,
+                                                               image=test_image,
+                                                               command=[build_pylint_command(self._facts["lint_files"])],
+                                                               user=f"{os.getuid()}:4000",
+                                                               detach=True,
+                                                               environment=self._facts["env_vars"])
+            stream_docker_container_output(container_obj.logs(stream=True))
+            # wait for container to finish
+            container_status = container_obj.wait(condition="exited")
+            # Get container exit code
+            container_exit_code = container_status.get("StatusCode")
+            # Getting container logs
+            container_log = container_obj.logs().decode("utf-8")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            if container_exit_code in [1, 2]:
+                # 1-fatal message issued
+                # 2-Error message issued
+                exit_code = FAIL
+                output = container_log
+                logger.info(f"{log_prompt} - Finished errors found")
+            elif container_exit_code in [4, 8, 16]:
+                # 4-Warning message issued
+                # 8-refactor message issued
+                # 16-convention message issued
+                logger.info(f"{log_prompt} - Successfully finished - warnings found")
+                exit_code = SUCCESS
+            elif container_exit_code == 32:
+                # 32-usage error
+                logger.critical(f"{log_prompt} - Finished - Usage error")
+                exit_code = RERUN
             else:
-                print("Test container [{}] was left available".format(container_id))
+                logger.info(f"{log_prompt} - Successfully finished")
+            # Keeping container if needed or remove it
+            if keep_container:
+                print(f"{log_prompt} - container name {container_name}")
+            else:
+                try:
+                    container_obj.remove(force=True)
+                except docker.errors.NotFound as e:
+                    logger.critical(f"{log_prompt} - Unable to delete container - {e}")
+        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+            logger.critical(f"{log_prompt} - Unable to run pylint - {e}")
+            exit_code = RERUN
+            output = str(e)
 
-    def _setup_dev_files_py(self, py_num):
-        # copy demistomock and common server
-        try:
-            shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.py', self.project_dir)
-            open(self.project_dir + '/CommonServerUserPython.py', 'a').close()  # create empty file
-            shutil.rmtree(self.project_dir + '/__pycache__', ignore_errors=True)
-            shutil.copy(self.configuration.env_dir + '/Tests/scripts/dev_envs/pytest/conftest.py', self.project_dir)
-            self.check_api_module_imports(py_num)
-            if "/Scripts/CommonServerPython" not in self.project_dir:
-                # Otherwise we already have the CommonServerPython.py file
-                common_server_path = get_common_server_path(self.configuration.env_dir)
-                shutil.copy(common_server_path, self.project_dir)
-        except Exception as e:
-            print_v('Could not copy demistomock and CommonServer files: {}'.format(str(e)))
+        return exit_code, output
 
-    def _setup_dev_files_pwsh(self):
-        # copy common server
-        try:
-            shutil.copy(self.configuration.env_dir + '/Tests/demistomock/demistomock.ps1', self.project_dir)
-            if "/Scripts/CommonServerPowerShell" not in self.project_dir:
-                # Otherwise we already have the CommonServerPowerShell.py file
-                shutil.copy(get_common_server_path_pwsh(self.configuration.env_dir),
-                            self.project_dir)
-        except Exception as e:
-            print('Could not copy CommonServerPowerShell.ps1: {}'.format(str(e)))
-            raise
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str]:
+        """ Run Pytest in created test image
 
-    def check_api_module_imports(self, py_num):
+        Args:
+            test_image(str): Test image id/name
+            keep_container(bool): True if to keep container after excution finished
+            test_xml(str): Xml saving path
+
+        Returns:
+            int: 0 on successful, errors 1, neet to retry 2
+            str: Unit test json report
         """
-        Checks if the integration imports an API module and if so pastes the module in the package.
-        :param py_num: The python version - api modules are in python 3
+        log_prompt = f'{self._pack_name} - Pytest - Image {test_image}'
+        logger.info(f"{log_prompt} - Start")
+        container_name = f"{self._pack_name}-pytest"
+        # Check if previous run left container a live if it does, Remove it
+        container_obj: docker.models.containers.Container
+        try:
+            container_obj = self._docker_client.containers.get(container_name)
+            container_obj.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+        # Collect tests
+        exit_code = SUCCESS
+        test_json = {}
+        try:
+            # Running pytest container
+            container_obj = self._docker_client.containers.run(name=container_name,
+                                                               image=test_image,
+                                                               command=[build_pytest_command(test_xml=test_xml, json=True)],
+                                                               user=f"{os.getuid()}:4000",
+                                                               detach=True,
+                                                               environment=self._facts["env_vars"])
+            stream_docker_container_output(container_obj.logs(stream=True))
+            # Waiting for container to be finished
+            container_status: dict = container_obj.wait(condition="exited")
+            # Getting container exit code
+            container_exit_code: int = container_status.get("StatusCode")
+            # Getting container logs
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            if container_exit_code in [0, 1, 2, 5]:
+                # 0-All tests passed
+                # 1-Tests were collected and run but some of the tests failed
+                # 2-Test execution was interrupted by the user
+                # 5-No tests were collected
+                if test_xml:
+                    test_data_xml: bytes = get_file_from_container(container_obj=container_obj,
+                                                                   container_path="/devwork/report_pytest.xml")
+                    xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
+                    with open(file=xml_apth, mode='bw') as f:
+                        f.write(test_data_xml)
+
+                test_json: dict = json.loads(get_file_from_container(container_obj=container_obj,
+                                                                     container_path="/devwork/report_pytest.json",
+                                                                     encoding="utf-8"))
+                for test in test_json.get('report', {}).get("tests"):
+                    if test.get("call", {}).get("longrepr"):
+                        test["call"]["longrepr"] = test["call"]["longrepr"].split('\n')
+                if container_exit_code in [0, 5]:
+                    logger.info(f"{log_prompt} - Successfully finished")
+                    exit_code = SUCCESS
+                else:
+                    logger.info(f"{log_prompt} - Finished errors found")
+                    exit_code = FAIL
+            elif container_exit_code in [3, 4]:
+                # 3-Internal error happened while executing tests
+                # 4-pytest command line usage error
+                logger.critical(f"{log_prompt} - Usage error")
+                exit_code = RERUN
+            # Remove container if not needed
+            if keep_container:
+                print(f"{log_prompt} - Conatiner name {container_name}")
+            else:
+                try:
+                    container_obj.remove(force=True)
+                except docker.errors.NotFound as e:
+                    logger.critical(f"{log_prompt} - Unable to remove container {e}")
+        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+            logger.critical(f"{log_prompt} - Unable to run pytest container {e}")
+            exit_code = RERUN
+
+        return exit_code, test_json
+
+    def _docker_run_pwsh_analyze(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
+        """ Run Powershell code analyze in created test image
+
+        Args:
+            test_image(str): test image id/name
+            keep_container(bool): True if to keep container after excution finished
+
+        Returns:
+            int: 0 on successful, errors 1, neet to retry 2
+            str: Container log
         """
-        if py_num > 3:
-            unifier = Unifier(self.project_dir)
-            code_file_path = unifier.get_code_file('.py')
+        log_prompt = f'{self._pack_name} - Powershell analyze - Image {test_image}'
+        logger.info(f"{log_prompt} - Start")
+        container_name = f"{self._pack_name}-pwsh-analyze"
+        # Check if previous run left container a live if it do, we remove it
+        container_obj: docker.models.containers.Container
+        try:
+            container_obj = self._docker_client.containers.get(container_name)
+            container_obj.remove(force=True)
+        except docker.errors.NotFound:
+            pass
 
-            try:
-                # Look for an import to an API module in the code. If there is such import, we need to copy the correct
-                # module file to the package directory.
-                with io.open(code_file_path, mode='r', encoding='utf-8') as script_file:
-                    _, module_name = unifier.check_api_module_imports(script_file.read())
-                if module_name:
-                    module_path = os.path.join(self.configuration.env_dir, 'Packs', 'ApiModules', 'Scripts',
-                                               module_name, module_name + '.py')
-                    print_v('Copying ' + os.path.join(self.configuration.env_dir, 'Scripts', module_path))
-                    if not os.path.exists(module_path):
-                        raise ValueError('API Module {} not found, you might be outside of the content repository'
-                                         ' or this API module does not exist'.format(module_name))
-                    shutil.copy(os.path.join(module_path), self.project_dir)
-            except Exception as e:
-                print_v('Unable to retrieve the module file {}: {}'.format(module_name, str(e)))
+        # Run container
+        exit_code = SUCCESS
+        output = ""
+        try:
+            container_obj = self._docker_client.containers.run(name=container_name,
+                                                               image=test_image,
+                                                               command=build_pwsh_analyze_command(
+                                                                   self._facts["lint_files"][0]),
+                                                               user=f"{os.getuid()}:4000",
+                                                               detach=True,
+                                                               environment=self._facts["env_vars"])
+            stream_docker_container_output(container_obj.logs(stream=True))
+            # wait for container to finish
+            container_status = container_obj.wait(condition="exited")
+            # Get container exit code
+            container_exit_code = container_status.get("StatusCode")
+            # Getting container logs
+            container_log = container_obj.logs().decode("utf-8")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            if container_exit_code:
+                # 1-fatal message issued
+                # 2-Error message issued
+                logger.info(f"{log_prompt} - Finshed errors found")
+                output = container_log
+                exit_code = FAIL
+            else:
+                logger.info(f"{log_prompt} - Successfully finished")
+            # Keeping container if needed or remove it
+            if keep_container:
+                print(f"{log_prompt} - container name {container_name}")
+            else:
+                try:
+                    container_obj.remove(force=True)
+                except docker.errors.NotFound as e:
+                    logger.critical(f"{log_prompt} - Unable to delete container - {e}")
+        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+            logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
+            exit_code = RERUN
 
-    def _get_lint_files(self):
-        unifier = Unifier(self.project_dir)
-        code_file = unifier.get_code_file(TYPE_TO_EXTENSION[self.script_type])
-        return os.path.abspath(code_file)
+        return exit_code, output
+
+    def _docker_run_pwsh_test(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
+        """ Run Powershell tests in created test image
+
+        Args:
+            test_image(str): test image id/name
+            keep_container(bool): True if to keep container after excution finished
+
+        Returns:
+            int: 0 on successful, errors 1, neet to retry 2
+            str: Container log
+        """
+        log_prompt = f'{self._pack_name} - Powershell test - Image {test_image}'
+        logger.info(f"{log_prompt} - Start")
+        container_name = f"{self._pack_name}-pwsh-test"
+        # Check if previous run left container a live if it do, we remove it
+        container_obj: docker.models.containers.Container
+        try:
+            container_obj = self._docker_client.containers.get(container_name)
+            container_obj.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+
+        # Run container
+        exit_code = SUCCESS
+        output = ""
+        try:
+            container_obj = self._docker_client.containers.run(name=container_name,
+                                                               image=test_image,
+                                                               command=build_pwsh_test_command(),
+                                                               user=f"{os.getuid()}:4000",
+                                                               detach=True,
+                                                               environment=self._facts["env_vars"])
+            stream_docker_container_output(container_obj.logs(stream=True))
+            # wait for container to finish
+            container_status = container_obj.wait(condition="exited")
+            # Get container exit code
+            container_exit_code = container_status.get("StatusCode")
+            # Getting container logs
+            container_log = container_obj.logs().decode("utf-8")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            if container_exit_code:
+                # 1-fatal message issued
+                # 2-Error message issued
+                logger.info(f"{log_prompt} - Finshed errors found")
+                output = container_log
+                exit_code = FAIL
+            else:
+                logger.info(f"{log_prompt} - Successfully finished")
+            # Keeping container if needed or remove it
+            if keep_container:
+                print(f"{log_prompt} - container name {container_name}")
+            else:
+                try:
+                    container_obj.remove(force=True)
+                except docker.errors.NotFound as e:
+                    logger.critical(f"{log_prompt} - Unable to delete container - {e}")
+        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+            logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
+            exit_code = RERUN
+
+        return exit_code, output

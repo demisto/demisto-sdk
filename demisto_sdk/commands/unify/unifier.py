@@ -1,19 +1,23 @@
-import os
-import io
-import glob
 import base64
-import re
 import copy
+import glob
+import io
+import os
+import re
 from typing import Tuple
 
+from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
+                                                   DIR_TO_PREFIX,
+                                                   INTEGRATIONS_DIR,
+                                                   SCRIPTS_DIR,
+                                                   TYPE_TO_EXTENSION, Errors)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
+                                               get_yml_paths_in_dir,
+                                               print_color, print_error,
+                                               print_warning,
+                                               server_version_compare)
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
-
-from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.tools import get_yaml, server_version_compare, get_yml_paths_in_dir, print_error,\
-    print_warning, print_color, LOG_COLORS
-from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, INTEGRATIONS_DIR, DIR_TO_PREFIX, \
-    DEFAULT_IMAGE_PREFIX, SCRIPTS_DIR
 
 
 class Unifier:

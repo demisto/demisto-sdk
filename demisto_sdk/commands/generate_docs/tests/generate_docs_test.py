@@ -1,11 +1,16 @@
 import os
-from demisto_sdk.commands.common.tools import get_yaml, get_json
-from demisto_sdk.commands.common.git_tools import git_path
 
-FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+import pytest
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.tools import get_json, get_yaml
+from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+    append_or_replace_command_in_docs, generate_integration_doc)
+
+FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
+TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integration.yml')
 
 
 # common tests
@@ -247,7 +252,7 @@ def test_generate_commands_with_permissions_section():
     }
 
     section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
-                                                'non-deprecated-cmd': 'SUPERUSER'})
+        'non-deprecated-cmd': 'SUPERUSER'})
 
     expected_section = [
         '## Commands',
@@ -260,3 +265,44 @@ def test_generate_commands_with_permissions_section():
         '##### Human Readable Output', '', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+class TestAppendOrReplaceCommandInDocs:
+    positive_test_data_file = os.path.join(FILES_PATH, 'docs_test', 'positive_docs_section_end_with_eof.md')
+    command = 'dxl-send-event'
+    old_doc = open(positive_test_data_file).read()
+    new_docs = "\n<NEW DOCS>\n"
+    positive_inputs = [
+        (old_doc, new_docs),
+        (old_doc + "\n## Known Limitation", new_docs + "\n## Known Limitation"),
+        (old_doc + "\n### new-command", new_docs + "\n### new-command"),
+        ("no docs (empty)\n", "no docs (empty)\n" + new_docs),
+        (f"Command in file, but cant replace. {command}", f"Command in file, but cant replace. {command}\n" + new_docs)
+    ]
+
+    @pytest.mark.parametrize('doc_file, output_docs', positive_inputs)
+    def test_append_or_replace_command_in_docs_positive(self, doc_file, output_docs):
+        docs, _ = append_or_replace_command_in_docs(doc_file, self.new_docs, self.command)
+        assert docs == output_docs
+
+
+class TestGenerateIntegrationDoc:
+    @classmethod
+    def rm_readme(cls):
+        test_integration_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')
+        if os.path.isfile(test_integration_readme):
+            os.remove(test_integration_readme)
+
+    @classmethod
+    def setup_class(cls):
+        cls.rm_readme()
+
+    @classmethod
+    def teardown_class(cls):
+        cls.rm_readme()
+
+    def test_generate_integration_doc(self):
+        fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
+        # Generate doc
+        generate_integration_doc(TEST_INTEGRATION_PATH)
+        assert open(fake_readme).read() == open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()

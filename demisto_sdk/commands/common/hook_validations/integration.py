@@ -1,10 +1,22 @@
-from demisto_sdk.commands.common.constants import Errors, INTEGRATION_CATEGORIES, PYTHON_SUBTYPES, BANG_COMMAND_NAMES, \
-    DBOT_SCORES_DICT, IOC_OUTPUTS_DICT, FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.tools import print_error, print_warning, get_dockerimage45, server_version_compare
+from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   DBOT_SCORES_DICT,
+                                                   FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   INTEGRATION_CATEGORIES,
+                                                   IOC_OUTPUTS_DICT,
+                                                   PYTHON_SUBTYPES, TYPE_PWSH,
+                                                   Errors)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.tools import (get_dockerimage45, print_error,
+                                               print_warning,
+                                               server_version_compare)
 
 
 class IntegrationValidator(BaseValidator):
@@ -42,9 +54,15 @@ class IntegrationValidator(BaseValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn=True):
-        # type: (bool) -> bool
-        """Check whether the Integration is valid or not"""
+    def is_valid_file(self, validate_rn: bool = True) -> bool:
+        """Check whether the Integration is valid or not
+
+            Args:
+                validate_rn (bool): Whether to validate release notes (changelog) or not.
+
+            Returns:
+                bool: True if integration is valid, False otherwise.
+        """
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
@@ -58,15 +76,26 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_fetch(),
             self.is_valid_display_name(),
             self.is_all_params_not_hidden(),
+            self.is_valid_pwsh(),
+            self.is_valid_image(),
+            self.is_valid_description(beta_integration=False),
         ]
         return all(answers)
 
-    def is_valid_beta_integration(self):
-        # type: () -> bool
-        """Check whether the beta Integration is valid or not, update the _is_valid field to determine that"""
+    def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
+        """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
+            Args:
+                validate_rn (bool): Whether to validate release notes (changelog) or not.
+
+            Returns:
+                bool: True if integration is valid, False otherwise.
+        """
         answers = [
+            super().is_valid_file(validate_rn),
             self.is_valid_default_arguments(),
             self.is_valid_beta(),
+            self.is_valid_image(),
+            self.is_valid_description(beta_integration=True),
         ]
         return all(answers)
 
@@ -513,6 +542,14 @@ class IntegrationValidator(BaseValidator):
             valid_feed_params = self.all_feed_params_exist()
         return valid_from_version and valid_feed_params
 
+    def is_valid_pwsh(self) -> bool:
+        if self.current_file.get("script", {}).get("type") == TYPE_PWSH:
+            from_version = self.current_file.get("fromversion", "0.0.0")
+            if not from_version or server_version_compare("5.5.0", from_version) > 0:
+                print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                return False
+        return True
+
     def is_valid_fetch(self) -> bool:
         """
         validate that all required fields in integration that have fetch incidents are in the yml file.
@@ -577,3 +614,29 @@ class IntegrationValidator(BaseValidator):
                 ans = False
                 print_error(Errors.found_hidden_param(int_parameter.get('name')))
         return ans
+
+    def is_valid_image(self) -> bool:
+        """Verifies integration image/logo is valid.
+
+        Returns:
+            bool. True if integration image/logo is valid, False otherwise.
+        """
+        image_validator = ImageValidator(self.file_path)
+        if not image_validator.is_valid():
+            return False
+        return True
+
+    def is_valid_description(self, beta_integration: bool = False) -> bool:
+        """Verifies integration description is valid.
+
+        Returns:
+            bool: True if description is valid, False otherwise.
+        """
+        description_validator = DescriptionValidator(self.file_path)
+        if beta_integration:
+            if not description_validator.is_valid_beta_description():
+                return False
+        else:
+            if not description_validator.is_valid():
+                return False
+        return True

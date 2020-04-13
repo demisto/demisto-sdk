@@ -1,5 +1,15 @@
 # Changelog
+* Added *-c, --command* option in *generate-docs* to generate specific command from integration.
+* Fixed an issue in getting a README/CHANGELOG files from git and loading it.
+* Removed release notes validation for new content.
+* Fixed secretes validations for files with the same name in a different directory.
+* demisto-sdk lint - parralel working with specify the number of workers.
+* demisto-sdk lint - logging levels output, 3 levels.
+* demisto-sdk lint - json report, structured error reports in json format.
+* demisto-sdk lint - xml junit report for unit-tests.
+* demisto-sdk lint - New packages used in order to excellarate execution time.
 
+#### 0.5.0
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
@@ -12,6 +22,8 @@
     * Added the *-fv --from-version*, *-nv --no-validation* arguments.
     * Removed the *-t yml_type* argument, the file type will be inferred.
     * Removed the *-g use_git* argument, running format without arguments will run automatically on git diff.
+* Fixed an issue in loading playbooks with '=' character.
+* Fixed an issue in *validate* failed on deleted README files.
 
 ### 0.4.8
 * Added the *max* field to the Playbook schema, allowing to define it in tasks loop.

@@ -1,67 +1,66 @@
 ### Lint
 
-Run lintings (flake8, mypy, pylint, bandit) and pytest.
-pylint and pytest will run within all the docker images of an integration/script.
-Meant to be used with integrations/scripts that use the folder (package) structure.
+  Lint command will perform:
 
-The appropriate docker images for the integration/script will be used to execute the pytest and pylint checks.
+  1. Package in host checks - flake8, bandit, mypy, vulture.
 
-**Use Cases**
-This command is used to make sure the code stands up to the python standards, prevents bugs and runs unit tests to
-make sure the code works as intended.
+  2. Package in docker image checks -  pylint, pytest, powershell - test, powershell -
+  analyze.
 
-**Arguments**:
-* **-d DIR, --dir DIR**
-  Specify directory of integration/script. Also supports several direcories as a CSV (default: None)
-* **--no-pylint**
-  Do NOT run pylint linter (default: False)
-* **--no-mypy**
-  Do NOT run mypy static type checking (default: False)
-* **--no-flake8**
-  Do NOT run flake8 linter (default: False)
-* **--no-bandit**
-  Do NOT run bandit linter (default: False)
-* **--no-test**
-  Do NOT test (skip pytest) (default: False)
-* **-r, --root**
-  Run pytest container with root user (default: False)
-* **-p, --parallel**
-  Run tests in parallel (default: False)
-* **-m, --max-workers**
-  The max workers to use in a parallel run (default: 10)
-* **-g, --git**
-  Run only on packages that changes between the current branch and content repo's origin/master branch (default: False)
-* **-a, --run-all-tests**
-  Run lint on all directories in content repo (default: False)
-* **-k, --keep-container**
-  Keep the test container (default: False)
-* **-v, --verbose**
-  Verbose output (default: False)
-* **--outfile** Specify a file path to save failing package list. (default: None)
-* **--cpu-num CPU_NUM**
-  Number of CPUs to run pytest on (can set to `auto` for automatic detection of the number of CPUs.) (default: 0)
+  Meant to be used with integrations/scripts that use the folder (package) structure. Will
+  lookup up what docker image to use and will setup the dev dependencies and file in the target
+  folder.
+
+Options:
+*  **-h, --help**
+    Show this message and exit.
+*  **-i, --input PATH**
+    Specify directory of integration/script
+*  **-g, --git**
+    Will run only on changed packages
+*  **-a, --all-packs**
+    Run lint on all directories in content repo
+*  **-v, --verbose**
+    Verbosity level -v / -vv / -vvv  [default: vv]
+*  **-q, --quiet**
+    Quiet output, only output results in the end
+*  **-p, --parallel INTEGER RANGE**
+    Run tests in parallel  [default: 1]
+*  **--no-flake8**
+    Do NOT run flake8 linter
+*  **--no-bandit**
+    Do NOT run bandit linter
+*  **--no-mypy**
+    Do NOT run mypy static type checking
+*  **--no-vulture**
+    Do NOT run vulture linter
+*  **--no-pylint**
+    Do NOT run pylint linter
+*  **--no-test**
+    Do NOT test (skip pytest)
+*  **--no-pwsh-analyze**
+    Do NOT run powershell analyze
+*  **--no-pwsh-test**
+    Do NOT run powershell test
+*  **-kc, --keep-container**
+    Keep the test container
+*  **--test-xml PATH**
+    Path to store pytest xml results
+*  **--json-report PATH**
+    Path to store json results
+*  **-lp, --log-path PATH**
+    Path to store all levels of logs
 
 
 **Examples**:
-`demisto-sdk lint -d Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy -p -m 2`
-This will parallel run the linters, excluding mypy, on the python files inside the "Integrations/PaloAltoNetworks_XDR" and "Scripts/HelloWorldScript" directories, using 2 workers (threads).
-<br/><br/>
-
-`demisto-sdk lint -a -g`
-This will run on all content repo's packaged and packed integrations and scripts and will activate the linting and tests only on the directories which had their files changed in comparison with content origin/master branch.
-<br/><br/>
-
-`demisto-sdk lint -d Interagtions/HelloWorld -v --no-bandit --no-flake8 --cpu-num auto`
-This will run the linters, excluding bandit and flake8, on "Integrations/HelloWorld" and give additional details on the run itself as well as any failures detected.
-Also this will check the amount of CPU's available to run pytest on and use them.
-<br/><br/>
-
-`demisto-sdk lint -d Scripts/HelloWorldScript --no-pytest --no-pylint`
-This will run only the linters (flake8, mypy, bandit) on "Scripts/HelloWorldScript".
-<br/><br/>
-
-`demisto-sdk lint -d Integrations/HelloWorld --no-mypy --no-flake8 --no-pytest -k -r`
-This will run only pylint and pytest on "Integrations/HelloWorld" using the root user for the pytest and will also keep the test container with the docker image after the operation is over.
-
-`demisto-sdk lint -g --outfile ~/failures.txt`
-This indicates lint runs only on changed packages from content repo's 'origin/master' branch and saves the failed packages to failures.txt file.
+---
+`demisto-sdk lint -i Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy `
+Details:
+1. lint and test check will execute on Packages `Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript`
+2. Mypy check will not be execute.
+3.
+---
+`demisto-sdk lint -g -p 2`
+1. lint and test check will execute on all Packages which are changed from `origin/master` and from in staging.
+2. 2 Threads will be used inorder to preform the lint.
+---

@@ -12,6 +12,7 @@ pytest-asyncio = "*"
 pytest-xdist = "*"
 pytest-datadir-ng = "*"
 freezegun = "*"
+pytest-json = "*"
 
 [packages]
 

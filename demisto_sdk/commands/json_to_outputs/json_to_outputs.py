@@ -71,12 +71,13 @@ outputs:
   description: ''
   type: String
 """
-import yaml
 import json
 import sys
-import dateparser
 
-from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS
+import dateparser
+import yaml
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+                                               print_error)
 
 
 def input_multiline():

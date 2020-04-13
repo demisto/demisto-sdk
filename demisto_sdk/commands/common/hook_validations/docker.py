@@ -1,11 +1,13 @@
-from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.tools import get_yaml, print_error, print_warning
-from distutils.version import LooseVersion
-from pkg_resources import parse_version
-from datetime import datetime, timedelta
 import re
-import requests
+from datetime import datetime, timedelta
+from distutils.version import LooseVersion
 
+from pkg_resources import parse_version
+
+import requests
+from demisto_sdk.commands.common.constants import Errors
+from demisto_sdk.commands.common.tools import (get_yaml, print_error,
+                                               print_warning)
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()

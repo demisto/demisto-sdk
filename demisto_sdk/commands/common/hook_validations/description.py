@@ -1,7 +1,10 @@
 import glob
 
-from demisto_sdk.commands.common.tools import re, print_error, print_warning, os, get_yaml
-from demisto_sdk.commands.common.constants import INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, BETA_INTEGRATION_DISCLAIMER
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
+                                                   BETA_INTEGRATION_REGEX,
+                                                   INTEGRATION_REGEX)
+from demisto_sdk.commands.common.tools import (get_yaml, os, print_error,
+                                               print_warning, re)
 
 
 class DescriptionValidator:

@@ -58,7 +58,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command, get_files_in_dir)
+                                               print_warning, run_command)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 

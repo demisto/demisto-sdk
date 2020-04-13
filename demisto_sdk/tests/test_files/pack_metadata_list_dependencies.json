@@ -18,13 +18,13 @@
     "useCases": [],
     "keywords": ["AWS", "Feed"],
     "price": 0,
-    "dependencies": {
-        "Base": [{
+    "dependencies": [{
+        "Base": {
             "mandatory": true,
             "minVersion": "1.0.0",
             "name": "Base",
             "certification": "certified",
             "author": "Cortex XSOAR"
-          }]
-    }
+          }
+    }]
 }

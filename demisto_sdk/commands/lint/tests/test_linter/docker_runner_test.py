@@ -34,8 +34,7 @@ class TestCreateImage:
         docker_build_response.short_id = exp_test_image_id
         linter_obj._docker_client.containers.create().commit().short_id = exp_test_image_id
 
-        act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, 3.7],
-                                                                        no_test=False)
+        act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, 3.7])
 
         assert act_test_image_id == exp_test_image_id
         assert act_errors == exp_errors

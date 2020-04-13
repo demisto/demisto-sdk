@@ -25,6 +25,7 @@ class TestPackMetadataValidator:
                                           # os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_dependencies.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_list_dependencies.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_empty_category.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_list.json')])
     def test_metadata_validator_invalid(self, mocker, metadata):

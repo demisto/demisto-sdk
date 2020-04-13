@@ -6,12 +6,11 @@ import json
 import os
 import re
 
-from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_DEPENDENCIES,
-    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS,
-    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+from demisto_sdk.commands.common.constants import (PACK_METADATA_PRICE, API_MODULES_PACK, PACK_METADATA_CATEGORIES,
+                                                   PACK_METADATA_DEPENDENCIES, PACK_METADATA_FIELDS,
+                                                   PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES,
+                                                   PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME, PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.tools import pack_name_to_path
 
 
@@ -146,12 +145,15 @@ class PackUniqueFilesValidator:
                 self._add_error('The dependencies field in the pack must be a dictionary.')
                 return False
             # TODO: add it back after #23546 is ready.
-            # price_field = metadata[PACK_METADATA_PRICE]
-            # try:
-            #     int(price_field)
-            # except Exception:
-            #     self._add_error('The price field in the pack must be a number.')
-            #     return False
+            price_field = metadata.get(PACK_METADATA_PRICE)
+            if price_field:
+                try:
+                    int(price_field)
+                except Exception:
+                    self._add_error('The price field in the pack must be a number.')
+                    return False
+            else:
+                pass
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
                                PACK_METADATA_USE_CASES):
                 field = metadata[list_field]

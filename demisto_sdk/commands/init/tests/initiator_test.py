@@ -1,9 +1,12 @@
 import os
-from collections import deque
+from collections import OrderedDict, deque
 from datetime import datetime
+from pathlib import Path
 from typing import Callable
 
 import pytest
+import yaml
+import yamlordereddictloader
 from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS)
@@ -144,3 +147,37 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
     # fail to create pack cause of existing dir without overriding it
     monkeypatch.setattr('builtins.input', lambda _: 'N')
     assert initiator.create_new_directory() is False
+
+
+def test_yml_reformatting(tmp_path, initiator):
+    integration_id = 'HelloWorld'
+    initiator.id = integration_id
+    d = tmp_path / integration_id
+    d.mkdir()
+    full_output_path = Path(d)
+    initiator.full_output_path = full_output_path
+
+    p = d / f'{integration_id}.yml'
+    with p.open(mode='w') as f:
+        yaml.dump(
+            {
+                'commonfields': {
+                    'id': ''
+                },
+                'name': '',
+                'display': ''
+            },
+            f
+        )
+    dir_name = 'HelloWorldTest'
+    initiator.dir_name = dir_name
+    initiator.yml_reformatting(current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True)
+    with open(full_output_path / f'{dir_name}.yml', 'r') as f:
+        yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+        assert yml_dict == OrderedDict({
+            'commonfields': OrderedDict({
+                'id': 'HelloWorld'
+            }),
+            'display': 'HelloWorld',
+            'name': 'HelloWorld'
+        })

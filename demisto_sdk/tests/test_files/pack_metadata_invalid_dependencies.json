@@ -23,7 +23,7 @@
             "mandatory": true,
             "minVersion": "1.0.0",
             "name": "Base",
-            "certification": "certified",
+            "certification": "certified"
           }
     }
 }

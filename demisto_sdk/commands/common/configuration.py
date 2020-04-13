@@ -15,6 +15,7 @@ class Configuration:
     def __init__(self, log_verbose=False, logging_level=logging.INFO):
         logging.basicConfig(level=logging_level)
         self.log_verbose = log_verbose
-        self.sdk_env_dir = str(Path(__file__).parent.parent)  # /Users/grabin/dev/demisto/demisto-sdk/demisto_sdk/commands
+        # refers to "demisto_sdk/commands" dir
+        self.sdk_env_dir = str(Path(__file__).parent.parent)
         self.env_dir = str(Path().cwd())
         self.envs_dirs_base = str(Path(self.sdk_env_dir) / 'lint' / 'resources' / 'pipfile_python')

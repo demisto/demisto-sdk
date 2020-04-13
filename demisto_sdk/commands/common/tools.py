@@ -833,7 +833,7 @@ def depth(data) -> int:
     :return: The json depth
     """
     if data and isinstance(data, dict):
-        return 1 + max(depth(data[a]) for a in data)
+        return 1 + max(depth(data[key]) for key in data)
     if data and isinstance(data, list):
-        return 1 + max(depth(a) for a in data)
+        return 1 + max(depth(element) for element in data)
     return 0

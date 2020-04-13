@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import zipfile
+import fnmatch
 from typing import List
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
@@ -334,28 +335,29 @@ class ContentCreator:
                 os.mkdir(dest_dir)
                 if dir_name in DIR_TO_PREFIX:
                     packages_dirs = get_child_directories(content_dir)
-                    for package_dir in packages_dirs:
-                        ymls, _ = get_yml_paths_in_dir(package_dir, error_msg='')
-                        if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
-                            msg = 'Skipping package: {} -'.format(package_dir)
-                            if not ymls:
-                                print_warning('{} No yml files found in the package directory'.format(msg))
-                            else:
-                                print_warning('{} Only unified yml found in the package directory'.format(msg))
-                            continue
-                        package_dir_name = os.path.basename(package_dir)
-                        unifier = Unifier(package_dir, dir_name, dest_dir)
-                        unifier.merge_script_package_to_yml()
 
-                        # also copy CHANGELOG markdown files over (should only be one per package)
-                        package_files = get_child_files(package_dir)
-                        changelog_files = [
-                            file_path
-                            for file_path in package_files if 'CHANGELOG.md' in file_path
-                        ]
-                        for md_file_path in changelog_files:
-                            md_out_name = '{}-{}_CHANGELOG.md'.format(DIR_TO_PREFIX.get(dir_name), package_dir_name)
-                            shutil.copyfile(md_file_path, os.path.join(dest_dir, md_out_name))
+                    if packages_dirs:  # split yml files directories
+                        for package_dir in packages_dirs:
+                            ymls, _ = get_yml_paths_in_dir(package_dir, error_msg='')
+                            if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
+                                msg = 'Skipping package: {} -'.format(package_dir)
+                                if not ymls:
+                                    print_warning('{} No yml files found in the package directory'.format(msg))
+                                else:
+                                    print_warning('{} Only unified yml found in the package directory'.format(msg))
+                                continue
+                            package_dir_name = os.path.basename(package_dir)
+                            unifier = Unifier(package_dir, dir_name, dest_dir)
+                            unifier.merge_script_package_to_yml()
+
+                    non_split_yml_files = [f for f in os.listdir(content_dir) if
+                                           os.path.isfile(os.path.join(content_dir, f))
+                                           and (fnmatch.fnmatch(f, 'integration-*.yml')
+                                                or fnmatch.fnmatch(f, 'script-*.yml'))]
+
+                    if non_split_yml_files:  # old format non split yml files
+                        for yml_file in non_split_yml_files:
+                            shutil.copyfile(os.path.join(content_dir, yml_file), os.path.join(dest_dir, yml_file))
                 else:
                     self.copy_dir_files(content_dir, dest_dir)
 

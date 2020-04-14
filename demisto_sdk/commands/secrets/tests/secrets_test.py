@@ -231,3 +231,16 @@ my_email = "fooo@someorg.com"
         file_contents = self.TEST_BASE_64_STRING
         file_contents = self.validator.ignore_base64(file_contents)
         assert file_contents.lstrip() == 'sade'
+
+    def test_get_white_listed_items_not_pack(self):
+        final_white_list, ioc_white_list, files_white_list = self.validator.get_white_listed_items(False, None)
+        assert final_white_list == {'https://api.zoom.us', 'PaloAltoNetworksXDR', 'ip-172-31-15-237'}
+        assert ioc_white_list == {'https://api.zoom.us'}
+        assert files_white_list == set()
+
+    def test_get_white_listed_items_pack(self, monkeypatch):
+        monkeypatch.setattr('demisto_sdk.commands.secrets.secrets.PACKS_DIR', self.FILES_PATH)
+        final_white_list, ioc_white_list, files_white_list = self.validator.get_white_listed_items(True, 'fake_pack')
+        assert final_white_list == {'https://www.demisto.com', 'https://api.zoom.us', 'PaloAltoNetworksXDR', 'ip-172-31-15-237'}
+        assert ioc_white_list == {'https://api.zoom.us'}
+        assert files_white_list == set()

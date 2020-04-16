@@ -8,6 +8,7 @@
 * demisto-sdk lint - json report, structured error reports in json format.
 * demisto-sdk lint - xml junit report for unit-tests.
 * demisto-sdk lint - New packages used in order to excellarate execution time.
+* demisto-sdk secrets command now respects the generic whitelist, and not only the pack secrets.
 
 #### 0.5.0
 [PyPI History][1]

@@ -171,7 +171,7 @@ my_email = "fooo@someorg.com"
         shmoop
         155.165.45.232
         '''
-        file_contents = self.validator.remove_white_list_regex(white_list, file_contents)
+        file_contents = self.validator.remove_whitelisted_items_from_file(white_list, file_contents)
         assert white_list not in file_contents
 
     def test_temp_white_list(self):

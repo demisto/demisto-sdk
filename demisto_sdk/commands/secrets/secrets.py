@@ -163,7 +163,7 @@ class SecretsValidator(object):
             file_contents = self.get_file_contents(file_path, file_extension)
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
-                file_contents = self.remove_white_list_regex(file_contents, secrets_white_list)
+                file_contents = self.remove_whitelisted_items_from_file(file_contents, secrets_white_list)
 
             yml_file_contents = self.get_related_yml_contents(file_path)
             # Add all context output paths keywords to whitelist temporary
@@ -211,10 +211,19 @@ class SecretsValidator(object):
         return secrets_found
 
     @staticmethod
-    def remove_white_list_regex(file_contents, secrets_white_list):
-        for regex in secrets_white_list:
-            file_contents = re.sub(regex, '', file_contents)
-        return file_contents
+    def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: list) -> str:
+        """Removes whitelisted items from file content
+
+        Arguments:
+            file_content (str): The content of the file to remove the whitelisted item from
+            secrets_white_list (list): List of whitelist items to remove from the file content.
+
+        Returns:
+            str: The file content with the whitelisted items removed.
+        """
+        for item in secrets_white_list:
+            file_content = file_content.replace(item, '')
+        return file_content
 
     @staticmethod
     def create_temp_white_list(file_contents):

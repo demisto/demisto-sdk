@@ -309,11 +309,12 @@ class SecretsValidator(object):
         return entropy
 
     def get_white_listed_items(self, is_pack, pack_name):
-        whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME) if is_pack \
-            else self.white_list_path
-        final_white_list, ioc_white_list, files_while_list = \
-            self.get_packs_white_list(whitelist_path, pack_name) if is_pack else \
-            self.get_generic_white_list(whitelist_path)
+        final_white_list, ioc_white_list, files_white_list = self.get_generic_white_list(self.white_list_path)
+        if is_pack:
+            pack_whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME)
+            pack_white_list, _, pack_files_white_list = self.get_packs_white_list(pack_whitelist_path, pack_name)
+            final_white_list.extend(pack_white_list)
+            files_white_list.extend(pack_files_white_list)
 
         final_white_list = set(final_white_list)
         if '' in final_white_list:
@@ -321,7 +322,7 @@ class SecretsValidator(object):
             # cause whitelisting of every string
             final_white_list.remove('')
 
-        return final_white_list, set(ioc_white_list), set(files_while_list)
+        return final_white_list, set(ioc_white_list), set(files_white_list)
 
     @staticmethod
     def get_generic_white_list(whitelist_path):

@@ -5,8 +5,10 @@ This script is used to create a release notes template
 import errno
 import json
 import os
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+
 from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                pack_name_to_path, print_color,
                                                print_error)
@@ -107,7 +109,7 @@ class UpdateRN:
             version[2] = str(int(version[2]) + 1)
             new_version = '.'.join(version)
         if pre_release:
-            new_version = new_version+'_prerelease'
+            new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version
 
         if self._does_pack_metadata_exist():

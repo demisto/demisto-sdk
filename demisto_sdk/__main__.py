@@ -657,17 +657,21 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack", help="Name of the pack."
+    "-p", "--pack", help="Name of the pack.", required=True
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
     type=RNUpdate()
 )
+@click.option(
+    "--pre_release", help="Indicates that this change should be designated a pre-release version.",
+    is_flag=True)
 def update_pack_releasenotes(**kwargs):
     pack = kwargs.get('pack')
     update_type = kwargs.get('update_type')
+    pre_release = kwargs.get('pre_release')
     update_pack_rn = UpdateRN(pack=pack, update_type=update_type)
-    new_version = update_pack_rn.bump_version_number()
+    new_version = update_pack_rn.bump_version_number(pre_release)
     rn_path = update_pack_rn.return_release_notes_path(new_version)
     update_pack_rn.check_rn_dir(rn_path)
     packfiles = update_pack_rn.get_master_diff()

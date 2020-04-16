@@ -5,7 +5,7 @@ This script is used to create a release notes template
 import errno
 import json
 import os
-
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                pack_name_to_path, print_color,
@@ -22,6 +22,8 @@ class UpdateRN:
         self.pack_path = pack_name_to_path(self.pack)
         # if self._does_pack_metadata_exist(self.pack_meta_file):
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
+
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
     @staticmethod
     def get_master_diff():
@@ -43,18 +45,26 @@ class UpdateRN:
         return os.path.join(self.pack_path, 'ReleaseNotes', '{}.md'.format(new_version))
 
     @staticmethod
-    def format_filename(file_path):
-        raw_name = os.path.basename(file_path)
-        _raw_name = str(raw_name).split('.')
-        file_name = _raw_name[0].replace('_', ' ')
-        return file_name
+    def get_display_name(file_path):
+        struct = StructureValidator(file_path=file_path)
+        file_data = struct.load_data_from_file()
+        name = file_data.get('name', None)
+        return name
+
+    @staticmethod
+    def find_corresponding_yml(file_path):
+        if file_path.endswith('.py'):
+            sanitized = file_path.replace('.py', '.yml')
+        else:
+            sanitized = file_path
+        return sanitized
 
     def ident_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
         if self.pack in file_path:
-            _file_name = os.path.basename(file_path)
-            file_name = self.format_filename(_file_name)
+            _file_path = self.find_corresponding_yml(file_path)
+            file_name = self.get_display_name(_file_path)
             if 'Playbooks' in file_path and ('TestPlaybooks' not in file_path):
                 _file_type = 'Playbook'
             elif 'Integration' in file_path:
@@ -73,24 +83,31 @@ class UpdateRN:
 
         return file_name, _file_type
 
-    def bump_version_number(self):
+    def bump_version_number(self, pre_release: bool = False):
+
+        new_version = None  # This will never happen since we pre-validate the arguement
         data_dictionary = get_json(self.metadata_path)
         if self.update_type == 'major':
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[0] = str(int(version[0]) + 1)
+            version[1] = '0'
+            version[2] = '0'
             new_version = '.'.join(version)
         elif self.update_type == 'minor':
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[1] = str(int(version[1]) + 1)
+            version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
-        else:
+        elif self.update_type == 'revision':
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[2] = str(int(version[2]) + 1)
             new_version = '.'.join(version)
+        if pre_release:
+            new_version = new_version+'_prerelease'
         data_dictionary['currentVersion'] = new_version
 
         if self._does_pack_metadata_exist():
@@ -110,7 +127,7 @@ class UpdateRN:
                     raise
 
     def build_rn_template(self, changed_items: dict):
-        rn_string = f'''<details>\n<summary>{self.pack}</summary>\n'''
+        rn_string = ''
         integration_header = False
         playbook_header = False
         script_header = False
@@ -156,7 +173,6 @@ class UpdateRN:
                     rn_string += '\n#### IncidentTypes\n'
                     inc_types_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
-        rn_string += '</details>'
         return rn_string
 
     @staticmethod

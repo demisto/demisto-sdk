@@ -119,9 +119,9 @@ class ContentCreator:
             if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
                 msg = 'Skipping package: {} -'.format(package)
                 if not ymls:
-                    print_warning('{} No yml files found in the package directory'.format(msg))
+                    print_warning(f'{msg} No yml files found in the package directory')
                 else:
-                    print_warning('{} Only unified yml found in the package directory'.format(msg))
+                    print_warning(f'{msg} Only unified yml found in the package directory')
                 continue
             unification_tool = Unifier(package, package_dir_name, dest_dir)
             if any(package_to_skip in package for package_to_skip in self.packages_to_skip):
@@ -340,7 +340,7 @@ class ContentCreator:
                         for package_dir in packages_dirs:
                             ymls, _ = get_yml_paths_in_dir(package_dir, error_msg='')
                             if not ymls or (len(ymls) == 1 and ymls[0].endswith('_unified.yml')):
-                                msg = 'Skipping package: {} -'.format(package_dir)
+                                msg = f'Skipping package: {package_dir} -'
                                 if not ymls:
                                     print_warning('{} No yml files found in the package directory'.format(msg))
                                 else:

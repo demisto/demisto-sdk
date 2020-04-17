@@ -11,14 +11,14 @@ INIT_CMD = "init"
 def test_integration_init_integration_positive(tmp_path):
     """
     Given
-    - Valid `city` incident field.
+    - Inputs to init pack with integration.
 
     When
-    - Running validation on it.
+    - Running the init command.
 
     Then
-    - Ensure validation passes.
-    - Ensure success validation message is printed.
+    - Ensure pack metadata is created successfully.
+    - Ensure integration directory contain all files.
     """
     pack_name = "SuperPack"
     fill_pack_metadata = "Y"

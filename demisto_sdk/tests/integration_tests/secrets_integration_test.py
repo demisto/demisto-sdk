@@ -60,7 +60,6 @@ def test_integration_secrets_negative(monkeypatch, mocker):
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ['secrets', '-wl', SECRETS_WHITELIST])
-    assert result.stdout == ""
     assert result.exit_code == 1
     assert "Starting secrets detection" in result.output
     assert "Secrets were found in the following files:" in result.output

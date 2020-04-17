@@ -26,3 +26,4 @@ def test_integration_validate():
            "please update to latest version." in stdout
     assert "The files were found as invalid, the exact error message can be located above" in stdout
     assert results.stderr == ""
+    assert results.returncode == 1

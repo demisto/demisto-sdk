@@ -33,7 +33,6 @@ def test_integration_secrets_postivie(monkeypatch, mocker):
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ['secrets', '-wl', SECRETS_WHITELIST])
-    assert result.stdout == ""
     assert result.exit_code == 0
     assert "Starting secrets detection" in result.output
     assert "Finished validating secrets, no secrets were found." in result.output

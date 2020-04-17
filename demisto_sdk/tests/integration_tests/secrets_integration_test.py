@@ -4,10 +4,8 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
 
-DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-MAIN_MODULE_PATH = join(DEMISTO_SDK_PATH, "__main__.py")
-PYTHON_CMD = "python"
 SECRETS_CMD = "secrets"
+DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 SECRETS_WHITELIST = join(DEMISTO_SDK_PATH, "tests/test_files/secrets_white_list.json")
 
 
@@ -32,7 +30,7 @@ def test_integration_secrets_postivie(monkeypatch, mocker):
         ]
     )
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, ['secrets', '-wl', SECRETS_WHITELIST])
+    result = runner.invoke(main, [SECRETS_CMD, '-wl', SECRETS_WHITELIST])
     assert result.exit_code == 0
     assert "Starting secrets detection" in result.output
     assert "Finished validating secrets, no secrets were found." in result.output
@@ -59,7 +57,7 @@ def test_integration_secrets_negative(monkeypatch, mocker):
         return_value=[integration_with_secrets_path]
     )
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, ['secrets', '-wl', SECRETS_WHITELIST])
+    result = runner.invoke(main, [SECRETS_CMD, '-wl', SECRETS_WHITELIST])
     assert result.exit_code == 1
     assert "Starting secrets detection" in result.output
     assert "Secrets were found in the following files:" in result.output

@@ -10,6 +10,17 @@ VALIDATE_CMD = "validate"
 
 
 def test_integration_validate_integration_negative():
+    """
+    Given
+    - FeedAzure integration with non-latest docker image.
+
+    When
+    - Running validation on it.
+
+    Then
+    - Ensure validation fails.
+    - Ensure failure message on non-latest docker image.
+    """
     pack_integration_path = "Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
     results = run(
         [PYTHON_CMD, MAIN_MODULE_PATH, VALIDATE_CMD, "-p", pack_integration_path],
@@ -30,6 +41,17 @@ def test_integration_validate_integration_negative():
 
 
 def test_integration_validate_incident_field_positive():
+    """
+    Given
+    - Valid `city` incident field.
+
+    When
+    - Running validation on it.
+
+    Then
+    - Ensure validation passes.
+    - Ensure success validation message is printed.
+    """
     pack_incident_field_path = "Packs/FeedAzure/IncidentFields/incidentfield-city.json"
     results = run(
         [PYTHON_CMD, MAIN_MODULE_PATH, VALIDATE_CMD, "-p", pack_incident_field_path],

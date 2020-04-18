@@ -12,9 +12,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Generator, List, Optional
 
+# Third party packages
 import docker
 import docker.errors
-# Third party packages
 import git
 import requests
 # Local packages
@@ -242,9 +242,8 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
     except Exception:
         pass
     finally:
-        for added_module in added_modules:
-            if added_module.exists():
-                added_module.unlink()
+        # If we want to change handling of files after finishing - do it here
+        pass
 
 
 @lru_cache(maxsize=100)

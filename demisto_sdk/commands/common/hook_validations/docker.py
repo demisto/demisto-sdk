@@ -160,7 +160,7 @@ class DockerImageValidator(object):
         return max_tag
 
     @staticmethod
-    def find_latest_tag_by_date(tags):
+    def find_latest_tag_by_date(tags: list) -> str:
         """Get the latest tags by datetime comparison.
             as long as it's not labeled 'latest'
 

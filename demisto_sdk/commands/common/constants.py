@@ -11,6 +11,11 @@ class Errors:
             .format(file_path, given_fromversion, needed_from_version)
 
     @staticmethod
+    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
+        return (f'{file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
+                f' Found version: {given_fromversion}')
+
+    @staticmethod
     def not_used_display_name(file_path, field_name):
         return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
             field_name, file_path)
@@ -699,6 +704,7 @@ JSON_ALL_INCIDENT_TYPES_REGEXES = [
 
 JSON_ALL_INDICATOR_FIELDS_REGEXES = [
     INDICATOR_FIELDS_REGEX,
+    PACKS_INDICATOR_FIELDS_REGEX
 ]
 
 JSON_ALL_CONNECTIONS_REGEXES = [
@@ -898,6 +904,7 @@ class PB_Status:
     COMPLETED = 'completed'
     FAILED = 'failed'
     IN_PROGRESS = 'inprogress'
+    FAILED_DOCKER_TEST = 'failed_docker_test'
 
 
 # change log regexes
@@ -932,7 +939,7 @@ SCHEMA_TO_REGEX = {
     'classifier': JSON_ALL_CLASSIFIER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
-    'incidenttype': [INCIDENT_TYPE_REGEX],
+    'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
     'image': [IMAGE_REGEX],
     'reputation': [REPUTATION_REGEX],
     'changelog': [INTEGRATION_CHANGELOG_REGEX, PACKS_CHANGELOG_REGEX, REPUTATION_CHANGELOG_REGEX,
@@ -1052,3 +1059,5 @@ FETCH_REQUIRED_PARAMS = [
         'type': 8
     }
 ]
+
+DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'

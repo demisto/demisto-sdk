@@ -1,12 +1,17 @@
-import unittest
-import pytest
-import os
 import json
+import os
 import sys
 import tempfile
-from demisto_sdk.commands.common.update_id_set import has_duplicate, get_integration_data, get_script_data, get_playbook_data, \
-    re_create_id_set, find_duplicates
+import unittest
+
+import pytest
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.update_id_set import (find_duplicates,
+                                                       get_integration_data,
+                                                       get_playbook_data,
+                                                       get_script_data,
+                                                       has_duplicate,
+                                                       re_create_id_set)
 
 WIDGET_DATA = {
     "id": "temp-widget-dup-check",

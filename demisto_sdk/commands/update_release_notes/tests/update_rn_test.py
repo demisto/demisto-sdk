@@ -17,6 +17,7 @@ def test_find_corresponding_yml():
     assert expected_result == filename
 
 
+
 def test_ident_changed_file_type():
     expected_result = ('HelloWorld test', 'Integration')
     from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN

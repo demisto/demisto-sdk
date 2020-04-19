@@ -6,8 +6,8 @@ import logging
 import os
 from typing import List, Optional, Tuple
 
-import docker
 # 3-rd party packages
+import docker
 import docker.errors
 import docker.models.containers
 import requests.exceptions
@@ -214,7 +214,9 @@ class Linter:
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             # Get lint files
-            lint_files = set(self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"], flags=NEGATE))
+            lint_files = set(
+                self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"],
+                                        flags=NEGATE))
         if 'commonserver' in self._pack_abs_dir.name.lower():
             if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                 self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
@@ -353,8 +355,8 @@ class Linter:
             lint_files(List[Path]): file to perform lint
 
         Returns:
-           int:  0 on successful else 1, errors
-           str: Bandit errors
+           int: 0 on successful else 1, errors
+           str: Vulture errors
         """
         log_prompt = f"{self._pack_name} - Vulture"
         logger.info(f"{log_prompt} - Start")
@@ -403,8 +405,7 @@ class Linter:
             image_id = ""
             errors = ""
             for trial in range(2):
-                image_id, errors = self._docker_image_create(docker_base_image=image,
-                                                             no_test=no_test)
+                image_id, errors = self._docker_image_create(docker_base_image=image)
                 if not errors:
                     break
 
@@ -453,6 +454,14 @@ class Linter:
                 pass
 
     def _docker_login(self) -> bool:
+        """ Login to docker-hub using enviorment varaibles:
+                1. DOCKERHUB_USER - User for docker hub.
+                2. DOCKERHUB_PASSWORD - Password for docker-hub.
+            Used in Circle-CI for pushing into repo devtestdemisto
+
+        Returns:
+            bool: True if logged in successfully.
+        """
         docker_user = os.getenv('DOCKERHUB_USER')
         docker_pass = os.getenv('DOCKERHUB_PASSWORD')
         try:
@@ -463,7 +472,7 @@ class Linter:
         except docker.errors.APIError:
             return False
 
-    def _docker_image_create(self, docker_base_image: str, no_test: bool) -> str:
+    def _docker_image_create(self, docker_base_image: str) -> str:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
             2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
@@ -472,8 +481,7 @@ class Linter:
                 demisto_sdk/commands/lint/templates/dockerfile.jinja2
 
         Args:
-            docker_base_image(str): docker image to use as base for installing dev deps.
-            no_test(bool): wheter to run tests or not - will install required packages if True.
+            docker_base_image(str): docker image to use as base for installing dev deps..
 
         Returns:
             string. image name to use
@@ -493,7 +501,6 @@ class Linter:
         try:
             dockerfile = template.render(image=docker_base_image[0],
                                          pypi_packs=requirements + self._facts["additional_requirements"],
-                                         no_test=(self._facts["test"] and no_test),
                                          pack_type=self._pkg_lint_status["pack_type"])
         except exceptions.TemplateError as e:
             logger.debug(f"{log_prompt} - Error when build image - {e.message()}")
@@ -562,7 +569,7 @@ class Linter:
         return test_image_id, errors
 
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
-        """ Run Pylint in container based to created test image
+        """ Run Pylint in created test image
 
         Args:
             test_image(str): test image id/name
@@ -635,7 +642,7 @@ class Linter:
         return exit_code, output
 
     def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str]:
-        """ Run Pytest in container based to created test image
+        """ Run Pytest in created test image
 
         Args:
             test_image(str): Test image id/name
@@ -718,7 +725,7 @@ class Linter:
         return exit_code, test_json
 
     def _docker_run_pwsh_analyze(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
-        """ Run Powershell code analyze in container based to created test image
+        """ Run Powershell code analyze in created test image
 
         Args:
             test_image(str): test image id/name
@@ -781,7 +788,7 @@ class Linter:
         return exit_code, output
 
     def _docker_run_pwsh_test(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
-        """ Run Powershell tests in container based to created test image
+        """ Run Powershell tests in created test image
 
         Args:
             test_image(str): test image id/name

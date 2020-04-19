@@ -207,7 +207,7 @@ class Initiator:
             'certification': 'certified',
             'useCases': [],
             'keywords': [],
-            'price': '0',
+            # 'price': '0',
             'dependencies': {},
         }
 
@@ -232,9 +232,9 @@ class Initiator:
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',')]
         metadata['tags'] = tags_list
-
-        price = input("\nThe price of the pack: ")
-        metadata['price'] = price
+        # TODO: add it back after #23546 is ready.
+        # price = input("\nThe price of the pack: ")
+        # metadata['price'] = price
 
         return metadata
 
@@ -268,19 +268,6 @@ class Initiator:
                 user_choice = input("\nThe option must be integer, please enter valid choice: ")
 
         return options_list[user_choice - 1]
-
-    @staticmethod
-    def get_yml_data_as_dict(file_path: str) -> Dict:
-        """Converts YML file data to Dict.
-
-        Args:
-            file_path (str): The path to the .yml file
-
-        Returns:
-            Dict. Data from YML.
-        """
-        with open(file_path) as f:
-            return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
@@ -365,7 +352,8 @@ class Initiator:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
             integration (bool): Indicates if integration yml is being reformatted.
         """
-        yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+        with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
+            yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
         if integration:

@@ -163,7 +163,7 @@ class SecretsValidator(object):
             file_contents = self.get_file_contents(file_path, file_extension)
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
-                file_contents = self.remove_white_list_regex(file_contents, secrets_white_list)
+                file_contents = self.remove_whitelisted_items_from_file(file_contents, secrets_white_list)
 
             yml_file_contents = self.get_related_yml_contents(file_path)
             # Add all context output paths keywords to whitelist temporary
@@ -211,10 +211,19 @@ class SecretsValidator(object):
         return secrets_found
 
     @staticmethod
-    def remove_white_list_regex(file_contents, secrets_white_list):
-        for regex in secrets_white_list:
-            file_contents = re.sub(regex, '', file_contents)
-        return file_contents
+    def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: list) -> str:
+        """Removes whitelisted items from file content
+
+        Arguments:
+            file_content (str): The content of the file to remove the whitelisted item from
+            secrets_white_list (list): List of whitelist items to remove from the file content.
+
+        Returns:
+            str: The file content with the whitelisted items removed.
+        """
+        for item in secrets_white_list:
+            file_content = file_content.replace(item, '')
+        return file_content
 
     @staticmethod
     def create_temp_white_list(file_contents):
@@ -309,11 +318,12 @@ class SecretsValidator(object):
         return entropy
 
     def get_white_listed_items(self, is_pack, pack_name):
-        whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME) if is_pack \
-            else self.white_list_path
-        final_white_list, ioc_white_list, files_while_list = \
-            self.get_packs_white_list(whitelist_path, pack_name) if is_pack else \
-            self.get_generic_white_list(whitelist_path)
+        final_white_list, ioc_white_list, files_white_list = self.get_generic_white_list(self.white_list_path)
+        if is_pack:
+            pack_whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME)
+            pack_white_list, _, pack_files_white_list = self.get_packs_white_list(pack_whitelist_path, pack_name)
+            final_white_list.extend(pack_white_list)
+            files_white_list.extend(pack_files_white_list)
 
         final_white_list = set(final_white_list)
         if '' in final_white_list:
@@ -321,7 +331,7 @@ class SecretsValidator(object):
             # cause whitelisting of every string
             final_white_list.remove('')
 
-        return final_white_list, set(ioc_white_list), set(files_while_list)
+        return final_white_list, set(ioc_white_list), set(files_white_list)
 
     @staticmethod
     def get_generic_white_list(whitelist_path):

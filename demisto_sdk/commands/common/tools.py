@@ -65,7 +65,7 @@ def print_color(obj, color):
 
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
-    """TODO: add unit test
+    """
     Gets the project directory and returns the path of all yml and json files in it
     Args:
         project_dir: String path to the project_dir
@@ -283,7 +283,7 @@ def get_script_or_integration_id(file_path):
 
 
 def get_id_by_content_entity(data: dict, content_entity: str):
-    """TODO: add unit test
+    """
     Returns the id of the file by it's content entity
     :param data: The data of the file
     :param content_entity: The content entity
@@ -298,7 +298,7 @@ def get_id_by_content_entity(data: dict, content_entity: str):
 
 
 def get_name_by_content_entity(data: dict, content_entity: str):
-    """TODO: add unit test
+    """
     Returns the name of the file by it's content entity
     :param data: The data of the file
     :param content_entity: The content entity
@@ -595,7 +595,7 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
 
 
 def find_type(path: str = '', _dict=None, file_type: str = ''):
-    """TODO: modify unit tests
+    """
     returns the content file type
 
     Arguments:
@@ -756,7 +756,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
 
 
 def retrieve_file_ending(file_path: str) -> str:
-    """TODO: add unit test
+    """
     Retrieves the file ending (without the dot)
     :param file_path: The file path
     :return: The file ending
@@ -766,10 +766,11 @@ def retrieve_file_ending(file_path: str) -> str:
         file_ending: str = os_split[1]
         if file_ending and '.' in file_ending:
             return file_ending[1:]
+    return ''
 
 
 def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
-    """TODO: add unit test
+    """
        Converts a string representation of args to a python list
 
        :type arg: ``str`` or ``list``
@@ -793,7 +794,7 @@ def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
 
 
 def depth(data: Any) -> int:
-    """TODO: add unit test
+    """
     Returns the depth of a data object
     :param data: The data
     :return: The depth of the data object

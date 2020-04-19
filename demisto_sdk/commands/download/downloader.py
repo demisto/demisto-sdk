@@ -29,6 +29,7 @@ class Downloader:
     Attributes:
         output_pack_path (str): The path of the output pack to download custom content to
         input_files (list): The list of custom content files names to download
+        insecure (bool): Indicates whether to you insecure connection or not
         force (bool): Indicates whether to merge existing files or not
         log_verbose (bool): Indicates whether to use verbose logs or not
         client (Demisto client): The Demisto client to make API calls
@@ -44,11 +45,10 @@ class Downloader:
         self.output_pack_path = output
         self.input_files = arg_to_list(input)
         self.force = force
+        self.insecure = insecure
         self.log_verbose = verbose
-        self.client = demisto_client.configure(verify_ssl=not insecure)
+        self.client = None
         self.custom_content_temp_dir = mkdtemp()
-        self.temp_dirs = list()
-        self.temp_dirs.append(self.custom_content_temp_dir)
         self.files_not_downloaded = list()
         self.custom_content = list()
         self.ryaml = YAML()
@@ -72,9 +72,9 @@ class Downloader:
         return 0
 
     def verify_path_is_pack(self) -> bool:
-        """TODO: add unit test
+        """
         Verifies the output path entered by the user is an actual pack path in content repository.
-        :return: Boolean indicates whether the path is pack path or not 
+        :return: Boolean indicates whether the path is pack path or not
         """
         output_pack_path = self.output_pack_path
         if not (os.path.isdir(output_pack_path)
@@ -100,7 +100,7 @@ class Downloader:
                     self.pack_content[content_entity].append(content_object)
 
     def build_pack_content_object(self, content_entity: str, entity_instance_path: str) -> dict:
-        """TODO: add unit test
+        """
         Build the pack content object the represents an entity instance.
         For example: HelloWorld Integration in Packs/HelloWorld.
         """
@@ -110,23 +110,23 @@ class Downloader:
         content_object: dict = dict()
 
         if file_paths:
-            main_id, main_data, main_file_path, main_name = self.get_main_file_details(content_entity,
-                                                                                       entity_instance_path)
-            content_object = {main_name: list()}
+            main_id, main_name = self.get_main_file_details(content_entity, entity_instance_path)
+            if main_id and main_name:
+                content_object = {main_name: list()}
 
-            for file_path in file_paths:
-                content_object[main_name].append({
-                    'name': main_name,
-                    'id': main_id,
-                    'path': file_path,
-                    'file_ending': retrieve_file_ending(file_path)
-                })
+                for file_path in file_paths:
+                    content_object[main_name].append({
+                        'name': main_name,
+                        'id': main_id,
+                        'path': file_path,
+                        'file_ending': retrieve_file_ending(file_path)
+                    })
 
         return content_object
 
     @staticmethod
     def get_main_file_details(content_entity: str, entity_instance_path: str) -> tuple:
-        """TODO: add unit test
+        """
         Returns the details of the "main" file within an entity instance.
         For example: In the HelloWorld integration under Packs/HelloWorld, the main file is the yml file.
         It contains all relevant ids and names for all the files under the HelloWorld integration dir.
@@ -141,23 +141,24 @@ class Downloader:
             elif os.path.isfile(entity_instance_path):
                 main_file_path = entity_instance_path
 
-            main_file_data = get_yaml(main_file_path)
+            if main_file_path:
+                main_file_data = get_yaml(main_file_path)
 
         # Entities which are json files (md files are ignored - changelog/readme)
         else:
-            if os.path.isfile(entity_instance_path) and entity_instance_path.endswith('json'):
-                main_file_path = entity_instance_path
+            if os.path.isfile(entity_instance_path) and entity_instance_path.endswith('.json'):
                 main_file_data = get_json(entity_instance_path)
 
         main_id = get_id_by_content_entity(main_file_data, content_entity)
         main_name = get_name_by_content_entity(main_file_data, content_entity)
 
-        return main_id, main_file_data, main_file_path, main_name
+        return main_id, main_name
 
     def fetch_custom_content(self) -> None:
-        """TODO: add unit test
+        """
         Fetches the custom content from Demisto into a temporary dir.
         """
+        self.client = demisto_client.configure(verify_ssl=not self.insecure)
         try:
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
             body: bytes = ast.literal_eval(api_response[0])
@@ -177,7 +178,7 @@ class Downloader:
 
     @staticmethod
     def update_file_prefix(file_name: str) -> str:
-        """TODO: add unit test
+        """
         Custom content scripts are prefixed with automation instead of script.
         """
         if file_name.startswith('automation-'):
@@ -199,12 +200,13 @@ class Downloader:
                     for entity_instance_object in self.pack_content[entity]:
                         if entity_instance_object.get(name):
                             exist_in_pack = True
+                            # move into function
                     custom_content_object['exist_in_pack'] = exist_in_pack
                     self.custom_content.append(custom_content_object)
 
     @staticmethod
     def build_custom_content_object(file_path: str) -> dict:
-        """TODO: add unit test
+        """
         Build the custom content object represents a custom content entity instance.
         For example: integration-HelloWorld.yml downloaded from Demisto.
         """
@@ -225,8 +227,8 @@ class Downloader:
 
     def update_pack_hierarchy(self) -> None:
         """TODO: add unit test
-        Adds all entity dirs are missing.
-        Adds all entity instance dirs are missing.
+        Adds all entity dirs (For example: Scripts) are missing.
+        Adds all entity instance dirs (For example: HelloWorldScript) are missing.
         :return: None
         """
         for custom_content_object in self.custom_content:
@@ -243,9 +245,9 @@ class Downloader:
 
     @staticmethod
     def create_dir_name(file_name: str) -> str:
-        """TODO: add unit test
+        """
         Creates the dir name corresponding to the file name.
-        For example: file_name = Hello World, dir_name = HelloWorld.
+        For example: file_name = Hello World Script, dir_name = HelloWorldScript.
         :param file_name: The file name
         :return: The dir name corresponding to the file name
         """
@@ -255,7 +257,7 @@ class Downloader:
         return dir_name
 
     def merge_into_pack(self) -> None:
-        """TODO: add unit test
+        """
         Merges the custom content into the output pack.
         If force flag is off than will merge only new files, otherwise will "Smart" merge existing files and
         download new files.
@@ -274,13 +276,15 @@ class Downloader:
             if exist_in_pack:
                 if self.force:
                     if file_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+                        # change old to exist
                         self.merge_and_extract_old_file(custom_content_object)
                     elif file_entity == PLAYBOOKS_DIR:
+                        # delete
                         self.merge_old_file(custom_content_object, file_ending)
                     else:
                         self.merge_old_file(custom_content_object, file_ending)
                 else:
-                    self.files_not_downloaded.append({'FILE NAME:': file_name, 'REASON': 'Force flag is off'})
+                    self.files_not_downloaded.append([file_name, 'File exists and -f is off'])
                     print_color(f'- Could not merge {file_type} "{file_name}" since file already exists and force flag '
                                 f'is off. To merge existing files use the download command with -f.', LOG_COLORS.NATIVE)
             else:
@@ -301,7 +305,6 @@ class Downloader:
         base_name: str = self.create_dir_name(file_name)
 
         temp_dir = mkdtemp()
-        self.temp_dirs.append(temp_dir)
 
         extractor = Extractor(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
                               no_logging=True, no_changelog=True, no_pipenv=True, no_readme=True,
@@ -325,6 +328,7 @@ class Downloader:
                 self.update_data(ex_file_path, corresponding_pack_file_path, ex_file_ending)
             shutil.move(src=ex_file_path, dst=corresponding_pack_file_path)
 
+        shutil.rmtree(temp_dir)
         print_color(f'- Merged {file_type} "{file_name}"', LOG_COLORS.NATIVE)
 
     def merge_old_file(self, custom_content_object: dict, file_ending: str) -> None:
@@ -345,10 +349,11 @@ class Downloader:
         corresponding_pack_file_path: str = corresponding_pack_file_object['path']
         self.update_data(file_path, corresponding_pack_file_path, file_ending)
         shutil.move(file_path, corresponding_pack_file_path)
+
         print_color(f'- Merged {file_type} "{file_name}"', LOG_COLORS.NATIVE)
 
     def merge_and_extract_new_file(self, custom_content_object: dict) -> None:
-        """TODO: add unit test
+        """
         Merges new files of type integration/script (not existing in the output pack)
         :param custom_content_object: The custom content object to merge into the pack
         :return: None
@@ -366,10 +371,11 @@ class Downloader:
         extractor = Extractor(input=file_path, output=output_path, file_type=file_type, base_name=dir_name,
                               no_auto_create_dir=True, no_logging=True, no_pipenv=True)
         extractor.extract_to_package_format()
+
         print_color(f'- Added {file_type} "{file_name}"', LOG_COLORS.NATIVE)
 
     def merge_new_file(self, custom_content_object: dict) -> None:
-        """TODO: add unit test
+        """
         Merges new files of type playbook/json (not existing in the output pack)
         :param custom_content_object: The custom content object to merge into the pack
         :return: None
@@ -383,6 +389,7 @@ class Downloader:
         output_name: str = os.path.basename(file_path)
         output_path: str = os.path.join(output_path, output_name)
         shutil.move(src=file_path, dst=output_path)
+
         print_color(f'- Added {file_type} "{file_name}"', LOG_COLORS.NATIVE)
 
     def get_corresponding_pack_content_object(self, custom_content_object: dict) -> dict:
@@ -443,7 +450,7 @@ class Downloader:
 
     @staticmethod
     def get_extracted_file_detail(file_ending: str) -> str:
-        """TODO: add unit test
+        """
         Returns the corresponding file detail of the extracted integration/script files
         :param file_ending: The file ending
         :return: The file type
@@ -459,7 +466,7 @@ class Downloader:
         return ''
 
     def get_searched_basename(self, file_name: str, file_ending: str, file_detail: str) -> str:
-        """TODO: add unit test
+        """
         Creates the file name to search for in the pack content file object
         :param file_name: The file name
         :param file_ending: The file ending
@@ -473,11 +480,10 @@ class Downloader:
             return f'{self.create_dir_name(file_name)}_{file_detail}.{file_ending}'
 
     def remove_traces(self):
-        """TODO: add unit test
+        """
         Removes (recursively) all temporary files & directories used across the module
         """
-        for temp_dir in self.temp_dirs:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+        shutil.rmtree(self.custom_content_temp_dir, ignore_errors=True)
 
     def log_files_not_downloaded(self) -> None:
         """TODO: add unit test
@@ -491,9 +497,8 @@ class Downloader:
                 if file_name == custom_content_object['name']:
                     exist_in_custom_content = True
             if not exist_in_custom_content:
-                self.files_not_downloaded.append({'FILE NAME': file_name, 'REASON': 'File not in custom content'})
+                self.files_not_downloaded.append([file_name, 'File not in custom content'])
 
         if self.files_not_downloaded:
             print_color("\nDidn't succeed to download the following files:\n", LOG_COLORS.RED)
-            table_values: list = [list(file.values()) for file in self.files_not_downloaded]
-            print_color(tabulate(table_values, headers=['FILE NAME', 'REASON']), LOG_COLORS.RED)
+            print_color(tabulate(self.files_not_downloaded, headers=['FILE NAME', 'REASON']), LOG_COLORS.RED)

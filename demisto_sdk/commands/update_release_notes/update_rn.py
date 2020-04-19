@@ -22,7 +22,6 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
-        # if self._does_pack_metadata_exist(self.pack_meta_file):
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'

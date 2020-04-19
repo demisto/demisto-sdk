@@ -53,9 +53,12 @@ class DockerImageValidator(object):
             self.is_latest_tag = False
             return self.is_latest_tag
 
-        if self.docker_image_latest_tag != self.docker_image_tag and not \
-                'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
-            # If docker image name are different and if the docker image isn't the default one
+        if self.docker_image_latest_tag != self.docker_image_tag:
+            # If docker image tag is the most updated one that exists in docker-hub
+            self.is_latest_tag = False
+
+        if 'demisto/python:1.3-alpine' != '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
+            # If the docker image isn't the default one
             self.is_latest_tag = False
 
         if not self.is_latest_tag:

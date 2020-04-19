@@ -17,7 +17,10 @@ import requests
 
 from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
     CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, PACKS_README_FILE_NAME
+    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, PACKS_README_FILE_NAME, \
+    SCRIPTS_DIR, INTEGRATIONS_DIR, DASHBOARDS_DIR, WIDGETS_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, \
+    TEST_PLAYBOOKS_DIR, REPORTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, LAYOUTS_DIR, CLASSIFIERS_DIR
+
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -724,3 +727,39 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return True, '/'.join(input_path_parts[len(content_path_parts):])
     else:
         return False, ''
+
+def is_path_of_integration_directory(path):
+    return os.path.basename(path) == INTEGRATIONS_DIR
+
+def is_path_of_script_directory(path):
+    return os.path.basename(path) == SCRIPTS_DIR
+
+def is_path_of_playbook_directory(path):
+    return os.path.basename(path) == PLAYBOOKS_DIR
+
+def is_path_of_test_playbook_directory(path):
+    return os.path.basename(path) == TEST_PLAYBOOKS_DIR
+
+def is_path_of_report_directory(path):
+    return os.path.basename(path) == REPORTS_DIR
+
+def is_path_of_dashboard_directory(path):
+    return os.path.basename(path) == DASHBOARDS_DIR
+
+def is_path_of_widget_directory(path):
+    return os.path.basename(path) == WIDGETS_DIR
+
+def is_path_of_incident_field_directory(path):
+    return os.path.basename(path) == INCIDENT_FIELDS_DIR
+
+def is_path_of_incident_type_directory(path):
+    return os.path.basename(path) == INCIDENT_TYPES_DIR
+
+def is_path_of_indicator_field_directory(path):
+    return os.path.basename(path) == INDICATOR_FIELDS_DIR
+
+def is_path_of_layout_directory(path):
+    return os.path.basename(path) == LAYOUTS_DIR
+
+def is_path_of_classifier_directory(path):
+    return os.path.basename(path) == CLASSIFIERS_DIR

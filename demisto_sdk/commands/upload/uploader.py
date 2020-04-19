@@ -2,7 +2,11 @@ import demisto_client
 import os
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_v, print_error, get_child_files, \
-    get_child_directories
+    get_child_directories, is_path_of_integration_directory, \
+    is_path_of_script_directory, is_path_of_playbook_directory, is_path_of_test_playbook_directory, \
+    is_path_of_dashboard_directory, is_path_of_widget_directory, is_path_of_incident_field_directory, \
+    is_path_of_incident_type_directory, is_path_of_indicator_field_directory, is_path_of_layout_directory, \
+    is_path_of_classifier_directory, find_type
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -25,79 +29,93 @@ class Uploader:
         if os.path.isdir(self.path):
             list_files_in_dir = get_child_files(self.path)
             if f'{self.path}/pack_metadata.json' in list_files_in_dir:
-                self.peck_uploader(self.path)
+                self.peck_uploader()
+            else:
+                self.directory_uploader(self.path)
         else:
-            print_error(f'Error: Path input is not a valid package directory. Check the given input path: {self.path}.')
+            file_type = find_type(self.path)
+            if file_type == "integration":
+                self.integration_uploader(self.path)
+
+            elif file_type == "script":
+                self.script_uploader(self.path)
+
+            elif file_type == "playbook":
+                self.playbook_uploader(self.path)
+
+            else:
+                print_error(f'Error: Path input is not valid. Check the given input path: {self.path}.')
         return 0
 
-    def peck_uploader(self, path):
-        list_directories = get_child_directories(path)
-
+    def peck_uploader(self):
+        list_directories = get_child_directories(self.path)
         for directory in list_directories:
+            self.directory_uploader(directory)
 
-            if directory.endswith(constants.INTEGRATIONS_DIR):
-                list_integrations = get_child_directories(directory)
-                for integration in list_integrations:
-                    self.integration_uploader(integration)
+    def directory_uploader(self, path):
+        if is_path_of_integration_directory(path):
+            list_integrations = get_child_directories(path)
+            for integration in list_integrations:
+                self.integration_uploader(integration)
 
-            elif directory.endswith(constants.SCRIPTS_DIR):
-                list_script = get_child_directories(directory)
-                for script in list_script:
-                    self.script_uploader(script)
+        elif is_path_of_script_directory(path):
+            list_script = get_child_directories(path)
+            for script in list_script:
+                self.script_uploader(script)
 
-            elif directory.endswith(f'/{constants.PLAYBOOKS_DIR}'):
-                list_playbooks = get_child_files(directory)
-                for playbook in list_playbooks:
-                    if playbook.endswith('.yml'):
-                        self.playbook_uploader(playbook)
+        elif is_path_of_playbook_directory(path):
+            list_playbooks = get_child_files(path)
+            for playbook in list_playbooks:
+                if playbook.endswith('.yml'):
+                    self.playbook_uploader(playbook)
 
-            elif directory.endswith(constants.INCIDENT_FIELDS_DIR):
-                list_incident_fields = get_child_files(directory)
-                for incident_field in list_incident_fields:
-                    if incident_field.endswith('.json'):
-                        self.incident_field_uploader(incident_field)
+        elif is_path_of_test_playbook_directory(path):
+            list_test_playbooks = get_child_files(path)
+            for test_playbook in list_test_playbooks:
+                if test_playbook.endswith('.yml'):
+                    self.test_playbook_uploader(test_playbook)
 
-            elif directory.endswith(constants.WIDGETS_DIR):
-                list_widgets = get_child_files(directory)
-                for widget in list_widgets:
-                    if widget.endswith('.json'):
-                        self.widget_uploader(widget)
+        elif is_path_of_incident_field_directory(path):
+            list_incident_fields = get_child_files(path)
+            for incident_field in list_incident_fields:
+                if incident_field.endswith('.json'):
+                    self.incident_field_uploader(incident_field)
 
-            elif directory.endswith(constants.DASHBOARDS_DIR):
-                list_dashboards = get_child_files(directory)
-                for dashboard in list_dashboards:
-                    if dashboard.endswith('.json'):
-                        self.dashboard_uploader(dashboard)
+        elif is_path_of_widget_directory(path):
+            list_widgets = get_child_files(path)
+            for widget in list_widgets:
+                if widget.endswith('.json'):
+                    self.widget_uploader(widget)
 
-            elif directory.endswith(constants.LAYOUTS_DIR):
-                list_layouts = get_child_files(directory)
-                for layout in list_layouts:
-                    if layout.endswith('.json'):
-                        self.layout_uploader(layout)
+        elif is_path_of_dashboard_directory(path):
+            list_dashboards = get_child_files(path)
+            for dashboard in list_dashboards:
+                if dashboard.endswith('.json'):
+                    self.dashboard_uploader(dashboard)
 
-            elif directory.endswith(constants.INDICATOR_FIELDS_DIR):
-                list_indicator_fields = get_child_files(directory)
-                for indicator_field in list_indicator_fields:
-                    if indicator_field.endswith('.json'):
-                        self.indicator_field_uploader(indicator_field)
+        elif is_path_of_layout_directory(path):
+            list_layouts = get_child_files(path)
+            for layout in list_layouts:
+                if layout.endswith('.json'):
+                    self.layout_uploader(layout)
 
-            elif directory.endswith(constants.INCIDENT_TYPES_DIR):
-                list_incident_types = get_child_files(directory)
-                for incident_type in list_incident_types:
-                    if incident_type.endswith('.json'):
-                        self.incident_type_uploader(incident_type)
+        elif is_path_of_indicator_field_directory(path):
+            list_indicator_fields = get_child_files(path)
+            for indicator_field in list_indicator_fields:
+                if indicator_field.endswith('.json'):
+                    self.indicator_field_uploader(indicator_field)
 
-            elif directory.endswith(constants.INDICATOR_TYPE_DIR):
-                list_indicator_types = get_child_files(directory)
-                for indicator_type in list_indicator_types:
-                    if indicator_type.endswith('.json'):
-                        self.indicator_type_uploader(indicator_type)
+        elif is_path_of_incident_type_directory(path):
+            list_incident_types = get_child_files(path)
+            for incident_type in list_incident_types:
+                if incident_type.endswith('.json'):
+                    self.incident_type_uploader(incident_type)
 
-            elif directory.endswith(constants.CLASSIFIERS_DIR):
-                list_classifiers = get_child_files(directory)
-                for classifiers in list_classifiers:
-                    if classifiers.endswith('.json'):
-                        self.classifiers_uploader(classifiers)
+        elif is_path_of_classifier_directory(path):
+            list_classifiers = get_child_files(path)
+            for classifiers in list_classifiers:
+                if classifiers.endswith('.json'):
+                    self.classifiers_uploader(classifiers)
 
     def integration_uploader(self, path):
         try:
@@ -126,7 +144,7 @@ class Uploader:
 
         finally:
             # Remove the temporary file
-            if os.path.isdir(self.path) and os.path.exists(path):
+            if os.path.exists(path):
                 try:
                     os.remove(path)
                 except (PermissionError, IsADirectoryError):
@@ -159,7 +177,7 @@ class Uploader:
 
         finally:
             # Remove the temporary file
-            if self.unify and os.path.exists(path):
+            if os.path.exists(path):
                 try:
                     os.remove(path)
                 except (PermissionError, IsADirectoryError):
@@ -182,6 +200,22 @@ class Uploader:
             return 1
         """
         print(f'{path} - playbook_uploader in construction')
+
+    def test_playbook_uploader(self, path):
+        """
+        try:
+            # Upload the file to Demisto
+            result = self.client.test_playbook_upload(file=path)
+
+            # Print results
+            print_v(f'Result:\n{result.to_str()}', self.log_verbose)
+            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+
+        except Exception as err:
+            print_error(str(err))
+            return 1
+        """
+        print(f'{path} - test_playbook_uploader in construction')
 
     def incident_field_uploader(self, path):
         """
@@ -279,21 +313,6 @@ class Uploader:
         """
         print(f'{path} - incident_type_uploader in construction')
 
-    def indicator_type_uploader(self, path):
-        """
-        try:
-            # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
-
-            # Print results
-            print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
-
-        except Exception as err:
-            print_error(str(err))
-            return 1
-        """
-        print(f'{path} - indicator_type_uploader in construction')
 
     def classifiers_uploader(self, path):
         """

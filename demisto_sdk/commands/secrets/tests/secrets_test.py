@@ -178,7 +178,9 @@ my_email = "fooo@someorg.com"
     def test_remove_whitelisted_items_from_file_substring(self):
         white_list = 'url.com'
         file_contents = '''
+        url.com
         boop
+        cool@url.com
         shmoop
         https://url.com
         '''

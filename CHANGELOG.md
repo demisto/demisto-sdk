@@ -2,7 +2,7 @@
 
 
 #### 0.5.2
-* Added *-c, --command* option in *generate-docs* to generate a specific command from integration.
+* Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.
 * Fixed an issue when getting README/CHANGELOG files from git and loading them.
 * Removed release notes validation for new content.
 * Fixed secrets validations for files with the same name in a different directory.

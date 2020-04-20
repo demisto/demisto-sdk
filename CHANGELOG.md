@@ -1,5 +1,5 @@
 # Changelog
-
+* demisto-sdk lint - Add error when package missing in docker image.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

@@ -469,6 +469,7 @@ class LintManager:
                                               string=test_case.get("name"))
                                 print(wrapper_test.fill(name))
                                 if test_case.get("call", {}).get("longrepr"):
+                                    print(wrapper_docker_image.fill(image['image']))
                                     for i in range(len(test_case.get("call", {}).get("longrepr"))):
                                         if i == 0:
                                             print(wrapper_first_error.fill(
@@ -477,7 +478,10 @@ class LintManager:
                                             print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
                                     print('\n')
                     else:
-                        print(wrapper_sec_error.fill(image.get("pytest_errors", {})))
+                        print(wrapper_docker_image.fill(image['image']))
+                        errors = image.get("pytest_errors", {})
+                        if errors:
+                            print(wrapper_sec_error.fill(errors))
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):

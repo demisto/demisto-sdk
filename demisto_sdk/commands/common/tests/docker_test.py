@@ -132,8 +132,6 @@ def test_parse_docker_image():
 
 
 # disable-secrets-detection-end
-
-
 def test_is_docker_image_latest_tag():
     # testing that the docker image most update tag is in use it have to be a numeric one and not "latest"
     with patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):

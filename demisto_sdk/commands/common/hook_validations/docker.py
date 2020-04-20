@@ -1,6 +1,5 @@
 import re
 from datetime import datetime, timedelta
-from distutils.version import LooseVersion
 
 from pkg_resources import parse_version
 

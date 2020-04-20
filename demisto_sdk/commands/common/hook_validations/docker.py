@@ -53,12 +53,10 @@ class DockerImageValidator(object):
             self.is_latest_tag = False
             return self.is_latest_tag
 
-        if self.docker_image_latest_tag != self.docker_image_tag:
+        if self.docker_image_latest_tag != self.docker_image_tag and \
+                not 'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
             # If docker image tag is the most updated one that exists in docker-hub
-            self.is_latest_tag = False
-
-        if 'demisto/python:1.3-alpine' != '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
-            # If the docker image isn't the default one
+            # and the docker image is not the default one
             self.is_latest_tag = False
 
         if not self.is_latest_tag:
@@ -68,6 +66,16 @@ class DockerImageValidator(object):
                         'You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n'
                         .format(self.docker_image_tag, self.docker_image_latest_tag, self.docker_image_name,
                                 self.docker_image_name))
+
+        # the most updated tag should be numeric and not labeled "latest"
+        if self.docker_image_latest_tag == "latest":
+            print_error('The most updated docker image tag is labeled "latest",\n'
+                        'Please create a new updated numeric image\n'
+                        'The current docker image tag in the yml file is: {}\n'
+                        'You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n'
+                        .format(self.docker_image_tag, self.docker_image_name,
+                                self.docker_image_name))
+
         return self.is_latest_tag
 
     def get_docker_image_from_yml(self):
@@ -167,8 +175,6 @@ class DockerImageValidator(object):
     @staticmethod
     def find_latest_tag_by_date(tags: list) -> str:
         """Get the latest tags by datetime comparison.
-            as long as it's not labeled 'latest'
-
         Args:
             tags(list): List of dictionaries representing the docker image tags
 
@@ -182,8 +188,6 @@ class DockerImageValidator(object):
             if tag_date >= latest_tag_date and tag.get('name') != 'latest':
                 latest_tag_date = tag_date
                 latest_tag_name = tag.get('name')
-        if latest_tag_name == 'latest':
-            print_error('The docker image tag is labeled "latest" please create a valid docker image tag')
         return latest_tag_name
 
     @staticmethod

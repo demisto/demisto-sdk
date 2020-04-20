@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import get_yaml
-from mock import patch
+from unittest.mock import patch
 
 RETURN_ERROR_TARGET = 'GetDockerImageLatestTag.return_error'
 
@@ -135,49 +135,31 @@ def test_parse_docker_image():
 
 
 def test_is_docker_image_latest_tag():
+    # testing that the docker image most update tag is in use it have to be a numeric one and not "latest"
     with patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
-        docker_image_validator.docker_image_latest_tag = 'latest_tag'
+        docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.from_version = '5.0.0'
 
-        # ===== Added File Tests =====
         # default docker image
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_modified_file = False
         docker_image_validator.docker_image_tag = '1.3-alpine'
-        assert docker_image_validator.is_docker_image_latest_tag() is False
+        assert docker_image_validator.is_docker_image_latest_tag() is True
 
-        # regular docker image, not latest tag
-        docker_image_validator.is_latest_tag = True
-        docker_image_validator.docker_image_tag = 'not_latest_tag'
-        assert docker_image_validator.is_docker_image_latest_tag() is False
-
-        # regular docker image, latest tag
+        # regular docker image, not most updated tag
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = 'latest_tag'
-        assert docker_image_validator.is_docker_image_latest_tag() is True
-
-        # ===== Modified File Tests =====
-        # from version 4.1.0
-        docker_image_validator.is_latest_tag = True
-        docker_image_validator.is_modified_file = True
-        docker_image_validator.from_version = '4.1.0'
-        assert docker_image_validator.is_docker_image_latest_tag() is True
-
-        # from version 5.0.0 - regular docker image, latest tag
-        docker_image_validator.is_latest_tag = True
-        docker_image_validator.from_version = '5.0.0'
-        assert docker_image_validator.is_docker_image_latest_tag() is True
-
-        # from version 5.0.0 - regular docker image, not latest tag
-        docker_image_validator.is_latest_tag = True
-        docker_image_validator.from_version = '5.0.0'
-        docker_image_validator.docker_image_tag = 'not_latest_tag'
         assert docker_image_validator.is_docker_image_latest_tag() is False
 
-        # from version 5.0.0 - default docker image
+        # regular docker image, most updated tag
         docker_image_validator.is_latest_tag = True
-        docker_image_validator.docker_image_tag = '1.3-alpine'
+        docker_image_validator.docker_image_tag = '1.0.3'
         assert docker_image_validator.is_docker_image_latest_tag() is True
+
+        # "latest" docker image, not numeric
+        docker_image_validator.is_latest_tag = True
+        docker_image_validator.docker_image_latest_tag = 'latest'
+        assert docker_image_validator.is_docker_image_latest_tag() is False

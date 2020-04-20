@@ -127,6 +127,8 @@ def test_check_global_secrets_positive(mocker):
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[integration_with_secrets_path]
     )
+    import os
+    raise Exception(os.getcwd())
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0

@@ -1,4 +1,5 @@
 from os.path import join
+from tempfile import NamedTemporaryFile
 
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -67,3 +68,34 @@ def test_integration_secrets_negative(mocker):
     assert "Dynamics365ForMarketingEmail" in result.stdout
     assert "Remove or whitelist secrets in order to proceed, then re-commit" in result.stdout
     assert result.stderr == ""
+
+
+def test_integration_secrets_positive_s(mocker):
+    """
+    Given
+    - FeedAzure integration yml with secrets.
+
+    When
+    - Running secrets validation on it.
+
+    Then
+    - Ensure secrets validation succeed.
+    - Ensure secret strings are in failure message.
+    """
+    whitelist = """
+    365ForMarketingEmail
+    feedBypassExclusionList
+    """
+    with NamedTemporaryFile("w+") as temp:
+        temp.write(whitelist)
+        temp.seek(0)
+        integration_with_secrets_path = join(
+            DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
+        )
+        mocker.patch(
+            "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
+            return_value=[integration_with_secrets_path]
+        )
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [SECRETS_CMD, '-wl', temp.name])
+        assert result.exit_code == 0

@@ -384,7 +384,8 @@ class LintManager:
                 print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.red}{fail_pack}{Colors.reset}")
-                    print(pkgs_status[fail_pack]["images"][0][f"{check}_errors"])
+                    for image in pkgs_status[fail_pack]["images"]:
+                        print(image[f"{check}_errors"])
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """ Log failed unit-tests , if verbosity specified will log also success unit-tests
@@ -460,20 +461,23 @@ class LintManager:
                 print(wrapper_pack.fill(f"{Colors.Fg.red}{fail_pack}{Colors.reset}"))
                 for image in pkgs_status[fail_pack]["images"]:
                     tests = image.get("pytest_json", {}).get("report", {}).get("tests")
-                    for test_case in tests:
-                        if test_case.get("call", {}).get("outcome") == "failed":
-                            name = re.sub(pattern=r"\[.*\]",
-                                          repl="",
-                                          string=test_case.get("name"))
-                            print(wrapper_test.fill(name))
-                            if test_case.get("call", {}).get("longrepr"):
-                                for i in range(len(test_case.get("call", {}).get("longrepr"))):
-                                    if i == 0:
-                                        print(wrapper_first_error.fill(
-                                            test_case.get("call", {}).get("longrepr")[i]))
-                                    else:
-                                        print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
-                                print('\n')
+                    if tests:
+                        for test_case in tests:
+                            if test_case.get("call", {}).get("outcome") == "failed":
+                                name = re.sub(pattern=r"\[.*\]",
+                                              repl="",
+                                              string=test_case.get("name"))
+                                print(wrapper_test.fill(name))
+                                if test_case.get("call", {}).get("longrepr"):
+                                    for i in range(len(test_case.get("call", {}).get("longrepr"))):
+                                        if i == 0:
+                                            print(wrapper_first_error.fill(
+                                                test_case.get("call", {}).get("longrepr")[i]))
+                                        else:
+                                            print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
+                                    print('\n')
+                    else:
+                        print(wrapper_sec_error.fill(image.get("pytest_errors", {})))
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):

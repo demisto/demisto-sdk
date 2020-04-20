@@ -1,9 +1,10 @@
+import json
 from os.path import join
+from tempfile import NamedTemporaryFile
 
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 SECRETS_CMD = "secrets"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -88,18 +89,19 @@ def test_integration_secrets_integration_positive(mocker):
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[integration_with_secrets_path]
     )
-    whitelist = """
-    365ForMarketingEmail
-    feedBypassExclusionList
-    """
-
-    def mock_integration_with_secrets(*args, **kwargs):
-        return [integration_with_secrets_path]
-
-    def mock_return_whitelists(*args, **kwargs):
-        return whitelist, [], []
-
-    secrets = SecretsValidator()
-    secrets.get_all_diff_text_files = mock_integration_with_secrets
-    secrets.get_generic_white_list = mock_return_whitelists
-    assert secrets.run() == 0
+    whitelist = {
+        "iocs": [],
+        "urls": [],
+        "somethingelse": [],
+        "generic_strings": [
+            "365ForMarketingEmail",
+            "feedBypassExclusionList"
+        ]
+    }
+    with NamedTemporaryFile("w+") as f:
+        json.dump(whitelist, f)
+        f.seek(0)
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [SECRETS_CMD, '-wl', f.name], catch_exceptions=False)
+        print(result.output)
+        assert result.exit_code == 0

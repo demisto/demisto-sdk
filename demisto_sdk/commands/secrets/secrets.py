@@ -213,12 +213,12 @@ class SecretsValidator(object):
         return secrets_found
 
     @staticmethod
-    def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: list) -> str:
+    def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: set) -> str:
         """Removes whitelisted items from file content
 
         Arguments:
             file_content (str): The content of the file to remove the whitelisted item from
-            secrets_white_list (list): List of whitelist items to remove from the file content.
+            secrets_white_list (set): List of whitelist items to remove from the file content.
 
         Returns:
             str: The file content with the whitelisted items removed.

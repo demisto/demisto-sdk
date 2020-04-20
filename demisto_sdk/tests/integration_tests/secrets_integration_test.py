@@ -1,5 +1,4 @@
 import json
-import shutil
 from os.path import join
 from pathlib import Path
 
@@ -108,11 +107,11 @@ def test_integration_secrets_integration_positive(mocker, tmp_path):
     assert "no secrets were found" in result.stdout
 
 
-def test_check_global_secrets_positive(mocker, tmpdir):
+def test_check_global_secrets_positive(mocker):
     """
     Given
     - An integration yml with secrets.
-    - Content Repo with whitelist file in it
+    - Content Repo with whitelist file in it (Tests/secrets_white_list.json)
 
     When
     - Running secrets validation on it.
@@ -121,24 +120,9 @@ def test_check_global_secrets_positive(mocker, tmpdir):
     - Ensure secrets validation fails.
     - Ensure secret strings are in failure message.
     """
-    content_repo = tmpdir / "content"
     integration_with_secrets_path = join(
-        content_repo,
-        "Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
+        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
     )
-    shutil.copytree(join(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"), Path(content_repo))
-    secrets_path = tmpdir.mkdir("content/Tests").join("secrets_white_list.json")
-    secrets_path.write(json.dumps(
-        {
-            "iocs": [],
-            "urls": [],
-            "somethingelse": [],
-            "generic_strings": [
-                "365ForMarketingEmail",
-                "feedBypassExclusionList"
-            ]
-        }
-    ))
     mocker.patch(
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[integration_with_secrets_path]
@@ -147,3 +131,4 @@ def test_check_global_secrets_positive(mocker, tmpdir):
     result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0
     assert not result.stderr
+    assert "no secrets were found" in result.stdout

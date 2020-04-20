@@ -1,9 +1,10 @@
-import os
-from demisto_sdk.commands.secrets.secrets import SecretsValidator
 import io
-import shutil
 import json
+import os
+import shutil
+
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 
 def create_whitelist_secrets_file(file_path, urls=[], ips=[], files=[], generic_strings=[]):
@@ -89,7 +90,7 @@ print(some_dict.some_foo)
             ''')
 
         secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS])
-        assert secrets_found['file_with_secrets_in_it.yml'] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
+        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
 
     def test_ignore_entropy(self):
         """
@@ -125,7 +126,43 @@ some_dict = {
             ''')
 
         secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS], True)
-        assert secrets_found['file_with_secrets_in_it.yml'] == ['fooo@someorg.com']
+        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == ['fooo@someorg.com']
+
+    def test_two_files_with_same_name(self):
+        """
+        - no items in the whitelist
+        - file contains 1 secret:
+            - email
+
+        - run validate secrets with --ignore-entropy=True
+
+        - ensure secret is found in two files from different directories with the same base name
+        """
+        create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
+        dir1_path = os.path.join(TestSecrets.TEMP_DIR, "dir1")
+        dir2_path = os.path.join(TestSecrets.TEMP_DIR, "dir2")
+        os.mkdir(dir1_path)
+        os.mkdir(dir2_path)
+        validator = SecretsValidator(is_circle=True,
+                                     ignore_entropy=True,
+                                     white_list_path=os.path.join(TestSecrets.TEMP_DIR,
+                                                                  TestSecrets.WHITE_LIST_FILE_NAME))
+
+        file_name = 'README.md'
+        file1_path = os.path.join(dir1_path, file_name)
+        file2_path = os.path.join(dir2_path, file_name)
+        for file_path in [file1_path, file2_path]:
+            with io.open(file_path, 'w') as f:
+                f.write('''
+print('This is our dummy code')
+
+my_email = "fooo@someorg.com"
+
+
+''')
+        secrets_found = validator.search_potential_secrets([file1_path, file2_path], True)
+        assert secrets_found[os.path.join(dir1_path, file_name)] == ['fooo@someorg.com']
+        assert secrets_found[os.path.join(dir2_path, file_name)] == ['fooo@someorg.com']
 
     def test_remove_white_list_regex(self):
         white_list = '155.165.45.232'
@@ -134,7 +171,7 @@ some_dict = {
         shmoop
         155.165.45.232
         '''
-        file_contents = self.validator.remove_white_list_regex(white_list, file_contents)
+        file_contents = self.validator.remove_whitelisted_items_from_file(white_list, file_contents)
         assert white_list not in file_contents
 
     def test_temp_white_list(self):
@@ -194,3 +231,16 @@ some_dict = {
         file_contents = self.TEST_BASE_64_STRING
         file_contents = self.validator.ignore_base64(file_contents)
         assert file_contents.lstrip() == 'sade'
+
+    def test_get_white_listed_items_not_pack(self):
+        final_white_list, ioc_white_list, files_white_list = self.validator.get_white_listed_items(False, None)
+        assert final_white_list == {'https://api.zoom.us', 'PaloAltoNetworksXDR', 'ip-172-31-15-237'}
+        assert ioc_white_list == {'https://api.zoom.us'}
+        assert files_white_list == set()
+
+    def test_get_white_listed_items_pack(self, monkeypatch):
+        monkeypatch.setattr('demisto_sdk.commands.secrets.secrets.PACKS_DIR', self.FILES_PATH)
+        final_white_list, ioc_white_list, files_white_list = self.validator.get_white_listed_items(True, 'fake_pack')
+        assert final_white_list == {'https://www.demisto.com', 'https://api.zoom.us', 'PaloAltoNetworksXDR', 'ip-172-31-15-237'}
+        assert ioc_white_list == {'https://api.zoom.us'}
+        assert files_white_list == set()

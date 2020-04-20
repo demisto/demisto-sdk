@@ -3,9 +3,9 @@ from __future__ import print_function
 import os
 import re
 
-from demisto_sdk.commands.common.tools import run_command
-from demisto_sdk.commands.common.tools import print_error, get_latest_release_notes_text, \
-    get_release_notes_file_path
+from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
+                                               get_release_notes_file_path,
+                                               print_error, run_command)
 
 
 class ReleaseNotesValidator:

@@ -1,8 +1,8 @@
 import pytest
-
-from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-
+from demisto_sdk.commands.common.hook_validations.reputation import \
+    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 
 data_is_valid_version = [
     (-1, True),

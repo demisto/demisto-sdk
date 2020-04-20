@@ -1,8 +1,10 @@
-import pytest
 import io
 import os
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+
+import pytest
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
+    PackUniqueFilesValidator
 
 
 class TestPackMetadataValidator:
@@ -18,8 +20,13 @@ class TestPackMetadataValidator:
         validator = PackUniqueFilesValidator('fake')
         assert validator.validate_pack_meta_file()
 
+    # TODO: add the validation for price after #23546 is ready.
     @pytest.mark.parametrize('metadata', [os.path.join(FILES_PATH, 'pack_metadata_missing_fields.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
+                                          # os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_dependencies.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_list_dependencies.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_empty_category.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_list.json')])
     def test_metadata_validator_invalid(self, mocker, metadata):

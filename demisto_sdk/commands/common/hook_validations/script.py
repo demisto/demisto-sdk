@@ -1,8 +1,12 @@
-from demisto_sdk.commands.common.constants import PYTHON_SUBTYPES, Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.tools import print_error, server_version_compare, get_dockerimage45
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.constants import (PYTHON_SUBTYPES, TYPE_PWSH,
+                                                   Errors)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
+from demisto_sdk.commands.common.tools import (get_dockerimage45, print_error,
+                                               server_version_compare)
 
 
 class ScriptValidator(BaseValidator):
@@ -57,6 +61,7 @@ class ScriptValidator(BaseValidator):
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
+            self.is_valid_pwsh(),
         ])
         # check only on added files
         if not self.old_file:
@@ -186,3 +191,11 @@ class ScriptValidator(BaseValidator):
                 print_error(Errors.invalid_v2_script_name(self.file_path))
                 return False
             return True
+
+    def is_valid_pwsh(self) -> bool:
+        if self.current_file.get("type") == TYPE_PWSH:
+            from_version = self.current_file.get("fromversion", "0.0.0")
+            if not from_version or server_version_compare("5.5.0", from_version) > 0:
+                print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                return False
+        return True

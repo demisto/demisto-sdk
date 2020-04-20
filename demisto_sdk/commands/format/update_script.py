@@ -1,29 +1,38 @@
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS
-from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
+from typing import Tuple
+
+from demisto_sdk.commands.common.constants import TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 
 
 class ScriptYMLFormat(BaseUpdateYML):
     """ScriptYMLFormat class is designed to update script YML file according to Demisto's convention.
 
         Attributes:
-            source_file (str): the path to the file we are updating at the moment.
-            output_file_name (str): the desired file name to save the updated version of the YML to.
-            yml_data (Dict): YML file data arranged in a Dict.
-            id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
+            input (str): the path to the file we are updating at the moment.
+            output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, source_file='', output_file_name=''):
-        super().__init__(source_file, output_file_name)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+        super().__init__(input, output, path, from_version, no_validate)
+        if not from_version and self.data.get("type") == TYPE_PWSH:
+            self.from_version = '5.5.0'
 
-    def format_file(self):
-        """Manager function for the script YML updater."""
-        super().update_yml()
+    def run_format(self) -> int:
+        try:
+            super().update_yml()
+            self.save_yml_to_destination_file()
+            return SUCCESS_RETURN_CODE
+        except Exception:
+            return ERROR_RETURN_CODE
 
-        print_color(F'========Starting updates for script: {self.source_file}=======', LOG_COLORS.YELLOW)
-
-        self.save_yml_to_destination_file()
-
-        print_color(F'========Finished updates for script: {self.output_file_name}=======', LOG_COLORS.YELLOW)
-
-        return self.initiate_file_validator(ScriptValidator, 'script')
+    def format_file(self) -> Tuple[int, int]:
+        """Manager function for the integration YML updater."""
+        format = self.run_format()
+        if format:
+            return format, SKIP_RETURN_CODE
+        else:
+            return format, self.initiate_file_validator(ScriptValidator)

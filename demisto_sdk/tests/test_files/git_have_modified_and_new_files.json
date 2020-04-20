@@ -1,0 +1,18 @@
+{
+    "data" : {
+        "params_without_data" : {
+            "modified_files1" : [""],
+            "added_files1" : [""],
+            "old_format_files1" : [""],
+            "packs1" : [""]
+    },
+
+        "params_with_data" : [
+            ["/path/mod_file1", "/path/mod_file2", "/path/mod_file3"],
+            ["/path/add_file1", "/path/add_file2", "/path/add_file3"],
+            ["/path/old_file1", "/path/old_file2", "/path/old_file3"],
+            ["/path/pack_file1", "/path/pack_file2", "/path/pack_file3"]
+
+        ]
+    }
+}

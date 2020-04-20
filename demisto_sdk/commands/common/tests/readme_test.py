@@ -1,7 +1,8 @@
-import pytest
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.git_tools import git_path
 import os
+
+import pytest
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'

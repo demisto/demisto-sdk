@@ -11,6 +11,11 @@ class Errors:
             .format(file_path, given_fromversion, needed_from_version)
 
     @staticmethod
+    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
+        return (f'{file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
+                f' Found version: {given_fromversion}')
+
+    @staticmethod
     def not_used_display_name(file_path, field_name):
         return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
             field_name, file_path)
@@ -538,11 +543,12 @@ PACK_METADATA_USE_CASES = 'useCases'
 PACK_METADATA_KEYWORDS = 'keywords'
 PACK_METADATA_PRICE = 'price'
 PACK_METADATA_DEPENDENCIES = 'dependencies'
+# TODO: add PACK_METADATA_PRICE to validated fields after #23546 is ready.
 PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_MIN_VERSION, PACK_METADATA_CURR_VERSION,
                         PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
                         PACK_METADATA_TAGS, PACK_METADATA_CREATED, PACK_METADATA_BETA,
                         PACK_METADATA_DEPRECATED, PACK_METADATA_CERTIFICATION, PACK_METADATA_USE_CASES,
-                        PACK_METADATA_KEYWORDS, PACK_METADATA_PRICE, PACK_METADATA_DEPENDENCIES)
+                        PACK_METADATA_KEYWORDS, PACK_METADATA_DEPENDENCIES)
 API_MODULES_PACK = 'ApiModules'
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
@@ -699,6 +705,7 @@ JSON_ALL_INCIDENT_TYPES_REGEXES = [
 
 JSON_ALL_INDICATOR_FIELDS_REGEXES = [
     INDICATOR_FIELDS_REGEX,
+    PACKS_INDICATOR_FIELDS_REGEX
 ]
 
 JSON_ALL_CONNECTIONS_REGEXES = [
@@ -898,6 +905,7 @@ class PB_Status:
     COMPLETED = 'completed'
     FAILED = 'failed'
     IN_PROGRESS = 'inprogress'
+    FAILED_DOCKER_TEST = 'failed_docker_test'
 
 
 # change log regexes
@@ -932,7 +940,7 @@ SCHEMA_TO_REGEX = {
     'classifier': JSON_ALL_CLASSIFIER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
-    'incidenttype': [INCIDENT_TYPE_REGEX],
+    'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
     'image': [IMAGE_REGEX],
     'reputation': [REPUTATION_REGEX],
     'changelog': [INTEGRATION_CHANGELOG_REGEX, PACKS_CHANGELOG_REGEX, REPUTATION_CHANGELOG_REGEX,
@@ -1052,3 +1060,5 @@ FETCH_REQUIRED_PARAMS = [
         'type': 8
     }
 ]
+
+DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'

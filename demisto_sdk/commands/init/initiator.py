@@ -1,18 +1,32 @@
+import json
 import os
 import shutil
+from datetime import datetime
+from distutils.dir_util import copy_tree
+from typing import Dict, List
+
 import yaml
 import yamlordereddictloader
-import json
-from datetime import datetime
-from typing import Dict
-from distutils.dir_util import copy_tree
-
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import print_error, print_color, LOG_COLORS, get_common_server_path, print_v
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, \
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, \
-    CONNECTIONS_DIR, DASHBOARDS_DIR, MISC_DIR, REPORTS_DIR, WIDGETS_DIR, PACK_INITIAL_VERSION, INTEGRATION_CATEGORIES, \
-    PACK_SUPPORT_OPTIONS
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+                                                   CONNECTIONS_DIR,
+                                                   DASHBOARDS_DIR,
+                                                   INCIDENT_FIELDS_DIR,
+                                                   INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR,
+                                                   INTEGRATION_CATEGORIES,
+                                                   INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR, MISC_DIR,
+                                                   PACK_INITIAL_VERSION,
+                                                   PACK_SUPPORT_OPTIONS,
+                                                   PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   WIDGETS_DIR)
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               get_common_server_path,
+                                               print_color, print_error,
+                                               print_v)
 
 
 class Initiator:
@@ -166,7 +180,15 @@ class Initiator:
         return True
 
     @staticmethod
-    def create_metadata(fill_manually):
+    def create_metadata(fill_manually: bool) -> Dict:
+        """Builds pack metadata JSON content.
+
+        Args:
+            fill_manually (bool): Whether to interact with the user to fill in metadata details or not.
+
+        Returns:
+            Dict. Pack metadata JSON content.
+        """
         metadata = {
             'name': '## FILL OUT MANUALLY ##',
             'description': '## FILL OUT MANUALLY ##',
@@ -185,7 +207,7 @@ class Initiator:
             'certification': 'certified',
             'useCases': [],
             'keywords': [],
-            'price': '0',
+            # 'price': '0',
             'dependencies': {},
         }
 
@@ -210,14 +232,23 @@ class Initiator:
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',')]
         metadata['tags'] = tags_list
-
-        price = input("\nThe price of the pack: ")
-        metadata['price'] = price
+        # TODO: add it back after #23546 is ready.
+        # price = input("\nThe price of the pack: ")
+        # metadata['price'] = price
 
         return metadata
 
     @staticmethod
-    def get_valid_user_input(options_list, option_message):
+    def get_valid_user_input(options_list: List[str], option_message: str) -> str:
+        """Gets user input from a list of options, by integer represents the choice.
+
+        Args:
+            options_list (List[str]): List of options for the user to choose from.
+            option_message (str): The message to show the user along with the list of options.
+
+        Returns:
+            str. The chosen option.
+        """
         for index, option in enumerate(options_list, start=1):
             option_message += f"[{index}] {option}\n"
         option_message += "\nEnter option: "
@@ -237,19 +268,6 @@ class Initiator:
                 user_choice = input("\nThe option must be integer, please enter valid choice: ")
 
         return options_list[user_choice - 1]
-
-    @staticmethod
-    def get_yml_data_as_dict(file_path: str) -> Dict:
-        """Converts YML file data to Dict.
-
-        Args:
-            file_path (str): The path to the .yml file
-
-        Returns:
-            Dict. Data from YML.
-        """
-        with open(file_path) as f:
-            return yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
@@ -334,7 +352,8 @@ class Initiator:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
             integration (bool): Indicates if integration yml is being reformatted.
         """
-        yml_dict = self.get_yml_data_as_dict(file_path=os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+        with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
+            yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
         if integration:

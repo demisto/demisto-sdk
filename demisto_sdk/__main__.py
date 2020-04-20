@@ -50,7 +50,7 @@ class DemistoSDK:
         self.configuration = None
 
 
-class RNUpdate(click.ParamType):
+class RNInputValidation(click.ParamType):
     name = 'update_type'
 
     def validate_rn_input(self, value, param, ctx):
@@ -661,7 +661,7 @@ def id_set_command(**kwargs):
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
-    type=RNUpdate()
+    type=RNInputValidation()
 )
 @click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",

@@ -55,10 +55,10 @@ class UpdateRN:
     @staticmethod
     def find_corresponding_yml(file_path):
         if file_path.endswith('.py'):
-            sanitized = file_path.replace('.py', '.yml')
+            yml_filepath = file_path.replace('.py', '.yml')
         else:
-            sanitized = file_path
-        return sanitized
+            yml_filepath = file_path
+        return yml_filepath
 
     def ident_changed_file_type(self, file_path):
         _file_type = None
@@ -92,6 +92,9 @@ class UpdateRN:
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[0] = str(int(version[0]) + 1)
+            if int(version[0]) > 99:
+                print_error("Version number is greater than 99. Please verify the currentVersion is"
+                            "correct. If it is, then something is very broken.")
             version[1] = '0'
             version[2] = '0'
             new_version = '.'.join(version)
@@ -99,6 +102,9 @@ class UpdateRN:
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[1] = str(int(version[1]) + 1)
+            if int(version[1]) > 99:
+                print_error("Version number is greater than 99. Please verify the currentVersion is"
+                            "correct. If it is, then consider bumping to a new Major version.")
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
@@ -106,6 +112,9 @@ class UpdateRN:
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[2] = str(int(version[2]) + 1)
+            if int(version[2]) > 99:
+                print_error("Version number is greater than 99. Please verify the currentVersion is"
+                            "correct. If it is, then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
         if pre_release:
             new_version = new_version + '_prerelease'

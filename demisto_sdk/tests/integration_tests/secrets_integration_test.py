@@ -1,9 +1,9 @@
 from os.path import join
-from tempfile import NamedTemporaryFile
 
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 SECRETS_CMD = "secrets"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -82,20 +82,25 @@ def test_integration_secrets_positive_s(mocker):
     - Ensure secrets validation succeed.
     - Ensure secret strings are in failure message.
     """
+    integration_with_secrets_path = join(
+        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
+    )
+    mocker.patch(
+        "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
+        return_value=[integration_with_secrets_path]
+    )
     whitelist = """
     365ForMarketingEmail
     feedBypassExclusionList
     """
-    with NamedTemporaryFile("w+") as temp:
-        temp.write(whitelist)
-        temp.seek(0)
-        integration_with_secrets_path = join(
-            DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
-        )
-        mocker.patch(
-            "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
-            return_value=[integration_with_secrets_path]
-        )
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SECRETS_CMD, '-wl', temp.name])
-        assert result.exit_code == 0
+
+    def mock_integration_with_secrets(*args, **kwargs):
+        return [integration_with_secrets_path]
+
+    def mock_return_whitelists(*args, **kwargs):
+        return whitelist, [], []
+
+    secrets = SecretsValidator()
+    secrets.get_all_diff_text_files = mock_integration_with_secrets
+    secrets.get_generic_white_list = mock_return_whitelists
+    assert secrets.run() == 0

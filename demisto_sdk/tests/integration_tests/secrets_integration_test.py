@@ -111,7 +111,8 @@ def test_integration_secrets_integration_positive(mocker, tmp_path):
 def test_check_global_secrets_positive(mocker, tmpdir):
     """
     Given
-    - FeedAzure integration yml with secrets.
+    - An integration yml with secrets.
+    - Content Repo with whitelist file in it
 
     When
     - Running secrets validation on it.

@@ -55,17 +55,17 @@ logger = logging.getLogger('demisto-sdk')
 
 def validate_env() -> None:
     """Packs which use python2 will need to be run inside virtual enviorment including python2 as main and the specified req"""
+    wrn_msg = 'Demsito-sdk lint not in virtual enviorment, Python2 lints will fail, use "source .hooks/bootstrap.sh"' \
+              ' to create the virtual enviorment'
     command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
     stdout, stderr, exit_code = run_command_os(command, cwd=Path().cwd())
     if "2" not in stdout:
-        print_warning('Demsito-sdk lint not in virtual enviorment, Python2 lints will failed, use "source '
-                      '.hooks/bootstrap.sh" to create the virtual enviorment')
+        print_warning(wrn_msg)
     else:
         stdout, stderr, exit_code = run_command_os("pip3 freeze", cwd=Path().cwd())
         for req in PYTHON2_REQ:
             if req not in stdout:
-                print_warning('Demsito-sdk lint not in virtual enviorment, Python2 lints will failed, use "source '
-                              '.hooks/bootstrap.sh" to create the virtual enviorment')
+                print_warning(wrn_msg)
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,

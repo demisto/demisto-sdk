@@ -462,6 +462,7 @@ class LintManager:
                 for image in pkgs_status[fail_pack]["images"]:
                     tests = image.get("pytest_json", {}).get("report", {}).get("tests")
                     if tests:
+                        print(wrapper_docker_image.fill(image['image']))
                         for test_case in tests:
                             if test_case.get("call", {}).get("outcome") == "failed":
                                 name = re.sub(pattern=r"\[.*\]",
@@ -477,7 +478,9 @@ class LintManager:
                                             print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
                                     print('\n')
                     else:
-                        print(wrapper_sec_error.fill(image.get("pytest_errors", {})))
+                        errors = image.get("pytest_errors", {})
+                        if errors:
+                            print(wrapper_sec_error.fill(errors))
 
     @staticmethod
     def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):

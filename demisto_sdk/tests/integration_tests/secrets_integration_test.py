@@ -1,4 +1,5 @@
 import json
+from os import chdir
 from os.path import join
 from pathlib import Path
 
@@ -127,8 +128,7 @@ def test_check_global_secrets_positive(mocker):
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[integration_with_secrets_path]
     )
-    import os
-    raise Exception(os.getcwd())
+    chdir(join(DEMISTO_SDK_PATH, "tests", "integration_tests"))
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0

@@ -10,7 +10,7 @@ DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 SECRETS_WHITELIST = join(DEMISTO_SDK_PATH, "tests/test_files/secrets_white_list.json")
 
 
-def test_integration_secrets_positive(mocker):
+def test_integration_secrets_incident_field_positive(mocker):
     """
     Given
     - Valid `city` incident field.
@@ -38,7 +38,7 @@ def test_integration_secrets_positive(mocker):
     assert result.stderr == ""
 
 
-def test_integration_secrets_negative(mocker):
+def test_integration_secrets_integration_negative(mocker):
     """
     Given
     - FeedAzure integration yml with secrets.
@@ -70,7 +70,7 @@ def test_integration_secrets_negative(mocker):
     assert result.stderr == ""
 
 
-def test_integration_secrets_positive_s(mocker):
+def test_integration_secrets_integration_positive(mocker):
     """
     Given
     - FeedAzure integration yml with secrets.
@@ -80,7 +80,6 @@ def test_integration_secrets_positive_s(mocker):
 
     Then
     - Ensure secrets validation succeed.
-    - Ensure secret strings are in failure message.
     """
     integration_with_secrets_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"

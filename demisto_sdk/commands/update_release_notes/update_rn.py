@@ -86,7 +86,7 @@ class UpdateRN:
 
     def bump_version_number(self, pre_release: bool = False):
 
-        new_version = None  # This will never happen since we pre-validate the arguement
+        new_version = None  # This will never happen since we pre-validate the argument
         data_dictionary = get_json(self.metadata_path)
         if self.update_type == 'major':
             version = data_dictionary.get('currentVersion', '99.99.99')

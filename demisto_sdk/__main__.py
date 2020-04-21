@@ -657,7 +657,7 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack", help="Name of the pack.", required=True
+    "-p", "--pack", help="Name of the pack.", required=True, multiple=True
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
@@ -667,23 +667,24 @@ def id_set_command(**kwargs):
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 def update_pack_releasenotes(**kwargs):
-    pack = kwargs.get('pack')
+    packs = kwargs.get('pack')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
-    update_pack_rn = UpdateRN(pack=pack, update_type=update_type)
-    new_version = update_pack_rn.bump_version_number(pre_release)
-    rn_path = update_pack_rn.return_release_notes_path(new_version)
-    update_pack_rn.check_rn_dir(rn_path)
-    packfiles = update_pack_rn.get_master_diff()
-    if len(packfiles) < 1:
-        print_warning('No changes were detected.')
-    else:
-        changed_files = {}
-        for packfile in packfiles:
-            fn, ft = update_pack_rn.ident_changed_file_type(packfile)
-            changed_files[fn] = ft
-        rn_string = update_pack_rn.build_rn_template(changed_files)
-        update_pack_rn.create_markdown(rn_path, rn_string)
+    for pack in packs:
+        update_pack_rn = UpdateRN(pack=pack, update_type=update_type)
+        new_version = update_pack_rn.bump_version_number(pre_release)
+        rn_path = update_pack_rn.return_release_notes_path(new_version)
+        update_pack_rn.check_rn_dir(rn_path)
+        packfiles = update_pack_rn.get_master_diff()
+        if len(packfiles) < 1:
+            print_warning('No changes were detected.')
+        else:
+            changed_files = {}
+            for packfile in packfiles:
+                fn, ft = update_pack_rn.ident_changed_file_type(packfile)
+                changed_files[fn] = ft
+            rn_string = update_pack_rn.build_rn_template(changed_files)
+            update_pack_rn.create_markdown(rn_path, rn_string)
 
 
 # ====================== find-dependencies ====================== #

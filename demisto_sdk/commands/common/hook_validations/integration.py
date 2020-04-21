@@ -611,14 +611,11 @@ class IntegrationValidator(BaseValidator):
         ans = True
         conf = self.current_file.get('configuration', [])
         for int_parameter in conf:
-            hidden = int_parameter.get('hidden')
-            name = int_parameter.get('name')
-            if hidden and name not in self.ALLOWED_HIDDEN_PARAMS:
             is_param_hidden = int_parameter.get('hidden')
             param_name = int_parameter.get('name')
-            if hidden and name not in allowed_hidden_params:
+            if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
                 ans = False
-                print_error(Errors.found_hidden_param(name))
+                print_error(Errors.found_hidden_param(param_name))
         return ans
 
     def is_valid_image(self) -> bool:

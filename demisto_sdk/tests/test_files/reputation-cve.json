@@ -8,7 +8,7 @@
     "shouldPublish": false,
     "shouldCommit": false,
     "regex": "CVE-\\d{4}-\\d{4,7}",
-    "details": "cveRep",
+    "details": "CVE",
     "prevDetails": "CVE",
     "reputationScriptName": "cveReputation",
     "reputationCommand": "cve",

@@ -58,12 +58,19 @@ DATES_REGEX = r'((\d{4}[/.-]\d{2}[/.-]\d{2})[T\s](\d{2}:?\d{2}:?\d{2}:?(\.\d{5,1
 UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 # find any substring
 WHILEIST_REGEX = r'\S*{}\S*'
+
+
 # disable-secrets-detection-end
 
 
 class SecretsValidator(object):
 
-    def __init__(self, configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path=''):
+    def __init__(
+            self,
+            configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path='',
+            input_path=''
+    ):
+        self.input_path = input_path.split(',')
         self.configuration = configuration
         self.is_circle = is_circle
         self.white_list_path = white_list_path
@@ -73,7 +80,10 @@ class SecretsValidator(object):
         secrets_found = {}
         # make sure not in middle of merge
         if not run_command('git rev-parse -q --verify MERGE_HEAD'):
-            secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
+            if not self.input_path:
+                secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
+            else:
+                secrets_file_paths = self.input_path
             secrets_found = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
             if secrets_found:
                 secrets_found_string = 'Secrets were found in the following files:'
@@ -224,7 +234,7 @@ class SecretsValidator(object):
             str: The file content with the whitelisted items removed.
         """
         for item in secrets_white_list:
-            file_content = re.sub(WHILEIST_REGEX.format(item), '', file_content)
+            file_content = re.sub(WHILEIST_REGEX.format(re.escape(item)), '', file_content)
         return file_content
 
     @staticmethod

@@ -10,7 +10,6 @@ from unittest.mock import patch
 
 RETURN_ERROR_TARGET = 'GetDockerImageLatestTag.return_error'
 
-
 MOCK_TAG_LIST = [{
     u'last_updated': u'2019-10-23T09:13:30.84299Z',
     u'name': u'1.0.0.2876',

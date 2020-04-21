@@ -60,7 +60,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command)
+                                               print_warning, run_command, get_files_in_dir)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -83,8 +83,9 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, configuration=Configuration()):
+                 validate_all=False, validate_pack=False, configuration=Configuration()):
         self.validate_all = validate_all
+        self.validate_pack = validate_pack
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
@@ -650,6 +651,15 @@ class FilesValidator:
         for file in all_files_to_validate:
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
+    def validate_pack(self):
+        packs = glob(f'{PACKS_DIR}/*')
+        if self.file_path not in packs:
+            print_error(F'Pack {self.file_path} was not found')
+        pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if not os.path.isdir(file)}
+        for file in pack_files:
+            print(f'Validating {file}')
+            self.run_all_validations_on_file(file, file_type=find_type(file))
+
     def validate_all_files_schema(self):
         """Validate all files in the repo are in the right format."""
         # go over packs
@@ -713,6 +723,9 @@ class FilesValidator:
         """
         if self.validate_all:
             self.validate_all_files()
+            return self._is_valid
+        if self.validate_pack:
+            self.validate_pack()
             return self._is_valid
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():

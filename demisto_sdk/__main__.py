@@ -208,12 +208,15 @@ def unify(**kwargs):
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
     help='Whether to run all validation on all files or not'
 )
+@click.option(
+    '-i', '--input', is_flag=True, show_default=True, default=False,
+    help='The path of a pack to validate specifically.'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs['path']
-
     if file_path and not os.path.isfile(file_path):
         print_error(F'File {file_path} was not found')
         return 1
@@ -223,7 +226,8 @@ def validate(config, **kwargs):
                                    is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
                                    file_path=kwargs.get('path'),
-                                   validate_all=kwargs.get('validate_all'))
+                                   validate_all=kwargs.get('validate_all'),
+                                   validate_pack=kwargs.get('validate_pack'))
         return validator.run()
 
 

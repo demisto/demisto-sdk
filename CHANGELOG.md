@@ -1,5 +1,6 @@
 # Changelog
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* Added an allowed hidden parameter: *longRunning* to the hidden integration parameters validation.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

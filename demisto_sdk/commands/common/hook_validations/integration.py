@@ -611,8 +611,8 @@ class IntegrationValidator(BaseValidator):
         allowed_hidden_params = {'longRunning'}
         conf = self.current_file.get('configuration', [])
         for int_parameter in conf:
-            hidden = int_parameter.get('hidden')
-            name = int_parameter.get('name')
+            is_param_hidden = int_parameter.get('hidden')
+            param_name = int_parameter.get('name')
             if hidden and name not in allowed_hidden_params:
                 ans = False
                 print_error(Errors.found_hidden_param(name))

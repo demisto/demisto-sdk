@@ -67,6 +67,13 @@ class Unifier:
         # script key for integrations is a dictionary.
         self.is_script_package = isinstance(self.yml_data.get('script'), str)
         self.dir_name = SCRIPTS_DIR if self.is_script_package else dir_name
+        # Save dest path to use in another places
+        package_dir_name = os.path.basename(self.package_path)
+        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+        if self.dest_path:
+            self.dest_path_yml = os.path.join(self.dest_path, output_filename)
+        else:
+            self.dest_path_yml = os.path.join(self.dir_name, output_filename)
 
     def write_yaml_with_docker(self, yml_unified, yml_data, script_obj):
         """Write out the yaml file taking into account the dockerimage45 tag.
@@ -134,13 +141,7 @@ class Unifier:
         """Merge the various components to create an output yml file
         """
         print("Merging package: {}".format(self.package_path))
-        package_dir_name = os.path.basename(self.package_path)
-        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
-
-        if self.dest_path:
-            self.dest_path = os.path.join(self.dest_path, output_filename)
-        else:
-            self.dest_path = os.path.join(self.dir_name, output_filename)
+        self.dest_path = self.dest_path_yml
 
         script_obj = self.yml_data
 

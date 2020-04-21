@@ -49,6 +49,12 @@ configuration:
   defaultvalue: "1"
   type: 0
   required: true
+- defaultvalue: 'true'
+  display: Long Running Instance
+  name: longRunning
+  required: false
+  type: 8
+  hidden: true
 script:
   script: ''
   type: python

@@ -13,19 +13,21 @@ from __future__ import print_function
 
 import os
 import re
+from glob import glob
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
-    CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES, IGNORED_TYPES_REGEXES,
-    IMAGE_REGEX, INTEGRATION_REGEX, JSON_ALL_DASHBOARDS_REGEXES,
-    JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
-    JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
-    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
+    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
+    CHECKED_TYPES_REGEXES, CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES,
+    IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
+    JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
+    JSON_ALL_LAYOUT_REGEXES, JSON_INDICATOR_AND_INCIDENT_FIELDS,
+    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
     PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, REPUTATION_REGEX, SCHEMA_REGEX,
-    SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TESTS_DIRECTORIES,
-    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES, Errors)
+    SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES,
+    YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
+    YML_INTEGRATION_REGEXES, Errors)
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -75,12 +77,14 @@ class FilesValidator:
         validate_conf_json (bool): Whether to validate conf.json or not.
         validate_id_set (bool): Whether to validate id_set or not.
         file_path (string): If validating a specific file, golds it's path.
+        validate_all (bool) Whether to validate all files or not.
         configuration (Configuration): Configurations for IDSetValidator.
     """
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 configuration=Configuration()):
+                 validate_all=False, configuration=Configuration()):
+        self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
@@ -514,22 +518,139 @@ class FilesValidator:
         # Ensure schema change did not break BC
         if schema_changed:
             print("Schema changed, validating all files")
-            self.validate_all_files()
+            self.validate_all_files_schema()
         else:
             self.validate_modified_files(modified_files)
             self.validate_added_files(added_files)
             self.validate_no_old_format(old_format_files)
             self.validate_pack_unique_files(packs)
 
-    def validate_pack_unique_files(self, packs):
+    def validate_pack_unique_files(self, packs: set) -> None:
+        """
+        Runs validations on the following pack files:
+        * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
+        * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
+        * README.md file: Validates that the file exists
+        * pack_metadata.json: Validates that the file exists and that it has a valid structure
+        Args:
+            packs: A set of pack paths i.e {Packs/<pack-name1>, Packs/<pack-name2>}
+        """
         for pack in packs:
+            print(f'Validating {pack} unique pack files')
             pack_unique_files_validator = PackUniqueFilesValidator(pack)
             pack_errors = pack_unique_files_validator.validate_pack_unique_files()
             if pack_errors:
                 print_error(pack_errors)
                 self._is_valid = False
 
+    def run_all_validations_on_file(self, file_path: str, file_type: str = None) -> None:
+        """
+        Runs all validations on file specified in 'file_path'
+        Args:
+            file_path: A relative content path to a file to be validated
+            file_type: The output of 'find_type' method
+        """
+        file_extension = os.path.splitext(file_path)[-1]
+        # We validate only yml json and .md files
+        if file_extension not in ['.yml', '.json', '.md']:
+            return
+
+        # Ignoring changelog and description files since these are checked on the integration validation
+        if 'changelog' in file_path.lower() or 'description' in file_path.lower():
+            return
+        print(f'Validating {file_path}')
+
+        if 'README' in file_path:
+            readme_validator = ReadMeValidator(file_path)
+            if not readme_validator.is_valid_file():
+                self._is_valid = False
+            return
+        structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
+        if not structure_validator.is_valid_file():
+            self._is_valid = False
+
+        elif re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            playbook_validator = PlaybookValidator(structure_validator)
+            if not playbook_validator.is_valid_playbook():
+                self._is_valid = False
+
+        elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
+            playbook_validator = PlaybookValidator(structure_validator)
+            if not playbook_validator.is_valid_playbook(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, INTEGRATION_REGXES) or file_type == 'integration':
+            integration_validator = IntegrationValidator(structure_validator)
+            if not integration_validator.is_valid_file(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, YML_ALL_SCRIPTS_REGEXES) or file_type == 'script':
+            # Set file path to the yml file
+            structure_validator.file_path = file_path
+            script_validator = ScriptValidator(structure_validator)
+
+            if not script_validator.is_valid_file(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
+            integration_validator = IntegrationValidator(structure_validator)
+            if not integration_validator.is_valid_beta_integration():
+                self._is_valid = False
+
+        # incident fields and indicator fields are using the same scheme.
+        elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
+                file_type in ('incidentfield', 'indicatorfield'):
+            incident_field_validator = IncidentFieldValidator(structure_validator)
+            if not incident_field_validator.is_valid_file(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
+            reputation_validator = ReputationValidator(structure_validator)
+            if not reputation_validator.is_valid_file(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
+            layout_validator = LayoutValidator(structure_validator)
+            if not layout_validator.is_valid_layout(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
+            dashboard_validator = DashboardValidator(structure_validator)
+            if not dashboard_validator.is_valid_dashboard(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) or file_type == 'incidenttype':
+            incident_type_validator = IncidentTypeValidator(structure_validator)
+            if not incident_type_validator.is_valid_incident_type(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, CHECKED_TYPES_REGEXES):
+            print(f'Could not find validations for file {file_path}')
+
+        else:
+            print_error('The file type of {} is not supported in validate command'.format(file_path))
+            print_error('validate command supports: Integrations, Scripts, Playbooks, dashboards, incident types, '
+                        'reputations, Incident fields, Indicator fields, Images, Release notes, '
+                        'Layouts and Descriptions')
+            self._is_valid = False
+
     def validate_all_files(self):
+        print('Validating all files')
+        print('Validating conf.json')
+        conf_json_validator = ConfJsonValidator()
+        if not conf_json_validator.is_valid_conf_json():
+            self._is_valid = False
+        packs = {os.path.basename(pack) for pack in glob(f'{PACKS_DIR}/*')}
+        self.validate_pack_unique_files(packs)
+        all_files_to_validate = set()
+        for directory in [PACKS_DIR, BETA_INTEGRATIONS_DIR, TEST_PLAYBOOKS_DIR]:
+            all_files_to_validate |= {file for file in glob(fr'{directory}/**', recursive=True) if
+                                      not os.path.isdir(file)}
+        print('Validating all Pack and Beta Integration files')
+        for file in all_files_to_validate:
+            self.run_all_validations_on_file(file, file_type=find_type(file))
+
+    def validate_all_files_schema(self):
         """Validate all files in the repo are in the right format."""
         # go over packs
         for root, dirs, _ in os.walk(PACKS_DIR):
@@ -590,6 +711,9 @@ class FilesValidator:
         Returns:
             (bool). Whether the structure is valid or not.
         """
+        if self.validate_all:
+            self.validate_all_files()
+            return self._is_valid
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False
@@ -601,7 +725,8 @@ class FilesValidator:
             else:
                 self.validate_against_previous_version(no_error=True)
                 print('Validates all of Content repo directories according to their schemas')
-                self.validate_all_files()
+                self.validate_all_files_schema()
+
         else:
             if self.file_path:
                 print('Not using git, validating file: {}'.format(self.file_path))
@@ -609,7 +734,7 @@ class FilesValidator:
                 self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
             else:
                 print('Not using git, validating all files.')
-                self.validate_all_files()
+                self.validate_all_files_schema()
 
         return self._is_valid
 

@@ -614,6 +614,9 @@ class IntegrationValidator(BaseValidator):
             hidden = int_parameter.get('hidden')
             name = int_parameter.get('name')
             if hidden and name not in self.ALLOWED_HIDDEN_PARAMS:
+            is_param_hidden = int_parameter.get('hidden')
+            param_name = int_parameter.get('name')
+            if hidden and name not in allowed_hidden_params:
                 ans = False
                 print_error(Errors.found_hidden_param(name))
         return ans

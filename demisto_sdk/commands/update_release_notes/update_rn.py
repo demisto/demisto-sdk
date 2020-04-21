@@ -94,7 +94,7 @@ class UpdateRN:
             version[0] = str(int(version[0]) + 1)
             if int(version[0]) > 99:
                 raise ValueError("Version number is greater than 99. Please verify the currentVersion is"
-                            "correct. If it is, then something is very broken.")
+                                 "correct. If it is, then something is very broken.")
             version[1] = '0'
             version[2] = '0'
             new_version = '.'.join(version)
@@ -104,7 +104,7 @@ class UpdateRN:
             version[1] = str(int(version[1]) + 1)
             if int(version[1]) > 99:
                 raise ValueError("Version number is greater than 99. Please verify the currentVersion is"
-                            "correct. If it is, then consider bumping to a new Major version.")
+                                 "correct. If it is, then consider bumping to a new Major version.")
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
@@ -114,7 +114,7 @@ class UpdateRN:
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
                 raise ValueError("Version number is greater than 99. Please verify the currentVersion is"
-                            "correct. If it is, then consider bumping to a new Minor version.")
+                                 "correct. If it is, then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
         if pre_release:
             new_version = new_version + '_prerelease'

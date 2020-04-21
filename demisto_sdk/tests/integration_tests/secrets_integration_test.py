@@ -133,3 +133,12 @@ def test_integration_secrets_integration_global_whitelist_positive(mocker):
     assert result.exit_code == 0
     assert not result.stderr
     assert "no secrets were found" in result.stdout
+
+
+def test_integration_secrets_integration_positive_with_input_option():
+    integration_secrets_path = join(
+        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
+    )
+    chdir(join(DEMISTO_SDK_PATH, "tests", "integration_tests"))
+    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration_secrets_path])
+    assert 'Finished validating secrets, no secrets were found' in result.stdout

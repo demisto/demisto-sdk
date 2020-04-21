@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import shutil
 
 from demisto_sdk.commands.common.git_tools import git_path
@@ -173,6 +174,17 @@ my_email = "fooo@someorg.com"
         '''
         file_contents = self.validator.remove_whitelisted_items_from_file(white_list, file_contents)
         assert white_list not in file_contents
+
+    def test_remove_whitelisted_items_from_file_substring(self):
+        white_list = 'url.com'
+        file_contents = '''
+        url.com
+        boop
+        cool@url.com
+        shmoop
+        https://url.com
+        '''
+        assert not re.match(white_list, file_contents)
 
     def test_temp_white_list(self):
         file_contents = self.validator.get_file_contents(self.TEST_YML_FILE, '.yml')

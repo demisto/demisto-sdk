@@ -1,9 +1,9 @@
 commonfields:
   id: Awake Security
   version: -1
-name: Awa
-display: Awa
-category: Net
+name: Awake Security
+display: Awake Security
+category: Database
 description: Net
 detaileddescription: ""
 configuration:
@@ -17,27 +17,6 @@ configuration:
   name: server
   defaultvalue: https://example.awake.cloud
   type: 0
-  required: true
-- display: Trust any certificate (unsecure)
-  name: unsecure
-  defaultvalue: ""
-  type: 8
-  required: false
-- display: Fetch incidents
-  name: isFetch
-  defaultvalue: ""
-  type: 8
-  required: false
-- display: Incident type
-  hidden: false
-  name: incidentType
-  defaultvalue: ""
-  type: 13
-  required: false
-- display: Use system proxy settings
-  name: proxy
-  defaultvalue: ""
-  type: 8
   required: true
 - display: 'test'
   name: threat_behaviors
@@ -58,8 +37,10 @@ configuration:
 script:
   script: ''
   type: python
+  subtype: python3
   commands:
   - name: awake-query-devices
+    description: description
     arguments:
     - name: queryExpression
       description: A query expression in Awake Query Language
@@ -76,5 +57,5 @@ script:
     - contextPath: AwakeSecurity.Devices.deviceName
       description: Device name
       type: string
-  isfetch: true
+  isfetch: false
   runonce: false

@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 class TestRNUpdate(unittest.TestCase):
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
-    def test_build_rn_template(self):
+    def test_build_rn_template_integration(self):
         """
             Given:
                 - a dict of changed items
@@ -17,10 +17,25 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n- __Hello World__\n%%UPDATE_RN%%\n"
+        expected_result = "\n#### Integrations\n- __Hello World Integration__\n%%UPDATE_RN%%\n" \
+                          "\n#### Playbooks\n- __Hello World Playbook__\n%%UPDATE_RN%%\n" \
+                          "\n#### Scripts\n- __Hello World Script__\n%%UPDATE_RN%%\n" \
+                          "\n#### IncidentFields\n- __Hello World IncidentField__\n%%UPDATE_RN%%\n" \
+                          "\n#### Classifiers\n- __Hello World Classifier__\n%%UPDATE_RN%%\n" \
+                          "\n#### Layouts\n- __Hello World Layout__\n%%UPDATE_RN%%\n" \
+                          "\n#### IncidentTypes\n- __Hello World Incident Type__\n%%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor')
-        changed_items = {"Hello World": "Integration"}
+        changed_items = {
+            "Hello World Integration": "Integration",
+            "Hello World Playbook": "Playbook",
+            "Hello World Script": "Script",
+            "Hello World IncidentField": "IncidentFields",
+            "Hello World Classifier": "Classifiers",
+            "N/A": "Integration",
+            "Hello World Layout": "Layouts",
+            "Hello World Incident Type": "IncidentTypes",
+        }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
@@ -180,7 +195,7 @@ class TestRNUpdate(unittest.TestCase):
 class TestRNUpdateUnit:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
-    def test_ident_changed_file_type(self, mocker):
+    def test_ident_changed_file_type_integration(self, mocker):
         """
             Given:
                 - a filepath of a changed file
@@ -193,6 +208,24 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="VulnDB", update_type='minor')
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Integration/VulnDB/VulnDB.py')
+        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
+        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
+        result = update_rn.ident_changed_file_type(filepath)
+        assert expected_result == result
+
+    def test_ident_changed_file_type_script(self, mocker):
+        """
+            Given:
+                - a filepath of a changed file
+            When:
+                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
+            Then:
+                - return tuple where first value is the pack name, and second is the item type
+        """
+        expected_result = ('VulnDB', 'Script')
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="VulnDB", update_type='minor')
+        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Script/VulnDB/VulnDB.py')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
         result = update_rn.ident_changed_file_type(filepath)

@@ -180,16 +180,29 @@ my_email = "fooo@someorg.com"
         shmoop
         155.165.45.232
         '''
-        file_contents = self.validator.remove_whitelisted_items_from_file(file_contents, white_list)
+        file_contents = self.validator.remove_whitelisted_items_from_file(file_contents, {white_list})
         assert white_list not in file_contents
 
     def test_remove_whitelisted_items_from_file_escaped_whitelist(self):
+        """
+        Given
+        - White list with a term that can be regex (***.).
+        - String with no content
+
+        When
+        - Removing terms containing that regex
+
+        Then
+        - Ensure secrets that the secret isn't in the output.
+        - Ensure no error raised
+        """
         white_list = '***.url'
         file_contents = '''
         Random and unmeaningful file content
+        a string containing ***.url
         '''
-        file_contents = self.validator.remove_whitelisted_items_from_file(file_contents, white_list)
-        assert file_contents
+        file_contents = self.validator.remove_whitelisted_items_from_file(file_contents, {white_list})
+        assert white_list not in file_contents
 
     def test_remove_whitelisted_items_from_file_substring(self):
         white_list = 'url.com'

@@ -32,6 +32,8 @@ Whether the validation is done after you committed your files, this will help th
  should check in its run. Before you commit the files it should not be used. Mostly for build validations.
 * **-p, --path**
 Path of file to validate specifically.
+* **-a, --validate-all**
+Whether to run all validation on all files or not.
 
 **Examples**:
 `demisto-sdk validate`
@@ -57,4 +59,7 @@ This indicates that the command runs post commit.
 
 `demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml`
 This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
+<br><br>
+`demisto-sdk validate -a`
+This will validate all files under `Packs` and `Beta_Integrations` directories
 <br><br>

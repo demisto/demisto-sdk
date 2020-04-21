@@ -25,6 +25,7 @@ class IntegrationValidator(BaseValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
+    ALLOWED_HIDDEN_PARAMS = {'longRunning'}
 
     def is_valid_version(self):
         # type: () -> bool
@@ -603,17 +604,16 @@ class IntegrationValidator(BaseValidator):
 
     def is_valid_hidden_params(self) -> bool:
         """
-        Verify there are no hidden integration parameters.
+        Verify there are no non-allowed hidden integration parameters.
         Returns:
-            bool. True if there aren't hidden parameters False otherwise.
+            bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
         ans = True
-        allowed_hidden_params = {'longRunning'}
         conf = self.current_file.get('configuration', [])
         for int_parameter in conf:
             hidden = int_parameter.get('hidden')
             name = int_parameter.get('name')
-            if hidden and name not in allowed_hidden_params:
+            if hidden and name not in self.ALLOWED_HIDDEN_PARAMS:
                 ans = False
                 print_error(Errors.found_hidden_param(name))
         return ans

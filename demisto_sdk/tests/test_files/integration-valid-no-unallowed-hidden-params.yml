@@ -1,11 +1,7 @@
+category: Messaging
 commonfields:
-  id: Awake Security
+  id: Google
   version: -1
-name: Awake Security
-display: Awake Security
-category: Database
-description: Net
-detaileddescription: ""
 configuration:
 - display: Credentials
   hidden: false
@@ -34,28 +30,17 @@ configuration:
   required: false
   type: 8
   hidden: true
+description: Google Cloud Pub
+display: Google Cloud
+name: Google
 script:
-  script: ''
-  type: python
-  subtype: python3
-  commands:
-  - name: awake-query-devices
-    description: description
-    arguments:
-    - name: queryExpression
-      description: A query expression in Awake Query Language
-    - name: startTime
-      required: true
-      description: Query start time ("2000-01-01T00:00:00Z")
-    - name: endTime
-      required: true
-      description: Query end time ("2000-01-01T00:00:00Z")
-    outputs:
-    - contextPath: AwakeSecurity.Devices.deviceId
-      description: Awake Security unique identifier for the specified device
-      type: string
-    - contextPath: AwakeSecurity.Devices.deviceName
-      description: Device name
-      type: string
+  dockerimage: demisto/googleapi-python3:1.0.0.7470
+  feed: false
   isfetch: false
+  longRunning: false
+  longRunningPort: false
   runonce: false
+  script: '-'
+  subtype: python3
+  type: python
+fromversion: 5.0.0

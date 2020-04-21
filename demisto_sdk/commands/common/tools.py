@@ -605,13 +605,16 @@ def find_type(path: str):
                 return 'layout'
             else:
                 return 'dashboard'
-
+        # When using it for all files validation- sometimes 'id' can be integer
         elif 'id' in _dict:
-            _id = _dict['id'].lower()
-            if _id.startswith('incident'):
-                return 'incidentfield'
-            elif _id.startswith('indicator'):
-                return 'indicatorfield'
+            if isinstance(_dict.get('id'), str):
+                _id = _dict['id'].lower()
+                if _id.startswith('incident'):
+                    return 'incidentfield'
+                elif _id.startswith('indicator'):
+                    return 'indicatorfield'
+            else:
+                print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
     return ''
 

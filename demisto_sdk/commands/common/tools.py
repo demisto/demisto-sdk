@@ -17,9 +17,10 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
-    PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER)
+    FIND_SUBSTRING_REGEX, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+    PACKS_README_FILE_NAME, RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES,
+    TYPE_PWSH, UNRELEASE_HEADER)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -432,7 +433,9 @@ def get_dockerimage45(script_object):
     return script_object.get('dockerimage', '')
 
 
-def is_file_path_in_pack(file_path):
+def is_file_path_in_pack(file_path, check_substring=False):
+    if check_substring:
+        return bool(re.findall(FIND_SUBSTRING_REGEX.format(PACKS_DIR), file_path))
     return bool(re.findall(PACKS_DIR_REGEX, file_path))
 
 

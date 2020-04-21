@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
+                                               is_file_path_in_pack,
                                                print_error, print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
@@ -542,9 +543,6 @@ def init(**kwargs):
                            " documentation file name is README.md. If not specified, will be in the yml dir.",
     required=False)
 @click.option(
-    "--pack", help="A non-unified pack (code and yml in separate files). Works only with scripts and integrations.",
-    is_flag=True, required=False)
-@click.option(
     "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",
     required=False)
 @click.option(
@@ -579,7 +577,6 @@ def generate_doc(**kwargs):
     limitations = kwargs.get('limitations')
     insecure = kwargs.get('insecure')
     verbose = kwargs.get('verbose')
-    is_pack = kwargs.get("pack")
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -607,8 +604,8 @@ def generate_doc(**kwargs):
         return 1
 
     print(f'Start generating {file_type} documentation...')
-    if is_pack:
-        full_dir_name = os.path.dirname(os.path.realpath(input_path))
+    full_dir_name = os.path.dirname(os.path.realpath(input_path))
+    if is_file_path_in_pack(full_dir_name, check_substring=True):
         unifier = Unifier(full_dir_name, output=full_dir_name)
         # If a unified file exists, should delete it.
         if os.path.isfile(unifier.dest_path_yml):

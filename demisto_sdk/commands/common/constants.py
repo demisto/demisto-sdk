@@ -420,6 +420,7 @@ DEFAULT_DBOT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAEIAAABlCAYAAAD5/TVmAAAfJEl
                             'jliiBUXY1lWWs9Hs+PgZlCMAXNBIRoRFMH1JDZzgeyl5/MFthk+FY4FyyyEqEzxKbI2DQxMv7MMJnQZDvovVqz' \
                             'A1HUzK9kdzt0/2+exnQr4g2hrAAAAABJRU5ErkJggg=='
 # file types regexes
+FIND_SUBSTRING_REGEX = r'\S*{}\S*'
 PIPFILE_REGEX = r'.*/Pipfile(\.lock)?'
 TEST_DATA_REGEX = r'.*test_data.*'
 TEST_FILES_REGEX = r'.*test_files.*'

@@ -542,7 +542,7 @@ def init(**kwargs):
                            " documentation file name is README.md. If not specified, will be in the yml dir.",
     required=False)
 @click.option(
-    "--pack", help="A non-unified pack (code and yml in separate files).",
+    "--pack", help="A non-unified pack (code and yml in separate files). Works only with scripts and integrations.",
     is_flag=True, required=False)
 @click.option(
     "-uc", "--use_cases", help="For integration - Top use-cases. Number the steps by '*' (i.e. '* foo. * bar.')",

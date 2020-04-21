@@ -1,10 +1,11 @@
 import os
 import shutil
+import unittest
 
 from demisto_sdk.commands.common.git_tools import git_path
 
 
-class TestRNUpdate:
+class TestRNUpdate(unittest.TestCase):
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
     def test_build_rn_template(self):
@@ -73,7 +74,7 @@ class TestRNUpdate:
         result = update_rn.return_release_notes_path(input_version)
         assert expected_result == result
 
-    def test_bump_version_number(self):
+    def test_bump_version_number_minor(self):
         """
             Given:
                 - a pack name and version
@@ -93,3 +94,102 @@ class TestRNUpdate:
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
+
+    def test_bump_version_number_major(self):
+        """
+            Given:
+                - a pack name and version
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return the correct bumped version number
+        """
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
+        expected_version = '2.0.0'
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='major')
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
+        version_number = update_rn.bump_version_number(pre_release=False)
+        assert version_number == expected_version
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
+
+    def test_bump_version_number_revision(self):
+        """
+            Given:
+                - a pack name and version
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return the correct bumped version number
+        """
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
+        expected_version = '1.0.1'
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='revision')
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
+        version_number = update_rn.bump_version_number(pre_release=False)
+        assert version_number == expected_version
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
+
+    def test_bump_version_number_revision_overflow(self):
+        """
+            Given:
+                - a pack name and invalid version
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return ValueError
+        """
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='revision')
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
+        self.assertRaises(ValueError, update_rn.bump_version_number)
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
+
+    def test_bump_version_number_minor_overflow(self):
+        """
+            Given:
+                - a pack name and invalid version
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return ValueError
+        """
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='minor')
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
+        self.assertRaises(ValueError, update_rn.bump_version_number)
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
+
+    def test_bump_version_number_major_overflow(self):
+        """
+            Given:
+                - a pack name and invalid version
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return ValueError
+        """
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='major')
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
+        self.assertRaises(ValueError, update_rn.bump_version_number)
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))

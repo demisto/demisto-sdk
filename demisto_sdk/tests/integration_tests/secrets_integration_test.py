@@ -108,7 +108,7 @@ def test_integration_secrets_integration_positive(mocker, tmp_path):
     assert "no secrets were found" in result.stdout
 
 
-def test_check_global_secrets_positive(mocker):
+def test_integration_secrets_integration_global_whitelist_positive(mocker):
     """
     Given
     - An integration yml with secrets.
@@ -118,8 +118,7 @@ def test_check_global_secrets_positive(mocker):
     - Running secrets validation on it.
 
     Then
-    - Ensure secrets validation fails.
-    - Ensure secret strings are in failure message.
+    - Ensure secrets validation succeed.
     """
     integration_with_secrets_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"

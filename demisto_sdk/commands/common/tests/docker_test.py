@@ -1,5 +1,6 @@
 import os
 
+
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.docker import \
@@ -8,6 +9,7 @@ from demisto_sdk.commands.common.tools import get_yaml
 from unittest.mock import patch
 
 RETURN_ERROR_TARGET = 'GetDockerImageLatestTag.return_error'
+
 
 MOCK_TAG_LIST = [{
     u'last_updated': u'2019-10-23T09:13:30.84299Z',

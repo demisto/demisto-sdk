@@ -336,8 +336,13 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
             tarinfo if not re.search(excluded_regex, Path(tarinfo.name).name) else None))
         os.chdir(old_cwd)
 
-    container_obj.put_archive(path=container_path,
-                              data=file_like_object.getvalue())
+    for trial in range(2):
+        status = container_obj.put_archive(path=container_path,
+                                           data=file_like_object.getvalue())
+        if status:
+            break
+        elif trial == 1:
+            raise docker.errors.APIError(message="unable to copy dir to container")
 
 
 def stream_docker_container_output(streamer: Generator) -> None:

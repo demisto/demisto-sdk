@@ -422,9 +422,9 @@ class Linter:
                                                                             keep_container=keep_container)
                             # Perform pytest
                             elif not no_test and self._facts["test"] and check == "pytest":
-                                exit_code, test_json = self._docker_run_pytest(test_image=image_id,
-                                                                               keep_container=keep_container,
-                                                                               test_xml=test_xml)
+                                exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
+                                                                                       keep_container=keep_container,
+                                                                                       test_xml=test_xml)
                                 status["pytest_json"]: dict = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                             # Perform powershell analyze
@@ -641,7 +641,7 @@ class Linter:
 
         return exit_code, output
 
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str]:
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
         Args:
@@ -665,6 +665,7 @@ class Linter:
             pass
         # Collect tests
         exit_code = SUCCESS
+        output = ''
         test_json = {}
         try:
             # Running pytest container
@@ -702,6 +703,9 @@ class Linter:
                 if container_exit_code in [0, 5]:
                     logger.info(f"{log_prompt} - Successfully finished")
                     exit_code = SUCCESS
+                elif container_exit_code in [2]:
+                    output = container_obj.logs().decode('utf-8')
+                    exit_code = FAIL
                 else:
                     logger.info(f"{log_prompt} - Finished errors found")
                     exit_code = FAIL
@@ -710,6 +714,7 @@ class Linter:
                 # 4-pytest command line usage error
                 logger.critical(f"{log_prompt} - Usage error")
                 exit_code = RERUN
+                output = container_obj.logs().decode('utf-8')
             # Remove container if not needed
             if keep_container:
                 print(f"{log_prompt} - Conatiner name {container_name}")
@@ -722,7 +727,7 @@ class Linter:
             logger.critical(f"{log_prompt} - Unable to run pytest container {e}")
             exit_code = RERUN
 
-        return exit_code, test_json
+        return exit_code, output, test_json
 
     def _docker_run_pwsh_analyze(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Powershell code analyze in created test image

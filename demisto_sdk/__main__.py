@@ -54,18 +54,21 @@ class RNInputValidation(click.ParamType):
     name = 'update_type'
 
     def validate_rn_input(self, value, param, ctx):
-        if re.match(r'(?i)(?<=|^)major(?= |$)', value):
-            update_type = 'major'
-        elif re.match(r'(?i)(?<=|^)minor(?= |$)', value):
-            update_type = 'minor'
-        elif re.match(r'(?i)(?<=|^)revision(?= |$)', value):
-            update_type = 'revision'
+        if value:
+            if re.match(r'(?i)(?<=|^)major(?= |$)', value):
+                update_type = 'major'
+            elif re.match(r'(?i)(?<=|^)minor(?= |$)', value):
+                update_type = 'minor'
+            elif re.match(r'(?i)(?<=|^)revision(?= |$)', value):
+                update_type = 'revision'
+            else:
+                self.fail(
+                    f'{value} is not a valid option. Please select: major, minor, revision',
+                    param,
+                    ctx,
+                )
         else:
-            self.fail(
-                f'{value} is not a valid option. Please select: major, minor, revision',
-                param,
-                ctx,
-            )
+            update_type = 'revision'
         return update_type
 
 
@@ -663,7 +666,7 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack", help="Name of the pack.", required=True, multiple=True
+    "-p", "--pack", help="Name of the pack.", multiple=True
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
@@ -673,24 +676,30 @@ def id_set_command(**kwargs):
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 def update_pack_releasenotes(**kwargs):
-    packs = kwargs.get('pack')
+    _pack = kwargs.get('pack')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
+    packfiles, b, c, _packs = FilesValidator(use_git=True).get_modified_and_added_files()
+    if len(_packs) > 1:
+        print_warning(f"Detected changes in the following packs: {_packs}")
+    if len(packfiles) < 1:
+        print_warning('No changes were detected.')
+        sys.exit(0)
+    if _pack:
+        packs = _pack
+    else:
+        packs = _packs
     for pack in packs:
         update_pack_rn = UpdateRN(pack=pack, update_type=update_type)
         new_version = update_pack_rn.bump_version_number(pre_release)
         rn_path = update_pack_rn.return_release_notes_path(new_version)
         update_pack_rn.check_rn_dir(rn_path)
-        packfiles = update_pack_rn.get_master_diff()
-        if len(packfiles) < 1:
-            print_warning('No changes were detected.')
-        else:
-            changed_files = {}
-            for packfile in packfiles:
-                fn, ft = update_pack_rn.ident_changed_file_type(packfile)
-                changed_files[fn] = ft
-            rn_string = update_pack_rn.build_rn_template(changed_files)
-            update_pack_rn.create_markdown(rn_path, rn_string)
+        changed_files = {}
+        for packfile in packfiles:
+            fn, ft = update_pack_rn.ident_changed_file_type(packfile)
+            changed_files[fn] = ft
+        rn_string = update_pack_rn.build_rn_template(changed_files)
+        update_pack_rn.create_markdown(rn_path, rn_string)
 
 
 # ====================== find-dependencies ====================== #

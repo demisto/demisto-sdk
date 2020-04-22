@@ -11,8 +11,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                pack_name_to_path, print_color,
-                                               print_error)
-from demisto_sdk.commands.validate.file_validator import FilesValidator
+                                               print_error, print_warning)
 
 
 class UpdateRN:
@@ -26,12 +25,6 @@ class UpdateRN:
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
-    @staticmethod
-    def get_master_diff():
-        a, b, c, packs = FilesValidator(use_git=True).get_modified_and_added_files()
-
-        return a
-
     def _does_pack_metadata_exist(self):
         """Check if pack_metadata.json exists"""
         if not os.path.isfile(self.metadata_path):
@@ -42,14 +35,22 @@ class UpdateRN:
         return True
 
     def return_release_notes_path(self, input_version: str):
-        new_version = input_version.replace('.', '_')
+        _new_version = input_version.replace('.', '_')
+        new_version = _new_version.replace('_prerelease', '')
         return os.path.join(self.pack_path, 'ReleaseNotes', '{}.md'.format(new_version))
 
     @staticmethod
     def get_display_name(file_path):
         struct = StructureValidator(file_path=file_path)
         file_data = struct.load_data_from_file()
-        name = file_data.get('name', None)
+        if 'name' in file_data:
+            name = file_data.get('name', None)
+        elif 'TypeName' in file_data:
+            name = file_data.get('TypeName', None)
+        else:
+            name = os.path.basename(file_path)
+            print_error(f"Could not find name in {file_path}")
+            # sys.exit(1)
         return name
 
     @staticmethod
@@ -187,5 +188,8 @@ class UpdateRN:
 
     @staticmethod
     def create_markdown(release_notes_path: str, rn_string: str):
-        with open(release_notes_path, 'w') as fp:
-            fp.write(rn_string)
+        if os.path.exists(release_notes_path):
+            print_warning(f"Release notes were found at {release_notes_path}. Skipping")
+        else:
+            with open(release_notes_path, 'w') as fp:
+                fp.write(rn_string)

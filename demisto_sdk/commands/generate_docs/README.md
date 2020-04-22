@@ -5,7 +5,7 @@ Generate a README file for an Integration, Script or a Playbook.
 This command is used to create a documentation file for Demisto content files.
 
 **Arguments**:
-* **-i, --input**Path of the yml file.
+* **-i, --input**Path of the yml file. If in pack, will unify the file into a unified file.
 * **-o, --output** The output dir to write the documentation file into, documentation file name is README.md. If not specified, will be in the yml dir.
 * **-u, --use_cases** For integration - Top use-cases. Number the steps by '*' (i.e. '\* foo. * bar.').
 * **-e, --examples** Path for file containing command or script examples. Each Command should be in a separate line. For script - the script example surrounded by double quotes.

@@ -6,6 +6,7 @@ from pathlib import Path
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.test_tools import create_temp_file
 
 SECRETS_CMD = "secrets"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -130,6 +131,31 @@ def test_integration_secrets_integration_global_whitelist_positive(mocker):
     chdir(join(DEMISTO_SDK_PATH, "tests", "integration_tests"))
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
+    assert result.exit_code == 0
+    assert not result.stderr
+    assert "no secrets were found" in result.stdout
+
+
+def test_integration_secrets_integration_with_regex_expression(tmp_path):
+    """
+    Given
+    - White list with a term that can be regex (***.).
+    - String with no content
+
+    When
+    - Removing terms containing that regex
+
+    Then
+    - Ensure secrets that the secret isn't in the output.
+    - Ensure no error raised
+    """
+    white_list_path = create_temp_file(tmp_path, '***.url\n', 'whitelist.txt')
+    file_contents_path = create_temp_file(tmp_path, '''
+    Random and unmeaningful file content
+    a string containing ***.url\n
+    ''')
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [SECRETS_CMD, '--input', file_contents_path, '-wl', white_list_path], catch_exceptions=False)
     assert result.exit_code == 0
     assert not result.stderr
     assert "no secrets were found" in result.stdout

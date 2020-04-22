@@ -60,7 +60,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command, get_files_in_dir)
+                                               print_warning, run_command)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -83,9 +83,8 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, validate_pack=False, configuration=Configuration()):
+                 validate_all=False, pack_path=False, configuration=Configuration()):
         self.validate_all = validate_all
-        self.validate_pack = validate_pack
         self.branch_name = ''
         self.use_git = use_git
         if self.use_git:
@@ -102,6 +101,7 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
+        self.pack_path = pack_path
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -652,12 +652,21 @@ class FilesValidator:
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_pack(self):
+        """Validate files in a specified pack"""
         packs = glob(f'{PACKS_DIR}/*')
-        if self.file_path not in packs:
-            print_error(F'Pack {self.file_path} was not found')
-        pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if not os.path.isdir(file)}
+        if self.pack_path not in packs:
+            raise Exception(F'File {self.pack_path} was not found\nMake sure you are using relative path')
+        pack_files = {file for file in glob(fr'{self.pack_path}/**', recursive=True) if not os.path.isdir(file)}
+        pack_unique_files_validator = PackUniqueFilesValidator(os.path.abspath(self.pack_path))
+        pack_errors = pack_unique_files_validator.validate_pack_unique_files()
+        if pack_errors:
+            print_error(pack_errors)
+            self._is_valid = False
         for file in pack_files:
-            print(f'Validating {file}')
+            if file.endswith('pack_metadata.json'):
+                continue
+            if any(test_file in file.lower() for test_file in TESTS_DIRECTORIES):
+                continue
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_all_files_schema(self):
@@ -724,7 +733,7 @@ class FilesValidator:
         if self.validate_all:
             self.validate_all_files()
             return self._is_valid
-        if self.validate_pack:
+        if self.pack_path:
             self.validate_pack()
             return self._is_valid
         if self.validate_conf_json:

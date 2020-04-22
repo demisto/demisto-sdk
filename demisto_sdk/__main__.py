@@ -209,17 +209,22 @@ def unify(**kwargs):
     help='Whether to run all validation on all files or not'
 )
 @click.option(
-    '-i', '--input', is_flag=True, show_default=True, default=False,
-    help='The path of a pack to validate specifically.'
+    '-i', '--input', help='The path of a pack to validate specifically.'
 )
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
+    pack_path = kwargs['input']
+    if pack_path and not os.path.isdir(pack_path):
+        print_error(F'File {pack_path} was not found')
+        return 1
+
     file_path = kwargs['path']
     if file_path and not os.path.isfile(file_path):
         print_error(F'File {file_path} was not found')
         return 1
+
     else:
         validator = FilesValidator(configuration=config.configuration,
                                    is_backward_check=not kwargs['no_backward_comp'],
@@ -227,7 +232,7 @@ def validate(config, **kwargs):
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
                                    file_path=kwargs.get('path'),
                                    validate_all=kwargs.get('validate_all'),
-                                   validate_pack=kwargs.get('validate_pack'))
+                                   pack_path=kwargs.get('input'))
         return validator.run()
 
 

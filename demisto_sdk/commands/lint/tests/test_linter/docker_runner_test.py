@@ -95,9 +95,9 @@ class TestPytest:
         linter.json.loads.return_value = exp_test_json
         mocker.patch.object(linter, 'get_file_from_container')
 
-        act_container_exit_code, act_test_json = linter_obj._docker_run_pytest(test_image='test-image',
-                                                                               keep_container=False,
-                                                                               test_xml="")
+        act_container_exit_code, act_output, act_test_json = linter_obj._docker_run_pytest(test_image='test-image',
+                                                                                           keep_container=False,
+                                                                                           test_xml="")
 
         assert exp_exit_code == act_container_exit_code
         assert exp_test_json == act_test_json
@@ -126,7 +126,7 @@ class TestRunLintInContainer:
         mocker.patch.object(linter_obj, '_docker_image_create')
         linter_obj._docker_image_create.return_value = ("test-image", "")
         mocker.patch.object(linter_obj, '_docker_run_pytest')
-        linter_obj._docker_run_pytest.return_value = (0b0, {})
+        linter_obj._docker_run_pytest.return_value = (0b0, '', {})
         mocker.patch.object(linter_obj, '_docker_run_pylint')
         linter_obj._docker_run_pylint.return_value = (0b0, '')
         mocker.patch.object(linter_obj, '_docker_run_pwsh_analyze')

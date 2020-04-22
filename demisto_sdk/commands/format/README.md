@@ -17,7 +17,7 @@ When done formatting, the **validate** command will run, to let you know of thin
 
 * **-o DESIRED_OUTPUT_PATH, --output DESIRED_OUTPUT_PATH**
 
-    The path where the formatted file will be saved to. (Default will be to override origin file).
+    The file path where the formatted file will be saved to. (Default will be to override origin file).
 
 * **-fv DESIRED_FROM_VERSION_KEY, --from-version DESIRED_FROM_VERSION_KEY**
 
@@ -63,7 +63,7 @@ This will format the given yml file, however validation will not ran as this fil
 ```
 demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml -o Integrations/Kenna_-_Search_and_Handle_Asset_Vulnerabilities.yml
 ```
-This will format the given yml file and save it in content repo under the specified directory.
+This will format the given yml file and save it in content repo under the specified file path.
 Also validation will run as the output file is in content repo.
 <br/><br/>
 

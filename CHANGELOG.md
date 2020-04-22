@@ -2,6 +2,7 @@
 * demisto-sdk lint - Copy dir better handling.
 * demisto-sdk lint - Add error when package missing in docker image.
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* Fixed an isssue with **format** command when executing with an output path of a folder and not a file path.
 
 
 #### 0.5.2

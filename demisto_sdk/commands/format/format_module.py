@@ -52,7 +52,8 @@ def format_manager(input: str = None, output: str = None, from_version: str = No
         files = [file['name'] for file in
                  get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]
     if output and not output.endswith(('.yml', 'json')):
-        raise Exception("Given output path is not a file. Please specify a correct output file.")
+        raise Exception("The given output path is not a specific file path.\n"
+                        "Only file path can be a output path.  Please specify a correct output.")
 
     log_list = []
     error_list = []

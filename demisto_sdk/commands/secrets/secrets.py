@@ -235,7 +235,12 @@ class SecretsValidator(object):
             str: The file content with the whitelisted items removed.
         """
         for item in secrets_white_list:
-            file_content = re.sub(WHILEIST_REGEX.format(re.escape(item)), '', file_content)
+            try:
+                file_content = re.sub(WHILEIST_REGEX.format(re.escape(item)), '', file_content)
+            except re.error as err:
+                error_string = f"Could not use secrets with item: {item}"
+                print_error(error_string)
+                raise re.error(error_string, err)
         return file_content
 
     @staticmethod

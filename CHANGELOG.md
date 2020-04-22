@@ -1,3 +1,6 @@
+## [Unreleased]
+* Improved 'validate' help and documentation description
+
 # Changelog
 * demisto-sdk lint - Copy dir better handling.
 * demisto-sdk lint - Add error when package missing in docker image.

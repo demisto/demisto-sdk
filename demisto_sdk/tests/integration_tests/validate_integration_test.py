@@ -101,4 +101,7 @@ class TestIntegration:
         integration_path = join(TEST_FILES_PATH, 'integration-valid-no-unallowed-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-p", integration_path])
-        assert_positive(integration_path, result)
+        assert "Starting validating files structure" in result.stdout
+        assert f"Validating {integration_path}" in result.stdout
+        assert "can't be hidden. Please remove this field" not in result.stdout
+        assert result.stderr == ""

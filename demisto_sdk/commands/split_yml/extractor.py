@@ -107,6 +107,7 @@ class Extractor:
             if os.path.exists(yml_readme):
                 shutil.copy(yml_readme, readme)
             else:
+                # open an empty file
                 with open(readme, 'w') as readme_file:
                     pass
         # check if there is a changelog

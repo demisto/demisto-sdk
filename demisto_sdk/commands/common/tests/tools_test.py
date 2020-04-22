@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACK
     INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type,\
     get_dict_from_file, LOG_COLORS, get_last_release_version, depth, arg_to_list, retrieve_file_ending, \
-    get_id_by_content_entity, get_name_by_content_entity, get_files_in_dir
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_files_in_dir
 from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
     VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
     INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH
@@ -182,12 +182,12 @@ class TestReleaseVersion:
 class TestEntityAttributes:
     @pytest.mark.parametrize('data, entity', [({'commonfields': {'id': 1}}, INTEGRATIONS_DIR),
                                               ({'typeId': 1}, LAYOUTS_DIR), ({'id': 1}, PLAYBOOKS_DIR)])
-    def test_get_id_by_content_entity(self, data, entity):
-        assert get_id_by_content_entity(data, entity) == 1
+    def test_get_entity_id_by_entity_type(self, data, entity):
+        assert get_entity_id_by_entity_type(data, entity) == 1
 
     @pytest.mark.parametrize('data, entity', [({'typeId': 'wow'}, LAYOUTS_DIR), ({'name': 'wow'}, PLAYBOOKS_DIR)])
-    def test_get_name_by_content_entity(self, data, entity):
-        assert get_name_by_content_entity(data, entity) == 'wow'
+    def test_get_entity_name_by_entity_type(self, data, entity):
+        assert get_entity_name_by_entity_type(data, entity) == 'wow'
 
 
 class TestGetFilesInDir:

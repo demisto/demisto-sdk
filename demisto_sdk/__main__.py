@@ -371,7 +371,7 @@ def upload(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
-    "-f", "--force", help="Whether to download existing files or not", is_flag=True)
+    "-f", "--force", help="Whether to override existing files or not", is_flag=True)
 def download(**kwargs):
     downloader: Downloader = Downloader(**kwargs)
     return downloader.download()

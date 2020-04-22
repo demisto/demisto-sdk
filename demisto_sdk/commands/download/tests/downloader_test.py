@@ -1,7 +1,10 @@
 from demisto_sdk.commands.download.downloader import Downloader
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR
+from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, \
+    REPORTS_DIR, DASHBOARDS_DIR, WIDGETS_DIR, INCIDENT_FIELDS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, CLASSIFIERS_DIR, \
+    CONNECTIONS_DIR, BETA_INTEGRATIONS_DIR
 from demisto_sdk.commands.common.tools import get_child_files
 from tempfile import mkdtemp
+from mock import patch
 import pytest
 import json
 import os
@@ -9,16 +12,35 @@ import shutil
 
 CONTENT_BASE_PATH = 'demisto_sdk/commands/download/tests/tests_env/content'
 CUSTOM_CONTENT_BASE_PATH = 'demisto_sdk/commands/download/tests/tests_data/custom_content'
+PACK_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack'
+
+INTEGRATION_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration'
+SCRIPT_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack/Scripts/TestScript'
+PLAYBOOK_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack/Playbooks/playbook-FormattingPerformance_-_Test.yml'
+LAYOUT_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack/Layouts/layout-details-Hello_World_Alert-V2.json'
 
 INTEGRATION_PACK_OBJECT = {'Test Integration': [{'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration/TestIntegration.py', 'file_ending': 'py'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration/TestIntegration_test.py', 'file_ending': 'py'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration/TestIntegration.yml', 'file_ending': 'yml'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration/TestIntegration_image.png', 'file_ending': 'png'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration/CHANGELOG.md', 'file_ending': 'md'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration/TestIntegration_description.md', 'file_ending': 'md'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration/README.md', 'file_ending': 'md'}]}
 SCRIPT_PACK_OBJECT = {'TestScript': [{'name': 'TestScript', 'id': 'TestScript', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Scripts/TestScript/TestScript.py', 'file_ending': 'py'}, {'name': 'TestScript', 'id': 'TestScript', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Scripts/TestScript/TestScript.yml', 'file_ending': 'yml'}, {'name': 'TestScript', 'id': 'TestScript', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Scripts/TestScript/CHANGELOG.md', 'file_ending': 'md'}, {'name': 'TestScript', 'id': 'TestScript', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Scripts/TestScript/README.md', 'file_ending': 'md'}]}
 PLAYBOOK_PACK_OBJECT = {'FormattingPerformance - Test': [{'name': 'FormattingPerformance - Test', 'id': 'FormattingPerformance - Test', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Playbooks/playbook-FormattingPerformance_-_Test.yml', 'file_ending': 'yml'}]}
 LAYOUT_PACK_OBJECT = {'Hello World Alert': [{'name': 'Hello World Alert', 'id': 'Hello World Alert', 'path': f'{CONTENT_BASE_PATH}/Packs/TestPack/Layouts/layout-details-Hello_World_Alert-V2.json', 'file_ending': 'json'}]}
 
+PACK_CONTENT = {
+    INTEGRATIONS_DIR: [INTEGRATION_PACK_OBJECT],
+    SCRIPTS_DIR: [SCRIPT_PACK_OBJECT],
+    PLAYBOOKS_DIR: [PLAYBOOK_PACK_OBJECT],
+    LAYOUTS_DIR: [LAYOUT_PACK_OBJECT],
+    TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [],INCIDENT_FIELDS_DIR: [],
+    INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [], BETA_INTEGRATIONS_DIR: []
+}
+
 INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration', 'path': f'{CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml', 'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml'}
 SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript', 'path': f'{CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml', 'entity': 'Scripts', 'type': 'script', 'file_ending': 'yml'}
 PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'FormattingPerformance - Test', 'name': 'FormattingPerformance - Test', 'path': f'{CUSTOM_CONTENT_BASE_PATH}/playbook-FormattingPerformance_-_Test.yml', 'entity': 'Playbooks', 'type': 'playbook', 'file_ending': 'yml'}
 LAYOUT_CUSTOM_CONTENT_OBJECT = {'id': 'Hello World Alert', 'name': 'Hello World Alert', 'path': f'{CUSTOM_CONTENT_BASE_PATH}/layout-details-Hello_World_Alert-V2.json', 'entity': 'Layouts', 'type': 'layout', 'file_ending': 'json'}
+FAKE_CUSTOM_CONTENT_OBJECT = {'id': 'DEMISTO', 'name': 'DEMISTO', 'path': f'{CUSTOM_CONTENT_BASE_PATH}/DEMISTO.json', 'entity': 'Layouts', 'type': 'layout', 'file_ending': 'json'}
+
+
+CUSTOM_CONTENT = [INTEGRATION_CUSTOM_CONTENT_OBJECT, SCRIPT_CUSTOM_CONTENT_OBJECT, PLAYBOOK_CUSTOM_CONTENT_OBJECT, LAYOUT_CUSTOM_CONTENT_OBJECT]
 
 
 class TestHelperMethods:
@@ -32,7 +54,8 @@ class TestHelperMethods:
     @pytest.mark.parametrize('name, ending, detail, output', [('G S M', 'py', 'python', 'GSM.py'),
                                                               ('G S M', 'yml', 'yaml', 'GSM.yml'),
                                                               ('G S M', 'png', 'image', 'GSM_image.png'),
-                                                              ('G S M', 'md', 'description', 'GSM_description.md')])
+                                                              ('G S M', 'md', 'description', 'GSM_description.md')
+                                                              ])
     def test_get_searched_basename(self, name, ending, detail, output):
         downloader = Downloader(output='', input='')
         assert downloader.get_searched_basename(name, ending, detail) == output
@@ -59,22 +82,22 @@ class TestBuildPackContent:
         pass
 
     @pytest.mark.parametrize('entity, path, output_pack_content_object', [
-        (INTEGRATIONS_DIR, f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration', INTEGRATION_PACK_OBJECT),
-        (SCRIPTS_DIR, f'{CONTENT_BASE_PATH}/Packs/TestPack/Scripts/TestScript', SCRIPT_PACK_OBJECT),
-        (PLAYBOOKS_DIR, f'{CONTENT_BASE_PATH}/Packs/TestPack/Playbooks/playbook-FormattingPerformance_-_Test.yml', PLAYBOOK_PACK_OBJECT),
-        (LAYOUTS_DIR, f'{CONTENT_BASE_PATH}/Packs/TestPack/Layouts/layout-details-Hello_World_Alert-V2.json', LAYOUT_PACK_OBJECT),
-        (LAYOUTS_DIR, 'demisto_sdk/commands/download/tests/downloader_test.py', {})])
+        (INTEGRATIONS_DIR, INTEGRATION_INSTANCE_PATH, INTEGRATION_PACK_OBJECT),
+        (SCRIPTS_DIR, SCRIPT_INSTANCE_PATH, SCRIPT_PACK_OBJECT),
+        (PLAYBOOKS_DIR, PLAYBOOK_INSTANCE_PATH, PLAYBOOK_PACK_OBJECT),
+        (LAYOUTS_DIR, LAYOUT_INSTANCE_PATH, LAYOUT_PACK_OBJECT),
+        (LAYOUTS_DIR, 'demisto_sdk/commands/download/tests/downloader_test.py', {})
+    ])
     def test_build_pack_content_object(self, entity, path, output_pack_content_object):
         downloader = Downloader(output='', input='')
         pack_content_object = downloader.build_pack_content_object(entity, path)
         assert json.dumps(pack_content_object, sort_keys=True) == json.dumps(output_pack_content_object, sort_keys=True)
 
     @pytest.mark.parametrize('entity, path, main_id, main_name', [
-        (INTEGRATIONS_DIR, f'{CONTENT_BASE_PATH}/Packs/TestPack/Integrations/TestIntegration',
-         'Test Integration', 'Test Integration'),
-        (LAYOUTS_DIR, f'{CONTENT_BASE_PATH}/Packs/TestPack/Layouts/layout-details-Hello_World_Alert-V2.json',
-         'Hello World Alert', 'Hello World Alert'),
-        (LAYOUTS_DIR, 'demisto_sdk/commands/download/tests/downloader_test.py', '', '')])
+        (INTEGRATIONS_DIR, INTEGRATION_INSTANCE_PATH, 'Test Integration', 'Test Integration'),
+        (LAYOUTS_DIR, LAYOUT_INSTANCE_PATH, 'Hello World Alert', 'Hello World Alert'),
+        (LAYOUTS_DIR, 'demisto_sdk/commands/download/tests/downloader_test.py', '', '')
+    ])
     def test_get_main_file_details(self, entity, path, main_id, main_name):
         downloader = Downloader(output='', input='')
         op_id, op_name = downloader.get_main_file_details(entity, os.path.abspath(path))
@@ -86,8 +109,15 @@ class TestBuildCustomContent:
     def test_build_custom_content(self):
         pass
 
-    def test_exist_in_pack_content(self):
-        pass
+    @pytest.mark.parametrize('custom_content_object, exist_in_pack', [
+        (INTEGRATION_CUSTOM_CONTENT_OBJECT, True), (SCRIPT_CUSTOM_CONTENT_OBJECT, True), (PLAYBOOK_CUSTOM_CONTENT_OBJECT, True),
+        (LAYOUT_CUSTOM_CONTENT_OBJECT, True), (FAKE_CUSTOM_CONTENT_OBJECT, False)
+    ])
+    def test_exist_in_pack_content(self, custom_content_object, exist_in_pack):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.pack_content = PACK_CONTENT
+            assert downloader.exist_in_pack_content(custom_content_object) is exist_in_pack
 
     @pytest.mark.parametrize('path, output_custom_content_object', [
         (f'{CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml', SCRIPT_CUSTOM_CONTENT_OBJECT),
@@ -101,19 +131,55 @@ class TestBuildCustomContent:
 
 
 class TestPackHierarchy:
+    @staticmethod
+    def prepare_env():
+        integration_instance_temp_path = f'{INTEGRATION_INSTANCE_PATH}_temp'
+        shutil.copytree(INTEGRATION_INSTANCE_PATH, integration_instance_temp_path)
+        script_dir_path = os.path.dirname(SCRIPT_INSTANCE_PATH)
+        script_dir_temp_path = f'{os.path.dirname(SCRIPT_INSTANCE_PATH)}_temp'
+        shutil.copytree(script_dir_path, script_dir_temp_path)
+        shutil.rmtree(INTEGRATION_INSTANCE_PATH)
+        shutil.rmtree(script_dir_path)
+        return integration_instance_temp_path, script_dir_temp_path, script_dir_path
+
+    @staticmethod
+    def restore_env(integration_instance_temp_path, script_dir_temp_path, script_dir_path):
+        shutil.rmtree(SCRIPT_INSTANCE_PATH)
+        os.rename(integration_instance_temp_path, INTEGRATION_INSTANCE_PATH)
+        os.rename(script_dir_temp_path, script_dir_path)
+
     def test_update_pack_hierarchy(self):
-        pass
+        integration_instance_temp_path, script_dir_temp_path, script_dir_path = self.prepare_env()
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.output_pack_path = PACK_INSTANCE_PATH
+            downloader.custom_content = CUSTOM_CONTENT
+            downloader.update_pack_hierarchy()
+            assert os.path.isdir(INTEGRATION_INSTANCE_PATH)
+            assert os.path.isdir(SCRIPT_INSTANCE_PATH)
+        self.restore_env(integration_instance_temp_path, script_dir_temp_path, script_dir_path)
 
 
 class TestMergeOldFile:
-    def test_merge_and_extract_old_file(self):
+    def test_merge_and_extract_existing_file(self):
         pass
 
-    def test_merge_old_file(self):
+    def test_merge_existing_file(self):
         pass
 
-    def test_get_corresponding_pack_content_object(self):
-        pass
+    @pytest.mark.parametrize('custom_content_object, pack_content_object', [
+        (INTEGRATION_CUSTOM_CONTENT_OBJECT, INTEGRATION_PACK_OBJECT),
+        (SCRIPT_CUSTOM_CONTENT_OBJECT, SCRIPT_PACK_OBJECT),
+        (PLAYBOOK_CUSTOM_CONTENT_OBJECT, PLAYBOOK_PACK_OBJECT),
+        (LAYOUT_CUSTOM_CONTENT_OBJECT, LAYOUT_PACK_OBJECT),
+        (FAKE_CUSTOM_CONTENT_OBJECT, {})
+    ])
+    def test_get_corresponding_pack_content_object(self, custom_content_object, pack_content_object):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.pack_content = PACK_CONTENT
+            corresponding_pack_content_object = json.dumps(downloader.get_corresponding_pack_content_object(custom_content_object), sort_keys=True)
+            assert corresponding_pack_content_object == json.dumps(pack_content_object, sort_keys=True)
 
     def test_get_corresponding_pack_file_object(self):
         pass
@@ -123,38 +189,23 @@ class TestMergeOldFile:
 
 
 class TestMergeNewFile:
-    def test_merge_and_extract_new_integration(self):
+    @pytest.mark.parametrize('custom_content_object, raw_files', [
+        (INTEGRATION_CUSTOM_CONTENT_OBJECT, ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md',
+                                             'odp/README.md', 'odp/CHANGELOG.md']),
+        (SCRIPT_CUSTOM_CONTENT_OBJECT, ['odp/bn.py', 'odp/bn.yml', 'odp/README.md', 'odp/CHANGELOG.md'])
+    ])
+    def test_merge_and_extract_new_file(self, custom_content_object, raw_files):
         temp_dir = mkdtemp()
-        entity = INTEGRATION_CUSTOM_CONTENT_OBJECT['entity']
-        basename = INTEGRATION_CUSTOM_CONTENT_OBJECT['name'].replace(' ', '')
+        entity = custom_content_object['entity']
+        downloader = Downloader(output=temp_dir, input='')
+        basename = downloader.create_dir_name(custom_content_object['name'])
         output_entity_dir_path = f'{temp_dir}/{entity}'
         os.mkdir(output_entity_dir_path)
         output_dir_path = f'{output_entity_dir_path}/{basename}'
         os.mkdir(output_dir_path)
-        downloader = Downloader(output=temp_dir, input='')
-        files = [f'{output_dir_path}/{basename}.py', f'{output_dir_path}/{basename}.yml',
-                 f'{output_dir_path}/{basename}_image.png', f'{output_dir_path}/{basename}_description.md',
-                 f'{output_dir_path}/README.md', f'{output_dir_path}/CHANGELOG.md']
+        files = [file.replace('odp', output_dir_path).replace('bn', basename) for file in raw_files]
 
-        downloader.merge_and_extract_new_file(INTEGRATION_CUSTOM_CONTENT_OBJECT)
-        output_files = get_child_files(output_dir_path)
-        assert sorted(output_files) == sorted(files)
-
-        shutil.rmtree(temp_dir)
-
-    def test_merge_and_extract_new_script(self):
-        temp_dir = mkdtemp()
-        entity = SCRIPT_CUSTOM_CONTENT_OBJECT['entity']
-        basename = SCRIPT_CUSTOM_CONTENT_OBJECT['name'].replace(' ', '')
-        output_entity_dir_path = f'{temp_dir}/{entity}'
-        os.mkdir(output_entity_dir_path)
-        output_dir_path = f'{output_entity_dir_path}/{basename}'
-        os.mkdir(output_dir_path)
-        downloader = Downloader(output=temp_dir, input='')
-        files = [f'{output_dir_path}/{basename}.py', f'{output_dir_path}/{basename}.yml',
-                 f'{output_dir_path}/README.md', f'{output_dir_path}/CHANGELOG.md']
-
-        downloader.merge_and_extract_new_file(SCRIPT_CUSTOM_CONTENT_OBJECT)
+        downloader.merge_and_extract_new_file(custom_content_object)
         output_files = get_child_files(output_dir_path)
         assert sorted(output_files) == sorted(files)
 
@@ -164,10 +215,11 @@ class TestMergeNewFile:
     def test_merge_new_file(self, custom_content_object):
         temp_dir = mkdtemp()
         entity = custom_content_object['entity']
-        os.mkdir(f'{temp_dir}/{entity}')
+        output_dir_path = f'{temp_dir}/{entity}'
+        os.mkdir(output_dir_path)
         downloader = Downloader(output=temp_dir, input='')
         old_file_path = custom_content_object['path']
-        new_file_path = f'{temp_dir}/{entity}/{os.path.basename(old_file_path)}'
+        new_file_path = f'{output_dir_path}/{os.path.basename(old_file_path)}'
 
         downloader.merge_new_file(custom_content_object)
         assert os.path.isfile(new_file_path)
@@ -176,14 +228,10 @@ class TestMergeNewFile:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-class TestFilesNotDownloaded:
-    def test_log_files_not_downloaded(self):
-        pass
-
-
 class TestVerifyPackPath:
     @pytest.mark.parametrize('output_path, valid_ans', [('Integrations', False), ('Packs/TestPack/', True),
-                             ('Demisto', False), ('Packs', False), ('Packs/TestPack', True)])
+                                                        ('Demisto', False), ('Packs', False), ('Packs/TestPack', True)
+                                                        ])
     def test_verify_path_is_pack(self, output_path, valid_ans):
         downloader = Downloader(output=f'{CONTENT_BASE_PATH}/{output_path}', input='')
         assert downloader.verify_path_is_pack() is valid_ans

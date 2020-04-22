@@ -282,11 +282,11 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
-def get_id_by_content_entity(data: dict, content_entity: str):
+def get_entity_id_by_entity_type(data: dict, content_entity: str):
     """
-    Returns the id of the file by it's content entity
+    Returns the id of the content entity given its entity type
     :param data: The data of the file
-    :param content_entity: The content entity
+    :param content_entity: The content entity type
     :return: The file id
     """
     if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
@@ -297,11 +297,11 @@ def get_id_by_content_entity(data: dict, content_entity: str):
         return data.get('id', '')
 
 
-def get_name_by_content_entity(data: dict, content_entity: str):
+def get_entity_name_by_entity_type(data: dict, content_entity: str):
     """
-    Returns the name of the file by it's content entity
+    Returns the name of the content entity given its entity type
     :param data: The data of the file
-    :param content_entity: The content entity
+    :param content_entity: The content entity type
     :return: The file name
     """
     if content_entity == LAYOUTS_DIR:

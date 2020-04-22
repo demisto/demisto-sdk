@@ -7,6 +7,8 @@ import re
 import shlex
 import sys
 from distutils.version import LooseVersion
+from os import listdir
+from os.path import isfile, join
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Dict, List, Optional, Tuple, Union
@@ -743,3 +745,61 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return True, '/'.join(input_path_parts[len(content_path_parts):])
     else:
         return False, ''
+
+
+class FileFinder:
+    class Extension:
+        YML = '.yml'
+        PYTHON = '.py'
+        JSON = '.json'
+
+    @staticmethod
+    def get_files_with_extension_in_dir(dir_path: str, extension: Union[str, Extension]) -> List[str]:
+        """Return all files in directory, absolute path.
+
+        Args:
+            dir_path: path to files in
+            extension: files that ends with this term
+
+        Returns:
+            A list of all files in the path.
+        """
+        return [
+            os.path.join(dir_path, f) for f in listdir(dir_path) if isfile(join(dir_path, f)) and f.endswith(extension)
+        ]
+
+    @classmethod
+    def get_yml_files_in_dir(cls, dir_path: str) -> List[str]:
+        """Return all files in directory, absolute path.
+
+        Args:
+            dir_path: path to find yml files in
+
+        Returns:
+            A list of all files in the path.
+        """
+        return cls.get_files_with_extension_in_dir(dir_path, cls.Extension.YML)
+
+    @classmethod
+    def get_json_files_in_dir(cls, dir_path: str) -> List[str]:
+        """Return all files in directory, absolute path.
+
+        Args:
+            dir_path: path to find json files in
+
+        Returns:
+            A list of all files in the path.
+        """
+        return cls.get_files_with_extension_in_dir(dir_path, cls.Extension.JSON)
+
+    @classmethod
+    def get_python_files_in_dir(cls, dir_path: str) -> List[str]:
+        """Return all files in directory, absolute path.
+
+        Args:
+            dir_path: path to find python files in
+
+        Returns:
+            A list of all files in the path.
+        """
+        return cls.get_files_with_extension_in_dir(dir_path, cls.Extension.PYTHON)

@@ -8,7 +8,7 @@ from pkg_resources import get_distribution
 import click
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.tools import (find_type,
+from demisto_sdk.commands.common.tools import (FileFinder, find_type,
                                                get_last_remote_release_version,
                                                is_file_path_in_pack,
                                                print_error, print_warning)
@@ -578,6 +578,17 @@ def generate_doc(**kwargs):
     insecure = kwargs.get('insecure')
     verbose = kwargs.get('verbose')
 
+    if input_path and os.path.isdir(input_path):
+        print("Input is a directory. will try to find yml files.")
+        file_list = FileFinder.get_yml_files_in_dir(input_path)
+        if not file_list:
+            print_error(f"Could not find any .yml files in {input_path}")
+            return 1
+        if len(file_list) > 1:
+            print_error(f"Found more than 1 .yml file in '{input_path}' which is not supported.")
+            return 1
+        input_path = file_list[0]
+        print(f"Found yml file! {input_path}")
     # validate inputs
     if input_path and not os.path.isfile(input_path):
         print_error(F'Input file {input_path} was not found.')

@@ -46,3 +46,45 @@ def test_generate_docs_on_file_not_exists():
     result = runner.invoke(main, [GENERATE_DOCS_COMMAND, '-i', test_file])
     assert result.exit_code == 1
     assert 'was not found.' in result.stdout
+
+
+def test_generate_docs_pack_directory_negative():
+    """
+    Given
+    - A directory with 2 integrations in it
+
+    When
+    - Running validation on it with --input/-i option
+    - The script can only run on a particular file
+
+    Then
+    - Ensure validation fails.
+    - Ensure failed message displayed.
+    """
+    test_file = 'demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/'
+    test_file_path = join(git_path(), test_file)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [GENERATE_DOCS_COMMAND, '-i', test_file_path])
+    assert result.exit_code == 1
+    assert "which is not supported" in result.stdout
+
+
+def test_generate_docs_pack_directory_positive():
+    """
+    Given
+    - A directory with 2 integrations in it
+
+    When
+    - Running validation on it with --input/-i option
+    - The script can only run on a particular file
+
+    Then
+    - Ensure validation fails.
+    - Ensure failed message displayed.
+    """
+    test_file = 'demisto_sdk/tests/test_files/CortexXDR/Integrations/PaloAltoNetworks_XDR'
+    test_file_path = join(git_path(), test_file)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [GENERATE_DOCS_COMMAND, '-i', test_file_path])
+    assert 0 == result.exit_code
+    assert "Output file was saved to " in result.stdout

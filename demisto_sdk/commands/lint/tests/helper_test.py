@@ -44,3 +44,27 @@ def test_get_python_version_from_image(image: str, output: bytes, expected: floa
     mocker.patch.object(helpers, 'docker')
     helpers.docker.from_env().containers.run().logs.return_value = output
     assert expected == helpers.get_python_version_from_image(image)
+
+
+@pytest.mark.parametrize(argnames="archive_response, expected_count, expected_exception",
+                         argvalues=[
+                             ([False, True], 2, False),
+                             ([True], 1, False),
+                             ([False, False], 2, True)
+                         ])
+def test_copy_dir_to_container(mocker, archive_response: bool, expected_count: int, expected_exception: bool):
+    from demisto_sdk.commands.lint import helpers
+    mocker.patch.object(helpers, 'docker')
+    mocker.patch.object(helpers, 'tarfile')
+    mocker.patch.object(helpers, 'os')
+    mock_container = mocker.MagicMock()
+    mock_container_path = mocker.MagicMock()
+    mock_host_path = mocker.MagicMock()
+    mock_container.put_archive.side_effect = archive_response
+    if expected_exception:
+        with pytest.raises(Exception):
+            helpers.copy_dir_to_container(mock_container, mock_container_path, mock_host_path)
+    else:
+        helpers.copy_dir_to_container(mock_container, mock_container_path, mock_host_path)
+
+    assert mock_container.put_archive.call_count == expected_count

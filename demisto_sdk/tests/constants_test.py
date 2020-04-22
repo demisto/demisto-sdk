@@ -3,6 +3,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 GIT_ROOT = "{}".format(git_path())
 INVALID_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-invalid.yml"
 VALID_TEST_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-test.yml"
+VALID_BETA_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/beta-playbook-valid.yml"
 VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks." \
                                           f"playbook-ArcSight_Add_Domain_Indicators.yml"
 VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"
@@ -100,3 +101,9 @@ DESTINATION_FORMAT_DASHBOARD_COPY = f"Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = f"Dashboards"
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
+
+DEFAULT_IMAGE = f'{git_path()}/demisto_sdk/tests/test_files/default_image.png'
+VALID_PACK = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzure'
+VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
+
+INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"

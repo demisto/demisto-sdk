@@ -1,14 +1,24 @@
+## [Unreleased]
+* Improved 'validate' help and documentation description
+
 # Changelog
-* Added *-c, --command* option in *generate-docs* to generate specific command from integration.
-* Fixed an issue in getting a README/CHANGELOG files from git and loading it.
+* demisto-sdk lint - Copy dir better handling.
+* demisto-sdk lint - Add error when package missing in docker image.
+* Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* Fixed an isssue with **format** command when executing with an output path of a folder and not a file path.
+
+
+#### 0.5.2
+* Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.
+* Fixed an issue when getting README/CHANGELOG files from git and loading them.
 * Removed release notes validation for new content.
-* Fixed secretes validations for files with the same name in a different directory.
-* demisto-sdk lint - parralel working with specify the number of workers.
+* Fixed secrets validations for files with the same name in a different directory.
+* demisto-sdk lint - parallelization working with specifying the number of workers.
 * demisto-sdk lint - logging levels output, 3 levels.
-* demisto-sdk lint - json report, structured error reports in json format.
-* demisto-sdk lint - xml junit report for unit-tests.
-* demisto-sdk lint - New packages used in order to excellarate execution time.
-* demisto-sdk secrets command now respects the generic whitelist, and not only the pack secrets.
+* demisto-sdk lint - JSON report, structured error reports in JSON format.
+* demisto-sdk lint - XML JUnit report for unit-tests.
+* demisto-sdk lint - new packages used to accelerate execution time.
+* demisto-sdk secrets - command now respects the generic whitelist, and not only the pack secrets.
 
 #### 0.5.0
 [PyPI History][1]

@@ -330,6 +330,22 @@ class TestValidators:
         finally:
             os.remove(target)
 
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_valid_structure_use_git(self, source: str, target: str) -> None:
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False, use_git=True).is_valid_structure()
+        finally:
+            os.remove(target)
+
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_valid_structure_use_git_post_commit(self, source: str, target: str) -> None:
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False, use_git=True, is_circle=True).is_valid_structure()
+        finally:
+            os.remove(target)
+
     FILE_PATHS = [
         ([VALID_INTEGRATION_TEST_PATH], 'integration'),
         ([VALID_TEST_PLAYBOOK_PATH], 'playbook'),

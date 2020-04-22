@@ -55,7 +55,7 @@ def test_generate_docs_pack_directory_negative():
 
     When
     - Running validation on it with --input/-i option
-    - The script can only run on a particular file
+    - The script can only run on a 1 yml in a directory
 
     Then
     - Ensure validation fails.
@@ -64,7 +64,7 @@ def test_generate_docs_pack_directory_negative():
     test_file = 'demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/'
     test_file_path = join(git_path(), test_file)
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [GENERATE_DOCS_COMMAND, '-i', test_file_path])
+    result = runner.invoke(main, [GENERATE_DOCS_COMMAND, '-i', test_file_path], catch_exceptions=False)
     assert result.exit_code == 1
     assert "which is not supported" in result.stdout
 

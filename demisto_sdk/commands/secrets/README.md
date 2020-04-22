@@ -21,6 +21,11 @@ demisto-sdk secrets
 This will run the secrets validator on your uncommited files.
 <br/><br/>
 ```
+demisto-sdk secrets -i ./MyRepo/Integration/integration.yml
+```
+This will run the secrets validator on the file located in ./MyRepo/Integration/integration.yml.
+<br/><br/>
+```
 demisto-sdk secrets --post-commit
 ```
 This will run the secrets validator on your files after you commited them.

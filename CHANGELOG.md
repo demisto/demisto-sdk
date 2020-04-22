@@ -1,5 +1,6 @@
 # Changelog
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* added *-i, --input* option in *secrets* to run on a specific file.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

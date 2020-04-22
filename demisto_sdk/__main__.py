@@ -597,8 +597,7 @@ def generate_doc(**kwargs):
                 and (not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "README.md"))):
             print_error("The `command` argument must be presented with existing `README.md` docs.")
             return 1
-
-    file_type = find_type(kwargs.get('input', ''))
+    file_type = find_type(input_path)
     if file_type not in ["integration", "script", "playbook"]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1

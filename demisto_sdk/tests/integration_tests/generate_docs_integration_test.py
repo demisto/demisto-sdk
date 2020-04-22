@@ -7,13 +7,13 @@ from demisto_sdk.commands.common.git_tools import git_path
 GENERATE_DOCS_COMMAND = 'generate-docs'
 
 
-def test_unifier_pack():
+def test_generate_docs_on_file_in_pack():
     """
     Given
-    - Valid `city` incident field.
+    - Valid integration file in pack
 
     When
-    - Running validation on it.
+    - Running validation on it with --input/-i option
 
     Then
     - Ensure validation passes.
@@ -27,3 +27,22 @@ def test_unifier_pack():
     assert "Merging package:" in result.stdout
     assert "Output file was saved to " in result.stdout
     assert not result.stderr
+
+
+def test_generate_docs_on_file_not_exists():
+    """
+    Given
+    - None existing file
+
+    When
+    - Running validation on non existing file
+
+    Then
+    - Ensure validation passes.
+    - Ensure success validation message is printed.
+    """
+    test_file = 'demisto_sdk/tests/test_files/content_repo_example/nofile.yml'
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [GENERATE_DOCS_COMMAND, '-i', test_file])
+    assert result.exit_code == 1
+    assert 'was not found.' in result.stdout

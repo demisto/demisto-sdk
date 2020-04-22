@@ -67,7 +67,7 @@ class Unifier:
         # script key for integrations is a dictionary.
         self.is_script_package = isinstance(self.yml_data.get('script'), str)
         self.dir_name = SCRIPTS_DIR if self.is_script_package else dir_name
-        # Save dest path to use in another places
+        # Save destination of output file. (Used in another places, like generate docs)
         package_dir_name = os.path.basename(self.package_path)
         output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
         if self.dest_path:

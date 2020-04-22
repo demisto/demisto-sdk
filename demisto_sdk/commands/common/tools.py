@@ -433,7 +433,16 @@ def get_dockerimage45(script_object):
     return script_object.get('dockerimage', '')
 
 
-def is_file_path_in_pack(file_path, check_substring=False):
+def is_file_path_in_pack(file_path: str, check_substring: bool = False) -> bool:
+    """ Checking if given file path is in package path
+
+    Args:
+        file_path: The path to check for package structure
+        check_substring: If True checks the whole string, else check with default packs dir regex
+
+    Returns:
+        True if the path is a package, else False
+    """
     if check_substring:
         return bool(re.findall(FIND_SUBSTRING_REGEX.format(PACKS_DIR), file_path))
     return bool(re.findall(PACKS_DIR_REGEX, file_path))

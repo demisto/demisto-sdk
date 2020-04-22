@@ -1,11 +1,11 @@
 import os
-import pytest
+from unittest.mock import patch
 
+import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import get_yaml
-from unittest.mock import patch
 
 RETURN_ERROR_TARGET = 'GetDockerImageLatestTag.return_error'
 

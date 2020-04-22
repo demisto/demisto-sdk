@@ -204,6 +204,10 @@ def unify(**kwargs):
 @click.option(
     '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
 )
+@click.option(
+    '-a', '--validate-all', is_flag=True, show_default=True, default=False,
+    help='Whether to run all validation on all files or not'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -218,7 +222,8 @@ def validate(config, **kwargs):
                                    is_backward_check=not kwargs['no_backward_comp'],
                                    is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
-                                   file_path=kwargs.get('path'))
+                                   file_path=kwargs.get('path'),
+                                   validate_all=kwargs.get('validate_all'))
         return validator.run()
 
 
@@ -301,7 +306,8 @@ def secrets(config, **kwargs):
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--json-report", help="Path to store json results", type=click.Path(exists=True, resolve_path=True))
-@click.option("-lp", "--log-path", help="Path to store all levels of logs", type=click.Path(exists=True, resolve_path=True))
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, test_xml: str, json_report: str, log_path: str):

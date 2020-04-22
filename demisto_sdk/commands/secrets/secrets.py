@@ -83,8 +83,8 @@ class SecretsValidator(object):
             secrets_file_paths = self.input_path
         else:
             secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
+        # If a input path supplied, should not run on git.
         if not run_command('git rev-parse -q --verify MERGE_HEAD') or self.input_path:
-            # If a input path supplied, should not run on git.
             secrets_found = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
             if secrets_found:
                 secrets_found_string = 'Secrets were found in the following files:'

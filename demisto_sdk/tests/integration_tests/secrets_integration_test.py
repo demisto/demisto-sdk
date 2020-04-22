@@ -140,7 +140,7 @@ def test_integration_secrets_integration_with_regex_expression(tmp_path):
     """
     Given
     - White list with a term that can be regex (***.).
-    - String with no content
+    - Content with one secret, the term above    ^^.
 
     When
     - Removing terms containing that regex
@@ -149,7 +149,7 @@ def test_integration_secrets_integration_with_regex_expression(tmp_path):
     - Ensure secrets that the secret isn't in the output.
     - Ensure no error raised
     """
-    white_list_path = create_temp_file(tmp_path, '***.url\n', 'whitelist.txt')
+    white_list_path = create_temp_file(tmp_path, json.dumps({"generic_strings": "***.url\n"}), 'whitelist.txt')
     file_contents_path = create_temp_file(tmp_path, '''
     Random and unmeaningful file content
     a string containing ***.url\n
@@ -162,6 +162,18 @@ def test_integration_secrets_integration_with_regex_expression(tmp_path):
 
 
 def test_integration_secrets_integration_positive_with_input_option():
+    """
+    Given
+    - Integration with no secrets in it.
+    - Default whitelist
+
+    When
+    - Running secrets
+
+    Then
+    - Ensure secrets that the secret isn't in the output.
+    - Ensure no error raised
+    """
     integration_secrets_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
     )

@@ -42,8 +42,7 @@ class TestIncidentField:
 
 
 class TestIntegration:
-    @staticmethod
-    def test_negative__non_latest_docker_image():
+    def test_negative__non_latest_docker_image(self):
         """
         Given
         - FeedAzure integration with non-latest docker image.
@@ -66,14 +65,14 @@ class TestIntegration:
                "please update to latest version." in result.stdout
         assert result.stderr == ""
 
-    @staticmethod
-    def test_negative__hidden_param():
+    def test_negative__hidden_param(self):
         """
         Given
-        - Integration with not allowed hidden params.
+        - Integration with not allowed hidden params: ["server", "credentials"].
 
         When
         - Running validation on it.
+
         Then
         - Ensure validation fails.
         - Ensure failure message on hidden params.
@@ -87,14 +86,14 @@ class TestIntegration:
         assert "can't be hidden. Please remove this field" in result.stdout
         assert result.stderr == ""
 
-    @staticmethod
-    def test_positive__hidden_param():
+    def test_positive__hidden_param(self):
         """
         Given
-        - Integration with allowed hidden params.
+        - Integration with allowed hidden param: "longRunning".
 
         When
         - Running validation on it.
+
         Then
         - Ensure validation succeeds.
         """

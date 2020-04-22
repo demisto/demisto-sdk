@@ -10,10 +10,10 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INDICATORFIELD_COPY,
     DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
     INCIDENTFIELD_PATH, INCIDENTTYPE_PATH, INDICATORFIELD_PATH,
-    INDICATORTYPE_PATH, LAYOUT_PATH, SOURCE_FORMAT_DASHBOARD_COPY,
-    SOURCE_FORMAT_INCIDENTFIELD_COPY, SOURCE_FORMAT_INCIDENTTYPE_COPY,
-    SOURCE_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY,
-    SOURCE_FORMAT_LAYOUT_COPY)
+    INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH,
+    SOURCE_FORMAT_DASHBOARD_COPY, SOURCE_FORMAT_INCIDENTFIELD_COPY,
+    SOURCE_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY,
+    SOURCE_FORMAT_INDICATORTYPE_COPY, SOURCE_FORMAT_LAYOUT_COPY)
 
 
 class TestFormattingJson:
@@ -35,3 +35,12 @@ class TestFormattingJson:
         os.rmdir(path)
 
         assert res is answer
+
+    @pytest.mark.parametrize('invalid_output', [INVALID_OUTPUT_PATH])
+    def test_output_file(self, invalid_output):
+        try:
+            res_invalid = format_manager(input=invalid_output, output=invalid_output)
+            assert res_invalid
+        except Exception as e:
+            assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
+                             "  Please specify a correct output."

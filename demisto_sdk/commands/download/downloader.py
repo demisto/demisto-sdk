@@ -195,14 +195,24 @@ class Downloader:
             for input_file_name in self.input_files:
                 name = custom_content_object['name']
                 if name == input_file_name:
-                    entity: str = custom_content_object['entity']
-                    exist_in_pack: bool = False
-                    for entity_instance_object in self.pack_content[entity]:
-                        if entity_instance_object.get(name):
-                            exist_in_pack = True
-                            # move into function
-                    custom_content_object['exist_in_pack'] = exist_in_pack
+                    custom_content_object['exist_in_pack'] = self.exist_in_pack_content(custom_content_object)
                     self.custom_content.append(custom_content_object)
+
+    def exist_in_pack_content(self, custom_content_object: dict) -> bool:
+        """
+        Checks if the current custom content object already exists in custom content
+        :param custom_content_object: The custom content object
+        :return: True if exists, False otherwise
+        """
+        entity: str = custom_content_object['entity']
+        name = custom_content_object['name']
+        exist_in_pack: bool = False
+
+        for entity_instance_object in self.pack_content[entity]:
+            if entity_instance_object.get(name):
+                exist_in_pack = True
+
+        return exist_in_pack
 
     @staticmethod
     def build_custom_content_object(file_path: str) -> dict:
@@ -276,11 +286,7 @@ class Downloader:
             if exist_in_pack:
                 if self.force:
                     if file_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-                        # change old to exist
                         self.merge_and_extract_old_file(custom_content_object)
-                    elif file_entity == PLAYBOOKS_DIR:
-                        # delete
-                        self.merge_old_file(custom_content_object, file_ending)
                     else:
                         self.merge_old_file(custom_content_object, file_ending)
                 else:

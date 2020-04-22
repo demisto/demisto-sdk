@@ -86,6 +86,9 @@ class TestBuildCustomContent:
     def test_build_custom_content(self):
         pass
 
+    def test_exist_in_pack_content(self):
+        pass
+
     @pytest.mark.parametrize('path, output_custom_content_object', [
         (f'{CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml', SCRIPT_CUSTOM_CONTENT_OBJECT),
         (f'{CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml', INTEGRATION_CUSTOM_CONTENT_OBJECT),

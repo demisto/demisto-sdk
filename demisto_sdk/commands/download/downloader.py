@@ -542,7 +542,7 @@ class Downloader:
 
     def log_files_not_downloaded(self) -> None:
         """
-        Keeps in the not downloaded files list the files haven't been downloaded
+        Logs a table of all files haven't been downloaded by Demisto
         :return: None
         """
         if self.files_not_downloaded:

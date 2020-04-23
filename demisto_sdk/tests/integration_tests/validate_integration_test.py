@@ -143,9 +143,10 @@ class TestPack:
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH])
         assert "Starting validating files structure" in result.output
-        assert f'Validating {VALID_PACK_PATH}' in result.output
-        assert f'{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml' in result.output
-        assert f'{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
+        assert f"{VALID_PACK_PATH} unique pack files" in result.output
+        assert f"Validating {VALID_PACK_PATH}" in result.output
+        assert f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml" in result.output
+        assert f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json" in result.output
         assert "The files are valid" in result.stdout
         assert result.stderr == ""
 
@@ -164,20 +165,4 @@ class TestPack:
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_INVALID_PACK_PATH])
         assert result.exit_code == 1
         assert f'{AZURE_FEED_INVALID_PACK_PATH} was not found' in result.output
-        assert result.stderr == ""
-
-    def test_pack_metadata(self):
-        """
-        Given
-        - FeedAzure integration Pack path.
-
-        When
-        - Running validation on the pack.
-
-        Then
-        - See that the the function validates the pack-metadata file.
-        """
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH])
-        assert "Packs/FeedAzure unique pack files" in result.output
         assert result.stderr == ""

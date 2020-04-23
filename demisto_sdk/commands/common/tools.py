@@ -17,10 +17,9 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
-    PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TESTS_DIRECTORIES, TYPE_PWSH,
-    UNRELEASE_HEADER)
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, RELEASE_NOTES_REGEX,
+    SDK_API_GITHUB_RELEASES, TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -337,15 +336,15 @@ def str2bool(v):
 
 
 def get_release_notes_file_path(file_path):
+    # We got the CHANGELOG file to get its release notes
+    if file_path.endswith('CHANGELOG.md'):
+        return file_path
+
     dir_name = os.path.dirname(file_path)
 
     # CHANGELOG in pack sub dirs
     if re.match(PACKAGE_YML_FILE_REGEX, file_path):
         return os.path.join(dir_name, 'CHANGELOG.md')
-
-    # CHANGELOG in pack root
-    if re.match(PACKS_CHANGELOG_REGEX, file_path):
-        return file_path
 
     # outside of packages, change log file will include the original file name.
     file_name = os.path.basename(file_path)

@@ -94,13 +94,13 @@ class IDSetValidator:
                     checked_instance_fromversion == obj_from_version:
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
-                    print_error("You have failed to update id_set.json with the data of {} "
-                                "please run `demisto-sdk create-id-set`".format(file_path))
+                    print_error(f"You have failed to update id_set.json with the data of {file_path} "
+                                f"please run `demisto-sdk create-id-set`")
                     return False
 
         if not is_found:
-            print_error("You have failed to update id_set.json with the data of {} "
-                        "please run `demisto-sdk create-id-set`".format(file_path))
+            print_error(f"You have failed to update id_set.json with the data of {file_path} "
+                        f"please run `demisto-sdk create-id-set`")
 
         return is_found
 

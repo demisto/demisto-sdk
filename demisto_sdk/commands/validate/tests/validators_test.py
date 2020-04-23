@@ -446,4 +446,3 @@ def test_pack_validation():
     file_validator.file_path = VALID_PACK_RELATIVE_PATH
     file_validator.is_valid_structure()
     assert file_validator._is_valid is False
-

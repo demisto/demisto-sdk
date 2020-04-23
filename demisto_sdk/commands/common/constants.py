@@ -270,6 +270,57 @@ BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
 
+SCRIPT = 'script'
+INTEGRATION = 'integration'
+PLAYBOOK = 'playbook'
+LAYOUT = 'layout'
+INCIDENT_TYPE = 'incidenttype'
+INCIDENT_FIELD = 'incidentfield'
+INDICATOR_FIELD = 'indicatorfield'
+CONNECTION = 'connection'
+CLASSIFIER = 'classifier'
+DASHBOARD = 'dashboard'
+REPORT = 'report'
+REPUTATION = 'reputation'
+WIDGET = 'widget'
+
+CONTENT_ENTITIES_DIRS = [
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+    PLAYBOOKS_DIR,
+    TEST_PLAYBOOKS_DIR,
+    REPORTS_DIR,
+    DASHBOARDS_DIR,
+    WIDGETS_DIR,
+    INCIDENT_FIELDS_DIR,
+    INDICATOR_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    LAYOUTS_DIR,
+    CLASSIFIERS_DIR,
+    CONNECTIONS_DIR,
+    BETA_INTEGRATIONS_DIR
+]
+
+ENTITY_TYPE_TO_DIR = {
+    INTEGRATION: INTEGRATIONS_DIR,
+    PLAYBOOK: PLAYBOOKS_DIR,
+    SCRIPT: SCRIPTS_DIR,
+    LAYOUT: LAYOUTS_DIR,
+    INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPE: INCIDENT_TYPES_DIR,
+    INDICATOR_FIELD: INDICATOR_FIELDS_DIR,
+    CONNECTION: CONNECTIONS_DIR,
+    CLASSIFIER: CLASSIFIERS_DIR,
+    DASHBOARD: DASHBOARDS_DIR,
+    REPUTATION: MISC_DIR,
+    REPORT: REPORTS_DIR,
+    WIDGET: WIDGETS_DIR
+}
+
+CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
+
+CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
+
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
 DEFAULT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAACYVBMVEVHcEwAT4UAT4UAT4YAf/8A//8AT4UAf78AT4U' \
                        'AT4UAT4UAUYcAT4YAT4YAT48AXIsAT4UAT4UAUIUAUIUAT4UAT4UAVaoAW5EAUIYAWYwAT4UAT4UAT4UAUIgAT4YAUo' \
@@ -566,6 +617,9 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'dashboard',
     'incident_type'
 ]
+
+INTEGRATION_PREFIX = 'integration'
+SCRIPT_PREFIX = 'script'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -964,14 +1018,18 @@ FILE_TYPES_PATHS_TO_VALIDATE = {
 
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
-SCRIPT_PREFIX = 'script'
-INTEGRATION_PREFIX = 'integration'
 
 DIR_TO_PREFIX = {
     'Integrations': INTEGRATION_PREFIX,
     'Beta_Integrations': INTEGRATION_PREFIX,
     'Scripts': SCRIPT_PREFIX
 }
+
+ENTITY_NAME_SEPARATORS = [' ', '_', '-']
+
+DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'script.dockerimage45', 'tests']
+
+DELETED_JSON_FIELDS_BY_DEMISTO = ['fromVersion', 'toVersion']
 
 ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'

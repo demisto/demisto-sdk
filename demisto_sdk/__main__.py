@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
@@ -381,6 +382,30 @@ def format_yml(input=None, output=None, from_version=None, no_validate=None):
 def upload(**kwargs):
     uploader = Uploader(**kwargs)
     return uploader.upload()
+
+# ====================== download ====================== #
+
+
+@main.command(name="download",
+              short_help="Download custom content from Demisto instance. DEMISTO_BASE_URL environment variable should"
+                         " contain the Demisto server base URL. DEMISTO_API_KEY environment variable should contain"
+                         " a valid Demisto API Key.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-o", "--output", help="The path of a package directory to download custom content to", required=True)
+@click.option(
+    "-i", "--input", help="Comma separated names of custom content files", required=True)
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
+@click.option(
+    "-f", "--force", help="Whether to override existing files or not", is_flag=True)
+def download(**kwargs):
+    downloader: Downloader = Downloader(**kwargs)
+    return downloader.download()
 
 
 # ====================== run ====================== #

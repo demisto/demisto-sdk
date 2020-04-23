@@ -9,17 +9,19 @@ import sys
 from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import git
 import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
+    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK,
+    DEF_DOCKER, DEF_DOCKER_PWSH, INTEGRATIONS_DIR, LAYOUTS_DIR,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
     PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER)
+    RELEASE_NOTES_REGEX, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -44,7 +46,7 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str = '',) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -65,20 +67,21 @@ def print_color(obj, color):
     print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
-def get_files_in_dir(project_dir: str, file_ending: Tuple[str, str]) -> List[str]:
+def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
     Gets the project directory and returns the path of all yml and json files in it
     Args:
-        project_dir: string path to the project_dir
-        file_ending: list of file endings to search for in given directory
-    :return: the path of all yml and json files in it
-
+        project_dir: String path to the project_dir
+        file_endings: List of file endings to search for in a given directory
+        recursive: Indicates whether search should be recursive or not
+    :return: The path of files with file_endings in the current dir
     """
     files = []
-    if project_dir.endswith(file_ending):
-        return [project_dir]
-    for file_type in file_ending:
-        files.extend([f for f in glob.glob(project_dir + '/**/*.' + file_type, recursive=True)])
+    pattern: str = '/**/*.' if recursive else '/*.'
+    for file_type in file_endings:
+        if project_dir.endswith(file_type):
+            return [project_dir]
+        files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
     return files
 
 
@@ -284,6 +287,34 @@ def get_script_or_integration_id(file_path):
     if data_dictionary:
         commonfields = data_dictionary.get('commonfields', {})
         return commonfields.get('id', ['-', ])
+
+
+def get_entity_id_by_entity_type(data: dict, content_entity: str):
+    """
+    Returns the id of the content entity given its entity type
+    :param data: The data of the file
+    :param content_entity: The content entity type
+    :return: The file id
+    """
+    if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
+        return data.get('commonfields', {}).get('id', '')
+    elif content_entity == LAYOUTS_DIR:
+        return data.get('typeId', '')
+    else:
+        return data.get('id', '')
+
+
+def get_entity_name_by_entity_type(data: dict, content_entity: str):
+    """
+    Returns the name of the content entity given its entity type
+    :param data: The data of the file
+    :param content_entity: The content entity type
+    :return: The file name
+    """
+    if content_entity == LAYOUTS_DIR:
+        return data.get('typeId', '')
+    else:
+        return data.get('name', '')
 
 
 def collect_ids(file_path):
@@ -570,7 +601,7 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     return {}, None
 
 
-def find_type(path: str):
+def find_type(path: str = '', _dict=None, file_type: str = ''):
     """
     returns the content file type
 
@@ -580,7 +611,8 @@ def find_type(path: str):
     Returns:
         string representing the content file type
     """
-    _dict, file_type = get_dict_from_file(path)
+    if not _dict and not file_type:
+        _dict, file_type = get_dict_from_file(path)
     if file_type == 'yml':
         if 'category' in _dict:
             return 'integration'
@@ -731,3 +763,66 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return True, '/'.join(input_path_parts[len(content_path_parts):])
     else:
         return False, ''
+
+
+def retrieve_file_ending(file_path: str) -> str:
+    """
+    Retrieves the file ending (without the dot)
+    :param file_path: The file path
+    :return: The file ending
+    """
+    os_split: tuple = os.path.splitext(file_path)
+    if os_split:
+        file_ending: str = os_split[1]
+        if file_ending and '.' in file_ending:
+            return file_ending[1:]
+    return ''
+
+
+def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
+    """
+       Converts a string representation of args to a python list
+
+       :type arg: ``str`` or ``list``
+       :param arg: Args to be converted (required)
+
+       :type separator: ``str``
+       :param separator: A string separator to separate the strings, the default is a comma.
+
+       :return: A python list of args
+       :rtype: ``list``
+    """
+    if not arg:
+        return []
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, (str, bytes)):
+        if arg[0] == '[' and arg[-1] == ']':
+            return json.loads(arg)
+        return [s.strip() for s in arg.split(separator)]
+    return arg
+
+
+def get_depth(data: Any) -> int:
+    """
+    Returns the depth of a data object
+    :param data: The data
+    :return: The depth of the data object
+    """
+    if data and isinstance(data, dict):
+        return 1 + max(get_depth(data[key]) for key in data)
+    if data and isinstance(data, list):
+        return 1 + max(get_depth(element) for element in data)
+    return 0
+
+
+def is_test_file(file_: str) -> bool:
+    """Check if the file is a test file under testdata, test_data or data_test
+    Args:
+        file_ (str): The file path which is checked.
+    Returns:
+        bool: True if the file is a test file, False otherwise.
+    """
+    if any(test_file in file_.lower() for test_file in TESTS_DIRECTORIES):
+        return True
+    return False

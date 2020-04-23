@@ -113,6 +113,7 @@ class StructureValidator:
         except Exception as err:
             try:
                 print_error(self.parse_error_msg(err))
+                print_error(Errors.suggest_fix(self.file_path))
             except Exception:
                 print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
             self.is_valid = False

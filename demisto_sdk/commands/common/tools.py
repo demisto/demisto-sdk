@@ -728,38 +728,74 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
     else:
         return False, ''
 
-def is_path_of_integration_directory(path):
+
+def is_path_of_integration_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == INTEGRATIONS_DIR
 
-def is_path_of_script_directory(path):
+
+def is_path_of_script_directory(path: str) -> bool:
+    """Returns true if directory is script directory false if not.
+    """
     return os.path.basename(path) == SCRIPTS_DIR
 
-def is_path_of_playbook_directory(path):
+
+def is_path_of_playbook_directory(path: str) -> bool:
+    """Returns true if directory is playbook directory false if not.
+    """
     return os.path.basename(path) == PLAYBOOKS_DIR
 
-def is_path_of_test_playbook_directory(path):
+
+def is_path_of_test_playbook_directory(path: str) -> bool:
+    """Returns true if directory is test_playbook directory false if not.
+    """
     return os.path.basename(path) == TEST_PLAYBOOKS_DIR
 
-def is_path_of_report_directory(path):
+
+def is_path_of_report_directory(path: str) -> bool:
+    """Returns true if directory is report directory false if not.
+    """
     return os.path.basename(path) == REPORTS_DIR
 
-def is_path_of_dashboard_directory(path):
+
+def is_path_of_dashboard_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == DASHBOARDS_DIR
 
-def is_path_of_widget_directory(path):
+
+def is_path_of_widget_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == WIDGETS_DIR
 
-def is_path_of_incident_field_directory(path):
+
+def is_path_of_incident_field_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == INCIDENT_FIELDS_DIR
 
-def is_path_of_incident_type_directory(path):
+
+def is_path_of_incident_type_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == INCIDENT_TYPES_DIR
 
-def is_path_of_indicator_field_directory(path):
+
+def is_path_of_indicator_field_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == INDICATOR_FIELDS_DIR
 
-def is_path_of_layout_directory(path):
+
+def is_path_of_layout_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == LAYOUTS_DIR
 
-def is_path_of_classifier_directory(path):
+
+def is_path_of_classifier_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
     return os.path.basename(path) == CLASSIFIERS_DIR

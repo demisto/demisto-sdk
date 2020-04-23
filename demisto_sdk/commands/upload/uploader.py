@@ -1,12 +1,11 @@
 import demisto_client
 import os
-import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_v, print_error, get_child_files, \
     get_child_directories, is_path_of_integration_directory, \
     is_path_of_script_directory, is_path_of_playbook_directory, is_path_of_test_playbook_directory, \
     is_path_of_dashboard_directory, is_path_of_widget_directory, is_path_of_incident_field_directory, \
-    is_path_of_incident_type_directory, is_path_of_indicator_field_directory, is_path_of_layout_directory, \
-    is_path_of_classifier_directory, find_type
+    is_path_of_incident_type_directory, is_path_of_layout_directory, \
+    is_path_of_classifier_directory, find_type, get_json
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -21,7 +20,8 @@ class Uploader:
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
         self.path = input
         self.log_verbose = verbose
-        self.client = demisto_client.configure(verify_ssl=not insecure)
+        # self.client = demisto_client.configure(verify_ssl=not insecure)
+        self.client = demisto_client.configure(base_url='https://dev1.demisto.works', api_key='99C2555554AAF7DE02FD5FD29F282AEA', verify_ssl=False)
 
     def upload(self):
         """Upload the pack / directory / file to the remote Demisto instance.
@@ -41,17 +41,17 @@ class Uploader:
             elif file_type == "playbook":
                 self.playbook_uploader(self.path)
             elif file_type == "widget":
-                self.script_uploader(self.path)
+                self.widget_uploader(self.path)
             elif file_type == "incidenttype":
-                self.playbook_uploader(self.path)
+                self.incident_type_uploader(self.path)
             elif file_type == "classifier":
-                self.script_uploader(self.path)
+                self.classifiers_uploader(self.path)
             elif file_type == "layout":
-                self.playbook_uploader(self.path)
+                self.layout_uploader(self.path)
             elif file_type == "dashboard":
-                self.script_uploader(self.path)
+                self.dashboard_uploader(self.path)
             elif file_type == "incidentfield":
-                self.playbook_uploader(self.path)
+                self.incident_field_uploader(self.path)
             else:
                 print_error(f'Error: Path input is not valid``. Check the given input path: {self.path}.')
         return 0
@@ -66,7 +66,7 @@ class Uploader:
         if not file_uploaded:
             print_error(f'Error: No files to upload``. Check the given input path: {self.path}.')
 
-    def directory_uploader(self, path):
+    def directory_uploader(self, path: str):
         """Uploads directories by name
         """
         if is_path_of_integration_directory(path):
@@ -130,10 +130,12 @@ class Uploader:
                     self.classifiers_uploader(classifiers)
             return True
 
-    def integration_uploader(self, path):
+    def integration_uploader(self, path: str):
+        is_dir = False
         try:
             if os.path.isdir(path):  # Create a temporary unified yml file
                 try:
+                    is_dir = True
                     unifier = Unifier(input=path, output=path)
                     path = unifier.merge_script_package_to_yml()[0]
                 except IndexError:
@@ -149,180 +151,156 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded integration - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload integration failed"))
             print_error(str(err))
             return 1
 
         finally:
             # Remove the temporary file
-            if os.path.exists(path):
+            if is_dir and os.path.exists(path):
                 try:
                     os.remove(path)
                 except (PermissionError, IsADirectoryError):
                     pass
 
-    def script_uploader(self, path):
-        """
+    def script_uploader(self, path: str):
+        is_dir = False
         try:
             if os.path.isdir(path):  # Create a temporary unified yml file
+                is_dir = True
                 try:
                     unifier = Unifier(input=path, output=path)
                     path = unifier.merge_script_package_to_yml()[0]
                 except IndexError:
-                    print_error(f'Error uploading script from pack. /
-                    Check that the given script path conatinas a valid script: {path}.')
+                    print_error(f'Error uploading script from pack. /'
+                                f'Check that the given script path conatinas a valid script: {path}.')
                     return 1
                 except Exception as err:
+                    print_error(str("Upload integration failed"))
                     print_error(str(err))
                     return 1
             # Upload the file to Demisto
-            result = self.client.scripts_upload(file=path)
+            result = self.client.import_script(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded script - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload script failed"))
             print_error(str(err))
             return 1
 
         finally:
             # Remove the temporary file
-            if os.path.exists(path):
+            if is_dir and os.path.exists(path):
                 try:
                     os.remove(path)
                 except (PermissionError, IsADirectoryError):
                     pass
-        """
-        print(f'{path} - script_uploader in construction')
 
-    def playbook_uploader(self, path):
-        """
+    def playbook_uploader(self, path: str):
+
         try:
             # Upload the file to Demisto
-            result = self.client.playbook_upload(file=path)
+            result = self.client.import_playbook(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded playbook - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload playbook failed"))
             print_error(str(err))
             return 1
-        """
-        print(f'{path} - playbook_uploader in construction')
 
-    def incident_field_uploader(self, path):
-        """
+    def incident_field_uploader(self, path: str):
+
+        file = {"incidentFields": [get_json(path)]}
+
         try:
+
             # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
+            result = self.client.import_incident_fields(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded incident field - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload incident_field failed"))
             print_error(str(err))
             return 1
-        """
-        print(f'{path} - incident_field_uploader in construction')
 
-    def widget_uploader(self, path):
-        """
+    def widget_uploader(self, path: str):
+
         try:
             # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
+            result = self.client.import_widget(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded widget - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload widget failed"))
             print_error(str(err))
             return 1
-        """
-        print(f'{path} - widget_uploader in construction')
 
-    def dashboard_uploader(self, path):
-        """
+    def dashboard_uploader(self, path: str):
         try:
             # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
+            result = self.client.import_dashboard(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded dashboard - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
-            print_error(str(err))
+            print_error(str("Upload dashboard failed"))
             return 1
-        """
-        print(f'{path} - dashboard_uploader in construction')
 
-    def layout_uploader(self, path):
-        """
+    def layout_uploader(self, path: str):
         try:
             # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
+            result = self.client.import_layout(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded layout - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload layout failed"))
             print_error(str(err))
             return 1
-        """
-        print(f'{path} - layout_uploader in construction')
 
-    def indicator_field_uploader(self, path):
-        """
+    def incident_type_uploader(self, path: str):
         try:
             # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
+            result = self.client.import_incident_types_handler(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded incident type - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload incident type failed"))
             print_error(str(err))
             return 1
-        """
-        print(f'{path} - indicator_field_uploader in construction')
 
-    def incident_type_uploader(self, path):
-        """
+    def classifiers_uploader(self, path: str):
         try:
             # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
+            result = self.client.import_classifier(file=path)
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded classifiers - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
 
         except Exception as err:
+            print_error(str("Upload classifiers failed"))
             print_error(str(err))
             return 1
-        """
-        print(f'{path} - incident_type_uploader in construction')
-
-
-    def classifiers_uploader(self, path):
-        """
-        try:
-            # Upload the file to Demisto
-            result = self.client.incident_field_upload(file=path)
-
-            # Print results
-            print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded \'{result.name}\' successfully', LOG_COLORS.GREEN)
-
-        except Exception as err:
-            print_error(str(err))
-            return 1
-        """
-        print(f'{path} - classifiers_uploader in construction')

@@ -101,7 +101,7 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
-        self.pack_path = pack_path
+        # self.pack_path = pack_path
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -653,18 +653,22 @@ class FilesValidator:
 
     def validate_pack(self):
         """Validate files in a specified pack"""
+        print_color(f'Validating {self.file_path}', LOG_COLORS.GREEN)
         packs = glob(f'{PACKS_DIR}/*')
-        if self.pack_path not in packs:
-            raise Exception(F'File {self.pack_path} was not found\nMake sure you are using relative path')
-        pack_files = {file for file in glob(fr'{self.pack_path}/**', recursive=True) if not os.path.isdir(file)}
-        pack_unique_files_validator = PackUniqueFilesValidator(os.path.abspath(self.pack_path))
-        pack_errors = pack_unique_files_validator.validate_pack_unique_files()
-        if pack_errors:
-            print_error(pack_errors)
-            self._is_valid = False
+        if self.file_path not in packs:
+            raise Exception(F'File {self.file_path} was not found\nMake sure you are using relative path')
+        pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if not os.path.isdir(file)}
+        self.validate_pack_unique_files(os.path.abspath(self.file_path))
+        # pack_unique_files_validator = PackUniqueFilesValidator(os.path.abspath(self.pack_path))
+        # pack_errors = pack_unique_files_validator.validate_pack_unique_files()
+        # if pack_errors:
+        #     print_error(pack_errors)
+        #     self._is_valid = False
         for file in pack_files:
+            # checks already in validate_pack_unique_files()
             if file.endswith('pack_metadata.json'):
                 continue
+            # check if the file_path is part of test_data yml
             if any(test_file in file.lower() for test_file in TESTS_DIRECTORIES):
                 continue
             self.run_all_validations_on_file(file, file_type=find_type(file))
@@ -733,9 +737,9 @@ class FilesValidator:
         if self.validate_all:
             self.validate_all_files()
             return self._is_valid
-        if self.pack_path:
-            self.validate_pack()
-            return self._is_valid
+        # if self.pack_path:
+        #     self.validate_pack()
+        #     return self._is_valid
         if self.validate_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False
@@ -753,7 +757,8 @@ class FilesValidator:
             if self.file_path:
                 print('Not using git, validating file: {}'.format(self.file_path))
                 self.is_backward_check = False  # if not using git, no need for BC checks
-                self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                # self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                self.validate_pack()
             else:
                 print('Not using git, validating all files.')
                 self.validate_all_files_schema()

@@ -1,5 +1,12 @@
+## [Unreleased]
+* Improved 'validate' help and documentation description
+
 # Changelog
+* demisto-sdk lint - Copy dir better handling.
+* demisto-sdk lint - Add error when package missing in docker image.
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* Added an allowed hidden parameter: *longRunning* to the hidden integration parameters validation.
+* Fixed an isssue with **format** command when executing with an output path of a folder and not a file path.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

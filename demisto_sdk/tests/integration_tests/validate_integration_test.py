@@ -145,7 +145,7 @@ class TestPack:
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH])
         assert "Starting validating files structure" in result.output
         assert f'Validating {VALID_PACK_PATH}' in result.output
-        assert f'{VALID_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output
+        assert f'{VALID_PACK_PATH}/Integrations/FeedAzure-valid/FeedAzure-valid.yml' in result.output
         assert f'{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
         assert "The files are valid" in result.stdout
         assert result.stderr == ""

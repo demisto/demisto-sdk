@@ -104,6 +104,7 @@ INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 
 DEFAULT_IMAGE = f'{git_path()}/demisto_sdk/tests/test_files/default_image.png'
 VALID_PACK = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzure'
+VALID_PACK_RELATIVE_PATH = 'Packs/FeedAzure'
 VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"

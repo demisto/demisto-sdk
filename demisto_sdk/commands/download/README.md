@@ -62,5 +62,5 @@ demisto-sdk download -o Pack/TestPack -i "Test Integration,TestScript,TestPlaybo
 ```
 This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook".
 If the file exists in the output pack, only it's changes from Demisto instance will be merged into the file already in the repository.
-If the file doesn't exist in the output pack, it will be copied completely from Demisto instace.
+If the file doesn't exist in the output pack, it will be copied completely from Demisto instance.
 <br/><br/>

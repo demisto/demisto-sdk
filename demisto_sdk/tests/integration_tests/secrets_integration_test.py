@@ -5,7 +5,7 @@ from pathlib import Path
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.test_tools import create_temp_file
+from demisto_sdk.tests.test_tools import create_temp_file
 
 SECRETS_CMD = "secrets"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")

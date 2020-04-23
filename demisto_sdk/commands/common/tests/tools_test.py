@@ -201,7 +201,7 @@ class TestGetFilesInDir:
         assert sorted(get_files_in_dir(project_dir, ['py', 'md'], False)) == sorted(files)
 
     def test_recursive(self):
-        project_dir = '/Users/gfreund/dev/demisto/demisto-sdk/demisto_sdk/commands/download'
-        files = [f'{project_dir}/__init__.py', f'{project_dir}/downloader.py', f'{project_dir}/README.md',
-                 f'{project_dir}/tests/downloader_test.py']
-        assert sorted(get_files_in_dir(project_dir, ['py', 'md'])) == sorted(files)
+        integrations_dir = 'demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack/Integrations'
+        integration_instance_dir = f'{integrations_dir}/TestIntegration'
+        files = [f'{integration_instance_dir}/TestIntegration.py', f'{integration_instance_dir}/TestIntegration_test.py']
+        assert sorted(get_files_in_dir(integrations_dir, ['py'])) == sorted(files)

@@ -336,15 +336,15 @@ def str2bool(v):
 
 
 def get_release_notes_file_path(file_path):
-    # We got the CHANGELOG file to get its release notes
-    if file_path.endswith('CHANGELOG.md'):
-        return file_path
-
     dir_name = os.path.dirname(file_path)
 
     # CHANGELOG in pack sub dirs
     if re.match(PACKAGE_YML_FILE_REGEX, file_path):
         return os.path.join(dir_name, 'CHANGELOG.md')
+
+    # We got the CHANGELOG file to get its release notes
+    if file_path.endswith('CHANGELOG.md'):
+        return file_path
 
     # outside of packages, change log file will include the original file name.
     file_name = os.path.basename(file_path)

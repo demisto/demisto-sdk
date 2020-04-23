@@ -1,10 +1,11 @@
 import json
 import os
+from os.path import join
 from shutil import copyfile
 from typing import Any, Type
 
-import pytest
 from demisto_sdk.commands.common.constants import DIR_LIST
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -47,9 +48,11 @@ from demisto_sdk.tests.constants_test import (
     VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_NO_HIDDEN_PARAMS, VALID_ONE_LINE_CHANGELOG_PATH,
-    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
-    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PACK_RELATIVE_PATH,
+    VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
+    VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH, WIDGET_TARGET)
+
+import pytest
 from mock import patch
 
 
@@ -432,3 +435,15 @@ class TestValidators:
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
+
+
+TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files/content_repo_example/")
+
+
+def test_pack_validation():
+    os.chdir(TEST_FILES_PATH)
+    file_validator = FilesValidator(validate_conf_json=False)
+    file_validator.file_path = VALID_PACK_RELATIVE_PATH
+    file_validator.is_valid_structure()
+    assert file_validator._is_valid is False
+

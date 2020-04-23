@@ -222,7 +222,7 @@ def validate(config, **kwargs):
 
     file_path = kwargs['path'] or kwargs['input']
     if file_path and not os.path.isfile(file_path) and not os.path.isdir(file_path):
-        print_error(F'File {file_path} was not found')
+        print_error(f'File {file_path} was not found')
         return 1
 
     else:

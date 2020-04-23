@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
     PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER)
+    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER, TESTS_DIRECTORIES)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -731,3 +731,8 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return True, '/'.join(input_path_parts[len(content_path_parts):])
     else:
         return False, ''
+
+
+def is_test_file(file_):
+    if any(test_file in file_.lower() for test_file in TESTS_DIRECTORIES):
+        return True

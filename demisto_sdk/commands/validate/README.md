@@ -67,5 +67,5 @@ This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
 This will validate all files under `Packs` and `Beta_Integrations` directories
 <br><br>
 `demisto-sdk validate -i Packs/HelloWorld`
-This will validate all files under the `Pack`
+This will validate all files under the content pack `HelloWorld`
 <br><br>

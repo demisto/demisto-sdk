@@ -60,7 +60,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command)
+                                               print_warning, run_command, is_test_file)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -83,7 +83,7 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, pack_path=False, configuration=Configuration()):
+                 validate_all=False, configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
@@ -101,7 +101,6 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
-        # self.pack_path = pack_path
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -656,15 +655,16 @@ class FilesValidator:
         print_color(f'Validating {self.file_path}', LOG_COLORS.GREEN)
         packs = glob(f'{PACKS_DIR}/*')
         if self.file_path not in packs:
-            raise Exception(F'File {self.file_path} was not found\nMake sure you are using relative path')
+            raise Exception(f'File {self.file_path} was not found\nMake sure you are using relative path, '
+                            f'for example - "Packs/HelloWorld')
         pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if not os.path.isdir(file)}
         self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
         for file in pack_files:
+            # check if the file_path is part of test_data yml
+            if is_test_file(file):
+                continue
             # checks already in validate_pack_unique_files()
             if file.endswith('pack_metadata.json'):
-                continue
-            # check if the file_path is part of test_data yml
-            if any(test_file in file.lower() for test_file in TESTS_DIRECTORIES):
                 continue
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
@@ -754,7 +754,7 @@ class FilesValidator:
                     print('Not using git, validating file: {}'.format(self.file_path))
                     self.is_backward_check = False  # if not using git, no need for BC checks
                     self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
-                if os.path.isdir(self.file_path):
+                elif os.path.isdir(self.file_path):
                     self.validate_pack()
             else:
                 print('Not using git, validating all files.')

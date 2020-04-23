@@ -1,4 +1,5 @@
 ## [Unreleased]
+* Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
 * Improved 'validate' help and documentation description
 
 # Changelog

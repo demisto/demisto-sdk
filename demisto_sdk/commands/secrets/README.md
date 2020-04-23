@@ -21,14 +21,19 @@ demisto-sdk secrets
 This will run the secrets validator on your uncommited files.
 <br/><br/>
 ```
-demisto-sdk secrets --post-commit
+demisto-sdk secrets -i ./Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml
 ```
-This will run the secrets validator on your files after you commited them.
+This will run the secrets validator on the file located in ./Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml.
 <br/><br/>
 ```
-demisto-sdk secrets -wl ./MyRepo/secrets_white_list.json
+demisto-sdk secrets --post-commit
 ```
-This will run the secrets validator on your uncommited files with your own whitelist file located in ./MyRepo/secrets_white_list.json.
+This will run the secrets validator on your files after you committed them.
+<br/><br/>
+```
+demisto-sdk secrets -wl ./secrets_white_list.json
+```
+This will run the secrets validator on your files with your own whitelist file located in ./secrets_white_list.json.
 
 
 ## More About Secrets and Sensitive Data

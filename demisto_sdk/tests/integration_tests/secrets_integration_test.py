@@ -128,7 +128,7 @@ def test_integration_secrets_integration_global_whitelist_positive(mocker):
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[integration_with_secrets_path]
     )
-    chdir(join(DEMISTO_SDK_PATH, "tests", "integration_tests"))
+    chdir(join(DEMISTO_SDK_PATH, "tests", "integration_tests", "content_repo_example"))
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0

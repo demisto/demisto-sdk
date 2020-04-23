@@ -1,25 +1,35 @@
-import demisto_client.demisto_api
-from demisto_client.demisto_api.rest import ApiException
-from tempfile import mkdtemp
-import tarfile
-import os
 import ast
 import io
-import shutil
 import json
-from ruamel.yaml import YAML
-from mergedeep import merge
+import os
+import shutil
+import tarfile
+from tempfile import mkdtemp
+
+import demisto_client.demisto_api
+from demisto_client.demisto_api.rest import ApiException
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATIONS_DIR, CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
+    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
+    ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, INTEGRATIONS_DIR,
+    PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
+                                               find_type,
+                                               get_child_directories,
+                                               get_child_files, get_depth,
+                                               get_dict_from_file,
+                                               get_entity_id_by_entity_type,
+                                               get_entity_name_by_entity_type,
+                                               get_files_in_dir, get_json,
+                                               get_yaml, get_yml_paths_in_dir,
+                                               print_color,
+                                               retrieve_file_ending)
+from demisto_sdk.commands.split_yml.extractor import Extractor
 from dictor import dictor
 from flatten_dict import unflatten
+from mergedeep import merge
+from ruamel.yaml import YAML
 from tabulate import tabulate
-
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_child_directories, get_yml_paths_in_dir, \
-    get_entity_id_by_entity_type, get_yaml, get_child_files, get_json, get_entity_name_by_entity_type, get_depth, arg_to_list, \
-    retrieve_file_ending, get_dict_from_file, find_type, print_color, LOG_COLORS
-from demisto_sdk.commands.split_yml.extractor import Extractor
-from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS, ENTITY_NAME_SEPARATORS, \
-    INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR, BETA_INTEGRATIONS_DIR, ENTITY_TYPE_TO_DIR, \
-    DELETED_YML_FIELDS_BY_DEMISTO, DELETED_JSON_FIELDS_BY_DEMISTO
 
 
 class Downloader:
@@ -77,9 +87,9 @@ class Downloader:
         :return: Boolean indicates whether the path is pack path or not
         """
         output_pack_path = self.output_pack_path
-        if not (os.path.isdir(output_pack_path)
-                and os.path.basename(os.path.dirname(os.path.abspath(output_pack_path))) == 'Packs'
-                and os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(output_pack_path)))) == 'content'):
+        if not (os.path.isdir(output_pack_path) and
+                os.path.basename(os.path.dirname(os.path.abspath(output_pack_path))) == 'Packs' and
+                os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(output_pack_path)))) == 'content'):
             print_color(f"Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
                         f" of format ~/.../content/Packs/$PACK_NAME", LOG_COLORS.RED)
             return False

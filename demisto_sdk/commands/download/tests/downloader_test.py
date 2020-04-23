@@ -1,17 +1,25 @@
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, \
-    REPORTS_DIR, DASHBOARDS_DIR, WIDGETS_DIR, INCIDENT_FIELDS_DIR, INDICATOR_FIELDS_DIR, INCIDENT_TYPES_DIR, CLASSIFIERS_DIR, \
-    CONNECTIONS_DIR, BETA_INTEGRATIONS_DIR
-from demisto_sdk.commands.common.tools import get_child_files
-from demisto_sdk.commands.download.downloader import Downloader
-from tempfile import mkdtemp
-from mock import patch
-import pytest
 import json
 import os
 import shutil
+from tempfile import mkdtemp
 
+import pytest
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
+                                                   CLASSIFIERS_DIR,
+                                                   CONNECTIONS_DIR,
+                                                   DASHBOARDS_DIR,
+                                                   INCIDENT_FIELDS_DIR,
+                                                   INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR,
+                                                   INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
+                                                   REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   WIDGETS_DIR)
+from demisto_sdk.commands.common.tools import get_child_files
+from demisto_sdk.commands.download.downloader import Downloader
+from mock import patch
 
-''' GLOBAL PATHS '''
 CONTENT_BASE_PATH = 'demisto_sdk/commands/download/tests/tests_env/content'
 CUSTOM_CONTENT_BASE_PATH = 'demisto_sdk/commands/download/tests/tests_data/custom_content'
 PACK_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack'
@@ -26,29 +34,67 @@ CUSTOM_CONTENT_INTEGRATION_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/integration-Test_
 CUSTOM_CONTENT_LAYOUT_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/layout-details-Hello_World_Alert-V2.json'
 CUSTOM_CONTENT_PLAYBOOK_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/playbook-FormattingPerformance_-_Test.yml'
 
-''' GLOBAL OBJECTS '''
-INTEGRATION_PACK_OBJECT = {'Test Integration': [{'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.py', 'file_ending': 'py'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_test.py', 'file_ending': 'py'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'file_ending': 'yml'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_image.png', 'file_ending': 'png'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{INTEGRATION_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_description.md', 'file_ending': 'md'}, {'name': 'Test Integration', 'id': 'Test Integration', 'path': f'{INTEGRATION_INSTANCE_PATH}/README.md', 'file_ending': 'md'}]}
-SCRIPT_PACK_OBJECT = {'TestScript': [{'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/TestScript.py', 'file_ending': 'py'}, {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/TestScript.yml', 'file_ending': 'yml'}, {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'}, {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/README.md', 'file_ending': 'md'}]}
-PLAYBOOK_PACK_OBJECT = {'FormattingPerformance - Test': [{'name': 'FormattingPerformance - Test', 'id': 'FormattingPerformance - Test', 'path': PLAYBOOK_INSTANCE_PATH, 'file_ending': 'yml'}]}
-LAYOUT_PACK_OBJECT = {'Hello World Alert': [{'name': 'Hello World Alert', 'id': 'Hello World Alert', 'path': LAYOUT_INSTANCE_PATH, 'file_ending': 'json'}]}
+INTEGRATION_PACK_OBJECT = {'Test Integration': [
+    {'name': 'Test Integration', 'id': 'Test Integration',
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.py', 'file_ending': 'py'},
+    {'name': 'Test Integration', 'id': 'Test Integration',
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_test.py', 'file_ending': 'py'},
+    {'name': 'Test Integration', 'id': 'Test Integration',
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'file_ending': 'yml'},
+    {'name': 'Test Integration', 'id': 'Test Integration',
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_image.png', 'file_ending': 'png'},
+    {'name': 'Test Integration', 'id': 'Test Integration',
+     'path': f'{INTEGRATION_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'},
+    {'name': 'Test Integration', 'id': 'Test Integration',
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_description.md', 'file_ending': 'md'},
+    {'name': 'Test Integration', 'id': 'Test Integration',
+     'path': f'{INTEGRATION_INSTANCE_PATH}/README.md', 'file_ending': 'md'}
+]}
+SCRIPT_PACK_OBJECT = {'TestScript': [
+    {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/TestScript.py', 'file_ending': 'py'},
+    {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/TestScript.yml', 'file_ending': 'yml'},
+    {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'},
+    {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/README.md', 'file_ending': 'md'}
+]}
+PLAYBOOK_PACK_OBJECT = {'FormattingPerformance - Test': [
+    {'name': 'FormattingPerformance - Test', 'id': 'FormattingPerformance - Test', 'path': PLAYBOOK_INSTANCE_PATH,
+     'file_ending': 'yml'}
+]}
+LAYOUT_PACK_OBJECT = {'Hello World Alert': [
+    {'name': 'Hello World Alert', 'id': 'Hello World Alert', 'path': LAYOUT_INSTANCE_PATH,
+     'file_ending': 'json'}
+]}
 
 PACK_CONTENT = {
     INTEGRATIONS_DIR: [INTEGRATION_PACK_OBJECT],
     SCRIPTS_DIR: [SCRIPT_PACK_OBJECT],
     PLAYBOOKS_DIR: [PLAYBOOK_PACK_OBJECT],
     LAYOUTS_DIR: [LAYOUT_PACK_OBJECT],
-    TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [],INCIDENT_FIELDS_DIR: [],
+    TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
     INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [], BETA_INTEGRATIONS_DIR: []
 }
 
-INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration', 'path': CUSTOM_CONTENT_INTEGRATION_PATH, 'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml'}
-SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript', 'path': CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts', 'type': 'script', 'file_ending': 'yml'}
-PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'FormattingPerformance - Test', 'name': 'FormattingPerformance - Test', 'path': CUSTOM_CONTENT_PLAYBOOK_PATH, 'entity': 'Playbooks', 'type': 'playbook', 'file_ending': 'yml'}
-LAYOUT_CUSTOM_CONTENT_OBJECT = {'id': 'Hello World Alert', 'name': 'Hello World Alert', 'path': CUSTOM_CONTENT_LAYOUT_PATH, 'entity': 'Layouts', 'type': 'layout', 'file_ending': 'json'}
-FAKE_CUSTOM_CONTENT_OBJECT = {'id': 'DEMISTO', 'name': 'DEMISTO', 'path': f'{CUSTOM_CONTENT_BASE_PATH}/DEMISTO.json', 'entity': 'Layouts', 'type': 'layout', 'file_ending': 'json'}
+INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration',
+                                     'path': CUSTOM_CONTENT_INTEGRATION_PATH, 'entity': 'Integrations',
+                                     'type': 'integration', 'file_ending': 'yml'}
+SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
+                                'path': CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
+                                'type': 'script', 'file_ending': 'yml'}
+PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'FormattingPerformance - Test', 'name': 'FormattingPerformance - Test',
+                                  'path': CUSTOM_CONTENT_PLAYBOOK_PATH, 'entity': 'Playbooks',
+                                  'type': 'playbook', 'file_ending': 'yml'}
+LAYOUT_CUSTOM_CONTENT_OBJECT = {'id': 'Hello World Alert', 'name': 'Hello World Alert',
+                                'path': CUSTOM_CONTENT_LAYOUT_PATH, 'entity': 'Layouts',
+                                'type': 'layout', 'file_ending': 'json'}
+FAKE_CUSTOM_CONTENT_OBJECT = {'id': 'DEMISTO', 'name': 'DEMISTO',
+                              'path': f'{CUSTOM_CONTENT_BASE_PATH}/DEMISTO.json', 'entity': 'Layouts',
+                              'type': 'layout', 'file_ending': 'json'}
 
 
-CUSTOM_CONTENT = [INTEGRATION_CUSTOM_CONTENT_OBJECT, SCRIPT_CUSTOM_CONTENT_OBJECT, PLAYBOOK_CUSTOM_CONTENT_OBJECT, LAYOUT_CUSTOM_CONTENT_OBJECT]
+CUSTOM_CONTENT = [
+    INTEGRATION_CUSTOM_CONTENT_OBJECT, SCRIPT_CUSTOM_CONTENT_OBJECT, PLAYBOOK_CUSTOM_CONTENT_OBJECT,
+    LAYOUT_CUSTOM_CONTENT_OBJECT
+]
 
 
 class TestHelperMethods:
@@ -190,14 +236,16 @@ class TestMergeOldFile:
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
             downloader.pack_content = PACK_CONTENT
-            corresponding_pack_content_object = json.dumps(downloader.get_corresponding_pack_content_object(custom_content_object), sort_keys=True)
+            corr_obj = downloader.get_corresponding_pack_content_object(custom_content_object)
+            corresponding_pack_content_object = json.dumps(corr_obj, sort_keys=True)
             assert corresponding_pack_content_object == json.dumps(pack_content_object, sort_keys=True)
 
     @pytest.mark.parametrize('file_name, ex_file_ending, ex_file_detail, corr_pack_object, pack_file_object', [
         ('Test Integration', 'yml', 'yaml', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration'][2]),
         ('Test Integration', 'py', 'python', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration'][0]),
         ('Test Integration', 'png', 'image', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration'][3]),
-        ('Test Integration', 'md', 'description', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration'][5]),
+        ('Test Integration', 'md', 'description', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration']
+            [5]),
         ('TestScript', 'yml', 'yaml', SCRIPT_PACK_OBJECT, SCRIPT_PACK_OBJECT['TestScript'][1]),
         ('TestScript', 'py', 'python', SCRIPT_PACK_OBJECT, SCRIPT_PACK_OBJECT['TestScript'][0]),
         ('Fake Name', 'py', 'python', SCRIPT_PACK_OBJECT, {})
@@ -208,7 +256,8 @@ class TestMergeOldFile:
             downloader = Downloader('', '')
             downloader.pack_content = PACK_CONTENT
             searched_basename = downloader.get_searched_basename(file_name, ex_file_ending, ex_file_detail)
-            corresponding_pack_file_object = json.dumps(downloader.get_corresponding_pack_file_object(searched_basename, corr_pack_object), sort_keys=True)
+            corr_file = downloader.get_corresponding_pack_file_object(searched_basename, corr_pack_object)
+            corresponding_pack_file_object = json.dumps(corr_file, sort_keys=True)
             assert corresponding_pack_file_object == json.dumps(pack_file_object, sort_keys=True)
 
     def test_update_data(self):

@@ -118,10 +118,10 @@ class Extractor:
                 shutil.copy(yml_readme, readme)
             else:
                 # open an empty file
-                with open(readme, 'w') as readme_file:
+                with open(readme, 'w'):
                     pass
         # check if there is a changelog
-        if self.chanelog:
+        if self.changelog:
             yml_changelog = os.path.splitext(self.input)[0] + '_CHANGELOG.md'
             changelog = output_path + '/CHANGELOG.md'
             if os.path.exists(yml_changelog):
@@ -145,9 +145,9 @@ class Extractor:
                     subprocess.call(["isort", code_file])
                 except FileNotFoundError:
                     self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
-                                "Make sure to install it with: pip install isort.\n"
-                                "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
-    
+                                    "Make sure to install it with: pip install isort.\n"
+                                    "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
+
                 self.print_logs("Detecting python version and setting up pipenv files ...", log_color=LOG_COLORS.NATIVE)
                 docker = get_all_docker_images(script_obj)[0]
                 py_ver = get_python_version(docker, self.config.log_verbose)
@@ -164,21 +164,21 @@ class Extractor:
                     fp = tempfile.NamedTemporaryFile(delete=False)
                     fp.write(requirements.encode('utf-8'))
                     fp.close()
-    
-                        try:
-                            subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
-    
-                        except Exception:
-                            self.print_logs("Failed installing requirements in pipenv.\n "
-                                            "Please try installing manually after extract ends\n", LOG_COLORS.RED)
-    
-                        os.unlink(fp.name)
-                        self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
-                        subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
-                    except FileNotFoundError:
-                        self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
-                                        "Make sure to install it with: pip3 install pipenv.\n"
-                                        "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
+
+                    try:
+                        subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+
+                    except Exception:
+                        self.print_logs("Failed installing requirements in pipenv.\n "
+                                        "Please try installing manually after extract ends\n", LOG_COLORS.RED)
+
+                    os.unlink(fp.name)
+                    self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
+                    subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
+                except FileNotFoundError:
+                    self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
+                                    "Make sure to install it with: pip3 install pipenv.\n"
+                                    "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
                 arg_path = os.path.relpath(output_path)
                 self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
                 next_steps: str = "Next steps: \n" \

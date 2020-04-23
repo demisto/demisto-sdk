@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
@@ -37,7 +38,6 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.file_validator import FilesValidator
-from demisto_sdk.commands.download.downloader import Downloader
 
 
 class DemistoSDK:
@@ -380,6 +380,8 @@ def upload(**kwargs):
     return uploader.upload()
 
 # ====================== download ====================== #
+
+
 @main.command(name="download",
               short_help="Download custom content from Demisto instance. DEMISTO_BASE_URL environment variable should"
                          " contain the Demisto server base URL. DEMISTO_API_KEY environment variable should contain"

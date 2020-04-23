@@ -9,18 +9,19 @@ import sys
 from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import git
 import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
+    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK,
+    DEF_DOCKER, DEF_DOCKER_PWSH, INTEGRATIONS_DIR, LAYOUTS_DIR,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
     PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER,
-    INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR, LAYOUTS_DIR)
+    RELEASE_NOTES_REGEX, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TYPE_PWSH,
+    UNRELEASE_HEADER)
 
 # disable insecure warnings
 urllib3.disable_warnings()

@@ -3,20 +3,23 @@ import os
 
 import pytest
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACKS_PLAYBOOK_YML_REGEX,
+from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR,
+                                                   PACKS_PLAYBOOK_YML_REGEX,
                                                    PACKS_TEST_PLAYBOOKS_REGEX,
-                                                   INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR)
+                                                   PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                filter_packagify_changes,
-                                               find_type, get_dict_from_file,
+                                               find_type, get_depth,
+                                               get_dict_from_file,
+                                               get_entity_id_by_entity_type,
+                                               get_entity_name_by_entity_type,
+                                               get_files_in_dir,
                                                get_last_release_version,
                                                get_matching_regex,
-                                               server_version_compare,
-                                               get_depth, arg_to_list, retrieve_file_ending,
-                                               get_entity_id_by_entity_type, get_entity_name_by_entity_type,
-                                               get_files_in_dir
-                                               )
+                                               retrieve_file_ending,
+                                               server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               VALID_DASHBOARD_PATH,
                                               VALID_INCIDENT_FIELD_PATH,

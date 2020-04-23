@@ -25,7 +25,7 @@ If the user won't use force, and there will be files existing both in the output
 * **-o PACK_PATH, --output Pack_PATH**
 
     The path of a package directory to download custom content to.
-    
+
 * **-i "file_name_1,...,file_name_n", --input "file_name_1,...,file_name_n"**
 
     Comma separated names of custom content files.
@@ -37,7 +37,7 @@ If the user won't use force, and there will be files existing both in the output
 * **-v, --verbose**
 
     Verbose output.
-    
+
 * **-f, --force**
 
     Whether to override existing files or not.
@@ -64,4 +64,3 @@ This will download the integration "Test Integration", script "TestScript" & pla
 If the file exists in the output pack, only it's changes from Demisto instance will be merged into the file already in the repository.
 If the file doesn't exist in the output pack, it will be copied completely from Demisto instace.
 <br/><br/>
-

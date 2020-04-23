@@ -1,11 +1,10 @@
-## [Unreleased]
+# Changelog
 * Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
 * Improved 'validate' help and documentation description
-
-# Changelog
 * demisto-sdk lint - Copy dir better handling.
 * demisto-sdk lint - Add error when package missing in docker image.
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* added *-i, --input* option in *secrets* to run on a specific file.
 * Added an allowed hidden parameter: *longRunning* to the hidden integration parameters validation.
 * Fixed an isssue with **format** command when executing with an output path of a folder and not a file path.
 

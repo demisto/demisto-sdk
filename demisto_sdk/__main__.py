@@ -265,6 +265,9 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
+    '-i', '--input', help='Specify file of to check secret on.', required=False
+)
+@click.option(
     '--post-commit', is_flag=True, show_default=True,
     help='Whether the secretes is done after you committed your files, '
          'this will help the command to determine which files it should check in its '
@@ -281,7 +284,8 @@ def create(**kwargs):
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
     secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
-                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'])
+                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'],
+                               input_path=kwargs.get('input'))
     return secrets.run()
 
 

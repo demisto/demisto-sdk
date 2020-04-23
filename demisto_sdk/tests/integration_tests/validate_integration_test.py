@@ -109,26 +109,6 @@ class TestIntegration:
 
 
 class TestPack:
-    def test_integration_validate_pack_negative(self):
-        """
-        Given
-        - FeedAzure integration invalid Pack.
-
-        When
-        - Running validation on the pack.
-
-        Then
-        - See that the validation failed.
-        """
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH])
-        assert "Starting validating files structure" in result.output
-        assert f'{AZURE_FEED_PACK_PATH}' in result.output
-        assert f'{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
-        assert f'{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output
-        assert "The files were found as invalid, the exact error message can be located above" in result.stdout
-        assert result.stderr == ""
-
     def test_integration_validate_pack_positive(self):
         """
         Given
@@ -148,6 +128,28 @@ class TestPack:
         assert f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml" in result.output
         assert f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json" in result.output
         assert "The files are valid" in result.stdout
+        assert result.stderr == ""
+
+    def test_integration_validate_pack_negative(self):
+        """
+        Given
+        - FeedAzure integration invalid Pack with invalid playbook that has unhandled conditional task.
+
+        When
+        - Running validation on the pack.
+
+        Then
+        - Ensure validation fails.
+        - Ensure error message regarding unhandled conditional task in playbook.
+        """
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH])
+        assert "Starting validating files structure" in result.output
+        assert f'{AZURE_FEED_PACK_PATH}' in result.output
+        assert f'{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
+        assert f'{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output
+        assert 'Playbook conditional task with id:15 has unhandled condition: #DEFAULT#' in result.output
+        assert "The files were found as invalid, the exact error message can be located above" in result.stdout
         assert result.stderr == ""
 
     def test_integration_validate_invalid_pack_path(self):

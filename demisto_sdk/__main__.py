@@ -208,27 +208,30 @@ def unify(**kwargs):
     'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
     'both committed and not committed. ')
 @click.option(
-    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
+    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.', hidden=True
 )
 @click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
     help='Whether to run all validation on all files or not'
 )
+@click.option(
+    '-i', '--input', help='The path of the content pack/file to validate specifically.'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    file_path = kwargs['path']
-
-    if file_path and not os.path.isfile(file_path):
-        print_error(F'File {file_path} was not found')
+    file_path = kwargs['path'] or kwargs['input']
+    if file_path and not os.path.isfile(file_path) and not os.path.isdir(file_path):
+        print_error(f'File {file_path} was not found')
         return 1
+
     else:
         validator = FilesValidator(configuration=config.configuration,
                                    is_backward_check=not kwargs['no_backward_comp'],
                                    is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
-                                   file_path=kwargs.get('path'),
+                                   file_path=file_path,
                                    validate_all=kwargs.get('validate_all'))
         return validator.run()
 

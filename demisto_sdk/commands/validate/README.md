@@ -35,8 +35,6 @@ Whether the validation should run only on the current branch's committed changed
 Path of file to validate specifically.
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
-* **-i, --input**
-The path of a pack to validate specifically.
 
 **Examples**:
 `demisto-sdk validate`
@@ -65,7 +63,4 @@ This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
 <br><br>
 `demisto-sdk validate -a`
 This will validate all files under `Packs` and `Beta_Integrations` directories
-<br><br>
-`demisto-sdk validate -i Packs/HelloWorld`
-This will validate all files under the content pack `HelloWorld`
 <br><br>

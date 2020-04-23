@@ -45,6 +45,7 @@ class BaseValidator:
         """
         if self.current_file.get('version') != self.DEFAULT_VERSION:
             print_error(Errors.wrong_version(self.file_path, self.DEFAULT_VERSION))
+            print_error(Errors.suggest_fix(self.file_path))
             self.is_valid = False
             return False
         return True
@@ -126,5 +127,6 @@ class BaseValidator:
         if file_id != name:
             print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
                         " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
+            print_error(Errors.suggest_fix(self.file_path))
             return False
         return True

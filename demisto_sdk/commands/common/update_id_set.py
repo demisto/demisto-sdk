@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DASHBOARDS_REGEX, PACKS_INCIDENT_FIELDS_REGEX,
     PACKS_INCIDENT_TYPES_REGEX, PACKS_INDICATOR_FIELDS_REGEX,
     PACKS_INTEGRATION_REGEX, PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUTS_REGEX,
-    PACKS_PLAYBOOK_YML_REGEX, PACKS_REPORTS_REGEX, PACKS_SCRIPT_YML_REGEX,
+    PACKS_PLAYBOOK_YML_REGEX, PACKS_REPORTS_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX, PLAYBOOK_REGEX,
     REPORT_REGEX, REPORTS_DIR, SCRIPT_REGEX, SCRIPTS_DIR, SCRIPTS_REGEX_LIST,
     TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TEST_SCRIPT_REGEX, WIDGETS_DIR,
@@ -42,6 +43,7 @@ CHECKED_TYPES_REGEXES = (
     # Scripts
     SCRIPT_REGEX,
     PACKS_SCRIPT_YML_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
     # Playbooks
     PLAYBOOK_REGEX,
     TEST_PLAYBOOK_REGEX,
@@ -393,7 +395,7 @@ def process_integration(file_path, print_logs):
 def process_script(file_path, print_logs):
     res = []
     if os.path.isfile(file_path):
-        if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX)):
+        if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX)):
             if print_logs:
                 print("adding {0} to id_set".format(file_path))
             res.append(get_script_data(file_path))

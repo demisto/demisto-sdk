@@ -275,17 +275,17 @@ class TestValidators:
         finally:
             os.remove(PLAYBOOK_TARGET)
 
-    IS_ALL_PARAMS_NOT_HIDDEN_INPUTS = [
+    IS_VALID_HIDDEN_PARAMS = [
         (VALID_NO_HIDDEN_PARAMS, True),
         (INVALID_NO_HIDDEN_PARAMS, False),
     ]
 
-    @pytest.mark.parametrize("source, answer", IS_ALL_PARAMS_NOT_HIDDEN_INPUTS)
-    def test_is_all_params_not_hidden(self, source, answer):
+    @pytest.mark.parametrize("source, answer", IS_VALID_HIDDEN_PARAMS)
+    def test_is_valid_hidden_params(self, source, answer):
         # type: (str, str) -> None
         structure = StructureValidator(source)
         validator = IntegrationValidator(structure)
-        assert validator.is_all_params_not_hidden() is answer
+        assert validator.is_valid_hidden_params() is answer
 
     with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
         tests_params = json.load(test_params_file)
@@ -327,6 +327,22 @@ class TestValidators:
         try:
             copyfile(source, target)
             assert FilesValidator(validate_conf_json=False).is_valid_structure()
+        finally:
+            os.remove(target)
+
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_valid_structure_use_git(self, source: str, target: str) -> None:
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False, use_git=True).is_valid_structure()
+        finally:
+            os.remove(target)
+
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_valid_structure_use_git_post_commit(self, source: str, target: str) -> None:
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False, use_git=True, is_circle=True).is_valid_structure()
         finally:
             os.remove(target)
 

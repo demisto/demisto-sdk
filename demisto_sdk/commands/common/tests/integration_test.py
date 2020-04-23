@@ -549,18 +549,20 @@ class TestIsFeedParamsExist:
     HIDDEN_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"display": "123", "name": "serer"}]}
     HIDDEN_TRUE = {"configuration": [{"id": "n", "n": "n"}, {"display": "123", "required": "false", "hidden": True}]}
     HIDDEN_TRUE_AND_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"ty": "0", "r": "true", "hidden": True}]}
-    IS_ALL_PARAMS_NOT_HIDDEN_INPUTS = [
+    HIDDEN_ALLOWED_TRUE = {"configuration": [{"name": "longRunning", "required": "false", "hidden": True}]}
+    IS_VALID_HIDDEN_PARAMS = [
         (NO_HIDDEN, True),
         (HIDDEN_FALSE, True),
         (HIDDEN_TRUE, False),
         (HIDDEN_TRUE_AND_FALSE, False),
+        (HIDDEN_ALLOWED_TRUE, True)
     ]
 
-    @pytest.mark.parametrize("current, answer", IS_ALL_PARAMS_NOT_HIDDEN_INPUTS)
-    def test_is_all_params_not_hidden(self, current, answer):
+    @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)
+    def test_is_valid_hidden_params(self, current, answer):
         structure = mock_structure(current_file=current)
         validator = IntegrationValidator(structure)
-        assert validator.is_all_params_not_hidden() is answer
+        assert validator.is_valid_hidden_params() is answer
 
     @pytest.mark.parametrize("script_type, fromversion, res", [
         ('powershell', None, False),

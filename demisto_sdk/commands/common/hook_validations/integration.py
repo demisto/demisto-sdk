@@ -25,6 +25,7 @@ class IntegrationValidator(BaseValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
+    ALLOWED_HIDDEN_PARAMS = {'longRunning'}
 
     def is_valid_version(self):
         # type: () -> bool
@@ -75,7 +76,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_feed(),
             self.is_valid_fetch(),
             self.is_valid_display_name(),
-            self.is_all_params_not_hidden(),
+            self.is_valid_hidden_params(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
@@ -601,18 +602,20 @@ class IntegrationValidator(BaseValidator):
                 return False
             return True
 
-    def is_all_params_not_hidden(self) -> bool:
+    def is_valid_hidden_params(self) -> bool:
         """
-        Verify there are no hidden integration parameters.
+        Verify there are no non-allowed hidden integration parameters.
         Returns:
-            bool. True if there aren't hidden parameters False otherwise.
+            bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
         ans = True
         conf = self.current_file.get('configuration', [])
         for int_parameter in conf:
-            if int_parameter.get('hidden'):
+            is_param_hidden = int_parameter.get('hidden')
+            param_name = int_parameter.get('name')
+            if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
                 ans = False
-                print_error(Errors.found_hidden_param(int_parameter.get('name')))
+                print_error(Errors.found_hidden_param(param_name))
         return ans
 
     def is_valid_image(self) -> bool:

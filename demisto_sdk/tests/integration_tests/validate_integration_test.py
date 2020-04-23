@@ -1,4 +1,3 @@
-import os
 from os.path import join
 
 from click.testing import CliRunner

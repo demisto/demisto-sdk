@@ -1,5 +1,4 @@
 import json
-from os import chdir
 from os.path import join
 from pathlib import Path
 
@@ -128,7 +127,6 @@ def test_integration_secrets_integration_global_whitelist_positive(mocker):
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[integration_with_secrets_path]
     )
-    chdir(join(DEMISTO_SDK_PATH, "tests", "integration_tests"))
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0
@@ -165,7 +163,7 @@ def test_integration_secrets_integration_positive_with_input_option():
     """
     Given
     - Integration with no secrets in it.
-    - Default whitelist
+    - Default whitelist (no -wl supplied)
 
     When
     - Running secrets
@@ -177,6 +175,22 @@ def test_integration_secrets_integration_positive_with_input_option():
     integration_secrets_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
     )
-    chdir(join(DEMISTO_SDK_PATH, "tests", "integration_tests"))
     result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration_secrets_path])
     assert 'Finished validating secrets, no secrets were found' in result.stdout
+
+
+def test_integration_secrets_integration_negative_with_input_option(tmp_path):
+    """
+    Given
+    - A file containing secret
+    - Default whitelist (no -wl supplied)
+
+    When
+    - Running secrets
+
+    Then
+    - Ensure secrets found.
+    """
+    integration_secrets_path = create_temp_file(tmp_path, 'ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
+    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration_secrets_path])
+    assert 'Secrets were found in the following files' in result.stdout

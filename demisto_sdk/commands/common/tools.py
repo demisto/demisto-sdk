@@ -377,7 +377,7 @@ def get_latest_release_notes_text(rn_path):
 def checked_type(file_path, compared_regexes=None, return_regex=False):
     compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
     for regex in compared_regexes:
-        if re.match(regex, file_path, re.IGNORECASE):
+        if re.search(regex, file_path, re.IGNORECASE):
             if return_regex:
                 return regex
             return True

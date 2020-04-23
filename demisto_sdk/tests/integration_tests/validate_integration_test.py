@@ -1,3 +1,4 @@
+import os
 from os.path import join
 
 from click.testing import CliRunner
@@ -7,6 +8,8 @@ from demisto_sdk.commands.common.git_tools import git_path
 VALIDATE_CMD = "validate"
 TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files")
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure")
+AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureab")
+VALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure-valid")
 
 
 def assert_positive(file_path, result):
@@ -103,4 +106,79 @@ class TestIntegration:
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {integration_path}" in result.stdout
         assert "can't be hidden. Please remove this field" not in result.stdout
+        assert result.stderr == ""
+
+
+class TestPack:
+    def test_integration_validate_pack_negative(self):
+        """
+        Given
+        - FeedAzure integration invalid Pack.
+
+        When
+        - Running validation on the pack.
+
+        Then
+        - See that the validation failed.
+        """
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH])
+        assert "Starting validating files structure" in result.output
+        assert f'{AZURE_FEED_PACK_PATH}' in result.output
+        assert f'{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
+        assert f'{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output
+        assert "The files were found as invalid, the exact error message can be located above" in result.stdout
+        assert result.stderr == ""
+
+    def test_integration_validate_pack_positive(self):
+        """
+        Given
+        - FeedAzure integration valid Pack.
+
+        When
+        - Running validation on the pack.
+
+        Then
+        - See that the validation succeed.
+        """
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH])
+        assert "Starting validating files structure" in result.output
+        assert f'Validating {VALID_PACK_PATH}' in result.output
+        assert f'{VALID_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output
+        assert f'{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
+        assert "The files are valid" in result.stdout
+        assert result.stderr == ""
+
+    def test_integration_validate_invalid_pack_path(self):
+        """
+        Given
+        - FeedAzure integration invalid Pack path.
+
+        When
+        - Running validation on the pack.
+
+        Then
+        - See that the validation failed.
+        """
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_INVALID_PACK_PATH])
+        assert result.exit_code == 1
+        assert f'{AZURE_FEED_INVALID_PACK_PATH} was not found' in result.output
+        assert result.stderr == ""
+
+    def test_pack_metadata(self):
+        """
+        Given
+        - FeedAzure integration Pack path.
+
+        When
+        - Running validation on the pack.
+
+        Then
+        - See that the the function validates the pack-metadata file.
+        """
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH])
+        assert "Packs/FeedAzure unique pack files" in result.output
         assert result.stderr == ""

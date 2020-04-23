@@ -654,10 +654,6 @@ class FilesValidator:
     def validate_pack(self):
         """Validate files in a specified pack"""
         print_color(f'Validating {self.file_path}', LOG_COLORS.GREEN)
-        packs = glob(f'{PACKS_DIR}/*')
-        if self.file_path not in packs:
-            raise Exception(f'File {self.file_path} was not found\nMake sure you are using relative path, '
-                            f'for example - "Packs/HelloWorld')
         pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if not os.path.isdir(file)}
         self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
         for file in pack_files:

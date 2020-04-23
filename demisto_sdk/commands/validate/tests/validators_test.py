@@ -436,12 +436,8 @@ class TestValidators:
         assert file_validator._is_valid
 
 
-TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files/content_repo_example/")
-
-
 def test_pack_validation():
-    os.chdir(TEST_FILES_PATH)
     file_validator = FilesValidator(validate_conf_json=False)
-    file_validator.file_path = VALID_PACK_RELATIVE_PATH
+    file_validator.file_path = VALID_PACK
     file_validator.is_valid_structure()
     assert file_validator._is_valid is False

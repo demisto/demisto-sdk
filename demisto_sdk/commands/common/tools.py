@@ -20,7 +20,8 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_README_FILE_NAME, RELEASE_NOTES_REGEX,
     SDK_API_GITHUB_RELEASES, TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER, SCRIPTS_DIR,
-    BETA_INTEGRATIONS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR)
+    BETA_INTEGRATIONS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_README_FILE_NAME,
+    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -372,8 +373,8 @@ def get_release_notes_file_path(file_path):
     if re.match(PACKAGE_YML_FILE_REGEX, file_path):
         return os.path.join(dir_name, 'CHANGELOG.md')
 
-    # We got the CHANGELOG file to get its release notes
-    if file_path.endswith('CHANGELOG.md'):
+    # CHANGELOG in pack root
+    if re.match(PACKS_CHANGELOG_REGEX, file_path):
         return file_path
 
     # outside of packages, change log file will include the original file name.
@@ -406,7 +407,7 @@ def get_latest_release_notes_text(rn_path):
 def checked_type(file_path, compared_regexes=None, return_regex=False):
     compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
     for regex in compared_regexes:
-        if re.search(regex, file_path, re.IGNORECASE):
+        if re.match(regex, file_path, re.IGNORECASE):
             if return_regex:
                 return regex
             return True

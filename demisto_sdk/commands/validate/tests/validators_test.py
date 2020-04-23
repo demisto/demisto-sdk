@@ -416,10 +416,3 @@ class TestValidators:
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
-
-
-def test_pack_validation():
-    file_validator = FilesValidator(validate_conf_json=False)
-    file_validator.file_path = VALID_PACK
-    file_validator.is_valid_structure()
-    assert file_validator._is_valid is False

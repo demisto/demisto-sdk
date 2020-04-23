@@ -275,17 +275,17 @@ class TestValidators:
         finally:
             os.remove(PLAYBOOK_TARGET)
 
-    IS_ALL_PARAMS_NOT_HIDDEN_INPUTS = [
+    IS_VALID_HIDDEN_PARAMS = [
         (VALID_NO_HIDDEN_PARAMS, True),
         (INVALID_NO_HIDDEN_PARAMS, False),
     ]
 
-    @pytest.mark.parametrize("source, answer", IS_ALL_PARAMS_NOT_HIDDEN_INPUTS)
-    def test_is_all_params_not_hidden(self, source, answer):
+    @pytest.mark.parametrize("source, answer", IS_VALID_HIDDEN_PARAMS)
+    def test_is_valid_hidden_params(self, source, answer):
         # type: (str, str) -> None
         structure = StructureValidator(source)
         validator = IntegrationValidator(structure)
-        assert validator.is_all_params_not_hidden() is answer
+        assert validator.is_valid_hidden_params() is answer
 
     with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
         tests_params = json.load(test_params_file)

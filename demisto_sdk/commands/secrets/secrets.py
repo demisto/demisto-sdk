@@ -78,7 +78,6 @@ class SecretsValidator(object):
 
     def get_secrets(self, branch_name, is_circle):
         secrets_found = {}
-        # make sure not in middle of merge
         if self.input_paths:
             secrets_file_paths = self.input_paths
         else:

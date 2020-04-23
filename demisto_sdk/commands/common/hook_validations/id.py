@@ -63,7 +63,7 @@ class IDSetValidator:
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
                     print_error("You probably merged from master and your id_set.json has conflicts. "
-                                "Run `python Tests/scripts/update_id_set.py -r`, it should reindex your id_set.json")
+                                "Run `demisto-sdk create-id-set`, it should reindex your id_set.json")
 
                 raise
 
@@ -95,12 +95,12 @@ class IDSetValidator:
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
                     print_error("You have failed to update id_set.json with the data of {} "
-                                "please run `python Tests/scripts/update_id_set.py`".format(file_path))
+                                "please run `demisto-sdk create-id-set`".format(file_path))
                     return False
 
         if not is_found:
             print_error("You have failed to update id_set.json with the data of {} "
-                        "please run `python Tests/scripts/update_id_set.py`".format(file_path))
+                        "please run `demisto-sdk create-id-set`".format(file_path))
 
         return is_found
 

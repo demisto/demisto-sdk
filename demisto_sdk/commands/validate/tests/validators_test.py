@@ -4,6 +4,7 @@ from os.path import join
 from shutil import copyfile
 from typing import Any, Type
 
+import pytest
 from demisto_sdk.commands.common.constants import DIR_LIST
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -51,8 +52,6 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PACK_RELATIVE_PATH,
     VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
     VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH, WIDGET_TARGET)
-
-import pytest
 from mock import patch
 
 

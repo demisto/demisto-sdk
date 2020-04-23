@@ -960,3 +960,5 @@ script:
     description: Retrieves a request by request ID.
   isfetch: true
   runonce: false
+tests:
+  - No tests

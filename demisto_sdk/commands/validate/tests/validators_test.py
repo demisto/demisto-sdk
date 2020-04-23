@@ -4,7 +4,7 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-from demisto_sdk.commands.common.constants import DIR_LIST
+from demisto_sdk.commands.common.constants import CONF_PATH, DIR_LIST
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -28,11 +28,12 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
-    BETA_INTEGRATION_TARGET, DASHBOARD_TARGET, DEFAULT_IMAGE,
-    GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
+    BETA_INTEGRATION_TARGET, CONF_JSON_MOCK_PATH, DASHBOARD_TARGET,
+    DEFAULT_IMAGE, GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
     INCIDENT_TYPE_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_INCIDENT_FIELD_PATH,
-    INVALID_INTEGRATION_ID_PATH, INVALID_LAYOUT_PATH,
+    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
+    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_PATH,
     INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
     INVALID_NO_HIDDEN_PARAMS, INVALID_ONE_LINE_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
@@ -63,10 +64,12 @@ class TestValidators:
             if not os.path.exists(dir_to_create):
                 cls.CREATED_DIRS.append(dir_to_create)
                 os.mkdir(dir_to_create)
+        copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
 
     @classmethod
     def teardown_class(cls):
         print("Tearing down class")
+        os.remove(CONF_PATH)
         for dir_to_delete in cls.CREATED_DIRS:
             if os.path.exists(dir_to_delete):
                 os.rmdir(dir_to_delete)
@@ -352,6 +355,7 @@ class TestValidators:
         mocker.patch.object(DashboardValidator, 'is_id_equals_name', return_value=True)
         mocker.patch.object(ReputationValidator, 'is_id_equals_details', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
+        mocker.patch.object(BaseValidator, 'are_tests_configured', return_value=True)
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
@@ -417,9 +421,31 @@ class TestValidators:
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
 
+    def test_pack_validation(self):
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.file_path = VALID_PACK
+        file_validator.is_valid_structure()
+        assert file_validator._is_valid is False
 
-def test_pack_validation():
-    file_validator = FilesValidator(validate_conf_json=False)
-    file_validator.file_path = VALID_PACK
-    file_validator.is_valid_structure()
-    assert file_validator._is_valid is False
+    ARE_TEST_CONFIGURED_TEST_INPUT = [
+        (VALID_INTEGRATION_TEST_PATH, True),
+        (INVALID_INTEGRATION_NO_TESTS, False),
+        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, False)
+    ]
+
+    @pytest.mark.parametrize('file_path, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
+    def test_are_tests_configured(self, file_path, expected):
+        # type: (str, bool) -> None
+        """
+            Given
+            - A content item
+
+            When
+            - Checking if the item has tests configured
+
+            Then
+            -  validator return the correct answer accordingly
+        """
+        structure_validator = StructureValidator(file_path, predefined_scheme='integration')
+        validator = BaseValidator(structure_validator)
+        assert validator.are_tests_configured() == expected

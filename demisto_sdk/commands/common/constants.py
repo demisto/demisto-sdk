@@ -269,6 +269,7 @@ CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
+TESTS_DIR = 'Tests'
 
 SCRIPT = 'script'
 INTEGRATION = 'integration'
@@ -481,8 +482,8 @@ TEST_FILES_REGEX = r'.*test_files.*'
 DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
-CONF_REGEX = 'Tests/conf.json'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
+CONF_PATH = 'Tests/conf.json'
 
 SCRIPT_TYPE_REGEX = '.*script-.*.yml'
 SCRIPT_PY_REGEX = r'{}{}/([^\\/]+)/\1.py$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
@@ -875,6 +876,7 @@ DIR_LIST = [
     MISC_DIR,
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
+    TESTS_DIR
 ]
 DIR_LIST_FOR_REGULAR_ENTETIES = [
     PLAYBOOKS_DIR,

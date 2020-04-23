@@ -1,4 +1,5 @@
 # Changelog
+* Added *download* command to download custom content from Demisto instance to the local content repository.
 * Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
 * Improved 'validate' help and documentation description
 * demisto-sdk lint - Copy dir better handling.

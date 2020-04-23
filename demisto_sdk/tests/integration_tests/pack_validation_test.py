@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.git_tools import git_path
 VALIDATE_CMD = "validate"
 TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files/content_repo_example/")
 AZURE_FEED_PACK_PATH = "Packs/FeedAzure"
-AZURE_FEED_BAD_PACK_METADATA = "Packs/FeedAzure2"
 AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, "Packs/FeedAzure")
 
 
@@ -34,5 +33,4 @@ class TestPack:
         os.chdir(TEST_FILES_PATH)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH])
-        assert "Validating /Users/sberman/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/content_repo_" \
-               "example/Packs/FeedAzure unique pack files" in result.output
+        assert "Packs/FeedAzure unique pack files" in result.output

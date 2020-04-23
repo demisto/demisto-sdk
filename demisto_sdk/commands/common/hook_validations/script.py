@@ -197,5 +197,6 @@ class ScriptValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 return False
         return True

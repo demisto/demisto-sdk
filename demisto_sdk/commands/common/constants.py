@@ -6,6 +6,10 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def suggest_fix(file_path: str, *args: List, cmd: str = 'format') -> str:
+        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
         return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
             .format(file_path, given_fromversion, needed_from_version)
@@ -461,6 +465,8 @@ PACKS_INTEGRATION_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(
 PACKS_INTEGRATION_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                              INTEGRATIONS_DIR)
 PACKS_INTEGRATION_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
+PACKS_SCRIPT_NON_SPLIT_YML_REGEX = r'{}{}/([^/]+)/{}/script-([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
+                                                                                 SCRIPTS_DIR)
 PACKS_SCRIPT_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
 PACKS_SCRIPT_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
 PACKS_SCRIPT_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,

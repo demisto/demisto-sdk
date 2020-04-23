@@ -175,6 +175,8 @@ class IntegrationValidator(BaseValidator):
                 if not flag_found_arg:
                     print_error(Errors.no_default_arg(self.file_path, command_name))
                     flag = False
+        if not flag:
+            print_error(Errors.suggest_fix(self.file_path))
         return flag
 
     def is_outputs_for_reputations_commands_valid(self):
@@ -539,6 +541,7 @@ class IntegrationValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 valid_from_version = False
             valid_feed_params = self.all_feed_params_exist()
         return valid_from_version and valid_feed_params
@@ -548,6 +551,7 @@ class IntegrationValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 return False
         return True
 

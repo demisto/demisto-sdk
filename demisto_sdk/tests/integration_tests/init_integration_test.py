@@ -25,7 +25,6 @@ def test_integration_init_integration_positive(tmp_path):
     pack_display_name = "SuperPackDisplayName"
     pack_desc = "This is a super pack desc"
     support_type = "1"
-    server_min_version = "5.5.0"
     pack_author = "SuperMario"
     pack_url = "https://www.github.com/supermario"
     pack_email = "mario@super.com"
@@ -34,7 +33,7 @@ def test_integration_init_integration_positive(tmp_path):
     create_integration = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
-    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type, server_min_version,
+    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type,
               pack_author, pack_url, pack_email, pack_category, pack_tags, create_integration, integration_name,
               use_dir_name_as_id]
 
@@ -60,7 +59,6 @@ def test_integration_init_integration_positive(tmp_path):
             "name": pack_display_name,
             "description": pack_desc,
             "support": "demisto",
-            "serverMinVersion": server_min_version,
             "currentVersion": "1.0.0",
             "author": pack_author,
             "url": pack_url,
@@ -71,7 +69,6 @@ def test_integration_init_integration_positive(tmp_path):
             "tags": pack_tags.split(","),
             "beta": False,
             "deprecated": False,
-            "certification": "certified",
             "useCases": [],
             "keywords": [],
             "dependencies": {}

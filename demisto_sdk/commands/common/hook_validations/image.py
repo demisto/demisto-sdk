@@ -31,7 +31,6 @@ class ImageValidator:
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
                     self._is_valid = False
-                    self.file_path = ''
                     print_error("You've created/modified a package but failed to provide an image as a .png file, "
                                 "please add an image in order to proceed.")
 

@@ -7,8 +7,7 @@ import re
 import shlex
 import sys
 from distutils.version import LooseVersion
-from os import listdir
-from os.path import isfile, join
+from os.path import isdir
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Dict, List, Optional, Tuple, Union
@@ -23,8 +22,9 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
     PACKS_README_FILE_NAME, RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES,
     TYPE_PWSH, UNRELEASE_HEADER)
-
 # disable insecure warnings
+from demisto_sdk.commands.common.file_finder import FileFinder
+
 urllib3.disable_warnings()
 
 
@@ -747,59 +747,34 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return False, ''
 
 
-class FileFinder:
-    class Extension:
-        YML = '.yml'
-        PYTHON = '.py'
-        JSON = '.json'
+def multiple_files_runner(func):
+    """ Gets dict (kwargs) that contains 'input' key which represents a directory or a file path.
+    If it's a directory, it'll find all yml file that represents an integration, script or playbook.
+    If it's a file, it'll send it back to the function supplied
 
-    @staticmethod
-    def get_files_with_extension_in_dir(dir_path: str, extension: Union[str, Extension]) -> List[str]:
-        """Return all files in directory, absolute path.
+    Args:
+        func: A function to run the decorator on. Originally built for generate-docs command.
 
-        Args:
-            dir_path: path to files in
-            extension: files that ends with this term
-
-        Returns:
-            A list of all files in the path.
-        """
-        return [
-            os.path.join(dir_path, f) for f in listdir(dir_path) if isfile(join(dir_path, f)) and f.endswith(extension)
-        ]
-
-    @classmethod
-    def get_yml_files_in_dir(cls, dir_path: str) -> List[str]:
-        """Return all files in directory, absolute path.
-
-        Args:
-            dir_path: path to find yml files in
-
-        Returns:
-            A list of all files in the path.
-        """
-        return cls.get_files_with_extension_in_dir(dir_path, cls.Extension.YML)
-
-    @classmethod
-    def get_json_files_in_dir(cls, dir_path: str) -> List[str]:
-        """Return all files in directory, absolute path.
-
-        Args:
-            dir_path: path to find json files in
-
-        Returns:
-            A list of all files in the path.
-        """
-        return cls.get_files_with_extension_in_dir(dir_path, cls.Extension.JSON)
-
-    @classmethod
-    def get_python_files_in_dir(cls, dir_path: str) -> List[str]:
-        """Return all files in directory, absolute path.
-
-        Args:
-            dir_path: path to find python files in
-
-        Returns:
-            A list of all files in the path.
-        """
-        return cls.get_files_with_extension_in_dir(dir_path, cls.Extension.PYTHON)
+    Returns:
+        0 if succeeded else 1
+    """
+    def inner(**kwargs):
+        input_path = kwargs.get('input')
+        if isdir(input_path):
+            print("Input path is a directory, will find all .yml files that are in Integrations/Scripts/Playbooks path.")
+            yml_files = FileFinder.get_yml_files_in_dir(input_path, recursive=True)
+            docs_generate_paths = [
+                path for path in yml_files if find_type(path) in ('integration', 'script', 'playbook')
+            ]
+            print(f'Found {len(docs_generate_paths)} files to generate docs to.')
+        else:
+            docs_generate_paths = [input_path]
+        for path in docs_generate_paths:
+            kwargs['input'] = path
+            errs_list = [path for path in docs_generate_paths if func(**kwargs)]
+            if errs_list:
+                print_error(f'Errors found for files: \n {json.dumps(errs_list, indent=4)}')
+                return 1
+            else:
+                return 0
+    return inner

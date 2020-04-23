@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.tools import (FileFinder, find_type,
                                                get_last_remote_release_version,
                                                is_file_path_in_pack,
+                                               multiple_files_runner,
                                                print_error, print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
@@ -568,6 +569,7 @@ def init(**kwargs):
     is_flag=True)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
+@multiple_files_runner
 def generate_doc(**kwargs):
     input_path = kwargs.get('input')
     output_path = kwargs.get('output')

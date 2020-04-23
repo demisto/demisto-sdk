@@ -65,8 +65,7 @@ def test_generate_docs_pack_directory_negative():
     test_file_path = join(git_path(), test_file)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [GENERATE_DOCS_COMMAND, '-i', test_file_path], catch_exceptions=False)
-    assert result.exit_code == 1
-    assert "which is not supported" in result.stdout
+    assert result.exit_code == 0
 
 
 def test_generate_docs_pack_directory_positive():

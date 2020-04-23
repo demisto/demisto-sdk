@@ -1,6 +1,7 @@
 # Changelog
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.
 * Added *-i, --input* option in *generate-docs* to run on a specific file.
+* The *-i, --input*  option in *generate-docs* now supports a directory. It will search for integrations, scripts and scripts and will automatically generate docs for all those files.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

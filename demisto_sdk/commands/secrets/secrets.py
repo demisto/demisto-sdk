@@ -70,7 +70,7 @@ class SecretsValidator(object):
             configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path='',
             input_path=''
     ):
-        self.input_path = input_path.split(',') if input_path else None
+        self.input_paths = input_path.split(',') if input_path else None
         self.configuration = configuration
         self.is_circle = is_circle
         self.white_list_path = white_list_path
@@ -79,12 +79,12 @@ class SecretsValidator(object):
     def get_secrets(self, branch_name, is_circle):
         secrets_found = {}
         # make sure not in middle of merge
-        if self.input_path:
-            secrets_file_paths = self.input_path
+        if self.input_paths:
+            secrets_file_paths = self.input_paths
         else:
             secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
         # If a input path supplied, should not run on git. If not supplied make sure not in middle of merge.
-        if not run_command('git rev-parse -q --verify MERGE_HEAD') or self.input_path:
+        if not run_command('git rev-parse -q --verify MERGE_HEAD') or self.input_paths:
             secrets_found = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
             if secrets_found:
                 secrets_found_string = 'Secrets were found in the following files:'

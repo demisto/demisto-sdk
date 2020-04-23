@@ -106,7 +106,7 @@ class Extractor:
         script_obj['script'] = SingleQuotedScalarString('')
         code_type = script_obj['type']
         if code_type == TYPE_PWSH and not yaml_obj.get('fromversion'):
-            self.prints_logs("Setting fromversion for PowerShell to: 5.5.0", log_color=LOG_COLORS.NATIVE)
+            self.print_logs("Setting fromversion for PowerShell to: 5.5.0", log_color=LOG_COLORS.NATIVE)
             yaml_obj['fromversion'] = "5.5.0"
         with open(yaml_out, 'w') as yf:
             ryaml.dump(yaml_obj, yf)
@@ -157,7 +157,8 @@ class Extractor:
                 shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
                 try:
                     subprocess.call(["pipenv", "install", "--dev"], cwd=output_path)
-                    self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker))
+                    self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
+                                    LOG_COLORS.NATIVE)
                     requirements = subprocess.check_output(["docker", "run", "--rm", docker,
                                                             "pip", "freeze", "--disable-pip-version-check"],
                                                            universal_newlines=True, stderr=subprocess.DEVNULL).strip()

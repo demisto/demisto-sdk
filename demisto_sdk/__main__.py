@@ -215,13 +215,8 @@ def unify(**kwargs):
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    # pack_path = kwargs['input']
-    # if pack_path and not os.path.isdir(pack_path):
-    #     print_error(F'Pack {pack_path} was not found')
-    #     return 1
-
     file_path = kwargs['path'] or kwargs['input']
-    if file_path and not os.path.isfile(file_path):
+    if file_path and not os.path.isfile(file_path) and not os.path.isdir(file_path):
         print_error(F'File {file_path} was not found')
         return 1
 
@@ -232,7 +227,6 @@ def validate(config, **kwargs):
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
                                    file_path=file_path,
                                    validate_all=kwargs.get('validate_all'))
-                                   # pack_path=kwargs.get('input'))
         return validator.run()
 
 

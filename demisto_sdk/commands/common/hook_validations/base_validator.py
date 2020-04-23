@@ -2,11 +2,13 @@ import os
 import re
 from abc import abstractmethod
 
-from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.tools import print_error, get_release_notes_file_path, \
-    get_latest_release_notes_text, run_command
-from demisto_sdk.commands.common.constants import ID_IN_COMMONFIELDS, ID_IN_ROOT
+from demisto_sdk.commands.common.constants import (ID_IN_COMMONFIELDS,
+                                                   ID_IN_ROOT, Errors)
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
+from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
+                                               get_release_notes_file_path,
+                                               print_error, run_command)
 
 
 class BaseValidator:
@@ -43,6 +45,7 @@ class BaseValidator:
         """
         if self.current_file.get('version') != self.DEFAULT_VERSION:
             print_error(Errors.wrong_version(self.file_path, self.DEFAULT_VERSION))
+            print_error(Errors.suggest_fix(self.file_path))
             self.is_valid = False
             return False
         return True
@@ -124,5 +127,6 @@ class BaseValidator:
         if file_id != name:
             print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
                         " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
+            print_error(Errors.suggest_fix(self.file_path))
             return False
         return True

@@ -1,24 +1,26 @@
-import io
-import re
-import os
-import sys
-import json
-import glob
 import argparse
-from subprocess import Popen, PIPE, DEVNULL, check_output
-from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple, Dict, List, Any
-import git
+import glob
+import io
+import json
+import os
+import re
 import shlex
+import sys
+from distutils.version import LooseVersion
 from pathlib import Path
+from subprocess import DEVNULL, PIPE, Popen, check_output
+from typing import Dict, List, Optional, Tuple, Union, Any
+
+import git
+import requests
 import urllib3
 import yaml
-import requests
-
-from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
-    CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, INTEGRATIONS_DIR, \
-    SCRIPTS_DIR, BETA_INTEGRATIONS_DIR, LAYOUTS_DIR
+from demisto_sdk.commands.common.constants import (
+    CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK, DEF_DOCKER, DEF_DOCKER_PWSH,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
+    PACKS_CHANGELOG_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
+    RELEASE_NOTES_REGEX, SDK_API_GITHUB_RELEASES, TYPE_PWSH, UNRELEASE_HEADER,
+    INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR, LAYOUTS_DIR)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -139,9 +141,11 @@ def get_remote_file(full_file_path, tag='master'):
 
     if full_file_path.endswith('json'):
         details = json.loads(res.content)
-    else:
+    elif full_file_path.endswith('yml'):
         details = yaml.safe_load(res.content)
-
+    # if neither yml nor json then probably a CHANGELOG or README file.
+    else:
+        details = {}
     return details
 
 
@@ -160,6 +164,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     packagify_diff = {}  # type: dict
     for file_path in removed_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
+            if PACKS_README_FILE_NAME in file_path:
+                continue
             details = get_remote_file(file_path, tag)
             if details:
                 uniq_identifier = '_'.join([
@@ -172,7 +178,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     updated_added_files = set()
     for file_path in added_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
-            if "README.md" in file_path:
+            if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
@@ -630,13 +636,16 @@ def find_type(path: str = '', _dict=None, file_type: str = ''):
                 return 'layout'
             else:
                 return 'dashboard'
-
+        # When using it for all files validation- sometimes 'id' can be integer
         elif 'id' in _dict:
-            _id = _dict['id'].lower()
-            if _id.startswith('incident'):
-                return 'incidentfield'
-            elif _id.startswith('indicator'):
-                return 'indicatorfield'
+            if isinstance(_dict.get('id'), str):
+                _id = _dict['id'].lower()
+                if _id.startswith('incident'):
+                    return 'incidentfield'
+                elif _id.startswith('indicator'):
+                    return 'indicatorfield'
+            else:
+                print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
     return ''
 

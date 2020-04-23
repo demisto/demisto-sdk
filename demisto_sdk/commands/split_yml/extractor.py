@@ -6,13 +6,16 @@ import tempfile
 from io import open
 
 import yaml
+from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
+                                                   TYPE_TO_EXTENSION)
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               get_all_docker_images,
+                                               get_pipenv_dir,
+                                               get_python_version, pascal_case,
+                                               print_color, print_error)
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
-
-from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, get_python_version, \
-    get_pipenv_dir, get_all_docker_images, print_error, pascal_case
-from demisto_sdk.commands.common.constants import TYPE_TO_EXTENSION, TYPE_PYTHON, TYPE_PWSH
 
 
 class Extractor:
@@ -100,6 +103,13 @@ class Extractor:
             del yaml_obj['image']
             if 'detaileddescription' in yaml_obj:
                 del yaml_obj['detaileddescription']
+        script_obj['script'] = SingleQuotedScalarString('')
+        code_type = script_obj['type']
+        if code_type == TYPE_PWSH and not yaml_obj.get('fromversion'):
+            self.prints_logs("Setting fromversion for PowerShell to: 5.5.0", log_color=LOG_COLORS.NATIVE)
+            yaml_obj['fromversion'] = "5.5.0"
+        with open(yaml_out, 'w') as yf:
+            ryaml.dump(yaml_obj, yf)
         # check if there is a README
         if self.readme:
             yml_readme = os.path.splitext(self.input)[0] + '_README.md'
@@ -111,7 +121,7 @@ class Extractor:
                 with open(readme, 'w') as readme_file:
                     pass
         # check if there is a changelog
-        if self.changelog:
+        if self.chanelog:
             yml_changelog = os.path.splitext(self.input)[0] + '_CHANGELOG.md'
             changelog = output_path + '/CHANGELOG.md'
             if os.path.exists(yml_changelog):
@@ -119,11 +129,7 @@ class Extractor:
             else:
                 with open(changelog, 'wt', encoding='utf-8') as changelog_file:
                     changelog_file.write("## [Unreleased]\n-\n")
-        script_obj['script'] = SingleQuotedScalarString('')
-        with open(yaml_out, 'w') as yf:
-            ryaml.dump(yaml_obj, yf)
         # Python code formatting and dev env setup
-        code_type = script_obj['type']
         if code_type == TYPE_PYTHON:
             self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
             try:
@@ -134,6 +140,14 @@ class Extractor:
                                 "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
 
             if self.pipenv:
+                self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
+                try:
+                    subprocess.call(["isort", code_file])
+                except FileNotFoundError:
+                    self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
+                                "Make sure to install it with: pip install isort.\n"
+                                "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
+    
                 self.print_logs("Detecting python version and setting up pipenv files ...", log_color=LOG_COLORS.NATIVE)
                 docker = get_all_docker_images(script_obj)[0]
                 py_ver = get_python_version(docker, self.config.log_verbose)
@@ -143,39 +157,39 @@ class Extractor:
                 shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
                 try:
                     subprocess.call(["pipenv", "install", "--dev"], cwd=output_path)
-                    self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker), log_color=LOG_COLORS.NATIVE)
+                    self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker))
                     requirements = subprocess.check_output(["docker", "run", "--rm", docker,
                                                             "pip", "freeze", "--disable-pip-version-check"],
                                                            universal_newlines=True, stderr=subprocess.DEVNULL).strip()
                     fp = tempfile.NamedTemporaryFile(delete=False)
                     fp.write(requirements.encode('utf-8'))
                     fp.close()
-
-                    try:
-                        subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
-
-                    except Exception:
-                        self.print_logs("Failed installing requirements in pipenv.\n "
-                                        "Please try installing manually after extract ends\n", LOG_COLORS.RED)
-
-                    os.unlink(fp.name)
-                    self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
-                    subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
-                except FileNotFoundError:
-                    self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
-                                    "Make sure to install it with: pip3 install pipenv.\n"
-                                    "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
-            arg_path = os.path.relpath(output_path)
-            self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
-            next_steps: str = "Next steps: \n" \
-                              "* Install additional py packages for unit testing (if needed): cd {};" \
-                              " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
-            next_steps += "* Create unit tests\n" \
-                          "* Check linting and unit tests by running: demisto-sdk lint -d {}\n".format(arg_path)
-            next_steps += "* When ready rm from git the source yml and add the new package:\n" \
-                          "    git rm {}\n".format(self.input)
-            next_steps += "    git add {}\n".format(arg_path)
-            self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
+    
+                        try:
+                            subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+    
+                        except Exception:
+                            self.print_logs("Failed installing requirements in pipenv.\n "
+                                            "Please try installing manually after extract ends\n", LOG_COLORS.RED)
+    
+                        os.unlink(fp.name)
+                        self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
+                        subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
+                    except FileNotFoundError:
+                        self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
+                                        "Make sure to install it with: pip3 install pipenv.\n"
+                                        "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
+                arg_path = os.path.relpath(output_path)
+                self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
+                next_steps: str = "Next steps: \n" \
+                                  "* Install additional py packages for unit testing (if needed): cd {};" \
+                                  " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
+                next_steps += "* Create unit tests\n" \
+                              "* Check linting and unit tests by running: demisto-sdk lint -d {}\n".format(arg_path)
+                next_steps += "* When ready rm from git the source yml and add the new package:\n" \
+                              "    git rm {}\n".format(self.input)
+                next_steps += "    git add {}\n".format(arg_path)
+                self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
         return 0
 
     def extract_code(self, code_file_path) -> int:

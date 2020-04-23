@@ -1,17 +1,32 @@
-import os
 import glob
-import pytest
+import os
 
-from demisto_sdk.commands.common.git_tools import git_path
+import pytest
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, \
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR
-from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type,\
-    get_dict_from_file, LOG_COLORS, get_last_release_version, get_depth, arg_to_list, retrieve_file_ending, \
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_files_in_dir
-from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
-    VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
-    INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH
+from demisto_sdk.commands.common.constants import (PACKS_PLAYBOOK_YML_REGEX,
+                                                   PACKS_TEST_PLAYBOOKS_REGEX,
+                                                   INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               filter_packagify_changes,
+                                               find_type, get_dict_from_file,
+                                               get_last_release_version,
+                                               get_matching_regex,
+                                               server_version_compare,
+                                               get_depth, arg_to_list, retrieve_file_ending,
+                                               get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+                                               get_files_in_dir
+                                               )
+from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+                                              VALID_DASHBOARD_PATH,
+                                              VALID_INCIDENT_FIELD_PATH,
+                                              VALID_INCIDENT_TYPE_PATH,
+                                              VALID_INTEGRATION_TEST_PATH,
+                                              VALID_LAYOUT_PATH, VALID_MD,
+                                              VALID_PLAYBOOK_ID_PATH,
+                                              VALID_REPUTATION_FILE,
+                                              VALID_SCRIPT_PATH,
+                                              VALID_WIDGET_PATH)
 
 
 class TestGenericFunctions:
@@ -66,6 +81,17 @@ class TestGenericFunctions:
         output = find_type(str(path))
         assert output == _type, f'find_type({path}) returns: {output} instead {_type}'
 
+    test_path_md = [
+        VALID_MD
+    ]
+
+    @pytest.mark.parametrize('path', test_path_md)
+    def test_filter_packagify_changes(self, path):
+        modified, added, removed = filter_packagify_changes(modified_files=[], added_files=[], removed_files=[path])
+        assert modified == []
+        assert added == set()
+        assert removed == [VALID_MD]
+
     @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
     def test_get_depth(self, data, output):
         assert get_depth(data) == output
@@ -90,14 +116,14 @@ class TestGenericFunctions:
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml')
-        assert gmail_yml
-        assert gmail_yml['commonfields']['id'] == 'Gmail'
+        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
+        assert hello_world_yml
+        assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_origin(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'master')
-        assert gmail_yml
-        assert gmail_yml['commonfields']['id'] == 'Gmail'
+        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
+        assert hello_world_yml
+        assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_tag(self):
         gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', '19.10.0')
@@ -120,6 +146,10 @@ class TestGetRemoteFile:
     def test_get_remote_file_invalid_origin_branch(self):
         invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
         assert not invalid_yml
+
+    def test_get_remote_md_file_origin(self):
+        hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
+        assert hello_world_readme == {}
 
 
 class TestGetMatchingRegex:

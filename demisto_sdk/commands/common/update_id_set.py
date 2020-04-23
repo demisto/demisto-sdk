@@ -1,26 +1,37 @@
-import itertools
-import os
 import glob
+import itertools
 import json
+import os
 import re
-import click
+import time
 from collections import OrderedDict
+from distutils.version import LooseVersion
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from distutils.version import LooseVersion
-import time
 
-from demisto_sdk.commands.common.constants import INTEGRATION_REGEX, INTEGRATION_YML_REGEX, \
-    PACKS_INTEGRATION_REGEX, SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PLAYBOOK_REGEX, TEST_PLAYBOOK_REGEX, \
-    PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, SCRIPTS_REGEX_LIST, BETA_INTEGRATION_REGEX, \
-    BETA_PLAYBOOK_REGEX, TEST_SCRIPT_REGEX, PACKS_INTEGRATION_YML_REGEX, PACKS_CLASSIFIERS_REGEX, CLASSIFIER_REGEX, \
-    SCRIPTS_DIR, WIDGETS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, \
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, LAYOUTS_DIR, REPORTS_DIR, DASHBOARD_REGEX, PACKS_DASHBOARDS_REGEX, \
-    INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX, INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPES_REGEX, \
-    INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_FIELDS_REGEX, LAYOUT_REGEX, PACKS_LAYOUTS_REGEX, REPORT_REGEX, \
-    PACKS_REPORTS_REGEX, WIDGETS_REGEX, PACKS_WIDGETS_REGEX
-from demisto_sdk.commands.common.tools import get_yaml, get_to_version, get_from_version, collect_ids, get_json, \
-    get_script_or_integration_id, LOG_COLORS, print_color, print_error, print_warning, run_command, get_pack_name
+import click
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_REGEX, BETA_PLAYBOOK_REGEX, CLASSIFIER_REGEX,
+    CLASSIFIERS_DIR, DASHBOARD_REGEX, DASHBOARDS_DIR, INCIDENT_FIELD_REGEX,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPE_REGEX, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_FIELDS_REGEX, INTEGRATION_REGEX,
+    INTEGRATION_YML_REGEX, LAYOUT_REGEX, LAYOUTS_DIR, PACKS_CLASSIFIERS_REGEX,
+    PACKS_DASHBOARDS_REGEX, PACKS_INCIDENT_FIELDS_REGEX,
+    PACKS_INCIDENT_TYPES_REGEX, PACKS_INDICATOR_FIELDS_REGEX,
+    PACKS_INTEGRATION_REGEX, PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUTS_REGEX,
+    PACKS_PLAYBOOK_YML_REGEX, PACKS_REPORTS_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
+    PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX, PLAYBOOK_REGEX,
+    REPORT_REGEX, REPORTS_DIR, SCRIPT_REGEX, SCRIPTS_DIR, SCRIPTS_REGEX_LIST,
+    TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TEST_SCRIPT_REGEX, WIDGETS_DIR,
+    WIDGETS_REGEX)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, collect_ids,
+                                               get_from_version, get_json,
+                                               get_pack_name,
+                                               get_script_or_integration_id,
+                                               get_to_version, get_yaml,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 CHECKED_TYPES_REGEXES = (
@@ -32,6 +43,7 @@ CHECKED_TYPES_REGEXES = (
     # Scripts
     SCRIPT_REGEX,
     PACKS_SCRIPT_YML_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
     # Playbooks
     PLAYBOOK_REGEX,
     TEST_PLAYBOOK_REGEX,
@@ -383,7 +395,7 @@ def process_integration(file_path, print_logs):
 def process_script(file_path, print_logs):
     res = []
     if os.path.isfile(file_path):
-        if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX)):
+        if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX)):
             if print_logs:
                 print("adding {0} to id_set".format(file_path))
             res.append(get_script_data(file_path))

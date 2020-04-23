@@ -1,35 +1,56 @@
+import json
 import os
 from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-
 from demisto_sdk.commands.common.constants import DIR_LIST
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import \
+    DashboardValidator
+from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import \
+    IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
+from demisto_sdk.commands.common.hook_validations.playbook import \
+    PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import \
+    ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.reputation import \
+    ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
-
-from demisto_sdk.tests.constants_test import VALID_LAYOUT_PATH, INVALID_LAYOUT_PATH, \
-    VALID_REPUTATION_PATH, INVALID_REPUTATION_PATH, VALID_WIDGET_PATH, INVALID_WIDGET_PATH, VALID_DASHBOARD_PATH, \
-    VALID_SCRIPT_PATH, INVALID_SCRIPT_PATH, INVALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, \
-    INVALID_INCIDENT_FIELD_PATH, VALID_INTEGRATION_TEST_PATH, VALID_ONE_LINE_CHANGELOG_PATH, \
-    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH, \
-    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH, \
-    INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH, \
-    LAYOUT_TARGET, WIDGET_TARGET, DASHBOARD_TARGET, INTEGRATION_TARGET, \
-    INCIDENT_FIELD_TARGET, SCRIPT_TARGET, SCRIPT_RELEASE_NOTES_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, \
-    VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_ID_PATH, \
-    INVALID_PLAYBOOK_CONDITION_1, INVALID_PLAYBOOK_CONDITION_2, VALID_PLAYBOOK_CONDITION, VALID_INTEGRATION_ID_PATH, \
-    INVALID_INTEGRATION_ID_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT, VALID_NO_HIDDEN_PARAMS, INVALID_NO_HIDDEN_PARAMS
-
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.validate.file_validator import FilesValidator
+from demisto_sdk.tests.constants_test import (
+    BETA_INTEGRATION_TARGET, DASHBOARD_TARGET, DEFAULT_IMAGE,
+    GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
+    INCIDENT_TYPE_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
+    INVALID_DASHBOARD_PATH, INVALID_INCIDENT_FIELD_PATH,
+    INVALID_INTEGRATION_ID_PATH, INVALID_LAYOUT_PATH,
+    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
+    INVALID_NO_HIDDEN_PARAMS, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
+    INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
+    INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
+    INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
+    LAYOUT_TARGET, PLAYBOOK_TARGET, REPUTATION_TARGET,
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
+    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
+    VALID_NO_HIDDEN_PARAMS, VALID_ONE_LINE_CHANGELOG_PATH,
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+    VALID_WIDGET_PATH, WIDGET_TARGET)
+from mock import patch
 
 
 class TestValidators:
@@ -65,6 +86,26 @@ class TestValidators:
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
+
+    @patch.object(ReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
+    def test_validation_of_beta_playbooks(self, mocker):
+        """
+        Given
+        - A beta playbook with 'beta: true in it's root
+
+        When
+        - Running validation on it with PlaybookValidator
+
+        Then
+        -  Ensure it accepts the 'beta' key as valid
+        """
+        try:
+            copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
+            structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme='playbook')
+            validator = PlaybookValidator(structure)
+            assert validator.is_valid_playbook(validate_rn=False)
+        finally:
+            os.remove(PLAYBOOK_TARGET)
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_valid_version(self, source, target, answer, validator):
@@ -234,14 +275,160 @@ class TestValidators:
         finally:
             os.remove(PLAYBOOK_TARGET)
 
-    IS_ALL_PARAMS_NOT_HIDDEN_INPUTS = [
+    IS_VALID_HIDDEN_PARAMS = [
         (VALID_NO_HIDDEN_PARAMS, True),
         (INVALID_NO_HIDDEN_PARAMS, False),
     ]
 
-    @pytest.mark.parametrize("source, answer", IS_ALL_PARAMS_NOT_HIDDEN_INPUTS)
-    def test_is_all_params_not_hidden(self, source, answer):
+    @pytest.mark.parametrize("source, answer", IS_VALID_HIDDEN_PARAMS)
+    def test_is_valid_hidden_params(self, source, answer):
         # type: (str, str) -> None
         structure = StructureValidator(source)
         validator = IntegrationValidator(structure)
-        assert validator.is_all_params_not_hidden() is answer
+        assert validator.is_valid_hidden_params() is answer
+
+    with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
+        tests_params = json.load(test_params_file)
+    params = [
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        ('origin/master', tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_without_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', False, False),
+    ]
+
+    @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer, is_valid", params)
+    def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer,
+                                               is_valid, mocker):
+        file_validator = FilesValidator(validate_conf_json=False, prev_ver=prev_var)
+        file_validator._is_valid = is_valid
+        mocker.patch.object(FilesValidator, 'get_modified_and_added_files', return_value=get_modified_and_added_files)
+        mocker.patch.object(FilesValidator, 'get_content_release_identifier', return_value=release_iden)
+        mocker.patch.object(FilesValidator, 'validate_modified_files', return_value=None)
+
+        assert file_validator.validate_against_previous_version() is None
+        assert file_validator._is_valid is answer
+
+    INPUTS_STRUCTURE_VALIDATION = [
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET),
+        (VALID_SCRIPT_PATH, SCRIPT_TARGET),
+        (VALID_DASHBOARD_PATH, DASHBOARD_TARGET),
+        (VALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET),
+        (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET),
+        (VALID_REPUTATION_PATH, REPUTATION_TARGET),
+        (VALID_INCIDENT_TYPE_PATH, INCIDENT_TYPE_TARGET),
+        (VALID_INTEGRATION_TEST_PATH, BETA_INTEGRATION_TARGET),
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_RELEASE_NOTES_TARGET)
+    ]
+
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_file_structure(self, source, target):
+        # type: (str, str) -> None
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False).is_valid_structure()
+        finally:
+            os.remove(target)
+
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_valid_structure_use_git(self, source: str, target: str) -> None:
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False, use_git=True).is_valid_structure()
+        finally:
+            os.remove(target)
+
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
+    def test_is_valid_structure_use_git_post_commit(self, source: str, target: str) -> None:
+        try:
+            copyfile(source, target)
+            assert FilesValidator(validate_conf_json=False, use_git=True, is_circle=True).is_valid_structure()
+        finally:
+            os.remove(target)
+
+    FILE_PATHS = [
+        ([VALID_INTEGRATION_TEST_PATH], 'integration'),
+        ([VALID_TEST_PLAYBOOK_PATH], 'playbook'),
+        ([VALID_DASHBOARD_PATH], 'dashboard'),
+        ([VALID_INCIDENT_FIELD_PATH], 'incidentfield'),
+        ([VALID_REPUTATION_PATH], 'reputation'),
+        ([VALID_INCIDENT_TYPE_PATH], 'incidenttype'),
+        ([VALID_INTEGRATION_TEST_PATH], 'betaintegration')
+    ]
+
+    @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
+    def test_is_valid_rn(self, mocker, file_path, file_type):
+        mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', sreturn_value=None)
+        mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_description', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_version', return_value=True)
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(DashboardValidator, 'is_id_equals_name', return_value=True)
+        mocker.patch.object(ReputationValidator, 'is_id_equals_details', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.validate_added_files(file_path, file_type)
+        assert file_validator._is_valid
+
+    FILES_PATHS_FOR_ALL_VALIDATIONS = [
+        # ignoring images and change-logs
+        (DEFAULT_IMAGE, ''),
+        (VALID_MULTI_LINE_LIST_CHANGELOG_PATH, ''),
+        (INVALID_ONE_LINE_1_CHANGELOG_PATH, ''),
+        # validating files
+        (VALID_INTEGRATION_ID_PATH, 'integration'),
+        (VALID_TEST_PLAYBOOK_PATH, 'playbook'),
+        (VALID_SCRIPT_PATH, 'script'),
+        (VALID_DASHBOARD_PATH, 'dashboard'),
+        (VALID_INCIDENT_FIELD_PATH, 'incidentfield'),
+        (VALID_REPUTATION_PATH, 'reputation'),
+        (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
+        (VALID_BETA_INTEGRATION, 'integration'),
+        (VALID_MD, '')
+    ]
+
+    @pytest.mark.parametrize('file_path, file_type', FILES_PATHS_FOR_ALL_VALIDATIONS)
+    @patch.object(ImageValidator, 'is_valid', return_value=True)
+    def test_run_all_validations_on_file(self, _, file_path, file_type):
+        """
+        Given
+        - A file in packs or beta integration
+
+        When
+        - running run_all_validations_on_file on that file
+
+        Then
+        -  If the file is not json,yml or md- it will be skipped (will be considered as valid)
+        -  If the file is a CHANGELOG  or DESCRIPTION it will be skipped  (will be considered as valid)
+        -  In any other case the file will be validated
+        """
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.run_all_validations_on_file(file_path, file_type)
+        assert file_validator._is_valid
+
+    def test_files_validator_validate_pack_unique_files(self,):
+        files_validator = FilesValidator(validate_conf_json=False)
+        files_validator.validate_pack_unique_files({VALID_PACK})
+        assert files_validator._is_valid
+
+    FILE_PATH = [
+        ([VALID_SCRIPT_PATH], 'script')
+    ]
+
+    @staticmethod
+    def mock_unifier():
+        def get_script_package_data_mock(*args, **kwargs):
+            return VALID_SCRIPT_PATH, ''
+        with patch.object(Unifier, '__init__', lambda a, b: None):
+            Unifier.get_script_package_data = get_script_package_data_mock
+            return Unifier('')
+
+    @pytest.mark.parametrize('file_path, file_type', FILE_PATH)
+    def test_script_valid_rn(self, mocker, file_path, file_type):
+        mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
+        self.mock_unifier()
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.validate_added_files(file_path, file_type)
+        assert file_validator._is_valid

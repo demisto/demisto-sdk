@@ -1,8 +1,11 @@
 from typing import Tuple
 
-from demisto_sdk.commands.format.format_constants import SKIP_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
+from demisto_sdk.commands.common.hook_validations.reputation import \
+    ReputationValidator
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 
 
 class IndicatorTypeJSONFormat(BaseUpdateJSON):

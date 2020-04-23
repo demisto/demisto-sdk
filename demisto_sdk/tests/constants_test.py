@@ -3,6 +3,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 GIT_ROOT = "{}".format(git_path())
 INVALID_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-invalid.yml"
 VALID_TEST_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-test.yml"
+VALID_BETA_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/beta-playbook-valid.yml"
 VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks." \
                                           f"playbook-ArcSight_Add_Domain_Indicators.yml"
 VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"
@@ -47,8 +48,10 @@ DASHBOARD_TARGET = "./Dashboards/dashboard-mocks.json"
 PLAYBOOK_TARGET = "Playbooks/playbook-test.yml"
 INTEGRATION_TARGET = "./Integrations/integration-test.yml"
 INCIDENT_FIELD_TARGET = "IncidentFields/incidentfield-test.json"
+INCIDENT_TYPE_TARGET = "IncidentTypes/incidenttype-valid.json"
 PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
 SCRIPT_TARGET = "./Scripts/script-test.yml"
+BETA_INTEGRATION_TARGET = "./Beta_Integrations/integration-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = "./Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = "./Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
@@ -71,10 +74,9 @@ INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-c
 EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-invalid-equal.yml"
 EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION = f"Playbooks/playbook-invalid-equal.yml"
 EQUAL_VAL_PATH = f'Playbooks'
-INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid-no-hidden-params.yml"
-VALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid-no-hidden-params.yml"
-
-
+INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-no-hidden-params.yml"
+VALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-no-unallowed-hidden-params.yml"
+GIT_HAVE_MODIFIED_AND_NEW_FILES = f"{GIT_ROOT}/demisto_sdk/tests/test_files/git_have_modified_and_new_files.json"
 SOURCE_FORMAT_INCIDENTFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidentfield-copy.json"
 DESTINATION_FORMAT_INCIDENTFIELD_COPY = f"IncidentFields/incidentfield-copy.json"
 INCIDENTFIELD_PATH = f"IncidentFields"
@@ -97,3 +99,11 @@ LAYOUT_PATH = f"Layouts"
 SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_dashboard-copy.json"
 DESTINATION_FORMAT_DASHBOARD_COPY = f"Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = f"Dashboards"
+VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
+INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
+
+DEFAULT_IMAGE = f'{git_path()}/demisto_sdk/tests/test_files/default_image.png'
+VALID_PACK = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzure'
+VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
+
+INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"

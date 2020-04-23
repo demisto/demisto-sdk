@@ -2,17 +2,21 @@
 
 Module contains validation of schemas, ids and paths.
 """
-from typing import Optional
-import logging
-import re
-import os
 import json
+import logging
+import os
+import re
+from typing import Optional
+
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import get_remote_file, get_matching_regex, print_error
-from demisto_sdk.commands.common.constants import Errors, ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, \
-    SCHEMA_TO_REGEX
-from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
+from demisto_sdk.commands.common.constants import (
+    ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, SCHEMA_TO_REGEX,
+    Errors)
+from demisto_sdk.commands.common.tools import (get_matching_regex,
+                                               get_remote_file, print_error)
+from demisto_sdk.commands.format.format_constants import \
+    OLD_FILE_DEFAULT_1_FROMVERSION
 from pykwalify.core import Core
 
 
@@ -109,6 +113,7 @@ class StructureValidator:
         except Exception as err:
             try:
                 print_error(self.parse_error_msg(err))
+                print_error(Errors.suggest_fix(self.file_path))
             except Exception:
                 print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
             self.is_valid = False

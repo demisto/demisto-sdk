@@ -68,6 +68,7 @@ this is the proper time to create a new key in the file named "sesame street" an
 ONLY do this in the rare case the string does not fit logically anywhere else.
 - Once you update the white list file with a string, it will be white listed globally for all integrations, even if it's integration specific.
 - Only words of 5+ chars will be taken into account in the whitelist.
+- Secrets found in content packs will be checked against both, the whitelist file provided in the WHITELIST argument, and in and the pack secrets file (.secrets-ignore).
 
 - **Notice:** all words in whitelist must be lowercase. In order to lower case strings use **command+shift+u**
 

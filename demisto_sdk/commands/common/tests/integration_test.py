@@ -1,11 +1,16 @@
-import pytest
-from mock import patch
-from typing import Optional
+import os
 from copy import deepcopy
+from typing import Optional
 
-from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+import pytest
+from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS)
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
+from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -299,7 +304,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         validator.old_file = old
-        assert validator.is_valid_beta_integration() is answer
+        assert validator.is_valid_beta() is answer
 
     PROXY_VALID = [{"name": "proxy", "type": 8, "display": "Use system proxy settings", "required": False}]
     PROXY_WRONG_TYPE = [{"name": "proxy", "type": 9, "display": "Use system proxy settings", "required": False}]
@@ -439,6 +444,26 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
 
+    def test_is_valid_image_positive(self, monkeypatch):
+        integration_path = os.path.normpath(
+            os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')
+        )
+        structure = mock_structure(file_path=integration_path)
+        monkeypatch.setattr(
+            'demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGXES',
+            [integration_path]
+        )
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_image() is True
+
+    def test_is_valid_description_positive(self):
+        integration_path = os.path.normpath(
+            os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')
+        )
+        structure = mock_structure(file_path=integration_path)
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_description() is True
+
 
 class TestIsFetchParamsExist:
     def setup(self):
@@ -524,15 +549,35 @@ class TestIsFeedParamsExist:
     HIDDEN_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"display": "123", "name": "serer"}]}
     HIDDEN_TRUE = {"configuration": [{"id": "n", "n": "n"}, {"display": "123", "required": "false", "hidden": True}]}
     HIDDEN_TRUE_AND_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"ty": "0", "r": "true", "hidden": True}]}
-    IS_ALL_PARAMS_NOT_HIDDEN_INPUTS = [
+    HIDDEN_ALLOWED_TRUE = {"configuration": [{"name": "longRunning", "required": "false", "hidden": True}]}
+    IS_VALID_HIDDEN_PARAMS = [
         (NO_HIDDEN, True),
         (HIDDEN_FALSE, True),
         (HIDDEN_TRUE, False),
         (HIDDEN_TRUE_AND_FALSE, False),
+        (HIDDEN_ALLOWED_TRUE, True)
     ]
 
-    @pytest.mark.parametrize("current, answer", IS_ALL_PARAMS_NOT_HIDDEN_INPUTS)
-    def test_is_all_params_not_hidden(self, current, answer):
+    @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)
+    def test_is_valid_hidden_params(self, current, answer):
         structure = mock_structure(current_file=current)
         validator = IntegrationValidator(structure)
-        assert validator.is_all_params_not_hidden() is answer
+        assert validator.is_valid_hidden_params() is answer
+
+    @pytest.mark.parametrize("script_type, fromversion, res", [
+        ('powershell', None, False),
+        ('powershell', '4.5.0', False),
+        ('powershell', '5.5.0', True),
+        ('powershell', '5.5.1', True),
+        ('powershell', '6.0.0', True),
+        ('python', '', True),
+        ('python', '4.5.0', True),
+    ])
+    def test_valid_pwsh(self, script_type, fromversion, res):
+        current = {
+            "script": {"type": script_type},
+            "fromversion": fromversion,
+        }
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_pwsh() == res

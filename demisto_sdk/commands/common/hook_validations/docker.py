@@ -1,11 +1,13 @@
-from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.tools import get_yaml, print_error, print_warning
-from distutils.version import LooseVersion
-from pkg_resources import parse_version
-from datetime import datetime, timedelta
 import re
-import requests
+from datetime import datetime, timedelta
+from distutils.version import LooseVersion
 
+from pkg_resources import parse_version
+
+import requests
+from demisto_sdk.commands.common.constants import Errors
+from demisto_sdk.commands.common.tools import (get_yaml, print_error,
+                                               print_warning)
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()
@@ -200,9 +202,9 @@ class DockerImageValidator(object):
         if yml_docker_image:
             if yml_docker_image.startswith('devdemisto/'):
                 print_warning('docker image must be a demisto docker image. When the docker image is ready,'
-                              ' please rename it to: demisto/python:<tag>')
+                              ' please rename it to: demisto/<image>:<tag>')
             elif not yml_docker_image.startswith('demisto/'):
-                print_error('docker image must be a demisto docker image. e.g: demisto/python:<tag>')
+                print_error('docker image must be a demisto docker image. e.g: demisto/<image>:<tag>')
                 return ''
         try:
             tag = ''

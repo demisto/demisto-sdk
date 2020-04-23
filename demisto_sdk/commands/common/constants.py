@@ -6,9 +6,18 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def suggest_fix(file_path: str, *args: List, cmd: str = 'format') -> str:
+        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
         return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
             .format(file_path, given_fromversion, needed_from_version)
+
+    @staticmethod
+    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
+        return (f'{file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
+                f' Found version: {given_fromversion}')
 
     @staticmethod
     def not_used_display_name(file_path, field_name):
@@ -255,7 +264,7 @@ INCIDENT_TYPES_DIR = 'IncidentTypes'
 INDICATOR_FIELDS_DIR = 'IndicatorFields'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
-MISC_DIR = 'Packs/Base/Misc'
+MISC_DIR = 'Misc'
 CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
@@ -507,6 +516,8 @@ PACKS_INTEGRATION_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(
 PACKS_INTEGRATION_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                              INTEGRATIONS_DIR)
 PACKS_INTEGRATION_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
+PACKS_SCRIPT_NON_SPLIT_YML_REGEX = r'{}{}/([^/]+)/{}/script-([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
+                                                                                 SCRIPTS_DIR)
 PACKS_SCRIPT_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
 PACKS_SCRIPT_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
 PACKS_SCRIPT_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
@@ -589,11 +600,12 @@ PACK_METADATA_USE_CASES = 'useCases'
 PACK_METADATA_KEYWORDS = 'keywords'
 PACK_METADATA_PRICE = 'price'
 PACK_METADATA_DEPENDENCIES = 'dependencies'
+# TODO: add PACK_METADATA_PRICE to validated fields after #23546 is ready.
 PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_MIN_VERSION, PACK_METADATA_CURR_VERSION,
                         PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
                         PACK_METADATA_TAGS, PACK_METADATA_CREATED, PACK_METADATA_BETA,
                         PACK_METADATA_DEPRECATED, PACK_METADATA_CERTIFICATION, PACK_METADATA_USE_CASES,
-                        PACK_METADATA_KEYWORDS, PACK_METADATA_PRICE, PACK_METADATA_DEPENDENCIES)
+                        PACK_METADATA_KEYWORDS, PACK_METADATA_DEPENDENCIES)
 API_MODULES_PACK = 'ApiModules'
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
@@ -1112,3 +1124,5 @@ FETCH_REQUIRED_PARAMS = [
         'type': 8
     }
 ]
+
+DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'

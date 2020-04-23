@@ -97,6 +97,15 @@ CUSTOM_CONTENT = [
 ]
 
 
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
+
+
 class TestHelperMethods:
     def test_remove_traces(self):
         downloader = Downloader(output='', input='')
@@ -137,7 +146,7 @@ class TestBuildPackContent:
     def test_build_pack_content(self):
         downloader = Downloader(output=PACK_INSTANCE_PATH, input='')
         downloader.build_pack_content()
-        assert json.dumps(downloader.pack_content, sort_keys=True) == json.dumps(PACK_CONTENT, sort_keys=True)
+        assert ordered(downloader.pack_content) == ordered(PACK_CONTENT)
 
     @pytest.mark.parametrize('entity, path, output_pack_content_object', [
         (INTEGRATIONS_DIR, INTEGRATION_INSTANCE_PATH, INTEGRATION_PACK_OBJECT),
@@ -149,7 +158,7 @@ class TestBuildPackContent:
     def test_build_pack_content_object(self, entity, path, output_pack_content_object):
         downloader = Downloader(output='', input='')
         pack_content_object = downloader.build_pack_content_object(entity, path)
-        assert json.dumps(pack_content_object, sort_keys=True) == json.dumps(output_pack_content_object, sort_keys=True)
+        assert ordered(pack_content_object) == ordered(output_pack_content_object)
 
     @pytest.mark.parametrize('entity, path, main_id, main_name', [
         (INTEGRATIONS_DIR, INTEGRATION_INSTANCE_PATH, 'Test Integration', 'Test Integration'),
@@ -237,8 +246,7 @@ class TestMergeOldFile:
             downloader = Downloader('', '')
             downloader.pack_content = PACK_CONTENT
             corr_obj = downloader.get_corresponding_pack_content_object(custom_content_object)
-            corresponding_pack_content_object = json.dumps(corr_obj, sort_keys=True)
-            assert corresponding_pack_content_object == json.dumps(pack_content_object, sort_keys=True)
+            assert ordered(corr_obj) == ordered(pack_content_object)
 
     @pytest.mark.parametrize('file_name, ex_file_ending, ex_file_detail, corr_pack_object, pack_file_object', [
         ('Test Integration', 'yml', 'yaml', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration'][2]),
@@ -257,8 +265,7 @@ class TestMergeOldFile:
             downloader.pack_content = PACK_CONTENT
             searched_basename = downloader.get_searched_basename(file_name, ex_file_ending, ex_file_detail)
             corr_file = downloader.get_corresponding_pack_file_object(searched_basename, corr_pack_object)
-            corresponding_pack_file_object = json.dumps(corr_file, sort_keys=True)
-            assert corresponding_pack_file_object == json.dumps(pack_file_object, sort_keys=True)
+            assert ordered(corr_file) == ordered(pack_file_object)
 
     def test_update_data(self):
         pass

@@ -225,11 +225,11 @@ class TestEntityAttributes:
 
 class TestGetFilesInDir:
     def test_project_dir_is_file(self):
-        project_dir = '/Users/gfreund/dev/demisto/demisto-sdk/demisto_sdk/commands/download/downloader.py'
+        project_dir = 'demisto_sdk/commands/download/downloader.py'
         assert get_files_in_dir(project_dir, ['py']) == [project_dir]
 
     def test_not_recursive(self):
-        project_dir = '/Users/gfreund/dev/demisto/demisto-sdk/demisto_sdk/commands/download'
+        project_dir = 'demisto_sdk/commands/download'
         files = [f'{project_dir}/__init__.py', f'{project_dir}/downloader.py', f'{project_dir}/README.md']
         assert sorted(get_files_in_dir(project_dir, ['py', 'md'], False)) == sorted(files)
 

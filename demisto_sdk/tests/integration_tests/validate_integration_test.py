@@ -8,7 +8,7 @@ VALIDATE_CMD = "validate"
 TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files")
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure")
 AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureab")
-VALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure-valid")
+VALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureValid")
 
 
 def assert_positive(file_path, result):
@@ -144,7 +144,7 @@ class TestPack:
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH])
         assert "Starting validating files structure" in result.output
         assert f'Validating {VALID_PACK_PATH}' in result.output
-        assert f'{VALID_PACK_PATH}/Integrations/FeedAzure-valid/FeedAzure-valid.yml' in result.output
+        assert f'{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml' in result.output
         assert f'{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
         assert "The files are valid" in result.stdout
         assert result.stderr == ""

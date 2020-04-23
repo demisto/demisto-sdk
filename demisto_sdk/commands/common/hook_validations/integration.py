@@ -80,6 +80,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
+            self.are_tests_configured()
         ]
         return all(answers)
 

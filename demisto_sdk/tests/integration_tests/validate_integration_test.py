@@ -3,12 +3,22 @@ from os.path import join
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 
 VALIDATE_CMD = "validate"
 TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files")
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure")
 AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureab")
 VALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureValid")
+CONF_JSON_MOCK = {
+    "tests": [
+        {
+            "integrations": "AzureFeed",
+            "playbookID": "AzureFeed - Test"
+        }
+    ]
+}
 
 
 def assert_positive(file_path, result):
@@ -109,7 +119,7 @@ class TestIntegration:
 
 
 class TestPack:
-    def test_integration_validate_pack_positive(self):
+    def test_integration_validate_pack_positive(self, mocker):
         """
         Given
         - FeedAzure integration valid Pack.
@@ -120,6 +130,7 @@ class TestPack:
         Then
         - See that the validation succeed.
         """
+        mocker.patch.object(BaseValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH])
         assert "Starting validating files structure" in result.output
@@ -130,7 +141,7 @@ class TestPack:
         assert "The files are valid" in result.stdout
         assert result.stderr == ""
 
-    def test_integration_validate_pack_negative(self):
+    def test_integration_validate_pack_negative(self, mocker):
         """
         Given
         - FeedAzure integration invalid Pack with invalid playbook that has unhandled conditional task.
@@ -142,6 +153,7 @@ class TestPack:
         - Ensure validation fails.
         - Ensure error message regarding unhandled conditional task in playbook.
         """
+        mocker.patch.object(BaseValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH])
         assert "Starting validating files structure" in result.output

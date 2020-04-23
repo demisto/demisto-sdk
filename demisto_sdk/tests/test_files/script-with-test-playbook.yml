@@ -15,4 +15,4 @@ args:
 scripttarget: 0
 runonce: false
 tests:
-  - No tests
+  - PagerDuty Test

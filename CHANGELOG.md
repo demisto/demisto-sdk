@@ -2,6 +2,8 @@
 * Added *download* command to download custom content from Demisto instance to the local content repository.
 * Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
 * Improved 'validate' help and documentation description
+* validate - checks that scripts, playbooks, and integrations have the *tests* key.
+* validate - checks that test playbooks are configured in `conf.json`.
 * demisto-sdk lint - Copy dir better handling.
 * demisto-sdk lint - Add error when package missing in docker image.
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.

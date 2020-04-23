@@ -18,7 +18,6 @@ class PlaybookValidator(BaseValidator):
         Returns:
             bool. Whether the playbook is valid or not
         """
-
         if is_new_playbook:
             new_playbook_checks = [
                 super().is_valid_file(validate_rn),
@@ -26,7 +25,8 @@ class PlaybookValidator(BaseValidator):
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
-                self.is_condition_branches_handled()
+                self.is_condition_branches_handled(),
+                self.are_tests_configured()
             ]
             answers = all(new_playbook_checks)
         else:
@@ -36,7 +36,8 @@ class PlaybookValidator(BaseValidator):
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
-                self.is_condition_branches_handled()
+                self.is_condition_branches_handled(),
+                self.are_tests_configured()
             ]
             answers = all(modified_playbook_checks)
 

@@ -276,6 +276,7 @@ class FilesValidator:
             modified_files (set): A set of the modified files in the current branch.
         """
         for file_path in modified_files:
+            file_type = find_type(file_path)
             old_file_path = None
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path
@@ -285,7 +286,7 @@ class FilesValidator:
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
             elif 'README' in file_path:
@@ -302,7 +303,7 @@ class FilesValidator:
                 if not self.id_set_validator.is_file_valid_in_set(file_path):
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_INTEGRATION_REGEXES):
+            elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
@@ -310,7 +311,7 @@ class FilesValidator:
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
+            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
@@ -321,8 +322,7 @@ class FilesValidator:
                     self._is_valid = False
                 if not script_validator.is_valid_file():
                     self._is_valid = False
-
-            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
+            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST) or file_type == 'playbook':
                 playbook_validator = PlaybookValidator(structure_validator)
                 if not playbook_validator.is_valid_playbook(is_new_playbook=False):
                     self._is_valid = False

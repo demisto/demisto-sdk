@@ -7,7 +7,7 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, \
     INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type,\
-    get_dict_from_file, LOG_COLORS, get_last_release_version, depth, arg_to_list, retrieve_file_ending, \
+    get_dict_from_file, LOG_COLORS, get_last_release_version, get_depth, arg_to_list, retrieve_file_ending, \
     get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_files_in_dir
 from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
     VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
@@ -67,8 +67,8 @@ class TestGenericFunctions:
         assert output == _type, f'find_type({path}) returns: {output} instead {_type}'
 
     @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
-    def test_depth(self, data, output):
-        assert depth(data) == output
+    def test_get_depth(self, data, output):
+        assert get_depth(data) == output
 
     def test_arg_to_list(self):
         expected = ['a', 'b', 'c']

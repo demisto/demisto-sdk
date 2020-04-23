@@ -14,7 +14,7 @@ from flatten_dict import unflatten
 from tabulate import tabulate
 
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_child_directories, get_yml_paths_in_dir, \
-    get_entity_id_by_entity_type, get_yaml, get_child_files, get_json, get_entity_name_by_entity_type, depth, arg_to_list, \
+    get_entity_id_by_entity_type, get_yaml, get_child_files, get_json, get_entity_name_by_entity_type, get_depth, arg_to_list, \
     retrieve_file_ending, get_dict_from_file, find_type, print_color, LOG_COLORS
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS, ENTITY_NAME_SEPARATORS, \
@@ -81,13 +81,13 @@ class Downloader:
                 and os.path.basename(os.path.dirname(os.path.abspath(output_pack_path))) == 'Packs'
                 and os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(output_pack_path)))) == 'content'):
             print_color(f"Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
-                        f"of format ~/.../content/Packs/$PACK_NAME", LOG_COLORS.RED)
+                        f" of format ~/.../content/Packs/$PACK_NAME", LOG_COLORS.RED)
             return False
         return True
 
     def build_pack_content(self) -> None:
-        """TODO: add unit test
-        Build the pack content that holds basic data for each content entity within the given output pack.
+        """
+        Build a data structure called custom content that holds basic data for each content entity within the given output pack.
         For example check out the PACK_CONTENT variable in downloader_test.py
         """
         for content_entity_path in get_child_directories(self.output_pack_path):
@@ -202,8 +202,8 @@ class Downloader:
         return file_name
 
     def build_custom_content(self) -> None:
-        """TODO: add unit test
-        Builds the custom content that holds basic data for each content entity instances downloaded from Demisto.
+        """
+        Build a data structure called pack content that holds basic data for each content entity instances downloaded from Demisto.
         For example check out the CUSTOM_CONTENT variable in downloader_test.py
         """
         # Build custom content files
@@ -358,7 +358,7 @@ class Downloader:
             corresponding_pack_file_object: dict = self.get_corresponding_pack_file_object(searched_basename,
                                                                                            corresponding_pack_object)
             corresponding_pack_file_path: str = corresponding_pack_file_object['path']
-            # We use "smart" merge only for yml files (py, png & md files to be moved regularly)
+            # We use "smart" merge only for yml files (py, png  & md files to be moved regularly)
             if ex_file_ending == 'yml':
                 # adding the deleted fields (by Demisto) of the old yml/json file to the custom content file.
                 self.update_data(ex_file_path, corresponding_pack_file_path, ex_file_ending)
@@ -459,7 +459,7 @@ class Downloader:
 
     @staticmethod
     def get_corresponding_pack_file_object(searched_basename: str, pack_content_object: dict) -> dict:
-        """TODO: add unit test
+        """
         Searches for the file named searched_basename under the pack content object and returns it
         :param searched_basename: The basename to look for
         :param pack_content_object: The pack content object
@@ -496,7 +496,7 @@ class Downloader:
         elif file_ending == 'json':
             file_data: dict = get_json(file_path_to_write)
             merge(file_data, preserved_data)
-            json_depth: int = depth(file_data)
+            json_depth: int = get_depth(file_data)
             with open(file_path_to_write, 'w') as jf:
                 json.dump(obj=file_data, fp=jf, indent=json_depth)
 

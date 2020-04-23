@@ -793,14 +793,14 @@ def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
     return arg
 
 
-def depth(data: Any) -> int:
+def get_depth(data: Any) -> int:
     """
     Returns the depth of a data object
     :param data: The data
     :return: The depth of the data object
     """
     if data and isinstance(data, dict):
-        return 1 + max(depth(data[key]) for key in data)
+        return 1 + max(get_depth(data[key]) for key in data)
     if data and isinstance(data, list):
-        return 1 + max(depth(element) for element in data)
+        return 1 + max(get_depth(element) for element in data)
     return 0

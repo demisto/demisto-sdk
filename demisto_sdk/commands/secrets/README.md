@@ -33,7 +33,7 @@ This will run the secrets validator on your files after you commited them.
 ```
 demisto-sdk secrets -wl ./MyRepo/secrets_white_list.json
 ```
-This will run the secrets validator on your uncommited files with your own whitelist file located in ./MyRepo/secrets_white_list.json.
+This will run the secrets validator on your files with your own whitelist file located in ./MyRepo/secrets_white_list.json.
 
 
 ## More About Secrets and Sensitive Data

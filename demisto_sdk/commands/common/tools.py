@@ -734,9 +734,13 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return False, ''
 
 
-def is_test_file(file_: str):
-    """Check if the file is a test file under testdata, test_data or data_test"""
+def is_test_file(file_: str) -> bool:
+    """Check if the file is a test file under testdata, test_data or data_test
+    Args:
+        file_ (str): The file path which is checked.
+    Returns:
+        bool: True if the file is a test file, False otherwise.
+    """
     if any(test_file in file_.lower() for test_file in TESTS_DIRECTORIES):
         return True
-    else:
-        False
+    return False

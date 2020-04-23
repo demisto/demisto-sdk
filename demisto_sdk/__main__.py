@@ -214,7 +214,7 @@ def unify(**kwargs):
     help='Whether to run all validation on all files or not'
 )
 @click.option(
-    '-i', '--input', help='The path of a pack to validate specifically.'
+    '-i', '--input', help='The path of the content pack/file to validate specifically.'
 )
 @pass_config
 def validate(config, **kwargs):

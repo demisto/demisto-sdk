@@ -125,9 +125,13 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
         assert hello_world_readme == {}
 
-    def test_is_test_file(self):
-        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json ')
+    def test_is_not_test_file(self):
+        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
         assert not test_file
+
+    def test_is_test_file(self):
+        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/test_data/search_alerts.json')
+        assert test_file
 
 
 class TestGetMatchingRegex:

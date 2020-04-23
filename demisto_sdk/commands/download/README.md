@@ -17,16 +17,15 @@ download it to the local content repository in order to make a contribution.
 
 ## Behavior
 The download is one-directional, data goes from the server to the repo.
-The force flag will cause all files already in the output directory to be merged with their newer version in server.
 
-If the user won't use force, and there will be files existing both in the output package and in custom content, the file won't be downloaded.
+If there are files that exist both in the output directory and are specified in the input, they will be ignored. To override this behavior such that existing files will be merged with their newer version, use the force flag.
 
 ### Arguments
 * **-o PACK_PATH, --output Pack_PATH**
 
     The path of a package directory to download custom content to.
 
-* **-i "file_name_1,...,file_name_n", --input "file_name_1,...,file_name_n"**
+* **-i "FILE_NAME_1,...,FILE_NAME_n", --input "FILE_NAME_1,...,FILE_NAME_n"**
 
     Comma separated names of custom content files.
 
@@ -44,12 +43,11 @@ If the user won't use force, and there will be files existing both in the output
 
 
 ## Asumptions
-We assume that if the user have an integration under his pack, the name of the directory where integration files are being
-will be named as the file name without separators. For example, if the output pack is "~/.../content/Packs/TestPack",
-and the integration name is "Test Integration", then the integration files will be under "~/.../content/Packs/TestPack/Integrations/TestIntegration/".
+For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with any separators. For example the integration "Test Integration", will be under "~/.../content/Packs/TestPack/Integrations/TestIntegration/".
 
-We assume that if the user already have a script/integration in the local content repository, it contains a yml file.
-
+Integrations Scripts, and Playbooks folders that does not contain a yml file, will be overwritten automatically.
+All other folders that do not contain a json file, will be overwritten automatically.
+For clarity, the given pack should be consistent with Content hierarchy structure with no rouge files present.
 
 ### Examples
 ```
@@ -61,6 +59,6 @@ This will download the integration "Test Integration", script "TestScript" & pla
 demisto-sdk download -o Pack/TestPack -i "Test Integration,TestScript,TestPlaybook" -f
 ```
 This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook".
-If the file exists in the output pack, only it's changes from Demisto instance will be merged into the file already in the repository.
+If one of the files exists in the output pack, only its changes from Demisto instance will be merged into the existing.
 If the file doesn't exist in the output pack, it will be copied completely from Demisto instance.
 <br/><br/>

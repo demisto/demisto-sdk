@@ -70,7 +70,7 @@ def main(config, version):
                       f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
     if version:
         version = get_distribution('demisto-sdk').version
-        print(version)
+        print(f'demisto-sdk {version}')
 
 
 # ====================== split-yml ====================== #

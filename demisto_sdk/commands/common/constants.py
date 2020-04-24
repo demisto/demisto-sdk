@@ -6,6 +6,10 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    def suggest_fix(file_path: str, *args: List, cmd: str = 'format') -> str:
+        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
         return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
             .format(file_path, given_fromversion, needed_from_version)
@@ -266,6 +270,58 @@ BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
 RELEASE_NOTES_DIR = 'ReleaseNotes'
+TESTS_DIR = 'Tests'
+
+SCRIPT = 'script'
+INTEGRATION = 'integration'
+PLAYBOOK = 'playbook'
+LAYOUT = 'layout'
+INCIDENT_TYPE = 'incidenttype'
+INCIDENT_FIELD = 'incidentfield'
+INDICATOR_FIELD = 'indicatorfield'
+CONNECTION = 'connection'
+CLASSIFIER = 'classifier'
+DASHBOARD = 'dashboard'
+REPORT = 'report'
+REPUTATION = 'reputation'
+WIDGET = 'widget'
+
+CONTENT_ENTITIES_DIRS = [
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+    PLAYBOOKS_DIR,
+    TEST_PLAYBOOKS_DIR,
+    REPORTS_DIR,
+    DASHBOARDS_DIR,
+    WIDGETS_DIR,
+    INCIDENT_FIELDS_DIR,
+    INDICATOR_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    LAYOUTS_DIR,
+    CLASSIFIERS_DIR,
+    CONNECTIONS_DIR,
+    BETA_INTEGRATIONS_DIR
+]
+
+ENTITY_TYPE_TO_DIR = {
+    INTEGRATION: INTEGRATIONS_DIR,
+    PLAYBOOK: PLAYBOOKS_DIR,
+    SCRIPT: SCRIPTS_DIR,
+    LAYOUT: LAYOUTS_DIR,
+    INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPE: INCIDENT_TYPES_DIR,
+    INDICATOR_FIELD: INDICATOR_FIELDS_DIR,
+    CONNECTION: CONNECTIONS_DIR,
+    CLASSIFIER: CLASSIFIERS_DIR,
+    DASHBOARD: DASHBOARDS_DIR,
+    REPUTATION: MISC_DIR,
+    REPORT: REPORTS_DIR,
+    WIDGET: WIDGETS_DIR
+}
+
+CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
+
+CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
 DEFAULT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAACYVBMVEVHcEwAT4UAT4UAT4YAf/8A//8AT4UAf78AT4U' \
@@ -427,8 +483,8 @@ TEST_FILES_REGEX = r'.*test_files.*'
 DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
-CONF_REGEX = 'Tests/conf.json'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
+CONF_PATH = 'Tests/conf.json'
 
 SCRIPT_TYPE_REGEX = '.*script-.*.yml'
 SCRIPT_PY_REGEX = r'{}{}/([^\\/]+)/\1.py$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
@@ -446,7 +502,8 @@ INTEGRATION_PS_REGEX = r'{}{}/([^\\/]+)/\1.ps1$'.format(CAN_START_WITH_DOT_SLASH
 INTEGRATION_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_REGEX = r'{}{}/(integration-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 INTEGRATION_README_REGEX = r'{}{}/([^\\/]+)/README.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_OLD_README_REGEX = r'{}{}/integration-([^\\/]+_README.md)'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
+INTEGRATION_OLD_README_REGEX = r'{}{}/integration-([^\\/]+_README.md)$'.format(CAN_START_WITH_DOT_SLASH,
+                                                                               INTEGRATIONS_DIR)
 
 INTEGRATION_CHANGELOG_REGEX = r'{}{}/([^\\/]+)/CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
 
@@ -461,7 +518,7 @@ PACKS_INTEGRATION_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
 PACKS_INTEGRATION_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                              INTEGRATIONS_DIR)
-PACKS_INTEGRATION_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
+PACKS_INTEGRATION_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
 PACKS_SCRIPT_NON_SPLIT_YML_REGEX = r'{}{}/([^/]+)/{}/script-([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                                  SCRIPTS_DIR)
 PACKS_SCRIPT_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
@@ -482,8 +539,8 @@ PACKS_INDICATOR_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START
 PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, LAYOUTS_DIR)
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_REPORTS_REGEX = r'{}/([^/]+)/{}/([^.]+)\.json'.format(PACKS_DIR, REPORTS_DIR)
-PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, RELEASE_NOTES_DIR)
+PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
+PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, RELEASE_NOTES_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 
@@ -548,10 +605,10 @@ PACK_METADATA_KEYWORDS = 'keywords'
 PACK_METADATA_PRICE = 'price'
 PACK_METADATA_DEPENDENCIES = 'dependencies'
 # TODO: add PACK_METADATA_PRICE to validated fields after #23546 is ready.
-PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_MIN_VERSION, PACK_METADATA_CURR_VERSION,
+PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_CURR_VERSION,
                         PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
                         PACK_METADATA_TAGS, PACK_METADATA_CREATED, PACK_METADATA_BETA,
-                        PACK_METADATA_DEPRECATED, PACK_METADATA_CERTIFICATION, PACK_METADATA_USE_CASES,
+                        PACK_METADATA_DEPRECATED, PACK_METADATA_USE_CASES,
                         PACK_METADATA_KEYWORDS, PACK_METADATA_DEPENDENCIES)
 API_MODULES_PACK = 'ApiModules'
 
@@ -564,6 +621,9 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'dashboard',
     'incident_type'
 ]
+
+INTEGRATION_PREFIX = 'integration'
+SCRIPT_PREFIX = 'script'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -828,6 +888,7 @@ DIR_LIST = [
     MISC_DIR,
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
+    TESTS_DIR
 ]
 DIR_LIST_FOR_REGULAR_ENTETIES = [
     PLAYBOOKS_DIR,
@@ -972,14 +1033,18 @@ FILE_TYPES_PATHS_TO_VALIDATE = {
 
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
-SCRIPT_PREFIX = 'script'
-INTEGRATION_PREFIX = 'integration'
 
 DIR_TO_PREFIX = {
     'Integrations': INTEGRATION_PREFIX,
     'Beta_Integrations': INTEGRATION_PREFIX,
     'Scripts': SCRIPT_PREFIX
 }
+
+ENTITY_NAME_SEPARATORS = [' ', '_', '-']
+
+DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'script.dockerimage45', 'tests']
+
+DELETED_JSON_FIELDS_BY_DEMISTO = ['fromVersion', 'toVersion']
 
 ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'

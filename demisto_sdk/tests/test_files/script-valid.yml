@@ -14,3 +14,5 @@ args:
   defaultValue: "6"
 scripttarget: 0
 runonce: false
+tests:
+  - No tests

@@ -193,7 +193,6 @@ class Initiator:
             'name': '## FILL OUT MANUALLY ##',
             'description': '## FILL OUT MANUALLY ##',
             'support': 'xsoar',
-            'serverMinVersion': '## FILL OUT MANUALLY #',
             'currentVersion': PACK_INITIAL_VERSION,
             'author': 'Cortex XSOAR',
             'url': 'https://www.paloaltonetworks.com/cortex',

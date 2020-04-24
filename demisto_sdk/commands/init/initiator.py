@@ -203,7 +203,6 @@ class Initiator:
             'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'beta': False,
             'deprecated': False,
-            'certification': 'certified',
             'useCases': [],
             'keywords': [],
             # 'price': '0',
@@ -217,7 +216,6 @@ class Initiator:
         metadata['description'] = input("\nDescription of the pack: ")
         metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
                                                              option_message="\nSupport type of the pack: \n")
-        metadata['serverMinVersion'] = input("\nServer min version: ")
         metadata['author'] = input("\nAuthor of the pack: ")
 
         support_url = input("\nThe url of support, should represent your GitHub account (optional): ")

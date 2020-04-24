@@ -83,7 +83,6 @@ def test_create_metadata(monkeypatch, initiator):
         'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
         'beta': False,
         'deprecated': False,
-        'certification': 'certified',
         'useCases': [],
         'keywords': [],
         # 'price': '0',
@@ -95,7 +94,7 @@ def test_create_metadata(monkeypatch, initiator):
         'builtins.input',
         generate_multiple_inputs(
             deque([
-                PACK_NAME, PACK_DESC, '1', PACK_SERVER_MIN_VERSION, PACK_AUTHOR,
+                PACK_NAME, PACK_DESC, '1', PACK_AUTHOR,
                 PACK_URL, PACK_EMAIL, '1', PACK_TAGS
                 # PACK_PRICE
             ])
@@ -106,7 +105,6 @@ def test_create_metadata(monkeypatch, initiator):
         'author': PACK_AUTHOR,
         'beta': False,
         'categories': [INTEGRATION_CATEGORIES[0]],
-        'certification': 'certified',
         'currentVersion': '1.0.0',
         'dependencies': {},
         'deprecated': False,
@@ -115,7 +113,6 @@ def test_create_metadata(monkeypatch, initiator):
         'keywords': [],
         'name': PACK_NAME,
         # 'price': PACK_PRICE,
-        'serverMinVersion': PACK_SERVER_MIN_VERSION,
         'support': PACK_SUPPORT_OPTIONS[0],
         'tags': ['Tag1', 'Tag2'],
         'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),

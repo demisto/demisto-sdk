@@ -112,6 +112,7 @@ def test_create_metadata(monkeypatch, initiator):
         'email': PACK_EMAIL,
         'keywords': [],
         'name': PACK_NAME,
+        'serverMinVersion': '## FILL OUT MANUALLY #',
         # 'price': PACK_PRICE,
         'support': PACK_SUPPORT_OPTIONS[0],
         'tags': ['Tag1', 'Tag2'],

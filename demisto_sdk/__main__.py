@@ -216,16 +216,21 @@ def unify(**kwargs):
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
-    '--post-commit', is_flag=True, help='Whether the validation is done after you committed your files, '
-                                        'this will help the command to determine which files it should check in its '
-                                        'run. Before you commit the files it should not be used. Mostly for build '
-                                        'validations.')
+    '--post-commit',
+    is_flag=True,
+    help='Whether the validation should run only on the current branch\'s committed changed files. '
+         'This applies only when the -g flag is supplied.')
 @click.option(
     '--no-backward-comp', is_flag=True, show_default=True,
     help='Whether to check backward compatibility or not.')
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
-    default=False, help='Validate changes using git - this will check your branch changes and will run only on them.')
+    default=False,
+    help='Validate changes using git - this will check current branch\'s changes against origin/master. '
+    'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
+    'that have been committed. '
+    'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
+    'both committed and not committed. ')
 @click.option(
     '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
 )

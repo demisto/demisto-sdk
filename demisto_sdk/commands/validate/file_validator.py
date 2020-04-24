@@ -719,7 +719,10 @@ class FilesValidator:
         if self.use_git:
             if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                                  not self.branch_name.startswith('20.')):
-                print('Validates only committed files')
+                if not self.is_circle:
+                    print('Validating both committed and non-committed changed files')
+                else:
+                    print('Validating committed changed files only')
                 self.validate_committed_files()
             else:
                 self.validate_against_previous_version(no_error=True)

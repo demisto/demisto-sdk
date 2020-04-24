@@ -1,13 +1,22 @@
 import io
 import json
 import os
+import re
 import shutil
 
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 
-def create_whitelist_secrets_file(file_path, urls=[], ips=[], files=[], generic_strings=[]):
+def create_whitelist_secrets_file(file_path, urls=None, ips=None, files=None, generic_strings=None):
+    if files is None:
+        files = []
+    if urls is None:
+        urls = []
+    if ips is None:
+        ips = []
+    if generic_strings is None:
+        generic_strings = []
     with io.open(file_path, 'w') as f:
         secrets_content = dict(
             files=files,
@@ -171,8 +180,40 @@ my_email = "fooo@someorg.com"
         shmoop
         155.165.45.232
         '''
-        file_contents = self.validator.remove_whitelisted_items_from_file(white_list, file_contents)
+        file_contents = self.validator.remove_whitelisted_items_from_file(file_contents, {white_list})
         assert white_list not in file_contents
+
+    def test_remove_whitelisted_items_from_file_escaped_whitelist(self):
+        """
+        Given
+        - White list with a term that can be regex (***.).
+        - String with no content
+
+        When
+        - Removing terms containing that regex
+
+        Then
+        - Ensure secrets that the secret isn't in the output.
+        - Ensure no error raised
+        """
+        white_list = '***.url'
+        file_contents = '''
+        Random and unmeaningful file content
+        a string containing ***.url
+        '''
+        file_contents = self.validator.remove_whitelisted_items_from_file(file_contents, {white_list})
+        assert white_list not in file_contents
+
+    def test_remove_whitelisted_items_from_file_substring(self):
+        white_list = 'url.com'
+        file_contents = '''
+        url.com
+        boop
+        cool@url.com
+        shmoop
+        https://url.com
+        '''
+        assert not re.match(white_list, file_contents)
 
     def test_temp_white_list(self):
         file_contents = self.validator.get_file_contents(self.TEST_YML_FILE, '.yml')

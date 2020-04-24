@@ -753,9 +753,13 @@ def update_pack_releasenotes(**kwargs):
         print_error(f"Please remove the --all flag when specifying only one pack.")
         sys.exit(0)
     else:
-        update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
-                                  pre_release=pre_release)
-        update_pack_rn.execute_update()
+        if _pack:
+            if _pack in packs_existing_rn:
+                print_error(f"Release notes are already updated for {_pack}")
+            else:
+                update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
+                                          pre_release=pre_release)
+                update_pack_rn.execute_update()
 
 
 # ====================== find-dependencies ====================== #

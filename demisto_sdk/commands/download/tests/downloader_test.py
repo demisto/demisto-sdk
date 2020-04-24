@@ -15,7 +15,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR)
-from demisto_sdk.commands.common.tools import get_child_files
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_child_files,
+                                               print_color)
 from demisto_sdk.commands.download.downloader import Downloader
 from mock import patch
 
@@ -105,6 +106,71 @@ def ordered(obj):
         return obj
 
 
+class EnvironmentGuardian:
+    def __init__(self):
+        assert self.verify_environment()
+
+    @staticmethod
+    def verify_environment():
+        valid = True
+        if not valid:
+            err_msg = 'Tests environment is corrupted. Look at ~/.../demisto_sdk/commands/download/tests/README.md'
+            print_color(err_msg, LOG_COLORS.RED)
+            return False
+        return True
+
+    def prepare_environment(self, test_name, *args):
+        if test_name == 'test_update_pack_hierarchy':
+            return self.test_update_pack_hierarchy_env_prep()
+        elif test_name == 'test_merge_new_file':
+            return self.test_merge_new_file_env_prep(*args)
+
+    def restore_environment(self, test_name, *args):
+        if test_name == 'test_update_pack_hierarchy':
+            self.test_update_pack_hierarchy_env_restore(*args)
+        elif test_name == 'test_merge_new_file':
+            self.test_merge_new_file_env_restore(*args)
+        elif test_name == 'test_merge_and_extract_new_file':
+            self.test_merge_and_extract_new_file_env_restore(*args)
+
+    @staticmethod
+    def test_update_pack_hierarchy_env_prep():
+        integration_instance_temp_path = f'{INTEGRATION_INSTANCE_PATH}_temp'
+        shutil.copytree(INTEGRATION_INSTANCE_PATH, integration_instance_temp_path)
+        script_dir_path = os.path.dirname(SCRIPT_INSTANCE_PATH)
+        script_dir_temp_path = f'{os.path.dirname(SCRIPT_INSTANCE_PATH)}_temp'
+        shutil.copytree(script_dir_path, script_dir_temp_path)
+        shutil.rmtree(INTEGRATION_INSTANCE_PATH)
+        shutil.rmtree(script_dir_path)
+        return integration_instance_temp_path, script_dir_temp_path, script_dir_path
+
+    def test_update_pack_hierarchy_env_restore(self, integration_instance_temp_path, script_dir_temp_path,
+                                               script_dir_path):
+        shutil.rmtree(SCRIPT_INSTANCE_PATH)
+        os.rename(integration_instance_temp_path, INTEGRATION_INSTANCE_PATH)
+        os.rename(script_dir_temp_path, script_dir_path)
+        assert self.verify_environment()
+
+    @staticmethod
+    def test_merge_new_file_env_prep(custom_content_object):
+        temp_dir = mkdtemp()
+        entity = custom_content_object['entity']
+        output_dir_path = f'{temp_dir}/{entity}'
+        os.mkdir(output_dir_path)
+        old_file_path = custom_content_object['path']
+        new_file_path = f'{output_dir_path}/{os.path.basename(old_file_path)}'
+        return temp_dir, custom_content_object, output_dir_path, new_file_path, old_file_path
+
+    def test_merge_new_file_env_restore(self, temp_dir, new_file_path, old_file_path):
+        shutil.move(src=new_file_path, dst=old_file_path)
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        assert self.verify_environment()
+
+    def test_merge_and_extract_new_file_env_restore(self, temp_dir):
+        shutil.rmtree(temp_dir)
+        assert self.verify_environment()
+
+
 class TestHelperMethods:
     def test_remove_traces(self):
         downloader = Downloader(output='', input='')
@@ -143,6 +209,7 @@ class TestHelperMethods:
 
 class TestBuildPackContent:
     def test_build_pack_content(self):
+        assert EnvironmentGuardian.verify_environment()
         downloader = Downloader(output=PACK_INSTANCE_PATH, input='')
         downloader.build_pack_content()
         assert ordered(downloader.pack_content) == ordered(PACK_CONTENT)
@@ -155,6 +222,7 @@ class TestBuildPackContent:
         (LAYOUTS_DIR, 'demisto_sdk/commands/download/tests/downloader_test.py', {})
     ])
     def test_build_pack_content_object(self, entity, path, output_pack_content_object):
+        assert EnvironmentGuardian.verify_environment()
         downloader = Downloader(output='', input='')
         pack_content_object = downloader.build_pack_content_object(entity, path)
         assert ordered(pack_content_object) == ordered(output_pack_content_object)
@@ -165,6 +233,7 @@ class TestBuildPackContent:
         (LAYOUTS_DIR, 'demisto_sdk/commands/download/tests/downloader_test.py', '', '')
     ])
     def test_get_main_file_details(self, entity, path, main_id, main_name):
+        assert EnvironmentGuardian.verify_environment()
         downloader = Downloader(output='', input='')
         op_id, op_name = downloader.get_main_file_details(entity, os.path.abspath(path))
         assert op_id == main_id
@@ -180,6 +249,7 @@ class TestBuildCustomContent:
         (FAKE_CUSTOM_CONTENT_OBJECT, False)
     ])
     def test_exist_in_pack_content(self, custom_content_object, exist_in_pack):
+        assert EnvironmentGuardian.verify_environment()
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
             downloader.pack_content = PACK_CONTENT
@@ -197,33 +267,23 @@ class TestBuildCustomContent:
 
 
 class TestPackHierarchy:
-    @staticmethod
-    def prepare_env():
-        integration_instance_temp_path = f'{INTEGRATION_INSTANCE_PATH}_temp'
-        shutil.copytree(INTEGRATION_INSTANCE_PATH, integration_instance_temp_path)
-        script_dir_path = os.path.dirname(SCRIPT_INSTANCE_PATH)
-        script_dir_temp_path = f'{os.path.dirname(SCRIPT_INSTANCE_PATH)}_temp'
-        shutil.copytree(script_dir_path, script_dir_temp_path)
-        shutil.rmtree(INTEGRATION_INSTANCE_PATH)
-        shutil.rmtree(script_dir_path)
-        return integration_instance_temp_path, script_dir_temp_path, script_dir_path
-
-    @staticmethod
-    def restore_env(integration_instance_temp_path, script_dir_temp_path, script_dir_path):
-        shutil.rmtree(SCRIPT_INSTANCE_PATH)
-        os.rename(integration_instance_temp_path, INTEGRATION_INSTANCE_PATH)
-        os.rename(script_dir_temp_path, script_dir_path)
-
     def test_update_pack_hierarchy(self):
-        integration_instance_temp_path, script_dir_temp_path, script_dir_path = self.prepare_env()
+        env_guard = EnvironmentGuardian()
+        integration_instance_temp_path, script_dir_temp_path, script_dir_path = \
+            env_guard.prepare_environment('test_update_pack_hierarchy')
+        test_answer = True
+
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
             downloader.output_pack_path = PACK_INSTANCE_PATH
             downloader.custom_content = CUSTOM_CONTENT
             downloader.update_pack_hierarchy()
-            assert os.path.isdir(INTEGRATION_INSTANCE_PATH)
-            assert os.path.isdir(SCRIPT_INSTANCE_PATH)
-        self.restore_env(integration_instance_temp_path, script_dir_temp_path, script_dir_path)
+            test_answer = test_answer and os.path.isdir(INTEGRATION_INSTANCE_PATH)
+            test_answer = test_answer and os.path.isdir(SCRIPT_INSTANCE_PATH)
+
+        env_guard.restore_environment('test_update_pack_hierarchy', integration_instance_temp_path,
+                                      script_dir_temp_path, script_dir_path)
+        assert test_answer
 
 
 class TestMergeOldFile:
@@ -241,6 +301,7 @@ class TestMergeOldFile:
         (FAKE_CUSTOM_CONTENT_OBJECT, {})
     ])
     def test_get_corresponding_pack_content_object(self, custom_content_object, pack_content_object):
+        assert EnvironmentGuardian.verify_environment()
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
             downloader.pack_content = PACK_CONTENT
@@ -259,6 +320,7 @@ class TestMergeOldFile:
     ])
     def test_get_corresponding_pack_file_object(self, file_name, ex_file_ending, ex_file_detail, corr_pack_object,
                                                 pack_file_object):
+        assert EnvironmentGuardian.verify_environment() is True
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
             downloader.pack_content = PACK_CONTENT
@@ -277,6 +339,7 @@ class TestMergeNewFile:
         (SCRIPT_CUSTOM_CONTENT_OBJECT, ['odp/bn.py', 'odp/bn.yml', 'odp/README.md', 'odp/CHANGELOG.md'])
     ])
     def test_merge_and_extract_new_file(self, custom_content_object, raw_files):
+        env_guard = EnvironmentGuardian()
         temp_dir = mkdtemp()
         entity = custom_content_object['entity']
         downloader = Downloader(output=temp_dir, input='')
@@ -289,25 +352,23 @@ class TestMergeNewFile:
 
         downloader.merge_and_extract_new_file(custom_content_object)
         output_files = get_child_files(output_dir_path)
-        assert sorted(output_files) == sorted(files)
+        test_answer = sorted(output_files) == sorted(files)
 
-        shutil.rmtree(temp_dir)
+        env_guard.restore_environment('test_merge_and_extract_new_file', temp_dir)
+        assert test_answer
 
     @pytest.mark.parametrize('custom_content_object', [PLAYBOOK_CUSTOM_CONTENT_OBJECT, LAYOUT_CUSTOM_CONTENT_OBJECT])
     def test_merge_new_file(self, custom_content_object):
-        temp_dir = mkdtemp()
-        entity = custom_content_object['entity']
-        output_dir_path = f'{temp_dir}/{entity}'
-        os.mkdir(output_dir_path)
+        env_guard = EnvironmentGuardian()
+        temp_dir, custom_content_object, output_dir_path, new_file_path, old_file_path = \
+            env_guard.prepare_environment('test_merge_new_file', custom_content_object)
+
         downloader = Downloader(output=temp_dir, input='')
-        old_file_path = custom_content_object['path']
-        new_file_path = f'{output_dir_path}/{os.path.basename(old_file_path)}'
-
         downloader.merge_new_file(custom_content_object)
-        assert os.path.isfile(new_file_path)
+        test_answer = os.path.isfile(new_file_path)
 
-        shutil.move(src=new_file_path, dst=old_file_path)
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        env_guard.restore_environment('test_merge_new_file', temp_dir, new_file_path, old_file_path)
+        assert test_answer
 
 
 class TestVerifyPackPath:
@@ -316,5 +377,6 @@ class TestVerifyPackPath:
         ('Demisto', False), ('Packs', False), ('Packs/TestPack', True)
     ])
     def test_verify_path_is_pack(self, output_path, valid_ans):
+        assert EnvironmentGuardian.verify_environment()
         downloader = Downloader(output=f'{CONTENT_BASE_PATH}/{output_path}', input='')
         assert downloader.verify_path_is_pack() is valid_ans

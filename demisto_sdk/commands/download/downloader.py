@@ -44,7 +44,6 @@ class Downloader:
         log_verbose (bool): Indicates whether to use verbose logs or not
         client (Demisto client): The Demisto client to make API calls
         custom_content_temp_dir (dir): The temporary dir to store custom content
-        temp_dirs (list): A list of all temp dirs used across the module
         files_not_downloaded (list): A list of all files didn't succeeded to be downloaded
         custom_content (list): A list of all custom content objects
         pack_content (dict): The pack content that maps the pack

@@ -11,7 +11,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               print_error, print_warning)
+                                               get_pack_name, print_error,
+                                               print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -666,11 +667,14 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack", help="Name of the pack.", multiple=True
+    "-p", "--pack", help="Name of the pack."
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
     type=RNInputValidation()
+)
+@click.option(
+    '--all', help="Update all changed packs", is_flag=True
 )
 @click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
@@ -679,27 +683,42 @@ def update_pack_releasenotes(**kwargs):
     _pack = kwargs.get('pack')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
-    packfiles, b, c, _packs = FilesValidator(use_git=True).get_modified_and_added_files()
+    is_all = kwargs.get('all')
+    modified, added, old, _packs = FilesValidator(use_git=True).get_modified_and_added_files()
+    packs_existing_rn = set()
+    for pf in added:
+        if 'ReleaseNotes' in pf:
+            pack_with_existing_rn = get_pack_name(pf)
+            packs_existing_rn.add(pack_with_existing_rn)
+    if len(packs_existing_rn):
+        existing_rns = ''.join(f"{p}, " for p in packs_existing_rn)
+        print_warning(f"Found existing release notes for the following packs: {existing_rns.rstrip(', ')}")
     if len(_packs) > 1:
-        print_warning(f"Detected changes in the following packs: {_packs}")
-    if len(packfiles) < 1:
+        pack_list = ''.join(f"{p}, " for p in _packs)
+        if not is_all:
+            print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}")
+            if _pack:
+                pass
+            else:
+                sys.exit(0)
+    if len(modified) < 1:
         print_warning('No changes were detected.')
         sys.exit(0)
-    if _pack:
-        packs = _pack
+    if is_all and not _pack:
+        packs = list(_packs - packs_existing_rn)
+        packs_list = ''.join(f"{p}, " for p in packs)
+        print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
+        for pack in packs:
+            update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
+                                      pre_release=pre_release)
+            update_pack_rn.execute_update()
+    elif is_all and _pack:
+        print_error(f"Please remove the --all flag when specifying only one pack.")
+        sys.exit(0)
     else:
-        packs = _packs
-    for pack in packs:
-        update_pack_rn = UpdateRN(pack=pack, update_type=update_type)
-        new_version = update_pack_rn.bump_version_number(pre_release)
-        rn_path = update_pack_rn.return_release_notes_path(new_version)
-        update_pack_rn.check_rn_dir(rn_path)
-        changed_files = {}
-        for packfile in packfiles:
-            fn, ft = update_pack_rn.ident_changed_file_type(packfile)
-            changed_files[fn] = ft
-        rn_string = update_pack_rn.build_rn_template(changed_files)
-        update_pack_rn.create_markdown(rn_path, rn_string)
+        update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
+                                  pre_release=pre_release)
+        update_pack_rn.execute_update()
 
 
 # ====================== find-dependencies ====================== #

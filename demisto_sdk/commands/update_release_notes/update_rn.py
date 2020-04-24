@@ -5,6 +5,7 @@ This script is used to create a release notes template
 import errno
 import json
 import os
+import sys
 
 from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -15,15 +16,32 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: str):
+    def __init__(self, pack: str, update_type: str, pack_files: set, pre_release: bool = False):
 
         self.pack = pack
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
+        self.pack_files = pack_files
+        self.pre_release = pre_release
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+    def execute_update(self):
+        try:
+            new_version = self.bump_version_number(self.pre_release)
+        except ValueError as e:
+            print_error(e)
+            sys.exit(0)
+        rn_path = self.return_release_notes_path(new_version)
+        self.check_rn_dir(rn_path)
+        changed_files = {}
+        for packfile in self.pack_files:
+            fn, ft = self.ident_changed_file_type(packfile)
+            changed_files[fn] = ft
+        rn_string = self.build_rn_template(changed_files)
+        self.create_markdown(rn_path, rn_string)
 
     def _does_pack_metadata_exist(self):
         """Check if pack_metadata.json exists"""
@@ -94,8 +112,9 @@ class UpdateRN:
             version = version.split('.')
             version[0] = str(int(version[0]) + 1)
             if int(version[0]) > 99:
-                raise ValueError("Version number is greater than 99. Please verify the currentVersion is"
-                                 "correct. If it is, then something is very broken.")
+                raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
+                                 f"Please verify the currentVersion is correct. If it is, "
+                                 f"then something is very broken.")
             version[1] = '0'
             version[2] = '0'
             new_version = '.'.join(version)
@@ -104,8 +123,9 @@ class UpdateRN:
             version = version.split('.')
             version[1] = str(int(version[1]) + 1)
             if int(version[1]) > 99:
-                raise ValueError("Version number is greater than 99. Please verify the currentVersion is"
-                                 "correct. If it is, then consider bumping to a new Major version.")
+                raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
+                                 f"Please verify the currentVersion is correct. If it is, "
+                                 f"then consider bumping to a new Major version.")
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
@@ -114,8 +134,9 @@ class UpdateRN:
             version = version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
-                raise ValueError("Version number is greater than 99. Please verify the currentVersion is"
-                                 "correct. If it is, then consider bumping to a new Minor version.")
+                raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
+                                 f"Please verify the currentVersion is correct. If it is, "
+                                 f"then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
         if pre_release:
             new_version = new_version + '_prerelease'

@@ -209,7 +209,6 @@ class FilesValidator:
             'git diff --name-status {tag}..{compare_type}refs/heads/{branch}'.format(tag=tag,
                                                                                      branch=self.branch_name,
                                                                                      compare_type=compare_type))
-
         modified_files, added_files, _, old_format_files = self.get_modified_files(
             all_changed_files_string,
             tag=tag,

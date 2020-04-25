@@ -799,3 +799,12 @@ def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not.
     """
     return os.path.basename(path) == CLASSIFIERS_DIR
+
+
+def get_parent_directory_name(path: str) -> str:
+    """
+    Retrieves the parent directory name
+    :param path: path to get the parent dir om
+    :return: parent directory nme
+    """
+    return os.path.basename(os.path.dirname(os.path.abspath(path)))

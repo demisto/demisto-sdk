@@ -20,8 +20,7 @@ class Uploader:
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
         self.path = input
         self.log_verbose = verbose
-        # self.client = demisto_client.configure(verify_ssl=not insecure)
-        self.client = demisto_client.configure(base_url='https://dev1.demisto.works', api_key='99C2555554AAF7DE02FD5FD29F282AEA', verify_ssl=False)
+        self.client = demisto_client.configure(verify_ssl=not insecure)
 
     def upload(self):
         """Upload the pack / directory / file to the remote Demisto instance.

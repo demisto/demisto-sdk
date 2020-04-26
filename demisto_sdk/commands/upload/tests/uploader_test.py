@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS
 from demisto_sdk.commands.upload.uploader import Uploader
 
+# Taken from https://github.com/pytest-dev/pytest-bdd/issues/155
 if not hasattr(inspect, '_orig_findsource'):
     @wraps(inspect.findsource)
     def findsource(*args, **kwargs):
@@ -68,7 +69,7 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
         LOG_COLORS.NATIVE
     )
 
-    assert print.call_args_list[0][0][0] == upload_success_message
+    assert print.call_args_list[1][0][0] == upload_success_message
 
 
 def test_parse_error_response_ssl(demisto_client_configure, mocker):

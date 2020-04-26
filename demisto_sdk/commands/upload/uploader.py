@@ -52,7 +52,7 @@ class Uploader:
             elif file_type == 'incidenttype':
                 self.incident_type_uploader(self.path)
             elif file_type == 'classifier':
-                self.classifiers_uploader(self.path)
+                self.classifier_uploader(self.path)
             elif file_type == 'layout':
                 self.layout_uploader(self.path)
             elif file_type == 'dashboard':
@@ -158,7 +158,7 @@ class Uploader:
             list_classifiers = get_child_files(path)
             for classifiers in list_classifiers:
                 if classifiers.endswith('.json'):
-                    self.classifiers_uploader(classifiers)
+                    self.classifier_uploader(classifiers)
 
     def integration_uploader(self, path: str):
         is_dir = False
@@ -368,7 +368,7 @@ class Uploader:
         finally:
             self._remove_temp_file(new_file_path)
 
-    def classifiers_uploader(self, path: str):
+    def classifier_uploader(self, path: str):
         file_name = os.path.basename(path)
         result = None
 

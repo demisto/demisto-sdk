@@ -31,6 +31,33 @@ def test_upload_invalid_path(demisto_client_configure):
     assert script_dir_uploader.upload() == 1
 
 
+def test_upload_incident_field_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - An incident field named XDR_Alert_Count to upload
+
+    When
+        - Uploading incident field
+
+    Then
+        - Ensure incident field is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    incident_field_name = "XDR_Alert_Count.json"
+    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
+    uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded incident field - '{incident_field_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[0][0][0] == upload_success_message
+
+
 def test_parse_error_response_ssl(demisto_client_configure, mocker):
     """
     Given

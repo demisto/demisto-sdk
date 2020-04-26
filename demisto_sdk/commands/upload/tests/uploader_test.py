@@ -104,7 +104,7 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
 def test_upload_widget_positive(demisto_client_configure, mocker):
     """
     Given
-        - A widget named Cortex_XDR_Incident_Handling to upload
+        - A widget named ActiveIncidentsByRole to upload
 
     When
         - Uploading a widget
@@ -131,13 +131,13 @@ def test_upload_widget_positive(demisto_client_configure, mocker):
 def test_upload_dashboard_positive(demisto_client_configure, mocker):
     """
     Given
-        - A script named EntryWidgetNumberHostsXDR to upload
+        - A dashboard named upload_test_dashboard.json to upload
 
     When
-        - Uploading a script
+        - Uploading a dashboard
 
     Then
-        - Ensure script is uploaded successfully
+        - Ensure dashboard is uploaded successfully
         - Ensure success upload message is printed as expected
     """
     mocker.patch("builtins.print")
@@ -149,6 +149,87 @@ def test_upload_dashboard_positive(demisto_client_configure, mocker):
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
         f"Uploaded dashboard - '{dashboard_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[1][0][0] == upload_success_message
+
+
+def test_upload_layout_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A layout named layout-details-test_bla-V2 to upload
+
+    When
+        - Uploading a layout
+
+    Then
+        - Ensure layout is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    layout_name = "layout-details-test_bla-V2.json"
+    layout_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Layouts/{layout_name}"
+    uploader = Uploader(input=layout_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded layout - '{layout_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[1][0][0] == upload_success_message
+
+
+def test_upload_incident_type_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - An incident type named XDR_Alert_Count to upload
+
+    When
+        - Uploading incident type
+
+    Then
+        - Ensure incident type is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    incident_type_name = "incidenttype-Hello_World_Alert.json"
+    incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/IncidentTypes/{incident_type_name}"
+    uploader = Uploader(input=incident_type_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded incident type - '{incident_type_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[1][0][0] == upload_success_message
+
+
+def test_upload_classifier_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A classifier type named XDR_Alert_Count to upload
+
+    When
+        - Uploading classifier
+
+    Then
+        - Ensure classifier is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    classifier_name = "classifier-aws_sns_test_classifier.json"
+    classifier_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Classifiers/{classifier_name}"
+    uploader = Uploader(input=classifier_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded classifier - '{classifier_name}' - successfully",
         LOG_COLORS.NATIVE
     )
 

@@ -44,8 +44,12 @@ class Uploader:
         """
         print(f"Uploading {self.path} ...")
         parent_dir_name = get_parent_directory_name(self.path)
+
+        if not os.path.exists(self.path):
+            print_error(f'Error: Given input path: {self.path} does not exist')
+
         # Input is a file
-        if os.path.isfile(self.path):
+        elif os.path.isfile(self.path):
             file_type = find_type(self.path)
             if file_type == 'integration':
                 self.integration_uploader(self.path)
@@ -85,18 +89,15 @@ class Uploader:
                 self.pack_uploader()
 
         else:
-            # If file exists
-            if os.path.exists(self.path):
-                print_error(
-                    f'\nError: Given input path: {self.path} is not valid. '
-                    f'Input path should point to one of the following:\n'
-                    f'  1. Pack\n'
-                    f'  2. Directory inside a pack for example: Integrations directory\n'
-                    f'  3. Valid file that can be imported to Cortex XSOAR manually. '
-                    f'For example a playbook: helloWorld.yml'
-                )
-            else:
-                print_error(f'Error: Given input path: {self.path} does not exist')
+            # Input is not supported
+            print_error(
+                f'\nError: Given input path: {self.path} is not valid. '
+                f'Input path should point to one of the following:\n'
+                f'  1. Pack\n'
+                f'  2. Directory inside a pack for example: Integrations directory\n'
+                f'  3. Valid file that can be imported to Cortex XSOAR manually. '
+                f'For example a playbook: helloWorld.yml'
+            )
             self.status_code = 1
 
         self._print_summary()
@@ -387,7 +388,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded classifiers - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded classifier - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Classifier'))
         except Exception as err:
             self._parse_error_response(err, 'classifier', file_name)

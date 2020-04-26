@@ -1,6 +1,7 @@
 import ast
 import io
 import json
+import logging
 import os
 import shutil
 import tarfile
@@ -31,6 +32,8 @@ from mergedeep import merge
 from ruamel.yaml import YAML
 from tabulate import tabulate
 
+logging.disable(logging.CRITICAL)
+
 
 class Downloader:
     """
@@ -50,14 +53,17 @@ class Downloader:
         SPECIAL_ENTITIES (dict): Used to treat Test Playbook & Beta Integrations as regular entities
     """
 
-    def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False):
+    def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False,
+                 list_files: bool = False, all_custom_content: bool = False):
         self.output_pack_path = output
-        self.input_files = arg_to_list(input)
+        self.input_files = list(input)
         self.force = force
         self.insecure = insecure
         self.log_verbose = verbose
+        self.list_files = list_files
+        self.all_custom_content = all_custom_content
         self.client = None
-        self.custom_content_temp_dir = mkdtemp()
+        self.custom_content_temp_dir = None
         self.files_not_downloaded = list()
         self.custom_content = list()
         self.ryaml = YAML()
@@ -69,10 +75,12 @@ class Downloader:
         """
         Downloads custom content data from Demisto to the output pack in content repository.
         """
-        if not self.verify_path_is_pack():
-            return 1
-        self.build_pack_content()
+        self.verify_flags()
         self.fetch_custom_content()
+        self.handle_list_files()
+        self.handle_all_custom_content_flag()
+        self.verify_path_is_pack()
+        self.build_pack_content()
         self.build_custom_content()
         self.update_pack_hierarchy()
         self.merge_into_pack()
@@ -80,10 +88,95 @@ class Downloader:
         self.log_files_not_downloaded()
         return 0
 
-    def verify_path_is_pack(self) -> bool:
+    def verify_flags(self) -> None:
+        """
+        Verifies that the flags configuration given by the user is correct
+        :return: None
+        """
+        if not self.list_files:
+            output_flag, input_flag = True, True
+            if not self.output_pack_path:
+                output_flag = False
+                print_color("Error: Missing option '-o' / '--output'.", LOG_COLORS.RED)
+            if not self.input_files:
+                if not self.all_custom_content:
+                    input_flag = False
+                    print_color("Error: Missing option '-i' / '--input'.", LOG_COLORS.RED)
+            if not input_flag or not output_flag:
+                exit(1)
+
+    def fetch_custom_content(self) -> None:
+        """
+        Fetches the custom content from Demisto into a temporary dir.
+        """
+        try:
+            self.client = demisto_client.configure(verify_ssl=not self.insecure)
+            api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
+            body: bytes = ast.literal_eval(api_response[0])
+            io_bytes = io.BytesIO(body)
+            # Demisto's custom content file is of type tar.gz
+            tar = tarfile.open(fileobj=io_bytes, mode='r')
+            self.custom_content_temp_dir = mkdtemp()
+
+            for member in tar.getmembers():
+                file_name: str = self.update_file_prefix(member.name.strip('/'))
+                file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
+                with open(file_path, 'w') as file:
+                    file.write(tar.extractfile(member).read().decode('utf-8'))
+
+            if not self.list_files:
+                print_color('\nDownloaded custom content from Demisto server.\n', LOG_COLORS.NATIVE)
+
+        except ApiException as e:
+            if e.status == 401:
+                print_color(f'\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+                            LOG_COLORS.RED)
+            print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
+            exit(1)
+        except Exception as e:
+            print_color(f'\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
+                        LOG_COLORS.RED)
+            print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+            exit(1)
+
+    def create_custom_content_objects(self) -> list:
+        """
+        Creates a list of all custom content objects
+        :return: The list of all custom content objects
+        """
+        custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
+        return [self.build_custom_content_object(file_path) for file_path in custom_content_file_paths]
+
+    def handle_list_files(self) -> None:
+        """
+        Prints the list of all files available to be downloaded from Demisto Instance
+        :return: None
+        """
+        if self.list_files:
+            custom_content_objects: list = self.create_custom_content_objects()
+
+            list_files: list = [[cco['name'], cco['entity'][:-1]] for cco in custom_content_objects]
+            print_color('\nThe following files are available to be downloaded from Demisto instance\n',
+                        LOG_COLORS.NATIVE)
+            print_color(tabulate(list_files, headers=['FILE NAME', 'FILE TYPE']), LOG_COLORS.NATIVE)
+
+            exit(0)
+
+    def handle_all_custom_content_flag(self) -> None:
+        """
+        Handles the case where the all custom content flag is given
+        :return: None
+        """
+        if self.all_custom_content:
+            custom_content_objects: list = self.create_custom_content_objects()
+            names_list: list = [cco['name'] for cco in custom_content_objects]
+            # Remove duplicated names
+            self.input_files = list(set(names_list))
+
+    def verify_path_is_pack(self) -> None:
         """
         Verifies the output path entered by the user is an actual pack path in content repository.
-        :return: Boolean indicates whether the path is pack path or not
+        :return: None
         """
         output_pack_path = self.output_pack_path
         if not (os.path.isdir(output_pack_path) and
@@ -91,8 +184,7 @@ class Downloader:
                 os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(output_pack_path)))) == 'content'):
             print_color(f"Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
                         f" of format ~/.../content/Packs/$PACK_NAME", LOG_COLORS.RED)
-            return False
-        return True
+            exit(1)
 
     def build_pack_content(self) -> None:
         """
@@ -147,7 +239,7 @@ class Downloader:
 
     @staticmethod
     def get_main_file_details(content_entity: str, entity_instance_path: str) -> tuple:
-        """TODO: add test for one file in pack
+        """
         Returns the details of the "main" file within an entity instance.
         For example: In the HelloWorld integration under Packs/HelloWorld, the main file is the yml file.
         It contains all relevant ids and names for all the files under the HelloWorld integration dir.
@@ -178,29 +270,6 @@ class Downloader:
 
         return main_id, main_name
 
-    def fetch_custom_content(self) -> None:
-        """
-        Fetches the custom content from Demisto into a temporary dir.
-        """
-        self.client = demisto_client.configure(verify_ssl=not self.insecure)
-        try:
-            api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
-            body: bytes = ast.literal_eval(api_response[0])
-            io_bytes = io.BytesIO(body)
-            # Demisto's custom content file is of type tar.gz
-            tar = tarfile.open(fileobj=io_bytes, mode='r')
-
-            for member in tar.getmembers():
-                file_name: str = self.update_file_prefix(member.name.strip('/'))
-                file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
-                with open(file_path, 'w') as file:
-                    file.write(tar.extractfile(member).read().decode('utf-8'))
-
-            print_color('\nDownloaded custom content from Demisto server.\n', LOG_COLORS.NATIVE)
-
-        except ApiException as e:
-            print(f'Exception raised when fetching custom content: {e}')
-
     @staticmethod
     def update_file_prefix(file_name: str) -> str:
         """
@@ -216,10 +285,7 @@ class Downloader:
         For example check out the CUSTOM_CONTENT variable in downloader_test.py
         """
         # Build custom content files
-        custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
-        custom_content_objects: list = list()
-        for custom_content_file_path in custom_content_file_paths:
-            custom_content_objects.append(self.build_custom_content_object(custom_content_file_path))
+        custom_content_objects: list = self.create_custom_content_objects()
 
         for input_file_name in self.input_files:
             input_file_exist_in_cc: bool = False
@@ -255,12 +321,9 @@ class Downloader:
         Build the custom content object represents a custom content entity instance.
         For example: integration-HelloWorld.yml downloaded from Demisto.
         """
-        # file ending is for example yml for integration files
-        file_data, file_ending = get_dict_from_file(file_path)
-        # file_type is for example 'integration'
-        file_type: str = find_type(_dict=file_data, file_type=file_ending)
-        # file_type is for example 'Integrations'
-        file_entity: str = ENTITY_TYPE_TO_DIR.get(file_type)
+        file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
+        file_type: str = find_type(_dict=file_data, file_type=file_ending)  # For example: integration
+        file_entity: str = ENTITY_TYPE_TO_DIR.get(file_type)  # For example: Integrations
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
 
@@ -338,7 +401,7 @@ class Downloader:
                     self.merge_new_file(custom_content_object)
 
     def merge_and_extract_existing_file(self, custom_content_object: dict) -> None:
-        """TODO: add unit test
+        """
         "Smart" merges old files of type integration/script (existing in the output pack)
         :param custom_content_object: The custom content object to merge into the pack
         :return: None
@@ -384,7 +447,7 @@ class Downloader:
         print_color(f'- Merged {file_type} "{file_name}"', LOG_COLORS.NATIVE)
 
     def merge_existing_file(self, custom_content_object: dict, file_ending: str) -> None:
-        """TODO: add unit test
+        """
         "Smart" merges the newly downloaded files into the existing files of type PB/json (existing in the output pack)
         :param custom_content_object: The custom content object to merge into the pack
         :param file_ending: The file ending
@@ -481,7 +544,7 @@ class Downloader:
         return {}
 
     def update_data(self, file_path_to_write: str, file_path_to_read: str, file_ending: str) -> None:
-        """TODO: add unit test
+        """
         Collects special chosen fields from the file_path_to_read and writes them into the file_path_to_write.
         :param file_path_to_write: The output file path to add the special fields to.
         :param file_path_to_read: The input file path to read the special fields from.

@@ -26,13 +26,13 @@ PACK_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack'
 
 INTEGRATION_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Integrations/TestIntegration'
 SCRIPT_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Scripts/TestScript'
-PLAYBOOK_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Playbooks/playbook-FormattingPerformance_-_Test.yml'
-LAYOUT_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Layouts/layout-details-Hello_World_Alert-V2.json'
+PLAYBOOK_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Playbooks/playbook-TestPlaybook.yml'
+LAYOUT_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json'
 
 CUSTOM_CONTENT_SCRIPT_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml'
 CUSTOM_CONTENT_INTEGRATION_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml'
-CUSTOM_CONTENT_LAYOUT_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/layout-details-Hello_World_Alert-V2.json'
-CUSTOM_CONTENT_PLAYBOOK_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/playbook-FormattingPerformance_-_Test.yml'
+CUSTOM_CONTENT_LAYOUT_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/layout-details-TestLayout.json'
+CUSTOM_CONTENT_PLAYBOOK_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/playbook-TestPlaybook.yml'
 
 INTEGRATION_PACK_OBJECT = {'Test Integration': [
     {'name': 'Test Integration', 'id': 'Test Integration',

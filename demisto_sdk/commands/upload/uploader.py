@@ -51,7 +51,7 @@ class Uploader:
                 self.integration_uploader(self.path)
             elif file_type == 'script':
                 self.script_uploader(self.path)
-            if file_type == 'playbook':
+            elif file_type == 'playbook':
                 self.playbook_uploader(self.path)
             elif file_type == 'widget':
                 self.widget_uploader(self.path)
@@ -63,24 +63,26 @@ class Uploader:
                 self.layout_uploader(self.path)
             elif file_type == 'dashboard':
                 self.dashboard_uploader(self.path)
-            elif file_type == 'incidentfield':
+            else:
+                file_type == 'incidentfield'
                 self.incident_field_uploader(self.path)
 
-        # Input is an integration directory (HelloWorld)
-        elif parent_dir_name == INTEGRATIONS_DIR:
-            self.integration_uploader(self.path)
+        elif os.path.isdir(self.path):
+            # Input is an integration directory (HelloWorld)
+            if parent_dir_name == INTEGRATIONS_DIR:
+                self.integration_uploader(self.path)
 
-        # Input is a script directory (commonServerPython)
-        elif parent_dir_name == SCRIPTS_DIR:
-            self.script_uploader(self.path)
+            # Input is a script directory (commonServerPython)
+            elif parent_dir_name == SCRIPTS_DIR:
+                self.script_uploader(self.path)
 
-        # Input is a content entity directory (Integrations/Scripts/Playbook etc...)
-        elif os.path.basename(self.path) in CONTENT_ENTITIES_DIRS:
-            self.directory_uploader(self.path)
+            # Input is a content entity directory (Integrations/Scripts/Playbook etc...)
+            elif os.path.basename(self.path) in CONTENT_ENTITIES_DIRS:
+                self.directory_uploader(self.path)
 
-        # Input is a pack
-        elif parent_dir_name == PACKS_DIR:
-            self.pack_uploader()
+            # Input is a pack
+            elif parent_dir_name == PACKS_DIR:
+                self.pack_uploader()
 
         else:
             # If file exists
@@ -424,7 +426,6 @@ class Uploader:
                 os.unlink(path_to_delete)
             except (PermissionError, IsADirectoryError) as error:
                 print_error(error)
-                pass
 
     def _sort_directories_based_on_dependencies(self, dir_list: List) -> List:
         """Sorts given list of directories based on logic order of content entities that depend on each other

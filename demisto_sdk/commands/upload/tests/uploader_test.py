@@ -23,6 +23,8 @@ if not hasattr(inspect, '_orig_findsource'):
             return inspect._orig_findsource(*args, **kwargs)
         except IndexError:
             raise IOError("Invalid line")
+
+
     inspect._orig_findsource = inspect.findsource
     inspect.findsource = findsource
 
@@ -32,7 +34,7 @@ def demisto_client_configure(mocker):
     mocker.patch.object(demisto_client, 'configure', return_value="object")
 
 
-def test_upload_sanity(demisto_client_configure):
+def test_upload_integration_positive(demisto_client_configure):
     integration_pckg_path = f'{git_path()}demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
     integration_pckg_uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
     with patch.object(integration_pckg_uploader, 'client', return_value='ok'):
@@ -43,6 +45,114 @@ def test_upload_invalid_path(demisto_client_configure):
     script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Scripts/'
     script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
     assert script_dir_uploader.upload() == 1
+
+
+def test_upload_script_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A script named EntryWidgetNumberHostsXDR to upload
+
+    When
+        - Uploading a script
+
+    Then
+        - Ensure script is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    script_name = "EntryWidgetNumberHostsXDR.yml"
+    script_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/Scripts/{script_name}"
+    uploader = Uploader(input=script_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded script - '{script_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[1][0][0] == upload_success_message
+
+
+def test_upload_playbook_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A playbook named Cortex_XDR_Incident_Handling to upload
+
+    When
+        - Uploading a playbook
+
+    Then
+        - Ensure playbook is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    playbook_name = "Cortex_XDR_Incident_Handling.yml"
+    playbook_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/Playbooks/{playbook_name}"
+    uploader = Uploader(input=playbook_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded playbook - '{playbook_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[1][0][0] == upload_success_message
+
+
+def test_upload_widget_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A widget named Cortex_XDR_Incident_Handling to upload
+
+    When
+        - Uploading a widget
+
+    Then
+        - Ensure widget is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    widget_name = "widget-ActiveIncidentsByRole.json"
+    widget_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Widgets/{widget_name}"
+    uploader = Uploader(input=widget_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded widget - '{widget_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[1][0][0] == upload_success_message
+
+
+def test_upload_dashboard_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A script named EntryWidgetNumberHostsXDR to upload
+
+    When
+        - Uploading a script
+
+    Then
+        - Ensure script is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    dashboard_name = "upload_test_dashboard.json"
+    dashboard_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Dashboards/{dashboard_name}"
+    uploader = Uploader(input=dashboard_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded dashboard - '{dashboard_name}' - successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[1][0][0] == upload_success_message
 
 
 def test_upload_incident_field_positive(demisto_client_configure, mocker):

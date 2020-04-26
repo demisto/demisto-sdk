@@ -25,6 +25,7 @@ class IntegrationValidator(BaseValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
+    ALLOWED_HIDDEN_PARAMS = {'longRunning'}
 
     def is_valid_version(self):
         # type: () -> bool
@@ -75,10 +76,11 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_feed(),
             self.is_valid_fetch(),
             self.is_valid_display_name(),
-            self.is_all_params_not_hidden(),
+            self.is_valid_hidden_params(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
+            self.are_tests_configured()
         ]
         return all(answers)
 
@@ -174,6 +176,8 @@ class IntegrationValidator(BaseValidator):
                 if not flag_found_arg:
                     print_error(Errors.no_default_arg(self.file_path, command_name))
                     flag = False
+        if not flag:
+            print_error(Errors.suggest_fix(self.file_path))
         return flag
 
     def is_outputs_for_reputations_commands_valid(self):
@@ -538,6 +542,7 @@ class IntegrationValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 valid_from_version = False
             valid_feed_params = self.all_feed_params_exist()
         return valid_from_version and valid_feed_params
@@ -547,6 +552,7 @@ class IntegrationValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 return False
         return True
 
@@ -601,18 +607,20 @@ class IntegrationValidator(BaseValidator):
                 return False
             return True
 
-    def is_all_params_not_hidden(self) -> bool:
+    def is_valid_hidden_params(self) -> bool:
         """
-        Verify there are no hidden integration parameters.
+        Verify there are no non-allowed hidden integration parameters.
         Returns:
-            bool. True if there aren't hidden parameters False otherwise.
+            bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
         ans = True
         conf = self.current_file.get('configuration', [])
         for int_parameter in conf:
-            if int_parameter.get('hidden'):
+            is_param_hidden = int_parameter.get('hidden')
+            param_name = int_parameter.get('name')
+            if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
                 ans = False
-                print_error(Errors.found_hidden_param(int_parameter.get('name')))
+                print_error(Errors.found_hidden_param(param_name))
         return ans
 
     def is_valid_image(self) -> bool:

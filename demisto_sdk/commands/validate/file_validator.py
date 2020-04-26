@@ -59,8 +59,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_remote_file, get_yaml,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+                                               is_test_file, print_color,
+                                               print_error, print_warning,
+                                               run_command)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -275,6 +276,7 @@ class FilesValidator:
             modified_files (set): A set of the modified files in the current branch.
         """
         for file_path in modified_files:
+            file_type = find_type(file_path)
             old_file_path = None
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path
@@ -284,7 +286,7 @@ class FilesValidator:
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
             elif 'README' in file_path:
@@ -301,7 +303,7 @@ class FilesValidator:
                 if not self.id_set_validator.is_file_valid_in_set(file_path):
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_INTEGRATION_REGEXES):
+            elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
@@ -309,7 +311,7 @@ class FilesValidator:
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
+            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
@@ -320,8 +322,7 @@ class FilesValidator:
                     self._is_valid = False
                 if not script_validator.is_valid_file():
                     self._is_valid = False
-
-            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
+            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST) or file_type == 'playbook':
                 playbook_validator = PlaybookValidator(structure_validator)
                 if not playbook_validator.is_valid_playbook(is_new_playbook=False):
                     self._is_valid = False
@@ -650,6 +651,20 @@ class FilesValidator:
         for file in all_files_to_validate:
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
+    def validate_pack(self):
+        """Validate files in a specified pack"""
+        print_color(f'Validating {self.file_path}', LOG_COLORS.GREEN)
+        pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if not os.path.isdir(file)}
+        self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
+        for file in pack_files:
+            # check if the file_path is part of test_data yml
+            if is_test_file(file):
+                continue
+            # checks already in validate_pack_unique_files()
+            if file.endswith('pack_metadata.json'):
+                continue
+            self.run_all_validations_on_file(file, file_type=find_type(file))
+
     def validate_all_files_schema(self):
         """Validate all files in the repo are in the right format."""
         # go over packs
@@ -732,9 +747,12 @@ class FilesValidator:
 
         else:
             if self.file_path:
-                print('Not using git, validating file: {}'.format(self.file_path))
-                self.is_backward_check = False  # if not using git, no need for BC checks
-                self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                if os.path.isfile(self.file_path):
+                    print('Not using git, validating file: {}'.format(self.file_path))
+                    self.is_backward_check = False  # if not using git, no need for BC checks
+                    self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                elif os.path.isdir(self.file_path):
+                    self.validate_pack()
             else:
                 print('Not using git, validating all files.')
                 self.validate_all_files_schema()

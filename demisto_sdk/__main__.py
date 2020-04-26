@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
@@ -207,27 +208,30 @@ def unify(**kwargs):
     'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
     'both committed and not committed. ')
 @click.option(
-    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.'
+    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.', hidden=True
 )
 @click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
     help='Whether to run all validation on all files or not'
 )
+@click.option(
+    '-i', '--input', help='The path of the content pack/file to validate specifically.'
+)
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    file_path = kwargs['path']
-
-    if file_path and not os.path.isfile(file_path):
-        print_error(F'File {file_path} was not found')
+    file_path = kwargs['path'] or kwargs['input']
+    if file_path and not os.path.isfile(file_path) and not os.path.isdir(file_path):
+        print_error(f'File {file_path} was not found')
         return 1
+
     else:
         validator = FilesValidator(configuration=config.configuration,
                                    is_backward_check=not kwargs['no_backward_comp'],
                                    is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
-                                   file_path=kwargs.get('path'),
+                                   file_path=file_path,
                                    validate_all=kwargs.get('validate_all'))
         return validator.run()
 
@@ -264,6 +268,9 @@ def create(**kwargs):
     '-h', '--help'
 )
 @click.option(
+    '-i', '--input', help='Specify file of to check secret on.', required=False
+)
+@click.option(
     '--post-commit', is_flag=True, show_default=True,
     help='Whether the secretes is done after you committed your files, '
          'this will help the command to determine which files it should check in its '
@@ -280,7 +287,8 @@ def create(**kwargs):
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
     secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
-                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'])
+                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'],
+                               input_path=kwargs.get('input'))
     return secrets.run()
 
 
@@ -377,6 +385,30 @@ def format_yml(input=None, output=None, from_version=None, no_validate=None):
 def upload(**kwargs):
     uploader = Uploader(**kwargs)
     return uploader.upload()
+
+# ====================== download ====================== #
+
+
+@main.command(name="download",
+              short_help="Download custom content from Demisto instance. DEMISTO_BASE_URL environment variable should"
+                         " contain the Demisto server base URL. DEMISTO_API_KEY environment variable should contain"
+                         " a valid Demisto API Key.")
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-o", "--output", help="The path of a package directory to download custom content to", required=True)
+@click.option(
+    "-i", "--input", help="Comma separated names of custom content files", required=True)
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
+@click.option(
+    "-f", "--force", help="Whether to override existing files or not", is_flag=True)
+def download(**kwargs):
+    downloader: Downloader = Downloader(**kwargs)
+    return downloader.download()
 
 
 # ====================== run ====================== #

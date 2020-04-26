@@ -62,6 +62,7 @@ class ScriptValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
+            self.are_tests_configured()
         ])
         # check only on added files
         if not self.old_file:
@@ -197,5 +198,6 @@ class ScriptValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 return False
         return True

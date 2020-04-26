@@ -18,9 +18,9 @@ from demisto_sdk.commands.common.tools import (
     is_path_of_widget_directory, print_color, print_error, print_v)
 from demisto_sdk.commands.unify.unifier import Unifier
 from tabulate import tabulate
+from tempfile import NamedTemporaryFile
 
 
-# TODO: Add typings
 # TODO: Docs - Add supported directories, Needed configuration for demisto client
 class Uploader:
     '''Upload a pack specified in self.infile to a remote Cortex XSOAR instance.
@@ -35,6 +35,7 @@ class Uploader:
         self.log_verbose = verbose
         # self.client = demisto_client.configure(verify_ssl=not insecure)
         self.client = demisto_client.configure(verify_ssl=False)
+        self.status_code = 0
         self.successfully_uploaded_files = []
         self.failed_uploaded_files = []
 
@@ -68,7 +69,7 @@ class Uploader:
         elif parent_dir_name == INTEGRATIONS_DIR:
             self.integration_uploader(self.path)
 
-        # Input is an integration directory (commonServerPython)
+        # Input is a script directory (commonServerPython)
         elif parent_dir_name == SCRIPTS_DIR:
             self.script_uploader(self.path)
 
@@ -84,7 +85,7 @@ class Uploader:
             # If file exists
             if os.path.exists(self.path):
                 print_error(
-                    f'Error: Given input path: {self.path} is not valid. '
+                    f'\nError: Given input path: {self.path} is not valid. '
                     f'Input path should point to one of the following:\n'
                     f'  1. Pack\n'
                     f'  2. Directory inside a pack for example: Integrations directory\n'
@@ -93,10 +94,10 @@ class Uploader:
                 )
             else:
                 print_error(f'Error: Given input path: {self.path} does not exist')
-            return 1
+            self.status_code = 1
 
         self._print_summary()
-        return 0
+        return self.status_code
 
     def pack_uploader(self):
         """Extracts the directories of the pack and upload them by directory_uploader
@@ -167,7 +168,6 @@ class Uploader:
     def integration_uploader(self, path: str):
         is_dir = False
         file_name = os.path.basename(path)
-        result = None
 
         try:
             if os.path.isdir(path):  # Create a temporary unified yml file
@@ -178,12 +178,19 @@ class Uploader:
                     file_name = os.path.basename(path)
                 except IndexError:
                     print_error(f'Error uploading integration from pack. /'
-                                f'Check that the given integration path coatings a valid integration: {path}.')
+                                f'Check that the given integration path contains a valid integration: {path}.')
 
-                    return 1
+                    self.status_code = 1
+                    self.failed_uploaded_files.append((file_name, 'Integration'))
+                    return
+
                 except Exception as err:
+                    print_error(str('Upload script failed\n'))
                     print_error(str(err))
-                    return 1
+                    self.failed_uploaded_files.append((file_name, 'Integration'))
+                    self.status_code = 1
+                    return
+
             # Upload the file to Cortex XSOAR
             result = self.client.integration_upload(file=path)
 
@@ -193,22 +200,19 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Integration'))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'integration', file_name)
+            self._parse_error_response(err, 'integration', file_name)
             self.failed_uploaded_files.append((file_name, 'Integration'))
-            return 1
+            self.status_code = 1
 
         finally:
             # Remove the temporary file
-            if is_dir and os.path.exists(path):
-                try:
-                    os.remove(path)
-                except (PermissionError, IsADirectoryError):
-                    pass
+            if is_dir:
+                self._remove_temp_file(path)
 
     def script_uploader(self, path: str):
         is_dir = False
         file_name = os.path.basename(path)
-        result = None
+
         try:
             if os.path.isdir(path):  # Create a temporary unified yml file
                 is_dir = True
@@ -218,12 +222,17 @@ class Uploader:
                     file_name = os.path.basename(path)
                 except IndexError:
                     print_error(f'Error uploading script from pack. /'
-                                f'Check that the given script path conatinas a valid script: {path}.')
-                    return 1
+                                f'Check that the given script path contains a valid script: {path}.')
+                    self.status_code = 1
+                    self.failed_uploaded_files.append((file_name, 'Script'))
+                    return
+
                 except Exception as err:
                     print_error(str('Upload script failed\n'))
                     print_error(str(err))
-                    return 1
+                    self.failed_uploaded_files.append((file_name, 'Script'))
+                    return
+
             # Upload the file to Cortex XSOAR
             result = self.client.import_script(file=path)
 
@@ -233,9 +242,9 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Script'))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'script', file_name)
+            self._parse_error_response(err, 'script', file_name)
             self.failed_uploaded_files.append((file_name, 'Script'))
-            return 1
+            self.status_code = 1
 
         finally:
             # Remove the temporary file
@@ -244,7 +253,6 @@ class Uploader:
 
     def playbook_uploader(self, path: str):
         file_name = os.path.basename(path)
-        result = None
 
         try:
             # Upload the file to Cortex XSOAR
@@ -256,21 +264,21 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Playbook'))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'playbook', file_name)
+            self._parse_error_response(err, 'playbook', file_name)
             self.failed_uploaded_files.append((file_name, 'Playbook'))
-
-            return 1
+            self.status_code = 1
 
     def incident_field_uploader(self, path: str):
         file_name = os.path.basename(path)
-        result = None
-
-        incident_fields_unified = {'incidentFields': [get_json(path)]}
-        new_file_path = f'{os.path.dirname(path)}/incident_fields_unified.json'
 
         try:
-            with open(new_file_path, 'w') as file:
-                file.write(json.dumps(incident_fields_unified))
+            # Wrap the incident object with a list to be compatible with Cortex XSOAR
+            incident_fields_unified_data = {'incidentFields': [get_json(path)]}
+            # Create a temp file object
+            incidents_unified_file = NamedTemporaryFile(dir=f'{os.path.dirname(path)}', suffix='.json', delete=False)
+            incidents_unified_file.write(bytes(json.dumps(incident_fields_unified_data), 'utf-8'))
+            new_file_path = incidents_unified_file.name
+            incidents_unified_file.close()
 
             # Upload the file to Cortex XSOAR
             result = self.client.import_incident_fields(file=new_file_path)
@@ -281,16 +289,15 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Incident Field'))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'incident field', file_name)
+            self._parse_error_response(err, 'incident field', file_name)
             self.failed_uploaded_files.append((file_name, 'Incident Field'))
+            self.status_code = 1
 
         finally:
             self._remove_temp_file(new_file_path)
-            return 1
 
     def widget_uploader(self, path: str):
         file_name = os.path.basename(path)
-        result = None
 
         try:
             # Upload the file to Cortex XSOAR
@@ -302,14 +309,12 @@ class Uploader:
             self.successfully_uploaded_files.append(((file_name, 'Widget')))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'widget', file_name)
+            self._parse_error_response(err, 'widget', file_name)
             self.failed_uploaded_files.append((file_name, 'Widget'))
-
-            return 1
+            self.status_code = 1
 
     def dashboard_uploader(self, path: str):
         file_name = os.path.basename(path)
-        result = None
 
         try:
             # Upload the file to Cortex XSOAR
@@ -321,14 +326,12 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Dashboard'))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'dashboard', file_name)
+            self._parse_error_response(err, 'dashboard', file_name)
             self.failed_uploaded_files.append((file_name, 'Dashboard'))
-
-            return 1
+            self.status_code = 1
 
     def layout_uploader(self, path: str):
         file_name = os.path.basename(path)
-        result = None
 
         try:
             # Upload the file to Cortex XSOAR
@@ -340,21 +343,21 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Layout'))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'layout', file_name)
+            self._parse_error_response(err, 'layout', file_name)
             self.failed_uploaded_files.append((file_name, 'Layout'))
-
-            return 1
+            self.status_code = 1
 
     def incident_type_uploader(self, path: str):
         file_name = os.path.basename(path)
-        result = None
-
-        incident_types_unified = [get_json(path)]
-        new_file_path = f'{os.path.dirname(path)}/incident_fields_unified.json'
 
         try:
-            with open(new_file_path, 'w') as file:
-                file.write(json.dumps(incident_types_unified))
+            # Wrap the incident object with a list to be compatible with Cortex XSOAR
+            incident_types_unified_data = [get_json(path)]
+            # Create a temp file object
+            incidents_unified_file = NamedTemporaryFile(dir=f'{os.path.dirname(path)}', suffix='.json', delete=False)
+            incidents_unified_file.write(bytes(json.dumps(incident_types_unified_data), 'utf-8'))
+            new_file_path = incidents_unified_file.name
+            incidents_unified_file.close()
 
             # Upload the file to Cortex XSOAR
             result = self.client.import_incident_types_handler(file=new_file_path)
@@ -365,16 +368,15 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Incident Type'))
 
         except Exception as err:
-            self._parse_error_response(result, err, 'incident type', file_name)
+            self._parse_error_response(err, 'incident type', file_name)
             self.failed_uploaded_files.append((file_name, 'Incident Type'))
-            return 1
+            self.status_code = 1
 
         finally:
             self._remove_temp_file(new_file_path)
 
     def classifier_uploader(self, path: str):
         file_name = os.path.basename(path)
-        result = None
 
         try:
             # Upload the file to Cortex XSOAR
@@ -385,40 +387,42 @@ class Uploader:
             print_color(f'Uploaded classifiers - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Classifier'))
         except Exception as err:
-            self._parse_error_response(result, err, 'classifier', file_name)
+            self._parse_error_response(err, 'classifier', file_name)
             self.failed_uploaded_files.append((file_name, 'Classifier'))
-            return 1
+            self.status_code = 1
 
-    def _parse_error_response(self, response, error: ApiException, file_type: str, file_name: str):
+    def _parse_error_response(self, error: ApiException, file_type: str, file_name: str):
         """Parses error message from exception raised in call to client to upload a file
 
         error (ApiException): The exception which was raised in call in to client
         file_type (str): The file type which was attempted to be uploaded
         file_name (str): The file name which was attempted to be uploaded
         """
-        message = ''
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(error.reason):
-            message = '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n' \
-                      'Try running the command with --insecure flag.'
+        message = error
+        if hasattr(error, 'reason'):
+            if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(error.reason):
+                message = '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n' \
+                          'Try running the command with --insecure flag.'
 
-        elif 'Failed to establish a new connection:' in str(error.reason):
-            message = 'Failed to establish a new connection: Connection refused.\n' \
-                      'Try checking your BASE url configuration.'
+            elif 'Failed to establish a new connection:' in str(error.reason):
+                message = 'Failed to establish a new connection: Connection refused.\n' \
+                          'Try checking your BASE url configuration.'
 
-        elif error.reason in ('Bad Request', 'Forbidden'):
-            error_body = json.loads(error.body)
-            message = error_body.get('error')
+            elif error.reason in ('Bad Request', 'Forbidden'):
+                error_body = json.loads(error.body)
+                message = error_body.get('error')
 
-            if error_body.get('status') == 403:
-                message += '\nTry checking your API key configuration.'
+                if error_body.get('status') == 403:
+                    message += '\nTry checking your API key configuration.'
         print_error(str(f'\nUpload {file_type}: {file_name} failed:'))
         print_error(str(message))
 
     def _remove_temp_file(self, path_to_delete):
         if os.path.exists(path_to_delete):
             try:
-                os.remove(path_to_delete)
-            except (PermissionError, IsADirectoryError):
+                os.unlink(path_to_delete)
+            except (PermissionError, IsADirectoryError) as error:
+                print_error(error)
                 pass
 
     def _sort_directories_based_on_dependencies(self, dir_list: List) -> List:

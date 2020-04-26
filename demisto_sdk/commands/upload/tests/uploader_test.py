@@ -281,7 +281,7 @@ def test_parse_error_response_ssl(demisto_client_configure, mocker):
     file_name = "SomePlaybookName.yml"
     api_exception = ApiException(reason="[SSL: CERTIFICATE_VERIFY_FAILED]")
     uploader = Uploader(input="", insecure=False, verbose=False)
-    uploader._parse_error_response(response=None, error=api_exception, file_type=file_type, file_name=file_name)
+    uploader._parse_error_response(error=api_exception, file_type=file_type, file_name=file_name)
     upload_failed_message = u"{}{}{}".format(
         LOG_COLORS.RED, f"\nUpload {file_type}: {file_name} failed:", LOG_COLORS.NATIVE
     )
@@ -315,7 +315,7 @@ def test_parse_error_response_connection(demisto_client_configure, mocker):
     file_name = "SomeWidgetName.json"
     api_exception = ApiException(reason="Failed to establish a new connection:")
     uploader = Uploader(input="", insecure=False, verbose=False)
-    uploader._parse_error_response(response=None, error=api_exception, file_type=file_type, file_name=file_name)
+    uploader._parse_error_response(error=api_exception, file_type=file_type, file_name=file_name)
     upload_failed_message = u"{}{}{}".format(
         LOG_COLORS.RED, f"\nUpload {file_type}: {file_name} failed:", LOG_COLORS.NATIVE
     )
@@ -356,7 +356,7 @@ def test_parse_error_response_forbidden(demisto_client_configure, mocker):
         "error": "Error message"
     })
     uploader = Uploader(input="", insecure=False, verbose=False)
-    uploader._parse_error_response(response=None, error=api_exception, file_type=file_type, file_name=file_name)
+    uploader._parse_error_response(error=api_exception, file_type=file_type, file_name=file_name)
     upload_failed_message = u"{}{}{}".format(
         LOG_COLORS.RED, f"\nUpload {file_type}: {file_name} failed:", LOG_COLORS.NATIVE
     )

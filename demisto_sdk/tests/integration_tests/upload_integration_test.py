@@ -63,7 +63,7 @@ def test_integration_upload_pack_positive(demisto_client):
     assert not result.stderr
 
 
-def test_integration_upload_negative(demisto_client):
+def test_integration_upload_path_does_not_exist(demisto_client):
     """
     Given
     - Directory path which does not exist.
@@ -82,4 +82,30 @@ def test_integration_upload_negative(demisto_client):
     result = runner.invoke(main, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
     assert result.exit_code == 1
     assert f"Error: Given input path: {invalid_dir_path} does not exist" in result.stdout
+    assert not result.stderr
+
+
+def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
+    """
+    Given
+    - Directory with invalid path - "Script" instead of "Scripts".
+
+    When
+    - Uploading the script.
+
+    Then
+    - Ensure upload fails due to invalid path.
+    - Ensure failure upload message is printed.
+    """
+    invalid_scripts_dir = tmp_path / "Script" / "InvalidScript"
+    invalid_scripts_dir.mkdir(parents=True)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [UPLOAD_CMD, "-i", str(invalid_scripts_dir), "--insecure"])
+    assert result.exit_code == 1
+    assert f"\nError: Given input path: {str(invalid_scripts_dir)} is not valid. " \
+           f"Input path should point to one of the following:\n" \
+           f"  1. Pack\n" \
+           f"  2. Directory inside a pack for example: Integrations directory\n" \
+           f"  3. Valid file that can be imported to Cortex XSOAR manually. " \
+           f"For example a playbook: helloWorld.yml" in result.stdout
     assert not result.stderr

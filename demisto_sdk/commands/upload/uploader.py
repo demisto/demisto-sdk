@@ -1,5 +1,6 @@
 import json
 import os
+from tempfile import NamedTemporaryFile
 from typing import List
 
 import demisto_client
@@ -18,7 +19,6 @@ from demisto_sdk.commands.common.tools import (
     is_path_of_widget_directory, print_color, print_error, print_v)
 from demisto_sdk.commands.unify.unifier import Unifier
 from tabulate import tabulate
-from tempfile import NamedTemporaryFile
 
 
 # TODO: Docs - Add supported directories, Needed configuration for demisto client
@@ -189,7 +189,7 @@ class Uploader:
                     return
 
                 except Exception as err:
-                    print_error(str('Upload script failed\n'))
+                    print_error(str('Upload integration failed\n'))
                     print_error(str(err))
                     self.failed_uploaded_files.append((file_name, 'Integration'))
                     self.status_code = 1
@@ -234,6 +234,7 @@ class Uploader:
                 except Exception as err:
                     print_error(str('Upload script failed\n'))
                     print_error(str(err))
+                    self.status_code = 1
                     self.failed_uploaded_files.append((file_name, 'Script'))
                     return
 

@@ -1,4 +1,6 @@
 import json
+from typing import List
+
 import demisto_client
 import os
 from tabulate import tabulate
@@ -32,8 +34,8 @@ class Uploader:
         self.failed_uploaded_files = []
 
     def upload(self):
-        '''Upload the pack / directory / file to the remote Cortex XSOAR instance.
-        '''
+        """Upload the pack / directory / file to the remote Cortex XSOAR instance.
+        """
         parent_dir_name = get_parent_directory_name(self.path)
         # Input is a file
         if os.path.isfile(self.path):
@@ -71,7 +73,7 @@ class Uploader:
 
         # Input is a pack
         elif parent_dir_name == PACKS_DIR:
-            self.peck_uploader()
+            self.pack_uploader()
 
         else:
             # If file exists
@@ -86,21 +88,25 @@ class Uploader:
                 )
             else:
                 print_error(f'Error: Given input path: {self.path} does not exist')
+            return 1
 
-        self.print_summary()
+        self._print_summary()
         return 0
 
-    def peck_uploader(self):
-        '''Extracting the directories of the peck and upload them by directory_uploader
-        '''
+    def pack_uploader(self):
+        """Extracts the directories of the pack and upload them by directory_uploader
+        """
         list_directories = get_child_directories(self.path)
-        ordered_directories_list = self.sort_directories_based_on_dependencies(list_directories)
+        ordered_directories_list = self._sort_directories_based_on_dependencies(list_directories)
         for directory in ordered_directories_list:
             self.directory_uploader(directory)
 
     def directory_uploader(self, path: str):
-        '''Uploads directories by name
-        '''
+        """Uploads directories by path
+
+        Args:
+            path (str): Path for directory to upload.
+        """
         if is_path_of_integration_directory(path):
             list_integrations = get_child_directories(path)
             for integration in list_integrations:
@@ -182,7 +188,7 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Integration'))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'integration', file_name)
+            self._parse_error_response(result, err, 'integration', file_name)
             self.failed_uploaded_files.append((file_name, 'Integration'))
             return 1
 
@@ -222,14 +228,14 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Script'))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'script', file_name)
+            self._parse_error_response(result, err, 'script', file_name)
             self.failed_uploaded_files.append((file_name, 'Script'))
             return 1
 
         finally:
             # Remove the temporary file
             if is_dir:
-                self.remove_temp_file(path)
+                self._remove_temp_file(path)
 
     def playbook_uploader(self, path: str):
         file_name = os.path.basename(path)
@@ -245,7 +251,7 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Playbook'))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'playbook', file_name)
+            self._parse_error_response(result, err, 'playbook', file_name)
             self.failed_uploaded_files.append((file_name, 'Playbook'))
 
             return 1
@@ -270,11 +276,11 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Incident Field'))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'incident field', file_name)
+            self._parse_error_response(result, err, 'incident field', file_name)
             self.failed_uploaded_files.append((file_name, 'Incident Field'))
 
         finally:
-            self.remove_temp_file(new_file_path)
+            self._remove_temp_file(new_file_path)
             return 1
 
     def widget_uploader(self, path: str):
@@ -291,7 +297,7 @@ class Uploader:
             self.successfully_uploaded_files.append(((file_name, 'Widget')))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'widget', file_name)
+            self._parse_error_response(result, err, 'widget', file_name)
             self.failed_uploaded_files.append((file_name, 'Widget'))
 
             return 1
@@ -310,7 +316,7 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Dashboard'))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'dashboard', file_name)
+            self._parse_error_response(result, err, 'dashboard', file_name)
             self.failed_uploaded_files.append((file_name, 'Dashboard'))
 
             return 1
@@ -329,7 +335,7 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Layout'))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'layout', file_name)
+            self._parse_error_response(result, err, 'layout', file_name)
             self.failed_uploaded_files.append((file_name, 'Layout'))
 
             return 1
@@ -354,12 +360,12 @@ class Uploader:
             self.successfully_uploaded_files.append((file_name, 'Incident Type'))
 
         except Exception as err:
-            self.parse_error_response(result, err, 'incident type', file_name)
+            self._parse_error_response(result, err, 'incident type', file_name)
             self.failed_uploaded_files.append((file_name, 'Incident Type'))
             return 1
 
         finally:
-            self.remove_temp_file(new_file_path)
+            self._remove_temp_file(new_file_path)
 
     def classifiers_uploader(self, path: str):
         file_name = os.path.basename(path)
@@ -373,21 +379,20 @@ class Uploader:
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
             print_color(f'Uploaded classifiers - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Classifier'))
-
-
         except Exception as err:
-            self.parse_error_response(result, err, 'classifier', file_name)
+            self._parse_error_response(result, err, 'classifier', file_name)
             self.failed_uploaded_files.append((file_name, 'Classifier'))
             return 1
 
-    def parse_error_response(self, response, error, file_type, file_name):
+    def _parse_error_response(self, response, error, file_type, file_name):
         message = ''
         if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(error.reason):
             message = '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n' \
                       'Try running the command with --insecure flag.'
 
         elif 'Failed to establish a new connection:' in str(error.reason):
-            message = 'Failed to establish a new connection: Connection refused.\nTry checking your BASE url configuration.'
+            message = 'Failed to establish a new connection: Connection refused.\n' \
+                      'Try checking your BASE url configuration.'
 
         elif error.reason in ('Bad Request', 'Forbidden'):
             error_body = json.loads(error.body)
@@ -398,19 +403,27 @@ class Uploader:
         print_error(str(f'\nUpload {file_type}: {file_name} failed:'))
         print_error(str(message))
 
-    def remove_temp_file(self, path_to_delete):
+    def _remove_temp_file(self, path_to_delete):
         if os.path.exists(path_to_delete):
             try:
                 os.remove(path_to_delete)
             except (PermissionError, IsADirectoryError):
                 pass
 
-    def sort_directories_based_on_dependencies(self, dir_list: list):
+    def _sort_directories_based_on_dependencies(self, dir_list: List) -> List:
+        """Sorts given list of directories based on logic order of content entities that depend on each other
+
+        Args:
+            dir_list (List): List of directories to sort
+
+        Returns:
+            List. The sorted list of directories.
+        """
         srt = {item: index for index, item in enumerate(CONTENT_ENTITY_UPLOAD_ORDER)}
         dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))
         return dir_list
 
-    def print_summary(self):
+    def _print_summary(self):
         print_color(f'\n\nUPLOAD SUMMARY:', LOG_COLORS.NATIVE)
         if self.successfully_uploaded_files:
             print_color(f'\nSUCCESSFUL UPLOADS:', LOG_COLORS.GREEN)

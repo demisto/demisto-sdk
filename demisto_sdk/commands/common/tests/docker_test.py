@@ -134,7 +134,18 @@ def test_parse_docker_image():
 
 # disable-secrets-detection-end
 def test_is_docker_image_latest_tag_with_default_image():
-    # the default docker image tag '1.3-alpine' is valid
+    """
+    Given
+    - The default docker image - 'demisto/python:1.3-alpine'
+
+    When
+    - The most updated docker image in docker-hub is '1.0.3'
+
+    Then
+    -  If the docker image is the default one, it is Valid
+    -  If the docker image is numeric and the most update one, it is Valid
+    -  If the docker image is not numeric and labeled "latest", it is Invalid
+   """
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
@@ -148,7 +159,18 @@ def test_is_docker_image_latest_tag_with_default_image():
 
 
 def test_is_docker_image_latest_tag_with_tag_labeled_latest():
-    # the tag "latest" is invalid, most be changed to a numeric tag
+    """
+    Given
+    - A docker image with "latest" as tag
+
+    When
+    - The most updated docker image in docker-hub is '1.0.3'
+
+    Then
+    -  If the docker image is the default one, it is Valid
+    -  If the docker image is numeric and the most update one, it is Valid
+    -  If the docker image is not numeric and labeled "latest", it is Invalid
+   """
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
@@ -161,7 +183,18 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
 
 
 def test_is_docker_image_latest_tag_with_latest_tag():
-    # the tag is valid, it is the most updated one in docker hub
+    """
+   Given
+   - A docker image with '1.0.3' as tag
+
+   When
+   - The most updated docker image in docker-hub is '1.0.3'
+
+   Then
+   -  If the docker image is the default one, it is Valid
+   -  If the docker image is numeric and the most update one, it is Valid
+   -  If the docker image is not numeric and labeled "latest", it is Invalid
+  """
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
@@ -171,3 +204,27 @@ def test_is_docker_image_latest_tag_with_latest_tag():
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.3'
         assert docker_image_validator.is_docker_image_latest_tag() is True
+
+
+def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
+    """
+   Given
+   - A docker image with '1.0.2' as tag
+
+   When
+   - The most updated docker image in docker-hub is '1.0.3'
+
+   Then
+   -  If the docker image is the default one, it is Valid
+   -  If the docker image is numeric and the most update one, it is Valid
+   -  If the docker image is not numeric and labeled "latest", it is Invalid
+  """
+    with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
+        docker_image_validator = DockerImageValidator(None, None, None)
+        docker_image_validator.yml_file = {}
+        docker_image_validator.docker_image_latest_tag = '1.0.3'
+        docker_image_validator.docker_image_name = 'demisto/python'
+
+        docker_image_validator.is_latest_tag = True
+        docker_image_validator.docker_image_tag = '1.0.2'
+        assert docker_image_validator.is_docker_image_latest_tag() is False

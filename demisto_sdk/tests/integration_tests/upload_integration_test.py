@@ -1,5 +1,6 @@
 from os.path import join
 
+import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
@@ -8,7 +9,15 @@ UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
-def test_integration_upload_pack_positive(mocker):
+@pytest.fixture
+def demisto_client(mocker):
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.demisto_client",
+        return_valure="object"
+    )
+
+
+def test_integration_upload_pack_positive(demisto_client):
     """
     Given
     - Content pack named FeedAzure to upload.
@@ -20,10 +29,6 @@ def test_integration_upload_pack_positive(mocker):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
-    mocker.patch(
-        "demisto_sdk.commands.upload.uploader.demisto_client",
-        return_valure="object"
-    )
     pack_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
@@ -55,4 +60,26 @@ def test_integration_upload_pack_positive(mocker):
     assert "├────────────────────────────────────────────┼────────────────┤" in result.output
     assert "│ incidentfield-city.json                    │ Incident Field │" in result.output
     assert "╘════════════════════════════════════════════╧════════════════╛" in result.output
+    assert not result.stderr
+
+
+def test_integration_upload_negative(demisto_client):
+    """
+    Given
+    - Directory path which does not exist.
+
+    When
+    - Uploading the directory.
+
+    Then
+    - Ensure upload fails.
+    - Ensure failure upload message is printed.
+    """
+    invalid_dir_path = join(
+        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist"
+    )
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
+    assert result.exit_code == 1
+    assert f"Error: Given input path: {invalid_dir_path} does not exist" in result.stdout
     assert not result.stderr

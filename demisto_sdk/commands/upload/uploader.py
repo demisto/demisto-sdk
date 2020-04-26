@@ -425,7 +425,6 @@ class Uploader:
                 os.unlink(path_to_delete)
             except (PermissionError, IsADirectoryError) as error:
                 print_error(error)
-                pass
 
     def _sort_directories_based_on_dependencies(self, dir_list: List) -> List:
         """Sorts given list of directories based on logic order of content entities that depend on each other

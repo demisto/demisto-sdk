@@ -5,6 +5,7 @@ from unittest.mock import patch
 from demisto_sdk.commands.common.constants import BETA_INTEGRATIONS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, CLASSIFIERS_DIR, \
     LAYOUTS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.tools import LOG_COLORS
 from demisto_sdk.commands.upload.uploader import Uploader
 
 
@@ -43,3 +44,77 @@ def test_sort_directories_based_on_dependencies(demisto_client_configure):
     sorted_dir_list = uploader._sort_directories_based_on_dependencies(dir_list)
     assert sorted_dir_list == [INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
                                CLASSIFIERS_DIR, LAYOUTS_DIR]
+
+
+def test_print_summary_successfully_uploaded_files(demisto_client_configure, mocker):
+    """
+    Given
+        - An empty (no given input path) Uploader object
+        - A successfully uploaded integration named SomeIntegrationName
+
+    When
+        - Printing summary of uploaded files
+
+    Then
+        - Ensure uploaded successfully message is printed as expected
+    """
+    mocker.patch('builtins.print')
+    successfully_uploaded_files = [("SomeIntegrationName", "Integration")]
+    uploader = Uploader(input="", insecure=False, verbose=False)
+    uploader.successfully_uploaded_files = successfully_uploaded_files
+    uploader._print_summary()
+    expected_upload_summary_title = f'{LOG_COLORS.NATIVE}\n\nUPLOAD SUMMARY:{LOG_COLORS.NATIVE}'
+    expected_successfully_uploaded_files_title = u'{}{}{}'.format(
+        LOG_COLORS.GREEN, '\nSUCCESSFUL UPLOADS:', LOG_COLORS.NATIVE
+    )
+    expected_successfully_uploaded_files = u'{}{}{}'.format(LOG_COLORS.GREEN,
+                                                            """╒═════════════════════╤═════════════╕
+│ NAME                │ TYPE        │
+╞═════════════════════╪═════════════╡
+│ SomeIntegrationName │ Integration │
+╘═════════════════════╧═════════════╛
+""",
+                                                            LOG_COLORS.NATIVE
+                                                            )
+    # verify exactly 3 calls to print_color
+    assert len(print.call_args_list) == 3
+    assert print.call_args_list[0][0][0] == expected_upload_summary_title
+    assert print.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
+    assert print.call_args_list[2][0][0] == expected_successfully_uploaded_files
+
+
+def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
+    """
+    Given
+        - An empty (no given input path) Uploader object
+        - A uploaded script named SomeScriptName which failed to upload
+
+    When
+        - Printing summary of uploaded files
+
+    Then
+        - Ensure uploaded failure message is printed as expected
+    """
+    mocker.patch('builtins.print')
+    failed_uploaded_files = [("SomeScriptName", "Script")]
+    uploader = Uploader(input="", insecure=False, verbose=False)
+    uploader.failed_uploaded_files = failed_uploaded_files
+    uploader._print_summary()
+    expected_upload_summary_title = f'{LOG_COLORS.NATIVE}\n\nUPLOAD SUMMARY:{LOG_COLORS.NATIVE}'
+    expected_successfully_uploaded_files_title = u'{}{}{}'.format(
+        LOG_COLORS.RED, '\nFAILED UPLOADS:', LOG_COLORS.NATIVE
+    )
+    expected_successfully_uploaded_files = u'{}{}{}'.format(LOG_COLORS.RED,
+                                                            """╒════════════════╤════════╕
+│ NAME           │ TYPE   │
+╞════════════════╪════════╡
+│ SomeScriptName │ Script │
+╘════════════════╧════════╛
+""",
+                                                            LOG_COLORS.NATIVE
+                                                            )
+    # verify exactly 3 calls to print_color
+    assert len(print.call_args_list) == 3
+    assert print.call_args_list[0][0][0] == expected_upload_summary_title
+    assert print.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
+    assert print.call_args_list[2][0][0] == expected_successfully_uploaded_files

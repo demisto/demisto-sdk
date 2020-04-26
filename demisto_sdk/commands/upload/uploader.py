@@ -424,12 +424,12 @@ class Uploader:
         return dir_list
 
     def _print_summary(self):
-        print_color(f'\n\nUPLOAD SUMMARY:', LOG_COLORS.NATIVE)
+        print_color('\n\nUPLOAD SUMMARY:', LOG_COLORS.NATIVE)
         if self.successfully_uploaded_files:
-            print_color(f'\nSUCCESSFUL UPLOADS:', LOG_COLORS.GREEN)
+            print_color('\nSUCCESSFUL UPLOADS:', LOG_COLORS.GREEN)
             print_color(tabulate(self.successfully_uploaded_files, headers=['NAME', 'TYPE'],
                                  tablefmt="fancy_grid") + '\n', LOG_COLORS.GREEN)
         if self.failed_uploaded_files:
-            print_color(f'\nFAILED UPLOADS:', LOG_COLORS.RED)
+            print_color('\nFAILED UPLOADS:', LOG_COLORS.RED)
             print_color(tabulate(self.failed_uploaded_files, headers=['NAME', 'TYPE'],
                                  tablefmt="fancy_grid") + '\n', LOG_COLORS.RED)

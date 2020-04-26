@@ -40,19 +40,19 @@ def test_integration_upload_pack_positive(mocker):
     assert "Uploaded incident field - 'incidentfield-city.json' - successfully" in result.output
     assert "UPLOAD SUMMARY:" in result.output
     assert "SUCCESSFUL UPLOADS:" in result.output
-    assert """╒════════════════════════════════════════════╤════════════════╕
-│ NAME                                       │ TYPE           │
-╞════════════════════════════════════════════╪════════════════╡
-│ integration-FeedAzure.yml                  │ Integration    │
-├────────────────────────────────────────────┼────────────────┤
-│ just_a_test_script.yml                     │ Playbook       │
-├────────────────────────────────────────────┼────────────────┤
-│ script-prefixed_automation.yml             │ Playbook       │
-├────────────────────────────────────────────┼────────────────┤
-│ playbook-FeedAzure_test_copy_no_prefix.yml │ Playbook       │
-├────────────────────────────────────────────┼────────────────┤
-│ FeedAzure_test.yml                         │ Playbook       │
-├────────────────────────────────────────────┼────────────────┤
-│ incidentfield-city.json                    │ Incident Field │
-╘════════════════════════════════════════════╧════════════════╛""" in result.output
+    assert "╒════════════════════════════════════════════╤════════════════╕" in result.output
+    assert "│ NAME                                       │ TYPE           │" in result.output
+    assert "╞════════════════════════════════════════════╪════════════════╡" in result.output
+    assert "│ integration-FeedAzure.yml                  │ Integration    │" in result.output
+    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
+    assert "│ just_a_test_script.yml                     │ Playbook       │" in result.output
+    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
+    assert "│ script-prefixed_automation.yml             │ Playbook       │" in result.output
+    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
+    assert "│ playbook-FeedAzure_test_copy_no_prefix.yml │ Playbook       │" in result.output
+    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
+    assert "│ FeedAzure_test.yml                         │ Playbook       │" in result.output
+    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
+    assert "│ incidentfield-city.json                    │ Incident Field │" in result.output
+    assert "╘════════════════════════════════════════════╧════════════════╛" in result.output
     assert not result.stderr

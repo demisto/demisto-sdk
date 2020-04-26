@@ -27,7 +27,7 @@ If there are files that exist both in the output directory and are specified in 
 
 * **-i "FILE_NAME_1" ... -i "FILE_NAME_n", --input "FILE_NAME_1" ... --input "FILE_NAME_n"**
 
-    Comma separated names of custom content files.
+    Custom content file name to be downloaded. Can be provided multiple times.
 
 * **--insecure**
 

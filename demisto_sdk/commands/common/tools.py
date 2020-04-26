@@ -790,30 +790,6 @@ def retrieve_file_ending(file_path: str) -> str:
     return ''
 
 
-def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
-    """
-       Converts a string representation of args to a python list
-
-       :type arg: ``str`` or ``list``
-       :param arg: Args to be converted (required)
-
-       :type separator: ``str``
-       :param separator: A string separator to separate the strings, the default is a comma.
-
-       :return: A python list of args
-       :rtype: ``list``
-    """
-    if not arg:
-        return []
-    if isinstance(arg, list):
-        return arg
-    if isinstance(arg, (str, bytes)):
-        if arg[0] == '[' and arg[-1] == ']':
-            return json.loads(arg)
-        return [s.strip() for s in arg.split(separator)]
-    return arg
-
-
 def get_depth(data: Any) -> int:
     """
     Returns the depth of a data object

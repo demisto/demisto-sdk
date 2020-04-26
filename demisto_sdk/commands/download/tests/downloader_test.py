@@ -3,22 +3,17 @@ import shutil
 from tempfile import mkdtemp
 
 import pytest
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
-                                                   CLASSIFIERS_DIR,
-                                                   CONNECTIONS_DIR,
-                                                   DASHBOARDS_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR)
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATIONS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_child_files,
-                                               print_color)
+                                               get_json, get_yaml, print_color)
 from demisto_sdk.commands.download.downloader import Downloader
 from mock import patch
+from ruamel.yaml import YAML
 
 CONTENT_BASE_PATH = 'demisto_sdk/commands/download/tests/tests_env/content'
 CUSTOM_CONTENT_BASE_PATH = 'demisto_sdk/commands/download/tests/tests_data/custom_content'
@@ -38,7 +33,7 @@ INTEGRATION_PACK_OBJECT = {'Test Integration': [
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.py', 'file_ending': 'py'},
     {'name': 'Test Integration', 'id': 'Test Integration',
-     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_test.py', 'file_ending': 'py'},
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_testt.py', 'file_ending': 'py'},
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'file_ending': 'yml'},
     {'name': 'Test Integration', 'id': 'Test Integration',
@@ -132,6 +127,9 @@ class EnvironmentGuardian:
             self.test_merge_new_file_env_restore(*args)
         elif test_name == 'test_merge_and_extract_new_file':
             self.test_merge_and_extract_new_file_env_restore(*args)
+        elif test_name in ('test_merge_existing_file', 'test_merge_and_extract_existing_file',
+                           'test_update_data_yml', 'test_update_data_json'):
+            self.test_existing_file_env_restore()
 
     @staticmethod
     def test_update_pack_hierarchy_env_prep():
@@ -170,14 +168,23 @@ class EnvironmentGuardian:
         shutil.rmtree(temp_dir)
         assert self.verify_environment()
 
+    def test_existing_file_env_restore(self):
+        shutil.rmtree('demisto_sdk/commands/download/tests/tests_data', ignore_errors=True)
+        shutil.rmtree('demisto_sdk/commands/download/tests/tests_env', ignore_errors=True)
+        shutil.copytree(src='demisto_sdk/commands/download/tests_backup/tests_data',
+                        dst='demisto_sdk/commands/download/tests/tests_data')
+        shutil.copytree(src='demisto_sdk/commands/download/tests_backup/tests_env',
+                        dst='demisto_sdk/commands/download/tests/tests_env')
+        assert self.verify_environment()
+
 
 class TestHelperMethods:
-    def test_remove_traces(self):
-        downloader = Downloader(output='', input='')
-        temp_dir_path = downloader.custom_content_temp_dir
-        assert os.path.isdir(temp_dir_path)
-        downloader.remove_traces()
-        assert not os.path.isdir(temp_dir_path)
+    def test_get_custom_content_objects(self):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.custom_content_temp_dir = CUSTOM_CONTENT_BASE_PATH
+            custom_content_objects = downloader.get_custom_content_objects()
+            assert ordered(custom_content_objects) == ordered(CUSTOM_CONTENT)
 
     @pytest.mark.parametrize('name, ending, detail, output', [
         ('G S M', 'py', 'python', 'GSM.py'),
@@ -205,6 +212,50 @@ class TestHelperMethods:
     def test_create_dir_name(self, name):
         downloader = Downloader(output='', input='')
         assert downloader.create_dir_name(name) == 'GSM'
+
+
+class TestFlagHandlers:
+    @pytest.mark.parametrize('lf, a, o, i, res, err', [
+        (True, True, True, True, True, ''),
+        (False, False, False, True, False, "Error: Missing option '-o' / '--output'."),
+        (False, False, True, False, False, "Error: Missing option '-i' / '--input'."),
+        (False, True, True, False, True, ''),
+        (False, True, True, True, True, '')
+    ])
+    def test_verify_flags(self, lf, a, o, i, res, err, capsys):
+        with patch.object(Downloader, "__init__", lambda x, y, z: None):
+            downloader = Downloader('', '')
+            downloader.list_files = lf
+            downloader.all_custom_content = a
+            downloader.output_pack_path = o
+            downloader.input_files = i
+            answer = downloader.verify_flags()
+            stdout, _ = capsys.readouterr()
+            if err:
+                assert err in stdout
+            assert answer is res
+
+    def test_handle_all_custom_content_flag(self):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.custom_content_temp_dir = CUSTOM_CONTENT_BASE_PATH
+            downloader.all_custom_content = True
+            downloader.handle_all_custom_content_flag()
+            custom_content_names = [cco['name'] for cco in CUSTOM_CONTENT]
+            assert ordered(custom_content_names) == ordered(downloader.input_files)
+
+    def test_handle_list_files_flag(self, capsys):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.custom_content_temp_dir = CUSTOM_CONTENT_BASE_PATH
+            downloader.list_files = True
+            answer = downloader.handle_list_files_flag()
+            stdout, _ = capsys.readouterr()
+            list_files = [[cco['name'], cco['entity'][:-1]] for cco in CUSTOM_CONTENT]
+            for file in list_files:
+                assert file[0] in stdout
+                assert file[1] in stdout
+            assert answer
 
 
 class TestBuildPackContent:
@@ -286,12 +337,70 @@ class TestPackHierarchy:
         assert test_answer
 
 
-class TestMergeOldFile:
+class TestMergeExistingFile:
     def test_merge_and_extract_existing_file(self):
-        pass
+        env_guard = EnvironmentGuardian()
+        test_answer = True
 
-    def test_merge_existing_file(self):
-        pass
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            ryaml = YAML()
+            ryaml.preserve_quotes = True
+            downloader.log_verbose = False
+            downloader.pack_content = PACK_CONTENT
+            downloader.merge_and_extract_existing_file(INTEGRATION_CUSTOM_CONTENT_OBJECT)
+            paths = [file['path'] for file in INTEGRATION_PACK_OBJECT['Test Integration']]
+            for path in paths:
+                test_answer = test_answer and os.path.isfile(path)
+            yml_data = get_yaml(INTEGRATION_PACK_OBJECT['Test Integration'][2]['path'])
+            for field in DELETED_YML_FIELDS_BY_DEMISTO:
+                obj = yml_data
+                dotted_path_list = field.split('.')
+                for path_part in dotted_path_list:
+                    if path_part != dotted_path_list[-1]:
+                        obj = obj.get(path_part)
+                    else:
+                        if obj.get(path_part):
+                            test_answer = test_answer and True
+                        else:
+                            test_answer = False
+            with open(INTEGRATION_PACK_OBJECT['Test Integration'][5]['path'], 'r') as description_file:
+                description_data = description_file.read()
+            test_answer = test_answer and 'Test Integration Long Description TEST' in description_data
+            with open(INTEGRATION_PACK_OBJECT['Test Integration'][0]['path'], 'r') as code_file:
+                code_data = code_file.read()
+            test_answer = test_answer and 'TEST' in code_data
+
+        env_guard.restore_environment('test_merge_and_extract_existing_file')
+        assert test_answer
+
+    @pytest.mark.parametrize('custom_content_object, ending, method, instance_path, fields', [
+        (PLAYBOOK_CUSTOM_CONTENT_OBJECT, 'yml', get_yaml, PLAYBOOK_INSTANCE_PATH, ['fromversion', 'toversion']),
+        (LAYOUT_CUSTOM_CONTENT_OBJECT, 'json', get_json, LAYOUT_INSTANCE_PATH, ['fromVersion', 'toVersion'])
+    ])
+    def test_merge_existing_file(self, custom_content_object, ending, method, instance_path, fields):
+        env_guard = EnvironmentGuardian()
+        test_answer = True
+
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            ryaml = YAML()
+            ryaml.preserve_quotes = True
+            downloader.pack_content = PACK_CONTENT
+            downloader.merge_existing_file(custom_content_object, ending)
+            test_answer = test_answer and os.path.isfile(instance_path)
+            file_data = method(instance_path)
+            for field in fields:
+                if file_data.get(field):
+                    test_answer = test_answer and True
+                else:
+                    test_answer = False
+            if ending == 'yml':
+                task_4_name = file_data['tasks']['4']['task']['name']
+                test_answer = test_answer and task_4_name == 'Done TEST'
+
+        env_guard.restore_environment('test_merge_existing_file')
+        assert test_answer
 
     @pytest.mark.parametrize('custom_content_object, pack_content_object', [
         (INTEGRATION_CUSTOM_CONTENT_OBJECT, INTEGRATION_PACK_OBJECT),
@@ -320,7 +429,7 @@ class TestMergeOldFile:
     ])
     def test_get_corresponding_pack_file_object(self, file_name, ex_file_ending, ex_file_detail, corr_pack_object,
                                                 pack_file_object):
-        assert EnvironmentGuardian.verify_environment() is True
+        assert EnvironmentGuardian.verify_environment()
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
             downloader.pack_content = PACK_CONTENT
@@ -328,8 +437,51 @@ class TestMergeOldFile:
             corr_file = downloader.get_corresponding_pack_file_object(searched_basename, corr_pack_object)
             assert ordered(corr_file) == ordered(pack_file_object)
 
-    def test_update_data(self):
-        pass
+    def test_update_data_yml(self):
+        ryaml = YAML()
+        ryaml.preserve_quotes = True
+        env_guard = EnvironmentGuardian()
+        downloader = Downloader('', '')
+        downloader.update_data(CUSTOM_CONTENT_INTEGRATION_PATH, f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.yml',
+                               'yml')
+        test_answer = True
+
+        with open(CUSTOM_CONTENT_INTEGRATION_PATH, 'r') as yf:
+            file_yaml_object = ryaml.load(yf)
+        for field in DELETED_YML_FIELDS_BY_DEMISTO:
+            obj = file_yaml_object
+            dotted_path_list = field.split('.')
+            for path_part in dotted_path_list:
+                if path_part != dotted_path_list[-1]:
+                    obj = obj.get(path_part)
+                else:
+                    if obj.get(path_part):
+                        test_answer = test_answer and True
+                    else:
+                        test_answer = False
+
+        env_guard.restore_environment('test_update_data_yml')
+        assert test_answer
+
+    def test_update_data_json(self):
+        env_guard = EnvironmentGuardian()
+        downloader = Downloader('', '')
+        downloader.update_data(CUSTOM_CONTENT_LAYOUT_PATH, LAYOUT_INSTANCE_PATH, 'json')
+        test_answer = True
+        file_data: dict = get_json(CUSTOM_CONTENT_LAYOUT_PATH)
+        for field in DELETED_JSON_FIELDS_BY_DEMISTO:
+            obj = file_data
+            dotted_path_list = field.split('.')
+            for path_part in dotted_path_list:
+                if path_part != dotted_path_list[-1]:
+                    obj = obj.get(path_part)
+                else:
+                    if obj.get(path_part):
+                        test_answer = test_answer and True
+                    else:
+                        test_answer = False
+        env_guard.restore_environment('test_update_data_json')
+        assert test_answer
 
 
 class TestMergeNewFile:

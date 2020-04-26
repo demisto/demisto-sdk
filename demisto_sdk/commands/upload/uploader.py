@@ -231,6 +231,7 @@ class Uploader:
                 except Exception as err:
                     print_error(str('Upload script failed\n'))
                     print_error(str(err))
+                    self.status_code = 1
                     self.failed_uploaded_files.append((file_name, 'Script'))
                     return
 

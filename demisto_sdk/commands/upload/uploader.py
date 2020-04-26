@@ -2,6 +2,7 @@ import json
 from typing import List
 
 import demisto_client
+from demisto_client.demisto_api.rest import ApiException
 import os
 from tabulate import tabulate
 from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_v, print_error, get_child_files, \
@@ -384,7 +385,13 @@ class Uploader:
             self.failed_uploaded_files.append((file_name, 'Classifier'))
             return 1
 
-    def _parse_error_response(self, response, error, file_type, file_name):
+    def _parse_error_response(self, response, error: ApiException, file_type: str, file_name: str):
+        """Parses error message from exception raised in call to client to upload a file
+
+        error (ApiException): The exception which was raised in call in to client
+        file_type (str): The file type which was attempted to be uploaded
+        file_name (str): The file name which was attempted to be uploaded
+        """
         message = ''
         if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(error.reason):
             message = '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n' \

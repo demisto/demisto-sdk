@@ -1,19 +1,23 @@
 import json
+import os
 from typing import List
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
-import os
-from tabulate import tabulate
-from demisto_sdk.commands.common.tools import print_color, LOG_COLORS, print_v, print_error, get_child_files, \
-    get_child_directories, is_path_of_integration_directory, \
-    is_path_of_script_directory, is_path_of_playbook_directory, is_path_of_test_playbook_directory, \
-    is_path_of_dashboard_directory, is_path_of_widget_directory, is_path_of_incident_field_directory, \
-    is_path_of_incident_type_directory, is_path_of_layout_directory, \
-    is_path_of_classifier_directory, find_type, get_json, get_parent_directory_name
+from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS,
+                                                   CONTENT_ENTITY_UPLOAD_ORDER,
+                                                   INTEGRATIONS_DIR, PACKS_DIR,
+                                                   SCRIPTS_DIR)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, find_type, get_child_directories, get_child_files, get_json,
+    get_parent_directory_name, is_path_of_classifier_directory,
+    is_path_of_dashboard_directory, is_path_of_incident_field_directory,
+    is_path_of_incident_type_directory, is_path_of_integration_directory,
+    is_path_of_layout_directory, is_path_of_playbook_directory,
+    is_path_of_script_directory, is_path_of_test_playbook_directory,
+    is_path_of_widget_directory, print_color, print_error, print_v)
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, CONTENT_ENTITIES_DIRS, \
-    CONTENT_ENTITY_UPLOAD_ORDER
+from tabulate import tabulate
 
 
 # TODO: Add typings

@@ -1,5 +1,30 @@
 # Changelog
+* Added *download* command to download custom content from Demisto instance to the local content repository.
+* Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
+* Improved 'validate' help and documentation description
+* validate - checks that scripts, playbooks, and integrations have the *tests* key.
+* validate - checks that test playbooks are configured in `conf.json`.
+* demisto-sdk lint - Copy dir better handling.
+* demisto-sdk lint - Add error when package missing in docker image.
+* Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* Added *-i , --input* option in *validate* to run validation on a specified pack/file.
+* added *-i, --input* option in *secrets* to run on a specific file.
+* Added an allowed hidden parameter: *longRunning* to the hidden integration parameters validation.
+* Fixed an issue with **format** command when executing with an output path of a folder and not a file path.
 
+#### 0.5.2
+* Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.
+* Fixed an issue when getting README/CHANGELOG files from git and loading them.
+* Removed release notes validation for new content.
+* Fixed secrets validations for files with the same name in a different directory.
+* demisto-sdk lint - parallelization working with specifying the number of workers.
+* demisto-sdk lint - logging levels output, 3 levels.
+* demisto-sdk lint - JSON report, structured error reports in JSON format.
+* demisto-sdk lint - XML JUnit report for unit-tests.
+* demisto-sdk lint - new packages used to accelerate execution time.
+* demisto-sdk secrets - command now respects the generic whitelist, and not only the pack secrets.
+
+#### 0.5.0
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
@@ -13,7 +38,7 @@
     * Removed the *-t yml_type* argument, the file type will be inferred.
     * Removed the *-g use_git* argument, running format without arguments will run automatically on git diff.
 * Fixed an issue in loading playbooks with '=' character.
-* Fixed an issue un *validate* failed on deleted README files.
+* Fixed an issue in *validate* failed on deleted README files.
 
 ### 0.4.8
 * Added the *max* field to the Playbook schema, allowing to define it in tasks loop.

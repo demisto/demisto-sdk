@@ -26,12 +26,17 @@ Create the id_set.json file.
 * **--prev-ver**
 Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**
-Validate changes using git - this will check your branch changes and will run only on them.
+Validate changes using git - this will check the current branch's changes against origin/master.
+If the **--post-commit** flag is supplied: validation will run only on the current branch's changed files that have been committed.
+If the **--post-commit** flag is not supplied: validation will run on all changed files in the current branch, both committed and not committed.
 * **--post-commit**
-Whether the validation is done after you committed your files, this will help the command to determine which files it
- should check in its run. Before you commit the files it should not be used. Mostly for build validations.
+Whether the validation should run only on the current branch's committed changed files. This applies only when the **-g** flag is supplied.
 * **-p, --path**
 Path of file to validate specifically.
+* **-a, --validate-all**
+Whether to run all validation on all files or not.
+* **-i, --input**
+The path of a pack to validate specifically.
 
 **Examples**:
 `demisto-sdk validate`
@@ -57,4 +62,10 @@ This indicates that the command runs post commit.
 
 `demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml`
 This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
+<br><br>
+`demisto-sdk validate -a`
+This will validate all files under `Packs` and `Beta_Integrations` directories
+<br><br>
+`demisto-sdk validate -i Packs/HelloWorld`
+This will validate all files under the content pack `HelloWorld`
 <br><br>

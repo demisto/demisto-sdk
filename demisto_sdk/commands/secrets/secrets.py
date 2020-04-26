@@ -1,19 +1,24 @@
 import io
-import os
-import math
 import json
+import math
+import os
 import string
+
 import PyPDF2
-
 from bs4 import BeautifulSoup
-from demisto_sdk.commands.common.constants import re, REQUIRED_YML_FILE_TYPES, PACKS_DIR, PACKS_WHITELIST_FILE_NAME, \
-    INTEGRATION_README_REGEX, EXTERNAL_PR_REGEX
-from demisto_sdk.commands.common.tools import run_command, print_error, print_color, LOG_COLORS, checked_type, \
-    is_file_path_in_pack, get_pack_name, print_warning
-
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import (EXTERNAL_PR_REGEX,
+                                                   INTEGRATION_README_REGEX,
+                                                   PACKS_DIR,
+                                                   PACKS_WHITELIST_FILE_NAME,
+                                                   REQUIRED_YML_FILE_TYPES, re)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
+                                               get_pack_name,
+                                               is_file_path_in_pack,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']
@@ -51,12 +56,21 @@ IPV4_REGEX = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0
 DATES_REGEX = r'((\d{4}[/.-]\d{2}[/.-]\d{2})[T\s](\d{2}:?\d{2}:?\d{2}:?(\.\d{5,10})?([+-]\d{2}:?\d{2})?Z?)?)'
 # false positives
 UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
+# find any substring
+WHILEIST_REGEX = r'\S*{}\S*'
+
+
 # disable-secrets-detection-end
 
 
 class SecretsValidator(object):
 
-    def __init__(self, configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path=''):
+    def __init__(
+            self,
+            configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path='',
+            input_path=''
+    ):
+        self.input_paths = input_path.split(',') if input_path else None
         self.configuration = configuration
         self.is_circle = is_circle
         self.white_list_path = white_list_path
@@ -64,9 +78,12 @@ class SecretsValidator(object):
 
     def get_secrets(self, branch_name, is_circle):
         secrets_found = {}
-        # make sure not in middle of merge
-        if not run_command('git rev-parse -q --verify MERGE_HEAD'):
+        if self.input_paths:
+            secrets_file_paths = self.input_paths
+        else:
             secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
+        # If a input path supplied, should not run on git. If not supplied make sure not in middle of merge.
+        if not run_command('git rev-parse -q --verify MERGE_HEAD') or self.input_paths:
             secrets_found = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
             if secrets_found:
                 secrets_found_string = 'Secrets were found in the following files:'
@@ -158,7 +175,7 @@ class SecretsValidator(object):
             file_contents = self.get_file_contents(file_path, file_extension)
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
-                file_contents = self.remove_white_list_regex(file_contents, secrets_white_list)
+                file_contents = self.remove_whitelisted_items_from_file(file_contents, secrets_white_list)
 
             yml_file_contents = self.get_related_yml_contents(file_path)
             # Add all context output paths keywords to whitelist temporary
@@ -201,15 +218,29 @@ class SecretsValidator(object):
             if high_entropy_strings or secrets_found_with_regex:
                 # uniquify identical matches between lists
                 file_secrets = list(set(high_entropy_strings + secrets_found_with_regex))
-                secrets_found[file_name] = file_secrets
+                secrets_found[file_path] = file_secrets
 
         return secrets_found
 
     @staticmethod
-    def remove_white_list_regex(file_contents, secrets_white_list):
-        for regex in secrets_white_list:
-            file_contents = re.sub(regex, '', file_contents)
-        return file_contents
+    def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: set) -> str:
+        """Removes whitelisted items from file content
+
+        Arguments:
+            file_content (str): The content of the file to remove the whitelisted item from
+            secrets_white_list (set): List of whitelist items to remove from the file content.
+
+        Returns:
+            str: The file content with the whitelisted items removed.
+        """
+        for item in secrets_white_list:
+            try:
+                file_content = re.sub(WHILEIST_REGEX.format(re.escape(item)), '', file_content)
+            except re.error as err:
+                error_string = f"Could not use secrets with item: {item}"
+                print_error(error_string)
+                raise re.error(error_string, err)
+        return file_content
 
     @staticmethod
     def create_temp_white_list(file_contents):
@@ -304,11 +335,12 @@ class SecretsValidator(object):
         return entropy
 
     def get_white_listed_items(self, is_pack, pack_name):
-        whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME) if is_pack \
-            else self.white_list_path
-        final_white_list, ioc_white_list, files_while_list = \
-            self.get_packs_white_list(whitelist_path, pack_name) if is_pack else \
-            self.get_generic_white_list(whitelist_path)
+        final_white_list, ioc_white_list, files_white_list = self.get_generic_white_list(self.white_list_path)
+        if is_pack:
+            pack_whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME)
+            pack_white_list, _, pack_files_white_list = self.get_packs_white_list(pack_whitelist_path, pack_name)
+            final_white_list.extend(pack_white_list)
+            files_white_list.extend(pack_files_white_list)
 
         final_white_list = set(final_white_list)
         if '' in final_white_list:
@@ -316,7 +348,7 @@ class SecretsValidator(object):
             # cause whitelisting of every string
             final_white_list.remove('')
 
-        return final_white_list, set(ioc_white_list), set(files_while_list)
+        return final_white_list, set(ioc_white_list), set(files_white_list)
 
     @staticmethod
     def get_generic_white_list(whitelist_path):

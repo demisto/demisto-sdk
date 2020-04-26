@@ -1,15 +1,35 @@
-import os
 import glob
-import pytest
+import os
 
-from demisto_sdk.commands.common.git_tools import git_path
+import pytest
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX
-from demisto_sdk.commands.common.tools import get_matching_regex, server_version_compare, find_type, \
-    get_dict_from_file, LOG_COLORS, get_last_release_version, filter_packagify_changes
-from demisto_sdk.tests.constants_test import VALID_REPUTATION_FILE, VALID_SCRIPT_PATH, VALID_INTEGRATION_TEST_PATH, \
-    VALID_PLAYBOOK_ID_PATH, VALID_LAYOUT_PATH, VALID_WIDGET_PATH, VALID_INCIDENT_FIELD_PATH, VALID_DASHBOARD_PATH, \
-    INDICATORFIELD_EXTRA_FIELDS, VALID_INCIDENT_TYPE_PATH, VALID_MD
+from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR,
+                                                   PACKS_PLAYBOOK_YML_REGEX,
+                                                   PACKS_TEST_PLAYBOOKS_REGEX,
+                                                   PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
+                                               filter_packagify_changes,
+                                               find_type, get_depth,
+                                               get_dict_from_file,
+                                               get_entity_id_by_entity_type,
+                                               get_entity_name_by_entity_type,
+                                               get_files_in_dir,
+                                               get_last_release_version,
+                                               get_matching_regex,
+                                               retrieve_file_ending,
+                                               server_version_compare)
+from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+                                              VALID_DASHBOARD_PATH,
+                                              VALID_INCIDENT_FIELD_PATH,
+                                              VALID_INCIDENT_TYPE_PATH,
+                                              VALID_INTEGRATION_TEST_PATH,
+                                              VALID_LAYOUT_PATH, VALID_MD,
+                                              VALID_PLAYBOOK_ID_PATH,
+                                              VALID_REPUTATION_FILE,
+                                              VALID_SCRIPT_PATH,
+                                              VALID_WIDGET_PATH)
 
 
 class TestGenericFunctions:
@@ -75,17 +95,38 @@ class TestGenericFunctions:
         assert added == set()
         assert removed == [VALID_MD]
 
+    @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
+    def test_get_depth(self, data, output):
+        assert get_depth(data) == output
+
+    def test_arg_to_list(self):
+        expected = ['a', 'b', 'c']
+        test1 = ['a', 'b', 'c']
+        test2 = 'a,b,c'
+        test3 = '["a","b","c"]'
+        test4 = 'a;b;c'
+
+        results = [arg_to_list(test1), arg_to_list(test2), arg_to_list(test2, ','), arg_to_list(test3),
+                   arg_to_list(test4, ';')]
+
+        for result in results:
+            assert expected == result, 'argToList test failed, {} is not equal to {}'.format(str(result), str(expected))
+
+    @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
+    def test_retrieve_file_ending(self, path, output):
+        assert retrieve_file_ending(path) == output
+
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml')
-        assert gmail_yml
-        assert gmail_yml['commonfields']['id'] == 'Gmail'
+        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
+        assert hello_world_yml
+        assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_origin(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'master')
-        assert gmail_yml
-        assert gmail_yml['commonfields']['id'] == 'Gmail'
+        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
+        assert hello_world_yml
+        assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_tag(self):
         gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', '19.10.0')
@@ -108,6 +149,18 @@ class TestGetRemoteFile:
     def test_get_remote_file_invalid_origin_branch(self):
         invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
         assert not invalid_yml
+
+    def test_get_remote_md_file_origin(self):
+        hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
+        assert hello_world_readme == {}
+
+    def test_is_not_test_file(self):
+        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
+        assert not test_file
+
+    def test_is_test_file(self):
+        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/test_data/search_alerts.json')
+        assert test_file
 
 
 class TestGetMatchingRegex:
@@ -165,3 +218,31 @@ class TestReleaseVersion:
         tag = get_last_release_version()
 
         assert tag == '20.0.0'
+
+
+class TestEntityAttributes:
+    @pytest.mark.parametrize('data, entity', [({'commonfields': {'id': 1}}, INTEGRATIONS_DIR),
+                                              ({'typeId': 1}, LAYOUTS_DIR), ({'id': 1}, PLAYBOOKS_DIR)])
+    def test_get_entity_id_by_entity_type(self, data, entity):
+        assert get_entity_id_by_entity_type(data, entity) == 1
+
+    @pytest.mark.parametrize('data, entity', [({'typeId': 'wow'}, LAYOUTS_DIR), ({'name': 'wow'}, PLAYBOOKS_DIR)])
+    def test_get_entity_name_by_entity_type(self, data, entity):
+        assert get_entity_name_by_entity_type(data, entity) == 'wow'
+
+
+class TestGetFilesInDir:
+    def test_project_dir_is_file(self):
+        project_dir = 'demisto_sdk/commands/download/downloader.py'
+        assert get_files_in_dir(project_dir, ['py']) == [project_dir]
+
+    def test_not_recursive(self):
+        project_dir = 'demisto_sdk/commands/download'
+        files = [f'{project_dir}/__init__.py', f'{project_dir}/downloader.py', f'{project_dir}/README.md']
+        assert sorted(get_files_in_dir(project_dir, ['py', 'md'], False)) == sorted(files)
+
+    def test_recursive(self):
+        integrations_dir = 'demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack/Integrations'
+        integration_instance_dir = f'{integrations_dir}/TestIntegration'
+        files = [f'{integration_instance_dir}/TestIntegration.py', f'{integration_instance_dir}/TestIntegration_test.py']
+        assert sorted(get_files_in_dir(integrations_dir, ['py'])) == sorted(files)

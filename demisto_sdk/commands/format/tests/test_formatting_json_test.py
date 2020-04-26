@@ -1,15 +1,19 @@
 import os
-import pytest
 import shutil
 
-from demisto_sdk.tests.constants_test import SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, \
-    SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY, \
-    DESTINATION_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, \
-    SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_DASHBOARD_COPY, \
-    DESTINATION_FORMAT_DASHBOARD_COPY, INCIDENTFIELD_PATH, DASHBOARD_PATH, LAYOUT_PATH, INCIDENTTYPE_PATH,\
-    INDICATORFIELD_PATH, INDICATORTYPE_PATH
-
+import pytest
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.tests.constants_test import (
+    DASHBOARD_PATH, DESTINATION_FORMAT_DASHBOARD_COPY,
+    DESTINATION_FORMAT_INCIDENTFIELD_COPY,
+    DESTINATION_FORMAT_INCIDENTTYPE_COPY,
+    DESTINATION_FORMAT_INDICATORFIELD_COPY,
+    DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
+    INCIDENTFIELD_PATH, INCIDENTTYPE_PATH, INDICATORFIELD_PATH,
+    INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH,
+    SOURCE_FORMAT_DASHBOARD_COPY, SOURCE_FORMAT_INCIDENTFIELD_COPY,
+    SOURCE_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY,
+    SOURCE_FORMAT_INDICATORTYPE_COPY, SOURCE_FORMAT_LAYOUT_COPY)
 
 
 class TestFormattingJson:
@@ -31,3 +35,12 @@ class TestFormattingJson:
         os.rmdir(path)
 
         assert res is answer
+
+    @pytest.mark.parametrize('invalid_output', [INVALID_OUTPUT_PATH])
+    def test_output_file(self, invalid_output):
+        try:
+            res_invalid = format_manager(input=invalid_output, output=invalid_output)
+            assert res_invalid
+        except Exception as e:
+            assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
+                             "  Please specify a correct output."

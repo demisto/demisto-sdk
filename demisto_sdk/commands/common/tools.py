@@ -1,26 +1,29 @@
-import io
-import re
-import os
-import sys
-import json
-import glob
 import argparse
-from subprocess import Popen, PIPE, DEVNULL, check_output
-from distutils.version import LooseVersion
-from typing import Union, Optional, Tuple, Dict, List
-import git
+import glob
+import io
+import json
+import os
+import re
 import shlex
+import sys
+from distutils.version import LooseVersion
 from pathlib import Path
+from subprocess import DEVNULL, PIPE, Popen, check_output
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import git
+import requests
 import urllib3
 import yaml
-import requests
-
-from demisto_sdk.commands.common.constants import CHECKED_TYPES_REGEXES, PACKAGE_SUPPORTING_DIRECTORIES, \
-    CONTENT_GITHUB_LINK, PACKAGE_YML_FILE_REGEX, UNRELEASE_HEADER, RELEASE_NOTES_REGEX, PACKS_DIR, PACKS_DIR_REGEX, \
-    DEF_DOCKER, DEF_DOCKER_PWSH, TYPE_PWSH, SDK_API_GITHUB_RELEASES, PACKS_CHANGELOG_REGEX, PACKS_README_FILE_NAME, \
-    SCRIPTS_DIR, INTEGRATIONS_DIR, DASHBOARDS_DIR, WIDGETS_DIR, INDICATOR_FIELDS_DIR, PLAYBOOKS_DIR, \
-    TEST_PLAYBOOKS_DIR, REPORTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, LAYOUTS_DIR, CLASSIFIERS_DIR
-
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR,
+    CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
+    SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES, TYPE_PWSH,
+    UNRELEASE_HEADER, WIDGETS_DIR)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -45,7 +48,7 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str,) -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str = '',) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -66,20 +69,21 @@ def print_color(obj, color):
     print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
-def get_files_in_dir(project_dir: str, file_ending: Tuple[str, str]) -> List[str]:
+def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
     Gets the project directory and returns the path of all yml and json files in it
     Args:
-        project_dir: string path to the project_dir
-        file_ending: list of file endings to search for in given directory
-    :return: the path of all yml and json files in it
-
+        project_dir: String path to the project_dir
+        file_endings: List of file endings to search for in a given directory
+        recursive: Indicates whether search should be recursive or not
+    :return: The path of files with file_endings in the current dir
     """
     files = []
-    if project_dir.endswith(file_ending):
-        return [project_dir]
-    for file_type in file_ending:
-        files.extend([f for f in glob.glob(project_dir + '/**/*.' + file_type, recursive=True)])
+    pattern: str = '/**/*.' if recursive else '/*.'
+    for file_type in file_endings:
+        if project_dir.endswith(file_type):
+            return [project_dir]
+        files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
     return files
 
 
@@ -140,9 +144,11 @@ def get_remote_file(full_file_path, tag='master'):
 
     if full_file_path.endswith('json'):
         details = json.loads(res.content)
-    else:
+    elif full_file_path.endswith('yml'):
         details = yaml.safe_load(res.content)
-
+    # if neither yml nor json then probably a CHANGELOG or README file.
+    else:
+        details = {}
     return details
 
 
@@ -285,6 +291,34 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
+def get_entity_id_by_entity_type(data: dict, content_entity: str):
+    """
+    Returns the id of the content entity given its entity type
+    :param data: The data of the file
+    :param content_entity: The content entity type
+    :return: The file id
+    """
+    if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
+        return data.get('commonfields', {}).get('id', '')
+    elif content_entity == LAYOUTS_DIR:
+        return data.get('typeId', '')
+    else:
+        return data.get('id', '')
+
+
+def get_entity_name_by_entity_type(data: dict, content_entity: str):
+    """
+    Returns the name of the content entity given its entity type
+    :param data: The data of the file
+    :param content_entity: The content entity type
+    :return: The file name
+    """
+    if content_entity == LAYOUTS_DIR:
+        return data.get('typeId', '')
+    else:
+        return data.get('name', '')
+
+
 def collect_ids(file_path):
     """Collect id mentioned in file_path"""
     data_dictionary = get_yaml(file_path)
@@ -341,8 +375,8 @@ def get_release_notes_file_path(file_path):
     if re.match(PACKAGE_YML_FILE_REGEX, file_path):
         return os.path.join(dir_name, 'CHANGELOG.md')
 
-    # CHANGELOG in pack root
-    if re.match(PACKS_CHANGELOG_REGEX, file_path):
+    # We got the CHANGELOG file to get its release notes
+    if file_path.endswith('CHANGELOG.md'):
         return file_path
 
     # outside of packages, change log file will include the original file name.
@@ -375,7 +409,7 @@ def get_latest_release_notes_text(rn_path):
 def checked_type(file_path, compared_regexes=None, return_regex=False):
     compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
     for regex in compared_regexes:
-        if re.match(regex, file_path, re.IGNORECASE):
+        if re.search(regex, file_path, re.IGNORECASE):
             if return_regex:
                 return regex
             return True
@@ -569,7 +603,7 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     return {}, None
 
 
-def find_type(path: str):
+def find_type(path: str = '', _dict=None, file_type: str = ''):
     """
     returns the content file type
 
@@ -579,7 +613,8 @@ def find_type(path: str):
     Returns:
         string representing the content file type
     """
-    _dict, file_type = get_dict_from_file(path)
+    if not _dict and not file_type:
+        _dict, file_type = get_dict_from_file(path)
     if file_type == 'yml':
         if 'category' in _dict:
             return 'integration'
@@ -604,13 +639,16 @@ def find_type(path: str):
                 return 'layout'
             else:
                 return 'dashboard'
-
+        # When using it for all files validation- sometimes 'id' can be integer
         elif 'id' in _dict:
-            _id = _dict['id'].lower()
-            if _id.startswith('incident'):
-                return 'incidentfield'
-            elif _id.startswith('indicator'):
-                return 'indicatorfield'
+            if isinstance(_dict.get('id'), str):
+                _id = _dict['id'].lower()
+                if _id.startswith('incident'):
+                    return 'incidentfield'
+                elif _id.startswith('indicator'):
+                    return 'indicatorfield'
+            else:
+                print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
     return ''
 
@@ -727,6 +765,69 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return True, '/'.join(input_path_parts[len(content_path_parts):])
     else:
         return False, ''
+
+
+def is_test_file(file_: str) -> bool:
+    """Check if the file is a test file under testdata, test_data or data_test
+    Args:
+        file_ (str): The file path which is checked.
+    Returns:
+        bool: True if the file is a test file, False otherwise.
+    """
+    if any(test_file in file_.lower() for test_file in TESTS_DIRECTORIES):
+        return True
+    return False
+
+
+def retrieve_file_ending(file_path: str) -> str:
+    """
+    Retrieves the file ending (without the dot)
+    :param file_path: The file path
+    :return: The file ending
+    """
+    os_split: tuple = os.path.splitext(file_path)
+    if os_split:
+        file_ending: str = os_split[1]
+        if file_ending and '.' in file_ending:
+            return file_ending[1:]
+    return ''
+
+
+def arg_to_list(arg: Union[str, list], separator: str = ',') -> list:
+    """
+       Converts a string representation of args to a python list
+
+       :type arg: ``str`` or ``list``
+       :param arg: Args to be converted (required)
+
+       :type separator: ``str``
+       :param separator: A string separator to separate the strings, the default is a comma.
+
+       :return: A python list of args
+       :rtype: ``list``
+    """
+    if not arg:
+        return []
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, (str, bytes)):
+        if arg[0] == '[' and arg[-1] == ']':
+            return json.loads(arg)
+        return [s.strip() for s in arg.split(separator)]
+    return arg
+
+
+def get_depth(data: Any) -> int:
+    """
+    Returns the depth of a data object
+    :param data: The data
+    :return: The depth of the data object
+    """
+    if data and isinstance(data, dict):
+        return 1 + max(get_depth(data[key]) for key in data)
+    if data and isinstance(data, list):
+        return 1 + max(get_depth(element) for element in data)
+    return 0
 
 
 def is_path_of_integration_directory(path: str) -> bool:

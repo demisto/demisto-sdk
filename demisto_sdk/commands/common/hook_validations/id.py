@@ -1,14 +1,25 @@
+import json
 import os
 import re
-import json
-from distutils.version import LooseVersion
 from collections import OrderedDict
+from distutils.version import LooseVersion
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.tools import get_script_or_integration_id, collect_ids, print_error
-from demisto_sdk.commands.common.constants import INTEGRATION_REGEX, TEST_PLAYBOOK_REGEX, SCRIPT_JS_REGEX, \
-    SCRIPT_REGEX, TEST_SCRIPT_REGEX, INTEGRATION_YML_REGEX, PLAYBOOK_REGEX, SCRIPT_YML_REGEX, SCRIPT_PY_REGEX
-from demisto_sdk.commands.common.update_id_set import get_script_data, get_playbook_data, get_integration_data
+from demisto_sdk.commands.common.constants import (INTEGRATION_REGEX,
+                                                   INTEGRATION_YML_REGEX,
+                                                   PLAYBOOK_REGEX,
+                                                   SCRIPT_JS_REGEX,
+                                                   SCRIPT_PY_REGEX,
+                                                   SCRIPT_REGEX,
+                                                   SCRIPT_YML_REGEX,
+                                                   TEST_PLAYBOOK_REGEX,
+                                                   TEST_SCRIPT_REGEX)
+from demisto_sdk.commands.common.tools import (collect_ids,
+                                               get_script_or_integration_id,
+                                               print_error)
+from demisto_sdk.commands.common.update_id_set import (get_integration_data,
+                                                       get_playbook_data,
+                                                       get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -52,7 +63,7 @@ class IDSetValidator:
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
                     print_error("You probably merged from master and your id_set.json has conflicts. "
-                                "Run `python Tests/scripts/update_id_set.py -r`, it should reindex your id_set.json")
+                                "Run `demisto-sdk create-id-set`, it should reindex your id_set.json")
 
                 raise
 
@@ -83,13 +94,13 @@ class IDSetValidator:
                     checked_instance_fromversion == obj_from_version:
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
-                    print_error("You have failed to update id_set.json with the data of {} "
-                                "please run `python Tests/scripts/update_id_set.py`".format(file_path))
+                    print_error(f"You have failed to update id_set.json with the data of {file_path} "
+                                f"please run `demisto-sdk create-id-set`")
                     return False
 
         if not is_found:
-            print_error("You have failed to update id_set.json with the data of {} "
-                        "please run `python Tests/scripts/update_id_set.py`".format(file_path))
+            print_error(f"You have failed to update id_set.json with the data of {file_path} "
+                        f"please run `demisto-sdk create-id-set`")
 
         return is_found
 

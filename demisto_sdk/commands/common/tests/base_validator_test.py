@@ -3,6 +3,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.tools import (find_test_match,
+                                               get_not_registered_tests)
 from demisto_sdk.tests.constants_test import (
     INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, SCRIPT_WITH_PLAYBOOK,
     VALID_INTEGRATION_TEST_PATH, VALID_TEST_PLAYBOOK_PATH)
@@ -99,7 +101,7 @@ def test_find_test_match(test_config, integration_id, test_playbook_id, expected
         Then
         -  Ensure the method 'find_test_match' return answer accordingly
     """
-    assert BaseValidator.find_test_match(test_config, test_playbook_id, integration_id, file_type) == expected
+    assert find_test_match(test_config, test_playbook_id, integration_id, file_type) == expected
 
 
 NOT_REGISTERED_TESTS_INPUT = [
@@ -166,4 +168,4 @@ def test_get_not_registered_tests(file_path, schema, conf_json_data, expected):
     validator = BaseValidator(structure_validator)
     tests = structure_validator.current_file.get('tests')
     integration_id = validator._get_file_id(structure_validator.scheme_name)
-    assert validator.get_not_registered_tests(conf_json_data, integration_id, tests) == expected
+    assert get_not_registered_tests(conf_json_data, integration_id, schema, tests) == expected

@@ -424,6 +424,10 @@ class Uploader:
         return dir_list
 
     def _print_summary(self):
+        """Prints uploaded files summary
+        Successful uploads grid based on `successfully_uploaded_files` attribute in green color
+        Failed uploads grid based on `failed_uploaded_files` attribute in red color
+        """
         print_color('\n\nUPLOAD SUMMARY:', LOG_COLORS.NATIVE)
         if self.successfully_uploaded_files:
             print_color('\nSUCCESSFUL UPLOADS:', LOG_COLORS.GREEN)

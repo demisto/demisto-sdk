@@ -1,16 +1,29 @@
+import inspect
 import json
-
-import pytest
-import demisto_client
+from functools import wraps
 from unittest.mock import patch
 
-from demisto_sdk.commands.common.constants import BETA_INTEGRATIONS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, CLASSIFIERS_DIR, \
-    LAYOUTS_DIR, TEST_PLAYBOOKS_DIR
+import demisto_client
+import pytest
+from demisto_client.demisto_api.rest import ApiException
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
+                                                   CLASSIFIERS_DIR,
+                                                   INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS
 from demisto_sdk.commands.upload.uploader import Uploader
 
-from demisto_client.demisto_api.rest import ApiException
+if not hasattr(inspect, '_orig_findsource'):
+    @wraps(inspect.findsource)
+    def findsource(*args, **kwargs):
+        try:
+            return inspect._orig_findsource(*args, **kwargs)
+        except IndexError:
+            raise IOError("Invalid line")
+    inspect._orig_findsource = inspect.findsource
+    inspect.findsource = findsource
 
 
 @pytest.fixture

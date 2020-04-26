@@ -41,6 +41,7 @@ class Uploader:
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
         """
+        print(f"Uploading {self.path} ...")
         parent_dir_name = get_parent_directory_name(self.path)
         # Input is a file
         if os.path.isfile(self.path):

@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS
 from demisto_sdk.commands.upload.uploader import Uploader
 
+# Taken from https://github.com/pytest-dev/pytest-bdd/issues/155
 if not hasattr(inspect, '_orig_findsource'):
     @wraps(inspect.findsource)
     def findsource(*args, **kwargs):

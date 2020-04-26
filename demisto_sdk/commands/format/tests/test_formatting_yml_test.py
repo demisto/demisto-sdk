@@ -2,7 +2,6 @@ import os
 import shutil
 
 import pytest
-import yaml
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -10,7 +9,7 @@ from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION,
-    EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, GIT_ROOT,
+    EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY)
 
@@ -21,6 +20,7 @@ BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
      'playbook')
 ]
+FORMAT_CMD = "format"
 
 
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
@@ -142,22 +142,3 @@ def test_eqaul_value_in_file(input, output, path):
     assert check
     assert not format
 
-
-@pytest.mark.parametrize('yml_file, yml_type', [
-    ('format_pwsh_script.yml', 'script'),
-    ('format_pwsh_integration.yml', 'integration')
-])
-def test_pwsh_format(tmpdir, yml_file, yml_type):
-    schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(yml_type)))
-    dest = str(tmpdir.join('pwsh_format_res.yml'))
-    src_file = f'{GIT_ROOT}/demisto_sdk/tests/test_files/{yml_file}'
-    if yml_type == 'script':
-        format_obj = ScriptYMLFormat(src_file, output=dest, path=schema_path)
-    else:
-        format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path)
-    assert format_obj.run_format() == 0
-    with open(dest) as f:
-        data = yaml.safe_load(f)
-    assert data['fromversion'] == '5.5.0'
-    assert data['commonfields']['version'] == -1

@@ -225,7 +225,7 @@ class BaseValidator:
                 f'please edit the yml file and add the TestPlaybook under the \'tests\' key. '
                 f'If you don\'t want to create a'
                 f' TestPlaybook for this {file_type}, edit the yml file and add  \ntests:\n -  No tests\n lines'
-                f' to it.')
+                f' to it or run \'demisto-sdk format -i {self.file_path}\'')
             return False
         return True
 

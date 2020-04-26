@@ -1,3 +1,4 @@
+import click
 import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
@@ -79,3 +80,15 @@ class BaseUpdateYML(BaseUpdate):
         self.copy_tests_from_old_file()
 
         print_color(F'=======Finished updates for file: {self.output_file}=======', LOG_COLORS.YELLOW)
+
+    def update_tests(self) -> None:
+        """
+        If there are no tests configured: Prompts a question to the cli that asks the user whether he wants to add
+        'No tests' under 'tests' key or not and format the file according to the answer
+        """
+        if not self.data.get('tests', ''):
+            should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks configured. '
+                                                    f'Do you want to configure it with "No tests"')
+            if should_modify_yml_tests:
+                click.echo(f'Formatting {self.output_file} with "No tests"')
+                self.data['tests'] = ['No tests (auto formatted)']

@@ -76,6 +76,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             super().update_yml()
+            self.update_tests()
             self.update_proxy_insecure_param_to_default()
             self.set_reputation_commands_basic_argument_as_needed()
             self.save_yml_to_destination_file()

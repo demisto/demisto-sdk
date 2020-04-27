@@ -349,6 +349,9 @@ class TestMergeExistingFile:
             downloader.log_verbose = False
             downloader.pack_content = PACK_CONTENT
             downloader.run_format = False
+            downloader.num_merged_files = 0
+            downloader.num_added_files = 0
+            downloader.log_verbose = False
             downloader.merge_and_extract_existing_file(INTEGRATION_CUSTOM_CONTENT_OBJECT)
             paths = [file['path'] for file in INTEGRATION_PACK_OBJECT['Test Integration']]
             for path in paths:
@@ -389,6 +392,9 @@ class TestMergeExistingFile:
             ryaml.preserve_quotes = True
             downloader.pack_content = PACK_CONTENT
             downloader.run_format = False
+            downloader.num_merged_files = 0
+            downloader.num_added_files = 0
+            downloader.log_verbose = False
             downloader.merge_existing_file(custom_content_object, ending)
             test_answer = test_answer and os.path.isfile(instance_path)
             file_data = method(instance_path)

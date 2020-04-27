@@ -9,7 +9,6 @@ from tempfile import mkdtemp
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
-from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATIONS_DIR, CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
@@ -26,6 +25,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_yaml, get_yml_paths_in_dir,
                                                print_color,
                                                retrieve_file_ending)
+from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from dictor import dictor
 from flatten_dict import unflatten
@@ -136,12 +136,6 @@ class Downloader:
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
                 with open(file_path, 'w') as file:
                     file.write(tar.extractfile(member).read().decode('utf-8'))
-
-            number_of_files = len(tar.getmembers())
-            print_color(f'\nDemisto instance: Enumerating objects: {number_of_files}, done.',
-                        LOG_COLORS.NATIVE)
-            print_color(f'Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),'
-                        f' done.\n', LOG_COLORS.NATIVE)
 
             return True
 
@@ -317,6 +311,12 @@ class Downloader:
             if not input_file_exist_in_cc:
                 self.files_not_downloaded.append([input_file_name, FILE_NOT_IN_CC_REASON])
 
+        number_of_files = len(self.custom_content)
+        print_color(f'\nDemisto instance: Enumerating objects: {number_of_files}, done.',
+                    LOG_COLORS.NATIVE)
+        print_color(f'Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),'
+                    f' done.\n', LOG_COLORS.NATIVE)
+
     def exist_in_pack_content(self, custom_content_object: dict) -> bool:
         """
         Checks if the current custom content object already exists in custom content
@@ -455,7 +455,6 @@ class Downloader:
                 print_color(e, LOG_COLORS.RED)
                 raise
             self.format_file(corresponding_pack_file_path, corresponding_pack_file_object['file_ending'])
-            self.num_merged_files += 1
 
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -463,6 +462,7 @@ class Downloader:
             print_color(e, LOG_COLORS.RED)
             raise
 
+        self.num_merged_files += 1
         self.log_finished_file('Merged', file_name, file_entity[:-1])
 
     def merge_existing_file(self, custom_content_object: dict, file_ending: str) -> None:
@@ -516,7 +516,7 @@ class Downloader:
 
         for file_path in get_child_files(dir_output_path):
             self.format_file(file_path, retrieve_file_ending(file_path))
-            self.num_added_files += 1
+        self.num_added_files += 1
         self.log_finished_file('Added', file_name, file_entity[:-1])
 
     def merge_new_file(self, custom_content_object: dict) -> None:
@@ -551,9 +551,8 @@ class Downloader:
         :param file_type: The file type
         :return: None
         """
-        verbose = self.log_verbose
-        print_color(f'- {action} {file_type} "{file_name}"', LOG_COLORS.GREEN if verbose else LOG_COLORS.NATIVE)
-        if verbose:
+        print_color(f'- {action} {file_type} "{file_name}"', LOG_COLORS.NATIVE)
+        if self.run_format:  # TODO: Refactored after format had verbose arg
             print_color('', LOG_COLORS.NATIVE)
 
     def get_corresponding_pack_content_object(self, custom_content_object: dict) -> dict:
@@ -598,8 +597,8 @@ class Downloader:
         ryaml.preserve_quotes = True
         pack_obj_data, _ = get_dict_from_file(file_path_to_read)
         fields: list = DELETED_YML_FIELDS_BY_DEMISTO if file_ending == 'yml' else DELETED_JSON_FIELDS_BY_DEMISTO
-        # Creates a nested-complex dict of all fields to be deleted by Demisto. We need the dict to be nested, to easily
-        # merge it later to the file data.
+        # Creates a nested-complex dict of all fields to be deleted by Demisto.
+        # We need the dict to be nested, to easily merge it later to the file data.
         preserved_data: dict = unflatten({field: dictor(pack_obj_data, field) for field in fields if
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
@@ -656,7 +655,7 @@ class Downloader:
         :return: None
         """
         if self.run_format and file_ending in ('yml', 'json'):
-            format_manager(input=file_path, verbose=self.log_verbose, no_validate=True)
+            format_manager(input=os.path.abspath(file_path), no_validate=False)
 
     def remove_traces(self):
         """

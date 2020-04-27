@@ -35,8 +35,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
 }
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = None, no_validate: bool = None,
-                   verbose: bool = True):
+def format_manager(input: str = None, output: str = None, from_version: str = None, no_validate: bool = None):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -44,7 +43,6 @@ def format_manager(input: str = None, output: str = None, from_version: str = No
         from_version: (str) in case of specific value for from_version that needs to be updated.
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
-        verbose (flag): Whether to print logs or not.
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -80,14 +78,12 @@ def format_manager(input: str = None, output: str = None, from_version: str = No
         log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
 
     if error_list:
-        if verbose:
-            for string, print_func in log_list:
-                print_func(('\n'.join(string)))
-        return 1
-
-    if verbose:
         for string, print_func in log_list:
             print_func(('\n'.join(string)))
+        return 1
+
+    for string, print_func in log_list:
+        print_func(('\n'.join(string)))
     return 0
 
 

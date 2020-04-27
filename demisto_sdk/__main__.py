@@ -401,7 +401,8 @@ def upload(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-o", "--output", help="The path of a package directory to download custom content to", required=False)
+    "-o", "--output", help="The path of a package directory to download custom content to", required=False,
+    multiple=False)
 @click.option(
     "-i", "--input", help="Custom content file name to be downloaded. Can be provided multiple times",
     required=False, multiple=True)

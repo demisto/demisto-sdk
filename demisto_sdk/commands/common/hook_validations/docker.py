@@ -284,5 +284,5 @@ class DockerImageValidator(object):
 
             return image, tag
         else:
-            # If the yml file has no docker image
-            print_error('There is no docker image specify in your integration/script')
+            # If the yml file has no docker image we provide the default one 'demisto/python:1.3-alpine'
+            return 'demisto/python', '1.3-alpine'

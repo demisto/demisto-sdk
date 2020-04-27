@@ -35,7 +35,7 @@ def demisto_client_configure(mocker):
 
 
 def test_upload_integration_positive(demisto_client_configure):
-    integration_pckg_path = f'{git_path()}demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
+    integration_pckg_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
     integration_pckg_uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
     with patch.object(integration_pckg_uploader, 'client', return_value='ok'):
         assert integration_pckg_uploader.upload() == 0

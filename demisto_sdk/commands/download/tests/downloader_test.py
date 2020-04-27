@@ -348,6 +348,7 @@ class TestMergeExistingFile:
             ryaml.preserve_quotes = True
             downloader.log_verbose = False
             downloader.pack_content = PACK_CONTENT
+            downloader.run_format = False
             downloader.merge_and_extract_existing_file(INTEGRATION_CUSTOM_CONTENT_OBJECT)
             paths = [file['path'] for file in INTEGRATION_PACK_OBJECT['Test Integration']]
             for path in paths:
@@ -387,6 +388,7 @@ class TestMergeExistingFile:
             ryaml = YAML()
             ryaml.preserve_quotes = True
             downloader.pack_content = PACK_CONTENT
+            downloader.run_format = False
             downloader.merge_existing_file(custom_content_object, ending)
             test_answer = test_answer and os.path.isfile(instance_path)
             file_data = method(instance_path)
@@ -441,7 +443,7 @@ class TestMergeExistingFile:
         ryaml = YAML()
         ryaml.preserve_quotes = True
         env_guard = EnvironmentGuardian()
-        downloader = Downloader('', '')
+        downloader = Downloader(output='', input='')
         downloader.update_data(CUSTOM_CONTENT_INTEGRATION_PATH, f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.yml',
                                'yml')
         test_answer = True
@@ -465,7 +467,7 @@ class TestMergeExistingFile:
 
     def test_update_data_json(self):
         env_guard = EnvironmentGuardian()
-        downloader = Downloader('', '')
+        downloader = Downloader(output='', input='')
         downloader.update_data(CUSTOM_CONTENT_LAYOUT_PATH, LAYOUT_INSTANCE_PATH, 'json')
         test_answer = True
         file_data: dict = get_json(CUSTOM_CONTENT_LAYOUT_PATH)

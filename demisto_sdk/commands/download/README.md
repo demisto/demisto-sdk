@@ -25,7 +25,7 @@ If there are files that exist both in the output directory and are specified in 
 
     The path of a package directory to download custom content to.
 
-* **-i "FILE_NAME_1" ... -i "FILE_NAME_n", --input "FILE_NAME_1" ... --input "FILE_NAME_n"**
+* **-i "file_name_1" ... -i "file_name_n", --input "file_name_1" ... --input "file_name_n"**
 
     Custom content file name to be downloaded. Can be provided multiple times.
 
@@ -48,6 +48,10 @@ If there are files that exist both in the output directory and are specified in 
 * **-acc, --all-custom-content**
 
     Download all available custom content files.
+
+* **-fmt, --run-format**
+
+    Whether to run demisto-sdk format on downloaded files or not.
 
 
 ### Asumptions

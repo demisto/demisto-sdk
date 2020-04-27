@@ -39,10 +39,6 @@ Whether to run all validation on all files or not.
 The path of a pack or a file to validate specifically.
 
 **Examples**:
-`demisto-sdk validate`
-This will validate all the files in content repo.
-<br><br>
-
 `demisto-sdk validate -g --no-backwards-comp`
 This will validate only changed files from content origin/master branch and will exclude backwards
 compatibility checks.

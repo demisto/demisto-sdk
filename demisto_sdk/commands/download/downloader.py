@@ -45,7 +45,7 @@ class Downloader:
         output_pack_path (str): The path of the output pack to download custom content to
         input_files (list): The list of custom content files names to download
         force (bool): Indicates whether to merge existing files or not
-        insecure (bool): Indicates whether to you insecure connection or not
+        insecure (bool): Indicates whether to use insecure connection or not
         log_verbose (bool): Indicates whether to use verbose logs or not
         client (Demisto client): The Demisto client to make API calls
         list_files (bool): Indicates whether to print the list of available custom content files and exit or not
@@ -70,6 +70,7 @@ class Downloader:
         self.run_format = run_format
         self.client = None
         self.custom_content_temp_dir = None
+        self.all_custom_content_objects = list()
         self.files_not_downloaded = list()
         self.custom_content = list()
         self.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
@@ -88,7 +89,7 @@ class Downloader:
         if self.handle_list_files_flag():
             return 0
         self.handle_all_custom_content_flag()
-        if not self.verify_path_is_pack():
+        if not self.verify_output_pack_is_pack():
             return 1
         self.build_pack_content()
         self.build_custom_content()
@@ -165,11 +166,11 @@ class Downloader:
     def handle_list_files_flag(self) -> bool:
         """
         Prints the list of all files available to be downloaded from Demisto Instance
-        :return: True if list-files flag is on, False otherwise
+        :return: True if list-files flag is on and listing available files process succeeded, False otherwise
         """
         if self.list_files:
-            custom_content_objects: list = self.get_custom_content_objects()
-            list_files: list = [[cco['name'], cco['entity'][:-1]] for cco in custom_content_objects]
+            self.all_custom_content_objects: list = self.get_custom_content_objects()
+            list_files: list = [[cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects]
             print_color('\nThe following files are available to be downloaded from Demisto instance:\n',
                         LOG_COLORS.NATIVE)
             print(tabulate(list_files, headers=['FILE NAME', 'FILE TYPE']))
@@ -184,10 +185,10 @@ class Downloader:
         if self.all_custom_content:
             custom_content_objects: list = self.get_custom_content_objects()
             names_list: list = [cco['name'] for cco in custom_content_objects]
-            # Remove duplicated names
+            # Remove duplicated names, for example: IncidentType & Layout with the same name.
             self.input_files = list(set(names_list))
 
-    def verify_path_is_pack(self) -> bool:
+    def verify_output_pack_is_pack(self) -> bool:
         """
         Verifies the output path entered by the user is an actual pack path in content repository.
         :return: The verification result
@@ -299,9 +300,11 @@ class Downloader:
         Build a data structure called pack content that holds basic data for each content entity instances downloaded from Demisto.
         For example check out the CUSTOM_CONTENT variable in downloader_test.py
         """
+        custom_content_objects: list = self.all_custom_content_objects if self.all_custom_content_objects else\
+            self.get_custom_content_objects()
         for input_file_name in self.input_files:
             input_file_exist_in_cc: bool = False
-            for custom_content_object in self.get_custom_content_objects():
+            for custom_content_object in custom_content_objects:
                 name = custom_content_object['name']
                 if name == input_file_name:
                     custom_content_object['exist_in_pack'] = self.exist_in_pack_content(custom_content_object)

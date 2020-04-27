@@ -29,6 +29,22 @@ If there are files that exist both in the output directory and are specified in 
 
     Custom content file name to be downloaded. Can be provided multiple times.
 
+* **-lf, --list-files**
+
+    Prints a list of all custom content files available to be downloaded.
+
+* **-a, --all-custom-content**
+
+    Download all available custom content files.
+
+* **-fmt, --run-format**
+
+    Whether to run demisto-sdk format on downloaded files or not.
+
+* **-f, --force**
+
+    Whether to override existing files or not.
+
 * **--insecure**
 
     Skip certificate validation.
@@ -37,25 +53,9 @@ If there are files that exist both in the output directory and are specified in 
 
     Verbose output.
 
-* **-f, --force**
-
-    Whether to override existing files or not.
-
-* **-lf, --list-files**
-
-    Prints a list of all custom content files available to be downloaded.
-
-* **-acc, --all-custom-content**
-
-    Download all available custom content files.
-
-* **-fmt, --run-format**
-
-    Whether to run demisto-sdk format on downloaded files or not.
-
 
 ### Asumptions
-For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with any separators. For example the integration "Test Integration", will be under "~/.../content/Packs/TestPack/Integrations/TestIntegration/".
+For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration "Test Integration", will be under "~/.../content/Packs/TestPack/Integrations/TestIntegration/".
 
 Integrations Scripts, and Playbooks folders that does not contain a yml file, will be overwritten automatically.
 All other folders that do not contain a json file, will be overwritten automatically.
@@ -68,14 +68,26 @@ For clarity, the given pack should be consistent with Content hierarchy structur
 
 ### Examples
 ```
-demisto-sdk download -o Pack/TestPack -i "Test Integration,TestScript,TestPlaybook"
+demisto-sdk download -o Pack/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook"
 ```
 This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook" only if they don't exists in the output pack.
 <br/><br/>
 ```
-demisto-sdk download -o Pack/TestPack -i "Test Integration,TestScript,TestPlaybook" -f
+demisto-sdk download -o Pack/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook" -f
 ```
 This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook".
 If one of the files exists in the output pack, only its changes from Demisto instance will be merged into the existing.
 If the file doesn't exist in the output pack, it will be copied completely from Demisto instance.
+<br/><br/>
+```
+demisto-sdk download -o Pack/TestPack -a
+```
+This will download the all available custom content to the output pack.
+-i / --input should not be provided.
+<br/><br/>
+```
+demisto-sdk download -lf
+```
+This will print the list of all custom content files available to be downloaded from Demisto instance.
+-i / --input & -o / --output should not be provided.
 <br/><br/>

@@ -536,7 +536,7 @@ class TestVerifyPackPath:
         ('Integrations', False), ('Packs/TestPack/', True),
         ('Demisto', False), ('Packs', False), ('Packs/TestPack', True)
     ])
-    def test_verify_path_is_pack(self, output_path, valid_ans):
+    def test_verify_output_path_is_pack(self, output_path, valid_ans):
         assert EnvironmentGuardian.verify_environment()
         downloader = Downloader(output=f'{CONTENT_BASE_PATH}/{output_path}', input='')
-        assert downloader.verify_path_is_pack() is valid_ans
+        assert downloader.verify_output_pack_is_pack() is valid_ans

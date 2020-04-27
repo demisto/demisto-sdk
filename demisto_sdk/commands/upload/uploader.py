@@ -89,17 +89,17 @@ class Uploader:
             elif parent_dir_name == PACKS_DIR:
                 self.pack_uploader()
 
-        else:
             # Input is not supported
-            print_error(
-                f'\nError: Given input path: {self.path} is not valid. '
-                f'Input path should point to one of the following:\n'
-                f'  1. Pack\n'
-                f'  2. Directory inside a pack for example: Integrations directory\n'
-                f'  3. Valid file that can be imported to Cortex XSOAR manually. '
-                f'For example a playbook: helloWorld.yml'
-            )
-            self.status_code = 1
+            else:
+                print_error(
+                    f'\nError: Given input path: {self.path} is not valid. '
+                    f'Input path should point to one of the following:\n'
+                    f'  1. Pack\n'
+                    f'  2. Directory inside a pack for example: Integrations directory\n'
+                    f'  3. Valid file that can be imported to Cortex XSOAR manually. '
+                    f'For example a playbook: helloWorld.yml'
+                )
+                self.status_code = 1
 
         self._print_summary()
         return self.status_code

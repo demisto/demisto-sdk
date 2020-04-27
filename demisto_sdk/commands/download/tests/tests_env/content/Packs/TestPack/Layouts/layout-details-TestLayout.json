@@ -2,6 +2,8 @@
        "TypeName": "",
        "id": "Hello World Alert",
        "kind": "details",
+       "fromVersion": "TEST",
+	   "toVersion": "TEST",
        "name": "",
        "sortValues": null,
        "system": false,

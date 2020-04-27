@@ -3,6 +3,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.tools import (find_test_match,
+                                               get_not_registered_tests)
 from demisto_sdk.tests.constants_test import (
     INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, SCRIPT_WITH_PLAYBOOK,
     VALID_INTEGRATION_TEST_PATH, VALID_TEST_PLAYBOOK_PATH)
@@ -99,7 +101,7 @@ def test_find_test_match(test_config, integration_id, test_playbook_id, expected
         Then
         -  Ensure the method 'find_test_match' return answer accordingly
     """
-    assert BaseValidator.find_test_match(test_config, test_playbook_id, integration_id, file_type) == expected
+    assert find_test_match(test_config, test_playbook_id, integration_id, file_type) == expected
 
 
 NOT_REGISTERED_TESTS_INPUT = [
@@ -107,51 +109,58 @@ NOT_REGISTERED_TESTS_INPUT = [
         VALID_INTEGRATION_TEST_PATH,
         'integration',
         [{'integrations': 'PagerDuty v2', 'playbookID': 'PagerDuty Test'}],
+        'PagerDuty v2',
         []
     ),
     (
         VALID_INTEGRATION_TEST_PATH,
         'integration',
         [{'integrations': 'test', 'playbookID': 'PagerDuty Test'}],
+        'PagerDuty v2',
         ['PagerDuty Test']
     ),
     (
         VALID_INTEGRATION_TEST_PATH,
         'integration',
         [{'integrations': 'PagerDuty v2', 'playbookID': 'Playbook'}],
+        'PagerDuty v2',
         ['PagerDuty Test']
     ),
     (
         VALID_TEST_PLAYBOOK_PATH,
         'playbook',
         [{'integrations': 'Account Enrichment', 'playbookID': 'PagerDuty Test'}],
+        'Account Enrichment',
         []
     ),
     (
         VALID_TEST_PLAYBOOK_PATH,
         'playbook',
         [{'integrations': 'Account Enrichment', 'playbookID': 'Playbook'}],
+        'Account Enrichment',
         ['PagerDuty Test']
     ),
     (
         SCRIPT_WITH_PLAYBOOK,
         'script',
         [{'integrations': 'TestCreateDuplicates', 'playbookID': 'PagerDuty Test'}],
+        'TestCreateDuplicates',
         []
     ),
     (
         SCRIPT_WITH_PLAYBOOK,
         'script',
         [{'integrations': 'TestCreateDuplicates', 'playbookID': 'other test'}],
+        'TestCreateDuplicates',
         ['PagerDuty Test']
     )
 
 ]
 
 
-@pytest.mark.parametrize('file_path, schema, conf_json_data, expected', NOT_REGISTERED_TESTS_INPUT)
-def test_get_not_registered_tests(file_path, schema, conf_json_data, expected):
-    # type: (str, str, list, list) -> None
+@pytest.mark.parametrize('file_path, schema, conf_json_data, content_item_id, expected', NOT_REGISTERED_TESTS_INPUT)
+def test_get_not_registered_tests(file_path, schema, conf_json_data, content_item_id, expected):
+    # type: (str, str, list, str, list) -> None
     """
         Given
         - A content item with test playbooks configured on it
@@ -163,7 +172,5 @@ def test_get_not_registered_tests(file_path, schema, conf_json_data, expected):
         -  Ensure the method 'get_not_registered_tests' return all test playbooks that are not configured
     """
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
-    validator = BaseValidator(structure_validator)
     tests = structure_validator.current_file.get('tests')
-    integration_id = validator._get_file_id(structure_validator.scheme_name)
-    assert validator.get_not_registered_tests(conf_json_data, integration_id, tests) == expected
+    assert get_not_registered_tests(conf_json_data, content_item_id, schema, tests) == expected

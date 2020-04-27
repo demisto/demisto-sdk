@@ -401,15 +401,23 @@ def upload(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-o", "--output", help="The path of a package directory to download custom content to", required=True)
+    "-o", "--output", help="The path of a package directory to download custom content to", required=False,
+    multiple=False)
 @click.option(
-    "-i", "--input", help="Comma separated names of custom content files", required=True)
+    "-i", "--input", help="Custom content file name to be downloaded. Can be provided multiple times",
+    required=False, multiple=True)
 @click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
     "-f", "--force", help="Whether to override existing files or not", is_flag=True)
+@click.option(
+    "-lf", "--list-files", help="Prints a list of all custom content files available to be downloaded", is_flag=True)
+@click.option(
+    "-a", "--all-custom-content", help="Download all available custom content files", is_flag=True)
+@click.option(
+    "-fmt", "--run-format", help="Whether to run demisto-sdk format on downloaded files or not", is_flag=True)
 def download(**kwargs):
     downloader: Downloader = Downloader(**kwargs)
     return downloader.download()

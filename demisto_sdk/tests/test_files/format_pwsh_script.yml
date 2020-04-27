@@ -29,3 +29,5 @@ tags:
 - Utility
 type: powershell
 dockerimage: demisto/powershell:6.2.4.6166
+tests:
+  - No tests

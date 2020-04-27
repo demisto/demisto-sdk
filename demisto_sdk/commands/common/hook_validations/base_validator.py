@@ -3,11 +3,11 @@ import os
 import re
 from abc import abstractmethod
 
-from demisto_sdk.commands.common.constants import (ID_IN_COMMONFIELDS,
-                                                   ID_IN_ROOT, Errors)
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
+from demisto_sdk.commands.common.tools import (_get_file_id,
+                                               get_latest_release_notes_text,
                                                get_not_registered_tests,
                                                get_release_notes_file_path,
                                                print_error, run_command)
@@ -108,14 +108,6 @@ class BaseValidator:
                 return False
         return True
 
-    def _get_file_id(self, file_type):
-        file_id = ''
-        if file_type in ID_IN_ROOT:
-            file_id = self.current_file.get('id')
-        elif file_type in ID_IN_COMMONFIELDS:
-            file_id = self.current_file.get('commonfields', {}).get('id')
-        return file_id
-
     def _is_id_equals_name(self, file_type):
         """Validate that the id of the file equals to the name.
          Args:
@@ -125,7 +117,7 @@ class BaseValidator:
             bool. Whether the file's id is equal to to its name
         """
 
-        file_id = self._get_file_id(file_type)
+        file_id = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
         if file_id != name:
             print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
@@ -165,7 +157,7 @@ class BaseValidator:
             return True
         conf_json_tests = self._load_conf_file()['tests']
 
-        content_item_id = self._get_file_id(self.structure_validator.scheme_name)
+        content_item_id = _get_file_id(self.structure_validator.scheme_name, self.current_file)
         file_type = self.structure_validator.scheme_name
         not_registered_tests = get_not_registered_tests(conf_json_tests, content_item_id, file_type, test_playbooks)
         if not_registered_tests:

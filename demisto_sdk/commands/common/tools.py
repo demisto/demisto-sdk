@@ -17,10 +17,11 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK,
-    DEF_DOCKER, DEF_DOCKER_PWSH, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, RELEASE_NOTES_REGEX, SCRIPTS_DIR,
-    SDK_API_GITHUB_RELEASES, TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER, CONF_PATH)
+    DEF_DOCKER, DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
+    RELEASE_NOTES_REGEX, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -45,7 +46,7 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str = '', ) -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -857,6 +858,19 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     return not_registered_tests
 
 
-def load_conf_file():
-    with open(CONF_PATH) as data_file:
-        return json.load(data_file)
+def _get_file_id(file_type: str, file_content: Dict):
+    """
+    Gets the ID of a content item according to it's type
+    Args:
+        file_type: The type of the content item
+        file_content: The content of the content item
+
+    Returns:
+        The file's content ID
+    """
+    file_id = ''
+    if file_type in ID_IN_ROOT:
+        file_id = file_content.get('id')
+    elif file_type in ID_IN_COMMONFIELDS:
+        file_id = file_content.get('commonfields', {}).get('id')
+    return file_id

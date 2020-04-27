@@ -285,4 +285,4 @@ class DockerImageValidator(object):
             return image, tag
         else:
             # If the yml file has no docker image we provide the default one 'demisto/python:1.3-alpine'
-            return 'demisto/python', '1.3-alpine'
+            return 'demisto/python', '2.7.17.6981'

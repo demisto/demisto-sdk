@@ -120,13 +120,12 @@ def get_inputs(playbook):
                 'Error! You are missing description in playbook input {}'.format(_input.get('key')))
 
         required_status = 'Required' if _input.get('required') else 'Optional'
-        _value, source = get_input_data(_input)
+        _value = get_input_data(_input)
 
         inputs.append({
             'Name': _input.get('key'),
             'Description': stringEscapeMD(_input.get('description', '')),
             'Default Value': _value,
-            'Source': source,
             'Required': required_status,
         })
 
@@ -171,12 +170,12 @@ def get_input_data(input_section):
     """
     default_value = input_section.get('value')
     if isinstance(default_value, str):
-        return default_value, ''
+        return default_value
 
     if default_value:
         complex = default_value.get('complex')
         if complex:
-            return complex.get('accessor'), complex.get('root')
-        return default_value.get('simple'), ''
+            return f"{complex.get('root')}.{complex.get('accessor')}"
+        return default_value.get('simple')
 
-    return '', ''
+    return ''

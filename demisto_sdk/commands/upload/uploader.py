@@ -201,7 +201,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded integration: \'{file_name}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded integration - \'{file_name}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Integration'))
 
         except Exception as err:
@@ -244,7 +244,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded script - \'{file_name}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded script - \'{file_name}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Script'))
 
         except Exception as err:
@@ -266,7 +266,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded playbook - \'{file_name}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded playbook - \'{file_name}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Playbook'))
 
         except Exception as err:
@@ -291,7 +291,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded incident field - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded incident field - \'{os.path.basename(path)}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Incident Field'))
 
         except Exception as err:
@@ -311,7 +311,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded widget - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded widget - \'{os.path.basename(path)}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append(((file_name, 'Widget')))
 
         except Exception as err:
@@ -328,7 +328,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded dashboard - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded dashboard - \'{os.path.basename(path)}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Dashboard'))
 
         except Exception as err:
@@ -345,7 +345,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded layout - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded layout - \'{os.path.basename(path)}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Layout'))
 
         except Exception as err:
@@ -370,7 +370,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded incident type - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded incident type - \'{os.path.basename(path)}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Incident Type'))
 
         except Exception as err:
@@ -390,7 +390,7 @@ class Uploader:
 
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-            print_color(f'Uploaded classifier - \'{os.path.basename(path)}\' - successfully', LOG_COLORS.GREEN)
+            print_color(f'Uploaded classifier - \'{os.path.basename(path)}\': successfully', LOG_COLORS.GREEN)
             self.successfully_uploaded_files.append((file_name, 'Classifier'))
         except Exception as err:
             self._parse_error_response(err, 'classifier', file_name)

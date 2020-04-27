@@ -1,5 +1,6 @@
 import inspect
 import json
+import os
 from functools import wraps
 from unittest.mock import patch
 
@@ -12,7 +13,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.tools import LOG_COLORS
+from demisto_sdk.commands.common.tools import LOG_COLORS, get_yml_paths_in_dir
 from demisto_sdk.commands.upload.uploader import Uploader
 
 # Taken from https://github.com/pytest-dev/pytest-bdd/issues/155
@@ -41,12 +42,6 @@ def test_upload_integration_positive(demisto_client_configure):
         assert integration_pckg_uploader.upload() == 0
 
 
-def test_upload_invalid_path(demisto_client_configure):
-    script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/'
-    script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
-    assert script_dir_uploader.upload() == 1
-
-
 def test_upload_script_positive(demisto_client_configure, mocker):
     """
     Given
@@ -61,13 +56,13 @@ def test_upload_script_positive(demisto_client_configure, mocker):
     """
     mocker.patch("builtins.print")
     script_name = "DummyScript.yml"
-    script_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Scripts/{script_name}"
+    script_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_name}"
     uploader = Uploader(input=script_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded script - '{script_name}' - successfully",
+        f"Uploaded script - '{script_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
@@ -94,7 +89,7 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded playbook - '{playbook_name}' - successfully",
+        f"Uploaded playbook - '{playbook_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
@@ -115,13 +110,13 @@ def test_upload_widget_positive(demisto_client_configure, mocker):
     """
     mocker.patch("builtins.print")
     widget_name = "widget-ActiveIncidentsByRole.json"
-    widget_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Widgets/{widget_name}"
+    widget_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/{widget_name}"
     uploader = Uploader(input=widget_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded widget - '{widget_name}' - successfully",
+        f"Uploaded widget - '{widget_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
@@ -142,13 +137,13 @@ def test_upload_dashboard_positive(demisto_client_configure, mocker):
     """
     mocker.patch("builtins.print")
     dashboard_name = "upload_test_dashboard.json"
-    dashboard_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Dashboards/{dashboard_name}"
+    dashboard_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/{dashboard_name}"
     uploader = Uploader(input=dashboard_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded dashboard - '{dashboard_name}' - successfully",
+        f"Uploaded dashboard - '{dashboard_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
@@ -169,13 +164,13 @@ def test_upload_layout_positive(demisto_client_configure, mocker):
     """
     mocker.patch("builtins.print")
     layout_name = "layout-details-test_bla-V2.json"
-    layout_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Layouts/{layout_name}"
+    layout_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/{layout_name}"
     uploader = Uploader(input=layout_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded layout - '{layout_name}' - successfully",
+        f"Uploaded layout - '{layout_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
@@ -196,13 +191,13 @@ def test_upload_incident_type_positive(demisto_client_configure, mocker):
     """
     mocker.patch("builtins.print")
     incident_type_name = "incidenttype-Hello_World_Alert.json"
-    incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/IncidentTypes/{incident_type_name}"
+    incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/{incident_type_name}"
     uploader = Uploader(input=incident_type_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded incident type - '{incident_type_name}' - successfully",
+        f"Uploaded incident type - '{incident_type_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
@@ -223,13 +218,13 @@ def test_upload_classifier_positive(demisto_client_configure, mocker):
     """
     mocker.patch("builtins.print")
     classifier_name = "classifier-aws_sns_test_classifier.json"
-    classifier_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Classifiers/{classifier_name}"
+    classifier_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/{classifier_name}"
     uploader = Uploader(input=classifier_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded classifier - '{classifier_name}' - successfully",
+        f"Uploaded classifier - '{classifier_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
@@ -256,11 +251,119 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     uploader.upload()
     upload_success_message = u'{}{}{}'.format(
         LOG_COLORS.GREEN,
-        f"Uploaded incident field - '{incident_field_name}' - successfully",
+        f"Uploaded incident field - '{incident_field_name}': successfully",
         LOG_COLORS.NATIVE
     )
 
     assert print.call_args_list[1][0][0] == upload_success_message
+
+
+def test_upload_an_integration_directory(demisto_client_configure, mocker):
+    """
+    Given
+        - An integration directory called UploadTest
+
+    When
+        - Uploading an integration
+
+    Then
+        - Ensure integration is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    integration_dir_name = "UploadTest"
+    integration_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Integrations/{integration_dir_name}"
+    uploader = Uploader(input=integration_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    _, integration_yml_name = get_yml_paths_in_dir(integration_path)
+    uploaded_file_name = f'integration-{os.path.basename(integration_yml_name)}'
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded integration - '{uploaded_file_name}': successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[3][0][0] == upload_success_message
+
+
+def test_upload_a_script_directory(demisto_client_configure, mocker):
+    """
+    Given
+        - A script directory called DummyScript
+
+    When
+        - Uploading an script
+
+    Then
+        - Ensure script is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    script_dir_name = "DummyScript"
+    scripts_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_dir_name}"
+    uploader = Uploader(input=scripts_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+    _, script_yml_name = get_yml_paths_in_dir(scripts_path)
+    uploaded_file_name = f'script-{os.path.basename(script_yml_name)}'
+    upload_success_message = u'{}{}{}'.format(
+        LOG_COLORS.GREEN,
+        f"Uploaded script - '{uploaded_file_name}': successfully",
+        LOG_COLORS.NATIVE
+    )
+
+    assert print.call_args_list[3][0][0] == upload_success_message
+
+
+def test_upload_incident_fields_directory(demisto_client_configure, mocker):
+    """
+    Given
+        - An incident fields directory called DummyScript
+
+    When
+        - Uploading incident fields
+
+    Then
+        - Ensure incident fields are uploaded successfully
+        - Ensure status code is as expected
+        - Ensure amount of messages is as expected
+    """
+    mocker.patch("builtins.print")
+    dir_name = "IncidentFields"
+    incident_fields_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}"
+    uploader = Uploader(input=incident_fields_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    assert uploader.upload() == 0
+    assert len(print.call_args_list) == 7
+
+
+def test_upload_pack(demisto_client_configure, mocker):
+    """
+    Given
+        - A pack called DummyPack
+
+    When
+        - Uploading pack
+
+    Then
+        - Ensure pack is uploaded successfully
+        - Ensure status code is as expected
+        - Ensure amount of messages is as expected
+    """
+    mocker.patch("builtins.print")
+    pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
+    uploader = Uploader(input=pack_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    status_code = uploader.upload()
+    assert status_code == 0
+    assert len(print.call_args_list) == 19
+
+
+def test_upload_invalid_path(demisto_client_configure):
+    script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/'
+    script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
+    assert script_dir_uploader.upload() == 1
 
 
 def test_parse_error_response_ssl(demisto_client_configure, mocker):

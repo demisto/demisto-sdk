@@ -1019,7 +1019,7 @@ FILE_TYPES_PATHS_TO_VALIDATE = {
     'reputations': [MISC_REGEX]
 }
 
-DEF_DOCKER = 'demisto/python:1.3-alpine'
+DEF_DOCKER = 'demisto/python:2.7.17.6981'
 DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
 DIR_TO_PREFIX = {

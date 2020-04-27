@@ -1,13 +1,14 @@
+import json
+import traceback
+from typing import Any, Dict
+
+import dateparser
 import demistomock as demisto
+import requests
 from CommonServerPython import *
 
 ''' IMPORTS '''
 
-import json
-import requests
-import dateparser
-import traceback
-from typing import Any, Dict
 
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()

@@ -1034,6 +1034,9 @@ DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages',
 
 DELETED_JSON_FIELDS_BY_DEMISTO = ['fromVersion', 'toVersion']
 
+FILE_EXIST_REASON = 'File already exist'
+FILE_NOT_IN_CC_REASON = 'File does not exist in Demisto instance'
+
 ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]

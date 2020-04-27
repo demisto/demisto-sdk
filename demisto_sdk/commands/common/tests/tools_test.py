@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_TEST_PLAYBOOKS_REGEX,
                                                    PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
                                                find_type, get_depth,
                                                get_dict_from_file,
@@ -98,19 +98,6 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
     def test_get_depth(self, data, output):
         assert get_depth(data) == output
-
-    def test_arg_to_list(self):
-        expected = ['a', 'b', 'c']
-        test1 = ['a', 'b', 'c']
-        test2 = 'a,b,c'
-        test3 = '["a","b","c"]'
-        test4 = 'a;b;c'
-
-        results = [arg_to_list(test1), arg_to_list(test2), arg_to_list(test2, ','), arg_to_list(test3),
-                   arg_to_list(test4, ';')]
-
-        for result in results:
-            assert expected == result, 'argToList test failed, {} is not equal to {}'.format(str(result), str(expected))
 
     @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
     def test_retrieve_file_ending(self, path, output):
@@ -244,5 +231,6 @@ class TestGetFilesInDir:
     def test_recursive(self):
         integrations_dir = 'demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack/Integrations'
         integration_instance_dir = f'{integrations_dir}/TestIntegration'
-        files = [f'{integration_instance_dir}/TestIntegration.py', f'{integration_instance_dir}/TestIntegration_test.py']
+        files = [f'{integration_instance_dir}/TestIntegration.py',
+                 f'{integration_instance_dir}/TestIntegration_testt.py']
         assert sorted(get_files_in_dir(integrations_dir, ['py'])) == sorted(files)

@@ -107,10 +107,10 @@ def test_get_inputs():
 
     inputs, errors = get_inputs(playbook)
 
-    expected_inputs = [{'Name': 'InputA', 'Description': '', 'Default Value': 'Name',
-                        'Source': 'File', 'Required': 'Optional'},
+    expected_inputs = [{'Name': 'InputA', 'Description': '', 'Default Value': 'File.Name',
+                        'Required': 'Optional'},
                        {'Name': 'InputB', 'Description': 'This is input b', 'Default Value': 'johnnydepp@gmail.com',
-                        'Source': '', 'Required': 'Required'}]
+                        'Required': 'Required'}]
 
     assert inputs == expected_inputs
     assert errors[0] == 'Error! You are missing description in playbook input InputA'
@@ -145,24 +145,22 @@ def test_get_input_data_simple():
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    input = playbook.get('inputs')[1]
+    sample_input = playbook.get('inputs')[1]
 
-    _value, source = get_input_data(input)
+    _value = get_input_data(sample_input)
 
     assert _value == 'johnnydepp@gmail.com'
-    assert source == ''
 
 
 def test_get_input_data_complex():
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    input = playbook.get('inputs')[0]
+    sample_input = playbook.get('inputs')[0]
 
-    _value, source = get_input_data(input)
+    _value = get_input_data(sample_input)
 
-    assert _value == 'Name'
-    assert source == 'File'
+    assert _value == 'File.Name'
 
 
 # script tests

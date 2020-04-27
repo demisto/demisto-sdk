@@ -159,7 +159,7 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_ht
        :rtype: ``str``
     """
     if escape_html:
-        st = html.escape(st)
+        st = html.escape(st, quote=False)
 
     if escape_multiline:
         st = st.replace('\r\n', '<br/>')  # Windows

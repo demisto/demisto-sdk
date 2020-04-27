@@ -46,7 +46,7 @@ class DockerImageValidator(object):
         return self.is_valid
 
     def is_docker_image_latest_tag(self):
-        if 'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
+        if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
             # the docker image is the default one
             self.is_latest_tag = False
             print_error('The current docker image in the yml file is the default one: demisto/python:1.3-alpine,\n'
@@ -284,5 +284,5 @@ class DockerImageValidator(object):
 
             return image, tag
         else:
-            # If the yml file has no docker image we provide the default one 'demisto/python:1.3-alpine'
-            return 'demisto/python', '1.3-alpine'
+            # If the yml file has no docker image
+            print_error('There is no docker image specify in your integration/script')

@@ -14,5 +14,6 @@ args:
   defaultValue: "6"
 scripttarget: 0
 runonce: false
+dockerimage: demisto/python3:3.7.5.5420
 tests:
   - No tests

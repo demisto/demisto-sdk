@@ -181,9 +181,9 @@ def get_input_data(input_section):
         return default_value
 
     if default_value:
-        complex = default_value.get('complex')
-        if complex:
-            return f"{complex.get('root')}.{complex.get('accessor')}"
+        complex_field = default_value.get('complex')
+        if complex_field:
+            return f"{complex_field.get('root')}.{complex_field.get('accessor')}"
         return default_value.get('simple')
 
     return ''

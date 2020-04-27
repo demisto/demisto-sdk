@@ -24,6 +24,10 @@ def test_stringEscapeMD():
     res = stringEscapeMD("new line test \n", escape_multiline=True)
     assert '\n' not in res
     assert '<br/>' in res
+    res = stringEscapeMD('Here are "Double Quotation" marks')
+    assert '"' in res
+    res = stringEscapeMD("Here are 'Single Quotation' marks")
+    assert "'" in res
 
 
 def test_generate_list_section_empty():

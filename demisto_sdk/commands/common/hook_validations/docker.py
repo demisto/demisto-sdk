@@ -46,16 +46,21 @@ class DockerImageValidator(object):
         return self.is_valid
 
     def is_docker_image_latest_tag(self):
+        if 'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
+            # the docker image is the default one
+            self.is_latest_tag = False
+            print_error('The current docker image in the yml file is the default one: demisto/python:1.3-alpine,\n'
+                        'Please create or use another docker image\n')
+            return self.is_latest_tag
+
         if not self.docker_image_name or not self.docker_image_latest_tag:
             # If the docker image isn't in the format we expect it to be or we failed fetching the tag
             # We don't want to print any error msgs to user because they have already been printed
             self.is_latest_tag = False
             return self.is_latest_tag
 
-        if self.docker_image_latest_tag != self.docker_image_tag and \
-                not 'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
+        if self.docker_image_latest_tag != self.docker_image_tag:
             # If docker image tag is the most updated one that exists in docker-hub
-            # and the docker image is not the default one
             self.is_latest_tag = False
 
         if not self.is_latest_tag:
@@ -68,6 +73,7 @@ class DockerImageValidator(object):
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
+            self.is_latest_tag = False
             print_error('The most updated docker image tag is labeled "latest",\n'
                         'Please create a new updated numeric image\n'
                         'The current docker image tag in the yml file is: {}\n'

@@ -552,5 +552,4 @@ class LintManager:
             json_path = Path(path) / "lint_report.json"
             json.dump(fp=json_path.open(mode='w'),
                       obj=pkgs_status,
-                      indent=4,
-                      sort_keys=True)
+                      indent=4)

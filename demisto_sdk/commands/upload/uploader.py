@@ -424,10 +424,9 @@ class Uploader:
         print_error(str(message))
 
     def _remove_temp_file(self, path_to_delete):
-        if os.path.exists(path_to_delete):
+        if os.path.exists(path_to_delete) and not os.path.isdir(path_to_delete):
             try:
                 os.unlink(path_to_delete)
-                # os.remove(path_to_delete)
             except (PermissionError, IsADirectoryError) as error:
                 print_error(error)
 

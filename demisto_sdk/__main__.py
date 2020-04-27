@@ -190,6 +190,9 @@ def unify(**kwargs):
     '-j', '--conf-json', is_flag=True,
     default=False, show_default=True, help='Validate the conf.json file.')
 @click.option(
+    '-s', '--id-set', is_flag=True,
+    default=False, show_default=True, help='Validate the id_set file.')
+@click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '--post-commit',
@@ -232,7 +235,8 @@ def validate(config, **kwargs):
                                    is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
                                    file_path=file_path,
-                                   validate_all=kwargs.get('validate_all'))
+                                   validate_all=kwargs.get('validate_all'),
+                                   validate_id_set=kwargs['id_set'])
         return validator.run()
 
 

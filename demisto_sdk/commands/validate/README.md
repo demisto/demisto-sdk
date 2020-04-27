@@ -34,7 +34,7 @@ Path of file to validate specifically.
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
 * **-i, --input**
-The path of a pack to validate specifically.
+The path of a pack or a file to validate specifically.
 
 **Examples**:
 `demisto-sdk validate`

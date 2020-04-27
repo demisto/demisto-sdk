@@ -37,12 +37,12 @@ def test_integration_upload_pack_positive(demisto_client):
     assert result.exit_code == 0
     assert f"Uploading {pack_path} ..."
     assert f"Merging package: {join(pack_path, 'Integrations/FeedAzure')}" in result.output
-    assert "Uploaded integration: 'integration-FeedAzure.yml' - successfully" in result.output
-    assert "Uploaded playbook - 'just_a_test_script.yml' - successfully" in result.output
-    assert "Uploaded playbook - 'script-prefixed_automation.yml' - successfully" in result.output
-    assert "Uploaded playbook - 'playbook-FeedAzure_test_copy_no_prefix.yml' - successfully" in result.output
-    assert "Uploaded playbook - 'FeedAzure_test.yml' - successfully" in result.output
-    assert "Uploaded incident field - 'incidentfield-city.json' - successfully" in result.output
+    assert "Uploaded integration - 'integration-FeedAzure.yml': successfully" in result.output
+    assert "Uploaded playbook - 'just_a_test_script.yml': successfully" in result.output
+    assert "Uploaded playbook - 'script-prefixed_automation.yml': successfully" in result.output
+    assert "Uploaded playbook - 'playbook-FeedAzure_test_copy_no_prefix.yml': successfully" in result.output
+    assert "Uploaded playbook - 'FeedAzure_test.yml': successfully" in result.output
+    assert "Uploaded incident field - 'incidentfield-city.json': successfully" in result.output
     assert "UPLOAD SUMMARY:" in result.output
     assert "SUCCESSFUL UPLOADS:" in result.output
     assert "╒════════════════════════════════════════════╤════════════════╕" in result.output

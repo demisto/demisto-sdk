@@ -20,7 +20,7 @@ This is used in our validation process both locally and in Circle CI.
 * **--no-backward-comp**
 Whether to check backward compatibility or not.
 * **-j, --conf-json**
-Validate the conf.json file and create the id_set.json file.
+Validate the conf.json file.
 * **--prev-ver**
 Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**
@@ -47,7 +47,7 @@ compatibility checks.
 <br><br>
 
 `demisto-sdk validate -j`
-This will validate all content repo files and including conf.json file and will create the id_set.json file.
+This will validate all content repo files and including conf.json file.
 <br><br>
 
 `demisto-sdk validate --prev-ver SHA1-HASH`

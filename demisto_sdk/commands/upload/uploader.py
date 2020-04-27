@@ -47,6 +47,7 @@ class Uploader:
 
         if not os.path.exists(self.path):
             print_error(f'Error: Given input path: {self.path} does not exist')
+            self.status_code = 1
 
         # Input is a file
         elif os.path.isfile(self.path):
@@ -426,6 +427,7 @@ class Uploader:
         if os.path.exists(path_to_delete):
             try:
                 os.unlink(path_to_delete)
+                # os.remove(path_to_delete)
             except (PermissionError, IsADirectoryError) as error:
                 print_error(error)
 

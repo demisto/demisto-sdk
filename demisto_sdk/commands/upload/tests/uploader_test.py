@@ -42,7 +42,7 @@ def test_upload_integration_positive(demisto_client_configure):
 
 
 def test_upload_invalid_path(demisto_client_configure):
-    script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Scripts/'
+    script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/'
     script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
     assert script_dir_uploader.upload() == 1
 
@@ -60,8 +60,8 @@ def test_upload_script_positive(demisto_client_configure, mocker):
         - Ensure success upload message is printed as expected
     """
     mocker.patch("builtins.print")
-    script_name = "EntryWidgetNumberHostsXDR.yml"
-    script_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/Scripts/{script_name}"
+    script_name = "DummyScript.yml"
+    script_path = f"{git_path()}/demisto_sdk/tests/test_files/DummyPack/Scripts/{script_name}"
     uploader = Uploader(input=script_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()

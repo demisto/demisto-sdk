@@ -176,6 +176,27 @@ inputs:
     simple: johnnydepp@gmail.com
   required: true
   description: This is input b
+- key: ""
+  value: {}
+  required: false
+  description: ""
+  playbookInputQuery:
+    query: (type:ip or type:file or type:Domain or type:URL) -tags:pending_review
+      and (tags:approved_black or tags:approved_white or tags:approved_watchlist)
+    queryEntity: indicators
+    results: null
+    daterange:
+      fromdate: 0001-01-01T00:00:00Z
+      todate: 0001-01-01T00:00:00Z
+      period:
+        by: ""
+        byto: ""
+        byfrom: ""
+        tovalue: null
+        fromvalue: null
+        field: ""
+      fromdatelicenseval: 0001-01-01T00:00:00Z
+    runFromLastJobTime: false
 outputs:
 - contextPath: Email.To
   description: The recipient of the email.

@@ -107,10 +107,22 @@ def test_get_inputs():
 
     inputs, errors = get_inputs(playbook)
 
-    expected_inputs = [{'Name': 'InputA', 'Description': '', 'Default Value': 'File.Name',
-                        'Required': 'Optional'},
-                       {'Name': 'InputB', 'Description': 'This is input b', 'Default Value': 'johnnydepp@gmail.com',
-                        'Required': 'Required'}]
+    expected_query = '(type:ip or type:file or type:Domain or type:URL) -tags:pending_review ' \
+        'and (tags:approved_black or tags:approved_white or tags:approved_watchlist)'
+    expected_inputs = [
+        {
+            'Name': 'InputA', 'Description': '', 'Default Value': 'File.Name', 'Required': 'Optional'
+        },
+        {
+            'Name': 'InputB', 'Description': 'This is input b',
+            'Default Value': 'johnnydepp@gmail.com', 'Required': 'Required'
+        },
+        {
+            'Name': 'Indicator Query',
+            'Description': 'Indicators matching the indicator query will be used as playbook input',
+            'Default Value': expected_query, 'Required': 'Optional'
+        }
+    ]
 
     assert inputs == expected_inputs
     assert errors[0] == 'Error! You are missing description in playbook input InputA'

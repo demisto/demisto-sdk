@@ -21,6 +21,8 @@ This is used in our validation process both locally and in Circle CI.
 Whether to check backward compatibility or not.
 * **-j, --conf-json**
 Validate the conf.json file.
+* **-s, --id-set**
+Validate the id_set.json file.
 * **--prev-ver**
 Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**

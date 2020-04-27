@@ -11,15 +11,28 @@ export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 
 
 ### Use Cases
-This command is used in order to upload integration files to a remote Demisto instance. This is useful especially when developing a new integration, so that while working on the code you can upload it directly from the CLI and optimize the development process flow.
-
+This command is used in order to upload content entities to a remote Demisto instance.
+Supported content entities:
+- Integrations
+- Playbooks
+- Scripts
+- Widgets
+- Dashboards
+- Incident Types
+- Incident Fields
+- Layouts
+- Classifiers
 
 ### Arguments
-* **-i INTEGRATION_PATH, --inpath INTEGRATION_PATH**
+* **-i <PATH_IN_CONTENT>, --<PATH_IN_CONTENT>**
 
-    The path of an integration file or a package directory to upload
+    Where PATH_IN_CONTENT is one of the following:
+    1. Pack
+    2. Directory inside a pack for example: Playbooks
+    3. Directory containing an integration or a script data for example: HelloWorld
+    4. Valid file that can be imported to Cortex XSOAR manually For example a playbook: HelloWorld.yml
 
-* **-k, --insecure**
+* **--insecure**
 
     Skip certificate validation
 
@@ -30,21 +43,34 @@ This command is used in order to upload integration files to a remote Demisto in
 
 ### Examples
 ```
-demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml
+demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld_unified.yml
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance.
+This will upload the integration YML file `HelloWorld_unified.yml` to the Demisto instance.
 <br/><br/>
 ```
-demisto-sdk upload -i Integrations/GoogleCloudTranslate
+demisto-sdk upload -i Packs/HelloWorld/Scripts/HelloWorldScript
 ```
-This will create a temporary unified file of the `GoogleCloudTranslate` integration which will be uploaded to the Demisto instance.
+This will create a temporary unified file of the `HelloWorldScript` script which will be uploaded to the Demisto instance.
 <br/><br/>
+
 ```
-demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml -k
+demisto-sdk upload -i Packs/HelloWorld/Scripts
+```
+This will iterate over the scripts folder and in turn will create a temporary unified file for each script and upload it to the Demisto instance.
+<br/><br/>
+
+```
+demisto-sdk upload -i Packs/HelloWorld
+```
+This will iterate over all content entities under the pack and will and in turn will upload each entity to the Demisto instance.
+<br/><br/>
+
+```
+demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --insecure
 ```
 This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance, without a certificate validation.
 <br/><br/>
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml -v
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance and print a JSON representation of the integration.
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance and print the response returned from the API.

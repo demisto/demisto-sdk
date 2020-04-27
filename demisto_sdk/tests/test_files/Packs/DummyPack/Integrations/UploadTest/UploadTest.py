@@ -1,8 +1,6 @@
 import demistomock as demisto
 from CommonServerPython import *
 
-
-
 ''' IMPORTS '''
 
 import json
@@ -171,7 +169,7 @@ def convert_to_demisto_severity(severity):
         '0': 1,  # low severity
         '1': 2,  # medium severity
         '2': 3,  # high severity
-        '3': 4   # critical severity
+        '3': 4  # critical severity
     }[str(severity)]
 
 

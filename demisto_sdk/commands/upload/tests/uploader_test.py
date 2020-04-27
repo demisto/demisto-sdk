@@ -25,7 +25,6 @@ if not hasattr(inspect, '_orig_findsource'):
         except IndexError:
             raise IOError("Invalid line")
 
-
     inspect._orig_findsource = inspect.findsource
     inspect.findsource = findsource
 

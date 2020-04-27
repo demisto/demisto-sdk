@@ -115,16 +115,24 @@ def get_inputs(playbook):
         return {}, []
 
     for _input in playbook.get('inputs'):
-        if not _input.get('description'):
-            errors.append(
-                'Error! You are missing description in playbook input {}'.format(_input.get('key')))
-
+        name = _input.get('key')
+        description = stringEscapeMD(_input.get('description', ''))
         required_status = 'Required' if _input.get('required') else 'Optional'
         _value = get_input_data(_input)
 
+        playbook_input_query = _input.get('playbookInputQuery')
+        if not name and isinstance(playbook_input_query, dict):
+            name = 'Indicator Query'
+            _value = playbook_input_query.get('query')
+            default_description = 'Indicators matching the indicator query will be used as playbook input'
+            description = description if description else default_description
+
+        if not description:
+            errors.append('Error! You are missing description in playbook input {}'.format(name))
+
         inputs.append({
-            'Name': _input.get('key'),
-            'Description': stringEscapeMD(_input.get('description', '')),
+            'Name': name,
+            'Description': description,
             'Default Value': _value,
             'Required': required_status,
         })

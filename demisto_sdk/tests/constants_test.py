@@ -95,7 +95,7 @@ INDICATORFIELD_PATH = f"IndicatorFields"
 
 SOURCE_FORMAT_INDICATORTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatortype-copy.json"
 DESTINATION_FORMAT_INDICATORTYPE_COPY = f"Packs/Base/Misc/reputation-copy.json"
-INDICATORTYPE_PATH = f"test_files/Packs/Base/Misc"
+INDICATORTYPE_PATH = f"Packs/Base/Misc"
 
 SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
 DESTINATION_FORMAT_LAYOUT_COPY = f"Layouts/layout-copy.json"
@@ -109,7 +109,7 @@ INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 
 DEFAULT_IMAGE = f'{git_path()}/demisto_sdk/tests/test_files/default_image.png'
 VALID_PACK = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzure'
-VALID_PACK_RELATIVE_PATH = 'test_files/Packs/FeedAzure'
+VALID_PACK_RELATIVE_PATH = 'Packs/FeedAzure'
 VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"

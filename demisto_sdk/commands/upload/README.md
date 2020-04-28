@@ -45,32 +45,32 @@ Supported content entities:
 ```
 demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld_unified.yml
 ```
-This will upload the integration YML file `HelloWorld_unified.yml` to the Demisto instance.
+This will upload the **integration** YML file `HelloWorld_unified.yml` to the Demisto instance.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts/HelloWorldScript
 ```
-This will create a temporary unified file of the `HelloWorldScript` script which will be uploaded to the Demisto instance.
+This will create a temporary unified file of the `HelloWorldScript` **script** which will be uploaded to the Demisto instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts
 ```
-This will iterate over the scripts folder and in turn will create a temporary unified file for each script and upload it to the Demisto instance.
+This will iterate over the **scripts** folder under the `HelloWorld` pack and in turn will create a temporary unified file for each script and upload it to the Demisto instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Packs/HelloWorld
 ```
-This will iterate over all content entities under the pack and will and in turn will upload each entity to the Demisto instance.
+This will iterate over **all content entities** under the pack `HelloWorld` and will and in turn will upload each entity to the Demisto instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --insecure
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance, without a certificate validation.
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance, **without a certificate validation**.
 <br/><br/>
 ```
-demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml -v
+demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --verbose
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance and print the response returned from the API.
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance and **print the response returned from the API**.

@@ -27,7 +27,7 @@ If there are files that exist both in the output directory and are specified in 
 
 * **-i "file_name_1" ... -i "file_name_n", --input "file_name_1" ... --input "file_name_n"**
 
-    Custom content file name to be downloaded. Can be provided multiple times. File names can be reterived using the -lf flag.
+    Custom content file name to be downloaded. Can be provided multiple times. File names can be retrieved using the -lf flag.
 
 * **-lf, --list-files**
 

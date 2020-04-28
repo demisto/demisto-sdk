@@ -21,20 +21,18 @@ from demisto_sdk.commands.unify.unifier import Unifier
 from tabulate import tabulate
 
 
-# TODO: Docs - Add supported directories, Needed configuration for demisto client
 class Uploader:
-    '''Upload a pack specified in self.infile to a remote Cortex XSOAR instance.
+    """Upload a pack specified in self.infile to a remote Cortex XSOAR instance.
         Attributes:
             path (str): The path of a pack / directory / file to upload.
             verbose (bool): Whether to output a detailed response.
             client (DefaultApi): Demisto-SDK client object.
-        '''
+        """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
         self.path = input
         self.log_verbose = verbose
-        # self.client = demisto_client.configure(verify_ssl=not insecure)
-        self.client = demisto_client.configure(verify_ssl=False)
+        self.client = demisto_client.configure(verify_ssl=not insecure)
         self.status_code = 0
         self.successfully_uploaded_files = []
         self.failed_uploaded_files = []

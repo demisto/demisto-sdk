@@ -38,12 +38,6 @@ class TestIntegrationValidator:
         (SCRIPT_WITH_DOCKER_IMAGE_1, EMPTY_CASE, True)
     ]
 
-    @pytest.mark.parametrize("current_file, old_file, answer", IS_DOCKER_IMAGE_CHANGED)
-    def test_is_docker_image_changed(self, current_file, old_file, answer):
-        structure = mock_structure("", current_file, old_file)
-        validator = IntegrationValidator(structure)
-        assert validator.is_docker_image_changed() is answer
-
     REQUIED_FIELDS_FALSE = {"configuration": [{"name": "test", "required": False}]}
     REQUIED_FIELDS_TRUE = {"configuration": [{"name": "test", "required": True}]}
     IS_ADDED_REQUIRED_FIELDS_INPUTS = [

@@ -21,13 +21,13 @@ The download is one-directional, data goes from the server to the repo.
 If there are files that exist both in the output directory and are specified in the input, they will be ignored. To override this behavior such that existing files will be merged with their newer version, use the force flag.
 
 ### Arguments
-* **-o PACK_PATH, --output Pack_PATH**
+* **-o PACK_PATH, --output PACK_PATH**
 
     The path of a package directory to download custom content to.
 
 * **-i "file_name_1" ... -i "file_name_n", --input "file_name_1" ... --input "file_name_n"**
 
-    Custom content file name to be downloaded. Can be provided multiple times.
+    Custom content file name to be downloaded. Can be provided multiple times. File names can be retrieved using the -lf flag.
 
 * **-lf, --list-files**
 
@@ -68,19 +68,19 @@ For clarity, the given pack should be consistent with Content hierarchy structur
 
 ### Examples
 ```
-demisto-sdk download -o Pack/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook"
+demisto-sdk download -o Packs/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook"
 ```
 This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook" only if they don't exists in the output pack.
 <br/><br/>
 ```
-demisto-sdk download -o Pack/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook" -f
+demisto-sdk download -o Packs/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook" -f
 ```
 This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook".
 If one of the files exists in the output pack, only its changes from Demisto instance will be merged into the existing.
 If the file doesn't exist in the output pack, it will be copied completely from Demisto instance.
 <br/><br/>
 ```
-demisto-sdk download -o Pack/TestPack -a
+demisto-sdk download -o Packs/TestPack -a
 ```
 This will download the all available custom content to the output pack.
 -i / --input should not be provided.

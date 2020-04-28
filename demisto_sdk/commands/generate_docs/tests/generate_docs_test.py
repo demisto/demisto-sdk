@@ -17,16 +17,16 @@ TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integrat
 
 
 def test_stringEscapeMD():
-    from demisto_sdk.commands.generate_docs.common import stringEscapeMD
-    res = stringEscapeMD('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
+    from demisto_sdk.commands.generate_docs.common import string_escape_md
+    res = string_escape_md('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
     assert '<' not in res
     assert '>' not in res
-    res = stringEscapeMD("new line test \n", escape_multiline=True)
+    res = string_escape_md("new line test \n", escape_multiline=True)
     assert '\n' not in res
     assert '<br/>' in res
-    res = stringEscapeMD('Here are "Double Quotation" marks')
+    res = string_escape_md('Here are "Double Quotation" marks')
     assert '"' in res
-    res = stringEscapeMD("Here are 'Single Quotation' marks")
+    res = string_escape_md("Here are 'Single Quotation' marks")
     assert "'" in res
 
 

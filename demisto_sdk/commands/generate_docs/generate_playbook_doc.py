@@ -4,7 +4,7 @@ from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     HEADER_TYPE, generate_list_section, generate_numbered_section,
-    generate_section, generate_table_section, save_output, stringEscapeMD)
+    generate_section, generate_table_section, save_output, string_escape_md)
 
 
 def generate_playbook_doc(input, output: str = None, permissions: str = None, limitations: str = None,
@@ -119,7 +119,7 @@ def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
 
     for _input in playbook.get('inputs'):
         name = _input.get('key')
-        description = stringEscapeMD(_input.get('description', ''))
+        description = string_escape_md(_input.get('description', ''))
         required_status = 'Required' if _input.get('required') else 'Optional'
         _value = get_input_data(_input)
 
@@ -166,7 +166,7 @@ def get_outputs(playbook):
 
         outputs.append({
             'Path': output.get('contextPath'),
-            'Description': stringEscapeMD(output.get('description', '')),
+            'Description': string_escape_md(output.get('description', '')),
             'Type': output_type
         })
 

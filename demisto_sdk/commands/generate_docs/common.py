@@ -138,7 +138,7 @@ def add_lines(line):
     return output if output else [line]
 
 
-def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
+def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
     """
        Escape any chars that might break a markdown string
 

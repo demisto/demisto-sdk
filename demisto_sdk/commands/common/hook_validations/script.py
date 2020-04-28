@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (get_dockerimage45, print_error,
+from demisto_sdk.commands.common.tools import (print_error,
                                                server_version_compare)
 
 
@@ -37,7 +37,6 @@ class ScriptValidator(BaseValidator):
             return True
 
         is_breaking_backwards = [
-            self.is_docker_image_changed(),
             self.is_context_path_changed(),
             self.is_added_required_args(),
             self.is_arg_changed(),
@@ -152,18 +151,6 @@ class ScriptValidator(BaseValidator):
         if not self._is_sub_set(current_context, old_context):
             print_error(Errors.breaking_backwards_context(self.file_path))
             return True
-        return False
-
-    def is_docker_image_changed(self):
-        # type: () -> bool
-        """Check if the docker image as been changed."""
-        # Unnecessary to check docker image only on 5.0 and up
-        if server_version_compare(self.old_file.get('fromversion', '0'), '5.0.0') < 0:
-            old_docker = get_dockerimage45(self.old_file)
-            new_docker = get_dockerimage45(self.current_file)
-            if old_docker != new_docker:
-                print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
-                return True
         return False
 
     def is_id_equals_name(self):

@@ -14,8 +14,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (get_dockerimage45, print_error,
-                                               print_warning,
+from demisto_sdk.commands.common.tools import (print_error, print_warning,
                                                server_version_compare)
 
 
@@ -43,7 +42,6 @@ class IntegrationValidator(BaseValidator):
 
         answers = [
             self.is_changed_context_path(),
-            self.is_docker_image_changed(),
             self.is_added_required_fields(),
             self.is_changed_command_name_or_arg(),
             self.is_there_duplicate_args(),
@@ -477,19 +475,6 @@ class IntegrationValidator(BaseValidator):
                 self.is_valid = False
                 is_added_required = True
         return is_added_required
-
-    def is_docker_image_changed(self):
-        """Check if the Docker image was changed or not."""
-        # Unnecessary to check docker image only on 5.0 and up
-        if server_version_compare(self.old_file.get('fromversion', '0'), '5.0.0') < 0:
-            old_docker = get_dockerimage45(self.old_file.get('script', {}))
-            new_docker = get_dockerimage45(self.current_file.get('script', {}))
-            if old_docker != new_docker:
-                print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
-                self.is_valid = False
-                return True
-
-        return False
 
     def is_id_equals_name(self):
         """Check whether the integration's ID is equal to its name

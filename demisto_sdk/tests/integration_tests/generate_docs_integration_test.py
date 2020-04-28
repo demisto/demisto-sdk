@@ -8,8 +8,6 @@ from demisto_sdk.__main__ import main
 
 GENERATE_DOCS_CMD = "generate-docs"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-VALID_PLAYBOOK_WITH_IO = join(DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml")
-VALID_PLAYBOOK_NO_IO = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml")
 
 
 class TestPlaybooks():
@@ -29,16 +27,19 @@ class TestPlaybooks():
         - Ensure README.md has an inputs section.
         - Ensure README.md has an outputs section.
         """
-
+        valid_playbook_with_io = join(DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml")
         runner = CliRunner(mix_stderr=False)
         arguments = [
             GENERATE_DOCS_CMD,
-            '-i', VALID_PLAYBOOK_WITH_IO,
+            '-i', valid_playbook_with_io,
             '-o', tmpdir
         ]
-        _ = runner.invoke(main, arguments)
+        result = runner.invoke(main, arguments)
         readme_path = join(tmpdir, 'README.md')
 
+        assert result.exit_code == 0
+        assert not result.stderr
+        assert not result.exception
         assert Path(readme_path).exists()
         with open(readme_path, 'r') as readme_file:
             contents = readme_file.read()
@@ -61,15 +62,19 @@ class TestPlaybooks():
         - Ensure README.md does not have an inputs section.
         - Ensure README.md does not have an outputs section.
         """
+        valid_playbook_no_io = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml")
         runner = CliRunner(mix_stderr=False)
         arguments = [
             GENERATE_DOCS_CMD,
-            '-i', VALID_PLAYBOOK_NO_IO,
+            '-i', valid_playbook_no_io,
             '-o', tmpdir
         ]
-        _ = runner.invoke(main, arguments)
+        result = runner.invoke(main, arguments)
         readme_path = join(tmpdir, 'README.md')
 
+        assert result.exit_code == 0
+        assert not result.stderr
+        assert not result.exception
         assert Path(readme_path).exists()
         with open(readme_path, 'r') as readme_file:
             contents = readme_file.read()

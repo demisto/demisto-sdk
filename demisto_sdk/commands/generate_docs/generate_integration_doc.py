@@ -250,7 +250,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
             required_status = 'Required' if arg.get('required') else 'Optional'
             section.append('| {} | {} | {} | '.format(arg['name'], string_escape_md(arg.get('description', ''),
-                                                                                  True, True), required_status))
+                                                                                    True, True), required_status))
         section.append('')
 
     # Context output

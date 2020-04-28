@@ -124,6 +124,8 @@ def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
         _value = get_input_data(_input)
 
         playbook_input_query = _input.get('playbookInputQuery')
+        # a playbook input section whose 'key' key is empty and whose 'playbookInputQuery' key is a dict
+        # is an Indicators Query input section
         if not name and isinstance(playbook_input_query, dict):
             name = 'Indicator Query'
             _value = playbook_input_query.get('query')

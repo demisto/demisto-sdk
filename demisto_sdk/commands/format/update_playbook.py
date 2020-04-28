@@ -73,6 +73,8 @@ class PlaybookYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             super().update_yml()
+            self.update_tests()
+            self.update_conf_json('playbook')
             self.add_description()
             self.update_playbook_task_name()
             self.save_yml_to_destination_file()

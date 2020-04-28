@@ -1,5 +1,5 @@
 import os
-
+from typing import Tuple, List, Dict
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
@@ -102,11 +102,14 @@ def get_playbook_dependencies(playbook):
     return list(playbooks), list(integrations), list(scripts), list(commands)
 
 
-def get_inputs(playbook):
-    """
-    Gets playbook inputs.
-    :param playbook: the playbook object.
-    :return: list of inputs and list of errors.
+def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
+    """Gets playbook inputs.
+
+    Args:
+        playbook (dict): the playbook object.
+
+    Returns:
+        (tuple): list of inputs and list of errors.
     """
     errors = []
     inputs = []
@@ -170,11 +173,14 @@ def get_outputs(playbook):
     return outputs, errors
 
 
-def get_input_data(input_section):
-    """
-    Gets playbook single input item - support simple and complex input.
-    :param input_section: playbook input item.
-    :return: The input default value(accessor) and the input source(root).
+def get_input_data(input_section: Dict) -> str:
+    """Gets playbook single input item - support simple and complex input.
+
+    Args:
+        input_section (dict): playbook input item.
+
+    Returns:
+        (str): The playbook input item's value.
     """
     default_value = input_section.get('value')
     if isinstance(default_value, str):

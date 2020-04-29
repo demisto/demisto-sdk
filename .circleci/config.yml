@@ -22,6 +22,7 @@ jobs:
             name: pre-commit
             command: |
               . .tox/py37/bin/activate
+              python ./demisto_sdk/commands/lint/flake8_plugins/setup.py install
               pre-commit --version
               pre-commit run -a
               deactivate

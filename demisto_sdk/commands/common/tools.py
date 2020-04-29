@@ -16,12 +16,15 @@ import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK,
-    DEF_DOCKER, DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS, ID_IN_ROOT,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    RELEASE_NOTES_REGEX, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER)
+    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR,
+    CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER,
+    WIDGETS_DIR)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -874,3 +877,84 @@ def _get_file_id(file_type: str, file_content: Dict):
     elif file_type in ID_IN_COMMONFIELDS:
         file_id = file_content.get('commonfields', {}).get('id')
     return file_id
+
+
+def is_path_of_integration_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INTEGRATIONS_DIR
+
+
+def is_path_of_script_directory(path: str) -> bool:
+    """Returns true if directory is script directory false if not.
+    """
+    return os.path.basename(path) == SCRIPTS_DIR
+
+
+def is_path_of_playbook_directory(path: str) -> bool:
+    """Returns true if directory is playbook directory false if not.
+    """
+    return os.path.basename(path) == PLAYBOOKS_DIR
+
+
+def is_path_of_test_playbook_directory(path: str) -> bool:
+    """Returns true if directory is test_playbook directory false if not.
+    """
+    return os.path.basename(path) == TEST_PLAYBOOKS_DIR
+
+
+def is_path_of_report_directory(path: str) -> bool:
+    """Returns true if directory is report directory false if not.
+    """
+    return os.path.basename(path) == REPORTS_DIR
+
+
+def is_path_of_dashboard_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == DASHBOARDS_DIR
+
+
+def is_path_of_widget_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == WIDGETS_DIR
+
+
+def is_path_of_incident_field_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INCIDENT_FIELDS_DIR
+
+
+def is_path_of_incident_type_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INCIDENT_TYPES_DIR
+
+
+def is_path_of_indicator_field_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INDICATOR_FIELDS_DIR
+
+
+def is_path_of_layout_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == LAYOUTS_DIR
+
+
+def is_path_of_classifier_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == CLASSIFIERS_DIR
+
+
+def get_parent_directory_name(path: str) -> str:
+    """
+    Retrieves the parent directory name
+    :param path: path to get the parent dir om
+    :return: parent directory nme
+    """
+    return os.path.basename(os.path.dirname(os.path.abspath(path)))

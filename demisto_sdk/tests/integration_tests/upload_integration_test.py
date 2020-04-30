@@ -105,7 +105,8 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
     assert f"\nError: Given input path: {str(invalid_scripts_dir)} is not valid. " \
            f"Input path should point to one of the following:\n" \
            f"  1. Pack\n" \
-           f"  2. Directory inside a pack for example: Integrations directory\n" \
+           f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or a " \
+           f"Layouts directory\n" \
            f"  3. Valid file that can be imported to Cortex XSOAR manually. " \
            f"For example a playbook: helloWorld.yml" in result.stdout
     assert not result.stderr

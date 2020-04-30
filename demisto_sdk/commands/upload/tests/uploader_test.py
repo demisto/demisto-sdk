@@ -365,6 +365,35 @@ def test_upload_invalid_path(demisto_client_configure):
     assert script_dir_uploader.upload() == 1
 
 
+def test_file_not_supported(demisto_client_configure, mocker):
+    """
+    Given
+        - A not supported (.py) file
+
+    When
+        - Uploading a file
+
+    Then
+        - Ensure uploaded failure message is printed as expected
+    """
+    mocker.patch("builtins.print")
+    file_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
+    uploader = Uploader(input=file_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    expected_failure_message = u'{}{}{}'.format(
+        LOG_COLORS.RED,
+        f"\nError: Given input path: {file_path} is not valid. Input path should point to one of the following:\n"
+        f"  1. Pack\n"
+        f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or a Layouts "
+        f"directory\n"
+        f"  3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook:"
+        f" helloWorld.yml",
+        LOG_COLORS.NATIVE)
+    status_code = uploader.upload()
+    assert status_code == 1
+    assert print.call_args_list[1][0][0] == expected_failure_message
+
+
 def test_parse_error_response_ssl(demisto_client_configure, mocker):
     """
     Given

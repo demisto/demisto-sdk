@@ -155,6 +155,7 @@ class TestLintFilesCollection:
                                docker_engine=True)
         runner._gather_facts(modules={})
         assert runner._facts["lint_files"][0] == integration_path / f'{integration_path.name}.py'
+        assert runner._facts['lint_unittest_files'][0] == integration_path / f'{integration_path.name}_test.py'
 
     def test_lint_files_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter

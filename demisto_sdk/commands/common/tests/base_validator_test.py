@@ -6,8 +6,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (find_test_match,
                                                get_not_registered_tests)
 from demisto_sdk.tests.constants_test import (
-    INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, SCRIPT_WITH_PLAYBOOK,
-    VALID_INTEGRATION_TEST_PATH, VALID_TEST_PLAYBOOK_PATH)
+    INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, VALID_INTEGRATION_TEST_PATH,
+    VALID_TEST_PLAYBOOK_PATH)
 
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, 'integration', True),
@@ -64,24 +64,10 @@ FIND_TEST_MATCH_INPUT = [
         False
     ),
     (
-        {'integrations': ['integration1', 'integration2'], 'playbookID': 'playbook1'},
-        'integration1',
-        'playbook2',
-        'integration',
-        False
-    ),
-    (
         {'playbookID': 'playbook1'},
         'playbook',
         'playbook1',
         'playbook',
-        True
-    ),
-    (
-        {'playbookID': 'playbook1'},
-        'some-script',
-        'playbook1',
-        'script',
         True
     ),
 
@@ -101,7 +87,7 @@ def test_find_test_match(test_config, integration_id, test_playbook_id, expected
         Then
         -  Ensure the method 'find_test_match' return answer accordingly
     """
-    assert find_test_match(test_config, test_playbook_id, integration_id, file_type) == expected
+    assert find_test_match(test_config, file_type, test_playbook_id, integration_id) == expected
 
 
 NOT_REGISTERED_TESTS_INPUT = [
@@ -123,7 +109,7 @@ NOT_REGISTERED_TESTS_INPUT = [
         VALID_INTEGRATION_TEST_PATH,
         'integration',
         [{'integrations': 'PagerDuty v2', 'playbookID': 'Playbook'}],
-        'PagerDuty v2',
+        'PagerDuty v3',
         ['PagerDuty Test']
     ),
     (
@@ -140,21 +126,6 @@ NOT_REGISTERED_TESTS_INPUT = [
         'Account Enrichment',
         ['PagerDuty Test']
     ),
-    (
-        SCRIPT_WITH_PLAYBOOK,
-        'script',
-        [{'integrations': 'TestCreateDuplicates', 'playbookID': 'PagerDuty Test'}],
-        'TestCreateDuplicates',
-        []
-    ),
-    (
-        SCRIPT_WITH_PLAYBOOK,
-        'script',
-        [{'integrations': 'TestCreateDuplicates', 'playbookID': 'other test'}],
-        'TestCreateDuplicates',
-        ['PagerDuty Test']
-    )
-
 ]
 
 

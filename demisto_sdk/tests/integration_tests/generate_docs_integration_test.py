@@ -71,7 +71,7 @@ class TestPlaybooks():
             '-o', tmpdir
         ]
         result = runner.invoke(main, arguments)
-        readme_path = join(tmpdir, 'playbook-Account_Enrichment_README.md')
+        readme_path = join(tmpdir, 'Playbooks.playbook-test_README.md')
 
         assert result.exit_code == 0
         assert 'Start generating playbook documentation...' in result.stdout

@@ -8,7 +8,8 @@ import shutil
 import zipfile
 from typing import List
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
+from demisto_sdk.commands.common.constants import (BASE_PACK,
+                                                   BETA_INTEGRATIONS_DIR,
                                                    CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -21,7 +22,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    PACKS_DIR, PLAYBOOKS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR, BASE_PACK)
+                                                   TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,

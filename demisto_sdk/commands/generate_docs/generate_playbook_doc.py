@@ -1,5 +1,6 @@
 import os
-from typing import Tuple, List, Dict
+from typing import Dict, List, Tuple
+
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (

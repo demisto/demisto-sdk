@@ -450,7 +450,7 @@ class ContentCreator:
 
                     if not os.path.exists(base_pack_doc_path):
                         os.mkdir(base_pack_doc_path)
-                    shutil.copyfile(doc_file, os.path.join(base_pack_doc_path, os.path.basename(doc_file)))
+                    shutil.copy(doc_file, os.path.join(base_pack_doc_path, os.path.basename(doc_file)))
                 else:
                     print_warning(f'{doc_file} was not found and '
                                   'therefore was not added to the content bundle')

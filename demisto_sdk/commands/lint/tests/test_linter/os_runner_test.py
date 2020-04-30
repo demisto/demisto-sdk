@@ -301,7 +301,19 @@ class TestRunLintInHost:
 
     @pytest.mark.usefixtures("linter_obj", "mocker", "lint_files")
     def test_fail_lint_on_only_test_file(self, mocker, linter_obj, lint_files):
-        """there is only a unittest file to lint"""
+        """
+        Given
+        - Only one file was collected for linting.
+        - The collected file is a unittest file.
+        - All linters are enabled.
+
+        When
+        - Running the Linter class's _run_lint_in_host() method.
+
+        Then
+        - Only the flake8 linter should run
+        - The flake8 linter is passed the unittest file
+        """
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {
@@ -336,7 +348,19 @@ class TestRunLintInHost:
 
     @pytest.mark.usefixtures("linter_obj", "mocker", "lint_files")
     def test_fail_lint_on_normal_and_test_file(self, mocker, linter_obj, lint_files):
-        """there is normal file and a unittest file to lint"""
+        """
+        Given
+        - Two files are collected for linting.
+        - One is a normal python code file and the other is a unittest python file.
+        - All linters are enabled.
+
+        When
+        - Running the Linter class's _run_lint_in_host() method.
+
+        Then
+        - The flake8 linter should run on the normal file and the unittest file
+        - The other linters should only run on the normal file
+        """
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {

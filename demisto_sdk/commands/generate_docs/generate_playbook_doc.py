@@ -26,6 +26,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
         playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook)
         inputs, inputs_errors = get_inputs(playbook)
         outputs, outputs_errors = get_outputs(playbook)
+        playbook_filename = os.path.basename(input).replace('.yml', '')
 
         errors.extend(inputs_errors)
         errors.extend(outputs_errors)
@@ -58,7 +59,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
 
         doc_text = '\n'.join(doc)
 
-        save_output(output, 'README.md', doc_text)
+        save_output(output, f'{playbook_filename}_README.md', doc_text)
 
         if errors:
             print_warning('Possible Errors:')

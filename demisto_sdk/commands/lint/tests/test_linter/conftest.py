@@ -41,10 +41,11 @@ def demisto_content() -> Callable:
 
 @pytest.fixture
 def create_integration(mocker) -> Callable:
-    def _create_integration(content_path: Path, path: str = 'Integrations', no_lint_file: bool = False, flake8: bool = False,
-                            bandit: bool = False, mypy: bool = False, vulture: bool = False, pylint: bool = False,
-                            test: bool = False, no_tests: bool = False, yml: bool = False, js_type: bool = False,
-                            type_script_key: bool = False, image: bool = "", image_py_num: float = 3.7) -> Path:
+    def _create_integration(content_path: Path, path: str = 'Integrations', no_lint_file: bool = False,
+                            flake8: bool = False, bandit: bool = False, mypy: bool = False, vulture: bool = False,
+                            pylint: bool = False, test: bool = False, no_tests: bool = False, yml: bool = False,
+                            js_type: bool = False, type_script_key: bool = False, image: bool = "",
+                            image_py_num: float = 3.7, test_reqs: bool = False) -> Path:
         """ Creates tmp content repositry for integration test
 
         Args:
@@ -63,6 +64,7 @@ def create_integration(mocker) -> Callable:
             type_script_key(bool): True for define type in script key.
             image(str): Image to define in yml.
             image_py_num(float): Image python version.
+            test_reqs(bool): True to include a test-requirements.txt file.
 
         Returns:
             Path: Path to tmp integration
@@ -75,6 +77,9 @@ def create_integration(mocker) -> Callable:
             if (ext == '_test.py' and no_tests) or (ext == '.py' and no_lint_file):
                 continue
             (integration_path / f'{integration_name}{ext}').touch()
+        if test_reqs:
+            (integration_path / 'test-requirements.txt').touch()
+            (integration_path / 'test-requirements.txt').write_text('\nmock\npre-commit\npytest')
         if flake8:
             (integration_path / f'{integration_name}.py').write_text('\nfrom typing import *')
         if bandit:

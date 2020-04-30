@@ -231,6 +231,24 @@ class TestRNUpdateUnit:
         result = update_rn.ident_changed_file_type(filepath)
         assert expected_result == result
 
+    def test_ident_changed_file_type_playbooks(self, mocker):
+        """
+            Given:
+                - a filepath of a changed file
+            When:
+                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
+            Then:
+                - return tuple where first value is the pack name, and second is the item type
+        """
+        expected_result = ('VulnDB', 'Playbook')
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'})
+        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Playbooks/VulnDB/VulnDB_playbook.yml')
+        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
+        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
+        result = update_rn.ident_changed_file_type(filepath)
+        assert expected_result == result
+
     def test_ident_changed_file_type_incident_fields(self, mocker):
         """
             Given:
@@ -302,3 +320,32 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
         result = update_rn.ident_changed_file_type(filepath)
         assert expected_result == result
+
+    def test_check_rn_directory(self):
+        """
+            Given:
+                - a filepath for a release notes directory
+            When:
+                - determining if the directory exists
+            Then:
+                - create the directory if it does not exist
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes')
+        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'})
+        update_rn.check_rn_dir(filepath)
+
+    def test_create_markdown(self):
+        """
+            Given:
+                - a filepath for a release notes file and a markdown string
+            When:
+                - creating a new markdown file
+            Then:
+                - create the file or skip if it exists.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'})
+        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
+        md_string = '### Test'
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string)

@@ -24,6 +24,8 @@ class ScriptYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             super().update_yml()
+            self.update_tests()
+            self.update_conf_json('script')
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception:

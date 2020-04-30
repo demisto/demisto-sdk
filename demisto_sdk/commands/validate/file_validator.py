@@ -275,7 +275,9 @@ class FilesValidator:
             modified_files (set): A set of the modified files in the current branch.
         """
         for file_path in modified_files:
-            file_type = find_type(file_path)
+            # modified_files are returning from running git diff.
+            # If modified file was renamed\moved, file_path could be a tuple containing original path and new path
+            file_type = find_type(file_path[1]) if isinstance(file_path, tuple) else find_type(file_path)
             old_file_path = None
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path

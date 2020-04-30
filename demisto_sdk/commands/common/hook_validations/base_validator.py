@@ -3,11 +3,12 @@ import os
 import re
 from abc import abstractmethod
 
-from demisto_sdk.commands.common.constants import (ID_IN_COMMONFIELDS,
-                                                   ID_IN_ROOT, Errors)
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
+from demisto_sdk.commands.common.tools import (_get_file_id,
+                                               get_latest_release_notes_text,
+                                               get_not_registered_tests,
                                                get_release_notes_file_path,
                                                print_error, run_command)
 
@@ -107,14 +108,6 @@ class BaseValidator:
                 return False
         return True
 
-    def _get_file_id(self, file_type):
-        file_id = ''
-        if file_type in ID_IN_ROOT:
-            file_id = self.current_file.get('id')
-        elif file_type in ID_IN_COMMONFIELDS:
-            file_id = self.current_file.get('commonfields', {}).get('id')
-        return file_id
-
     def _is_id_equals_name(self, file_type):
         """Validate that the id of the file equals to the name.
          Args:
@@ -124,7 +117,7 @@ class BaseValidator:
             bool. Whether the file's id is equal to to its name
         """
 
-        file_id = self._get_file_id(file_type)
+        file_id = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
         if file_id != name:
             print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
@@ -164,8 +157,9 @@ class BaseValidator:
             return True
         conf_json_tests = self._load_conf_file()['tests']
 
-        content_item_id = self._get_file_id(self.structure_validator.scheme_name)
-        not_registered_tests = self.get_not_registered_tests(conf_json_tests, content_item_id, test_playbooks)
+        content_item_id = _get_file_id(self.structure_validator.scheme_name, self.current_file)
+        file_type = self.structure_validator.scheme_name
+        not_registered_tests = get_not_registered_tests(conf_json_tests, content_item_id, file_type, test_playbooks)
         if not_registered_tests:
             file_type = self.structure_validator.scheme_name
             if file_type == 'integration':
@@ -182,30 +176,6 @@ class BaseValidator:
             print_error(error_message)
             return False
         return True
-
-    def get_not_registered_tests(self, conf_json_tests: list, content_item_id: str, test_playbooks: list) -> list:
-        """
-        Return all test playbooks that are not configured in conf.json file
-        Args:
-            conf_json_tests: the 'tests' value of 'conf.json file
-            content_item_id: A content item ID, could be a script, an integration or a playbook.
-            test_playbooks: The yml file's list of test playbooks
-
-        Returns:
-            A list of TestPlaybooks not configured
-        """
-        not_registered_tests = []
-        file_type = self.structure_validator.scheme_name
-        for test in test_playbooks:
-            test_registered_in_conf_json = any(
-                test_config for test_config in conf_json_tests if self.find_test_match(test_config,
-                                                                                       test,
-                                                                                       content_item_id,
-                                                                                       file_type)
-            )
-            if not test_registered_in_conf_json:
-                not_registered_tests.append(test)
-        return not_registered_tests
 
     def yml_has_test_key(self, test_playbooks: list, file_type: str) -> bool:
         """
@@ -225,35 +195,6 @@ class BaseValidator:
                 f'please edit the yml file and add the TestPlaybook under the \'tests\' key. '
                 f'If you don\'t want to create a'
                 f' TestPlaybook for this {file_type}, edit the yml file and add  \ntests:\n -  No tests\n lines'
-                f' to it.')
+                f' to it or run \'demisto-sdk format -i {self.file_path}\'')
             return False
         return True
-
-    @staticmethod
-    def find_test_match(test_config: dict, test_playbook_id: str, content_item_id: str, file_type: str) -> bool:
-        """
-        Given a test configuration from conf.json file, this method checks if the configuration is configured for the
-        test playbook with content item.
-        Since in conf.json there could be test configurations with 'integrations' as strings or list of strings
-        the type of test_configurations['integrations'] is checked in first and the match according to the type.
-        If file type is not an integration- will return True if the test_playbook id matches playbookID.
-        Args:
-            file_type: The file type. can be 'integration', 'script', 'playbook'.
-            test_config: A test configuration from conf.json file under 'tests' key.
-            test_playbook_id: A test playbook ID.
-            content_item_id: A content item ID, could be a script, an integration or a playbook.
-
-        Returns:
-            True if the test configuration contains the test playbook and the content item or False if not
-        """
-        if test_playbook_id != test_config.get('playbookID'):
-            return False
-        if file_type != 'integration':
-            return True
-
-        test_integrations = test_config.get('integrations')
-        if isinstance(test_integrations, list):
-            return any(
-                test_integration for test_integration in test_integrations if test_integration == content_item_id)
-        else:
-            return test_integrations == content_item_id

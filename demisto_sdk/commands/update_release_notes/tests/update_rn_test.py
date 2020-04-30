@@ -137,7 +137,7 @@ class TestRNUpdate(unittest.TestCase):
     def test_bump_version_number_revision_overflow(self):
         """
             Given:
-                - a pack name and invalid version
+                - a pack name and a version before an overflow condition
             When:
                 - bumping the version number in the metadata.json
             Then:
@@ -156,7 +156,7 @@ class TestRNUpdate(unittest.TestCase):
     def test_bump_version_number_minor_overflow(self):
         """
             Given:
-                - a pack name and invalid version
+                - a pack name and a version before an overflow condition
             When:
                 - bumping the version number in the metadata.json
             Then:
@@ -175,7 +175,7 @@ class TestRNUpdate(unittest.TestCase):
     def test_bump_version_number_major_overflow(self):
         """
             Given:
-                - a pack name and invalid version
+                - a pack name and a version before an overflow condition
             When:
                 - bumping the version number in the metadata.json
             Then:

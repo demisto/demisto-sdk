@@ -11,7 +11,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
+                                               get_pack_name,
+                                               pack_name_to_path, print_error,
                                                print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
@@ -733,10 +734,12 @@ def update_pack_releasenotes(**kwargs):
     if len(_packs) > 1:
         pack_list = ''.join(f"{p}, " for p in _packs)
         if not is_all:
-            print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}")
             if _pack:
                 pass
             else:
+                print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
+                            f"To update release notes in a specific pack, please use the -p parameter "
+                            f"along with the pack name.")
                 sys.exit(0)
     if len(modified) < 1:
         print_warning('No changes were detected.')
@@ -755,7 +758,8 @@ def update_pack_releasenotes(**kwargs):
     else:
         if _pack:
             if _pack in packs_existing_rn:
-                print_error(f"Release notes are already updated for {_pack}")
+                print_error(f"New release notes file already found for {_pack}. "
+                            f"Please update manually or delete {pack_name_to_path(_pack)}")
             else:
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
                                           pre_release=pre_release)

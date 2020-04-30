@@ -33,7 +33,7 @@ class UpdateRN:
             new_version = self.bump_version_number(self.pre_release)
         except ValueError as e:
             print_error(e)
-            sys.exit(0)
+            sys.exit(1)
         rn_path = self.return_release_notes_path(new_version)
         self.check_rn_dir(rn_path)
         changed_files = {}
@@ -55,7 +55,7 @@ class UpdateRN:
     def return_release_notes_path(self, input_version: str):
         _new_version = input_version.replace('.', '_')
         new_version = _new_version.replace('_prerelease', '')
-        return os.path.join(self.pack_path, 'ReleaseNotes', '{}.md'.format(new_version))
+        return os.path.join(self.pack_path, 'ReleaseNotes', f'{new_version}.md')
 
     @staticmethod
     def get_display_name(file_path):

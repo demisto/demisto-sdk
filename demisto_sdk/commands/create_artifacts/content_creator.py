@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    PACKS_DIR, PLAYBOOKS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR, BASE_PACK)
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
@@ -444,6 +444,13 @@ class ContentCreator:
                     print(f'copying {doc_file} doc to content bundle')
                     shutil.copyfile(doc_file,
                                     os.path.join(self.content_bundle, os.path.basename(doc_file)))
+                    # copy doc to packs bundle
+                    print(f'copying {doc_file} doc to content pack bundle')
+                    base_pack_doc_path = os.path.join(self.packs_bundle, BASE_PACK, "Documentation")
+
+                    if not os.path.exists(base_pack_doc_path):
+                        os.mkdir(base_pack_doc_path)
+                    shutil.copyfile(doc_file, base_pack_doc_path)
                 else:
                     print_warning(f'{doc_file} was not found and '
                                   'therefore was not added to the content bundle')

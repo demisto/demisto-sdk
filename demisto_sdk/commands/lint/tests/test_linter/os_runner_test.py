@@ -298,3 +298,78 @@ class TestRunLintInHost:
         linter_obj._run_bandit.assert_not_called()
         linter_obj._run_mypy.assert_not_called()
         linter_obj._run_vulture.assert_not_called()
+
+    @pytest.mark.usefixtures("linter_obj", "mocker", "lint_files")
+    def test_fail_lint_on_only_test_file(self, mocker, linter_obj, lint_files):
+        """there is only a unittest file to lint"""
+        from demisto_sdk.commands.lint.linter import EXIT_CODES
+        unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
+        mocker.patch.dict(linter_obj._facts, {
+            "images": [["image", "3.7"]],
+            "test": False,
+            "version_two": False,
+            "lint_files": [],
+            "lint_unittest_files": [unittest_path],
+            "additional_requirements": []
+        })
+        mocker.patch.object(linter_obj, '_run_flake8')
+        linter_obj._run_flake8.return_value = (0b1, 'Error')
+        mocker.patch.object(linter_obj, '_run_bandit')
+        linter_obj._run_bandit.return_value = (0b1, 'Error')
+        mocker.patch.object(linter_obj, '_run_mypy')
+        linter_obj._run_mypy.return_value = (0b1, 'Error')
+        mocker.patch.object(linter_obj, '_run_vulture')
+        linter_obj._run_vulture.return_value = (0b1, 'Error')
+        linter_obj._run_lint_in_host(no_flake8=False,
+                                     no_bandit=False,
+                                     no_mypy=False,
+                                     no_vulture=False)
+        linter_obj._run_flake8.assert_called_once_with(
+            py_num=linter_obj._facts["images"][0][1],
+            lint_files=linter_obj._facts["lint_unittest_files"]
+        )
+        assert linter_obj._pkg_lint_status.get("flake8_errors") == 'Error'
+        linter_obj._run_bandit.assert_not_called()
+        linter_obj._run_mypy.assert_not_called()
+        linter_obj._run_vulture.assert_not_called()
+        assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['flake8']
+
+    @pytest.mark.usefixtures("linter_obj", "mocker", "lint_files")
+    def test_fail_lint_on_normal_and_test_file(self, mocker, linter_obj, lint_files):
+        """there is normal file and a unittest file to lint"""
+        from demisto_sdk.commands.lint.linter import EXIT_CODES
+        unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
+        mocker.patch.dict(linter_obj._facts, {
+            "images": [["image", "3.7"]],
+            "test": False,
+            "version_two": False,
+            "lint_files": lint_files,
+            "lint_unittest_files": [unittest_path],
+            "additional_requirements": []
+        })
+        mocker.patch.object(linter_obj, '_run_flake8')
+        linter_obj._run_flake8.return_value = (0b1, 'Error')
+        mocker.patch.object(linter_obj, '_run_bandit')
+        linter_obj._run_bandit.return_value = (0b1, 'Error')
+        mocker.patch.object(linter_obj, '_run_mypy')
+        linter_obj._run_mypy.return_value = (0b1, 'Error')
+        mocker.patch.object(linter_obj, '_run_vulture')
+        linter_obj._run_vulture.return_value = (0b1, 'Error')
+        linter_obj._run_lint_in_host(no_flake8=False,
+                                     no_bandit=False,
+                                     no_mypy=False,
+                                     no_vulture=False)
+        assert linter_obj._run_flake8.call_count == 2
+        linter_obj._run_flake8.assert_any_call(
+            py_num=linter_obj._facts["images"][0][1],
+            lint_files=linter_obj._facts["lint_unittest_files"]
+        )
+        linter_obj._run_flake8.assert_any_call(
+            py_num=linter_obj._facts["images"][0][1],
+            lint_files=linter_obj._facts["lint_files"]
+        )
+        linter_obj._run_bandit.assert_called_once()
+        linter_obj._run_mypy.assert_called_once()
+        linter_obj._run_vulture.assert_called_once()
+        assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['flake8'] + EXIT_CODES['bandit'] + \
+            EXIT_CODES['mypy'] + EXIT_CODES['vulture']

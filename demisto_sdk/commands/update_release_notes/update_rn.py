@@ -26,8 +26,6 @@ class UpdateRN:
         self.pack_files = pack_files
         self.pre_release = pre_release
 
-    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-
     def execute_update(self):
         try:
             new_version = self.bump_version_number(self.pre_release)
@@ -46,8 +44,7 @@ class UpdateRN:
     def _does_pack_metadata_exist(self):
         """Check if pack_metadata.json exists"""
         if not os.path.isfile(self.metadata_path):
-            print_error('"{}" file does not exist, create one in the root of the pack'.format(
-                self.metadata_path))
+            print_error(f'"{self.metadata_path}" file does not exist, create one in the root of the pack')
             return False
 
         return True
@@ -113,8 +110,7 @@ class UpdateRN:
             version[0] = str(int(version[0]) + 1)
             if int(version[0]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
-                                 f"Please verify the currentVersion is correct. If it is, "
-                                 f"then something is very broken.")
+                                 f"Please verify the currentVersion is correct.")
             version[1] = '0'
             version[2] = '0'
             new_version = '.'.join(version)

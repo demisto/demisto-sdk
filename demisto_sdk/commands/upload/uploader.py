@@ -66,9 +66,19 @@ class Uploader:
                 self.layout_uploader(self.path)
             elif file_type == 'dashboard':
                 self.dashboard_uploader(self.path)
-            else:
-                file_type == 'incidentfield'
+            elif file_type == 'incidentfield':
                 self.incident_field_uploader(self.path)
+            else:
+                print_error(
+                    f'\nError: Given input path: {self.path} is not valid. '
+                    f'Input path should point to one of the following:\n'
+                    f'  1. Pack\n'
+                    f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
+                    f'a Layouts directory\n'
+                    f'  3. Valid file that can be imported to Cortex XSOAR manually. '
+                    f'For example a playbook: helloWorld.yml'
+                )
+                self.status_code = 1
 
         elif os.path.isdir(self.path):
             # Input is an integration directory (HelloWorld)
@@ -93,7 +103,8 @@ class Uploader:
                     f'\nError: Given input path: {self.path} is not valid. '
                     f'Input path should point to one of the following:\n'
                     f'  1. Pack\n'
-                    f'  2. Directory inside a pack for example: Integrations directory\n'
+                    f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
+                    f'a Layouts directory\n'
                     f'  3. Valid file that can be imported to Cortex XSOAR manually. '
                     f'For example a playbook: helloWorld.yml'
                 )

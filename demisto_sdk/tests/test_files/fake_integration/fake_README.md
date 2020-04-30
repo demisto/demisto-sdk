@@ -68,7 +68,7 @@ Create a new zoom meeting (scheduled or instant)
 | user | email address or id of user for meeting | Required | 
 | topic | The topic of the meeting | Required | 
 | auto-record-meeting | Record zoom meeting?  | Optional | 
-| start-time | Meeting start time. When using a format like “yyyy-MM-dd’T&#x27;HH:mm:ss&#x27;Z’”, always use GMT time. When using a format like “yyyy-MM-dd’T&#x27;HH:mm:ss”, you should use local time and you will need to specify the time zone. Only used for scheduled meetings and recurring meetings with fixed time. | Optional | 
+| start-time | Meeting start time. When using a format like “yyyy-MM-dd’T'HH:mm:ss'Z’”, always use GMT time. When using a format like “yyyy-MM-dd’T'HH:mm:ss”, you should use local time and you will need to specify the time zone. Only used for scheduled meetings and recurring meetings with fixed time. | Optional | 
 | timezone | Timezone to format start_time. For example, “America/Los_Angeles”. For scheduled meetings only.  | Optional | 
 
 
@@ -106,16 +106,16 @@ Get meeting record and save as file in the warroom
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
-| File.SHA256 | unknown | Attachment&\#x27;s SHA256 | 
-| File.SHA1 | unknown | Attachment&\#x27;s SHA1 | 
-| File.MD5 | unknown | Attachment&\#x27;s MD5 | 
-| File.Name | unknown | Attachment&\#x27;s Name | 
-| File.Info | unknown | Attachment&\#x27;s Info | 
-| File.Size | unknown | Attachment&\#x27;s Size \(In Bytes\) | 
-| File.Extension | unknown | Attachment&\#x27;s Extension | 
-| File.Type | unknown | Attachment&\#x27;s Type | 
-| File.EntryID | unknown | Attachment&\#x27;s EntryID | 
-| File.SSDeep | unknown | Attachment&\#x27;s SSDeep hash | 
+| File.SHA256 | unknown | Attachment's SHA256 | 
+| File.SHA1 | unknown | Attachment's SHA1 | 
+| File.MD5 | unknown | Attachment's MD5 | 
+| File.Name | unknown | Attachment's Name | 
+| File.Info | unknown | Attachment's Info | 
+| File.Size | unknown | Attachment's Size \(In Bytes\) | 
+| File.Extension | unknown | Attachment's Extension | 
+| File.Type | unknown | Attachment's Type | 
+| File.EntryID | unknown | Attachment's EntryID | 
+| File.SSDeep | unknown | Attachment's SSDeep hash | 
 
 
 ##### Command Example

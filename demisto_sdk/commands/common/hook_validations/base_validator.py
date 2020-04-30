@@ -6,9 +6,10 @@ from abc import abstractmethod
 from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (_get_file_id, find_test_match,
+from demisto_sdk.commands.common.tools import (_get_file_id,
                                                get_latest_release_notes_text,
                                                get_release_notes_file_path,
+                                               is_test_config_match,
                                                print_error, run_command)
 
 
@@ -129,7 +130,7 @@ class BaseValidator:
         with open(self.CONF_PATH) as data_file:
             return json.load(data_file)
 
-    def tests_registered_in_conf_json_file(self, test_playbooks: list) -> bool:
+    def are_tests_registered_in_conf_json_file(self, test_playbooks: list) -> bool:
         """
         Checking if test playbooks are configured in 'conf.json' unless 'No tests' is in test playbooks.
         If 'No tests' is not in test playbooks and there is a test playbook that is not configured: Will print's
@@ -149,31 +150,35 @@ class BaseValidator:
         content_item_id = _get_file_id(self.structure_validator.scheme_name, self.current_file)
         file_type = self.structure_validator.scheme_name
         # Test playbook case
+
         if 'TestPlaybooks' in self.file_path and file_type == 'playbook':
             is_configured_test = any(test_config for test_config in conf_json_tests if
-                                     find_test_match(test_config, file_type, test_playbook_id=content_item_id))
-            missing_test_configurations = json.dumps([
-                {'playbookID': content_item_id}
-            ], indent=4).strip('[]')
+                                     is_test_config_match(test_config, test_playbook_id=content_item_id))
             if not is_configured_test:
+                missing_test_playbook_configurations = json.dumps({'playbookID': content_item_id}, indent=4)
+                missing_integration_configurations = json.dumps(
+                    {'integrations': '<integration ID>', 'playbookID': content_item_id},
+                    indent=4)
                 error_message = \
                     f'The TestPlaybook {content_item_id} is not registered in {self.CONF_PATH} file.\n' \
-                    f'Please add\n{missing_test_configurations}\nto {self.CONF_PATH} path under \'tests\' key.'
+                    f'Please add\n{missing_test_playbook_configurations}\n' \
+                    f'or if this test playbook is for an integration\n{missing_integration_configurations}\n' \
+                    f'to {self.CONF_PATH} path under \'tests\' key.'
                 print_error(error_message)
                 return False
+
         # Integration case
         elif file_type == 'integration':
             is_configured_test = any(
-                test_config for test_config in conf_json_tests if find_test_match(test_config,
-                                                                                  file_type,
-                                                                                  integration_id=content_item_id))
-            missing_test_configurations = json.dumps([
-                {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'}
-            ], indent=4).strip('[]')
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       integration_id=content_item_id))
             if not is_configured_test:
+                missing_test_playbook_configurations = json.dumps(
+                    {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
+                    indent=4)
                 error_message = \
                     f'The following TestPlaybooks are not registered in {self.CONF_PATH} file.\n' \
-                    f'Please add\n{missing_test_configurations}\nto {self.CONF_PATH} path under \'tests\' key.'
+                    f'Please add\n{missing_test_playbook_configurations}\nto {self.CONF_PATH} path under \'tests\' key.'
                 print_error(error_message)
                 return False
         return True

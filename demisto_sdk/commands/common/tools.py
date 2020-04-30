@@ -807,7 +807,7 @@ def get_depth(data: Any) -> int:
     return 0
 
 
-def find_test_match(test_config: dict, file_type: str, test_playbook_id: str = '', integration_id: str = '') -> bool:
+def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
     test playbook or for integration_id.
@@ -818,22 +818,30 @@ def find_test_match(test_config: dict, file_type: str, test_playbook_id: str = '
         test_config: A test configuration from conf.json file under 'tests' key.
         file_type: The file type. can be 'integration', 'playbook'.
         test_playbook_id: A test playbook ID.
-        integration_id: An integration ID. Only one of test_playbook_id, integration_id must be given
-
+        integration_id: An integration ID.
+    If both test_playbook_id and integration_id are given will look for a match of both, else will look for match
+    of either test playbook id or integration id
     Returns:
         True if the test configuration contains the test playbook and the content item or False if not
     """
-    # If playbook
-    if file_type == 'playbook':
-        return test_playbook_id == test_config.get('playbookID')
-
-    # If integration
+    test_playbook_match = test_playbook_id == test_config.get('playbookID')
     test_integrations = test_config.get('integrations')
     if isinstance(test_integrations, list):
-        return any(
+        integration_match = any(
             test_integration for test_integration in test_integrations if test_integration == integration_id)
     else:
-        return test_integrations == integration_id
+        integration_match = test_integrations == integration_id
+    # If both playbook id and integration id are given
+    if integration_id and test_playbook_id:
+        return test_playbook_match and integration_match
+
+    # If only integration id is given
+    if integration_id:
+        return integration_match
+
+    # If only test playbook is given
+    if test_playbook_id:
+        return test_playbook_match
 
 
 def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list) -> list:
@@ -850,12 +858,16 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     """
     not_registered_tests = []
     for test in test_playbooks:
-        test_registered_in_conf_json = any(
-            test_config for test_config in conf_json_tests if find_test_match(test_config,
-                                                                              file_type,
-                                                                              test_playbook_id=test,
-                                                                              integration_id=content_item_id)
-        )
+        if file_type == 'playbook':
+            test_registered_in_conf_json = any(
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       test_playbook_id=test)
+            )
+        else:
+            test_registered_in_conf_json = any(
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       integration_id=content_item_id)
+            )
         if not test_registered_in_conf_json:
             not_registered_tests.append(test)
     return not_registered_tests

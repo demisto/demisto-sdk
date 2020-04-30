@@ -91,7 +91,7 @@ class IntegrationValidator(BaseValidator):
         """
         file_type = self.structure_validator.scheme_name
         tests = self.current_file.get('tests', [])
-        if not self.tests_registered_in_conf_json_file(tests):
+        if not self.are_tests_registered_in_conf_json_file(tests):
             return self.yml_has_test_key(tests, file_type)
         return True
 

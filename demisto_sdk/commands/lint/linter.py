@@ -204,7 +204,7 @@ class Linter:
                 test_requirements = self._pack_abs_dir / 'test-requirements.txt'
                 if test_requirements.exists():
                     try:
-                        additional_req = test_requirements.read_text(encoding='utf-8')
+                        additional_req = test_requirements.read_text(encoding='utf-8').strip().split('\n')
                         self._facts["additional_requirements"].extend(additional_req)
                         logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
                     except (FileNotFoundError, IOError):

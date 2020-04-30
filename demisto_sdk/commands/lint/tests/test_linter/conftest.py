@@ -42,7 +42,7 @@ def demisto_content() -> Callable:
 @pytest.fixture
 def create_integration(mocker) -> Callable:
     def _create_integration(content_path: Path, path: str = 'Integrations', no_lint_file: bool = False,
-                            flake8: bool = False ,bandit: bool = False, mypy: bool = False, vulture: bool = False,
+                            flake8: bool = False, bandit: bool = False, mypy: bool = False, vulture: bool = False,
                             pylint: bool = False, test: bool = False, no_tests: bool = False, yml: bool = False,
                             js_type: bool = False, type_script_key: bool = False, image: bool = "",
                             image_py_num: float = 3.7, test_reqs: bool = False) -> Path:

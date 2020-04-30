@@ -35,7 +35,7 @@ class TestPlaybooks():
             '-o', tmpdir
         ]
         result = runner.invoke(main, arguments)
-        readme_path = join(tmpdir, 'README.md')
+        readme_path = join(tmpdir, 'playbook-Test_playbook_README.md')
 
         assert result.exit_code == 0
         assert 'Start generating playbook documentation...' in result.stdout
@@ -71,7 +71,7 @@ class TestPlaybooks():
             '-o', tmpdir
         ]
         result = runner.invoke(main, arguments)
-        readme_path = join(tmpdir, 'README.md')
+        readme_path = join(tmpdir, 'Playbooks.playbook-test_README.md')
 
         assert result.exit_code == 0
         assert 'Start generating playbook documentation...' in result.stdout

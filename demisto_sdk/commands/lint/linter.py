@@ -62,6 +62,7 @@ class Linter:
             "env_vars": {},
             "test": False,
             "lint_files": [],
+            "lint_unittest_files": [],
             "additional_requirements": [],
             "docker_engine": docker_engine
         }
@@ -204,12 +205,12 @@ class Linter:
                 if test_requirements.exists():
                     try:
                         additional_req = test_requirements.read_text(encoding='utf-8')
-                        self._facts["additinal_requirements"].extend(additional_req)
+                        self._facts["additional_requirements"].extend(additional_req)
                         logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
                     except (FileNotFoundError, IOError):
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
             # Get lint files
-            lint_files = set(self._pack_abs_dir.glob(["*.py", "!*_test.py", "!test_*.py", "!__init__.py", "!*.tmp"],
+            lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
@@ -230,7 +231,18 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
+        self._split_lint_files()
         return False
+
+    def _split_lint_files(self):
+        """ Remove unit test files from _facts['lint_files'] and put into their own list _facts['lint_unittest_files']
+        This is because not all lintings should be done on unittest files.
+        """
+        # split unittest files into separate key since shouldn't run mypy on on them
+        for lint_file in self._facts["lint_files"]:
+            if lint_file.name.startswith('test') or lint_file.name.endswith('test.py'):
+                lint_unittest_file = self._facts["lint_files"].pop(self._facts["lint_files"].index(lint_file))
+                self._facts['lint_unittest_files'].append(lint_unittest_file)
 
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
         """ Run lint check on host
@@ -256,6 +268,15 @@ class Linter:
                 elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
+                if exit_code:
+                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                    self._pkg_lint_status[f"{lint_check}_errors"] = output
+        if self._facts['lint_unittest_files'] and not no_flake8:
+            for lint_check in ["flake8"]:
+                exit_code: int = SUCCESS
+                output: str = ""
+                exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                                                     lint_files=self._facts["lint_unittest_files"])
                 if exit_code:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output

@@ -1,10 +1,11 @@
 import os
+from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     HEADER_TYPE, generate_list_section, generate_numbered_section,
-    generate_section, generate_table_section, save_output, stringEscapeMD)
+    generate_section, generate_table_section, save_output, string_escape_md)
 
 
 def generate_playbook_doc(input, output: str = None, permissions: str = None, limitations: str = None,
@@ -25,6 +26,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
         playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook)
         inputs, inputs_errors = get_inputs(playbook)
         outputs, outputs_errors = get_outputs(playbook)
+        playbook_filename = os.path.basename(input).replace('.yml', '')
 
         errors.extend(inputs_errors)
         errors.extend(outputs_errors)
@@ -57,7 +59,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
 
         doc_text = '\n'.join(doc)
 
-        save_output(output, 'README.md', doc_text)
+        save_output(output, f'{playbook_filename}_README.md', doc_text)
 
         if errors:
             print_warning('Possible Errors:')
@@ -102,11 +104,14 @@ def get_playbook_dependencies(playbook):
     return list(playbooks), list(integrations), list(scripts), list(commands)
 
 
-def get_inputs(playbook):
-    """
-    Gets playbook inputs.
-    :param playbook: the playbook object.
-    :return: list of inputs and list of errors.
+def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
+    """Gets playbook inputs.
+
+    Args:
+        playbook (dict): the playbook object.
+
+    Returns:
+        (tuple): list of inputs and list of errors.
     """
     errors = []
     inputs = []
@@ -115,18 +120,27 @@ def get_inputs(playbook):
         return {}, []
 
     for _input in playbook.get('inputs'):
-        if not _input.get('description'):
-            errors.append(
-                'Error! You are missing description in playbook input {}'.format(_input.get('key')))
-
+        name = _input.get('key')
+        description = string_escape_md(_input.get('description', ''))
         required_status = 'Required' if _input.get('required') else 'Optional'
-        _value, source = get_input_data(_input)
+        _value = get_input_data(_input)
+
+        playbook_input_query = _input.get('playbookInputQuery')
+        # a playbook input section whose 'key' key is empty and whose 'playbookInputQuery' key is a dict
+        # is an Indicators Query input section
+        if not name and isinstance(playbook_input_query, dict):
+            name = 'Indicator Query'
+            _value = playbook_input_query.get('query')
+            default_description = 'Indicators matching the indicator query will be used as playbook input'
+            description = description if description else default_description
+
+        if not description:
+            errors.append('Error! You are missing description in playbook input {}'.format(name))
 
         inputs.append({
-            'Name': _input.get('key'),
-            'Description': stringEscapeMD(_input.get('description', '')),
+            'Name': name,
+            'Description': description,
             'Default Value': _value,
-            'Source': source,
             'Required': required_status,
         })
 
@@ -156,27 +170,30 @@ def get_outputs(playbook):
 
         outputs.append({
             'Path': output.get('contextPath'),
-            'Description': stringEscapeMD(output.get('description', '')),
+            'Description': string_escape_md(output.get('description', '')),
             'Type': output_type
         })
 
     return outputs, errors
 
 
-def get_input_data(input_section):
-    """
-    Gets playbook single input item - support simple and complex input.
-    :param input_section: playbook input item.
-    :return: The input default value(accessor) and the input source(root).
+def get_input_data(input_section: Dict) -> str:
+    """Gets playbook single input item - support simple and complex input.
+
+    Args:
+        input_section (dict): playbook input item.
+
+    Returns:
+        (str): The playbook input item's value.
     """
     default_value = input_section.get('value')
     if isinstance(default_value, str):
-        return default_value, ''
+        return default_value
 
     if default_value:
-        complex = default_value.get('complex')
-        if complex:
-            return complex.get('accessor'), complex.get('root')
-        return default_value.get('simple'), ''
+        complex_field = default_value.get('complex')
+        if complex_field:
+            return f"{complex_field.get('root')}.{complex_field.get('accessor')}"
+        return default_value.get('simple')
 
-    return '', ''
+    return ''

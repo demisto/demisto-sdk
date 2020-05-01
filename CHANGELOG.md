@@ -1,4 +1,8 @@
 # Changelog
+* Improved the *upload* command to support the upload of all the content entities within a pack.
+* The *upload* command now supports the improved pack file structure.*
+* Added an interactive option to format integrations, scripts and playbooks with No TestPlaybooks configured.
+* Added an interactive option to configure *conf.json* file with missing test playbooks for integrations, scripts and playbooks
 * Added *download* command to download custom content from Demisto instance to the local content repository.
 * Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
 * Improved 'validate' help and documentation description

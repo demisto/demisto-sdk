@@ -16,7 +16,10 @@
     "deprecated": false,
     "certification": "certified",
     "useCases": [],
-    "keywords": ["AWS", "Feed"],
+    "keywords": [
+        "AWS",
+        "Feed"
+    ],
     "price": 0,
     "dependencies": {
         "Base": {
@@ -25,6 +28,6 @@
             "name": "Base",
             "certification": "certified",
             "author": "Cortex XSOAR"
-          }
+        }
     }
 }

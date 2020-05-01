@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.common import (
     build_example_dict, generate_list_section, generate_numbered_section,
-    generate_section, generate_table_section, save_output, stringEscapeMD)
+    generate_section, generate_table_section, save_output, string_escape_md)
 
 
 def generate_script_doc(input, examples, output: str = None, permissions: str = None,
@@ -145,7 +145,7 @@ def get_inputs(script):
 
         inputs.append({
             'Argument Name': arg.get('name'),
-            'Description': stringEscapeMD(arg.get('description', ''))
+            'Description': string_escape_md(arg.get('description', ''))
         })
 
     return inputs, errors
@@ -170,7 +170,7 @@ def get_outputs(script):
 
         outputs.append({
             'Path': arg.get('contextPath'),
-            'Description': stringEscapeMD(arg.get('description', '')),
+            'Description': string_escape_md(arg.get('description', '')),
             'Type': arg.get('type', 'Unknown')
         })
 

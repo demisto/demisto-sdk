@@ -192,10 +192,10 @@ class Initiator:
         metadata = {
             'name': '## FILL OUT MANUALLY ##',
             'description': '## FILL OUT MANUALLY ##',
-            'support': 'demisto',
+            'support': 'xsoar',
             'currentVersion': PACK_INITIAL_VERSION,
-            'author': 'demisto',
-            'url': 'https://www.demisto.com',
+            'author': 'Cortex XSOAR',
+            'url': 'https://www.paloaltonetworks.com/cortex',
             'email': '',
             'categories': [],
             'tags': [],

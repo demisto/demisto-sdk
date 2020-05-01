@@ -43,6 +43,18 @@ class PlaybookValidator(BaseValidator):
 
         return answers
 
+    def are_tests_configured(self) -> bool:
+        """
+        Checks if the playbook has a TestPlaybook and if the TestPlaybook is configured in conf.json
+        And prints an error message accordingly
+        """
+        if 'TestPlaybooks' in self.file_path:
+            return True
+
+        file_type = self.structure_validator.scheme_name
+        tests = self.current_file.get('tests', [])
+        return self.yml_has_test_key(tests, file_type)
+
     def is_id_equals_name(self):  # type: () -> bool
         """Check whether the playbook ID is equal to its name.
 

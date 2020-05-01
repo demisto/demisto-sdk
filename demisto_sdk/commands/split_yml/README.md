@@ -1,11 +1,11 @@
 ## split-yml
-Split a Demisto downloaded yml file(Of an integration or a script) and split it into multiple files so it will be in
+Split a Demisto downloaded yml file (of an integration or a script) and split it into multiple files so it will be in
 the package format - https://xsoar.pan.dev/docs/integrations/package-dir
 
 **Use-Cases**
-Our work in the Content repository is done in the package format, which enables us to preform more validations on our
+Our work in the Content repository is done in a directory format, which enables us to preform more validations on our
 code.
-In turn those validation helps us maintain a more stable code base.
+In turn those validation help us maintain a more stable code base. For more details about [see](https://xsoar.pan.dev/docs/integrations/package-dir).
 
 **Arguments**:
 * **-i, --input**

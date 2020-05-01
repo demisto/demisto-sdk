@@ -216,9 +216,9 @@ def generate_commands_section(
 def generate_single_command_section(cmd: dict, example_dict: dict, command_permissions_dict):
     cmd_example = example_dict.get(cmd['name'])
     if command_permissions_dict:
-        cmd_permission_example = ['##### Required Permissions', command_permissions_dict.get(cmd['name'])]
+        cmd_permission_example = ['#### Required Permissions', command_permissions_dict.get(cmd['name'])]
     elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
-        cmd_permission_example = ['##### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
+        cmd_permission_example = ['#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
     else:  # no permissions for this command
         cmd_permission_example = ['', '']
 
@@ -229,9 +229,9 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         cmd.get('description', ' '),
         cmd_permission_example[0],
         cmd_permission_example[1],
-        '##### Base Command',
+        '#### Base Command',
         '', '`{}`'.format(cmd['name']),
-        '##### Input',
+        '#### Input',
         ''
     ]
 
@@ -256,7 +256,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     # Context output
     section.extend([
         '',
-        '##### Context Output',
+        '#### Context Output',
         '',
     ])
     outputs = cmd.get('outputs')
@@ -297,21 +297,21 @@ def generate_command_example(cmd, cmd_example=None):
 
     example = [
         '',
-        '##### Command Example',
+        '#### Command Example',
         '```{}```'.format(cmd_example),
         '',
     ]
     if context_example:
         example.extend([
-            '##### Context Example',
+            '#### Context Example',
             '```',
             '{}'.format(context_example),
             '```',
             '',
         ])
     example.extend([
-        '##### Human Readable Output',
-        '{}'.format(md_example),
+        '#### Human Readable Output',
+        '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
         '',
     ])
 

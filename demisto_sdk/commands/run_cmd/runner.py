@@ -45,6 +45,7 @@ class Runner:
         try:
             log_ids = self._run_query(playground_id)
         except DemistoRunTimeError as err:
+            log_ids = None
             print_error(str(err))
 
         if self.debug:

@@ -8,32 +8,31 @@ from ruamel.yaml import YAML
 
 
 class ContentItemType:
-    INTEGRATION = 'integration'
-    SCRIPT = 'script'
+    INTEGRATION = "integration"
+    SCRIPT = "script"
 
 
 class Playbook:
-    def __init__(self, name, fromversion='4.5.0'):
+    def __init__(self, name, fromversion="4.5.0"):
         self.name = name
         self.fromversion = fromversion
 
         self.tasks = {
-            '0': create_start_task(),
-            '1': create_automation_task(1, 'DeleteContext', ContentItemType.SCRIPT, {'all': 'yes'})
+            "0": create_start_task(),
+            "1": create_automation_task(
+                1, "DeleteContext", ContentItemType.SCRIPT, {"all": "yes"}
+            ),
         }
         self.task_counter = len(self.tasks)
 
-        self.view = json.dumps({
-            "linkLabelsPosition": {},
-            "paper": {
-                "dimensions": {
-                    "height": 200,
-                    "width": 380,
-                    "x": 50,
-                    "y": 50
-                }
+        self.view = json.dumps(
+            {
+                "linkLabelsPosition": {},
+                "paper": {
+                    "dimensions": {"height": 200, "width": 380, "x": 50, "y": 50}
+                },
             }
-        })
+        )
 
     def add_task(self, task):
         self.tasks[str(self.task_counter)] = task
@@ -41,46 +40,37 @@ class Playbook:
 
     def to_dict(self):
         return {
-            'id': self.name,
-            'name': self.name,
-            'version': -1,
-            'fromversion': self.fromversion,
-            'starttaskid': "0",
-            'tasks': self.tasks,
-            'view': self.view,
-            'inputs': [],
-            'outputs': []
+            "id": self.name,
+            "name": self.name,
+            "version": -1,
+            "fromversion": self.fromversion,
+            "starttaskid": "0",
+            "tasks": self.tasks,
+            "view": self.view,
+            "inputs": [],
+            "outputs": [],
         }
 
 
 def create_start_task():
     return {
-        'id': "0",
-        'taskid': '0',
-        'type': 'start',
-        'task': {
-            'id': '0',
-            'version': -1,
-            'name': "",
-            'iscommand': False,
-            'brand': "",
-            'description': ""
+        "id": "0",
+        "taskid": "0",
+        "type": "start",
+        "task": {
+            "id": "0",
+            "version": -1,
+            "name": "",
+            "iscommand": False,
+            "brand": "",
+            "description": "",
         },
-        'nexttasks': {
-            '#none#': [
-                "1"
-            ]
-        },
-        'separatecontext': False,
-        'view': json.dumps({
-            "position": {
-                "x": 50,
-                "y": 50
-            }
-        }),
-        'note': False,
-        'timertriggers': [],
-        'ignoreworker': False
+        "nexttasks": {"#none#": ["1"]},
+        "separatecontext": False,
+        "view": json.dumps({"position": {"x": 50, "y": 50}}),
+        "note": False,
+        "timertriggers": [],
+        "ignoreworker": False,
     }
 
 
@@ -96,29 +86,24 @@ def create_end_task(id):
             "type": "title",
             "iscommand": False,
             "brand": "",
-            'description': ""
+            "description": "",
         },
         "separatecontext": False,
-        "view": json.dumps({
-            'position': {
-                'x': 50,
-                'y': id * 200
-            }
-        }),
+        "view": json.dumps({"position": {"x": 50, "y": id * 200}}),
         "note": False,
         "timertriggers": [],
         "ignoreworker": False,
-        "skipunavailable": False
+        "skipunavailable": False,
     }
 
 
 def create_automation_task(_id, automation_name, item_type: ContentItemType, args=None):
     scriptargs = {}  # type:Dict
     if args and len(args) > 0:
-        scriptargs['all'] = {}
+        scriptargs["all"] = {}
 
         for arg, val in args.items():
-            scriptargs['all']['simple'] = val
+            scriptargs["all"]["simple"] = val
 
     if item_type == ContentItemType.INTEGRATION:
         script_name = f"|||{automation_name}"
@@ -137,25 +122,16 @@ def create_automation_task(_id, automation_name, item_type: ContentItemType, arg
             "script": script_name,
             "type": "regular",
             "iscommand": True,
-            "brand": ""
+            "brand": "",
         },
-        "nexttasks": {
-            "#none#": [
-                str(_id + 1)
-            ]
-        },
+        "nexttasks": {"#none#": [str(_id + 1)]},
         "scriptarguments": scriptargs,
         "separatecontext": False,
-        "view": json.dumps({
-            'position': {
-                'x': 50,
-                'y': _id * 200
-            }
-        }),
+        "view": json.dumps({"position": {"x": 50, "y": _id * 200}}),
         "note": False,
         "timertriggers": [],
         "ignoreworker": False,
-        "skipunavailable": False
+        "skipunavailable": False,
     }
 
 
@@ -170,26 +146,17 @@ def create_verify_outputs_task(id, conditions=[]):
             "name": "Verify Outputs",
             "type": "condition",
             "iscommand": False,
-            'description': '',
-            "brand": ""
+            "description": "",
+            "brand": "",
         },
-        "nexttasks": {
-            "yes": [
-                str(id + 1)
-            ]
-        },
+        "nexttasks": {"yes": [str(id + 1)]},
         "separatecontext": False,
         "conditions": conditions,
-        "view": json.dumps({
-            'position': {
-                'x': 50,
-                'y': id * 200
-            }
-        }),
+        "view": json.dumps({"position": {"x": 50, "y": id * 200}}),
         "note": False,
         "timertriggers": [],
         "ignoreworker": False,
-        "skipunavailable": False
+        "skipunavailable": False,
     }
 
 
@@ -204,24 +171,19 @@ def outputs_to_condition(outputs):
         list of conditions generated from outputs
     """
     conditions = []
-    condition = {
-        'label': 'yes',
-        'condition': []
-    }
+    condition = {"label": "yes", "condition": []}
 
     for output in outputs:
-        context_output_path = output.get('contextPath')
+        context_output_path = output.get("contextPath")
 
-        condition['condition'].append(
+        condition["condition"].append(
             [
                 {
                     "operator": "isNotEmpty",
                     "left": {
-                        "value": {
-                            "simple": context_output_path
-                        },
-                        "iscontext": True
-                    }
+                        "value": {"simple": context_output_path},
+                        "iscontext": True,
+                    },
                 }
             ]
         )
@@ -231,7 +193,9 @@ def outputs_to_condition(outputs):
     return conditions
 
 
-def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs):
+def create_automation_task_and_verify_outputs_task(
+    test_playbook, command, item_type, no_outputs
+):
     """
     create automation task from command and verify outputs task from automation(script/integration command) outputs.
     both tasks added to test playbook. both of this tasks linked to each other
@@ -245,32 +209,45 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
     Returns:
         test_playbook is updated
     """
-    command_name = command.get('name')
-    outputs = command.get('outputs', [])
+    command_name = command.get("name")
+    outputs = command.get("outputs", [])
     conditions = outputs_to_condition(outputs)
 
-    task_command = create_automation_task(test_playbook.task_counter, command_name, item_type=item_type)
+    task_command = create_automation_task(
+        test_playbook.task_counter, command_name, item_type=item_type
+    )
     test_playbook.add_task(task_command)
 
     if len(outputs) > 0:
         # add verify output task only if automation have outputs
         if no_outputs:
-            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
+            task_verify_outputs = create_verify_outputs_task(
+                test_playbook.task_counter, []
+            )
         else:
-            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
+            task_verify_outputs = create_verify_outputs_task(
+                test_playbook.task_counter, conditions
+            )
 
         test_playbook.add_task(task_verify_outputs)
 
 
 class PlaybookTestsGenerator:
-    def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
-                 verbose: bool = False):
+    def __init__(
+        self,
+        input: str,
+        output: str,
+        name: str,
+        file_type: str,
+        no_outputs: bool = False,
+        verbose: bool = False,
+    ):
         self.integration_yml_path = input
         self.output = output
         if output:
-            self.test_playbook_yml_path = os.path.join(output, name + '.yml')
+            self.test_playbook_yml_path = os.path.join(output, name + ".yml")
         else:
-            self.test_playbook_yml_path = f'{name}.yml'
+            self.test_playbook_yml_path = f"{name}.yml"
 
         self.file_type = file_type
         self.name = name
@@ -293,16 +270,16 @@ class PlaybookTestsGenerator:
         """
         if self.output:
             if not os.path.isdir(self.output):
-                print_error(f'Directory not exist: {self.output}')
+                print_error(f"Directory not exist: {self.output}")
                 return
 
         ryaml = YAML()
         ryaml.preserve_quotes = True
         try:
-            with open(self.integration_yml_path, 'r') as yf:
+            with open(self.integration_yml_path, "r") as yf:
                 yaml_obj = ryaml.load(yf)
 
-                yaml_obj.get('name')
+                yaml_obj.get("name")
         except FileNotFoundError as ex:
             if self.verbose:
                 raise
@@ -310,21 +287,20 @@ class PlaybookTestsGenerator:
             print_error(str(ex))
             return
         except AttributeError:
-            print_error(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file')
+            print_error(
+                f"Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file"
+            )
             return
 
-        test_playbook = Playbook(
-            name=self.name,
-            fromversion='4.5.0'
-        )
+        test_playbook = Playbook(name=self.name, fromversion="4.5.0")
 
         if self.file_type == ContentItemType.INTEGRATION:
-            for command in yaml_obj.get('script').get('commands'):
+            for command in yaml_obj.get("script").get("commands"):
                 create_automation_task_and_verify_outputs_task(
                     test_playbook=test_playbook,
                     command=command,
                     item_type=ContentItemType.INTEGRATION,
-                    no_outputs=self.no_outputs
+                    no_outputs=self.no_outputs,
                 )
 
         elif self.file_type == ContentItemType.SCRIPT:
@@ -332,12 +308,15 @@ class PlaybookTestsGenerator:
                 test_playbook=test_playbook,
                 command=yaml_obj,
                 item_type=ContentItemType.INTEGRATION,
-                no_outputs=self.no_outputs
+                no_outputs=self.no_outputs,
             )
 
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
 
-        with open(self.test_playbook_yml_path, 'w') as yf:
+        with open(self.test_playbook_yml_path, "w") as yf:
             ryaml.dump(test_playbook.to_dict(), yf)
 
-            print_color(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}', LOG_COLORS.GREEN)
+            print_color(
+                f"Test playbook yml was saved at:\n{self.test_playbook_yml_path}",
+                LOG_COLORS.GREEN,
+            )

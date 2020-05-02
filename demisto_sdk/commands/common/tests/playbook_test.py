@@ -10,10 +10,10 @@ from mock import patch
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
-    with patch.object(StructureValidator, '__init__', lambda a, b: None):
+    with patch.object(StructureValidator, "__init__", lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
-        structure.scheme_name = 'playbook'
+        structure.scheme_name = "playbook"
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
@@ -23,100 +23,168 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 class TestPlaybookValidator:
     ROLENAME_NOT_EXIST = {"id": "Intezer - scan host", "version": -1}
     ROLENAME_EXIST_EMPTY = {"id": "Intezer - scan host", "version": -1, "rolename": []}
-    ROLENAME_EXIST_NON_EMPTY = {"id": "Intezer - scan host", "version": -1, "rolename": ["Administrator"]}
+    ROLENAME_EXIST_NON_EMPTY = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "rolename": ["Administrator"],
+    }
     IS_NO_ROLENAME_INPUTS = [
         (ROLENAME_NOT_EXIST, True),
         (ROLENAME_EXIST_EMPTY, True),
-        (ROLENAME_EXIST_NON_EMPTY, False)
+        (ROLENAME_EXIST_NON_EMPTY, False),
     ]
     CONDITION_NOT_EXIST_1 = ROLENAME_NOT_EXIST
-    CONDITION_NOT_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "tasks": {'1': {'type': 'not_condition'}}}
-    CONDITION_EXIST_EMPTY_1 = {"id": "Intezer - scan host", "version": -1,
-                               "tasks": {
-                                   '1': {'type': 'not_condition'},
-                                   '2': {'type': 'condition'}}
-                               }
-    CONDITION_EXIST_EMPTY_2 = {"id": "Intezer - scan host", "version": -1,
-                               "tasks":
-                                   {'1': {'type': 'condition',
-                                          'nexttasks': {}}}
-                               }
-    CONDITION_EXIST_PARTIAL_1 = {"id": "Intezer - scan host", "version": -1,
-                                 "tasks":
-                                     {'1': {'type': 'condition',
-                                            'conditions': [],
-                                            'nexttasks': {}}}
-                                 }
-    CONDITION_EXIST_PARTIAL_2 = {"id": "Intezer - scan host", "version": -1,
-                                 "tasks":
-                                     {'1':
-                                       {'type': 'condition',
-                                        'conditions': [{'label': 'yes'}],
-                                        'nexttasks': {'#default#': ['2']}}}
-                                 }
-    CONDITION_EXIST_PARTIAL_3 = {"id": "Intezer - scan host", "version": -1,
-                                 "tasks":
-                                     {'1': {'type': 'condition',
-                                            'conditions': [{'label': 'yes'}],
-                                            'nexttasks': {'#default#': []}}}
-                                 }
-    CONDITION_EXIST_FULL_NO_TASK_ID = {"id": "Intezer - scan host", "version": -1,
-                                       "tasks":
-                                           {'1': {'type': 'condition',
-                                                  'conditions': [{'label': 'yes'}],
-                                                  'nexttasks': {'#default#': []}}}
-                                       }
-    CONDITION_EXIST_FULL = {"id": "Intezer - scan host", "version": -1,
-                            "tasks":
-                                {'1': {'type': 'condition',
-                                       'conditions': [{'label': 'yes'}],
-                                       'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
-    CONDITION_EXIST_FULL_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
-                                     "tasks":
-                                     {'1': {'type': 'condition',
-                                            'conditions': [{'label': 'YES'}],
-                                            'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
-    CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS = {"id": "Intezer - scan host", "version": -1,
-                                            "tasks":
-                                            {'1': {'type': 'condition',
-                                                   'message': {},
-                                                   'nexttasks': {}}}}
-    CONDITIONAL_ASK_EXISTS_NO_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                          "tasks":
-                                              {'1': {'type': 'condition',
-                                                     'message': {'replyOptions': ['yes']},
-                                                     'nexttasks': {}}}
-                                          }
-    CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                                 "tasks":
-                                                     {'1': {'type': 'condition',
-                                                            'message': {'replyOptions': ['yes']},
-                                                            'nexttasks': {'#default#': []}}}}
-    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                            "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'message': {'replyOptions': ['yes']},
-                                                       'nexttasks': {'yes': ['1']}}}
-                                            }
-    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
-                                                     "tasks":
-                                                     {'1': {'type': 'condition',
-                                                            'message': {'replyOptions': ['yes']},
-                                                            'nexttasks': {'YES': ['1']}}}}
-    CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                                "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'scriptName': 'testScript'}}}
-    CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                            "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'scriptName': 'testScript',
-                                                       'nexttasks': {'#default#': []}}}}
-    CONDITIONAL_SCRPT_WITH_MULTI_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                             "tasks":
-                                                 {'1': {'type': 'condition',
-                                                        'scriptName': 'testScript',
-                                                        'nexttasks': {'#default#': [], 'yes': []}}}}
+    CONDITION_NOT_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "not_condition"}},
+    }
+    CONDITION_EXIST_EMPTY_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "not_condition"}, "2": {"type": "condition"}},
+    }
+    CONDITION_EXIST_EMPTY_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "nexttasks": {}}},
+    }
+    CONDITION_EXIST_PARTIAL_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "conditions": [], "nexttasks": {}}},
+    }
+    CONDITION_EXIST_PARTIAL_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"#default#": ["2"]},
+            }
+        },
+    }
+    CONDITION_EXIST_PARTIAL_3 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITION_EXIST_FULL_NO_TASK_ID = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITION_EXIST_FULL = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "yes"}],
+                "nexttasks": {"#default#": ["2"], "yes": ["3"]},
+            }
+        },
+    }
+    CONDITION_EXIST_FULL_CASE_DIF = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "conditions": [{"label": "YES"}],
+                "nexttasks": {"#default#": ["2"], "yes": ["3"]},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "message": {}, "nexttasks": {}}},
+    }
+    CONDITIONAL_ASK_EXISTS_NO_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"yes": ["1"]},
+            }
+        },
+    }
+    CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "message": {"replyOptions": ["yes"]},
+                "nexttasks": {"YES": ["1"]},
+            }
+        },
+    }
+    CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {"1": {"type": "condition", "scriptName": "testScript"}},
+    }
+    CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "scriptName": "testScript",
+                "nexttasks": {"#default#": []},
+            }
+        },
+    }
+    CONDITIONAL_SCRPT_WITH_MULTI_NXT_TASK = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "tasks": {
+            "1": {
+                "type": "condition",
+                "scriptName": "testScript",
+                "nexttasks": {"#default#": [], "yes": []},
+            }
+        },
+    }
     IS_CONDITIONAL_INPUTS = [
         (CONDITION_NOT_EXIST_1, True),
         (CONDITION_EXIST_EMPTY_1, True),
@@ -138,36 +206,57 @@ class TestPlaybookValidator:
     ]
 
     TASKS_NOT_EXIST = ROLENAME_NOT_EXIST
-    NEXT_TASKS_NOT_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                              "tasks": {'1': {'type': 'not_condition'}}}
-    NEXT_TASKS_NOT_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                              "tasks": {
-                                  '1': {'type': 'title'},
-                                  '2': {'type': 'condition'}}
-                              }
-    NEXT_TASKS_INVALID_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                  "tasks": {
-                                      '1': {'type': 'title', 'nexttasks': {'next': ['3']}},
-                                      '2': {'type': 'condition'}}
-                                  }
-    NEXT_TASKS_INVALID_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                  "tasks": {
-                                      '1': {'type': 'title', 'nexttasks': {'next': ['3']}},
-                                      '2': {'type': 'condition'},
-                                      '3': {'type': 'condition'}}
-                                  }
-    NEXT_TASKS_VALID_EXIST_1 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                "tasks": {
-                                    '1': {'type': 'title', 'nexttasks': {'next': ['2', '3']}},
-                                    '2': {'type': 'condition'},
-                                    '3': {'type': 'condition'}}
-                                }
-    NEXT_TASKS_VALID_EXIST_2 = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
-                                "tasks": {
-                                    '1': {'type': 'title', 'nexttasks': {'next': ['2']}},
-                                    '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
-                                    '3': {'type': 'condition'}}
-                                }
+    NEXT_TASKS_NOT_EXIST_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {"1": {"type": "not_condition"}},
+    }
+    NEXT_TASKS_NOT_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {"1": {"type": "title"}, "2": {"type": "condition"}},
+    }
+    NEXT_TASKS_INVALID_EXIST_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["3"]}},
+            "2": {"type": "condition"},
+        },
+    }
+    NEXT_TASKS_INVALID_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["3"]}},
+            "2": {"type": "condition"},
+            "3": {"type": "condition"},
+        },
+    }
+    NEXT_TASKS_VALID_EXIST_1 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["2", "3"]}},
+            "2": {"type": "condition"},
+            "3": {"type": "condition"},
+        },
+    }
+    NEXT_TASKS_VALID_EXIST_2 = {
+        "id": "Intezer - scan host",
+        "version": -1,
+        "starttaskid": "1",
+        "tasks": {
+            "1": {"type": "title", "nexttasks": {"next": ["2"]}},
+            "2": {"type": "condition", "nexttasks": {"next": ["3"]}},
+            "3": {"type": "condition"},
+        },
+    }
     IS_ROOT_CONNECTED_INPUTS = [
         (TASKS_NOT_EXIST, True),
         (NEXT_TASKS_NOT_EXIST_1, True),

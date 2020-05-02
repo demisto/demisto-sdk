@@ -167,12 +167,7 @@ class IncidentFieldValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        is_bc_broke = any(
-            [
-                self.is_changed_type(),
-                self.is_changed_from_version(),
-            ]
-        )
+        is_bc_broke = any([self.is_changed_type(), self.is_changed_from_version(), ])
 
         return not is_bc_broke
 
@@ -190,7 +185,7 @@ class IncidentFieldValidator(BaseValidator):
                 self.is_valid_cliname(),
                 self.is_valid_version(),
                 self.is_current_valid_from_version(),
-                self.is_valid_required()
+                self.is_valid_required(),
             ]
         )
 
@@ -321,7 +316,7 @@ class IncidentFieldValidator(BaseValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    error_msg = f'{self.file_path}: fromVersion must be at least 5.0.0'
+                    error_msg = f"{self.file_path}: fromVersion must be at least 5.0.0"
                     is_valid = False
             except (AttributeError, ValueError):
                 error_msg = f'{self.file_path}: "fromVersion" has an invalid value.'
@@ -340,10 +335,12 @@ class IncidentFieldValidator(BaseValidator):
         # due to a current platform limitation, incident fields can not be set to required
         # after it will be fixed, need to validate that required field are not associated to all incident types
         # as can be seen in this pr: https://github.com/demisto/content/pull/5682
-        required = self.current_file.get('required', False)
+        required = self.current_file.get("required", False)
         if required:
-            error_msg = f'{self.file_path}: new incident fields can not be required.' \
-                        f' change to:\nrequired: false.'
+            error_msg = (
+                f"{self.file_path}: new incident fields can not be required."
+                f" change to:\nrequired: false."
+            )
             is_valid = False
 
         if error_msg:
@@ -358,9 +355,9 @@ class IncidentFieldValidator(BaseValidator):
            bool. Whether fromversion has been changed.
        """
         is_fromversion_changed = False
-        old_from_version = self.old_file.get('fromVersion', None)
+        old_from_version = self.old_file.get("fromVersion", None)
         if old_from_version:
-            current_from_version = self.current_file.get('fromVersion', None)
+            current_from_version = self.current_file.get("fromVersion", None)
             if old_from_version != current_from_version:
                 print_error(Errors.from_version_modified_after_rename())
                 is_fromversion_changed = True
@@ -371,11 +368,13 @@ class IncidentFieldValidator(BaseValidator):
         """Validate that the type was not changed."""
         error_msg = None
         is_type_changed = False
-        current_type = self.current_file.get('type', "")
+        current_type = self.current_file.get("type", "")
         if self.old_file:
-            old_type = self.old_file.get('type', {})
+            old_type = self.old_file.get("type", {})
             if old_type and old_type != current_type:
-                error_msg = f'{self.file_path}: Changing incident field type is not allowed.'
+                error_msg = (
+                    f"{self.file_path}: Changing incident field type is not allowed."
+                )
                 is_type_changed = True
 
         if error_msg:

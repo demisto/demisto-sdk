@@ -8,10 +8,12 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 class TestIDSetCreator:
     def setup(self):
-        tests_dir = f'{git_path()}/demisto_sdk/tests'
-        self.id_set_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'id_set.json')
+        tests_dir = f"{git_path()}/demisto_sdk/tests"
+        self.id_set_full_path = os.path.join(
+            tests_dir, "test_files", "content_repo_example", "id_set.json"
+        )
         self._test_dir = mkdtemp()
-        self.file_path = os.path.join(self._test_dir, 'id_set.json')
+        self.file_path = os.path.join(self._test_dir, "id_set.json")
 
     def teardown(self):
         # delete the id set file
@@ -21,7 +23,7 @@ class TestIDSetCreator:
             elif os.path.isdir(self.file_path):
                 shutil.rmtree(self.file_path)
         except Exception as err:
-            print(f'Failed to delete {self.file_path}. Reason: {err}')
+            print(f"Failed to delete {self.file_path}. Reason: {err}")
 
     def test_create_id_set_output(self):
         id_set_creator = IDSetCreator(self.file_path)
@@ -35,15 +37,15 @@ class TestIDSetCreator:
         id_set = id_set_creator.create_id_set()
         assert not os.path.exists(self.file_path)
         assert id_set is not None
-        assert 'scripts' in id_set.keys()
-        assert 'integrations' in id_set.keys()
-        assert 'playbooks' in id_set.keys()
-        assert 'TestPlaybooks' in id_set.keys()
-        assert 'Classifiers' in id_set.keys()
-        assert 'Dashboards' in id_set.keys()
-        assert 'IncidentFields' in id_set.keys()
-        assert 'IncidentTypes' in id_set.keys()
-        assert 'IndicatorFields' in id_set.keys()
-        assert 'Layouts' in id_set.keys()
-        assert 'Reports' in id_set.keys()
-        assert 'Widgets' in id_set.keys()
+        assert "scripts" in id_set.keys()
+        assert "integrations" in id_set.keys()
+        assert "playbooks" in id_set.keys()
+        assert "TestPlaybooks" in id_set.keys()
+        assert "Classifiers" in id_set.keys()
+        assert "Dashboards" in id_set.keys()
+        assert "IncidentFields" in id_set.keys()
+        assert "IncidentTypes" in id_set.keys()
+        assert "IndicatorFields" in id_set.keys()
+        assert "Layouts" in id_set.keys()
+        assert "Reports" in id_set.keys()
+        assert "Widgets" in id_set.keys()

@@ -6,7 +6,13 @@ from typing import List
 # Third party packages
 # Local imports
 
-excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
+excluded_files = [
+    "CommonServerPython.py",
+    "demistomock.py",
+    "CommonServerUserPython.py",
+    "conftest.py",
+    "venv",
+]
 
 
 def get_python_exec(py_num: float) -> str:
@@ -40,7 +46,7 @@ def build_flake8_command(files: List[Path], py_num: float) -> str:
     command = f"{get_python_exec(py_num)} -m flake8"
     # Generating file pattrens - path1,path2,path3,..
     files = [str(file) for file in files]
-    command += ' ' + ' '.join(files)
+    command += " " + " ".join(files)
 
     return command
 
@@ -121,11 +127,13 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     """
     command = f"{get_python_exec(py_num)} -m vulture"
     # Excluded files
-    command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
+    command += (
+        f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
+    )
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # Whitelist vulture
-    whitelist = Path(pack_path) / '.vulture_whitelist.py'
+    whitelist = Path(pack_path) / ".vulture_whitelist.py"
     if whitelist.exists():
         command += f" {whitelist}"
     files = [str(item) for item in files]

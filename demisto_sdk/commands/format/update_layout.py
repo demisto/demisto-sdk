@@ -17,27 +17,34 @@ class LayoutJSONFormat(BaseUpdateJSON):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+    def __init__(
+        self,
+        input: str = "",
+        output: str = "",
+        path: str = "",
+        from_version: str = "",
+        no_validate: bool = False,
+    ):
         super().__init__(input, output, path, from_version, no_validate)
 
     def remove_unnecessary_keys(self):
-        print(F'Removing Unnecessary fields from file')
+        print(f"Removing Unnecessary fields from file")
         arguments_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
-            print(F'Removing Unnecessary fields {key} from file')
-            self.data['layout'].pop(key, None)
+            print(f"Removing Unnecessary fields {key} from file")
+            self.data["layout"].pop(key, None)
 
     def arguments_to_remove(self):
         arguments_to_remove = []
-        with open(self.schema_path, 'r') as file_obj:
+        with open(self.schema_path, "r") as file_obj:
             a = yaml.safe_load(file_obj)
-        out_schema_fields = a.get('mapping').keys()
+        out_schema_fields = a.get("mapping").keys()
         out_file_fields = self.data.keys()
         for field in out_file_fields:
             if field not in out_schema_fields:
                 arguments_to_remove.append(field)
-        out_schema_fields = a.get('mapping').get('layout').get('mapping').keys()
-        out_file_fields = self.data['layout'].keys()
+        out_schema_fields = a.get("mapping").get("layout").get("mapping").keys()
+        out_file_fields = self.data["layout"].keys()
         for field in out_file_fields:
             if field not in out_schema_fields:
                 arguments_to_remove.append(field)
@@ -45,29 +52,35 @@ class LayoutJSONFormat(BaseUpdateJSON):
 
     def set_layout_key(self):
         if "layout" not in self.data.keys():
-            kind = self.data['kind']
-            id = self.data['id']
+            kind = self.data["kind"]
+            id = self.data["id"]
             self.data = {
                 "typeId": id,
                 "version": DEFAULT_VERSION,
                 "TypeName": id,
                 "kind": kind,
                 "fromVersion": NEW_FILE_DEFAULT_5_FROMVERSION,
-                "layout": self.data
+                "layout": self.data,
             }
 
     def run_format(self) -> int:
         try:
-            print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
+            print_color(
+                f"=======Starting updates for file: {self.source_file}=======",
+                LOG_COLORS.YELLOW,
+            )
             self.set_layout_key()
             # version is both in layout key and in base dict
             self.set_version_to_default()
-            self.set_version_to_default(self.data['layout'])
+            self.set_version_to_default(self.data["layout"])
             self.remove_unnecessary_keys()
             self.set_fromVersion(from_version=self.from_version)
             super().save_json_to_destination_file()
 
-            print_color(F'=======Finished updates for files: {self.output_file}=======', LOG_COLORS.YELLOW)
+            print_color(
+                f"=======Finished updates for files: {self.output_file}=======",
+                LOG_COLORS.YELLOW,
+            )
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE

@@ -18,15 +18,40 @@ from demisto_sdk.tests.constants_test import (
 
 class TestFormattingJson:
     FORMAT_FILES = [
-        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, INCIDENTFIELD_PATH, 0),
-        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, INCIDENTTYPE_PATH, 0),
-        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, INDICATORFIELD_PATH, 0),
-        (SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, INDICATORTYPE_PATH, 0),
+        (
+            SOURCE_FORMAT_INCIDENTFIELD_COPY,
+            DESTINATION_FORMAT_INCIDENTFIELD_COPY,
+            INCIDENTFIELD_PATH,
+            0,
+        ),
+        (
+            SOURCE_FORMAT_INCIDENTTYPE_COPY,
+            DESTINATION_FORMAT_INCIDENTTYPE_COPY,
+            INCIDENTTYPE_PATH,
+            0,
+        ),
+        (
+            SOURCE_FORMAT_INDICATORFIELD_COPY,
+            DESTINATION_FORMAT_INDICATORFIELD_COPY,
+            INDICATORFIELD_PATH,
+            0,
+        ),
+        (
+            SOURCE_FORMAT_INDICATORTYPE_COPY,
+            DESTINATION_FORMAT_INDICATORTYPE_COPY,
+            INDICATORTYPE_PATH,
+            0,
+        ),
         (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, LAYOUT_PATH, 0),
-        (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, DASHBOARD_PATH, 0),
+        (
+            SOURCE_FORMAT_DASHBOARD_COPY,
+            DESTINATION_FORMAT_DASHBOARD_COPY,
+            DASHBOARD_PATH,
+            0,
+        ),
     ]
 
-    @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
+    @pytest.mark.parametrize("source, target, path, answer", FORMAT_FILES)
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path)
         shutil.copyfile(source, target)
@@ -36,11 +61,14 @@ class TestFormattingJson:
 
         assert res is answer
 
-    @pytest.mark.parametrize('invalid_output', [INVALID_OUTPUT_PATH])
+    @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:
             res_invalid = format_manager(input=invalid_output, output=invalid_output)
             assert res_invalid
         except Exception as e:
-            assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
-                             "  Please specify a correct output."
+            assert (
+                str(e)
+                == "The given output path is not a specific file path.\nOnly file path can be a output path."
+                "  Please specify a correct output."
+            )

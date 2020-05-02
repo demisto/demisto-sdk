@@ -8,40 +8,40 @@ from mock import patch
 
 class TestIncidentFieldsValidator:
     NAME_SANITY_FILE = {
-        'cliName': 'sanityname',
-        'name': 'sanity name',
-        'id': 'incident',
-        'content': True,
+        "cliName": "sanityname",
+        "name": "sanity name",
+        "id": "incident",
+        "content": True,
     }
 
     BAD_NAME_1 = {
-        'cliName': 'sanityname',
-        'name': 'Incident',
-        'content': True,
+        "cliName": "sanityname",
+        "name": "Incident",
+        "content": True,
     }
 
     BAD_NAME_2 = {
-        'cliName': 'sanityname',
-        'name': 'case',
-        'content': True,
+        "cliName": "sanityname",
+        "name": "case",
+        "content": True,
     }
 
     BAD_NAME_3 = {
-        'cliName': 'sanityname',
-        'name': 'Playbook',
-        'content': True,
+        "cliName": "sanityname",
+        "name": "Playbook",
+        "content": True,
     }
 
     GOOD_NAME_4 = {
-        'cliName': 'sanityname',
-        'name': 'Alerting feature',
-        'content': True,
+        "cliName": "sanityname",
+        "name": "Alerting feature",
+        "content": True,
     }
 
     BAD_NAME_5 = {
-        'cliName': 'sanity name',
-        'name': 'INciDeNts',
-        'content': True,
+        "cliName": "sanity name",
+        "name": "INciDeNts",
+        "content": True,
     }
 
     INPUTS_NAMES = [
@@ -50,12 +50,12 @@ class TestIncidentFieldsValidator:
         (BAD_NAME_2, False),
         (BAD_NAME_3, False),
         (GOOD_NAME_4, True),
-        (BAD_NAME_5, False)
+        (BAD_NAME_5, False),
     ]
 
-    @pytest.mark.parametrize('current_file, answer', INPUTS_NAMES)
+    @pytest.mark.parametrize("current_file, answer", INPUTS_NAMES)
     def test_is_valid_name_sanity(self, current_file, answer):
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file
             structure.old_file = None
@@ -65,27 +65,17 @@ class TestIncidentFieldsValidator:
             validator.current_file = current_file
             assert validator.is_valid_name() is answer
 
-    CONTENT_1 = {
-        'content': True
-    }
+    CONTENT_1 = {"content": True}
 
-    CONTENT_BAD_1 = {
-        'content': False
-    }
+    CONTENT_BAD_1 = {"content": False}
 
-    CONTENT_BAD_2 = {
-        'something': True
-    }
+    CONTENT_BAD_2 = {"something": True}
 
-    INPUTS_FLAGS = [
-        (CONTENT_1, True),
-        (CONTENT_BAD_1, False),
-        (CONTENT_BAD_2, False)
-    ]
+    INPUTS_FLAGS = [(CONTENT_1, True), (CONTENT_BAD_1, False), (CONTENT_BAD_2, False)]
 
-    @pytest.mark.parametrize('current_file, answer', INPUTS_FLAGS)
+    @pytest.mark.parametrize("current_file, answer", INPUTS_FLAGS)
     def test_is_valid_content_flag_sanity(self, current_file, answer):
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file
             structure.old_file = None
@@ -96,23 +86,20 @@ class TestIncidentFieldsValidator:
             assert validator.is_valid_content_flag() is answer
 
     SYSTEM_FLAG_1 = {
-        'system': False,
-        'content': True,
+        "system": False,
+        "content": True,
     }
 
     SYSTEM_FLAG_BAD_1 = {
-        'system': True,
-        'content': True,
+        "system": True,
+        "content": True,
     }
 
-    INPUTS_SYSTEM_FLAGS = [
-        (SYSTEM_FLAG_1, True),
-        (SYSTEM_FLAG_BAD_1, False)
-    ]
+    INPUTS_SYSTEM_FLAGS = [(SYSTEM_FLAG_1, True), (SYSTEM_FLAG_BAD_1, False)]
 
-    @pytest.mark.parametrize('current_file, answer', INPUTS_SYSTEM_FLAGS)
+    @pytest.mark.parametrize("current_file, answer", INPUTS_SYSTEM_FLAGS)
     def test_is_valid_system_flag_sanity(self, current_file, answer):
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file
             structure.old_file = None
@@ -125,12 +112,12 @@ class TestIncidentFieldsValidator:
     VALID_CLINAMES_AND_GROUPS = [
         ("validind", GroupFieldTypes.INCIDENT_FIELD),
         ("validind", GroupFieldTypes.EVIDENCE_FIELD),
-        ("validind", GroupFieldTypes.INDICATOR_FIELD)
+        ("validind", GroupFieldTypes.INDICATOR_FIELD),
     ]
 
     @pytest.mark.parametrize("cliname, group", VALID_CLINAMES_AND_GROUPS)
     def test_is_cliname_is_builtin_key(self, cliname, group):
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             current_file = {"cliName": cliname, "group": group}
             structure = StructureValidator("")
             structure.current_file = current_file
@@ -144,12 +131,12 @@ class TestIncidentFieldsValidator:
     INVALID_CLINAMES_AND_GROUPS = [
         ("id", GroupFieldTypes.INCIDENT_FIELD),
         ("id", GroupFieldTypes.EVIDENCE_FIELD),
-        ("id", GroupFieldTypes.INDICATOR_FIELD)
+        ("id", GroupFieldTypes.INDICATOR_FIELD),
     ]
 
     @pytest.mark.parametrize("cliname, group", INVALID_CLINAMES_AND_GROUPS)
     def test_is_cliname_is_builtin_key_invalid(self, cliname, group):
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             current_file = {"cliName": cliname, "group": group}
             structure = StructureValidator("")
             structure.current_file = current_file
@@ -167,7 +154,7 @@ class TestIncidentFieldsValidator:
 
     @pytest.mark.parametrize("cliname", VALID_CLINAMES)
     def test_matching_cliname_regex(self, cliname):
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             current_file = {"cliName": cliname}
             structure = StructureValidator("")
             structure.current_file = current_file
@@ -187,7 +174,7 @@ class TestIncidentFieldsValidator:
 
     @pytest.mark.parametrize("cliname", INVALID_CLINAMES)
     def test_matching_cliname_regex_invalid(self, cliname):
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             current_file = {"cliName": cliname}
             structure = StructureValidator("")
             structure.current_file = current_file
@@ -201,7 +188,7 @@ class TestIncidentFieldsValidator:
     @pytest.mark.parametrize("cliname, group", VALID_CLINAMES_AND_GROUPS)
     def test_is_valid_cliname(self, cliname, group):
         current_file = {"cliName": cliname, "group": group}
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file
             structure.old_file = None
@@ -214,7 +201,7 @@ class TestIncidentFieldsValidator:
     @pytest.mark.parametrize("cliname, group", INVALID_CLINAMES_AND_GROUPS)
     def test_is_valid_cliname_invalid(self, cliname, group):
         current_file = {"cliName": cliname, "group": group}
-        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file
             structure.old_file = None
@@ -230,31 +217,34 @@ class TestIncidentFieldsValidator:
         (1, False),
     ]
 
-    @pytest.mark.parametrize('version, is_valid', data_is_valid_version)
+    @pytest.mark.parametrize("version, is_valid", data_is_valid_version)
     def test_is_valid_version(self, version, is_valid):
         structure = StructureValidator("")
         structure.current_file = {"version": version}
         validator = IncidentFieldValidator(structure)
-        assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
+        assert (
+            validator.is_valid_version() == is_valid
+        ), f"is_valid_version({version}) returns {not is_valid}."
 
     data_is_valid_from_version = [
-        ('5.0.0', True),
-        ('4.', False),
-        ('', False),
-        ('4.0.0', False),
-        ('5.0.1', True),
-        ('100.0.0', True),
-        ('5', False),
-        (None, False)
+        ("5.0.0", True),
+        ("4.", False),
+        ("", False),
+        ("4.0.0", False),
+        ("5.0.1", True),
+        ("100.0.0", True),
+        ("5", False),
+        (None, False),
     ]
 
-    @pytest.mark.parametrize('from_version, is_valid', data_is_valid_from_version)
+    @pytest.mark.parametrize("from_version, is_valid", data_is_valid_from_version)
     def test_is_current_valid_from_version(self, from_version, is_valid):
         structure = StructureValidator("")
         structure.current_file = {"fromVersion": from_version}
         validator = IncidentFieldValidator(structure)
-        assert validator.is_current_valid_from_version() == is_valid, f'is_valid_from_version({from_version})' \
-                                                                      f' returns {not is_valid}.'
+        assert validator.is_current_valid_from_version() == is_valid, (
+            f"is_valid_from_version({from_version})" f" returns {not is_valid}."
+        )
 
     IS_FROM_VERSION_CHANGED_NO_OLD = {}
     IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
@@ -269,8 +259,12 @@ class TestIncidentFieldsValidator:
         (IS_FROM_VERSION_CHANGED_OLD, IS_FROM_VERSION_CHANGED_NEW_HIGHER, True),
     ]
 
-    @pytest.mark.parametrize("current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS)
-    def test_is_changed_from_version(self, current_from_version, old_from_version, answer):
+    @pytest.mark.parametrize(
+        "current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS
+    )
+    def test_is_changed_from_version(
+        self, current_from_version, old_from_version, answer
+    ):
         structure = StructureValidator("")
         structure.old_file = old_from_version
         structure.current_file = current_from_version
@@ -282,31 +276,33 @@ class TestIncidentFieldsValidator:
         (False, True),
     ]
 
-    @pytest.mark.parametrize('required, is_valid', data_required)
+    @pytest.mark.parametrize("required, is_valid", data_required)
     def test_is_valid_required(self, required, is_valid):
         structure = StructureValidator("")
         structure.current_file = {"required": required}
         validator = IncidentFieldValidator(structure)
-        assert validator.is_valid_required() == is_valid, f'is_valid_required({required})' \
-                                                          f' returns {not is_valid}.'
+        assert validator.is_valid_required() == is_valid, (
+            f"is_valid_required({required})" f" returns {not is_valid}."
+        )
 
     data_is_changed_type = [
-        ('shortText', 'shortText', False),
-        ('shortText', 'longText', True),
-        ('number', 'number', False),
-        ('shortText', 'number', True),
-        ('timer', 'timer', False),
-        ('timer', 'number', True),
-        ('timer', 'shortText', True),
-        ('singleSelect', 'singleSelect', False),
-        ('singleSelect', 'shortText', True)
+        ("shortText", "shortText", False),
+        ("shortText", "longText", True),
+        ("number", "number", False),
+        ("shortText", "number", True),
+        ("timer", "timer", False),
+        ("timer", "number", True),
+        ("timer", "shortText", True),
+        ("singleSelect", "singleSelect", False),
+        ("singleSelect", "shortText", True),
     ]
 
-    @pytest.mark.parametrize('current_type, old_type, is_valid', data_is_changed_type)
+    @pytest.mark.parametrize("current_type, old_type, is_valid", data_is_changed_type)
     def test_is_changed_type(self, current_type, old_type, is_valid):
         structure = StructureValidator("")
         structure.current_file = {"type": current_type}
         structure.old_file = {"type": old_type}
         validator = IncidentFieldValidator(structure)
-        assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
-                                                        f' returns {not is_valid}.'
+        assert validator.is_changed_type() == is_valid, (
+            f"is_changed_type({current_type}, {old_type})" f" returns {not is_valid}."
+        )

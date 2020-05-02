@@ -23,16 +23,29 @@ class BaseUpdateYML(BaseUpdate):
             data (Dict): YML file data arranged in a Dict.
             id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
     """
+
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
-        'IntegrationYMLFormat': 'commonfields',
-        'ScriptYMLFormat': 'commonfields',
-        'PlaybookYMLFormat': '',
+        "IntegrationYMLFormat": "commonfields",
+        "ScriptYMLFormat": "commonfields",
+        "PlaybookYMLFormat": "",
     }
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
+    def __init__(
+        self,
+        input: str = "",
+        output: str = "",
+        path: str = "",
+        from_version: str = "",
+        no_validate: bool = False,
+    ):
+        super().__init__(
+            input=input,
+            output=output,
+            path=path,
+            from_version=from_version,
+            no_validate=no_validate,
+        )
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def _load_conf_file(self) -> Dict:
@@ -55,37 +68,38 @@ class BaseUpdateYML(BaseUpdate):
 
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name."""
-        print(F'Updating YML ID to be the same as YML name')
-        self.id_and_version_location['id'] = self.data['name']
+        print(f"Updating YML ID to be the same as YML name")
+        self.id_and_version_location["id"] = self.data["name"]
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print(F'Saving output YML file to {self.output_file}')
+        print(f"Saving output YML file to {self.output_file}")
         # Configure safe dumper (multiline for strings)
         yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
 
         def repr_str(dumper, data):
-            if '\n' in data:
-                return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
+            if "\n" in data:
+                return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
             return dumper.org_represent_str(data)
 
         yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
 
-        with open(self.output_file, 'w') as f:
-            ryaml.dump(
-                self.data,
-                f)
+        with open(self.output_file, "w") as f:
+            ryaml.dump(self.data, f)
 
     def copy_tests_from_old_file(self):
         """Copy the tests key from old file if exists.
         """
         if self.old_file:
-            if not self.data.get('tests', '') and self.old_file.get('tests', ''):
-                self.data['tests'] = self.old_file['tests']
+            if not self.data.get("tests", "") and self.old_file.get("tests", ""):
+                self.data["tests"] = self.old_file["tests"]
 
     def update_yml(self):
         """Manager function for the generic YML updates."""
-        print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(
+            f"=======Starting updates for file: {self.source_file}=======",
+            LOG_COLORS.YELLOW,
+        )
 
         self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
@@ -94,19 +108,24 @@ class BaseUpdateYML(BaseUpdate):
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
 
-        print_color(F'=======Finished updates for file: {self.output_file}=======', LOG_COLORS.YELLOW)
+        print_color(
+            f"=======Finished updates for file: {self.output_file}=======",
+            LOG_COLORS.YELLOW,
+        )
 
     def update_tests(self) -> None:
         """
         If there are no tests configured: Prompts a question to the cli that asks the user whether he wants to add
         'No tests' under 'tests' key or not and format the file according to the answer
         """
-        if not self.data.get('tests', ''):
-            should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks configured. '
-                                                    f'Do you want to configure it with "No tests"?')
+        if not self.data.get("tests", ""):
+            should_modify_yml_tests = click.confirm(
+                f"The file {self.source_file} has no test playbooks configured. "
+                f'Do you want to configure it with "No tests"?'
+            )
             if should_modify_yml_tests:
                 click.echo(f'Formatting {self.output_file} with "No tests"')
-                self.data['tests'] = ['No tests (auto formatted)']
+                self.data["tests"] = ["No tests (auto formatted)"]
 
     def update_conf_json(self, file_type: str) -> None:
         """
@@ -115,40 +134,47 @@ class BaseUpdateYML(BaseUpdate):
         Args:
             file_type: The typr of the file, can be integration, playbook or script
         """
-        test_playbooks = self.data.get('tests', [])
+        test_playbooks = self.data.get("tests", [])
         if not test_playbooks:
             return
-        no_test_playbooks_explicitly = any(test for test in test_playbooks if 'no test' in test.lower())
+        no_test_playbooks_explicitly = any(
+            test for test in test_playbooks if "no test" in test.lower()
+        )
         if no_test_playbooks_explicitly:
             return
         conf_json_content = self._load_conf_file()
-        conf_json_test_configuration = conf_json_content['tests']
+        conf_json_test_configuration = conf_json_content["tests"]
         content_item_id = _get_file_id(file_type, self.data)
-        not_registered_tests = get_not_registered_tests(conf_json_test_configuration,
-                                                        content_item_id,
-                                                        file_type,
-                                                        test_playbooks)
+        not_registered_tests = get_not_registered_tests(
+            conf_json_test_configuration, content_item_id, file_type, test_playbooks
+        )
         if not_registered_tests:
-            not_registered_tests_string = '\n'.join(not_registered_tests)
-            should_edit_conf_json = click.confirm(f'The following test playbooks are not configured in conf.json file '
-                                                  f'{not_registered_tests_string}\n'
-                                                  f'Would you like to add them now?')
+            not_registered_tests_string = "\n".join(not_registered_tests)
+            should_edit_conf_json = click.confirm(
+                f"The following test playbooks are not configured in conf.json file "
+                f"{not_registered_tests_string}\n"
+                f"Would you like to add them now?"
+            )
             if should_edit_conf_json:
-                conf_json_content['tests'].extend(self.get_test_playbooks_configuration(not_registered_tests,
-                                                                                        content_item_id,
-                                                                                        file_type))
+                conf_json_content["tests"].extend(
+                    self.get_test_playbooks_configuration(
+                        not_registered_tests, content_item_id, file_type
+                    )
+                )
                 self._save_to_conf_json(conf_json_content)
-                click.echo('Added test playbooks to conf.json successfully')
+                click.echo("Added test playbooks to conf.json successfully")
             else:
-                click.echo('Skipping test playbooks configuration')
+                click.echo("Skipping test playbooks configuration")
 
     def _save_to_conf_json(self, conf_json_content: Dict) -> None:
         """Save formatted JSON data to destination file."""
-        with open(self.CONF_PATH, 'w') as file:
+        with open(self.CONF_PATH, "w") as file:
             json.dump(conf_json_content, file, indent=4)
 
     @staticmethod
-    def get_test_playbooks_configuration(test_playbooks: List, content_item_id: str, file_type: str) -> List[Dict]:
+    def get_test_playbooks_configuration(
+        test_playbooks: List, content_item_id: str, file_type: str
+    ) -> List[Dict]:
         """
         Gets the content item playbook's configuration in order to add it to conf.json
         Args:
@@ -159,8 +185,12 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
 
         """
-        if file_type == 'integration':
-            return [{'integrations': content_item_id, 'playbookID': test_playbook_id} for test_playbook_id in
-                    test_playbooks]
-        elif file_type in {'playbook', 'script'}:
-            return [{'playbookID': test_playbook_id} for test_playbook_id in test_playbooks]
+        if file_type == "integration":
+            return [
+                {"integrations": content_item_id, "playbookID": test_playbook_id}
+                for test_playbook_id in test_playbooks
+            ]
+        elif file_type in {"playbook", "script"}:
+            return [
+                {"playbookID": test_playbook_id} for test_playbook_id in test_playbooks
+            ]

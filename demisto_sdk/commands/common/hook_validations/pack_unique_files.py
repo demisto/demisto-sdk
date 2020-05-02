@@ -40,23 +40,29 @@ class PackUniqueFilesValidator:
 
     def get_errors(self, raw=False):
         """Get the dict version or string version for print"""
-        errors = ''
+        errors = ""
         if raw:
             errors = self._errors
         elif self._errors:
-            errors = '@@@Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
+            errors = "@@@Issues with unique files in pack: {}\n  {}".format(
+                self.pack, "\n  ".join(self._errors)
+            )
 
         return errors
 
     # file utils
-    def _get_pack_file_path(self, file_name=''):
+    def _get_pack_file_path(self, file_name=""):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
 
     def _is_pack_file_exists(self, file_name):
         """Check if .secrets-ignore exists"""
         if not os.path.isfile(self._get_pack_file_path(file_name)):
-            self._add_error('"{}" file does not exist, create one in the root of the pack'.format(file_name))
+            self._add_error(
+                '"{}" file does not exist, create one in the root of the pack'.format(
+                    file_name
+                )
+            )
             return False
 
         return True
@@ -64,30 +70,40 @@ class PackUniqueFilesValidator:
     def _read_file_content(self, file_name):
         """Open & Read a file object's content throw exception if can't"""
         try:
-            with io.open(self._get_pack_file_path(file_name), mode="r", encoding="utf-8") as file:
+            with io.open(
+                self._get_pack_file_path(file_name), mode="r", encoding="utf-8"
+            ) as file:
                 return file.read()
         except IOError:
             self._add_error('Could not open "{}" file'.format(file_name))
         except ValueError:
-            self._add_error('Could not read the contents of "{}" file'.format(file_name))
+            self._add_error(
+                'Could not read the contents of "{}" file'.format(file_name)
+            )
 
         return False
 
-    def _parse_file_into_list(self, file_name, delimiter='\n'):
+    def _parse_file_into_list(self, file_name, delimiter="\n"):
         """Parse file's content to list, throw exception if can't"""
         file_content = self._read_file_content(file_name)
         try:
             if file_content:
                 return file_content.split(delimiter)
         except ValueError:
-            self._add_error('Could not parse the contents of "{}" file into a list'.format(file_name))
+            self._add_error(
+                'Could not parse the contents of "{}" file into a list'.format(
+                    file_name
+                )
+            )
 
         return False
 
     # secrets validation
     def validate_secrets_file(self):
         """Validate everything related to .secrets-ignore file"""
-        if self._is_pack_file_exists(self.secrets_file) and all([self._is_secrets_file_structure_valid()]):
+        if self._is_pack_file_exists(self.secrets_file) and all(
+            [self._is_secrets_file_structure_valid()]
+        ):
             return True
 
         return False
@@ -102,7 +118,9 @@ class PackUniqueFilesValidator:
     # pack ignore validation
     def validate_pack_ignore_file(self):
         """Validate everything related to .pack-ignore file"""
-        if self._is_pack_file_exists(self.pack_ignore_file) and all([self._is_pack_ignore_file_structure_valid()]):
+        if self._is_pack_file_exists(self.pack_ignore_file) and all(
+            [self._is_pack_ignore_file_structure_valid()]
+        ):
             return True
 
         return False
@@ -111,17 +129,23 @@ class PackUniqueFilesValidator:
         """Check if .pack-ignore structure is parse-able & has valid regex"""
         try:
             pack_ignore_regex_list = self._parse_file_into_list(self.pack_ignore_file)
-            if pack_ignore_regex_list and all(re.compile(regex) for regex in pack_ignore_regex_list):
+            if pack_ignore_regex_list and all(
+                re.compile(regex) for regex in pack_ignore_regex_list
+            ):
                 return True
         except re.error:
-            self._add_error('Detected none valid regex in {} file'.format(self.pack_ignore_file))
+            self._add_error(
+                "Detected none valid regex in {} file".format(self.pack_ignore_file)
+            )
 
         return False
 
     # pack metadata validation
     def validate_pack_meta_file(self):
         """Validate everything related to pack_metadata.json file"""
-        if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid()]):
+        if self._is_pack_file_exists(self.pack_meta_file) and all(
+            [self._is_pack_meta_file_structure_valid()]
+        ):
             return True
 
         return False
@@ -131,19 +155,25 @@ class PackUniqueFilesValidator:
         try:
             pack_meta_file_content = self._read_file_content(self.pack_meta_file)
             if not pack_meta_file_content:
-                self._add_error('Pack metadata is empty.')
+                self._add_error("Pack metadata is empty.")
                 return False
             metadata = json.loads(pack_meta_file_content)
             if not isinstance(metadata, dict):
-                self._add_error('Pack metadata should be a dictionary.')
+                self._add_error("Pack metadata should be a dictionary.")
                 return False
-            missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
+            missing_fields = [
+                field for field in PACK_METADATA_FIELDS if field not in metadata.keys()
+            ]
             if missing_fields:
-                self._add_error('Missing fields in the pack metadata: {}'.format(missing_fields))
+                self._add_error(
+                    "Missing fields in the pack metadata: {}".format(missing_fields)
+                )
                 return False
             dependencies_field = metadata[PACK_METADATA_DEPENDENCIES]
             if not isinstance(dependencies_field, dict):
-                self._add_error('The dependencies field in the pack must be a dictionary.')
+                self._add_error(
+                    "The dependencies field in the pack must be a dictionary."
+                )
                 return False
             # TODO: add it back after #23546 is ready.
             # price_field = metadata.get(PACK_METADATA_PRICE)
@@ -152,16 +182,26 @@ class PackUniqueFilesValidator:
             # except Exception:
             #     self._add_error('The price field in the pack must be a number.')
             #     return False
-            for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
-                               PACK_METADATA_USE_CASES):
+            for list_field in (
+                PACK_METADATA_KEYWORDS,
+                PACK_METADATA_TAGS,
+                PACK_METADATA_CATEGORIES,
+                PACK_METADATA_USE_CASES,
+            ):
                 field = metadata[list_field]
                 if field and len(field) == 1:
                     value = field[0]
                     if not value:
-                        self._add_error('Empty value in the {} field.'.format(list_field))
+                        self._add_error(
+                            "Empty value in the {} field.".format(list_field)
+                        )
                         return False
         except (ValueError, TypeError):
-            self._add_error('Could not parse {} file contents to json format'.format(self.pack_meta_file))
+            self._add_error(
+                "Could not parse {} file contents to json format".format(
+                    self.pack_meta_file
+                )
+            )
             return False
 
         return True

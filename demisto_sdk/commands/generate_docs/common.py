@@ -10,9 +10,9 @@ STRING_TYPES = (str, bytes)  # type: ignore
 
 
 class HEADER_TYPE:
-    H1 = '#'
-    H2 = '##'
-    H3 = '###'
+    H1 = "#"
+    H2 = "##"
+    H3 = "###"
 
 
 def save_output(path, file_name, content):
@@ -27,46 +27,48 @@ def save_output(path, file_name, content):
     with open(output, mode="w", encoding="utf8") as doc_file:
         doc_file.write(content)
 
-    print_color(f'Output file was saved to :\n{output}', LOG_COLORS.GREEN)
+    print_color(f"Output file was saved to :\n{output}", LOG_COLORS.GREEN)
 
 
-def generate_section(title, data=''):
+def generate_section(title, data=""):
     """
     Generate simple section in markdown format.
     :param title: The section title.
     :param data: The section text.
     :return: array of strings contains the section lines in markdown format.
     """
-    section = [
-        '## {}'.format(title),
-        ''
-    ]
+    section = ["## {}".format(title), ""]
     if data:
         section.extend(add_lines(data))
     return section
 
 
-def generate_numbered_section(title: str, data: str = ''):
+def generate_numbered_section(title: str, data: str = ""):
     """
     Generate numbered section in markdown format.
     :param title: The section title.
     :param data: The section text.
     :return: array of strings contains the section lines in markdown format.
     """
-    section = [
-        '## {}'.format(title)
-    ]
+    section = ["## {}".format(title)]
 
-    list_data = data.split('* ')
+    list_data = data.split("* ")
     if list_data:
         for i, item in enumerate(list_data):
             if item:
-                section.append(f'{i}. {item.rstrip()}')
+                section.append(f"{i}. {item.rstrip()}")
 
     return section
 
 
-def generate_list_section(title, data='', horizontal_rule=False, empty_message='', text='', header_type=HEADER_TYPE.H2):
+def generate_list_section(
+    title,
+    data="",
+    horizontal_rule=False,
+    empty_message="",
+    text="",
+    header_type=HEADER_TYPE.H2,
+):
     """
      Generate list section in markdown format.
      :param data: list of strings.
@@ -79,24 +81,26 @@ def generate_list_section(title, data='', horizontal_rule=False, empty_message='
      """
     section = []
     if title:
-        section.append(f'{header_type} {title}')
+        section.append(f"{header_type} {title}")
 
     if horizontal_rule:
-        section.append('---')
+        section.append("---")
 
     if not data:
-        section.extend([empty_message, ''])
+        section.extend([empty_message, ""])
         return section
 
     if text:
         section.append(text)
     for item in data:
-        section.append(f'* {item}')
-    section.append('')
+        section.append(f"* {item}")
+    section.append("")
     return section
 
 
-def generate_table_section(data, title, empty_message='', text='', horizontal_rule=True):
+def generate_table_section(
+    data, title, empty_message="", text="", horizontal_rule=True
+):
     """
     Generate table in markdown format.
     :param data: list of dicts contains the table data.
@@ -108,37 +112,39 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
     """
     section = []
     if title:
-        section.append(f'## {title}')
+        section.append(f"## {title}")
 
     if horizontal_rule:
-        section.append('---')
+        section.append("---")
 
     if not data:
-        section.extend([empty_message, ''])
+        section.extend([empty_message, ""])
         return section
 
-    section.extend([text, '|', '|'])
+    section.extend([text, "|", "|"])
     header_index = len(section) - 2
     for key in data[0]:
-        section[header_index] += f' **{key}** |'
-        section[header_index + 1] += ' --- |'
+        section[header_index] += f" **{key}** |"
+        section[header_index + 1] += " --- |"
 
     for item in data:
-        tmp_item = '|'
+        tmp_item = "|"
         for key in item:
             tmp_item += f" {item.get(key, '')} |"
         section.append(tmp_item)
 
-    section.append('')
+    section.append("")
     return section
 
 
 def add_lines(line):
-    output = re.findall(r'^\d+\..+', line, re.MULTILINE)
+    output = re.findall(r"^\d+\..+", line, re.MULTILINE)
     return output if output else [line]
 
 
-def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
+def string_escape_md(
+    st, minimal_escaping=False, escape_multiline=False, escape_html=True
+):
     """
        Escape any chars that might break a markdown string
 
@@ -162,13 +168,13 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
         st = html.escape(st, quote=False)
 
     if escape_multiline:
-        st = st.replace('\r\n', '<br/>')  # Windows
-        st = st.replace('\r', '<br/>')  # old Mac
-        st = st.replace('\n', '<br/>')  # Unix
+        st = st.replace("\r\n", "<br/>")  # Windows
+        st = st.replace("\r", "<br/>")  # old Mac
+        st = st.replace("\n", "<br/>")  # Unix
 
     if minimal_escaping:
-        for c in '|':
-            st = st.replace(c, '\\' + c)
+        for c in "|":
+            st = st.replace(c, "\\" + c)
     else:
         st = "".join(["\\" + str(c) if c in r"\`*_{}[]()#+-!" else str(c) for c in st])
 
@@ -178,20 +184,24 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
 def execute_command(command_example, insecure: bool):
     errors = []
     context = {}
-    md_example = ''
+    md_example = ""
     cmd = command_example
     try:
-        runner = Runner('', insecure=insecure)
+        runner = Runner("", insecure=insecure)
         res, raw_context = runner.execute_command(command_example)
         if not res:
-            raise RuntimeError('something went wrong with your command: {}'.format(command_example))
+            raise RuntimeError(
+                "something went wrong with your command: {}".format(command_example)
+            )
 
         for entry in res:
             if is_error(entry):
-                raise RuntimeError('something went wrong with your command: {}'.format(command_example))
+                raise RuntimeError(
+                    "something went wrong with your command: {}".format(command_example)
+                )
 
             if raw_context:
-                context = {k.split('(')[0]: v for k, v in raw_context.items()}
+                context = {k.split("(")[0]: v for k, v in raw_context.items()}
 
             if entry.contents:
                 content = entry.contents
@@ -201,14 +211,17 @@ def execute_command(command_example, insecure: bool):
                     md_example += json.dumps(content)
 
     except RuntimeError:
-        errors.append('The provided example for cmd {} has failed...'.format(cmd))
+        errors.append("The provided example for cmd {} has failed...".format(cmd))
 
     except Exception as e:
         errors.append(
-            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e)) +
-            '. Please check your command inputs and outputs')
+            "Error encountered in the processing of command {}, error was: {}. ".format(
+                cmd, str(e)
+            )
+            + ". Please check your command inputs and outputs"
+        )
 
-    cmd = cmd.split(' ')[0][1:]
+    cmd = cmd.split(" ")[0][1:]
     return cmd, md_example, context, errors
 
 
@@ -228,11 +241,11 @@ def is_error(execute_command_result):
     if isinstance(execute_command_result, list):
         if len(execute_command_result) > 0:
             for entry in execute_command_result:
-                if entry.type == entryTypes['error']:
+                if entry.type == entryTypes["error"]:
                     return True
 
     # return type(execute_command_result) == dict and execute_command_result.type == entryTypes['error']
-    return execute_command_result.type == entryTypes['error']
+    return execute_command_result.type == entryTypes["error"]
 
 
 def build_example_dict(command_examples: list, insecure: bool):
@@ -244,9 +257,11 @@ def build_example_dict(command_examples: list, insecure: bool):
     examples = {}  # type: dict
     errors = []  # type: list
     for example in command_examples:
-        cmd, md_example, context_example, cmd_errors = execute_command(example, insecure)
-        if 'playbookQuery' in context_example:
-            del context_example['playbookQuery']
+        cmd, md_example, context_example, cmd_errors = execute_command(
+            example, insecure
+        )
+        if "playbookQuery" in context_example:
+            del context_example["playbookQuery"]
 
         context_example = json.dumps(context_example, indent=4)
         errors.extend(cmd_errors)
@@ -257,17 +272,17 @@ def build_example_dict(command_examples: list, insecure: bool):
 
 
 entryTypes = {
-    'note': 1,
-    'downloadAgent': 2,
-    'file': 3,
-    'error': 4,
-    'pinned': 5,
-    'userManagement': 6,
-    'image': 7,
-    'plagroundError': 8,
-    'playgroundError': 8,
-    'entryInfoFile': 9,
-    'warning': 11,
-    'map': 15,
-    'widget': 17
+    "note": 1,
+    "downloadAgent": 2,
+    "file": 3,
+    "error": 4,
+    "pinned": 5,
+    "userManagement": 6,
+    "image": 7,
+    "plagroundError": 8,
+    "playgroundError": 8,
+    "entryInfoFile": 9,
+    "warning": 11,
+    "map": 15,
+    "widget": 17,
 }

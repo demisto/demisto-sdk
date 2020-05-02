@@ -38,6 +38,7 @@ class IDSetValidator:
         integration_set (set): Set of all the data regarding integrations in our system.
         test_playbook_set (set): Set of all the data regarding test playbooks in our system.
     """
+
     SCRIPTS_SECTION = "scripts"
     PLAYBOOK_SECTION = "playbooks"
     INTEGRATION_SECTION = "integrations"
@@ -45,25 +46,31 @@ class IDSetValidator:
 
     ID_SET_PATH = "./Tests/id_set.json"
 
-    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration()):
+    def __init__(
+        self, is_test_run=False, is_circle=False, configuration=Configuration()
+    ):
         self.is_circle = is_circle
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set = self.load_id_set()
-            self.id_set_path = os.path.join(self.configuration.env_dir, 'configs', 'id_set.json')
+            self.id_set_path = os.path.join(
+                self.configuration.env_dir, "configs", "id_set.json"
+            )
             self.script_set = self.id_set[self.SCRIPTS_SECTION]
             self.playbook_set = self.id_set[self.PLAYBOOK_SECTION]
             self.integration_set = self.id_set[self.INTEGRATION_SECTION]
             self.test_playbook_set = self.id_set[self.TEST_PLAYBOOK_SECTION]
 
     def load_id_set(self):
-        with open(self.ID_SET_PATH, 'r') as id_set_file:
+        with open(self.ID_SET_PATH, "r") as id_set_file:
             try:
                 id_set = json.load(id_set_file)
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
-                    print_error("You probably merged from master and your id_set.json has conflicts. "
-                                "Run `demisto-sdk create-id-set`, it should reindex your id_set.json")
+                    print_error(
+                        "You probably merged from master and your id_set.json has conflicts. "
+                        "Run `demisto-sdk create-id-set`, it should reindex your id_set.json"
+                    )
 
                 raise
 
@@ -86,21 +93,32 @@ class IDSetValidator:
         for checked_instance in obj_set:
             checked_instance_id = list(checked_instance.keys())[0]
             checked_instance_data = checked_instance[checked_instance_id]
-            checked_instance_toversion = checked_instance_data.get('toversion', '99.99.99')
-            checked_instance_fromversion = checked_instance_data.get('fromversion', '0.0.0')
-            obj_to_version = obj_data[file_id].get('toversion', '99.99.99')
-            obj_from_version = obj_data[file_id].get('fromversion', '0.0.0')
-            if checked_instance_id == file_id and checked_instance_toversion == obj_to_version and \
-                    checked_instance_fromversion == obj_from_version:
+            checked_instance_toversion = checked_instance_data.get(
+                "toversion", "99.99.99"
+            )
+            checked_instance_fromversion = checked_instance_data.get(
+                "fromversion", "0.0.0"
+            )
+            obj_to_version = obj_data[file_id].get("toversion", "99.99.99")
+            obj_from_version = obj_data[file_id].get("fromversion", "0.0.0")
+            if (
+                checked_instance_id == file_id
+                and checked_instance_toversion == obj_to_version
+                and checked_instance_fromversion == obj_from_version
+            ):
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
-                    print_error(f"You have failed to update id_set.json with the data of {file_path} "
-                                f"please run `demisto-sdk create-id-set`")
+                    print_error(
+                        f"You have failed to update id_set.json with the data of {file_path} "
+                        f"please run `demisto-sdk create-id-set`"
+                    )
                     return False
 
         if not is_found:
-            print_error(f"You have failed to update id_set.json with the data of {file_path} "
-                        f"please run `demisto-sdk create-id-set`")
+            print_error(
+                f"You have failed to update id_set.json with the data of {file_path} "
+                f"please run `demisto-sdk create-id-set`"
+            )
 
         return is_found
 
@@ -114,35 +132,51 @@ class IDSetValidator:
             bool. Whether the file is represented correctly in the id_set or not.
         """
         is_valid = True
-        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+        if (
+            self.is_circle
+        ):  # No need to check on local env because the id_set will contain this info after the commit
             if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = get_playbook_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, playbook_data, self.playbook_set
+                )
 
             elif re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = get_playbook_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.test_playbook_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, playbook_data, self.test_playbook_set
+                )
 
-            elif re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
+            elif re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or re.match(
+                SCRIPT_REGEX, file_path, re.IGNORECASE
+            ):
 
                 script_data = get_script_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, script_data, self.script_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, script_data, self.script_set
+                )
 
-            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
+            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or re.match(
+                INTEGRATION_YML_REGEX, file_path, re.IGNORECASE
+            ):
 
                 integration_data = get_integration_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, integration_data, self.integration_set)
+                is_valid = self.is_valid_in_id_set(
+                    file_path, integration_data, self.integration_set
+                )
 
-            elif re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE):
+            elif (
+                re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE)
+                or re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE)
+                or re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE)
+            ):
 
                 unifier = Unifier(os.path.dirname(file_path))
                 yml_path, code = unifier.get_script_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
-                is_valid = self.is_valid_in_id_set(yml_path, script_data, self.script_set)
+                is_valid = self.is_valid_in_id_set(
+                    yml_path, script_data, self.script_set
+                )
 
         return is_valid
 
@@ -160,33 +194,46 @@ class IDSetValidator:
         is_duplicated = False
         obj_data_list = list(obj_data.values())
         dict_value = obj_data_list[0]
-        obj_toversion = dict_value.get('toversion', '99.99.99')
-        obj_fromversion = dict_value.get('fromversion', '0.0.0')
+        obj_toversion = dict_value.get("toversion", "99.99.99")
+        obj_fromversion = dict_value.get("fromversion", "0.0.0")
 
         for section, section_data in self.id_set.items():
             for instance in section_data:
                 instance_id = list(instance.keys())[0]
-                instance_to_version = instance[instance_id].get('toversion', '99.99.99')
-                instance_from_version = instance[instance_id].get('fromversion', '0.0.0')
+                instance_to_version = instance[instance_id].get("toversion", "99.99.99")
+                instance_from_version = instance[instance_id].get(
+                    "fromversion", "0.0.0"
+                )
                 if obj_id == instance_id:
-                    if section != obj_type and LooseVersion(obj_fromversion) < LooseVersion(instance_to_version):
+                    if section != obj_type and LooseVersion(
+                        obj_fromversion
+                    ) < LooseVersion(instance_to_version):
                         is_duplicated = True
                         break
 
-                    elif obj_fromversion == instance_from_version and obj_toversion == instance_to_version:
+                    elif (
+                        obj_fromversion == instance_from_version
+                        and obj_toversion == instance_to_version
+                    ):
                         if instance[instance_id] != obj_data[obj_id]:
                             is_duplicated = True
                             break
 
-                    elif (LooseVersion(obj_fromversion) <= LooseVersion(instance_to_version) and
-                          (LooseVersion(obj_toversion) >= LooseVersion(instance_from_version))):
+                    elif LooseVersion(obj_fromversion) <= LooseVersion(
+                        instance_to_version
+                    ) and (
+                        LooseVersion(obj_toversion)
+                        >= LooseVersion(instance_from_version)
+                    ):
                         is_duplicated = True
                         break
 
         if is_duplicated:
-            print_error("The ID {0} already exists, please update the file or update the "
-                        "id_set.json toversion field of this id to match the "
-                        "old occurrence of this id".format(obj_id))
+            print_error(
+                "The ID {} already exists, please update the file or update the "
+                "id_set.json toversion field of this id to match the "
+                "old occurrence of this id".format(obj_id)
+            )
 
         return is_duplicated
 
@@ -207,14 +254,16 @@ class IDSetValidator:
                 obj_id = collect_ids(file_path)
                 obj_data = get_playbook_data(file_path)
 
-            elif re.match(SCRIPT_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE):
+            elif re.match(SCRIPT_REGEX, file_path, re.IGNORECASE) or re.match(
+                TEST_SCRIPT_REGEX, file_path, re.IGNORECASE
+            ):
                 obj_type = self.SCRIPTS_SECTION
                 obj_id = get_script_or_integration_id(file_path)
                 obj_data = get_script_data(file_path)
 
-            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
+            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or re.match(
+                INTEGRATION_YML_REGEX, file_path, re.IGNORECASE
+            ):
 
                 obj_type = self.INTEGRATION_SECTION
                 obj_id = get_script_or_integration_id(file_path)
@@ -225,9 +274,11 @@ class IDSetValidator:
                 obj_id = collect_ids(file_path)
                 obj_data = get_playbook_data(file_path)
 
-            elif re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE):
+            elif (
+                re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE)
+                or re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE)
+                or re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE)
+            ):
 
                 unifier = Unifier(os.path.dirname(os.path.dirname(file_path)))
                 yml_path, code = unifier.get_script_package_data()

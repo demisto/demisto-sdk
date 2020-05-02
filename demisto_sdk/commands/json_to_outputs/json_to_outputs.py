@@ -81,14 +81,14 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
 
 
 def input_multiline():
-    sentinel = ''  # ends when this string is seen
-    return '\n'.join(iter(input, sentinel))
+    sentinel = ""  # ends when this string is seen
+    return "\n".join(iter(input, sentinel))
 
 
 def flatten_json(nested_json, camelize=False):
     out = {}
 
-    def flatten(x, name=''):
+    def flatten(x, name=""):
         # capitalize first letter in each key
         try:
             name = name[0].upper() + name[1:] if camelize else name
@@ -97,22 +97,22 @@ def flatten_json(nested_json, camelize=False):
 
         if isinstance(x, dict):
             for a in x:
-                flatten(x[a], name + a + '.')
+                flatten(x[a], name + a + ".")
         elif isinstance(x, list):
             for a in x:
-                flatten(a, name[:-1] + '.')
+                flatten(a, name[:-1] + ".")
         else:
-            out[name.rstrip('.')] = x
+            out[name.rstrip(".")] = x
 
     flatten(nested_json)
     return out
 
 
-def jsonise(context_key, value, description=''):
+def jsonise(context_key, value, description=""):
     return {
-        'contextPath': context_key,
-        'description': description,
-        'type': determine_type(value)
+        "contextPath": context_key,
+        "description": description,
+        "type": determine_type(value),
     }
 
 
@@ -126,7 +126,12 @@ def is_date(val):
         # if number is between these two numbers it probably is timestamp=date
         return True
 
-    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and dateparser.parse(val):
+    if (
+        isinstance(val, str)
+        and len(val) >= 10
+        and len(val) <= 30
+        and dateparser.parse(val)
+    ):
         # the shortest date string is => len(2019-10-10) = 10
         # The longest date string I could think of wasn't of length over len=30 '2019-10-10T00:00:00.000 +0900'
         # To reduce in performance of using dateparser.parse,I
@@ -137,23 +142,23 @@ def is_date(val):
 
 def determine_type(val):
     if is_date(val):
-        return 'Date'
+        return "Date"
 
     if isinstance(val, str):
-        return 'String'
+        return "String"
 
     if isinstance(val, (int, float)):
-        return 'Number'
+        return "Number"
 
     if isinstance(val, bool):
-        return 'Boolean'
+        return "Boolean"
 
-    return 'Unknown'
+    return "Unknown"
 
 
 def parse_json(data, command_name, prefix, verbose=False, interactive=False):
-    if data == '':
-        raise ValueError('Invalid input JSON - got empty string')
+    if data == "":
+        raise ValueError("Invalid input JSON - got empty string")
 
     try:
         data = json.loads(data)
@@ -161,36 +166,36 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
         if verbose:
             print_error(str(ex))
 
-        raise ValueError('Invalid input JSON')
+        raise ValueError("Invalid input JSON")
 
     flattened_data = flatten_json(data)
     if prefix:
-        flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
+        flattened_data = {
+            f"{prefix}.{key}": value for key, value in flattened_data.items()
+        }
 
     arg_json = []
     for key, value in flattened_data.items():
-        description = ''
+        description = ""
         if interactive:
-            print(f'Enter description for: [{key}]')
+            print(f"Enter description for: [{key}]")
             description = input_multiline()
 
         arg_json.append(jsonise(key, value, description))
 
     if verbose:
-        print(f'JSON before converting to YAML: {arg_json}')
+        print(f"JSON before converting to YAML: {arg_json}")
 
     yaml_output = yaml.safe_dump(
-        {
-            'name': command_name.lstrip('!'),
-            'arguments': [],
-            'outputs': arg_json
-        },
-        default_flow_style=False
+        {"name": command_name.lstrip("!"), "arguments": [], "outputs": arg_json},
+        default_flow_style=False,
     )
     return yaml_output
 
 
-def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False):
+def json_to_outputs(
+    command, input, prefix, output=None, verbose=False, interactive=False
+):
     """
     This script parses JSON to Demisto Outputs YAML format
 
@@ -208,7 +213,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
     """
     try:
         if input:
-            with open(input, 'r') as json_file:
+            with open(input, "r") as json_file:
                 input_json = json_file.read()
         else:
             print("Dump your JSON here:")
@@ -217,10 +222,10 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         yaml_output = parse_json(input_json, command, prefix, verbose, interactive)
 
         if output:
-            with open(output, 'w') as yf:
+            with open(output, "w") as yf:
                 yf.write(yaml_output)
 
-                print_color(f'Outputs file was saved to :\n{output}', LOG_COLORS.GREEN)
+                print_color(f"Outputs file was saved to :\n{output}", LOG_COLORS.GREEN)
         else:
             print_color("YAML Outputs\n\n", LOG_COLORS.GREEN)
             print(yaml_output)
@@ -229,5 +234,5 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         if verbose:
             raise
         else:
-            print_error(f'Error: {str(ex)}')
+            print_error(f"Error: {str(ex)}")
             sys.exit(1)

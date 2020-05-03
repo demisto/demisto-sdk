@@ -579,10 +579,11 @@ class IntegrationValidator(BaseValidator):
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(f'Integration with fetch-incidents was detected '
-                                f'("isfetch: true" was found in the YAML file).'
-                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                                f'the param is:\n{yaml.dump(param)}\n'
+                    print_error(f'A required parameter'
+                                f'\n```\n{yaml.dump(param)}```\n'
+                                f' is missing or malformed in the YAML file.'
+                                'The correct format of the parameter should be as follows:'
+                                f'\n```\n{yaml.dump(param)}```\n'
                                 f'If another other arguments exists in the param remove them.')
                     fetch_params_exist = False
 

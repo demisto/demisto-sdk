@@ -4,7 +4,8 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
-    append_or_replace_command_in_docs, generate_integration_doc)
+    append_or_replace_command_in_docs, generate_commands_section,
+    generate_integration_doc)
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -223,7 +224,6 @@ def test_get_used_in():
 
 
 def test_generate_commands_section():
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
 
     yml_data = {
         'script': {
@@ -242,17 +242,46 @@ def test_generate_commands_section():
         '## Commands',
         'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
-        '**FILL IN REQUIRED PERMISSIONS HERE**', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
-        'There are no input arguments for this command.', '', '##### Context Output', '',
-        'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
-        '##### Human Readable Output', '', '']
+        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+        '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+        'There are no input arguments for this command.', '', '#### Context Output', '',
+        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
+        '#### Human Readable Output', '\n', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def test_generate_commands_section_human_readable():
+
+    yml_data = {
+        'script': {
+            'commands': [
+                {'deprecated': True,
+                 'name': 'deprecated-cmd'},
+                {'deprecated': False,
+                 'name': 'non-deprecated-cmd'}
+            ]
+        }
+    }
+
+    example_dict = {
+        'non-deprecated-cmd': [
+            '!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}'
+        ]
+    }
+
+    section, errors = generate_commands_section(yml_data, example_dict, command_permissions_dict={})
+
+    hr_section: str = section[section.index('#### Human Readable Output') + 1]
+    # get lines except first one which is a \n
+    lines = hr_section.splitlines()[1:]
+    for l in lines:
+        assert l.startswith('>')
+    assert lines[0] == '>## this is human readable'
+    assert lines[1] == '>This is a line'
+
+
 def test_generate_commands_with_permissions_section():
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
 
     yml_data = {
         'script': {
@@ -272,11 +301,11 @@ def test_generate_commands_with_permissions_section():
         '## Commands',
         'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
-        'SUPERUSER', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
-        'There are no input arguments for this command.', '', '##### Context Output', '',
-        'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
-        '##### Human Readable Output', '', '']
+        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+        'SUPERUSER', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+        'There are no input arguments for this command.', '', '#### Context Output', '',
+        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
+        '#### Human Readable Output', '\n', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 

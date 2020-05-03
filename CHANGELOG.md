@@ -1,6 +1,6 @@
 # Changelog
 * Fixed a bug in the **unify** command when output path was provided empty.
-
+* Improved error message for integration with no tests configured
 
 #### 1.0.0
 * Improved the *upload* command to support the upload of all the content entities within a pack.

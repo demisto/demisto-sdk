@@ -90,11 +90,8 @@ class IntegrationValidator(BaseValidator):
         Checks if the integration has a TestPlaybook and if the TestPlaybook is configured in conf.json
         And prints an error message accordingly
         """
-        file_type = self.structure_validator.scheme_name
         tests = self.current_file.get('tests', [])
-        if not self.are_tests_registered_in_conf_json_file(tests):
-            return self.yml_has_test_key(tests, file_type)
-        return True
+        return self.are_tests_registered_in_conf_json_file_or_yml_file(tests)
 
     def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that

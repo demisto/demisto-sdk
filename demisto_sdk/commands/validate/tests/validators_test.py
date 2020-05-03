@@ -432,13 +432,12 @@ class TestValidators:
     ARE_TEST_CONFIGURED_TEST_INPUT = [
         (VALID_INTEGRATION_TEST_PATH, 'integration', True),
         (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
-        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', True),
+        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
         (TEST_PLAYBOOK, 'playbook', False)
     ]
 
     @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
-    def test_are_tests_configured(self, file_path, file_type, expected):
-        # type: (str, bool) -> None
+    def test_are_tests_configured(self, file_path: str, file_type: str, expected: bool):
         """
             Given
             - A content item

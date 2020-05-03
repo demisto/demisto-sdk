@@ -89,3 +89,33 @@ class TestContentCreator:
                            f'{self._test_dir}/script-just_a_test_script.yml')
         assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/script-prefixed_automation.yml',
                            f'{self._test_dir}/script-prefixed_automation.yml')
+
+    def test_copy_docs_files(self, mocker):
+        """
+        Given
+        - valid packs and content bundle paths.
+        When
+        - copying the common docs files to content and packs bundle
+        Then
+        - ensure common docs files are copied to correct path.
+        """
+        mocker.patch('builtins.print')
+        mocker.patch('os.mkdir')
+
+        doc_files_paths = ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json')
+        mocker.patch('os.path.exists', side_effect=lambda p: p in doc_files_paths)
+
+        copied_to_bundle = mocker.patch('shutil.copyfile')
+        copied_to_packs = mocker.patch('shutil.copy')
+
+        ContentCreator.copy_docs_files(content_bundle_path="dummy_bundle_path", packs_bundle_path="dummy_packs_path")
+
+        for called_args in copied_to_bundle.call_args_list:
+            destination_copy_path = called_args.args[1]
+            assert destination_copy_path in (
+                'dummy_bundle_path/doc-CommonServer.json', 'dummy_bundle_path/doc-howto.json')
+
+        for called_args in copied_to_packs.call_args_list:
+            destination_copy_path = called_args.args[1]
+            assert destination_copy_path in ("dummy_packs_path/Base/Documentation/doc-CommonServer.json",
+                                             "dummy_packs_path/Base/Documentation/doc-howto.json")

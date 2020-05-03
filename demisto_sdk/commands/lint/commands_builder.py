@@ -19,7 +19,7 @@ def get_python_exec(py_num: float) -> str:
         str: python executable
     """
     if py_num < 3:
-        py_num = ""
+        py_num = 2
     else:
         py_num = 3
 
@@ -39,8 +39,8 @@ def build_flake8_command(files: List[Path], py_num: float) -> str:
 
     command = f"{get_python_exec(py_num)} -m flake8"
     # Generating file pattrens - path1,path2,path3,..
-    files = [str(file) for file in files]
-    command += ' ' + ' '.join(files)
+    files_list = [str(file) for file in files]
+    command += ' ' + ' '.join(files_list)
 
     return command
 
@@ -66,8 +66,8 @@ def build_bandit_command(files: List[Path]) -> str:
     # only show output in the case of an error
     command += f" -q"
     # Generating path pattrens - path1,path2,path3,..
-    files = [str(item) for item in files]
-    command += f" -r {','.join(files)}"
+    files_list = [str(item) for item in files]
+    command += f" -r {','.join(files_list)}"
 
     return command
 
@@ -102,8 +102,8 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     # Disable cache creation
     command += " --cache-dir=/dev/null"
     # Generating path pattrens - file1 file2 file3,..
-    files = [str(item) for item in files]
-    command += " " + " ".join(files)
+    files_list = [str(item) for item in files]
+    command += " " + " ".join(files_list)
 
     return command
 
@@ -128,8 +128,8 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     whitelist = Path(pack_path) / '.vulture_whitelist.py'
     if whitelist.exists():
         command += f" {whitelist}"
-    files = [str(item) for item in files]
-    command += " " + " ".join(files)
+    files_list = [str(item) for item in files]
+    command += " " + " ".join(files_list)
 
     return command
 
@@ -154,8 +154,8 @@ def build_pylint_command(files: List[Path]) -> str:
     # E1101 when accessed.
     command += " --generated-members=requests.packages.urllib3,requests.codes.ok"
     # Generating path pattrens - file1 file2 file3,..
-    files = [file.name for file in files]
-    command += " " + " ".join(files)
+    files_list = [file.name for file in files]
+    command += " " + " ".join(files_list)
 
     return command
 

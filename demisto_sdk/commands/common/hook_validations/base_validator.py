@@ -120,8 +120,8 @@ class BaseValidator:
         file_id = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
         if file_id != name:
-            print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
-                        " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
+            print_error("The File's name, which is: '{}', should be equal to its ID, which is: '{}'."
+                        " please update the file (path to file: {}).".format(name, file_id, self.file_path))
             print_error(Errors.suggest_fix(self.file_path))
             return False
         return True

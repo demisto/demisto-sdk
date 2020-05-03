@@ -321,7 +321,7 @@ class Uploader:
             # Print results
             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
             print_color(f'Uploaded widget - \'{os.path.basename(path)}\': successfully', LOG_COLORS.GREEN)
-            self.successfully_uploaded_files.append(((file_name, 'Widget')))
+            self.successfully_uploaded_files.append((file_name, 'Widget'))
 
         except Exception as err:
             self._parse_error_response(err, 'widget', file_name)

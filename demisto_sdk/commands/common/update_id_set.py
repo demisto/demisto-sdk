@@ -64,11 +64,11 @@ def checked_type(file_path, regex_list=CHECKED_TYPES_REGEXES):
 
 def get_changed_files(files_string):
     all_files = files_string.split('\n')
-    deleted_files = set([])
-    added_files_list = set([])
-    added_script_list = set([])
-    modified_script_list = set([])
-    modified_files_list = set([])
+    deleted_files = set()
+    added_files_list = set()
+    added_script_list = set()
+    modified_script_list = set()
+    modified_files_list = set()
     for f in all_files:
         file_data = f.split()
         if not file_data:
@@ -110,7 +110,7 @@ def get_integration_commands(file_path):
 
 
 def get_task_ids_from_playbook(param_to_enrich_by, data_dict):
-    implementing_ids = set([])
+    implementing_ids = set()
     tasks = data_dict.get('tasks', {})
 
     for task in tasks.values():
@@ -306,7 +306,7 @@ def get_general_data(path):
 
 def get_depends_on(data_dict):
     depends_on = data_dict.get('dependson', {}).get('must', [])
-    depends_on_list = list(set(cmd.split('|')[-1] for cmd in depends_on))
+    depends_on_list = list({cmd.split('|')[-1] for cmd in depends_on})
     command_to_integration = {}
     for cmd in depends_on:
         splitted_cmd = cmd.split('|')
@@ -317,7 +317,7 @@ def get_depends_on(data_dict):
 
 
 def update_object_in_id_set(obj_id, obj_data, file_path, instances_set):
-    change_string = run_command("git diff HEAD {0}".format(file_path))
+    change_string = run_command("git diff HEAD {}".format(file_path))
     is_added_from_version = True if re.search(r'\+fromversion: .*', change_string) else False
     is_added_to_version = True if re.search(r'\+toversion: .*', change_string) else False
 
@@ -377,7 +377,7 @@ def process_integration(file_path, print_logs):
     if os.path.isfile(file_path):
         if checked_type(file_path, (INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, PACKS_INTEGRATION_REGEX)):
             if print_logs:
-                print("adding {0} to id_set".format(file_path))
+                print("adding {} to id_set".format(file_path))
             res.append(get_integration_data(file_path))
     else:
         # package integration
@@ -386,7 +386,7 @@ def process_integration(file_path, print_logs):
         if os.path.isfile(file_path):
             # locally, might have leftover dirs without committed files
             if print_logs:
-                print("adding {0} to id_set".format(file_path))
+                print("adding {} to id_set".format(file_path))
             res.append(get_integration_data(file_path))
 
     return res
@@ -397,14 +397,14 @@ def process_script(file_path, print_logs):
     if os.path.isfile(file_path):
         if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX)):
             if print_logs:
-                print("adding {0} to id_set".format(file_path))
+                print("adding {} to id_set".format(file_path))
             res.append(get_script_data(file_path))
     else:
         # package script
         unifier = Unifier(file_path)
         yml_path, code = unifier.get_script_package_data()
         if print_logs:
-            print("adding {0} to id_set".format(file_path))
+            print("adding {} to id_set".format(file_path))
         res.append(get_script_data(yml_path, script_code=code))
 
     return res
@@ -414,7 +414,7 @@ def process_playbook(file_path, print_logs):
     res = []
     if checked_type(file_path, (PACKS_PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX, BETA_PLAYBOOK_REGEX)):
         if print_logs:
-            print('adding {0} to id_set'.format(file_path))
+            print('adding {} to id_set'.format(file_path))
         res.append(get_playbook_data(file_path))
     return res
 
@@ -574,7 +574,7 @@ def process_test_playbook_path(file_path, print_logs):
         pair -- first element is a playbook second is a script. each may be None
     """
     if print_logs:
-        print("adding {0} to id_set".format(file_path))
+        print("adding {} to id_set".format(file_path))
     script = None
     playbook = None
     if checked_type(file_path, (TEST_SCRIPT_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, TEST_PLAYBOOK_REGEX)):
@@ -780,7 +780,7 @@ def find_duplicates(id_set, print_logs):
         if print_logs:
             print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)
-        ids = set(list(specific_item.keys())[0] for specific_item in objects)
+        ids = {list(specific_item.keys())[0] for specific_item in objects}
 
         dup_list = []
         for id_to_check in ids:
@@ -792,7 +792,7 @@ def find_duplicates(id_set, print_logs):
         print_color("Checking diff for Incident and Idicator Fields", LOG_COLORS.GREEN)
 
     fields = id_set['IncidentFields'] + id_set['IndicatorFields']
-    field_ids = set(list(field.keys())[0] for field in fields)
+    field_ids = {list(field.keys())[0] for field in fields}
 
     field_list = []
     for field_to_check in field_ids:
@@ -880,23 +880,23 @@ def update_id_set():
                     re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
                 add_new_object_to_id_set(get_script_or_integration_id(file_path), get_integration_data(file_path),
                                          integration_set)
-                print("Adding {0} to id_set".format(get_script_or_integration_id(file_path)))
+                print("Adding {} to id_set".format(get_script_or_integration_id(file_path)))
             if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
                 add_new_object_to_id_set(get_script_or_integration_id(file_path), get_script_data(file_path),
                                          script_set)
-                print("Adding {0} to id_set".format(get_script_or_integration_id(file_path)))
+                print("Adding {} to id_set".format(get_script_or_integration_id(file_path)))
             if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 add_new_object_to_id_set(collect_ids(file_path), get_playbook_data(file_path),
                                          playbook_set)
-                print("Adding {0} to id_set".format(collect_ids(file_path)))
+                print("Adding {} to id_set".format(collect_ids(file_path)))
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 add_new_object_to_id_set(collect_ids(file_path), get_playbook_data(file_path),
                                          test_playbook_set)
-                print("Adding {0} to id_set".format(collect_ids(file_path)))
+                print("Adding {} to id_set".format(collect_ids(file_path)))
             if re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE):
                 add_new_object_to_id_set(get_script_or_integration_id(file_path), get_script_data(file_path),
                                          script_set)
-                print("Adding {0} to id_set".format(collect_ids(file_path)))
+                print("Adding {} to id_set".format(collect_ids(file_path)))
 
     if modified_files:
         for file_path in modified_files:
@@ -905,23 +905,23 @@ def update_id_set():
                 id_ = get_script_or_integration_id(file_path)
                 integration_data = get_integration_data(file_path)
                 update_object_in_id_set(id_, integration_data, file_path, integration_set)
-                print("updated {0} in id_set".format(id_))
+                print("updated {} in id_set".format(id_))
             if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE) or re.match(TEST_SCRIPT_REGEX,
                                                                             file_path, re.IGNORECASE):
                 id_ = get_script_or_integration_id(file_path)
                 script_data = get_script_data(file_path)
                 update_object_in_id_set(id_, script_data, file_path, script_set)
-                print("updated {0} in id_set".format(id_))
+                print("updated {} in id_set".format(id_))
             if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 id_ = collect_ids(file_path)
                 playbook_data = get_playbook_data(file_path)
                 update_object_in_id_set(id_, playbook_data, file_path, playbook_set)
-                print("updated {0} in id_set".format(id_))
+                print("updated {} in id_set".format(id_))
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 id_ = collect_ids(file_path)
                 playbook_data = get_playbook_data(file_path)
                 update_object_in_id_set(id_, playbook_data, file_path, test_playbook_set)
-                print("updated {0} in id_set".format(id_))
+                print("updated {} in id_set".format(id_))
 
     if added_scripts:
         for added_script_package in added_scripts:
@@ -929,7 +929,7 @@ def update_id_set():
             yml_path, code = unifier.get_script_package_data()
             add_new_object_to_id_set(get_script_or_integration_id(yml_path),
                                      get_script_data(yml_path, script_code=code), script_set)
-            print("Adding {0} to id_set".format(get_script_or_integration_id(yml_path)))
+            print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))
 
     if modified_scripts:
         for modified_script_package in added_scripts:
@@ -937,7 +937,7 @@ def update_id_set():
             yml_path, code = unifier.get_script_package_data()
             update_object_in_id_set(get_script_or_integration_id(yml_path),
                                     get_script_data(yml_path, script_code=code), yml_path, script_set)
-            print("Adding {0} to id_set".format(get_script_or_integration_id(yml_path)))
+            print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))
 
     if added_files or modified_files:
         new_ids_dict = OrderedDict()

@@ -45,7 +45,7 @@ class ConfJsonValidator:
 
         if problematic_instances:
             self._is_valid = False
-            print("Those instances don't have description:\n{0}".format('\n'.join(problematic_instances)))
+            print("Those instances don't have description:\n{}".format('\n'.join(problematic_instances)))
 
         return self._is_valid
 
@@ -64,5 +64,5 @@ class ConfJsonValidator:
             if file_id == playbook_id:
                 return True
 
-        print_error("You've failed to add the {0} to conf.json".format(file_id))
+        print_error("You've failed to add the {} to conf.json".format(file_id))
         return False

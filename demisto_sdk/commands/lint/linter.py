@@ -188,14 +188,14 @@ class Linter:
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
             if self._facts["docker_engine"]:
-                # Getting python version from docker image - verfying if not valid docker image configured
+                # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     py_num: float = get_python_version_from_image(image=image[0])
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
-                # Checking wheter *test* exsits in package
+                # Checking whatever *test* exsits in package
                 self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None) else False
                 if self._facts["test"]:
                     logger.info(f"{log_prompt} - Tests found")

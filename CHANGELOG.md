@@ -1,4 +1,5 @@
 # Changelog
+* Fixed a bug in the **unify** command when output path was provided empty.
 
 
 #### 1.0.0

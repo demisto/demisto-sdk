@@ -88,7 +88,7 @@ def test_clean_python_code():
 def test_get_code_file():
     from demisto_sdk.commands.unify.unifier import Unifier
     # Test integration case
-    unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    unifier = c(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
     assert unifier.get_code_file(".py") == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.py"
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):
@@ -455,3 +455,32 @@ class TestMergeScriptPackageToYMLScript:
                                    'script-SampleScriptPackageSanityDocker45_45.yml')
 
         assert expected_yml_45 == actual_yml_45
+
+
+TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
+
+
+def test_unify_default_output_integration():
+    """Test unify command with default output - integration"""
+    from demisto_sdk.commands.unify.unifier import Unifier
+    input_path_integration = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
+    unifier = Unifier(input_path_integration)
+    yml_files = unifier.merge_script_package_to_yml()
+    export_yml_path = yml_files[0]
+    expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml'
+
+    assert export_yml_path == expected_yml_path
+    os.remove(expected_yml_path)
+
+
+def test_unify_default_output_script():
+    """Test unify command with default output - script"""
+    from demisto_sdk.commands.unify.unifier import Unifier
+    input_path_script = TESTS_DIR + '/test_files/Packs/DummyPack/Scripts/DummyScript'
+    unifier = Unifier(input_path_script)
+    yml_files = unifier.merge_script_package_to_yml()
+    export_yml_path = yml_files[0]
+    expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Scripts/DummyScript/script-DummyScript.yml'
+
+    assert export_yml_path == expected_yml_path
+    os.remove(expected_yml_path)

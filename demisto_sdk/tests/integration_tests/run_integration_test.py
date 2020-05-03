@@ -12,10 +12,10 @@ def set_environment_variables(monkeypatch):
     monkeypatch.setenv('DEMISTO_API_KEY', 'API_KEY')
 
 
-def test_runner_with_wrong_query(mocker, set_environment_variables):
+def test_integration_run_non_existing_command(mocker, set_environment_variables):
     """
     Given
-    - Non-existing query.
+    - Non-existing command to run.
 
     When
     - Running `run` command.
@@ -25,5 +25,7 @@ def test_runner_with_wrong_query(mocker, set_environment_variables):
     """
     mocker.patch.object(DefaultApi, 'investigation_add_entries_sync', return_value=None)
     mocker.patch.object(Runner, '_get_playground_id', return_value='pg_id')
-    result = CliRunner(mix_stderr=False).invoke(main, ['run', '-q', '!non-existing-command'])
+    result = CliRunner(mix_stderr=False, ).invoke(main, ['run', '-q', '!non-existing-command'], catch_exceptions=False)
+    assert result.exit_code == 0
     assert 'Command did not run, make sure it was written correctly.' in result.output
+    assert not result.stderr

@@ -140,7 +140,7 @@ class Unifier:
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
         else:
-            self.dest_path = os.path.join(self.dir_name, output_filename)
+            self.dest_path = os.path.join(self.package_path, output_filename)
 
         script_obj = self.yml_data
 

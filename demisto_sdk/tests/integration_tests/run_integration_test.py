@@ -16,6 +16,7 @@ def test_integration_run_non_existing_command(mocker, set_environment_variables)
     """
     Given
     - Non-existing command to run.
+    - Debug and Verbose option to increase coverage
 
     When
     - Running `run` command.
@@ -25,7 +26,8 @@ def test_integration_run_non_existing_command(mocker, set_environment_variables)
     """
     mocker.patch.object(DefaultApi, 'investigation_add_entries_sync', return_value=None)
     mocker.patch.object(Runner, '_get_playground_id', return_value='pg_id')
-    result = CliRunner(mix_stderr=False, ).invoke(main, ['run', '-q', '!non-existing-command'], catch_exceptions=False)
-    assert result.exit_code == 0
+    result = CliRunner(mix_stderr=False, ).invoke(main, ['run', '-q', '!non-existing-command', '-D', '-v'])
+    assert 0 == result.exit_code
+    assert not result.exception
     assert 'Command did not run, make sure it was written correctly.' in result.output
     assert not result.stderr

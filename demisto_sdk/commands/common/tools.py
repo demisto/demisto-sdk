@@ -8,7 +8,7 @@ import shlex
 import sys
 from distutils.version import LooseVersion
 from pathlib import Path
-from subprocess import DEVNULL, PIPE, Popen, check_output
+from subprocess import _ENV, DEVNULL, PIPE, Popen, check_output
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import git
@@ -604,7 +604,7 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: str = ''):
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = ''):
     """
     returns the content file type
 
@@ -683,19 +683,18 @@ def get_content_path() -> str:
     Returns:
         str: Absolute content path
     """
-    git_repo = ""
     try:
         git_repo = git.Repo(os.getcwd(),
                             search_parent_directories=True)
         if 'content' not in git_repo.remote().urls.__next__():
             raise git.InvalidGitRepositoryError
+        return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         print_error("Please run demisto-sdk in content repository - Aborting!")
+    return ''
 
-    return git_repo.working_dir
 
-
-def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Path, env: _ENV = os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
@@ -707,12 +706,14 @@ def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str
         int: exit code of command
     """
     try:
-        process = Popen(shlex.split(command),
-                        cwd=cwd,
-                        env=env,
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        universal_newlines=True)
+        process = Popen(
+            shlex.split(command),
+            cwd=cwd,
+            env=env,
+            stdout=PIPE,
+            stderr=PIPE,
+            universal_newlines=True
+        )
         stdout, stderr = process.communicate()
     except OSError as e:
         return '', str(e), 1
@@ -843,6 +844,8 @@ def is_test_config_match(test_config: dict, test_playbook_id: str = '', integrat
     if test_playbook_id:
         return test_playbook_match
 
+    return False
+
 
 def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list) -> list:
     """
@@ -885,7 +888,7 @@ def _get_file_id(file_type: str, file_content: Dict):
     """
     file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get('id')
+        file_id = file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
         file_id = file_content.get('commonfields', {}).get('id')
     return file_id

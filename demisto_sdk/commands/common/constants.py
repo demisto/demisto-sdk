@@ -1,13 +1,13 @@
 import re
-from typing import List
+from typing import Any, List
 
 
 class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
-    def suggest_fix(file_path: str, *args: List, cmd: str = 'format') -> str:
-        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+    def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
+        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(*args)}`'
 
     @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):

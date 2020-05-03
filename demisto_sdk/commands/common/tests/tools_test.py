@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_last_release_version,
                                                get_matching_regex,
                                                retrieve_file_ending,
+                                               run_command_os,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               VALID_DASHBOARD_PATH,
@@ -234,3 +235,15 @@ class TestGetFilesInDir:
         files = [f'{integration_instance_dir}/TestIntegration.py',
                  f'{integration_instance_dir}/TestIntegration_testt.py']
         assert sorted(get_files_in_dir(integrations_dir, ['py'])) == sorted(files)
+
+
+def test_run_command_os():
+    """Tests a simple command, to check if it works
+    """
+    stdout, stderr, return_code = run_command_os(
+        'ls',
+        cwd=os.getcwd()
+    )
+    assert 0 == return_code
+    assert stdout
+    assert not stderr

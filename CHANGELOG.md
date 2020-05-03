@@ -1,5 +1,5 @@
 # Changelog
-* Fixed a bug when an output argument was not passed to the **unify** command.
+* Fixed a bug in the **unify** command when output path was provided empty.
 
 
 #### 1.0.0

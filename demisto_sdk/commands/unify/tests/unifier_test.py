@@ -386,7 +386,8 @@ final test: hi
     def test_unify_default_output_integration(self):
         """
         Given
-        - DummyPack integration valid Pack.
+        - UploadTest integration.
+        - No output path.
 
         When
         - Running Unify on it.
@@ -481,7 +482,8 @@ class TestMergeScriptPackageToYMLScript:
     def test_unify_default_output_script(self):
         """
         Given
-        - DummyPack script valid Pack.
+        - DummyScript script.
+        - No output path.
 
         When
         - Running Unify on it.

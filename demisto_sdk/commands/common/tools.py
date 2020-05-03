@@ -8,7 +8,7 @@ import shlex
 import sys
 from distutils.version import LooseVersion
 from pathlib import Path
-from subprocess import _ENV, DEVNULL, PIPE, Popen, check_output
+from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import git
@@ -694,12 +694,12 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: _ENV = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env=os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
         cwd(Path): Path from pathlib object to be executed
-        env: Enviorment variables for the execution
+        env: Environment variables for the execution
     Returns:
         str: Stdout of the command
         str: Stderr of the command

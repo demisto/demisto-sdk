@@ -19,11 +19,11 @@ def get_python_exec(py_num: float) -> str:
         str: python executable
     """
     if py_num < 3:
-        py_num = 2
+        py_str = ""
     else:
-        py_num = 3
+        py_str = "3"
 
-    return f"python{py_num}"
+    return f"python{py_str}"
 
 
 def build_flake8_command(files: List[Path], py_num: float) -> str:

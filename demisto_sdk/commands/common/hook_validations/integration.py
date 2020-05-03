@@ -1,3 +1,4 @@
+import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
                                                    FEED_REQUIRED_PARAMS,
@@ -578,10 +579,13 @@ class IntegrationValidator(BaseValidator):
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(f'Integration with fetch-incidents was detected '
-                                f'("isfetch:  true" was found in the YAML file).'
-                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                                f'the param is:\n{param}')
+                    print_error(
+                        f'{self.file_path}:'
+                        f'A required parameter "{param.get("name")}" is missing or malformed '
+                        f'in the YAML file.\n'
+                        'The correct format of the parameter should be as follows:'
+                        f'\n{yaml.dump(param)}'
+                    )
                     fetch_params_exist = False
 
         return fetch_params_exist
@@ -599,9 +603,14 @@ class IntegrationValidator(BaseValidator):
                 params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
-                print_error(f'Feed Integration was detected '
-                            f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                            f'the param should be:\n{param}')
+                print_error(
+                    f'{self.file_path}'
+                    f'Feed Integration was detected '
+                    f'A required parameter "{param.get("name")}" is missing or malformed '
+                    f'in the YAML file.\n'
+                    'The correct format of the parameter should be as follows:'
+                    f'\n{yaml.dump(param)}'
+                )
                 params_exist = False
 
         return params_exist

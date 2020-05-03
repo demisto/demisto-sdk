@@ -21,10 +21,10 @@ After you successfully execute a command, a DBot message appears in the War Room
 Create a new user in zoom account
 
 
-##### Base Command
+#### Base Command
 
 `zoom-create-user`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -34,7 +34,7 @@ Create a new user in zoom account
 | user_type | The type of the newly created user | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
@@ -46,10 +46,11 @@ Create a new user in zoom account
 | Zoom.User.type | number | The type of the user | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-create-meeting
@@ -57,10 +58,10 @@ Create a new user in zoom account
 Create a new zoom meeting (scheduled or instant)
 
 
-##### Base Command
+#### Base Command
 
 `zoom-create-meeting`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -72,7 +73,7 @@ Create a new zoom meeting (scheduled or instant)
 | timezone | Timezone to format start_time. For example, “America/Los_Angeles”. For scheduled meetings only.  | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
@@ -81,10 +82,11 @@ Create a new zoom meeting (scheduled or instant)
 | Zoom.Meeting.start_url | string | The URL to start the meeting | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-fetch-recording
@@ -92,17 +94,17 @@ Create a new zoom meeting (scheduled or instant)
 Get meeting record and save as file in the warroom
 
 
-##### Base Command
+#### Base Command
 
 `zoom-fetch-recording`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
 | meeting_id | Meeting id to get the recording | Required | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
@@ -118,10 +120,11 @@ Get meeting record and save as file in the warroom
 | File.SSDeep | unknown | Attachment's SSDeep hash | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-list-users
@@ -129,10 +132,10 @@ Get meeting record and save as file in the warroom
 List the existing users
 
 
-##### Base Command
+#### Base Command
 
 `zoom-list-users`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -141,7 +144,7 @@ List the existing users
 | page-number | Which page of results to return | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
@@ -163,10 +166,11 @@ List the existing users
 | Zoom.User.group_ids | string | Groups user belongs to | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-delete-user
@@ -174,10 +178,10 @@ List the existing users
 Delete a user from Zoom
 
 
-##### Base Command
+#### Base Command
 
 `zoom-delete-user`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -185,12 +189,13 @@ Delete a user from Zoom
 | action | The action to take | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 There is no context output for this command.
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 

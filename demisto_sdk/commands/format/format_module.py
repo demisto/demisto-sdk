@@ -79,11 +79,11 @@ def format_manager(input: str = None, output: str = None, from_version: str = No
 
     if error_list:
         for string, print_func in log_list:
-            print_func(('\n'.join(string)))
+            print_func('\n'.join(string))
         return 1
 
     for string, print_func in log_list:
-        print_func(('\n'.join(string)))
+        print_func('\n'.join(string))
     return 0
 
 

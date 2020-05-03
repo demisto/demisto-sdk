@@ -1,6 +1,9 @@
 # Changelog
+
+
+#### 1.0.0
 * Improved the *upload* command to support the upload of all the content entities within a pack.
-* The *upload* command now supports the improved pack file structure.*
+* The *upload* command now supports the improved pack file structure.
 * Added an interactive option to format integrations, scripts and playbooks with No TestPlaybooks configured.
 * Added an interactive option to configure *conf.json* file with missing test playbooks for integrations, scripts and playbooks
 * Added *download* command to download custom content from Demisto instance to the local content repository.
@@ -15,6 +18,8 @@
 * added *-i, --input* option in *secrets* to run on a specific file.
 * Added an allowed hidden parameter: *longRunning* to the hidden integration parameters validation.
 * Fixed an issue with **format** command when executing with an output path of a folder and not a file path.
+* Bug fixes in generate-docs command given playbook as input.
+* Fixed an issue with lint command in which flake8 was not running on unit test files.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

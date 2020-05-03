@@ -490,7 +490,7 @@ class TestIsFetchParamsExist:
         print(self.validator.current_file['configuration'])
         assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
 
-    def test_malformed_field(self):
+    def test_malformed_field(self, capsys):
         # incorrect param
         config = self.validator.current_file['configuration']
         self.validator.current_file['configuration'] = []
@@ -500,9 +500,15 @@ class TestIsFetchParamsExist:
             self.validator.current_file['configuration'].append(t)
 
         assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
+        captured = capsys.readouterr()
+        out = captured.out
+        assert "display: Incident type" in out
+        assert "name: incidentType" in out
+        assert "required: false" in out
+        assert "type: 13" in out
 
-    def test_not_fetch(self):
-        self.test_malformed_field()
+    def test_not_fetch(self, capsys):
+        self.test_malformed_field(capsys)
         self.validator.is_valid = True
         self.validator.current_file['script']['isfetch'] = False
         assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'

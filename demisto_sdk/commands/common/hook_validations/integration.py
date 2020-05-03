@@ -1,3 +1,4 @@
+import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
                                                    FEED_REQUIRED_PARAMS,
@@ -579,9 +580,10 @@ class IntegrationValidator(BaseValidator):
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     print_error(f'Integration with fetch-incidents was detected '
-                                f'("isfetch:  true" was found in the YAML file).'
+                                f'("isfetch: true" was found in the YAML file).'
                                 f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                                f'the param is:\n{param}')
+                                f'the param is:\n{yaml.dump(param)}\n'
+                                f'If another other arguments exists in the param remove them.')
                     fetch_params_exist = False
 
         return fetch_params_exist
@@ -601,7 +603,8 @@ class IntegrationValidator(BaseValidator):
             if param not in params:
                 print_error(f'Feed Integration was detected '
                             f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                            f'the param should be:\n{param}')
+                            f'the param should be:\n{yaml.dump(param)}\n'
+                            f'If another other arguments exists in the param remove them.')
                 params_exist = False
 
         return params_exist

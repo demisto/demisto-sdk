@@ -88,7 +88,7 @@ def test_clean_python_code():
 def test_get_code_file():
     from demisto_sdk.commands.unify.unifier import Unifier
     # Test integration case
-    unifier = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/"
+    unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
     assert unifier.get_code_file(".py") == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.py"
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):

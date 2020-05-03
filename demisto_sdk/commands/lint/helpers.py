@@ -71,7 +71,7 @@ def validate_env() -> None:
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
-                            no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> int:
+                            no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
     no_bandit(bool): Whether to skip bandit.
@@ -259,7 +259,6 @@ def get_python_version_from_image(image: str) -> float:
         float: Python version X.Y (3.7, 3.6, ..)
     """
     docker_client = docker.from_env()
-    containers = list()
     py_num = 2.7
     # Run two times
     for _ in range(2):
@@ -271,7 +270,6 @@ def get_python_version_from_image(image: str) -> float:
                 command=shlex.split(command),
                 detach=True
             )
-            containers.append(container_obj)
             # Wait for container to finish
             container_obj.wait(condition="exited")
             # Get python version
@@ -302,7 +300,7 @@ def get_file_from_container(container_obj: Container, container_path: str, encod
         encoding(str): valid encoding e.g. utf-8
 
     Returns:
-        str: file as string decode as utf-8
+        str or bytes: file as string decoded in utf-8
 
     Raises:
         IOError: Raise IO error if unable to create temp file

@@ -694,7 +694,7 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Path, env: _ENV = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: _ENV = os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
@@ -705,6 +705,8 @@ def run_command_os(command: str, cwd: Path, env: _ENV = os.environ) -> Tuple[str
         str: Stderr of the command
         int: exit code of command
     """
+    if isinstance(cwd, str):
+        cwd = Path(cwd)
     try:
         process = Popen(
             shlex.split(command),

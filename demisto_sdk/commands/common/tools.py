@@ -604,7 +604,7 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = ''):
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     """
     returns the content file type
 
@@ -694,7 +694,7 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env=os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.

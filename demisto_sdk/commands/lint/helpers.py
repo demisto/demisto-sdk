@@ -10,7 +10,7 @@ import textwrap
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import IO, Dict, Generator, List, Optional, Union
+from typing import Dict, Generator, List, Optional, Union
 
 # Third party packages
 import docker
@@ -308,13 +308,12 @@ def get_file_from_container(container_obj: Container, container_path: str, encod
     data: Union[str, bytes] = b''
     archive, stat = container_obj.get_archive(container_path)
     file_like = io.BytesIO(b"".join(b for b in archive))
-    tar: Optional[tarfile.TarFile] = tarfile.open(fileobj=file_like)
-    if isinstance(tar, tarfile.TarFile):
-        before_read = tar.extractfile(stat['name'])
-        if isinstance(before_read, IO):
-            data = before_read.read()
-        if encoding and isinstance(data, bytes):
-            data = data.decode(encoding)
+    tar = tarfile.open(fileobj=file_like)
+    before_read = tar.extractfile(stat['name'])
+    if isinstance(before_read, io.BufferedReader):
+        data = before_read.read()
+    if encoding and isinstance(data, bytes):
+        data = data.decode(encoding)
 
     return data
 

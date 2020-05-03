@@ -502,6 +502,7 @@ class TestIsFetchParamsExist:
         assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
         captured = capsys.readouterr()
         out = captured.out
+        print(out)
         assert "display: Incident type" in out
         assert "name: incidentType" in out
         assert "required: false" in out

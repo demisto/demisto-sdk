@@ -26,7 +26,9 @@ class BaseValidator:
         self.is_valid = structure_validator.is_valid
 
     def is_valid_file(self, validate_rn=True):
-        tests = [self.is_valid_version()]
+        tests = [
+            self.is_valid_version()
+        ]
         # In case of release branch we allow to remove release notes
         if validate_rn and not self.is_release_branch():
             tests.append(self.is_there_release_notes())
@@ -44,7 +46,7 @@ class BaseValidator:
         Return:
             True if version is valid, else False
         """
-        if self.current_file.get("version") != self.DEFAULT_VERSION:
+        if self.current_file.get('version') != self.DEFAULT_VERSION:
             print_error(Errors.wrong_version(self.file_path, self.DEFAULT_VERSION))
             print_error(Errors.suggest_fix(self.file_path))
             self.is_valid = False
@@ -77,9 +79,7 @@ class BaseValidator:
         Returns:
             (bool): is release branch
         """
-        diff_string_config_yml = run_command(
-            "git diff origin/master .circleci/config.yml"
-        )
+        diff_string_config_yml = run_command("git diff origin/master .circleci/config.yml")
         if re.search(r'[+-][ ]+CONTENT_VERSION: ".*', diff_string_config_yml):
             return True
         return False
@@ -118,14 +118,10 @@ class BaseValidator:
         """
 
         file_id = _get_file_id(file_type, self.current_file)
-        name = self.current_file.get("name", "")
+        name = self.current_file.get('name', '')
         if file_id != name:
-            print_error(
-                "The File's name, which is: '{}', should be equal to its ID, which is: '{}'."
-                " please update the file (path to file: {}).".format(
-                    name, file_id, self.file_path
-                )
-            )
+            print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
+                        " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
             print_error(Errors.suggest_fix(self.file_path))
             return False
         return True
@@ -145,62 +141,44 @@ class BaseValidator:
         Returns:
             True if all test playbooks are configured in conf.json
         """
-        no_tests_explicitly = any(
-            test for test in test_playbooks if "no test" in test.lower()
-        )
+        no_tests_explicitly = any(test for test in test_playbooks if 'no test' in test.lower())
         if no_tests_explicitly:
             return True
 
-        conf_json_tests = self._load_conf_file()["tests"]
+        conf_json_tests = self._load_conf_file()['tests']
 
-        content_item_id = _get_file_id(
-            self.structure_validator.scheme_name, self.current_file
-        )
+        content_item_id = _get_file_id(self.structure_validator.scheme_name, self.current_file)
         file_type = self.structure_validator.scheme_name
         # Test playbook case
 
-        if "TestPlaybooks" in self.file_path and file_type == "playbook":
-            is_configured_test = any(
-                test_config
-                for test_config in conf_json_tests
-                if is_test_config_match(test_config, test_playbook_id=content_item_id)
-            )
+        if 'TestPlaybooks' in self.file_path and file_type == 'playbook':
+            is_configured_test = any(test_config for test_config in conf_json_tests if
+                                     is_test_config_match(test_config, test_playbook_id=content_item_id))
             if not is_configured_test:
-                missing_test_playbook_configurations = json.dumps(
-                    {"playbookID": content_item_id}, indent=4
-                )
+                missing_test_playbook_configurations = json.dumps({'playbookID': content_item_id}, indent=4)
                 missing_integration_configurations = json.dumps(
-                    {"integrations": "<integration ID>", "playbookID": content_item_id},
-                    indent=4,
-                )
-                error_message = (
-                    f"The TestPlaybook {content_item_id} is not registered in {self.CONF_PATH} file.\n"
-                    f"Please add\n{missing_test_playbook_configurations}\n"
-                    f"or if this test playbook is for an integration\n{missing_integration_configurations}\n"
-                    f"to {self.CONF_PATH} path under 'tests' key."
-                )
+                    {'integrations': '<integration ID>', 'playbookID': content_item_id},
+                    indent=4)
+                error_message = \
+                    f'The TestPlaybook {content_item_id} is not registered in {self.CONF_PATH} file.\n' \
+                    f'Please add\n{missing_test_playbook_configurations}\n' \
+                    f'or if this test playbook is for an integration\n{missing_integration_configurations}\n' \
+                    f'to {self.CONF_PATH} path under \'tests\' key.'
                 print_error(error_message)
                 return False
 
         # Integration case
-        elif file_type == "integration":
+        elif file_type == 'integration':
             is_configured_test = any(
-                test_config
-                for test_config in conf_json_tests
-                if is_test_config_match(test_config, integration_id=content_item_id)
-            )
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       integration_id=content_item_id))
             if not is_configured_test:
                 missing_test_playbook_configurations = json.dumps(
-                    {
-                        "integrations": content_item_id,
-                        "playbookID": "<TestPlaybook ID>",
-                    },
-                    indent=4,
-                )
-                error_message = (
-                    f"The following TestPlaybooks are not registered in {self.CONF_PATH} file.\n"
-                    f"Please add\n{missing_test_playbook_configurations}\nto {self.CONF_PATH} path under 'tests' key."
-                )
+                    {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
+                    indent=4)
+                error_message = \
+                    f'The following TestPlaybooks are not registered in {self.CONF_PATH} file.\n' \
+                    f'Please add\n{missing_test_playbook_configurations}\nto {self.CONF_PATH} path under \'tests\' key.'
                 print_error(error_message)
                 return False
         return True
@@ -218,12 +196,11 @@ class BaseValidator:
         """
         if not test_playbooks:
             print_error(
-                f"You don't have a TestPlaybook for {file_type} {self.file_path}. "
-                f"If you have a TestPlaybook for this {file_type}, "
-                f"please edit the yml file and add the TestPlaybook under the 'tests' key. "
-                f"If you don't want to create a"
-                f" TestPlaybook for this {file_type}, edit the yml file and add  \ntests:\n -  No tests\n lines"
-                f" to it or run 'demisto-sdk format -i {self.file_path}'"
-            )
+                f'You don\'t have a TestPlaybook for {file_type} {self.file_path}. '
+                f'If you have a TestPlaybook for this {file_type}, '
+                f'please edit the yml file and add the TestPlaybook under the \'tests\' key. '
+                f'If you don\'t want to create a'
+                f' TestPlaybook for this {file_type}, edit the yml file and add  \ntests:\n -  No tests\n lines'
+                f' to it or run \'demisto-sdk format -i {self.file_path}\'')
             return False
         return True

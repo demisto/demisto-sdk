@@ -1,6 +1,6 @@
 def main():
-    print("Test Script")
+    print('Test Script')
 
 
-if __name__ in ["__main__", "builtins"]:
+if __name__ in ['__main__', 'builtins']:
     main()

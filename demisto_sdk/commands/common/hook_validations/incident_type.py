@@ -17,26 +17,29 @@ class IncidentTypeValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        is_bc_broke = any([self.is_changed_from_version()])
+        is_bc_broke = any(
+            [
+                self.is_changed_from_version()
+            ]
+        )
 
         return not is_bc_broke
 
     def is_valid_incident_type(self, validate_rn=True):
         """Check whether the Incident Type is valid or not
         """
-        is_incident_type__valid = all(
-            [super().is_valid_file(validate_rn), self.is_valid_version()]
-        )
+        is_incident_type__valid = all([
+            super().is_valid_file(validate_rn),
+            self.is_valid_version()
+        ])
 
         # check only on added files
         if not self.old_file:
-            is_incident_type__valid = all(
-                [
-                    is_incident_type__valid,
-                    self.is_id_equals_name(),
-                    self.is_including_int_fields(),
-                ]
-            )
+            is_incident_type__valid = all([
+                is_incident_type__valid,
+                self.is_id_equals_name(),
+                self.is_including_int_fields()
+            ])
 
         return is_incident_type__valid
 
@@ -62,7 +65,7 @@ class IncidentTypeValidator(BaseValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    print_error(f"{self.file_path}: fromVersion must be at least 5.0.0")
+                    print_error(f'{self.file_path}: fromVersion must be at least 5.0.0')
                     is_valid = False
             except (AttributeError, ValueError):
                 print_error(f'{self.file_path}: "fromVersion" has an invalid value.')
@@ -77,7 +80,7 @@ class IncidentTypeValidator(BaseValidator):
         Returns:
             bool. Whether the file id equals to its name
         """
-        return super(IncidentTypeValidator, self)._is_id_equals_name("incident_type")
+        return super(IncidentTypeValidator, self)._is_id_equals_name('incident_type')
 
     def is_changed_from_version(self):
         # type: () -> bool
@@ -87,9 +90,9 @@ class IncidentTypeValidator(BaseValidator):
        """
         is_bc_broke = False
 
-        old_from_version = self.old_file.get("fromVersion", None)
+        old_from_version = self.old_file.get('fromVersion', None)
         if old_from_version:
-            current_from_version = self.current_file.get("fromVersion", None)
+            current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
                 print_error(Errors.from_version_modified_after_rename())
                 is_bc_broke = True
@@ -102,7 +105,7 @@ class IncidentTypeValidator(BaseValidator):
             bool. Whether the included fields have a positive integer value.
         """
         is_valid = True
-        fields_to_include = ["hours", "days", "weeks", "hoursR", "daysR", "weeksR"]
+        fields_to_include = ['hours', 'days', 'weeks', 'hoursR', 'daysR', 'weeksR']
 
         try:
             from_version = self.current_file.get("fromVersion", "0.0.0")
@@ -111,10 +114,8 @@ class IncidentTypeValidator(BaseValidator):
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
                         is_valid = False
-                        print_error(
-                            f"{self.file_path}: the field {field} needs to be a positive integer."
-                            f" Please add it.\n"
-                        )
+                        print_error(f'{self.file_path}: the field {field} needs to be a positive integer.'
+                                    f' Please add it.\n')
         except (AttributeError, ValueError):
             print_error(f'{self.file_path}: "fromVersion" has an invalid value.')
             is_valid = False

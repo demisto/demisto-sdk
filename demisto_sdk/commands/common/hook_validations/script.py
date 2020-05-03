@@ -16,10 +16,7 @@ class ScriptValidator(BaseValidator):
 
     def is_valid_version(self):
         # type: () -> bool
-        if (
-            self.current_file.get("commonfields", {}).get("version")
-            != self.DEFAULT_VERSION
-        ):
+        if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             print_error(Errors.wrong_version(self.file_path))
             return False
         return True
@@ -52,25 +49,26 @@ class ScriptValidator(BaseValidator):
         # Sane-doc-report uses docker and every fix/change requires a docker tag change,
         # thus it won't be backwards compatible.
         # All other tests should be False (i.e. no problems)
-        if self.file_path == "Scripts/SaneDocReport/SaneDocReport.yml":
+        if self.file_path == 'Scripts/SaneDocReport/SaneDocReport.yml':
             return not any(is_breaking_backwards[1:])
         return not any(is_breaking_backwards)
 
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
         """Check whether the script is valid or not"""
-        is_script_valid = all(
-            [
-                super().is_valid_file(validate_rn),
-                self.is_valid_subtype(),
-                self.is_id_equals_name(),
-                self.is_docker_image_valid(),
-                self.is_valid_pwsh(),
-            ]
-        )
+        is_script_valid = all([
+            super().is_valid_file(validate_rn),
+            self.is_valid_subtype(),
+            self.is_id_equals_name(),
+            self.is_docker_image_valid(),
+            self.is_valid_pwsh(),
+        ])
         # check only on added files
         if not self.old_file:
-            is_script_valid = all([is_script_valid, self.is_valid_name()])
+            is_script_valid = all([
+                is_script_valid,
+                self.is_valid_name()
+            ])
         return is_script_valid
 
     @classmethod
@@ -84,18 +82,18 @@ class ScriptValidator(BaseValidator):
             dict. arg name to its required status.
         """
         arg_to_required = {}
-        args = script_json.get("args", [])
+        args = script_json.get('args', [])
         for arg in args:
-            arg_to_required[arg.get("name")] = arg.get("required", False)
+            arg_to_required[arg.get('name')] = arg.get('required', False)
         return arg_to_required
 
     def is_changed_subtype(self):
         """Validate that the subtype was not changed."""
-        type_ = self.current_file.get("type")
-        if type_ == "python":
-            subtype = self.current_file.get("subtype")
+        type_ = self.current_file.get('type')
+        if type_ == 'python':
+            subtype = self.current_file.get('subtype')
             if self.old_file:
-                old_subtype = self.old_file.get("subtype", "")
+                old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     print_error(Errors.breaking_backwards_subtype(self.file_path))
                     return True
@@ -103,9 +101,9 @@ class ScriptValidator(BaseValidator):
 
     def is_valid_subtype(self):
         """Validate that the subtype is python2 or python3."""
-        type_ = self.current_file.get("type")
-        if type_ == "python":
-            subtype = self.current_file.get("subtype")
+        type_ = self.current_file.get('type')
+        if type_ == 'python':
+            subtype = self.current_file.get('subtype')
             if subtype not in PYTHON_SUBTYPES:
                 print_error(Errors.wrong_subtype(self.file_path))
                 return False
@@ -119,10 +117,8 @@ class ScriptValidator(BaseValidator):
 
         for arg, required in current_args_to_required.items():
             if required:
-                if (arg not in old_args_to_required) or (
-                    arg in old_args_to_required
-                    and required != old_args_to_required[arg]
-                ):
+                if (arg not in old_args_to_required) or \
+                        (arg in old_args_to_required and required != old_args_to_required[arg]):
                     print_error(Errors.added_required_fields(self.file_path, arg))
                     return True
         return False
@@ -130,7 +126,7 @@ class ScriptValidator(BaseValidator):
     def is_there_duplicates_args(self):
         # type: () -> bool
         """Check if there are duplicated arguments."""
-        args = [arg["name"] for arg in self.current_file.get("args", [])]
+        args = [arg['name'] for arg in self.current_file.get('args', [])]
         if len(args) != len(set(args)):
             return True
         return False
@@ -138,8 +134,8 @@ class ScriptValidator(BaseValidator):
     def is_arg_changed(self):
         # type: () -> bool
         """Check if the argument has been changed."""
-        current_args = [arg["name"] for arg in self.current_file.get("args", [])]
-        old_args = [arg["name"] for arg in self.old_file.get("args", [])]
+        current_args = [arg['name'] for arg in self.current_file.get('args', [])]
+        old_args = [arg['name'] for arg in self.old_file.get('args', [])]
 
         if not self._is_sub_set(current_args, old_args):
             print_error(Errors.breaking_backwards_arg_changed(self.file_path))
@@ -149,12 +145,8 @@ class ScriptValidator(BaseValidator):
     def is_context_path_changed(self):
         # type: () -> bool
         """Check if the context path as been changed."""
-        current_context = [
-            output["contextPath"] for output in self.current_file.get("outputs", [])
-        ]
-        old_context = [
-            output["contextPath"] for output in self.old_file.get("outputs", [])
-        ]
+        current_context = [output['contextPath'] for output in self.current_file.get('outputs', [])]
+        old_context = [output['contextPath'] for output in self.old_file.get('outputs', [])]
 
         if not self._is_sub_set(current_context, old_context):
             print_error(Errors.breaking_backwards_context(self.file_path))
@@ -165,15 +157,11 @@ class ScriptValidator(BaseValidator):
         # type: () -> bool
         """Check if the docker image as been changed."""
         # Unnecessary to check docker image only on 5.0 and up
-        if server_version_compare(self.old_file.get("fromversion", "0"), "5.0.0") < 0:
+        if server_version_compare(self.old_file.get('fromversion', '0'), '5.0.0') < 0:
             old_docker = get_dockerimage45(self.old_file)
             new_docker = get_dockerimage45(self.current_file)
             if old_docker != new_docker:
-                print_error(
-                    Errors.breaking_backwards_docker(
-                        self.file_path, old_docker, new_docker
-                    )
-                )
+                print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
                 return True
         return False
 
@@ -183,13 +171,11 @@ class ScriptValidator(BaseValidator):
             Returns:
                 bool. Whether the script's id equals to its name
             """
-        return super(ScriptValidator, self)._is_id_equals_name("script")
+        return super(ScriptValidator, self)._is_id_equals_name('script')
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        docker_image_validator = DockerImageValidator(
-            self.file_path, is_modified_file=True, is_integration=False
-        )
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False)
         if docker_image_validator.is_docker_image_valid():
             return True
         return False
@@ -199,7 +185,7 @@ class ScriptValidator(BaseValidator):
         if not is_v2_file(self.current_file):
             return True
         else:
-            name = self.current_file.get("name")
+            name = self.current_file.get('name')
             correct_name = "V2"
             if not name.endswith(correct_name):
                 print_error(Errors.invalid_v2_script_name(self.file_path))
@@ -211,8 +197,6 @@ class ScriptValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
-                print_error(
-                    Errors.suggest_fix(self.file_path, "--from-version", "5.5.0")
-                )
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 return False
         return True

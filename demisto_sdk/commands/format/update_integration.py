@@ -16,80 +16,68 @@ class IntegrationYMLFormat(BaseUpdateYML):
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
     """
-
     ARGUMENTS_DESCRIPTION = {
-        "insecure": "Trust any certificate (not secure)",
-        "unsecure": "Trust any certificate (not secure)",
-        "proxy": "Use system proxy settings",
+        'insecure': 'Trust any certificate (not secure)',
+        'unsecure': 'Trust any certificate (not secure)',
+        'proxy': 'Use system proxy settings'
     }
 
-    def __init__(
-        self,
-        input: str = "",
-        output: str = "",
-        path: str = "",
-        from_version: str = "",
-        no_validate: bool = False,
-    ):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
-            self.from_version = "5.5.0"
+            self.from_version = '5.5.0'
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
-        print(
-            f"Updating proxy and insecure/unsecure integration arguments description to default"
-        )
+        print(F'Updating proxy and insecure/unsecure integration arguments description to default')
 
-        for integration_argument in self.data.get("configuration", {}):
-            argument_name = integration_argument.get("name", "")
+        for integration_argument in self.data.get('configuration', {}):
+            argument_name = integration_argument.get('name', '')
 
             if argument_name in self.ARGUMENTS_DESCRIPTION:
-                integration_argument["display"] = self.ARGUMENTS_DESCRIPTION[
-                    argument_name
-                ]
+                integration_argument['display'] = self.ARGUMENTS_DESCRIPTION[argument_name]
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
-        print(
-            f"Updating reputation commands' basic arguments to be True for default, isArray and required"
-        )
+        print(F'Updating reputation commands\' basic arguments to be True for default, isArray and required')
 
-        integration_commands = self.data.get("script", {}).get("commands", [])
+        integration_commands = self.data.get('script', {}).get('commands', [])
 
         for command in integration_commands:
-            command_name = command.get("name", "")
+            command_name = command.get('name', '')
             current_command_default_argument_changed = False
 
             if command_name in BANG_COMMAND_NAMES:
-                for argument in command.get("arguments", []):
-                    if argument.get("name", "") == command_name:
-                        argument.update(
-                            {"default": True, "isArray": True, "required": True}
-                        )
+                for argument in command.get('arguments', []):
+                    if argument.get('name', '') == command_name:
+                        argument.update({
+                            'default': True,
+                            'isArray': True,
+                            'required': True
+                        })
                         current_command_default_argument_changed = True
                         break
 
                 if not current_command_default_argument_changed:
-                    argument_list = command.get("arguments", [])  # type: List
+                    argument_list = command.get('arguments', [])  # type: List
                     argument_list.append(
                         {
-                            "default": True,
-                            "description": "",
-                            "isArray": True,
-                            "name": command_name,
-                            "required": True,
-                            "secret": False,
+                            'default': True,
+                            'description': '',
+                            'isArray': True,
+                            'name': command_name,
+                            'required': True,
+                            'secret': False
                         }
                     )
 
-                    command["arguments"] = argument_list
+                    command['arguments'] = argument_list
 
     def run_format(self) -> int:
         try:
             super().update_yml()
             self.update_tests()
-            self.update_conf_json("integration")
+            self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()
             self.set_reputation_commands_basic_argument_as_needed()
             self.save_yml_to_destination_file()

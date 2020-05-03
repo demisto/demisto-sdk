@@ -25,13 +25,11 @@ outputs:
     """
     yaml_output = parse_json(
         data='{"aaa":100,"bbb":"foo"}',
-        command_name="xdr-get-incidents",
-        prefix="XDR.Incident",
+        command_name='xdr-get-incidents',
+        prefix='XDR.Incident'
     )
 
-    assert (
-        yaml_output
-        == """arguments: []
+    assert yaml_output == '''arguments: []
 name: xdr-get-incidents
 outputs:
 - contextPath: XDR.Incident.aaa
@@ -40,8 +38,7 @@ outputs:
 - contextPath: XDR.Incident.bbb
   description: ''
   type: String
-"""
-    )
+'''
 
 
 def test_json_to_outputs__invalid_json():
@@ -56,12 +53,14 @@ def test_json_to_outputs__invalid_json():
     """
     try:
         parse_json(
-            data='{"aaa":100', command_name="xdr-get-incidents", prefix="XDR.Incident"
+            data='{"aaa":100',
+            command_name='xdr-get-incidents',
+            prefix='XDR.Incident'
         )
 
         assert False
     except Exception as ex:
-        assert str(ex) == "Invalid input JSON"
+        assert str(ex) == 'Invalid input JSON'
 
 
 def test_json_to_outputs__detect_date():
@@ -76,17 +75,14 @@ def test_json_to_outputs__detect_date():
     """
     yaml_output = parse_json(
         data='{"created_at": "2019-10-10T00:00:00"}',
-        command_name="jira-ticket",
-        prefix="Jira.Ticket",
+        command_name='jira-ticket',
+        prefix='Jira.Ticket'
     )
 
-    assert (
-        yaml_output
-        == """arguments: []
+    assert yaml_output == '''arguments: []
 name: jira-ticket
 outputs:
 - contextPath: Jira.Ticket.created_at
   description: ''
   type: Date
-"""
-    )
+'''

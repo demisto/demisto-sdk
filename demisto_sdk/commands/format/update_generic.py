@@ -31,34 +31,21 @@ class BaseUpdate:
             from_version_key (str): The fromVersion key in file, different between yml and json files.
     """
 
-    def __init__(
-        self,
-        input: str = "",
-        output: str = "",
-        path: str = "",
-        from_version: str = "",
-        no_validate: bool = False,
-    ):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
-        self.old_file = self.is_old_file(
-            self.relative_content_path
-            if self.relative_content_path
-            else self.output_file
-        )
+        self.old_file = self.is_old_file(self.relative_content_path if self.relative_content_path else self.output_file)
         self.schema_path = path
         self.from_version = from_version
         self.no_validate = no_validate
 
         if not self.source_file:
-            raise Exception(
-                "Please provide <source path>, <optional - destination path>."
-            )
+            raise Exception('Please provide <source path>, <optional - destination path>.')
         try:
             self.data, self.file_type = get_dict_from_file(self.source_file)
         except Exception:
-            raise Exception(f"Provided file {self.source_file} is not a valid file.")
+            raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
 
     def set_output_file_path(self, output_file_path) -> str:
@@ -71,10 +58,10 @@ class BaseUpdate:
         if not output_file_path:
             source_dir = os.path.dirname(self.source_file)
             file_name = os.path.basename(self.source_file)
-            if self.__class__.__name__ == "PlaybookYMLFormat":
+            if self.__class__.__name__ == 'PlaybookYMLFormat':
                 if "Pack" not in source_dir:
-                    if not file_name.startswith("playbook-"):
-                        file_name = f"playbook-{file_name}"
+                    if not file_name.startswith('playbook-'):
+                        file_name = F'playbook-{file_name}'
 
             return os.path.join(source_dir, file_name)
         else:
@@ -82,17 +69,17 @@ class BaseUpdate:
 
     def set_version_to_default(self, location=None):
         """Replaces the version of the YML to default."""
-        print(f"Setting JSON version to default: {DEFAULT_VERSION}")
+        print(F'Setting JSON version to default: {DEFAULT_VERSION}')
         if location:
-            location["version"] = DEFAULT_VERSION
+            location['version'] = DEFAULT_VERSION
         else:
-            self.data["version"] = DEFAULT_VERSION
+            self.data['version'] = DEFAULT_VERSION
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
-            print(f"Removing Unnecessary fields {key} from file")
+            print(F'Removing Unnecessary fields {key} from file')
             self.data.pop(key, None)
 
     def set_fromVersion(self, from_version=None):
@@ -102,7 +89,7 @@ class BaseUpdate:
         """
         # If there is no existing file in content repo
         if not self.old_file:
-            print(f"Setting fromVersion field")
+            print(F'Setting fromVersion field')
             # If current file does not have fromversion key
             if self.from_version_key not in self.data:
 
@@ -125,9 +112,7 @@ class BaseUpdate:
 
                 # If existing file already have a fromversion key, copy its value to current file
                 elif self.from_version_key in self.old_file:
-                    self.data[self.from_version_key] = self.old_file[
-                        self.from_version_key
-                    ]
+                    self.data[self.from_version_key] = self.old_file[self.from_version_key]
 
                 # Otherwise add fromversion key to current file and set to default 1.0.0
                 else:
@@ -139,9 +124,9 @@ class BaseUpdate:
             List of keys that should be deleted in file
         """
         arguments_to_remove = []
-        with open(self.schema_path, "r") as file_obj:
+        with open(self.schema_path, 'r') as file_obj:
             a = yaml.safe_load(file_obj)
-        schema_fields = a.get("mapping").keys()
+        schema_fields = a.get('mapping').keys()
         file_fields = self.data.keys()
         for field in file_fields:
             if field not in schema_fields:
@@ -151,9 +136,9 @@ class BaseUpdate:
     def set_from_version_key_name(self) -> Union[str, None]:
         """fromversion key is different between yml and json , in yml file : fromversion, in json files : fromVersion"""
         if self.file_type == "yml":
-            return "fromversion"
+            return 'fromversion'
         elif self.file_type == "json":
-            return "fromVersion"
+            return 'fromVersion'
         return None
 
     def is_old_file(self, path: str) -> dict:
@@ -170,15 +155,11 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        print(f"Removing _dev and _copy suffixes from name and display tags")
-        if self.data["name"]:
-            self.data["name"] = (
-                self.data.get("name", "").replace("_copy", "").replace("_dev", "")
-            )
-        if self.data.get("display"):
-            self.data["display"] = (
-                self.data.get("display", "").replace("_copy", "").replace("_dev", "")
-            )
+        print(F'Removing _dev and _copy suffixes from name and display tags')
+        if self.data['name']:
+            self.data['name'] = self.data.get('name', '').replace('_copy', '').replace('_dev', '')
+        if self.data.get('display'):
+            self.data['display'] = self.data.get('display', '').replace('_copy', '').replace('_dev', '')
 
     def initiate_file_validator(self, validator_type):
         """ Run schema validate and file validate of file
@@ -188,27 +169,21 @@ class BaseUpdate:
             int 2 in case of skip
         """
         if self.no_validate:
-            print_color(
-                f"Validator Skipped on file: {self.output_file} , no-validate flag was set.",
-                LOG_COLORS.YELLOW,
-            )
+            print_color(f'Validator Skipped on file: {self.output_file} , no-validate flag was set.',
+                        LOG_COLORS.YELLOW)
             return SKIP_RETURN_CODE
         else:
-            print_color("Starting validating files structure", LOG_COLORS.GREEN)
+            print_color('Starting validating files structure', LOG_COLORS.GREEN)
             if self.relative_content_path:
                 structure_validator = StructureValidator(self.relative_content_path)
                 validator = validator_type(structure_validator)
-                if structure_validator.is_valid_file() and validator.is_valid_file(
-                    validate_rn=False
-                ):
-                    print_color("The files are valid", LOG_COLORS.GREEN)
+                if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
+                    print_color('The files are valid', LOG_COLORS.GREEN)
                     return SUCCESS_RETURN_CODE
                 else:
-                    print_color("The files are invalid", LOG_COLORS.RED)
+                    print_color('The files are invalid', LOG_COLORS.RED)
                     return ERROR_RETURN_CODE
             else:
-                print_color(
-                    f"The file {self.output_file} are not part of content repo, Validator Skipped",
-                    LOG_COLORS.YELLOW,
-                )
+                print_color(f'The file {self.output_file} are not part of content repo, Validator Skipped',
+                            LOG_COLORS.YELLOW)
                 return SKIP_RETURN_CODE

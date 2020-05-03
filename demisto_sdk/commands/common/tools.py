@@ -31,10 +31,10 @@ urllib3.disable_warnings()
 
 
 class LOG_COLORS:
-    NATIVE = "\033[m"
-    RED = "\033[01;31m"
-    GREEN = "\033[01;32m"
-    YELLOW = "\033[0;33m"
+    NATIVE = '\033[m'
+    RED = '\033[01;31m'
+    GREEN = '\033[01;32m'
+    YELLOW = '\033[0;33m'
 
 
 LOG_VERBOSE = False
@@ -49,7 +49,7 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -57,22 +57,20 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, s
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
-    yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
+    yml_files = glob.glob(os.path.join(project_dir, '*.yml'))
     if not yml_files:
         if error_msg:
             print(error_msg)
-        return [], ""
+        return [], ''
     return yml_files, yml_files[0]
 
 
 # print srt in the given color
 def print_color(obj, color):
-    print("{}{}{}".format(color, obj, LOG_COLORS.NATIVE))
+    print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
 
 
-def get_files_in_dir(
-    project_dir: str, file_endings: list, recursive: bool = True
-) -> list:
+def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
     Gets the project directory and returns the path of all yml and json files in it
     Args:
@@ -82,18 +80,11 @@ def get_files_in_dir(
     :return: The path of files with file_endings in the current dir
     """
     files = []
-    pattern: str = "/**/*." if recursive else "/*."
+    pattern: str = '/**/*.' if recursive else '/*.'
     for file_type in file_endings:
         if project_dir.endswith(file_type):
             return [project_dir]
-        files.extend(
-            [
-                f
-                for f in glob.glob(
-                    project_dir + pattern + file_type, recursive=recursive
-                )
-            ]
-        )
+        files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
     return files
 
 
@@ -122,49 +113,39 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(
-            command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd
-        )
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
         p = Popen(command.split(), cwd=cwd)
 
     output, err = p.communicate()
     if err:
         if exit_on_error:
-            print_error(
-                "Failed to run command {}\nerror details:\n{}".format(command, err)
-            )
+            print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
             sys.exit(1)
         else:
-            raise RuntimeError(
-                "Failed to run command {}\nerror details:\n{}".format(command, err)
-            )
+            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
 
     return output
 
 
-def get_remote_file(full_file_path, tag="master"):
+def get_remote_file(full_file_path, tag='master'):
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.lstrip("origin/")
+    tag = tag.lstrip('origin/')
 
     # The replace in the end is for Windows support
-    github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace(
-        "\\", "/"
-    )
+    github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
     try:
         res = requests.get(github_path, verify=False, timeout=10)
         res.raise_for_status()
     except Exception as exc:
-        print_warning(
-            'Could not find the old entity file under "{}".\n'
-            "please make sure that you did not break backward compatibility. "
-            "Reason: {}".format(github_path, exc)
-        )
+        print_warning('Could not find the old entity file under "{}".\n'
+                      'please make sure that you did not break backward compatibility. '
+                      'Reason: {}'.format(github_path, exc))
         return {}
 
-    if full_file_path.endswith("json"):
+    if full_file_path.endswith('json'):
         details = json.loads(res.content)
-    elif full_file_path.endswith("yml"):
+    elif full_file_path.endswith('yml'):
         details = yaml.safe_load(res.content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
@@ -172,7 +153,7 @@ def get_remote_file(full_file_path, tag="master"):
     return details
 
 
-def filter_packagify_changes(modified_files, added_files, removed_files, tag="master"):
+def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
     """
     Mark scripts/integrations that were removed and added as modifiied.
 
@@ -191,13 +172,11 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag="ma
                 continue
             details = get_remote_file(file_path, tag)
             if details:
-                uniq_identifier = "_".join(
-                    [
-                        details["name"],
-                        details.get("fromversion", "0.0.0"),
-                        details.get("toversion", "99.99.99"),
-                    ]
-                )
+                uniq_identifier = '_'.join([
+                    details['name'],
+                    details.get('fromversion', '0.0.0'),
+                    details.get('toversion', '99.99.99')
+                ])
                 packagify_diff[uniq_identifier] = file_path
 
     updated_added_files = set()
@@ -209,13 +188,11 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag="ma
             with open(file_path) as f:
                 details = yaml.safe_load(f.read())
 
-            uniq_identifier = "_".join(
-                [
-                    details["name"],
-                    details.get("fromversion", "0.0.0"),
-                    details.get("toversion", "99.99.99"),
-                ]
-            )
+            uniq_identifier = '_'.join([
+                details['name'],
+                details.get('fromversion', '0.0.0'),
+                details.get('toversion', '99.99.99')
+            ])
             if uniq_identifier in packagify_diff:
                 # if name appears as added and removed, this is packagify process - treat as modified.
                 removed_files.remove(packagify_diff[uniq_identifier])
@@ -239,9 +216,8 @@ def get_child_directories(directory):
     if not os.path.isdir(directory):
         return []
     child_directories = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isdir(os.path.join(directory, path))
+        os.path.join(directory, path) for
+        path in os.listdir(directory) if os.path.isdir(os.path.join(directory, path))
     ]
     return child_directories
 
@@ -251,9 +227,8 @@ def get_child_files(directory):
     if not os.path.isdir(directory):
         return []
     child_files = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, path))
+        os.path.join(directory, path) for
+        path in os.listdir(directory) if os.path.isfile(os.path.join(directory, path))
     ]
     return child_files
 
@@ -264,17 +239,13 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get("DEMISTO_SDK_SKIP_VERSION_CHECK") and not os.environ.get(
-        "CI"
-    ):
+    if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
         try:
-            releases_request = requests.get(
-                SDK_API_GITHUB_RELEASES, verify=False, timeout=5
-            )
+            releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
             releases_request.raise_for_status()
             releases = releases_request.json()
             if isinstance(releases, list) and isinstance(releases[0], dict):
-                latest_release = releases[0].get("tag_name")
+                latest_release = releases[0].get('tag_name')
                 if isinstance(latest_release, str):
                     # remove v prefix
                     return latest_release[1:]
@@ -282,10 +253,8 @@ def get_last_remote_release_version():
             exc_msg = str(exc)
             if isinstance(exc, requests.exceptions.ConnectionError):
                 exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\nThis may happen if you are not connected to the internet.'
-            print_warning(
-                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}"
-            )
-    return ""
+            print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+    return ''
 
 
 def get_file(method, file_path, type_of_file):
@@ -300,10 +269,7 @@ def get_file(method, file_path, type_of_file):
                 data_dictionary = method(stream)
             except Exception as e:
                 print_error(
-                    "{} has a structure issue of file type{}. Error was: {}".format(
-                        file_path, type_of_file, str(e)
-                    )
-                )
+                    "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
                 return []
     if type(data_dictionary) is dict:
         return data_dictionary
@@ -311,19 +277,19 @@ def get_file(method, file_path, type_of_file):
 
 
 def get_yaml(file_path):
-    return get_file(yaml.safe_load, file_path, ("yml", "yaml"))
+    return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
 
 
 def get_json(file_path):
-    return get_file(json.load, file_path, "json")
+    return get_file(json.load, file_path, 'json')
 
 
 def get_script_or_integration_id(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        commonfields = data_dictionary.get("commonfields", {})
-        return commonfields.get("id", ["-", ])
+        commonfields = data_dictionary.get('commonfields', {})
+        return commonfields.get('id', ['-', ])
 
 
 def get_entity_id_by_entity_type(data: dict, content_entity: str):
@@ -334,11 +300,11 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     :return: The file id
     """
     if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
-        return data.get("commonfields", {}).get("id", "")
+        return data.get('commonfields', {}).get('id', '')
     elif content_entity == LAYOUTS_DIR:
-        return data.get("typeId", "")
+        return data.get('typeId', '')
     else:
-        return data.get("id", "")
+        return data.get('id', '')
 
 
 def get_entity_name_by_entity_type(data: dict, content_entity: str):
@@ -349,9 +315,9 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :return: The file name
     """
     if content_entity == LAYOUTS_DIR:
-        return data.get("typeId", "")
+        return data.get('typeId', '')
     else:
-        return data.get("name", "")
+        return data.get('name', '')
 
 
 def collect_ids(file_path):
@@ -359,56 +325,48 @@ def collect_ids(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        return data_dictionary.get("id", "-")
+        return data_dictionary.get('id', '-')
 
 
 def get_from_version(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get("fromversion", "0.0.0")
+        from_version = data_dictionary.get('fromversion', '0.0.0')
         if from_version == "":
             return "0.0.0"
 
         if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
-            raise ValueError(
-                '{} fromversion is invalid "{}". '
-                'Should be of format: "x.x.x". for example: "4.5.0"'.format(
-                    file_path, from_version
-                )
-            )
+            raise ValueError("{} fromversion is invalid \"{}\". "
+                             "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, from_version))
 
         return from_version
 
-    return "0.0.0"
+    return '0.0.0'
 
 
 def get_to_version(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        to_version = data_dictionary.get("toversion", "99.99.99")
+        to_version = data_dictionary.get('toversion', '99.99.99')
         if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", to_version):
-            raise ValueError(
-                '{} toversion is invalid "{}". '
-                'Should be of format: "x.x.x". for example: "4.5.0"'.format(
-                    file_path, to_version
-                )
-            )
+            raise ValueError("{} toversion is invalid \"{}\". "
+                             "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, to_version))
 
         return to_version
 
-    return "99.99.99"
+    return '99.99.99'
 
 
 def str2bool(v):
-    if v.lower() in ("yes", "true", "t", "y", "1"):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
 
-    if v.lower() in ("no", "false", "f", "n", "0"):
+    if v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
 
-    raise argparse.ArgumentTypeError("Boolean value expected.")
+    raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def get_release_notes_file_path(file_path):
@@ -416,15 +374,15 @@ def get_release_notes_file_path(file_path):
 
     # CHANGELOG in pack sub dirs
     if re.match(PACKAGE_YML_FILE_REGEX, file_path):
-        return os.path.join(dir_name, "CHANGELOG.md")
+        return os.path.join(dir_name, 'CHANGELOG.md')
 
     # We got the CHANGELOG file to get its release notes
-    if file_path.endswith("CHANGELOG.md"):
+    if file_path.endswith('CHANGELOG.md'):
         return file_path
 
     # outside of packages, change log file will include the original file name.
     file_name = os.path.basename(file_path)
-    return os.path.join(dir_name, os.path.splitext(file_name)[0] + "_CHANGELOG.md")
+    return os.path.join(dir_name, os.path.splitext(file_name)[0] + '_CHANGELOG.md')
 
 
 def get_latest_release_notes_text(rn_path):
@@ -444,7 +402,7 @@ def get_latest_release_notes_text(rn_path):
         # get release notes up to release header
         new_rn = new_rn[0].rstrip()
     else:
-        new_rn = rn.replace(UNRELEASE_HEADER, "")
+        new_rn = rn.replace(UNRELEASE_HEADER, '')
 
     return new_rn if new_rn else None
 
@@ -503,9 +461,9 @@ def get_dockerimage45(script_object):
     Arguments:
         script_object {dict} -- [script object containing the dockerimage configuration]
     """
-    if "dockerimage45" in script_object:
-        return script_object["dockerimage45"]
-    return script_object.get("dockerimage", "")
+    if 'dockerimage45' in script_object:
+        return script_object['dockerimage45']
+    return script_object.get('dockerimage', '')
 
 
 def is_file_path_in_pack(file_path):
@@ -513,7 +471,7 @@ def is_file_path_in_pack(file_path):
 
 
 def get_pack_name(file_path):
-    match = re.search(r"^(?:./)?{}/([^/]+)/".format(PACKS_DIR), file_path)
+    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
     return match.group(1) if match else None
 
 
@@ -546,13 +504,13 @@ def get_all_docker_images(script_obj) -> List[str]:
     """
     # this makes sure the first docker in the list is the main docker image.
     def_docker_image = DEF_DOCKER
-    if script_obj.get("type") == TYPE_PWSH:
+    if script_obj.get('type') == TYPE_PWSH:
         def_docker_image = DEF_DOCKER_PWSH
-    imgs = [script_obj.get("dockerimage") or def_docker_image]
+    imgs = [script_obj.get('dockerimage') or def_docker_image]
 
     # get additional docker images
     for key in script_obj.keys():
-        if "dockerimage" in key and key != "dockerimage":
+        if 'dockerimage' in key and key != 'dockerimage':
             if isinstance(script_obj.get(key), str):
                 imgs.append(script_obj.get(key))
 
@@ -575,34 +533,17 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
     if log_verbose is None:
         log_verbose = LOG_VERBOSE
     stderr_out = None if log_verbose else DEVNULL
-    py_ver = check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "python",
-            "-c",
-            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
-        ],
-        universal_newlines=True,
-        stderr=stderr_out,
-    ).strip()
+    py_ver = check_output(["docker", "run", "--rm", docker_image,
+                           "python", "-c",
+                           "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
+                          universal_newlines=True, stderr=stderr_out).strip()
     if not no_prints:
-        print(
-            "Detected python version: [{}] for docker image: {}".format(
-                py_ver, docker_image
-            )
-        )
+        print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
 
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError(
-            "Python vesion for docker image: {} is not supported: {}. "
-            "We only support python 2.7.* and python3 >= 3.4.".format(
-                docker_image, py_num
-            )
-        )
+        raise ValueError("Python vesion for docker image: {} is not supported: {}. "
+                         "We only support python 2.7.* and python3 >= 3.4.".format(docker_image, py_num))
     return py_num
 
 
@@ -639,12 +580,8 @@ def get_dev_requirements(py_version, envs_dirs_base):
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
     stderr_out = None if LOG_VERBOSE else DEVNULL
-    requirements = check_output(
-        ["pipenv", "lock", "-r", "-d"],
-        cwd=env_dir,
-        universal_newlines=True,
-        stderr=stderr_out,
-    )
+    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
+                                stderr=stderr_out)
     print_v("dev requirements:\n{}".format(requirements))
     return requirements
 
@@ -660,14 +597,14 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
         dict representation of the file, and the file_type, either .yml ot .json
     """
     if path:
-        if path.endswith(".yml"):
-            return get_yaml(path), "yml"
-        elif path.endswith(".json"):
-            return get_json(path), "json"
+        if path.endswith('.yml'):
+            return get_yaml(path), 'yml'
+        elif path.endswith('.json'):
+            return get_json(path), 'json'
     return {}, None
 
 
-def find_type(path: str = "", _dict=None, file_type: str = ""):
+def find_type(path: str = '', _dict=None, file_type: str = ''):
     """
     returns the content file type
 
@@ -679,68 +616,66 @@ def find_type(path: str = "", _dict=None, file_type: str = ""):
     """
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
-    if file_type == "yml":
-        if "category" in _dict:
-            return "integration"
-        elif "script" in _dict:
-            return "script"
-        elif "tasks" in _dict:
-            return "playbook"
+    if file_type == 'yml':
+        if 'category' in _dict:
+            return 'integration'
+        elif 'script' in _dict:
+            return 'script'
+        elif 'tasks' in _dict:
+            return 'playbook'
 
-    elif file_type == "json":
-        if "widgetType" in _dict:
-            return "widget"
-        elif "reportType" in _dict:
-            return "report"
-        elif "preProcessingScript" in _dict:
-            return "incidenttype"
-        elif "regex" in _dict:
-            return "reputation"
-        elif "mapping" in _dict or "unclassifiedCases" in _dict:
-            return "classifier"
-        elif "layout" in _dict or "kind" in _dict:
-            if "kind" in _dict or "typeId" in _dict:
-                return "layout"
+    elif file_type == 'json':
+        if 'widgetType' in _dict:
+            return 'widget'
+        elif 'reportType' in _dict:
+            return 'report'
+        elif 'preProcessingScript' in _dict:
+            return 'incidenttype'
+        elif 'regex' in _dict:
+            return 'reputation'
+        elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
+            return 'classifier'
+        elif 'layout' in _dict or 'kind' in _dict:
+            if 'kind' in _dict or 'typeId' in _dict:
+                return 'layout'
             else:
-                return "dashboard"
+                return 'dashboard'
         # When using it for all files validation- sometimes 'id' can be integer
-        elif "id" in _dict:
-            if isinstance(_dict.get("id"), str):
-                _id = _dict["id"].lower()
-                if _id.startswith("incident"):
-                    return "incidentfield"
-                elif _id.startswith("indicator"):
-                    return "indicatorfield"
+        elif 'id' in _dict:
+            if isinstance(_dict.get('id'), str):
+                _id = _dict['id'].lower()
+                if _id.startswith('incident'):
+                    return 'incidentfield'
+                elif _id.startswith('indicator'):
+                    return 'indicatorfield'
             else:
-                print(
-                    f'The file {path} could not be recognized, please update the "id" to be a string'
-                )
+                print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
-    return ""
+    return ''
 
 
 def get_common_server_path(env_dir):
     common_server_dir = get_common_server_dir(env_dir)
-    return os.path.join(common_server_dir, "CommonServerPython.py")
+    return os.path.join(common_server_dir, 'CommonServerPython.py')
 
 
 def get_common_server_path_pwsh(env_dir):
     common_server_dir = get_common_server_dir_pwsh(env_dir)
-    return os.path.join(common_server_dir, "CommonServerPowerShell.ps1")
+    return os.path.join(common_server_dir, 'CommonServerPowerShell.ps1')
 
 
 def _get_common_server_dir_general(env_dir, name):
-    common_server_pack_path = os.path.join(env_dir, "Packs", "Base", "Scripts", name)
+    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts', name)
 
     return common_server_pack_path
 
 
 def get_common_server_dir(env_dir):
-    return _get_common_server_dir_general(env_dir, "CommonServerPython")
+    return _get_common_server_dir_general(env_dir, 'CommonServerPython')
 
 
 def get_common_server_dir_pwsh(env_dir):
-    return _get_common_server_dir_general(env_dir, "CommonServerPowerShell")
+    return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
 def get_content_path() -> str:
@@ -750,8 +685,9 @@ def get_content_path() -> str:
     """
     git_repo = ""
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-        if "content" not in git_repo.remote().urls.__next__():
+        git_repo = git.Repo(os.getcwd(),
+                            search_parent_directories=True)
+        if 'content' not in git_repo.remote().urls.__next__():
             raise git.InvalidGitRepositoryError
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         print_error("Please run demisto-sdk in content repository - Aborting!")
@@ -759,9 +695,7 @@ def get_content_path() -> str:
     return git_repo.working_dir
 
 
-def run_command_os(
-    command: str, cwd: Path, env: dict = os.environ
-) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
@@ -773,17 +707,15 @@ def run_command_os(
         int: exit code of command
     """
     try:
-        process = Popen(
-            shlex.split(command),
-            cwd=cwd,
-            env=env,
-            stdout=PIPE,
-            stderr=PIPE,
-            universal_newlines=True,
-        )
+        process = Popen(shlex.split(command),
+                        cwd=cwd,
+                        env=env,
+                        stdout=PIPE,
+                        stderr=PIPE,
+                        universal_newlines=True)
         stdout, stderr = process.communicate()
     except OSError as e:
-        return "", str(e), 1
+        return '', str(e), 1
 
     return stdout, stderr, process.returncode
 
@@ -798,8 +730,8 @@ def pascal_case(st: str) -> str:
     Returns:
         str -- converted string
     """
-    words = re.findall(r"[a-zA-Z0-9]+", st)
-    return "".join("".join([w[0].upper(), w[1:]]) for w in words)
+    words = re.findall(r'[a-zA-Z0-9]+', st)
+    return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
 
 
 def get_last_release_version():
@@ -808,8 +740,8 @@ def get_last_release_version():
 
     :return: tag
     """
-    tags = run_command("git tag").split("\n")
-    tags = [tag for tag in tags if re.match(r"\d+\.\d+\.\d+", tag) is not None]
+    tags = run_command('git tag').split('\n')
+    tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
     tags.sort(key=LooseVersion, reverse=True)
 
     return tags[0]
@@ -823,16 +755,17 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         bool: if file is part of content repo.
         str: relative path of file in content repo.
     """
-    git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    if "content" not in git_repo.remote().urls.__next__():
-        return False, ""
+    git_repo = git.Repo(os.getcwd(),
+                        search_parent_directories=True)
+    if 'content' not in git_repo.remote().urls.__next__():
+        return False, ''
     content_path_parts = Path(git_repo.working_dir).parts
     input_path_parts = Path(file_path).parts
-    input_path_parts_prefix = input_path_parts[: len(content_path_parts)]
+    input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
     if content_path_parts == input_path_parts_prefix:
-        return True, "/".join(input_path_parts[len(content_path_parts):])
+        return True, '/'.join(input_path_parts[len(content_path_parts):])
     else:
-        return False, ""
+        return False, ''
 
 
 def is_test_file(file_: str) -> bool:
@@ -856,9 +789,9 @@ def retrieve_file_ending(file_path: str) -> str:
     os_split: tuple = os.path.splitext(file_path)
     if os_split:
         file_ending: str = os_split[1]
-        if file_ending and "." in file_ending:
+        if file_ending and '.' in file_ending:
             return file_ending[1:]
-    return ""
+    return ''
 
 
 def get_depth(data: Any) -> int:
@@ -874,9 +807,7 @@ def get_depth(data: Any) -> int:
     return 0
 
 
-def is_test_config_match(
-    test_config: dict, test_playbook_id: str = "", integration_id: str = ""
-) -> bool:
+def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
     test playbook or for integration_id.
@@ -893,14 +824,11 @@ def is_test_config_match(
     Returns:
         True if the test configuration contains the test playbook and the content item or False if not
     """
-    test_playbook_match = test_playbook_id == test_config.get("playbookID")
-    test_integrations = test_config.get("integrations")
+    test_playbook_match = test_playbook_id == test_config.get('playbookID')
+    test_integrations = test_config.get('integrations')
     if isinstance(test_integrations, list):
         integration_match = any(
-            test_integration
-            for test_integration in test_integrations
-            if test_integration == integration_id
-        )
+            test_integration for test_integration in test_integrations if test_integration == integration_id)
     else:
         integration_match = test_integrations == integration_id
     # If both playbook id and integration id are given
@@ -916,9 +844,7 @@ def is_test_config_match(
         return test_playbook_match
 
 
-def get_not_registered_tests(
-    conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list
-) -> list:
+def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list) -> list:
     """
     Return all test playbooks that are not configured in conf.json file
     Args:
@@ -932,17 +858,15 @@ def get_not_registered_tests(
     """
     not_registered_tests = []
     for test in test_playbooks:
-        if file_type == "playbook":
+        if file_type == 'playbook':
             test_registered_in_conf_json = any(
-                test_config
-                for test_config in conf_json_tests
-                if is_test_config_match(test_config, test_playbook_id=test)
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       test_playbook_id=test)
             )
         else:
             test_registered_in_conf_json = any(
-                test_config
-                for test_config in conf_json_tests
-                if is_test_config_match(test_config, integration_id=content_item_id)
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       integration_id=content_item_id)
             )
         if not test_registered_in_conf_json:
             not_registered_tests.append(test)
@@ -959,11 +883,11 @@ def _get_file_id(file_type: str, file_content: Dict):
     Returns:
         The file's content ID
     """
-    file_id = ""
+    file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get("id")
+        file_id = file_content.get('id')
     elif file_type in ID_IN_COMMONFIELDS:
-        file_id = file_content.get("commonfields", {}).get("id")
+        file_id = file_content.get('commonfields', {}).get('id')
     return file_id
 
 

@@ -8,9 +8,7 @@ from demisto_sdk.commands.common.tools import print_error
 class PlaybookValidator(BaseValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def is_valid_playbook(
-        self, is_new_playbook: bool = True, validate_rn: bool = True
-    ) -> bool:
+    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
@@ -28,7 +26,7 @@ class PlaybookValidator(BaseValidator):
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
                 self.is_condition_branches_handled(),
-                self.are_tests_configured(),
+                self.are_tests_configured()
             ]
             answers = all(new_playbook_checks)
         else:
@@ -39,7 +37,7 @@ class PlaybookValidator(BaseValidator):
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
                 self.is_condition_branches_handled(),
-                self.are_tests_configured(),
+                self.are_tests_configured()
             ]
             answers = all(modified_playbook_checks)
 
@@ -50,11 +48,11 @@ class PlaybookValidator(BaseValidator):
         Checks if the playbook has a TestPlaybook and if the TestPlaybook is configured in conf.json
         And prints an error message accordingly
         """
-        if "TestPlaybooks" in self.file_path:
+        if 'TestPlaybooks' in self.file_path:
             return True
 
         file_type = self.structure_validator.scheme_name
-        tests = self.current_file.get("tests", [])
+        tests = self.current_file.get('tests', [])
         return self.yml_has_test_key(tests, file_type)
 
     def is_id_equals_name(self):  # type: () -> bool
@@ -63,7 +61,7 @@ class PlaybookValidator(BaseValidator):
         Returns:
             bool. Whether the file id equals to its name
         """
-        return super(PlaybookValidator, self)._is_id_equals_name("playbook")
+        return super(PlaybookValidator, self)._is_id_equals_name('playbook')
 
     def is_valid_version(self):  # type: () -> bool
         """Check whether the playbook version is equal to DEFAULT_VERSION (see base_validator class)
@@ -79,7 +77,7 @@ class PlaybookValidator(BaseValidator):
         Return:
             bool. if the Playbook has a rolename it is not valid.
         """
-        rolename = self.current_file.get("rolename", None)
+        rolename = self.current_file.get('rolename', None)
         if rolename:
             print_error("Playbook can not have a rolename.")
             self.is_valid = False
@@ -93,27 +91,21 @@ class PlaybookValidator(BaseValidator):
             bool. if the Playbook handles all condition branches correctly.
         """
         is_all_condition_branches_handled: bool = True
-        tasks: Dict = self.current_file.get("tasks", {})
+        tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
-            if task.get("type") == "condition":
+            if task.get('type') == 'condition':
                 # builtin conditional task
-                if task.get("conditions"):
-                    is_all_condition_branches_handled = (
-                        self.is_builtin_condition_task_branches_handled(task)
-                        and is_all_condition_branches_handled
-                    )
+                if task.get('conditions'):
+                    is_all_condition_branches_handled = self.is_builtin_condition_task_branches_handled(
+                        task) and is_all_condition_branches_handled
                 # ask conditional task
-                elif task.get("message"):
-                    is_all_condition_branches_handled = (
-                        self.is_ask_condition_branches_handled(task)
-                        and is_all_condition_branches_handled
-                    )
+                elif task.get('message'):
+                    is_all_condition_branches_handled = self.is_ask_condition_branches_handled(
+                        task) and is_all_condition_branches_handled
                 # script conditional task
-                elif task.get("scriptName"):
-                    is_all_condition_branches_handled = (
-                        self.is_script_condition_branches_handled(task)
-                        and is_all_condition_branches_handled
-                    )
+                elif task.get('scriptName'):
+                    is_all_condition_branches_handled = self.is_script_condition_branches_handled(
+                        task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
@@ -129,39 +121,35 @@ class PlaybookValidator(BaseValidator):
         is_all_condition_branches_handled: bool = True
         # ADD all possible conditions to task_condition_labels (UPPER)
         # #default# condition should always exist in a builtin condition
-        task_condition_labels = {"#DEFAULT#"}
-        for condition in task.get("conditions", []):
-            label = condition.get("label")
+        task_condition_labels = {'#DEFAULT#'}
+        for condition in task.get('conditions', []):
+            label = condition.get('label')
             if label:
                 task_condition_labels.add(label.upper())
 
         # REMOVE all used condition branches from task_condition_labels (UPPER)
-        next_tasks: Dict = task.get("nexttasks", {})
+        next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch in next_tasks.keys():
             try:
                 if next_task_branch:
                     task_condition_labels.remove(next_task_branch.upper())
             except KeyError:
-                print_error(
-                    f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
-                    f'next task condition "{next_task_branch}". Please remove this task or add '
-                    f'this condition to condition task with id:{task.get("id")}.'
-                )
+                print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
+                            f'next task condition "{next_task_branch}". Please remove this task or add '
+                            f'this condition to condition task with id:{task.get("id")}.')
                 self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
             try:
                 # try to rename default condition to else for print
-                task_condition_labels.remove("#default#")
-                task_condition_labels.add("else")
+                task_condition_labels.remove('#default#')
+                task_condition_labels.add('else')
             except KeyError:
                 # there is no #default# task, so we didn't replace it with else and can continue
                 pass
-            print_error(
-                f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
-                f'{",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
-            )
+            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
+                        f'{",".join(map(lambda x: f"{str(x)}", task_condition_labels))}')
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -176,35 +164,29 @@ class PlaybookValidator(BaseValidator):
             bool. if the task handles all condition branches correctly.
         """
         is_all_condition_branches_handled: bool = True
-        next_tasks: Dict = task.get("nexttasks", {})
+        next_tasks: Dict = task.get('nexttasks', {})
         # if default is handled, then it means all branches are being handled
-        if "#default#" in next_tasks:
+        if '#default#' in next_tasks:
             return is_all_condition_branches_handled
 
         # ADD all replyOptions to unhandled_reply_options (UPPER)
-        unhandled_reply_options = set(
-            map(str.upper, task.get("message", {}).get("replyOptions", []))
-        )
+        unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
 
         # Remove all nexttasks from unhandled_reply_options (UPPER)
-        next_tasks: Dict = task.get("nexttasks", {})
+        next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch, next_task_id in next_tasks.items():
             try:
                 if next_task_id:
                     unhandled_reply_options.remove(next_task_branch.upper())
             except KeyError:
-                print_error(
-                    f'Playbook conditional Ask task with id:{task.get("id")} has task with unreachable '
-                    f'next task condition "{next_task_branch}". Please remove this task or add '
-                    f'this condition to condition task with id:{task.get("id")}.'
-                )
+                print_error(f'Playbook conditional Ask task with id:{task.get("id")} has task with unreachable '
+                            f'next task condition "{next_task_branch}". Please remove this task or add '
+                            f'this condition to condition task with id:{task.get("id")}.')
                 self.is_valid = is_all_condition_branches_handled = False
 
         if unhandled_reply_options:
-            print_error(
-                f'Playbook conditional Ask task with id:{task.get("id")} has unhandled condition: '
-                f'{",".join(map(lambda x: f"{str(x)}", unhandled_reply_options))}'
-            )
+            print_error(f'Playbook conditional Ask task with id:{task.get("id")} has unhandled condition: '
+                        f'{",".join(map(lambda x: f"{str(x)}", unhandled_reply_options))}')
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -218,17 +200,13 @@ class PlaybookValidator(BaseValidator):
             bool. if the task handles all condition branches correctly.
         """
         is_all_condition_branches_handled: bool = True
-        next_tasks: Dict = task.get("nexttasks", {})
-        if "#default#" not in next_tasks:
-            print_error(
-                f'Playbook conditional task with id:{task.get("id")} has unhandled condition: else'
-            )
+        next_tasks: Dict = task.get('nexttasks', {})
+        if '#default#' not in next_tasks:
+            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: else')
             self.is_valid = is_all_condition_branches_handled = False
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
-            print_error(
-                f'Playbook conditional task with id:{task.get("id")} has unhandled condition'
-            )
+            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition')
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -238,19 +216,17 @@ class PlaybookValidator(BaseValidator):
         Return:
             bool. if the Playbook has root is connected to all tasks.
         """
-        start_task_id = self.current_file.get("starttaskid")
-        tasks = self.current_file.get("tasks", {})
+        start_task_id = self.current_file.get('starttaskid')
+        tasks = self.current_file.get('tasks', {})
         tasks_bucket = set()
         next_tasks_bucket = set()
         for task_id, task in tasks.items():
             if task_id != start_task_id:
                 tasks_bucket.add(task_id)
-            next_tasks = task.get("nexttasks", {})
+            next_tasks = task.get('nexttasks', {})
             for next_task_ids in next_tasks.values():
                 next_tasks_bucket.update(next_task_ids)
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
-            print_error(
-                f"The following tasks ids have no previous tasks: {orphan_tasks}"
-            )
+            print_error(f'The following tasks ids have no previous tasks: {orphan_tasks}')
         return tasks_bucket.issubset(next_tasks_bucket)

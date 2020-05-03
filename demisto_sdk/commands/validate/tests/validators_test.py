@@ -82,26 +82,16 @@ class TestValidators:
         (INVALID_WIDGET_PATH, WIDGET_TARGET, False, WidgetValidator),
         (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True, DashboardValidator),
         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
-        (
-            VALID_INCIDENT_FIELD_PATH,
-            INCIDENT_FIELD_TARGET,
-            True,
-            IncidentFieldValidator,
-        ),
-        (
-            INVALID_INCIDENT_FIELD_PATH,
-            INCIDENT_FIELD_TARGET,
-            False,
-            IncidentFieldValidator,
-        ),
+        (VALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, True, IncidentFieldValidator),
+        (INVALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, False, IncidentFieldValidator),
         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
         (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),
         (INVALID_SCRIPT_PATH, SCRIPT_TARGET, False, ScriptValidator),
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
-        (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator),
+        (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
-    @patch.object(ReleaseNotesValidator, "get_master_diff", return_value="Comment.")
+    @patch.object(ReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -115,17 +105,13 @@ class TestValidators:
         """
         try:
             copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
-            structure = StructureValidator(
-                VALID_BETA_PLAYBOOK_PATH, predefined_scheme="playbook"
-            )
+            structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme='playbook')
             validator = PlaybookValidator(structure)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
             os.remove(PLAYBOOK_TARGET)
 
-    @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
-    )
+    @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_valid_version(self, source, target, answer, validator):
         # type: (str, str, Any, Type[BaseValidator]) -> None
         try:
@@ -139,10 +125,10 @@ class TestValidators:
     INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
         (INVALID_PLAYBOOK_CONDITION_2, False),
-        (VALID_PLAYBOOK_CONDITION, True),
+        (VALID_PLAYBOOK_CONDITION, True)
     ]
 
-    @pytest.mark.parametrize("source, answer", INPUTS_is_condition_branches_handled)
+    @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
     def test_is_condition_branches_handled(self, source, answer):
         # type: (str, str, Any) -> None
         try:
@@ -158,16 +144,14 @@ class TestValidators:
         (INVALID_REPUTATION_PATH, False, ReputationValidator),
     ]
 
-    @pytest.mark.parametrize("source, answer, validator", INPUTS_LOCKED_PATHS)
+    @pytest.mark.parametrize('source, answer, validator', INPUTS_LOCKED_PATHS)
     def test_is_valid_version_locked_paths(self, source, answer, validator):
         """Tests locked path (as reputations.json) so we won't override the file"""
         structure = StructureValidator(source)
         validator = validator(structure)
         assert validator.is_valid_version() is answer
 
-    @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
-    )
+    @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(self, source, target, answer, validator):
         # type: (str, str, Any, Type[BaseValidator]) -> None
         try:
@@ -179,64 +163,26 @@ class TestValidators:
             os.remove(target)
 
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
-        (
-            VALID_SCRIPT_PATH,
-            SCRIPT_TARGET,
-            VALID_ONE_LINE_CHANGELOG_PATH,
-            SCRIPT_RELEASE_NOTES_TARGET,
-            ReleaseNotesValidator,
-            True,
-        ),
-        (
-            VALID_SCRIPT_PATH,
-            SCRIPT_TARGET,
-            VALID_ONE_LINE_CHANGELOG_PATH,
-            INTEGRATION_RELEASE_NOTES_TARGET,
-            ReleaseNotesValidator,
-            False,
-        ),
-        (
-            VALID_INTEGRATION_TEST_PATH,
-            INTEGRATION_TARGET,
-            VALID_ONE_LINE_CHANGELOG_PATH,
-            INTEGRATION_RELEASE_NOTES_TARGET,
-            ReleaseNotesValidator,
-            True,
-        ),
-        (
-            VALID_INTEGRATION_TEST_PATH,
-            INTEGRATION_TARGET,
-            VALID_ONE_LINE_CHANGELOG_PATH,
-            SCRIPT_RELEASE_NOTES_TARGET,
-            ReleaseNotesValidator,
-            False,
-        ),
+        (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, SCRIPT_RELEASE_NOTES_TARGET,
+         ReleaseNotesValidator, True),
+        (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, INTEGRATION_RELEASE_NOTES_TARGET,
+         ReleaseNotesValidator, False),
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
+         INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, True),
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
+         SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, False)
     ]
 
-    @pytest.mark.parametrize(
-        "source_dummy, target_dummy, source_release_notes, target_release_notes, "
-        "validator, answer",
-        INPUTS_RELEASE_NOTES_EXISTS_VALIDATION,
-    )
-    def test_is_release_notes_exists(
-        self,
-        source_dummy,
-        target_dummy,
-        source_release_notes,
-        target_release_notes,
-        validator,
-        answer,
-        mocker,
-    ):
+    @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
+                             'validator, answer',
+                             INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
+    def test_is_release_notes_exists(self, source_dummy, target_dummy,
+                                     source_release_notes, target_release_notes, validator, answer, mocker):
         # type: (str, str, str, str, Type[BaseValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            mocker.patch.object(
-                ReleaseNotesValidator,
-                "get_master_diff",
-                side_effect=self.mock_get_master_diff,
-            )
+            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.validate_file_release_notes_exists() is answer
         finally:
@@ -246,8 +192,8 @@ class TestValidators:
     @staticmethod
     def create_release_notes_structure_test_package():
         changelog_needed = [
-            (VALID_SCRIPT_PATH, "Script"),
-            (VALID_INTEGRATION_TEST_PATH, "Integration"),
+            (VALID_SCRIPT_PATH, 'Script'),
+            (VALID_INTEGRATION_TEST_PATH, 'Integration')
         ]
 
         changelog_files_answer = [
@@ -260,64 +206,33 @@ class TestValidators:
             (INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH, False),
             (INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, False),
             (INVALID_MULTI_LINE_1_CHANGELOG_PATH, False),
-            (INVALID_MULTI_LINE_2_CHANGELOG_PATH, False),
+            (INVALID_MULTI_LINE_2_CHANGELOG_PATH, False)
         ]
 
         test_package = list()
 
         for (dummy_file, file_type) in changelog_needed:
             for (release_notes_file, answer) in changelog_files_answer:
-                if file_type == "Script":
-                    test_package.append(
-                        (
-                            dummy_file,
-                            SCRIPT_TARGET,
-                            release_notes_file,
-                            SCRIPT_RELEASE_NOTES_TARGET,
-                            ReleaseNotesValidator,
-                            answer,
-                        )
-                    )
-                elif file_type == "Integration":
-                    test_package.append(
-                        (
-                            dummy_file,
-                            INTEGRATION_TARGET,
-                            release_notes_file,
-                            INTEGRATION_RELEASE_NOTES_TARGET,
-                            ReleaseNotesValidator,
-                            answer,
-                        )
-                    )
+                if file_type == 'Script':
+                    test_package.append((dummy_file, SCRIPT_TARGET, release_notes_file,
+                                         SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
+                elif file_type == 'Integration':
+                    test_package.append((dummy_file, INTEGRATION_TARGET, release_notes_file,
+                                         INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
 
         return test_package
 
     test_package = create_release_notes_structure_test_package.__func__()
 
-    @pytest.mark.parametrize(
-        "source_dummy, target_dummy, source_release_notes, target_release_notes, "
-        "validator, answer",
-        test_package,
-    )
-    def test_valid_release_notes_structure(
-        self,
-        source_dummy,
-        target_dummy,
-        source_release_notes,
-        target_release_notes,
-        validator,
-        answer,
-        mocker,
-    ):
+    @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
+                             'validator, answer', test_package)
+    def test_valid_release_notes_structure(self, source_dummy, target_dummy,
+                                           source_release_notes, target_release_notes, validator, answer, mocker):
         # type: (str, str, str, str, Type[BaseValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            mocker.patch.object(
-                ReleaseNotesValidator,
-                "get_master_diff",
-                side_effect=self.mock_get_master_diff,
-            )
+            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = ReleaseNotesValidator(target_dummy)
             assert validator.is_valid_release_notes_structure() is answer
         finally:
@@ -326,7 +241,7 @@ class TestValidators:
 
     @staticmethod
     def mock_get_master_diff():
-        return "Comment."
+        return 'Comment.'
 
     INPUTS_IS_ID_EQUALS_NAME = [
         (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),
@@ -334,12 +249,10 @@ class TestValidators:
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
         (INVALID_PLAYBOOK_ID_PATH, PLAYBOOK_TARGET, False, PlaybookValidator),
         (VALID_INTEGRATION_ID_PATH, INTEGRATION_TARGET, True, IntegrationValidator),
-        (INVALID_INTEGRATION_ID_PATH, INTEGRATION_TARGET, False, IntegrationValidator),
+        (INVALID_INTEGRATION_ID_PATH, INTEGRATION_TARGET, False, IntegrationValidator)
     ]
 
-    @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_ID_EQUALS_NAME
-    )
+    @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
     def test_is_id_equals_name(self, source, target, answer, validator):
         # type: (str, str, Any, Type[BaseValidator]) -> None
         try:
@@ -352,10 +265,10 @@ class TestValidators:
 
     INPUTS_IS_CONNECTED_TO_ROOT = [
         (INVALID_PLAYBOOK_PATH_FROM_ROOT, False),
-        (VALID_TEST_PLAYBOOK_PATH, True),
+        (VALID_TEST_PLAYBOOK_PATH, True)
     ]
 
-    @pytest.mark.parametrize("source, answer", INPUTS_IS_CONNECTED_TO_ROOT)
+    @pytest.mark.parametrize('source, answer', INPUTS_IS_CONNECTED_TO_ROOT)
     def test_is_root_connected_to_all_tasks(self, source, answer):
         # type: (str, str, Any) -> None
         try:
@@ -381,68 +294,21 @@ class TestValidators:
     with open(GIT_HAVE_MODIFIED_AND_NEW_FILES, "r") as test_params_file:
         tests_params = json.load(test_params_file)
     params = [
-        (
-            None,
-            tuple(set(i) for i in tests_params["data"]["params_with_data"]),
-            "123456",
-            True,
-            True,
-        ),
-        (
-            "origin/master",
-            tuple(set(i) for i in tests_params["data"]["params_with_data"]),
-            "123456",
-            True,
-            True,
-        ),
-        (
-            None,
-            tuple(set(i) for i in tests_params["data"]["params_with_data"]),
-            "",
-            True,
-            True,
-        ),
-        (
-            None,
-            tuple(set(i) for i in tests_params["data"]["params_without_data"]),
-            "123456",
-            True,
-            True,
-        ),
-        (
-            None,
-            tuple(set(i) for i in tests_params["data"]["params_with_data"]),
-            "123456",
-            False,
-            False,
-        ),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        ('origin/master', tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_without_data']), '123456', True, True),
+        (None, tuple(set(i) for i in tests_params['data']['params_with_data']), '123456', False, False),
     ]
 
-    @pytest.mark.parametrize(
-        "prev_var, get_modified_and_added_files, release_iden, answer, is_valid", params
-    )
-    def test_validate_against_previous_version(
-        self,
-        prev_var,
-        get_modified_and_added_files,
-        release_iden,
-        answer,
-        is_valid,
-        mocker,
-    ):
+    @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer, is_valid", params)
+    def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer,
+                                               is_valid, mocker):
         file_validator = FilesValidator(validate_conf_json=False, prev_ver=prev_var)
         file_validator._is_valid = is_valid
-        mocker.patch.object(
-            FilesValidator,
-            "get_modified_and_added_files",
-            return_value=get_modified_and_added_files,
-        )
-        mocker.patch.object(
-            FilesValidator, "get_content_release_identifier", return_value=release_iden
-        )
-        mocker.patch.object(
-            FilesValidator, "validate_modified_files", return_value=None
-        )
+        mocker.patch.object(FilesValidator, 'get_modified_and_added_files', return_value=get_modified_and_added_files)
+        mocker.patch.object(FilesValidator, 'get_content_release_identifier', return_value=release_iden)
+        mocker.patch.object(FilesValidator, 'validate_modified_files', return_value=None)
 
         assert file_validator.validate_against_previous_version() is None
         assert file_validator._is_valid is answer
@@ -456,10 +322,10 @@ class TestValidators:
         (VALID_REPUTATION_PATH, REPUTATION_TARGET),
         (VALID_INCIDENT_TYPE_PATH, INCIDENT_TYPE_TARGET),
         (VALID_INTEGRATION_TEST_PATH, BETA_INTEGRATION_TARGET),
-        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_RELEASE_NOTES_TARGET),
+        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_RELEASE_NOTES_TARGET)
     ]
 
-    @pytest.mark.parametrize("source, target", INPUTS_STRUCTURE_VALIDATION)
+    @pytest.mark.parametrize('source, target', INPUTS_STRUCTURE_VALIDATION)
     def test_is_file_structure(self, source, target):
         # type: (str, str) -> None
         try:
@@ -469,62 +335,52 @@ class TestValidators:
             os.remove(target)
 
     FILE_PATHS = [
-        ([VALID_INTEGRATION_TEST_PATH], "integration"),
-        ([VALID_TEST_PLAYBOOK_PATH], "playbook"),
-        ([VALID_DASHBOARD_PATH], "dashboard"),
-        ([VALID_INCIDENT_FIELD_PATH], "incidentfield"),
-        ([VALID_REPUTATION_PATH], "reputation"),
-        ([VALID_INCIDENT_TYPE_PATH], "incidenttype"),
-        ([VALID_INTEGRATION_TEST_PATH], "betaintegration"),
+        ([VALID_INTEGRATION_TEST_PATH], 'integration'),
+        ([VALID_TEST_PLAYBOOK_PATH], 'playbook'),
+        ([VALID_DASHBOARD_PATH], 'dashboard'),
+        ([VALID_INCIDENT_FIELD_PATH], 'incidentfield'),
+        ([VALID_REPUTATION_PATH], 'reputation'),
+        ([VALID_INCIDENT_TYPE_PATH], 'incidenttype'),
+        ([VALID_INTEGRATION_TEST_PATH], 'betaintegration')
     ]
 
-    @pytest.mark.parametrize("file_path, file_type", FILE_PATHS)
+    @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
     def test_is_valid_rn(self, mocker, file_path, file_type):
-        mocker.patch.object(
-            ReleaseNotesValidator, "get_master_diff", sreturn_value=None
-        )
-        mocker.patch.object(StructureValidator, "is_valid_file", return_value=True)
-        mocker.patch.object(IntegrationValidator, "is_valid_subtype", return_value=True)
-        mocker.patch.object(IntegrationValidator, "is_valid_feed", return_value=True)
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_description", return_value=True
-        )
-        mocker.patch.object(IntegrationValidator, "is_valid_version", return_value=True)
-        mocker.patch.object(ImageValidator, "is_valid", return_value=True)
-        mocker.patch.object(DashboardValidator, "is_id_equals_name", return_value=True)
-        mocker.patch.object(
-            ReputationValidator, "is_id_equals_details", return_value=True
-        )
-        mocker.patch.object(IntegrationValidator, "is_valid_beta", return_value=True)
-        mocker.patch.object(
-            IntegrationValidator, "are_tests_configured", return_value=True
-        )
-        mocker.patch.object(
-            PlaybookValidator, "are_tests_configured", return_value=True
-        )
+        mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', sreturn_value=None)
+        mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_description', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_version', return_value=True)
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(DashboardValidator, 'is_id_equals_name', return_value=True)
+        mocker.patch.object(ReputationValidator, 'is_id_equals_details', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'are_tests_configured', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'are_tests_configured', return_value=True)
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
         # ignoring images and change-logs
-        (DEFAULT_IMAGE, ""),
-        (VALID_MULTI_LINE_LIST_CHANGELOG_PATH, ""),
-        (INVALID_ONE_LINE_1_CHANGELOG_PATH, ""),
+        (DEFAULT_IMAGE, ''),
+        (VALID_MULTI_LINE_LIST_CHANGELOG_PATH, ''),
+        (INVALID_ONE_LINE_1_CHANGELOG_PATH, ''),
         # validating files
-        (VALID_INTEGRATION_ID_PATH, "integration"),
-        (VALID_TEST_PLAYBOOK_PATH, "playbook"),
-        (VALID_SCRIPT_PATH, "script"),
-        (VALID_DASHBOARD_PATH, "dashboard"),
-        (VALID_INCIDENT_FIELD_PATH, "incidentfield"),
-        (VALID_REPUTATION_PATH, "reputation"),
-        (VALID_INCIDENT_TYPE_PATH, "incidenttype"),
-        (VALID_BETA_INTEGRATION, "integration"),
-        (VALID_MD, ""),
+        (VALID_INTEGRATION_ID_PATH, 'integration'),
+        (VALID_TEST_PLAYBOOK_PATH, 'playbook'),
+        (VALID_SCRIPT_PATH, 'script'),
+        (VALID_DASHBOARD_PATH, 'dashboard'),
+        (VALID_INCIDENT_FIELD_PATH, 'incidentfield'),
+        (VALID_REPUTATION_PATH, 'reputation'),
+        (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
+        (VALID_BETA_INTEGRATION, 'integration'),
+        (VALID_MD, '')
     ]
 
-    @pytest.mark.parametrize("file_path, file_type", FILES_PATHS_FOR_ALL_VALIDATIONS)
-    @patch.object(ImageValidator, "is_valid", return_value=True)
+    @pytest.mark.parametrize('file_path, file_type', FILES_PATHS_FOR_ALL_VALIDATIONS)
+    @patch.object(ImageValidator, 'is_valid', return_value=True)
     def test_run_all_validations_on_file(self, _, file_path, file_type):
         """
         Given
@@ -547,20 +403,21 @@ class TestValidators:
         files_validator.validate_pack_unique_files({VALID_PACK})
         assert files_validator._is_valid
 
-    FILE_PATH = [([VALID_SCRIPT_PATH], "script")]
+    FILE_PATH = [
+        ([VALID_SCRIPT_PATH], 'script')
+    ]
 
     @staticmethod
     def mock_unifier():
         def get_script_package_data_mock(*args, **kwargs):
-            return VALID_SCRIPT_PATH, ""
-
-        with patch.object(Unifier, "__init__", lambda a, b: None):
+            return VALID_SCRIPT_PATH, ''
+        with patch.object(Unifier, '__init__', lambda a, b: None):
             Unifier.get_script_package_data = get_script_package_data_mock
-            return Unifier("")
+            return Unifier('')
 
-    @pytest.mark.parametrize("file_path, file_type", FILE_PATH)
+    @pytest.mark.parametrize('file_path, file_type', FILE_PATH)
     def test_script_valid_rn(self, mocker, file_path, file_type):
-        mocker.patch.object(ScriptValidator, "is_valid_name", return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         self.mock_unifier()
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
@@ -573,15 +430,13 @@ class TestValidators:
         assert file_validator._is_valid is False
 
     ARE_TEST_CONFIGURED_TEST_INPUT = [
-        (VALID_INTEGRATION_TEST_PATH, "integration", True),
-        (INVALID_INTEGRATION_NO_TESTS, "integration", False),
-        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, "integration", True),
-        (TEST_PLAYBOOK, "playbook", False),
+        (VALID_INTEGRATION_TEST_PATH, 'integration', True),
+        (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
+        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', True),
+        (TEST_PLAYBOOK, 'playbook', False)
     ]
 
-    @pytest.mark.parametrize(
-        "file_path, file_type, expected", ARE_TEST_CONFIGURED_TEST_INPUT
-    )
+    @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
     def test_are_tests_configured(self, file_path, file_type, expected):
         # type: (str, bool) -> None
         """

@@ -13,17 +13,18 @@ from demisto_sdk.commands.common.tools import (get_yaml, print_error,
 requests.packages.urllib3.disable_warnings()
 
 ACCEPT_HEADER = {
-    "Accept": "application/json, "
-    "application/vnd.docker.distribution.manifest.v2+json, "
-    "application/vnd.docker.distribution.manifest.list.v2+json"
+    'Accept': 'application/json, '
+              'application/vnd.docker.distribution.manifest.v2+json, '
+              'application/vnd.docker.distribution.manifest.list.v2+json'
 }
 
 # use 10 seconds timeout for requests
 TIMEOUT = 10
-DEFAULT_REGISTRY = "registry-1.docker.io"
+DEFAULT_REGISTRY = 'registry-1.docker.io'
 
 
 class DockerImageValidator(object):
+
     def __init__(self, yml_file_path, is_modified_file, is_integration):
         self.is_valid = True
         self.is_modified_file = is_modified_file
@@ -31,25 +32,17 @@ class DockerImageValidator(object):
         self.file_path = yml_file_path
         self.yml_file = get_yaml(yml_file_path)
         self.yml_docker_image = self.get_docker_image_from_yml()
-        self.from_version = self.yml_file.get("fromversion", "0")
-        (
-            self.docker_image_name,
-            self.docker_image_tag,
-        ) = DockerImageValidator.parse_docker_image(self.yml_docker_image)
+        self.from_version = self.yml_file.get('fromversion', '0')
+        self.docker_image_name, self.docker_image_tag = DockerImageValidator.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
-        self.docker_image_latest_tag = DockerImageValidator.get_docker_image_latest_tag(
-            self.docker_image_name, self.yml_docker_image
-        )
+        self.docker_image_latest_tag = DockerImageValidator.get_docker_image_latest_tag(self.docker_image_name,
+                                                                                        self.yml_docker_image)
 
     def is_docker_image_valid(self):
         if not self.docker_image_latest_tag:
             self.is_valid = False
         elif not self.is_docker_image_latest_tag():
-            print_error(
-                Errors.not_latest_docker(
-                    self.file_path, self.docker_image_tag, self.docker_image_latest_tag
-                )
-            )
+            print_error(Errors.not_latest_docker(self.file_path, self.docker_image_tag, self.docker_image_latest_tag))
             self.is_valid = False
         return self.is_valid
 
@@ -62,12 +55,9 @@ class DockerImageValidator(object):
 
         server_version = LooseVersion(self.from_version)
         # Case of a modified file with version >= 5.0.0
-        if self.is_modified_file and server_version >= "5.0.0":
-            if (
-                self.docker_image_latest_tag != self.docker_image_tag
-                and not "demisto/python:1.3-alpine"
-                == "{}:{}".format(self.docker_image_name, self.docker_image_tag)
-            ):
+        if self.is_modified_file and server_version >= '5.0.0':
+            if self.docker_image_latest_tag != self.docker_image_tag and not \
+                    'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
                 # If docker image name are different and if the docker image isn't the default one
                 self.is_latest_tag = False
         # Case of an added file
@@ -76,24 +66,19 @@ class DockerImageValidator(object):
                 self.is_latest_tag = False
 
         if not self.is_latest_tag:
-            print_error(
-                "The docker image tag is not the latest, please update it.\n"
-                "The docker image tag in the yml file is: {}\n"
-                "The latest docker image tag in docker hub is: {}\n"
-                "You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n".format(
-                    self.docker_image_tag,
-                    self.docker_image_latest_tag,
-                    self.docker_image_name,
-                    self.docker_image_name,
-                )
-            )
+            print_error('The docker image tag is not the latest, please update it.\n'
+                        'The docker image tag in the yml file is: {}\n'
+                        'The latest docker image tag in docker hub is: {}\n'
+                        'You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n'
+                        .format(self.docker_image_tag, self.docker_image_latest_tag, self.docker_image_name,
+                                self.docker_image_name))
         return self.is_latest_tag
 
     def get_docker_image_from_yml(self):
         if self.is_integration:
-            docker_image = self.yml_file.get("script").get("dockerimage", "")
+            docker_image = self.yml_file.get('script').get('dockerimage', '')
         else:
-            docker_image = self.yml_file.get("dockerimage", "")
+            docker_image = self.yml_file.get('dockerimage', '')
         return docker_image
 
     @staticmethod
@@ -115,35 +100,35 @@ class DockerImageValidator(object):
         Authenticate to the docker service. Return an authentication token if authentication is required.
         """
         res = requests.get(
-            "https://{}/v2/".format(registry),
+            'https://{}/v2/'.format(registry),
             headers=ACCEPT_HEADER,
             timeout=TIMEOUT,
-            verify=verify_ssl,
+            verify=verify_ssl
         )
         if res.status_code == 401:  # need to authenticate
             # defaults in case we fail for some reason
-            realm = "https://auth.docker.io/token"
-            service = "registry.docker.io"
+            realm = 'https://auth.docker.io/token'
+            service = 'registry.docker.io'
             # Should contain header: Www-Authenticate
-            www_auth = res.headers.get("www-authenticate")
+            www_auth = res.headers.get('www-authenticate')
             if www_auth:
                 parse_auth = DockerImageValidator.parse_www_auth(www_auth)
                 if parse_auth:
                     realm, service = parse_auth
             params = {
-                "scope": "repository:{}:pull".format(image_name),
-                "service": service,
+                'scope': 'repository:{}:pull'.format(image_name),
+                'service': service
             }
             res = requests.get(
                 url=realm,
                 params=params,
                 headers=ACCEPT_HEADER,
                 timeout=TIMEOUT,
-                verify=verify_ssl,
+                verify=verify_ssl
             )
             res.raise_for_status()
             res_json = res.json()
-            return res_json.get("token")
+            return res_json.get('token')
         else:
             res.raise_for_status()
             return None
@@ -158,7 +143,7 @@ class DockerImageValidator(object):
         Returns:
             a tag list with only numbered tags
         """
-        return [tag for tag in tags if re.match(r"^(?:\d+\.)*\d+$", tag) is not None]
+        return [tag for tag in tags if re.match(r'^(?:\d+\.)*\d+$', tag) is not None]
 
     @staticmethod
     def lexical_find_latest_tag(tags):
@@ -193,15 +178,13 @@ class DockerImageValidator(object):
         Returns:
             The last updated docker image tag name
         """
-        latest_tag_name = "latest"
+        latest_tag_name = 'latest'
         latest_tag_date = datetime.now() - timedelta(days=400000)
         for tag in tags:
-            tag_date = datetime.strptime(
-                tag.get("last_updated"), "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
+            tag_date = datetime.strptime(tag.get('last_updated'), '%Y-%m-%dT%H:%M:%S.%fZ')
             if tag_date >= latest_tag_date:
                 latest_tag_date = tag_date
-                latest_tag_name = tag.get("name")
+                latest_tag_name = tag.get('name')
 
         return latest_tag_name
 
@@ -217,35 +200,27 @@ class DockerImageValidator(object):
             The last updated docker image tag
         """
         if yml_docker_image:
-            if yml_docker_image.startswith("devdemisto/"):
-                print_warning(
-                    "docker image must be a demisto docker image. When the docker image is ready,"
-                    " please rename it to: demisto/<image>:<tag>"
-                )
-            elif not yml_docker_image.startswith("demisto/"):
-                print_error(
-                    "docker image must be a demisto docker image. e.g: demisto/<image>:<tag>"
-                )
-                return ""
+            if yml_docker_image.startswith('devdemisto/'):
+                print_warning('docker image must be a demisto docker image. When the docker image is ready,'
+                              ' please rename it to: demisto/<image>:<tag>')
+            elif not yml_docker_image.startswith('demisto/'):
+                print_error('docker image must be a demisto docker image. e.g: demisto/<image>:<tag>')
+                return ''
         try:
-            tag = ""
-            auth_token = DockerImageValidator.docker_auth(
-                docker_image_name, False, DEFAULT_REGISTRY
-            )
+            tag = ''
+            auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
             headers = ACCEPT_HEADER.copy()
             if auth_token:
-                headers["Authorization"] = "Bearer {}".format(auth_token)
+                headers['Authorization'] = 'Bearer {}'.format(auth_token)
 
             # first try to get the docker image tags using normal http request
             res = requests.get(
-                url="https://hub.docker.com/v2/repositories/{}/tags".format(
-                    docker_image_name
-                ),
+                url='https://hub.docker.com/v2/repositories/{}/tags'.format(docker_image_name),
                 verify=False,
                 timeout=TIMEOUT,
             )
             if res.status_code == 200:
-                tags = res.json().get("results", [])
+                tags = res.json().get('results', [])
                 # if http request successful find the latest tag by date in the response
                 if tags:
                     tag = DockerImageValidator.find_latest_tag_by_date(tags)
@@ -254,28 +229,23 @@ class DockerImageValidator(object):
                 # if http request did not succeed than get tags using the API.
                 # See: https://docs.docker.com/registry/spec/api/#listing-image-tags
                 res = requests.get(
-                    "https://{}/v2/{}/tags/list".format(
-                        DEFAULT_REGISTRY, docker_image_name
-                    ),
+                    'https://{}/v2/{}/tags/list'.format(DEFAULT_REGISTRY, docker_image_name),
                     headers=headers,
                     timeout=TIMEOUT,
-                    verify=False,
+                    verify=False
                 )
                 res.raise_for_status()
                 # the API returns tags in lexical order with no date info - so try an get the numeric highest tag
-                tags = res.json().get("tags", [])
+                tags = res.json().get('tags', [])
                 if tags:
                     tag = DockerImageValidator.lexical_find_latest_tag(tags)
             return tag
         except (requests.exceptions.RequestException, Exception):
             if not docker_image_name:
                 docker_image_name = yml_docker_image
-            print_error(
-                "Failed getting tag for: {}. Please check it exists and of demisto format.".format(
-                    docker_image_name
-                )
-            )
-            return ""
+            print_error('Failed getting tag for: {}. Please check it exists and of demisto format.'
+                        .format(docker_image_name))
+            return ''
 
     @staticmethod
     def parse_docker_image(docker_image):
@@ -288,29 +258,24 @@ class DockerImageValidator(object):
             The name and the tag of the docker image
         """
         if docker_image:
-            tag = ""
-            image = ""
+            tag = ''
+            image = ''
             try:
-                image_regex = re.findall(r"(demisto\/.+)", docker_image, re.IGNORECASE)
+                image_regex = re.findall(r'(demisto\/.+)', docker_image, re.IGNORECASE)
                 if image_regex:
                     image = image_regex[0]
-                if ":" in image:
-                    image_split = image.split(":")
+                if ':' in image:
+                    image_split = image.split(':')
                     image = image_split[0]
                     tag = image_split[1]
                 else:
-                    print_error(
-                        "The docker image in your integration/script does not have a tag, please attach the "
-                        "latest tag"
-                    )
+                    print_error('The docker image in your integration/script does not have a tag, please attach the '
+                                'latest tag')
             except IndexError:
-                print_error(
-                    "The docker image: {} is not of format - demisto/image_name".format(
-                        docker_image
-                    )
-                )
+                print_error('The docker image: {} is not of format - demisto/image_name'
+                            .format(docker_image))
 
             return image, tag
         else:
             # If the yml file has no docker image we provide the default one 'demisto/python:1.3-alpine'
-            return "demisto/python", "1.3-alpine"
+            return 'demisto/python', '1.3-alpine'

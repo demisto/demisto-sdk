@@ -48,17 +48,15 @@ PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
 PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
-RL = "\n"
+RL = '\n'
 
-logger = logging.getLogger("demisto-sdk")
+logger = logging.getLogger('demisto-sdk')
 
 
 def validate_env() -> None:
     """Packs which use python2 will need to be run inside virtual enviorment including python2 as main and the specified req"""
-    wrn_msg = (
-        'demisto-sdk lint not in virtual environment, Python2 lints will fail, use "source .hooks/bootstrap"'
-        " to create the virtual environment"
-    )
+    wrn_msg = 'demisto-sdk lint not in virtual environment, Python2 lints will fail, use "source .hooks/bootstrap"' \
+              ' to create the virtual environment'
     command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
     stdout, stderr, exit_code = run_command_os(command, cwd=Path().cwd())
     if "2" not in stdout:
@@ -70,17 +68,8 @@ def validate_env() -> None:
                 print_warning(wrn_msg)
 
 
-def build_skipped_exit_code(
-    no_flake8: bool,
-    no_bandit: bool,
-    no_mypy: bool,
-    no_pylint: bool,
-    no_vulture: bool,
-    no_test: bool,
-    no_pwsh_analyze: bool,
-    no_pwsh_test: bool,
-    docker_engine: bool,
-) -> bool:
+def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                            no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> bool:
     """
     no_flake8(bool): Whether to skip flake8.
     no_bandit(bool): Whether to skip bandit.
@@ -121,13 +110,11 @@ def get_test_modules(content_repo: Optional[git.Repo]) -> Dict[Path, bytes]:
     Returns:
         dict: path and file content - see below modules dict
     """
-    modules = [
-        Path("Tests/demistomock/demistomock.py"),
-        Path("Tests/scripts/dev_envs/pytest/conftest.py"),
-        Path("Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"),
-        Path("Tests/demistomock/demistomock.ps1"),
-        Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1"),
-    ]
+    modules = [Path("Tests/demistomock/demistomock.py"),
+               Path("Tests/scripts/dev_envs/pytest/conftest.py"),
+               Path("Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"),
+               Path("Tests/demistomock/demistomock.ps1"),
+               Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1")]
     modules_content = {}
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
@@ -136,9 +123,10 @@ def get_test_modules(content_repo: Optional[git.Repo]) -> Dict[Path, bytes]:
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:
-            url = f"https://raw.githubusercontent.com/demisto/content/master/{module}"
+            url = f'https://raw.githubusercontent.com/demisto/content/master/{module}'
             for trial in range(2):
-                res = requests.get(url=url, verify=False)
+                res = requests.get(url=url,
+                                   verify=False)
                 if res.ok:
                     # ok - not 4XX or 5XX
                     modules_content[module] = res.content
@@ -146,7 +134,7 @@ def get_test_modules(content_repo: Optional[git.Repo]) -> Dict[Path, bytes]:
                 elif trial == 2:
                     raise requests.exceptions.ConnectionError
 
-    modules_content[Path("CommonServerUserPython.py")] = b""
+    modules_content[Path("CommonServerUserPython.py")] = b''
 
     return modules_content
 
@@ -175,12 +163,10 @@ def add_typing_module(lint_files: List[Path], python_version: float):
                 module_match = re.search(typing_regex, data)
                 if not module_match:
                     original_file = lint_file
-                    back_file = lint_file.with_suffix(".bak")
+                    back_file = lint_file.with_suffix('.bak')
                     original_file.rename(back_file)
                     data = back_file.read_text()
-                    original_file.write_text(
-                        "from typing import *  # noqa: F401" + "\n" + data
-                    )
+                    original_file.write_text("from typing import *  # noqa: F401" + '\n' + data)
                     back_lint_files.append(back_file)
                     added_modules.append(original_file)
         yield
@@ -192,18 +178,13 @@ def add_typing_module(lint_files: List[Path], python_version: float):
                 added_module.unlink()
         for back_file in back_lint_files:
             if back_file.exists():
-                original_name = back_file.with_suffix(".py")
+                original_name = back_file.with_suffix('.py')
                 back_file.rename(original_name)
 
 
 @contextmanager
-def add_tmp_lint_files(
-    content_repo: git.Repo,
-    pack_path: Path,
-    lint_files: List[Path],
-    modules: Dict[Path, bytes],
-    pack_type: str,
-):
+def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List[Path], modules: Dict[Path, bytes],
+                       pack_type: str):
     """ LintFiles is context manager to mandatory files for lint and test
             1. Entrance - download missing files to pack.
             2. Closing - Remove downloaded files from pack.
@@ -222,8 +203,8 @@ def add_tmp_lint_files(
     try:
         # Add mandatory test,lint modules
         for module, content in modules.items():
-            pwsh_module = TYPE_PWSH == pack_type and module.suffix == ".ps1"
-            python_module = TYPE_PYTHON == pack_type and module.suffix == ".py"
+            pwsh_module = TYPE_PWSH == pack_type and module.suffix == '.ps1'
+            python_module = TYPE_PYTHON == pack_type and module.suffix == '.py'
             if pwsh_module or python_module:
                 cur_path = pack_path / module.name
                 if not cur_path.exists():
@@ -237,25 +218,23 @@ def add_tmp_lint_files(
                 added_modules.append(cur_path)
 
             # Add API modules to directory if needed
-            module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
+            module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
             for lint_file in lint_files:
                 module_name = ""
                 data = lint_file.read_text()
                 module_match = re.search(module_regex, data)
                 if module_match:
                     module_name = module_match.group(1)
-                    rel_api_path = (
-                        Path("Packs/ApiModules/Scripts")
-                        / module_name
-                        / f"{module_name}.py"
-                    )
-                    cur_path = pack_path / f"{module_name}.py"
+                    rel_api_path = Path('Packs/ApiModules/Scripts') / module_name / f'{module_name}.py'
+                    cur_path = pack_path / f'{module_name}.py'
                     if content_repo:
                         module_path = content_repo / rel_api_path
-                        shutil.copy(src=module_path, dst=cur_path)
+                        shutil.copy(src=module_path,
+                                    dst=cur_path)
                     else:
-                        url = f"https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}"
-                        api_content = requests.get(url=url, verify=False).content
+                        url = f'https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}'
+                        api_content = requests.get(url=url,
+                                                   verify=False).content
                         cur_path.write_bytes(api_content)
 
                     added_modules.append(cur_path)
@@ -284,9 +263,9 @@ def get_python_version_from_image(image: str) -> float:
         try:
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
-            container_obj: Container = docker_client.containers.run(
-                image=image, command=shlex.split(command), detach=True
-            )
+            container_obj: Container = docker_client.containers.run(image=image,
+                                                                    command=shlex.split(command),
+                                                                    detach=True)
             # Wait for container to finish
             container_obj.wait(condition="exited")
             # Get python version
@@ -310,9 +289,7 @@ def get_python_version_from_image(image: str) -> float:
     return py_num
 
 
-def get_file_from_container(
-    container_obj: Container, container_path: str, encoding: str = ""
-) -> str:
+def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> str:
     """ Copy file from container.
 
     Args:
@@ -329,16 +306,14 @@ def get_file_from_container(
     archive, stat = container_obj.get_archive(container_path)
     filelike = io.BytesIO(b"".join(b for b in archive))
     tar = tarfile.open(fileobj=filelike)
-    data = tar.extractfile(stat["name"]).read()
+    data = tar.extractfile(stat['name']).read()
     if encoding:
         data = data.decode(encoding)
 
     return data
 
 
-def copy_dir_to_container(
-    container_obj: Container, host_path: Path, container_path: Path
-):
+def copy_dir_to_container(container_obj: Container, host_path: Path, container_path: Path):
     """ Copy all content directory from container.
 
     Args:
@@ -355,23 +330,15 @@ def copy_dir_to_container(
     excluded_regex = "(__init__.py|.*.back)"
     file_like_object = io.BytesIO()
     old_cwd = os.getcwd()
-    with tarfile.open(fileobj=file_like_object, mode="w:gz") as archive:
+    with tarfile.open(fileobj=file_like_object, mode='w:gz') as archive:
         os.chdir(host_path)
-        archive.add(
-            ".",
-            recursive=True,
-            filter=lambda tarinfo: (
-                tarinfo
-                if not re.search(excluded_regex, Path(tarinfo.name).name)
-                else None
-            ),
-        )
+        archive.add('.', recursive=True, filter=lambda tarinfo: (
+            tarinfo if not re.search(excluded_regex, Path(tarinfo.name).name) else None))
         os.chdir(old_cwd)
 
     for trial in range(2):
-        status = container_obj.put_archive(
-            path=container_path, data=file_like_object.getvalue()
-        )
+        status = container_obj.put_archive(path=container_path,
+                                           data=file_like_object.getvalue())
         if status:
             break
         elif trial == 1:
@@ -385,10 +352,10 @@ def stream_docker_container_output(streamer: Generator) -> None:
         streamer(Generator): Generator created by docker-sdk
     """
     try:
-        wrapper = textwrap.TextWrapper(
-            initial_indent="\t", subsequent_indent="\t", width=150
-        )
+        wrapper = textwrap.TextWrapper(initial_indent='\t',
+                                       subsequent_indent='\t',
+                                       width=150)
         for chunk in streamer:
-            logger.info(wrapper.fill(str(chunk.decode("utf-8"))))
+            logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         pass

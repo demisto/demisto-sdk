@@ -16,10 +16,10 @@ def logging_setup(verbose: int, quiet: bool, log_path: str) -> logging.Logger:
     """
     if quiet:
         verbose = 0
-    logger: logging.Logger = logging.getLogger("demisto-sdk")
+    logger: logging.Logger = logging.getLogger('demisto-sdk')
     logger.setLevel(logging.DEBUG)
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)
-    fmt = logging.Formatter("%(message)s")
+    fmt = logging.Formatter('%(message)s')
 
     if verbose:
         console_handler = logging.StreamHandler()
@@ -29,9 +29,7 @@ def logging_setup(verbose: int, quiet: bool, log_path: str) -> logging.Logger:
 
     # Setting debug log file if in circleci
     if log_path:
-        file_handler = logging.FileHandler(
-            filename=os.path.join(log_path, "lint_debug_log.log")
-        )
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
         file_handler.setFormatter(fmt)
         file_handler.setLevel(level=logging.DEBUG)
         logger.addHandler(file_handler)
@@ -50,41 +48,38 @@ class Colors:
     i.e. colors.fg.red or colors.bg.greenalso, the generic bold, disable,
     underline, reverse, strike through,
     and invisible work with the main class i.e. colors.bold"""
-
-    reset = "\033[0m"
-    bold = "\033[01m"
-    disable = "\033[02m"
-    underline = "\033[04m"
-    reverse = "\033[07m"
-    strikethrough = "\033[09m"
-    invisible = "\033[08m"
+    reset = '\033[0m'
+    bold = '\033[01m'
+    disable = '\033[02m'
+    underline = '\033[04m'
+    reverse = '\033[07m'
+    strikethrough = '\033[09m'
+    invisible = '\033[08m'
 
     class Fg:
         """Forgrownd"""
-
-        black = "\033[30m"
-        red = "\033[31m"
-        green = "\033[32m"
-        orange = "\033[33m"
-        blue = "\033[34m"
-        purple = "\033[35m"
-        cyan = "\033[36m"
-        lightgrey = "\033[37m"
-        darkgrey = "\033[90m"
-        lightred = "\033[91m"
-        lightgreen = "\033[92m"
-        yellow = "\033[93m"
-        lightblue = "\033[94m"
-        pink = "\033[95m"
-        lightcyan = "\033[96m"
+        black = '\033[30m'
+        red = '\033[31m'
+        green = '\033[32m'
+        orange = '\033[33m'
+        blue = '\033[34m'
+        purple = '\033[35m'
+        cyan = '\033[36m'
+        lightgrey = '\033[37m'
+        darkgrey = '\033[90m'
+        lightred = '\033[91m'
+        lightgreen = '\033[92m'
+        yellow = '\033[93m'
+        lightblue = '\033[94m'
+        pink = '\033[95m'
+        lightcyan = '\033[96m'
 
     class Bg:
         """Backgrownd"""
-
-        black = "\033[40m"
-        red = "\033[41m"
-        green = "\033[42m"
-        orange = "\033[43m"
-        blue = "\033[44m"
-        purple = "\033[45m"
-        cyan = "\033[46m"
+        black = '\033[40m'
+        red = '\033[41m'
+        green = '\033[42m'
+        orange = '\033[43m'
+        blue = '\033[44m'
+        purple = '\033[45m'
+        cyan = '\033[46m'

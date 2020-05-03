@@ -7,10 +7,10 @@ class DashboardValidator(BaseValidator):
     @staticmethod
     def get_widgets_from_dashboard(dashboard):
         # type: () -> list
-        layout_of_dashboard: list = dashboard.get("layout", [])
+        layout_of_dashboard: list = dashboard.get('layout', [])
         widgets = []
         if layout_of_dashboard:
-            widgets = [item.get("widget") for item in layout_of_dashboard]
+            widgets = [item.get('widget') for item in layout_of_dashboard]
         return widgets
 
     def is_valid_dashboard(self, validate_rn=True):
@@ -22,12 +22,15 @@ class DashboardValidator(BaseValidator):
         """
         is_dashboard_valid = [
             super().is_valid_file(validate_rn),
-            self.is_valid_version(),
+            self.is_valid_version()
         ]
 
         # check only on added files
         if not self.old_file:
-            is_dashboard_valid = all([is_dashboard_valid, self.is_id_equals_name()])
+            is_dashboard_valid = all([
+                is_dashboard_valid,
+                self.is_id_equals_name()
+            ])
 
         return is_dashboard_valid
 
@@ -47,7 +50,7 @@ class DashboardValidator(BaseValidator):
         Returns:
             bool. Whether the file id equals to its name
         """
-        return super(DashboardValidator, self)._is_id_equals_name("dashboard")
+        return super(DashboardValidator, self)._is_id_equals_name('dashboard')
 
     def contains_forbidden_fields(self):
         # type: () -> bool
@@ -58,31 +61,21 @@ class DashboardValidator(BaseValidator):
         """
         error_msg = ""
         is_valid = True
-        fields_to_exclude = [
-            "system",
-            "isCommon",
-            "shared",
-            "owner",
-            "sortValues",
-            "vcShouldIgnore",
-            "commitMessage",
-            "shouldCommit",
-        ]
+        fields_to_exclude = ['system', 'isCommon', 'shared', 'owner',
+                             'sortValues', 'vcShouldIgnore', 'commitMessage', 'shouldCommit']
 
         widgets = self.get_widgets_from_dashboard(self.current_file)
 
         for field in fields_to_exclude:
             if self.current_file.get(field) is not None:
                 is_valid = False
-                error_msg += (
-                    f"{self.file_path}: the field {field} needs to be removed.\n"
-                )
+                error_msg += f'{self.file_path}: the field {field} needs to be removed.\n'
             # iterate over the widgets if exist
             if widgets:
                 for widget in widgets:
                     if widget.get(field):
                         is_valid = False
-                        error_msg += f"The field {field} needs to be removed from the widget: {widget}.\n"
+                        error_msg += f'The field {field} needs to be removed from the widget: {widget}.\n'
         if error_msg:
             print_error(error_msg)
         return is_valid
@@ -96,24 +89,22 @@ class DashboardValidator(BaseValidator):
         """
         error_msg = ""
         is_valid = True
-        fields_to_include = ["fromDate", "toDate", "fromDateLicense"]
+        fields_to_include = ['fromDate', 'toDate', 'fromDateLicense']
 
         widgets = self.get_widgets_from_dashboard(self.current_file)
 
         for field in fields_to_include:
             if not self.current_file.get(field):
                 is_valid = False
-                error_msg += f"{self.file_path}: the field {field} needs to be included. Please add it.\n"
+                error_msg += f'{self.file_path}: the field {field} needs to be included. Please add it.\n'
             # iterate over the widgets if exist
             if widgets:
                 for widget in widgets:
                     if not widget.get(field):
                         is_valid = False
                         widget_name = widget.get("name")
-                        error_msg += (
-                            f"The field {field} needs to be included in the widget: {widget_name}."
-                            f" Please add it.\n"
-                        )
+                        error_msg += f'The field {field} needs to be included in the widget: {widget_name}.' \
+                                     f' Please add it.\n'
         if error_msg:
             print_error(error_msg)
         return is_valid

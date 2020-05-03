@@ -17,18 +17,15 @@ class ReleaseNotesValidator:
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
         master_diff (str): the changes in the changelog file compared to origin/master.
     """
-
-    COMMENT_FILLER_REGEX = r"- ?$"
-    SINGLE_LINE_REAL_COMMENT_REGEX = r"[a-zA-Z0-9].*\.$"
-    MULTI_LINE_REAL_COMMENT_REGEX = r"(\t+| {2,4})- .*\.$"
-    LINK_TO_RELEASE_NOTES_STANDARD = "https://xsoar.pan.dev/docs/integrations/changelog"
+    COMMENT_FILLER_REGEX = r'- ?$'
+    SINGLE_LINE_REAL_COMMENT_REGEX = r'[a-zA-Z0-9].*\.$'
+    MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
+    LINK_TO_RELEASE_NOTES_STANDARD = 'https://xsoar.pan.dev/docs/integrations/changelog'
 
     def __init__(self, file_path):
         self.file_path = file_path
         self.release_notes_path = get_release_notes_file_path(self.file_path)
-        self.latest_release_notes = get_latest_release_notes_text(
-            self.release_notes_path
-        )
+        self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
         self.master_diff = self.get_master_diff()
 
     def get_master_diff(self):
@@ -41,9 +38,8 @@ class ReleaseNotesValidator:
         Returns:
             str. empty string if no changes made or no origin/master branch, otherwise full difference context.
         """
-        return run_command(
-            f"git diff --unified=100 " f"origin/master {self.release_notes_path}"
-        )
+        return run_command(F'git diff --unified=100 '
+                           F'origin/master {self.release_notes_path}')
 
     def is_release_notes_changed(self):
         """Validates that a new comment was added to release notes.
@@ -53,42 +49,37 @@ class ReleaseNotesValidator:
         """
         # there exists a difference between origin/master and current branch
         if self.master_diff:
-            diff_releases = self.master_diff.split("##")
+            diff_releases = self.master_diff.split('##')
             unreleased_section = diff_releases[1]
-            unreleased_section_lines = unreleased_section.split("\n")
+            unreleased_section_lines = unreleased_section.split('\n')
 
             adds_in_diff = 0
             removes_in_diff = 0
 
             for line in unreleased_section_lines:
-                if line.startswith("+"):
+                if line.startswith('+'):
                     adds_in_diff += 1
-                elif line.startswith("-") and not re.match(r"- *$", line):
+                elif line.startswith('-') and not re.match(r'- *$', line):
                     removes_in_diff += 1
 
             # means that at least one new line was added
             if adds_in_diff - removes_in_diff > 0:
                 return True
 
-        print_error(
-            f"No new comment has been added in the release notes file: {self.release_notes_path}"
-        )
+        print_error(F'No new comment has been added in the release notes file: {self.release_notes_path}')
         return False
 
     def is_valid_one_line_comment(self, release_notes_comments):
-        if re.match(
-            self.SINGLE_LINE_REAL_COMMENT_REGEX, release_notes_comments[0]
-        ) or re.match(self.COMMENT_FILLER_REGEX, release_notes_comments[0]):
+        if re.match(self.SINGLE_LINE_REAL_COMMENT_REGEX, release_notes_comments[0]) or \
+                re.match(self.COMMENT_FILLER_REGEX, release_notes_comments[0]):
             return True
 
         return False
 
     def is_valid_multi_line_comment(self, release_notes_comments):
         for comment in release_notes_comments:
-            if not (
-                re.match(self.MULTI_LINE_REAL_COMMENT_REGEX, comment)
-                or re.match(self.COMMENT_FILLER_REGEX, comment)
-            ):
+            if not (re.match(self.MULTI_LINE_REAL_COMMENT_REGEX, comment) or
+                    re.match(self.COMMENT_FILLER_REGEX, comment)):
                 return False
 
         return True
@@ -99,21 +90,17 @@ class ReleaseNotesValidator:
         Returns:
             bool. True if release notes structure valid, False otherwise
         """
-        release_notes_comments = self.latest_release_notes.split("\n")
+        release_notes_comments = self.latest_release_notes.split('\n')
 
         if not release_notes_comments[-1]:
             release_notes_comments = release_notes_comments[:-1]
 
-        if len(release_notes_comments) == 1 and self.is_valid_one_line_comment(
-            release_notes_comments
-        ):
+        if len(release_notes_comments) == 1 and self.is_valid_one_line_comment(release_notes_comments):
             return True
 
         elif len(release_notes_comments) <= 1:
-            print_error(
-                f"File {self.release_notes_path} is not formatted according to "
-                f"release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}"
-            )
+            print_error(F'File {self.release_notes_path} is not formatted according to '
+                        F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
             return False
 
         else:
@@ -121,10 +108,8 @@ class ReleaseNotesValidator:
                 release_notes_comments = release_notes_comments[1:]
 
             if not self.is_valid_multi_line_comment(release_notes_comments):
-                print_error(
-                    f"File {self.release_notes_path} is not formatted according to "
-                    f"release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}"
-                )
+                print_error(F'File {self.release_notes_path} is not formatted according to '
+                            F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
                 return False
 
         return True
@@ -137,10 +122,8 @@ class ReleaseNotesValidator:
         """
         # checks that release notes file exists and contains text
         if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
-            print_error(
-                f"File {self.file_path} is missing release notes, "
-                f"Please add it under {self.release_notes_path}"
-            )
+            print_error(F'File {self.file_path} is missing release notes, '
+                        F'Please add it under {self.release_notes_path}')
             return False
 
         return True

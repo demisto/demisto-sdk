@@ -41,18 +41,9 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    def __init__(
-        self,
-        output: str,
-        name: str = "",
-        id: str = "",
-        integration: bool = False,
-        script: bool = False,
-        pack: bool = False,
-        demisto_mock: bool = False,
-        common_server: bool = False,
-    ):
-        self.output = output if output else ""
+    def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
+                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+        self.output = output if output else ''
         self.id = id
 
         self.is_integration = integration
@@ -66,42 +57,25 @@ class Initiator:
         if not integration and not script and not pack:
             self.is_pack = True
 
-        self.full_output_path = ""
+        self.full_output_path = ''
 
         if name is not None and len(name) != 0:
-            while " " in name:
-                name = str(
-                    input(
-                        "The directory and file name cannot have spaces in it, Enter a different name: "
-                    )
-                )
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
 
-    HELLO_WORLD_INTEGRATION = "HelloWorld"
-    HELLO_WORLD_SCRIPT = "HelloWorldScript"
-    PACK_TEMPLATE_FOLDER = "PackData"
-    PACK_METADATA_TEMPLATE = "metadata_template.json"
-    DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+    HELLO_WORLD_INTEGRATION = 'HelloWorld'
+    HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+    PACK_TEMPLATE_FOLDER = 'PackData'
+    PACK_METADATA_TEMPLATE = 'metadata_template.json'
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
 
-    DIR_LIST = [
-        INTEGRATIONS_DIR,
-        SCRIPTS_DIR,
-        INCIDENT_FIELDS_DIR,
-        INCIDENT_TYPES_DIR,
-        INDICATOR_FIELDS_DIR,
-        PLAYBOOKS_DIR,
-        LAYOUTS_DIR,
-        TEST_PLAYBOOKS_DIR,
-        CLASSIFIERS_DIR,
-        CONNECTIONS_DIR,
-        DASHBOARDS_DIR,
-        MISC_DIR,
-        REPORTS_DIR,
-        WIDGETS_DIR,
-    ]
+    DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+                MISC_DIR, REPORTS_DIR, WIDGETS_DIR]
 
     def init(self):
         """Starts the init command process.
@@ -128,42 +102,24 @@ class Initiator:
             created_object (str): the type of the created object (integration/script/pack)
         """
         while not self.dir_name or len(self.dir_name) == 0:
-            self.dir_name = str(
-                input(f"Please input the name of the initialized {created_object}: ")
-            )
-            while " " in self.dir_name:
-                self.dir_name = str(
-                    input(
-                        "The directory name cannot have spaces in it, Enter a different name: "
-                    )
-                )
+            self.dir_name = str(input(f"Please input the name of the initialized {created_object}: "))
+            while ' ' in self.dir_name:
+                self.dir_name = str(input("The directory name cannot have spaces in it, Enter a different name: "))
 
     def get_object_id(self, created_object: str):
         if not self.id:
-            if (
-                self.is_pack_creation
-            ):  # There was no option to enter the ID in this process.
-                use_dir_name = str(
-                    input(
-                        f"Do you want to use the directory name as an "
-                        f"ID for the {created_object}? Y/N "
-                    )
-                )
+            if self.is_pack_creation:  # There was no option to enter the ID in this process.
+                use_dir_name = str(input(f"Do you want to use the directory name as an "
+                                         f"ID for the {created_object}? Y/N "))
             else:
-                use_dir_name = str(
-                    input(
-                        f"No ID given for the {created_object}'s yml file. "
-                        f"Do you want to use the directory name? Y/N "
-                    )
-                )
+                use_dir_name = str(input(f"No ID given for the {created_object}'s yml file. "
+                                         f"Do you want to use the directory name? Y/N "))
 
-            if use_dir_name and use_dir_name.lower() in ["y", "yes"]:
+            if use_dir_name and use_dir_name.lower() in ['y', 'yes']:
                 self.id = self.dir_name
             else:
                 while not self.id:
-                    self.id = str(
-                        input(f"Please enter the id name for the {created_object}: ")
-                    )
+                    self.id = str(input(f"Please enter the id name for the {created_object}: "))
 
     def pack_init(self) -> bool:
         """Creates a pack directory tree.
@@ -177,7 +133,7 @@ class Initiator:
 
         # content-descriptor file indicates we are in "content" repository
         # thus we will create the pack under Packs directory
-        elif os.path.isfile("content-descriptor.json"):
+        elif os.path.isfile('content-descriptor.json'):
             self.full_output_path = os.path.join("Packs", self.dir_name)
 
         # if non of the above conditions apply - create the pack in current directory
@@ -190,47 +146,35 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
 
-        with open(os.path.join(self.full_output_path, "CHANGELOG.md"), "a") as fp:
+        with open(os.path.join(self.full_output_path, 'CHANGELOG.md'), 'a') as fp:
             fp.write("## [Unreleased]")
 
-        fp = open(os.path.join(self.full_output_path, "README.md"), "a")
+        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 
-        fp = open(os.path.join(self.full_output_path, ".secrets-ignore"), "a")
+        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
         fp.close()
 
-        fp = open(os.path.join(self.full_output_path, ".pack-ignore"), "a")
+        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
 
-        print_color(
-            f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
-            LOG_COLORS.GREEN,
-        )
+        print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
-        metadata_path = os.path.join(self.full_output_path, "pack_metadata.json")
-        with open(metadata_path, "a") as fp:
-            user_response = input(
-                "\nDo you want to fill pack's metadata file? Y/N "
-            ).lower()
-            fill_manually = user_response in ["y", "yes"]
+        metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
+        with open(metadata_path, 'a') as fp:
+            user_response = input("\nDo you want to fill pack's metadata file? Y/N ").lower()
+            fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)
             json.dump(pack_metadata, fp, indent=4)
 
-            print_color(
-                f"Created pack metadata at path : {metadata_path}", LOG_COLORS.GREEN
-            )
+            print_color(f"Created pack metadata at path : {metadata_path}", LOG_COLORS.GREEN)
 
-        create_integration = str(
-            input("\nDo you want to create an integration in the pack? Y/N ")
-        ).lower()
-        if create_integration in ["y", "yes"]:
-            integration_init = Initiator(
-                output=os.path.join(self.full_output_path, "Integrations"),
-                integration=True,
-                common_server=self.common_server,
-                demisto_mock=self.demisto_mock,
-            )
+        create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
+        if create_integration in ['y', 'yes']:
+            integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
+                                         integration=True, common_server=self.common_server,
+                                         demisto_mock=self.demisto_mock)
             return integration_init.init()
 
         return True
@@ -246,53 +190,45 @@ class Initiator:
             Dict. Pack metadata JSON content.
         """
         metadata = {
-            "name": "## FILL OUT MANUALLY ##",
-            "description": "## FILL OUT MANUALLY ##",
-            "support": "xsoar",
-            "currentVersion": PACK_INITIAL_VERSION,
-            "author": "Cortex XSOAR",
-            "url": "https://www.paloaltonetworks.com/cortex",
-            "email": "",
-            "categories": [],
-            "tags": [],
-            "created": datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-            "updated": datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-            "beta": False,
-            "deprecated": False,
-            "useCases": [],
-            "keywords": [],
+            'name': '## FILL OUT MANUALLY ##',
+            'description': '## FILL OUT MANUALLY ##',
+            'support': 'xsoar',
+            'currentVersion': PACK_INITIAL_VERSION,
+            'author': 'Cortex XSOAR',
+            'url': 'https://www.paloaltonetworks.com/cortex',
+            'email': '',
+            'categories': [],
+            'tags': [],
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'beta': False,
+            'deprecated': False,
+            'useCases': [],
+            'keywords': [],
             # 'price': '0',
-            "dependencies": {},
+            'dependencies': {},
         }
 
         if not fill_manually:
             return metadata
 
-        metadata["name"] = input("\nDisplay name of the pack: ")
-        metadata["description"] = input("\nDescription of the pack: ")
-        metadata["support"] = Initiator.get_valid_user_input(
-            options_list=PACK_SUPPORT_OPTIONS,
-            option_message="\nSupport type of the pack: \n",
-        )
-        metadata["author"] = input("\nAuthor of the pack: ")
+        metadata['name'] = input("\nDisplay name of the pack: ")
+        metadata['description'] = input("\nDescription of the pack: ")
+        metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
+                                                             option_message="\nSupport type of the pack: \n")
+        metadata['author'] = input("\nAuthor of the pack: ")
 
-        support_url = input(
-            "\nThe url of support, should represent your GitHub account (optional): "
-        )
+        support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
         while support_url and "http" not in support_url:
             support_url = input("\nIncorrect input. Please enter full valid url: ")
-        metadata["url"] = support_url
+        metadata['url'] = support_url
 
-        metadata["email"] = input("\nThe email in which you can be contacted in: ")
-        metadata["categories"] = [
-            Initiator.get_valid_user_input(
-                options_list=INTEGRATION_CATEGORIES,
-                option_message="\nPack category options: \n",
-            )
-        ]
+        metadata['email'] = input("\nThe email in which you can be contacted in: ")
+        metadata['categories'] = [Initiator.get_valid_user_input(options_list=INTEGRATION_CATEGORIES,
+                                                                 option_message="\nPack category options: \n")]
         tags = input("\nTags of the pack, comma separated values: ")
-        tags_list = [t.strip() for t in tags.split(",")]
-        metadata["tags"] = tags_list
+        tags_list = [t.strip() for t in tags.split(',')]
+        metadata['tags'] = tags_list
         # TODO: add it back after #23546 is ready.
         # price = input("\nThe price of the pack: ")
         # metadata['price'] = price
@@ -322,15 +258,11 @@ class Initiator:
                 user_choice = int(user_choice)
 
                 if user_choice not in range(1, len(options_list) + 1):
-                    user_choice = input(
-                        f"\nInvalid option {user_choice}, please enter valid choice: "
-                    )
+                    user_choice = input(f"\nInvalid option {user_choice}, please enter valid choice: ")
                 else:
                     invalid_input = False
             except ValueError:
-                user_choice = input(
-                    "\nThe option must be integer, please enter valid choice: "
-                )
+                user_choice = input("\nThe option must be integer, please enter valid choice: ")
 
         return options_list[user_choice - 1]
 
@@ -346,7 +278,7 @@ class Initiator:
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
-            self.full_output_path = os.path.join("Integrations", self.dir_name)
+            self.full_output_path = os.path.join('Integrations', self.dir_name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:
@@ -355,27 +287,20 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        hello_world_path = os.path.normpath(
-            os.path.join(
-                __file__, "..", "..", "init", "templates", self.HELLO_WORLD_INTEGRATION
-            )
-        )
+        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'init', 'templates',
+                                                         self.HELLO_WORLD_INTEGRATION))
 
         copy_tree(str(hello_world_path), self.full_output_path)
         if self.id != self.HELLO_WORLD_INTEGRATION:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
-            self.yml_reformatting(
-                current_suffix=self.HELLO_WORLD_INTEGRATION, integration=True
-            )
+            self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION, integration=True)
             self.fix_test_file_import(name_to_change=self.HELLO_WORLD_INTEGRATION)
 
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(
-            f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN
-        )
+        print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
 
         return True
 
@@ -391,7 +316,7 @@ class Initiator:
 
         # will create the script under the Scripts directory of the pack
         elif os.path.isdir(SCRIPTS_DIR):
-            self.full_output_path = os.path.join("Scripts", self.dir_name)
+            self.full_output_path = os.path.join('Scripts', self.dir_name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:
@@ -400,11 +325,8 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        hello_world_path = os.path.normpath(
-            os.path.join(
-                __file__, "..", "..", "init", "templates", self.HELLO_WORLD_SCRIPT
-            )
-        )
+        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'init', 'templates',
+                                                         self.HELLO_WORLD_SCRIPT))
 
         copy_tree(str(hello_world_path), self.full_output_path)
         if self.id != self.HELLO_WORLD_SCRIPT:
@@ -416,9 +338,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(
-            f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN
-        )
+        print_color(f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
 
         return True
 
@@ -432,19 +352,16 @@ class Initiator:
         with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
             yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
-        yml_dict["name"] = self.id
+        yml_dict['name'] = self.id
         if integration:
             yml_dict["display"] = self.id
 
-        with open(
-            os.path.join(self.full_output_path, f"{self.dir_name}.yml"), "w"
-        ) as f:
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(
                 yml_dict,
                 f,
                 Dumper=yamlordereddictloader.SafeDumper,
-                default_flow_style=False,
-            )
+                default_flow_style=False)
 
         os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
 
@@ -454,25 +371,17 @@ class Initiator:
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
-        os.rename(
-            os.path.join(self.full_output_path, f"{current_suffix}.py"),
-            os.path.join(self.full_output_path, f"{self.dir_name}.py"),
-        )
-        os.rename(
-            os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
-            os.path.join(self.full_output_path, f"{self.dir_name}_description.md"),
-        )
-        os.rename(
-            os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
-            os.path.join(self.full_output_path, f"{self.dir_name}_test.py"),
-        )
+        os.rename(os.path.join(self.full_output_path, f"{current_suffix}.py"),
+                  os.path.join(self.full_output_path, f"{self.dir_name}.py"))
+        os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
+                  os.path.join(self.full_output_path, f"{self.dir_name}_description.md"))
+        os.rename(os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
+                  os.path.join(self.full_output_path, f"{self.dir_name}_test.py"))
         if self.is_integration:
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
-                os.path.join(self.full_output_path, f"{self.dir_name}_image.png"),
-            )
+            os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
+                      os.path.join(self.full_output_path, f"{self.dir_name}_image.png"))
 
-    def create_new_directory(self,) -> bool:
+    def create_new_directory(self, ) -> bool:
         """Creates a new directory for the integration/script/pack.
 
         Returns:
@@ -482,20 +391,12 @@ class Initiator:
             os.mkdir(self.full_output_path)
 
         except FileExistsError:
-            to_delete = str(
-                input(
-                    f"The directory {self.full_output_path} "
-                    f"already exists.\nDo you want to overwrite it? Y/N "
-                )
-            ).lower()
-            while to_delete != "y" and to_delete != "n":
-                to_delete = str(
-                    input(
-                        f"Your response was invalid.\nDo you want to delete it? Y/N "
-                    ).lower()
-                )
+            to_delete = str(input(f"The directory {self.full_output_path} "
+                                  f"already exists.\nDo you want to overwrite it? Y/N ")).lower()
+            while to_delete != 'y' and to_delete != 'n':
+                to_delete = str(input(f"Your response was invalid.\nDo you want to delete it? Y/N ").lower())
 
-            if to_delete in ["y", "yes"]:
+            if to_delete in ['y', 'yes']:
                 shutil.rmtree(path=self.full_output_path, ignore_errors=True)
                 os.mkdir(self.full_output_path)
 
@@ -511,16 +412,12 @@ class Initiator:
         Args:
             name_to_change (str): The name of the former integration/script to replace in the import.
         """
-        with open(
-            os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), "r"
-        ) as fp:
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
             file_contents = fp.read()
 
-        file_contents = file_contents.replace(f".{name_to_change}", self.dir_name)
+        file_contents = file_contents.replace(f'.{name_to_change}', self.dir_name)
 
-        with open(
-            os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), "w"
-        ) as fp:
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'w') as fp:
             fp.write(file_contents)
 
     def copy_common_server_python(self):
@@ -530,15 +427,12 @@ class Initiator:
                 common_server_path = get_common_server_path(self.configuration.env_dir)
                 shutil.copy(common_server_path, self.full_output_path)
             except Exception as err:
-                print_v(f"Could not copy CommonServerPython: {str(err)}")
+                print_v(f'Could not copy CommonServerPython: {str(err)}')
 
     def copy_demistotmock(self):
         """copy demistomock from content"""
         if self.demisto_mock:
             try:
-                shutil.copy(
-                    f"{self.configuration.env_dir}/Tests/demistomock/demistomock.py",
-                    self.full_output_path,
-                )
+                shutil.copy(f'{self.configuration.env_dir}/Tests/demistomock/demistomock.py', self.full_output_path)
             except Exception as err:
-                print_v(f"Could not copy demistomock: {str(err)}")
+                print_v(f'Could not copy demistomock: {str(err)}')

@@ -10,7 +10,6 @@ class ConfJsonValidator:
         _is_valid (bool): Whether the conf.json file current state is valid or not.
         conf_data (dict): The data from the conf.json file in our repo.
     """
-
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self):
@@ -23,9 +22,9 @@ class ConfJsonValidator:
 
     def is_valid_conf_json(self):
         """Validate the fields skipped_tests, skipped_integrations and unmockable_integrations in conf.json file."""
-        skipped_tests_conf = self.conf_data["skipped_tests"]
-        skipped_integrations_conf = self.conf_data["skipped_integrations"]
-        unmockable_integrations_conf = self.conf_data["unmockable_integrations"]
+        skipped_tests_conf = self.conf_data['skipped_tests']
+        skipped_integrations_conf = self.conf_data['skipped_integrations']
+        unmockable_integrations_conf = self.conf_data['unmockable_integrations']
 
         self.is_valid_description_in_conf_dict(skipped_tests_conf)
         self.is_valid_description_in_conf_dict(skipped_integrations_conf)
@@ -46,11 +45,7 @@ class ConfJsonValidator:
 
         if problematic_instances:
             self._is_valid = False
-            print(
-                "Those instances don't have description:\n{}".format(
-                    "\n".join(problematic_instances)
-                )
-            )
+            print("Those instances don't have description:\n{0}".format('\n'.join(problematic_instances)))
 
         return self._is_valid
 
@@ -63,11 +58,11 @@ class ConfJsonValidator:
         Returns:
             bool. Whether the test as been located in the conf.json file or not.
         """
-        conf_tests = self.conf_data["tests"]
+        conf_tests = self.conf_data['tests']
         for test in conf_tests:
-            playbook_id = test["playbookID"]
+            playbook_id = test['playbookID']
             if file_id == playbook_id:
                 return True
 
-        print_error("You've failed to add the {} to conf.json".format(file_id))
+        print_error("You've failed to add the {0} to conf.json".format(file_id))
         return False

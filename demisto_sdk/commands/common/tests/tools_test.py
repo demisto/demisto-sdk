@@ -1,5 +1,6 @@
 import glob
 import os
+from pathlib import Path
 
 import pytest
 from demisto_sdk.commands.common import tools
@@ -237,12 +238,19 @@ class TestGetFilesInDir:
         assert sorted(get_files_in_dir(integrations_dir, ['py'])) == sorted(files)
 
 
-def test_run_command_os():
+run_command_os_inputs = [
+    ('ls', os.getcwd()),
+    ('ls', Path(os.getcwd()))
+]
+
+
+@pytest.mark.parametrize('command, cwd', run_command_os_inputs)
+def test_run_command_os(command, cwd):
     """Tests a simple command, to check if it works
     """
     stdout, stderr, return_code = run_command_os(
-        'ls',
-        cwd=os.getcwd()
+        command,
+        cwd=cwd
     )
     assert 0 == return_code
     assert stdout

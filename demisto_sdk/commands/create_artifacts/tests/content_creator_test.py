@@ -110,12 +110,12 @@ class TestContentCreator:
 
         ContentCreator.copy_docs_files(content_bundle_path="dummy_bundle_path", packs_bundle_path="dummy_packs_path")
 
-        for called_args in copied_to_bundle.call_args_list:
-            destination_copy_path = called_args.args[1]
+        for called_bundle_args in copied_to_bundle.call_args_list:
+            destination_copy_path = called_bundle_args.args[1]
             assert destination_copy_path in (
                 'dummy_bundle_path/doc-CommonServer.json', 'dummy_bundle_path/doc-howto.json')
 
-        for called_args in copied_to_packs.call_args_list:
-            destination_copy_path = called_args.args[1]
+        for called_packs_args in copied_to_packs.call_args_list:
+            destination_copy_path = called_packs_args.args[1]
             assert destination_copy_path in ("dummy_packs_path/Base/Documentation/doc-CommonServer.json",
                                              "dummy_packs_path/Base/Documentation/doc-howto.json")

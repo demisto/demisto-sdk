@@ -28,7 +28,7 @@ class TestContentCreator:
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as err:
-                    print('Failed to delete %s. Reason: %s' % (file_path, err))
+                    print('Failed to delete {}. Reason: {}'.format(file_path, err))
 
     def test_copy_dir_files(self):
         """

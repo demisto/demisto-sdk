@@ -1,12 +1,12 @@
 import re
-from typing import List
+from typing import Any, List
 
 
 class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
-    def suggest_fix(file_path: str, *args: List, cmd: str = 'format') -> str:
+    def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
 
     @staticmethod
@@ -269,6 +269,7 @@ CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
+RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 
 SCRIPT = 'script'
@@ -554,6 +555,7 @@ PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_REPORTS_REGEX = r'{}/([^/]+)/{}/([^.]+)\.json'.format(PACKS_DIR, REPORTS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
+PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, RELEASE_NOTES_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 
@@ -845,6 +847,16 @@ CHECKED_TYPES_REGEXES = [
     PACKS_README_REGEX,
     PACKS_README_REGEX_INNER,
     INTEGRATION_OLD_README_REGEX,
+    # Pack Misc
+    PACKS_CLASSIFIERS_REGEX,
+    PACKS_DASHBOARDS_REGEX,
+    PACKS_INCIDENT_TYPES_REGEX,
+    PACKS_INCIDENT_FIELDS_REGEX,
+    PACKS_INDICATOR_FIELDS_REGEX,
+    PACKS_LAYOUTS_REGEX,
+    PACKS_WIDGETS_REGEX,
+    PACKS_REPORTS_REGEX,
+    PACKS_RELEASE_NOTES_REGEX
 ]
 
 CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in

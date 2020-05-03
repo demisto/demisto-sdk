@@ -136,10 +136,10 @@ class FilesValidator:
             (modified_files_list, added_files_list, deleted_files). Tuple of sets.
         """
         all_files = files_string.split('\n')
-        deleted_files = set([])
-        added_files_list = set([])
-        modified_files_list = set([])
-        old_format_files = set([])
+        deleted_files = set()
+        added_files_list = set()
+        modified_files_list = set()
+        old_format_files = set()
         for f in all_files:
             file_data = f.split()
             if not file_data:
@@ -210,7 +210,6 @@ class FilesValidator:
             'git diff --name-status {tag}..{compare_type}refs/heads/{branch}'.format(tag=tag,
                                                                                      branch=self.branch_name,
                                                                                      compare_type=compare_type))
-
         modified_files, added_files, _, old_format_files = self.get_modified_files(
             all_changed_files_string,
             tag=tag,

@@ -1,6 +1,8 @@
 # Changelog
 * Fixed a bug in the **unify** command when output path was provided empty.
-* Improved error message for integration with no tests configured
+* Improved error message for integration with no tests configured.
+* Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.
+* Fixed a bug in the **create** command where a unified YML with a docker image for 4.5 was copied incorrectly.
 * Missing release notes message are now showing the release notes file path to update.
 * Fixed an issue in the **validate** command in which unified YAML files were not ignored.
 * File format suggestions are now shown in the relevant file format (JSON or YAML).

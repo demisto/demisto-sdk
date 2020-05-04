@@ -128,6 +128,12 @@ class Errors:
         return "{}: {}, You've changed the context in the file,please " \
                "undo. the command is:\n{}".format(file_path, cls.BACKWARDS, old_command)
 
+    @staticmethod
+    def not_latest_docker(file_path, current_docker, latest_docker):
+        return "{}: You're not using latest docker for the file," \
+               " please update to latest version. Current: {}, Latest: {} ".format(file_path, current_docker,
+                                                                                   latest_docker)
+
     @classmethod
     def breaking_backwards_arg_changed(cls, file_path):
         return "{}: {}, You've changed the name of an arg in " \

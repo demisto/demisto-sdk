@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from pkg_resources import parse_version
 
 import requests
-from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
 
@@ -41,7 +40,6 @@ class DockerImageValidator(object):
         if not self.docker_image_latest_tag:
             self.is_valid = False
         elif not self.is_docker_image_latest_tag():
-            print_error(Errors.not_latest_docker(self.file_path, self.docker_image_tag, self.docker_image_latest_tag))
             self.is_valid = False
         return self.is_valid
 

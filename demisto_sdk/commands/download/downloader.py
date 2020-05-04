@@ -33,6 +33,7 @@ from mergedeep import merge
 from ruamel.yaml import YAML
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
+from typing import List
 
 logging.disable(logging.CRITICAL)
 
@@ -85,11 +86,14 @@ class Downloader:
         if not self.verify_flags():
             return 1
         if not self.fetch_custom_content():
+            self.remove_traces()
             return 1
         if self.handle_list_files_flag():
+            self.remove_traces()
             return 0
         self.handle_all_custom_content_flag()
         if not self.verify_output_pack_is_pack():
+            self.remove_traces()
             return 1
         self.build_pack_content()
         self.build_custom_content()
@@ -161,7 +165,12 @@ class Downloader:
         :return: The list of all custom content objects
         """
         custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
-        return [self.build_custom_content_object(file_path) for file_path in custom_content_file_paths]
+        custom_content_objects: List = list()
+        for file_path in custom_content_file_paths:
+            custom_content_object = self.build_custom_content_object(file_path)
+            if custom_content_object:
+                custom_content_objects.append(custom_content_object)
+        return custom_content_objects
 
     def handle_list_files_flag(self) -> bool:
         """
@@ -355,7 +364,7 @@ class Downloader:
             'entity': file_entity,
             'type': file_type,
             'file_ending': file_ending,
-        }
+        } if file_type else {}
 
     def update_pack_hierarchy(self) -> None:
         """

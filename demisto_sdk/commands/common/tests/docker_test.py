@@ -173,7 +173,7 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
-        docker_image_validator.docker_image_latest_tag = '1.0.3'
+        docker_image_validator.docker_image_latest_tag = 'latest'
         docker_image_validator.docker_image_name = 'demisto/python'
 
         docker_image_validator.is_latest_tag = True

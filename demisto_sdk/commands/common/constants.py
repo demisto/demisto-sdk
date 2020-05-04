@@ -129,17 +129,6 @@ class Errors:
                "undo. the command is:\n{}".format(file_path, cls.BACKWARDS, old_command)
 
     @classmethod
-    def breaking_backwards_docker(cls, file_path, old_docker, new_docker):
-        return "{}: {}, You've changed the docker for the file," \
-               " this is not allowed. Old: {}, New: {} ".format(file_path, cls.BACKWARDS, old_docker, new_docker)
-
-    @staticmethod
-    def not_latest_docker(file_path, current_docker, latest_docker):
-        return "{}: You're not using latest docker for the file," \
-               " please update to latest version. Current: {}, Latest: {} ".format(file_path, current_docker,
-                                                                                   latest_docker)
-
-    @classmethod
     def breaking_backwards_arg_changed(cls, file_path):
         return "{}: {}, You've changed the name of an arg in " \
                "the file, please undo.".format(file_path, cls.BACKWARDS)

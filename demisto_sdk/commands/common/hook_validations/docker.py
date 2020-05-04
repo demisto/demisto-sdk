@@ -72,8 +72,8 @@ class DockerImageValidator(object):
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
             self.is_latest_tag = False
-            print_error('"￿Latest" tag is not aloowed only versioned ones,\n'
-                        'Please create a new updated numeric image\n'
+            print_error('"￿Latest" tag is not allowed,\n'
+                        'Please create a new updated versioned image\n'
                         'You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n'
                         .format(self.docker_image_tag, self.docker_image_name))
 

@@ -275,13 +275,15 @@ class FilesValidator:
             modified_files (set): A set of the modified files in the current branch.
         """
         for file_path in modified_files:
+            old_file_path = None
             # modified_files are returning from running git diff.
             # If modified file was renamed\moved, file_path could be a tuple containing original path and new path
-            file_type = find_type(file_path[1]) if isinstance(file_path, tuple) else find_type(file_path)
-            old_file_path = None
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path
-
+            file_type = find_type(file_path)
+            # unified files should not be validated
+            if file_path.endswith('_unified.yml'):
+                continue
             print('Validating {}'.format(file_path))
             if not checked_type(file_path):
                 print_warning('- Skipping validation of non-content entity file.')
@@ -397,6 +399,9 @@ class FilesValidator:
             file_type (str): Used only with -p flag (the type of the file).
         """
         for file_path in added_files:
+            # unified files should not be validated
+            if file_path.endswith('_unified.yml'):
+                continue
             print('Validating {}'.format(file_path))
 
             if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
@@ -560,6 +565,10 @@ class FilesValidator:
         # Ignoring changelog and description files since these are checked on the integration validation
         if 'changelog' in file_path.lower() or 'description' in file_path.lower():
             return
+        # unified files should not be validated
+        if file_path.endswith('_unified.yml'):
+            return
+
         print(f'Validating {file_path}')
 
         if 'README' in file_path:

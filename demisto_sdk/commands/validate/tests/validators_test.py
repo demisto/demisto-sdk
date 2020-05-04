@@ -31,12 +31,13 @@ from demisto_sdk.tests.constants_test import (
     BETA_INTEGRATION_TARGET, CONF_JSON_MOCK_PATH, DASHBOARD_TARGET,
     DEFAULT_IMAGE, GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
     INCIDENT_TYPE_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
-    INVALID_DASHBOARD_PATH, INVALID_INCIDENT_FIELD_PATH,
-    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
-    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_PATH,
-    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
-    INVALID_NO_HIDDEN_PARAMS, INVALID_ONE_LINE_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
+    INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
+    INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
+    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_NO_HIDDEN_PARAMS,
+    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
+    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
@@ -432,13 +433,12 @@ class TestValidators:
     ARE_TEST_CONFIGURED_TEST_INPUT = [
         (VALID_INTEGRATION_TEST_PATH, 'integration', True),
         (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
-        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', True),
+        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
         (TEST_PLAYBOOK, 'playbook', False)
     ]
 
     @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
-    def test_are_tests_configured(self, file_path, file_type, expected):
-        # type: (str, bool) -> None
+    def test_are_tests_configured(self, file_path: str, file_type: str, expected: bool):
         """
             Given
             - A content item
@@ -452,3 +452,22 @@ class TestValidators:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         validator = IntegrationValidator(structure_validator)
         assert validator.are_tests_configured() == expected
+
+    def test_unified_files_ignored(self):
+        """
+            Given
+            - A unified yml file
+
+            When
+            - Validating it
+
+            Then
+            -  validator should ignore those files
+        """
+        file_validator = FilesValidator()
+        file_validator.validate_modified_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
+        assert file_validator._is_valid
+        file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
+        assert file_validator._is_valid
+        file_validator.run_all_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION)
+        assert file_validator._is_valid

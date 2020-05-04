@@ -58,7 +58,7 @@ class DockerImageValidator(object):
             return self.is_latest_tag
 
         if self.docker_image_latest_tag != self.docker_image_tag:
-            # If docker image tag is the most updated one that exists in docker-hub
+            # If docker image tag is not the most updated one that exists in docker-hub
             self.is_latest_tag = False
 
         if not self.is_latest_tag:
@@ -66,16 +66,16 @@ class DockerImageValidator(object):
             print_warning('The docker image tag is not the latest, please update it.\n'
                           'The docker image tag in the yml file is: {}\n'
                           'The latest docker image tag in docker hub is: {}\n'
-                          'You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n'
+                          'You can check for the most updated version of {} here: https://hub.docker.com/r/{}/tags\n'
                           .format(self.docker_image_tag, self.docker_image_latest_tag, self.docker_image_name,
                                   self.docker_image_name))
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
             self.is_latest_tag = False
-            print_error('"￿Latest" tag is not allowed,\n'
-                        'Please create a new updated versioned image\n'
-                        'You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n'
+            print_error('"latest" tag is not allowed,\n'
+                        'Please create or update to an updated versioned image\n'
+                        'You can check for the most updated version of {} here: https://hub.docker.com/r/{}/tags\n'
                         .format(self.docker_image_tag, self.docker_image_name))
 
         return self.is_latest_tag

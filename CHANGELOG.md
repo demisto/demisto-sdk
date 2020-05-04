@@ -1,7 +1,7 @@
 # Changelog
 * Fixed a bug in the **unify** command when output path was provided empty.
 * Improved error message for integration with no tests configured
-* The **validate** command returns a better error in a case where integration contains `isFetch` parameter with wrong arguments.
+* Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.
 
 #### 1.0.0
 * Improved the *upload* command to support the upload of all the content entities within a pack.

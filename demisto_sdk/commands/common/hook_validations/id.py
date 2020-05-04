@@ -184,7 +184,7 @@ class IDSetValidator:
                         break
 
         if is_duplicated:
-            print_error("The ID {0} already exists, please update the file or update the "
+            print_error("The ID {} already exists, please update the file or update the "
                         "id_set.json toversion field of this id to match the "
                         "old occurrence of this id".format(obj_id))
 

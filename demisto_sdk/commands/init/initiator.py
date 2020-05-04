@@ -192,10 +192,10 @@ class Initiator:
         metadata = {
             'name': '## FILL OUT MANUALLY ##',
             'description': '## FILL OUT MANUALLY ##',
-            'support': 'demisto',
+            'support': 'xsoar',
             'currentVersion': PACK_INITIAL_VERSION,
-            'author': 'demisto',
-            'url': 'https://www.demisto.com',
+            'author': 'Cortex XSOAR',
+            'url': 'https://www.paloaltonetworks.com/cortex',
             'email': '',
             'categories': [],
             'tags': [],
@@ -250,21 +250,17 @@ class Initiator:
             option_message += f"[{index}] {option}\n"
         option_message += "\nEnter option: "
 
-        user_choice = input(option_message)
+        user_input = input(option_message)
 
-        invalid_input = True
-        while invalid_input:
+        while True:
             try:
-                user_choice = int(user_choice)
-
+                user_choice = int(user_input)
                 if user_choice not in range(1, len(options_list) + 1):
-                    user_choice = input(f"\nInvalid option {user_choice}, please enter valid choice: ")
+                    user_input = input(f"\nInvalid option {user_input}, please enter valid choice: ")
                 else:
-                    invalid_input = False
+                    return options_list[user_choice - 1]
             except ValueError:
-                user_choice = input("\nThe option must be integer, please enter valid choice: ")
-
-        return options_list[user_choice - 1]
+                user_input = input("\nThe option must be number, please enter valid choice: ")
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.

@@ -31,26 +31,28 @@ from demisto_sdk.tests.constants_test import (
     BETA_INTEGRATION_TARGET, CONF_JSON_MOCK_PATH, DASHBOARD_TARGET,
     DEFAULT_IMAGE, GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
     INCIDENT_TYPE_TARGET, INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
-    INVALID_DASHBOARD_PATH, INVALID_INCIDENT_FIELD_PATH,
-    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
-    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_PATH,
-    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
-    INVALID_NO_HIDDEN_PARAMS, INVALID_ONE_LINE_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
+    INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
+    INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
+    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_NO_HIDDEN_PARAMS,
+    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
+    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, PLAYBOOK_TARGET, REPUTATION_TARGET,
-    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
-    VALID_INCIDENT_TYPE_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
-    VALID_NO_HIDDEN_PARAMS, VALID_ONE_LINE_CHANGELOG_PATH,
-    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
-    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, TEST_PLAYBOOK,
+    VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH,
+    VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
+    VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_NO_HIDDEN_PARAMS,
+    VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
+    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
+    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
+    WIDGET_TARGET)
 from mock import patch
 
 
@@ -355,7 +357,8 @@ class TestValidators:
         mocker.patch.object(DashboardValidator, 'is_id_equals_name', return_value=True)
         mocker.patch.object(ReputationValidator, 'is_id_equals_details', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
-        mocker.patch.object(BaseValidator, 'are_tests_configured', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'are_tests_configured', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'are_tests_configured', return_value=True)
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
@@ -428,14 +431,14 @@ class TestValidators:
         assert file_validator._is_valid is False
 
     ARE_TEST_CONFIGURED_TEST_INPUT = [
-        (VALID_INTEGRATION_TEST_PATH, True),
-        (INVALID_INTEGRATION_NO_TESTS, False),
-        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, False)
+        (VALID_INTEGRATION_TEST_PATH, 'integration', True),
+        (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
+        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
+        (TEST_PLAYBOOK, 'playbook', False)
     ]
 
-    @pytest.mark.parametrize('file_path, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
-    def test_are_tests_configured(self, file_path, expected):
-        # type: (str, bool) -> None
+    @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
+    def test_are_tests_configured(self, file_path: str, file_type: str, expected: bool):
         """
             Given
             - A content item
@@ -446,6 +449,25 @@ class TestValidators:
             Then
             -  validator return the correct answer accordingly
         """
-        structure_validator = StructureValidator(file_path, predefined_scheme='integration')
-        validator = BaseValidator(structure_validator)
+        structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
+        validator = IntegrationValidator(structure_validator)
         assert validator.are_tests_configured() == expected
+
+    def test_unified_files_ignored(self):
+        """
+            Given
+            - A unified yml file
+
+            When
+            - Validating it
+
+            Then
+            -  validator should ignore those files
+        """
+        file_validator = FilesValidator()
+        file_validator.validate_modified_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
+        assert file_validator._is_valid
+        file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
+        assert file_validator._is_valid
+        file_validator.run_all_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION)
+        assert file_validator._is_valid

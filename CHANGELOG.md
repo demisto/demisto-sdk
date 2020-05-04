@@ -1,5 +1,17 @@
 # Changelog
-* Added an interactive option to format integrations, scripts and playbooks with No TestPlaybooks configured
+* Fixed a bug in the **unify** command when output path was provided empty.
+* Improved error message for integration with no tests configured.
+* Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.
+* Fixed a bug in the **create** command where a unified YML with a docker image for 4.5 was copied incorrectly.
+* Missing release notes message are now showing the release notes file path to update.
+* Fixed an issue in the **validate** command in which unified YAML files were not ignored.
+* File format suggestions are now shown in the relevant file format (JSON or YAML).
+* Fixed docker image tag checking in validation hook.
+
+#### 1.0.0
+* Improved the *upload* command to support the upload of all the content entities within a pack.
+* The *upload* command now supports the improved pack file structure.
+* Added an interactive option to format integrations, scripts and playbooks with No TestPlaybooks configured.
 * Added an interactive option to configure *conf.json* file with missing test playbooks for integrations, scripts and playbooks
 * Added *download* command to download custom content from Demisto instance to the local content repository.
 * Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
@@ -13,7 +25,8 @@
 * added *-i, --input* option in *secrets* to run on a specific file.
 * Added an allowed hidden parameter: *longRunning* to the hidden integration parameters validation.
 * Fixed an issue with **format** command when executing with an output path of a folder and not a file path.
-* Fixed docker image tag checking in validation hook.
+* Bug fixes in generate-docs command given playbook as input.
+* Fixed an issue with lint command in which flake8 was not running on unit test files.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

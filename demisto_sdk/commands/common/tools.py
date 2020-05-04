@@ -7,21 +7,25 @@ import re
 import shlex
 import sys
 from distutils.version import LooseVersion
+from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import git
 import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CONTENT_GITHUB_LINK,
-    DEF_DOCKER, DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS, ID_IN_ROOT,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    RELEASE_NOTES_REGEX, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER)
+    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR,
+    CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER,
+    WIDGETS_DIR)
 
 # disable insecure warnings
 urllib3.disable_warnings()
@@ -601,7 +605,7 @@ def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: str = ''):
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     """
     returns the content file type
 
@@ -680,36 +684,39 @@ def get_content_path() -> str:
     Returns:
         str: Absolute content path
     """
-    git_repo = ""
     try:
         git_repo = git.Repo(os.getcwd(),
                             search_parent_directories=True)
         if 'content' not in git_repo.remote().urls.__next__():
             raise git.InvalidGitRepositoryError
+        return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         print_error("Please run demisto-sdk in content repository - Aborting!")
+    return ''
 
-    return git_repo.working_dir
 
-
-def run_command_os(command: str, cwd: Path, env: dict = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
         cwd(Path): Path from pathlib object to be executed
-        env: Enviorment variables for the execution
+        env: Environment variables for the execution
     Returns:
         str: Stdout of the command
         str: Stderr of the command
         int: exit code of command
     """
+    if isinstance(cwd, str):
+        cwd = Path(cwd)
     try:
-        process = Popen(shlex.split(command),
-                        cwd=cwd,
-                        env=env,
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        universal_newlines=True)
+        process = Popen(
+            shlex.split(command),
+            cwd=cwd,
+            env=env,
+            stdout=PIPE,
+            stderr=PIPE,
+            universal_newlines=True
+        )
         stdout, stderr = process.communicate()
     except OSError as e:
         return '', str(e), 1
@@ -804,33 +811,43 @@ def get_depth(data: Any) -> int:
     return 0
 
 
-def find_test_match(test_config: dict, test_playbook_id: str, content_item_id: str, file_type: str) -> bool:
+def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
-    test playbook with content item.
+    test playbook or for integration_id.
     Since in conf.json there could be test configurations with 'integrations' as strings or list of strings
     the type of test_configurations['integrations'] is checked in first and the match according to the type.
     If file type is not an integration- will return True if the test_playbook id matches playbookID.
     Args:
-        file_type: The file type. can be 'integration', 'script', 'playbook'.
         test_config: A test configuration from conf.json file under 'tests' key.
+        file_type: The file type. can be 'integration', 'playbook'.
         test_playbook_id: A test playbook ID.
-        content_item_id: A content item ID, could be a script, an integration or a playbook.
-
+        integration_id: An integration ID.
+    If both test_playbook_id and integration_id are given will look for a match of both, else will look for match
+    of either test playbook id or integration id
     Returns:
         True if the test configuration contains the test playbook and the content item or False if not
     """
-    if test_playbook_id != test_config.get('playbookID'):
-        return False
-    if file_type != 'integration':
-        return True
-
+    test_playbook_match = test_playbook_id == test_config.get('playbookID')
     test_integrations = test_config.get('integrations')
     if isinstance(test_integrations, list):
-        return any(
-            test_integration for test_integration in test_integrations if test_integration == content_item_id)
+        integration_match = any(
+            test_integration for test_integration in test_integrations if test_integration == integration_id)
     else:
-        return test_integrations == content_item_id
+        integration_match = test_integrations == integration_id
+    # If both playbook id and integration id are given
+    if integration_id and test_playbook_id:
+        return test_playbook_match and integration_match
+
+    # If only integration id is given
+    if integration_id:
+        return integration_match
+
+    # If only test playbook is given
+    if test_playbook_id:
+        return test_playbook_match
+
+    return False
 
 
 def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list) -> list:
@@ -839,7 +856,7 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     Args:
         conf_json_tests: the 'tests' value of 'conf.json file
         content_item_id: A content item ID, could be a script, an integration or a playbook.
-        file_type: The file type, could be a script, an integration or a playbook.
+        file_type: The file type, could be an integration or a playbook.
         test_playbooks: The yml file's list of test playbooks
 
     Returns:
@@ -847,12 +864,16 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     """
     not_registered_tests = []
     for test in test_playbooks:
-        test_registered_in_conf_json = any(
-            test_config for test_config in conf_json_tests if find_test_match(test_config,
-                                                                              test,
-                                                                              content_item_id,
-                                                                              file_type)
-        )
+        if file_type == 'playbook':
+            test_registered_in_conf_json = any(
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       test_playbook_id=test)
+            )
+        else:
+            test_registered_in_conf_json = any(
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       integration_id=content_item_id)
+            )
         if not test_registered_in_conf_json:
             not_registered_tests.append(test)
     return not_registered_tests
@@ -870,7 +891,115 @@ def _get_file_id(file_type: str, file_content: Dict):
     """
     file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get('id')
+        file_id = file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
         file_id = file_content.get('commonfields', {}).get('id')
     return file_id
+
+
+def is_path_of_integration_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INTEGRATIONS_DIR
+
+
+def is_path_of_script_directory(path: str) -> bool:
+    """Returns true if directory is script directory false if not.
+    """
+    return os.path.basename(path) == SCRIPTS_DIR
+
+
+def is_path_of_playbook_directory(path: str) -> bool:
+    """Returns true if directory is playbook directory false if not.
+    """
+    return os.path.basename(path) == PLAYBOOKS_DIR
+
+
+def is_path_of_test_playbook_directory(path: str) -> bool:
+    """Returns true if directory is test_playbook directory false if not.
+    """
+    return os.path.basename(path) == TEST_PLAYBOOKS_DIR
+
+
+def is_path_of_report_directory(path: str) -> bool:
+    """Returns true if directory is report directory false if not.
+    """
+    return os.path.basename(path) == REPORTS_DIR
+
+
+def is_path_of_dashboard_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == DASHBOARDS_DIR
+
+
+def is_path_of_widget_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == WIDGETS_DIR
+
+
+def is_path_of_incident_field_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INCIDENT_FIELDS_DIR
+
+
+def is_path_of_incident_type_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INCIDENT_TYPES_DIR
+
+
+def is_path_of_indicator_field_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == INDICATOR_FIELDS_DIR
+
+
+def is_path_of_layout_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == LAYOUTS_DIR
+
+
+def is_path_of_classifier_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == CLASSIFIERS_DIR
+
+
+def get_parent_directory_name(path: str) -> str:
+    """
+    Retrieves the parent directory name
+    :param path: path to get the parent dir om
+    :return: parent directory nme
+    """
+    return os.path.basename(os.path.dirname(os.path.abspath(path)))
+
+
+def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
+    """
+    Return a method with which 'curr' (the current key the lies in the path of the error) should be printed with
+    If the file is a yml file:
+        will return a yaml.dump function
+    If the file is a json file:
+        will return a json.dumps function configured with indent=4
+    In any other case- will just print the string representation of the key.
+
+    The file type is checked according to the file extension
+
+    Args:
+        file_path: The file path whose type is determined in this method
+
+    Returns:
+        A function that returns string representation of 'curr'
+    """
+    # Setting the method that should the curr path
+    file_extension = os.path.splitext(file_path)[-1]
+    curr_string_transformer = str
+    if file_extension in ['.yml', '.yaml']:
+        curr_string_transformer = yaml.dump
+    elif file_extension == '.json':
+        curr_string_transformer = partial(json.dumps, indent=4)
+    return curr_string_transformer

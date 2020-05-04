@@ -4,7 +4,8 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
-    append_or_replace_command_in_docs, generate_integration_doc)
+    append_or_replace_command_in_docs, generate_commands_section,
+    generate_integration_doc)
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -17,13 +18,17 @@ TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integrat
 
 
 def test_stringEscapeMD():
-    from demisto_sdk.commands.generate_docs.common import stringEscapeMD
-    res = stringEscapeMD('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
+    from demisto_sdk.commands.generate_docs.common import string_escape_md
+    res = string_escape_md('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
     assert '<' not in res
     assert '>' not in res
-    res = stringEscapeMD("new line test \n", escape_multiline=True)
+    res = string_escape_md("new line test \n", escape_multiline=True)
     assert '\n' not in res
     assert '<br/>' in res
+    res = string_escape_md('Here are "Double Quotation" marks')
+    assert '"' in res
+    res = string_escape_md("Here are 'Single Quotation' marks")
+    assert "'" in res
 
 
 def test_generate_list_section_empty():
@@ -103,10 +108,22 @@ def test_get_inputs():
 
     inputs, errors = get_inputs(playbook)
 
-    expected_inputs = [{'Name': 'InputA', 'Description': '', 'Default Value': 'Name',
-                        'Source': 'File', 'Required': 'Optional'},
-                       {'Name': 'InputB', 'Description': 'This is input b', 'Default Value': 'johnnydepp@gmail.com',
-                        'Source': '', 'Required': 'Required'}]
+    expected_query = '(type:ip or type:file or type:Domain or type:URL) -tags:pending_review ' \
+        'and (tags:approved_black or tags:approved_white or tags:approved_watchlist)'
+    expected_inputs = [
+        {
+            'Name': 'InputA', 'Description': '', 'Default Value': 'File.Name', 'Required': 'Optional'
+        },
+        {
+            'Name': 'InputB', 'Description': 'This is input b',
+            'Default Value': 'johnnydepp@gmail.com', 'Required': 'Required'
+        },
+        {
+            'Name': 'Indicator Query',
+            'Description': 'Indicators matching the indicator query will be used as playbook input',
+            'Default Value': expected_query, 'Required': 'Optional'
+        }
+    ]
 
     assert inputs == expected_inputs
     assert errors[0] == 'Error! You are missing description in playbook input InputA'
@@ -141,24 +158,22 @@ def test_get_input_data_simple():
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    input = playbook.get('inputs')[1]
+    sample_input = playbook.get('inputs')[1]
 
-    _value, source = get_input_data(input)
+    _value = get_input_data(sample_input)
 
     assert _value == 'johnnydepp@gmail.com'
-    assert source == ''
 
 
 def test_get_input_data_complex():
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    input = playbook.get('inputs')[0]
+    sample_input = playbook.get('inputs')[0]
 
-    _value, source = get_input_data(input)
+    _value = get_input_data(sample_input)
 
-    assert _value == 'Name'
-    assert source == 'File'
+    assert _value == 'File.Name'
 
 
 # script tests
@@ -209,7 +224,6 @@ def test_get_used_in():
 
 
 def test_generate_commands_section():
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
 
     yml_data = {
         'script': {
@@ -228,17 +242,46 @@ def test_generate_commands_section():
         '## Commands',
         'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
-        '**FILL IN REQUIRED PERMISSIONS HERE**', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
-        'There are no input arguments for this command.', '', '##### Context Output', '',
-        'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
-        '##### Human Readable Output', '', '']
+        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+        '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+        'There are no input arguments for this command.', '', '#### Context Output', '',
+        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
+        '#### Human Readable Output', '\n', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def test_generate_commands_section_human_readable():
+
+    yml_data = {
+        'script': {
+            'commands': [
+                {'deprecated': True,
+                 'name': 'deprecated-cmd'},
+                {'deprecated': False,
+                 'name': 'non-deprecated-cmd'}
+            ]
+        }
+    }
+
+    example_dict = {
+        'non-deprecated-cmd': [
+            '!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}'
+        ]
+    }
+
+    section, errors = generate_commands_section(yml_data, example_dict, command_permissions_dict={})
+
+    hr_section: str = section[section.index('#### Human Readable Output') + 1]
+    # get lines except first one which is a \n
+    lines = hr_section.splitlines()[1:]
+    for l in lines:
+        assert l.startswith('>')
+    assert lines[0] == '>## this is human readable'
+    assert lines[1] == '>This is a line'
+
+
 def test_generate_commands_with_permissions_section():
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_commands_section
 
     yml_data = {
         'script': {
@@ -258,11 +301,11 @@ def test_generate_commands_with_permissions_section():
         '## Commands',
         'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '##### Required Permissions',
-        'SUPERUSER', '##### Base Command', '', '`non-deprecated-cmd`', '##### Input', '',
-        'There are no input arguments for this command.', '', '##### Context Output', '',
-        'There is no context output for this command.', '', '##### Command Example', '``` ```', '',
-        '##### Human Readable Output', '', '']
+        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+        'SUPERUSER', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+        'There are no input arguments for this command.', '', '#### Context Output', '',
+        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
+        '#### Human Readable Output', '\n', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 

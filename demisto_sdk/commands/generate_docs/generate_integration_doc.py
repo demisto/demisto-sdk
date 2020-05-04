@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
-    generate_table_section, save_output, stringEscapeMD)
+    generate_table_section, save_output, string_escape_md)
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, command_name: str) -> Tuple[str, list]:
@@ -160,7 +160,7 @@ def generate_setup_section(yaml_data: dict):
     for conf in yaml_data['configuration']:
         access_data.append(
             {'Parameter': conf.get('name', ''),
-             'Description': stringEscapeMD(conf.get('display', '')),
+             'Description': string_escape_md(conf.get('display', '')),
              'Required': conf.get('required', '')})
 
     section.extend(generate_table_section(access_data, '', horizontal_rule=False))
@@ -216,9 +216,9 @@ def generate_commands_section(
 def generate_single_command_section(cmd: dict, example_dict: dict, command_permissions_dict):
     cmd_example = example_dict.get(cmd['name'])
     if command_permissions_dict:
-        cmd_permission_example = ['##### Required Permissions', command_permissions_dict.get(cmd['name'])]
+        cmd_permission_example = ['#### Required Permissions', command_permissions_dict.get(cmd['name'])]
     elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
-        cmd_permission_example = ['##### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
+        cmd_permission_example = ['#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
     else:  # no permissions for this command
         cmd_permission_example = ['', '']
 
@@ -229,9 +229,9 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         cmd.get('description', ' '),
         cmd_permission_example[0],
         cmd_permission_example[1],
-        '##### Base Command',
+        '#### Base Command',
         '', '`{}`'.format(cmd['name']),
-        '##### Input',
+        '#### Input',
         ''
     ]
 
@@ -249,14 +249,14 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
                 errors.append(
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
             required_status = 'Required' if arg.get('required') else 'Optional'
-            section.append('| {} | {} | {} | '.format(arg['name'], stringEscapeMD(arg.get('description', ''),
-                                                                                  True, True), required_status))
+            section.append('| {} | {} | {} | '.format(arg['name'], string_escape_md(arg.get('description', ''),
+                                                                                    True, True), required_status))
         section.append('')
 
     # Context output
     section.extend([
         '',
-        '##### Context Output',
+        '#### Context Output',
         '',
     ])
     outputs = cmd.get('outputs')
@@ -274,7 +274,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
                                                                                            cmd['name']))
             section.append(
                 '| {} | {} | {} | '.format(output['contextPath'], output.get('type', 'unknown'),
-                                           stringEscapeMD(output.get('description'))))
+                                           string_escape_md(output.get('description'))))
         section.append('')
 
     # Raw output:
@@ -297,21 +297,21 @@ def generate_command_example(cmd, cmd_example=None):
 
     example = [
         '',
-        '##### Command Example',
+        '#### Command Example',
         '```{}```'.format(cmd_example),
         '',
     ]
     if context_example:
         example.extend([
-            '##### Context Example',
+            '#### Context Example',
             '```',
             '{}'.format(context_example),
             '```',
             '',
         ])
     example.extend([
-        '##### Human Readable Output',
-        '{}'.format(md_example),
+        '#### Human Readable Output',
+        '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
         '',
     ])
 

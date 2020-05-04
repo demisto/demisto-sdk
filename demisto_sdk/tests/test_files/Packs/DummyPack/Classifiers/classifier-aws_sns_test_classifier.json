@@ -1,0 +1,25 @@
+{
+	"brandName": "aws_sns",
+	"custom": true,
+	"defaultIncidentType": "",
+	"feed": false,
+	"fromServerVersion": "",
+	"id": "aws_sns",
+	"incidentSamples": [],
+	"indicatorSamples": null,
+	"instanceId": "",
+	"instanceName": "",
+	"isDefault": false,
+	"itemVersion": "",
+	"keyTypeMap": {},
+	"mapping": null,
+	"packID": "",
+	"sortValues": null,
+	"toServerVersion": "",
+	"transformer": {
+		"complex": null,
+		"simple": "testing"
+	},
+	"unclassifiedCases": {},
+	"version": -1
+}

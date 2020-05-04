@@ -61,7 +61,6 @@ class ScriptValidator(BaseValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
-            self.are_tests_configured()
         ])
         # check only on added files
         if not self.old_file:

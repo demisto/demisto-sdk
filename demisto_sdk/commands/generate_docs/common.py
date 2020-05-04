@@ -138,7 +138,7 @@ def add_lines(line):
     return output if output else [line]
 
 
-def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
+def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
     """
        Escape any chars that might break a markdown string
 
@@ -159,7 +159,7 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_ht
        :rtype: ``str``
     """
     if escape_html:
-        st = html.escape(st)
+        st = html.escape(st, quote=False)
 
     if escape_multiline:
         st = st.replace('\r\n', '<br/>')  # Windows

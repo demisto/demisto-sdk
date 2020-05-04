@@ -1,5 +1,6 @@
 # Site packages
 import os
+import re
 import sys
 
 from pkg_resources import get_distribution
@@ -10,7 +11,9 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               print_error, print_warning)
+                                               get_pack_name,
+                                               pack_name_to_path, print_error,
+                                               print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -36,6 +39,7 @@ from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 
@@ -47,6 +51,28 @@ class DemistoSDK:
 
     def __init__(self):
         self.configuration = None
+
+
+class RNInputValidation(click.ParamType):
+    name = 'update_type'
+
+    def validate_rn_input(self, value, param, ctx):
+        if value:
+            if re.match(r'(?i)(?<=|^)major(?= |$)', value):
+                update_type = 'major'
+            elif re.match(r'(?i)(?<=|^)minor(?= |$)', value):
+                update_type = 'minor'
+            elif re.match(r'(?i)(?<=|^)revision(?= |$)', value):
+                update_type = 'revision'
+            else:
+                self.fail(
+                    f'{value} is not a valid option. Please select: major, minor, revision',
+                    param,
+                    ctx,
+                )
+        else:
+            update_type = 'revision'
+        return update_type
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -682,6 +708,74 @@ def generate_doc(**kwargs):
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()
+
+
+# ====================== update-release-notes =================== #
+@main.command(name="update-release-notes",
+              short_help='''Auto-increment pack version and generate release notes template.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-p", "--pack", help="Name of the pack."
+)
+@click.option(
+    '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
+    type=RNInputValidation()
+)
+@click.option(
+    '--all', help="Update all changed packs", is_flag=True
+)
+@click.option(
+    "--pre_release", help="Indicates that this change should be designated a pre-release version.",
+    is_flag=True)
+def update_pack_releasenotes(**kwargs):
+    _pack = kwargs.get('pack')
+    update_type = kwargs.get('update_type')
+    pre_release = kwargs.get('pre_release')
+    is_all = kwargs.get('all')
+    modified, added, old, _packs = FilesValidator(use_git=True).get_modified_and_added_files()
+    packs_existing_rn = set()
+    for pf in added:
+        if 'ReleaseNotes' in pf:
+            pack_with_existing_rn = get_pack_name(pf)
+            packs_existing_rn.add(pack_with_existing_rn)
+    if len(packs_existing_rn):
+        existing_rns = ''.join(f"{p}, " for p in packs_existing_rn)
+        print_warning(f"Found existing release notes for the following packs: {existing_rns.rstrip(', ')}")
+    if len(_packs) > 1:
+        pack_list = ''.join(f"{p}, " for p in _packs)
+        if not is_all:
+            if _pack:
+                pass
+            else:
+                print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
+                            f"To update release notes in a specific pack, please use the -p parameter "
+                            f"along with the pack name.")
+                sys.exit(0)
+    if len(modified) < 1:
+        print_warning('No changes were detected.')
+        sys.exit(0)
+    if is_all and not _pack:
+        packs = list(_packs - packs_existing_rn)
+        packs_list = ''.join(f"{p}, " for p in packs)
+        print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
+        for pack in packs:
+            update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
+                                      pre_release=pre_release)
+            update_pack_rn.execute_update()
+    elif is_all and _pack:
+        print_error(f"Please remove the --all flag when specifying only one pack.")
+        sys.exit(0)
+    else:
+        if _pack:
+            if _pack in packs_existing_rn:
+                print_error(f"New release notes file already found for {_pack}. "
+                            f"Please update manually or delete {pack_name_to_path(_pack)}")
+            else:
+                update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
+                                          pre_release=pre_release)
+                update_pack_rn.execute_update()
 
 
 # ====================== find-dependencies ====================== #

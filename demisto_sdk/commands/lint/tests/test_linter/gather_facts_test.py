@@ -155,6 +155,7 @@ class TestLintFilesCollection:
                                docker_engine=True)
         runner._gather_facts(modules={})
         assert runner._facts["lint_files"][0] == integration_path / f'{integration_path.name}.py'
+        assert runner._facts['lint_unittest_files'][0] == integration_path / f'{integration_path.name}_test.py'
 
     def test_lint_files_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter
@@ -170,3 +171,36 @@ class TestLintFilesCollection:
                                docker_engine=True)
         runner._gather_facts(modules={})
         assert not runner._facts["lint_files"]
+
+
+class TestTestRequirementsCollection:
+    def test_test_requirements_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
+        from demisto_sdk.commands.lint import linter
+        from wcmatch.pathlib import Path
+        mocker.patch.object(linter.Linter, '_docker_login')
+        linter.Linter._docker_login.return_value = False
+        integration_path: Path = create_integration(content_path=demisto_content, test_reqs=True)
+        runner = linter.Linter(content_repo=demisto_content,
+                               pack_dir=integration_path,
+                               req_2=[],
+                               req_3=[],
+                               docker_engine=True)
+        runner._gather_facts(modules={})
+        assert runner._facts["additional_requirements"]
+        test_requirements = ['mock', 'pre-commit', 'pytest']
+        for test_req in test_requirements:
+            assert test_req in runner._facts["additional_requirements"]
+
+    def test_test_requirements_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
+        from demisto_sdk.commands.lint import linter
+        from wcmatch.pathlib import Path
+        mocker.patch.object(linter.Linter, '_docker_login')
+        linter.Linter._docker_login.return_value = False
+        integration_path: Path = create_integration(content_path=demisto_content)
+        runner = linter.Linter(content_repo=demisto_content,
+                               pack_dir=integration_path,
+                               req_2=[],
+                               req_3=[],
+                               docker_engine=True)
+        runner._gather_facts(modules={})
+        assert not runner._facts["additional_requirements"]

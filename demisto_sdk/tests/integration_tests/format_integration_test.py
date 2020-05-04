@@ -6,23 +6,19 @@ from typing import List
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.tools import (find_test_match,
-                                               get_dict_from_file)
+from demisto_sdk.commands.common.tools import (get_dict_from_file,
+                                               is_test_config_match)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
-from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
-    DESTINATION_FORMAT_SCRIPT_COPY, INTEGRATION_WITH_TEST_PLAYBOOKS,
-    PLAYBOOK_WITH_TEST_PLAYBOOKS, SCRIPT_WITH_TEST_PLAYBOOKS,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY,
-    SOURCE_FORMAT_SCRIPT_COPY)
+    INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
      'integration'),
-    (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, ScriptYMLFormat, 'New_script_copy', 'script'),
     (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
      'playbook')
 ]
@@ -34,12 +30,6 @@ YML_FILES_WITH_TEST_PLAYBOOKS = [
         IntegrationYMLFormat,
         'New Integration',
         'integration'),
-    (
-        SCRIPT_WITH_TEST_PLAYBOOKS,
-        DESTINATION_FORMAT_SCRIPT_COPY,
-        ScriptYMLFormat,
-        'New_script_copy',
-        'script'),
     (
         PLAYBOOK_WITH_TEST_PLAYBOOKS,
         DESTINATION_FORMAT_PLAYBOOK_COPY,
@@ -170,7 +160,10 @@ def test_integration_format_configuring_conf_json_positive(tmp_path: PosixPath,
     prompt = 'The following test playbooks are not configured in conf.json file'
     assert not result.exception
     assert prompt in result.output
-    _verify_conf_json_modified(file_type, test_playbooks, yml_title, conf_json_path)
+    if file_type == 'playbook':
+        _verify_conf_json_modified(test_playbooks, '', conf_json_path)
+    else:
+        _verify_conf_json_modified(test_playbooks, yml_title, conf_json_path)
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(main, [FORMAT_CMD, '-i', saved_file_path], input='Y')
     assert not result.exception
@@ -216,7 +209,7 @@ def test_integration_format_configuring_conf_json_negative(tmp_path: PosixPath,
     assert 'Skipping test playbooks configuration' in result.output
 
 
-def _verify_conf_json_modified(file_type: str, test_playbooks: List, yml_title: str, conf_json_path: str):
+def _verify_conf_json_modified(test_playbooks: List, yml_title: str, conf_json_path: str):
     """
     Verifying all test playbooks are configured in conf.json file
     """
@@ -225,10 +218,11 @@ def _verify_conf_json_modified(file_type: str, test_playbooks: List, yml_title: 
             conf_json_content = json.load(data_file)
             for test_playbook in test_playbooks:
                 assert any(
-                    test_config for test_config in conf_json_content['tests'] if find_test_match(test_config,
-                                                                                                 test_playbook,
-                                                                                                 yml_title,
-                                                                                                 file_type)
+                    test_config for test_config in conf_json_content['tests'] if
+                    is_test_config_match(test_config,
+                                         test_playbook_id=test_playbook,
+                                         integration_id=yml_title,
+                                         )
                 )
     except Exception:
         raise

@@ -7,9 +7,10 @@ import re
 import shlex
 import sys
 from distutils.version import LooseVersion
+from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import git
 import requests
@@ -975,3 +976,30 @@ def get_parent_directory_name(path: str) -> str:
     :return: parent directory nme
     """
     return os.path.basename(os.path.dirname(os.path.abspath(path)))
+
+
+def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
+    """
+    Return a method with which 'curr' (the current key the lies in the path of the error) should be printed with
+    If the file is a yml file:
+        will return a yaml.dump function
+    If the file is a json file:
+        will return a json.dumps function configured with indent=4
+    In any other case- will just print the string representation of the key.
+
+    The file type is checked according to the file extension
+
+    Args:
+        file_path: The file path whose type is determined in this method
+
+    Returns:
+        A function that returns string representation of 'curr'
+    """
+    # Setting the method that should the curr path
+    file_extension = os.path.splitext(file_path)[-1]
+    curr_string_transformer = str
+    if file_extension in ['.yml', '.yaml']:
+        curr_string_transformer = yaml.dump
+    elif file_extension == '.json':
+        curr_string_transformer = partial(json.dumps, indent=4)
+    return curr_string_transformer

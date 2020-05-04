@@ -1,9 +1,9 @@
 # Changelog
 * Fixed a bug in the **unify** command when output path was provided empty.
 * Improved error message for integration with no tests configured
-* Missing release notes message will now show the release notes file path to update.
-* unified yml files will be ignored.
-* Fix suggestions will be in the relevant file format.
+* Missing release notes message are now showing the release notes file path to update.
+* Fixed an issue in the **validate** command in which unified YAML files were not ignored.
+* File format suggestions are now shown in the relevant file format (JSON or YAML).
 
 #### 1.0.0
 * Improved the *upload* command to support the upload of all the content entities within a pack.

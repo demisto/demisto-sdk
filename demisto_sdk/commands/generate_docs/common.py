@@ -196,10 +196,11 @@ def execute_command(command_example, insecure: bool):
             if entry.contents:
                 content = entry.contents
                 if isinstance(content, STRING_TYPES):
-                    # The replacement of <br> by <br/> is for compatibility with our docs site
-                    md_example += content.replace('<br>', '<br/>')
+                    md_example += content
                 else:
-                    md_example += json.dumps(content).replace('<br>', '<br/>')
+                    md_example += json.dumps(content)
+
+            md_example = format_md(md_example)
 
     except RuntimeError:
         errors.append('The provided example for cmd {} has failed...'.format(cmd))
@@ -255,6 +256,14 @@ def build_example_dict(command_examples: list, insecure: bool):
         if not cmd_errors and cmd not in examples:
             examples[cmd] = (example, md_example, context_example)
     return examples, errors
+
+
+def format_md(md: str):
+    if md:
+        # The replacement of <br> by <br/> is for compatibility with our docs site
+        md.replace('<br>', '<br/>')
+        md.replace('<BR>', '<br/>')
+    return md
 
 
 entryTypes = {

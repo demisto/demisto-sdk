@@ -13,7 +13,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, SCHEMA_TO_REGEX,
     Errors)
-from demisto_sdk.commands.common.tools import (get_matching_regex,
+from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
+                                               get_matching_regex,
                                                get_remote_file, print_error)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
@@ -295,29 +296,35 @@ class StructureValidator:
                     # if the error is from outputs of file
                     elif curr.get('contextPath'):
                         key_list.append(curr.get('contextPath'))
+                    else:
+                        key_list.append(single_path)
                 else:
                     curr = curr.get(single_path)
                     key_list.append(single_path)
 
+            curr_string_transformer = get_content_file_type_dump(self.file_path)
+
             # if the error is from arguments of file
             if curr.get('name'):
-                return ('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
-                                                                                str(curr.get('name')),
-                                                                                str(key_list).strip('[]').replace(
-                                                                                    ',', '->')))
+                return ('Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
+                                                                                  curr_string_transformer(
+                                                                                      curr.get('name')),
+                                                                                  str(key_list).strip('[]').replace(
+                                                                                      ',', '->')))
             # if the error is from outputs of file
             elif curr.get('contextPath'):
-                return ('Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
-                                                                                str(curr.get('contextPath')),
-                                                                                str(key_list).strip('[]').replace(
-                                                                                    ',', '->')))
+                return ('Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
+                                                                                  curr_string_transformer(
+                                                                                      curr.get('contextPath')),
+                                                                                  str(key_list).strip('[]').replace(
+                                                                                      ',', '->')))
             # if the error is from neither arguments , outputs nor root
             else:
                 return (
-                    'Failed: {} failed.\nMissing {} in {}, Path: {}'.format(self.file_path, str(key_from_error),
-                                                                            str(curr),
-                                                                            str(key_list).strip('[]').replace(',',
-                                                                                                              '->')))
+                    'Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
+                                                                              curr_string_transformer(curr),
+                                                                              str(key_list).strip('[]').replace(',',
+                                                                                                                '->')))
         else:
             if 'key' in str(err):
                 key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]

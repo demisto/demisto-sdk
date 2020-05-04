@@ -228,3 +228,27 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
         docker_image_validator.docker_image_tag = '1.0.2'
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
+
+
+def test_is_docker_image_latest_tag_without_tag():
+    """
+   Given
+   - A latest docker image has an empty tag
+
+   When
+   - The most updated docker image in docker-hub is '1.0.3'
+
+   Then
+   -  If the docker image is numeric and the most update one, it is Valid
+   -  If the docker image is not numeric and labeled "latest", it is Invalid
+  """
+    with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
+        docker_image_validator = DockerImageValidator(None, None, None)
+        docker_image_validator.yml_file = {}
+        docker_image_validator.docker_image_latest_tag = ''
+        docker_image_validator.docker_image_name = 'demisto/python'
+
+        docker_image_validator.is_latest_tag = True
+        docker_image_validator.docker_image_tag = '1.0.2'
+        assert docker_image_validator.is_docker_image_latest_tag() is False
+        assert docker_image_validator.is_latest_tag is False

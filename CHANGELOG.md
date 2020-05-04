@@ -6,6 +6,8 @@
 * Missing release notes message are now showing the release notes file path to update.
 * Fixed an issue in the **validate** command in which unified YAML files were not ignored.
 * File format suggestions are now shown in the relevant file format (JSON or YAML).
+* Changed Docker image validation to fail only on non-valid ones.
+* Removed backward compatibility validation when Docker image is updated.
 
 #### 1.0.0
 * Improved the *upload* command to support the upload of all the content entities within a pack.

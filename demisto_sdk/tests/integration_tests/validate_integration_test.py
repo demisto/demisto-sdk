@@ -73,7 +73,7 @@ class TestIntegration:
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {pack_integration_path}" in result.stdout
         assert "The docker image tag is not the latest, please update it" in result.stdout
-        assert "You can check for the tags of demisto/python3 here:" in result.stdout
+        assert "You can check for the most updated version of demisto/python3 here:" in result.stdout
         assert result.stderr == ""
 
     def test_negative__hidden_param(self):

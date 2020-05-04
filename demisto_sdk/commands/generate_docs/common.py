@@ -196,9 +196,10 @@ def execute_command(command_example, insecure: bool):
             if entry.contents:
                 content = entry.contents
                 if isinstance(content, STRING_TYPES):
-                    md_example += content
+                    # The replacement of <br> by <br/> is for compatibility with our docs site
+                    md_example += content.replace('<br>', '<br/>')
                 else:
-                    md_example += json.dumps(content)
+                    md_example += json.dumps(content).replace('<br>', '<br/>')
 
     except RuntimeError:
         errors.append('The provided example for cmd {} has failed...'.format(cmd))

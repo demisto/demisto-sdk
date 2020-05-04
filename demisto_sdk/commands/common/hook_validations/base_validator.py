@@ -3,6 +3,7 @@ import os
 import re
 from abc import abstractmethod
 
+import yaml
 from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
@@ -130,11 +131,12 @@ class BaseValidator:
         with open(self.CONF_PATH) as data_file:
             return json.load(data_file)
 
-    def are_tests_registered_in_conf_json_file(self, test_playbooks: list) -> bool:
+    def are_tests_registered_in_conf_json_file_or_yml_file(self, test_playbooks: list) -> bool:
         """
-        Checking if test playbooks are configured in 'conf.json' unless 'No tests' is in test playbooks.
-        If 'No tests' is not in test playbooks and there is a test playbook that is not configured: Will print's
-        an error message and return a boolean accordingly.
+        If the file is a test playbook:
+            Validates it is registered in conf.json file
+        If the file is an integration:
+            Validating it is registered in conf.json file or that the yml file has 'No tests' under 'tests' key
         Args:
             test_playbooks: The yml file's list of test playbooks
 
@@ -144,7 +146,6 @@ class BaseValidator:
         no_tests_explicitly = any(test for test in test_playbooks if 'no test' in test.lower())
         if no_tests_explicitly:
             return True
-
         conf_json_tests = self._load_conf_file()['tests']
 
         content_item_id = _get_file_id(self.structure_validator.scheme_name, self.current_file)
@@ -176,9 +177,14 @@ class BaseValidator:
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
+                no_tests_key = yaml.dump({'tests': ['No tests']})
                 error_message = \
-                    f'The following TestPlaybooks are not registered in {self.CONF_PATH} file.\n' \
-                    f'Please add\n{missing_test_playbook_configurations}\nto {self.CONF_PATH} path under \'tests\' key.'
+                    f'The following integration is not registered in {self.CONF_PATH} file.\n' \
+                    f'Please add\n{missing_test_playbook_configurations}\nto {self.CONF_PATH} ' \
+                    f'path under \'tests\' key.\n' \
+                    f'If you don\'t want to add a test playbook for this integration, ' \
+                    f'please add \n{no_tests_key}to the ' \
+                    f'file {self.file_path} or run \'demisto-sdk format -p {self.file_path}\''
                 print_error(error_message)
                 return False
         return True

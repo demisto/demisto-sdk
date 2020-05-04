@@ -118,7 +118,6 @@ class Unifier:
                 self.dest_path: yml_unified,
                 output_path45: yml_unified45,
             }
-
         for file_path, file_data in output_map.items():
             if os.path.isfile(file_path) and self.use_force is False:
                 raise ValueError(f'Output file already exists: {self.dest_path}.'
@@ -140,7 +139,7 @@ class Unifier:
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
         else:
-            self.dest_path = os.path.join(self.dir_name, output_filename)
+            self.dest_path = os.path.join(self.package_path, output_filename)
 
         script_obj = self.yml_data
 

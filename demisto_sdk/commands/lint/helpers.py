@@ -10,7 +10,7 @@ import textwrap
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Generator, List, Optional
+from typing import Dict, Generator, List, Optional, Union
 
 # Third party packages
 import docker
@@ -54,7 +54,9 @@ logger = logging.getLogger('demisto-sdk')
 
 
 def validate_env() -> None:
-    """Packs which use python2 will need to be run inside virtual enviorment including python2 as main and the specified req"""
+    """Packs which use python2 will need to be run inside virtual environment including python2 as main
+    and the specified req
+    """
     wrn_msg = 'demisto-sdk lint not in virtual environment, Python2 lints will fail, use "source .hooks/bootstrap"' \
               ' to create the virtual environment'
     command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
@@ -69,7 +71,7 @@ def validate_env() -> None:
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
-                            no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> bool:
+                            no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
     no_bandit(bool): Whether to skip bandit.
@@ -257,57 +259,60 @@ def get_python_version_from_image(image: str) -> float:
         float: Python version X.Y (3.7, 3.6, ..)
     """
     docker_client = docker.from_env()
-    container_obj: Container = None
-    py_num = ""
-    for trial1 in range(2):
+    py_num = 2.7
+    # Run two times
+    for _ in range(2):
         try:
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
-            container_obj: Container = docker_client.containers.run(image=image,
-                                                                    command=shlex.split(command),
-                                                                    detach=True)
+            container_obj: Container = docker_client.containers.run(
+                image=image,
+                command=shlex.split(command),
+                detach=True
+            )
             # Wait for container to finish
             container_obj.wait(condition="exited")
             # Get python version
             py_num = container_obj.logs()
             if isinstance(py_num, bytes):
                 py_num = float(py_num)
-                break
             else:
                 raise docker.errors.ContainerError
+            for _ in range(2):
+                # Try to remove the container two times.
+                try:
+                    container_obj.remove(force=True)
+                    break
+                except docker.errors.APIError:
+                    pass
         except (docker.errors.APIError, docker.errors.ContainerError):
             continue
-
-    if container_obj:
-        for trial2 in range(2):
-            try:
-                container_obj.remove(force=True)
-                break
-            except docker.errors.APIError:
-                continue
 
     return py_num
 
 
-def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> str:
+def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> Union[str, bytes]:
     """ Copy file from container.
 
     Args:
         container_obj(Container): Container ID to copy file from
         container_path(Path): Path in container image (file)
-        encoding(str): valide encoding e.g. utf-8
+        encoding(str): valid encoding e.g. utf-8
 
     Returns:
-        str: file as string decode as utf-8
+        str or bytes: file as string decoded in utf-8
 
     Raises:
-        IOError: Rase IO error if unable to create temp file
+        IOError: Raise IO error if unable to create temp file
     """
+    data: Union[str, bytes] = b''
     archive, stat = container_obj.get_archive(container_path)
-    filelike = io.BytesIO(b"".join(b for b in archive))
-    tar = tarfile.open(fileobj=filelike)
-    data = tar.extractfile(stat['name']).read()
-    if encoding:
+    file_like = io.BytesIO(b"".join(b for b in archive))
+    tar = tarfile.open(fileobj=file_like)
+    before_read = tar.extractfile(stat['name'])
+    if isinstance(before_read, io.BufferedReader):
+        data = before_read.read()
+    if encoding and isinstance(data, bytes):
         data = data.decode(encoding)
 
     return data

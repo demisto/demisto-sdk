@@ -64,6 +64,16 @@ def test_get_object_id(monkeypatch, initiator):
     assert initiator.id == 'SomeIntegrationID'
 
 
+def test_get_object_id_custom_name(monkeypatch, initiator):
+    """Tests integration with custom name of id
+    """
+    given_id = 'given_id'
+    monkeypatch.setattr('builtins.input', lambda _: given_id)
+    initiator.is_pack_creation = False
+    initiator.get_object_id('integration')
+    assert given_id == initiator.id
+
+
 # TODO: add the validation for price after #23546 is ready.
 def test_create_metadata(monkeypatch, initiator):
     # test create_metadata without user filling manually

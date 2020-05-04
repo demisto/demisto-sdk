@@ -155,6 +155,7 @@ def test_is_docker_image_latest_tag_with_default_image():
         docker_image_validator.is_modified_file = False
         docker_image_validator.docker_image_tag = '1.3-alpine'
         assert docker_image_validator.is_docker_image_latest_tag() is False
+        assert docker_image_validator.is_latest_tag is False
 
 
 def test_is_docker_image_latest_tag_with_tag_labeled_latest():
@@ -178,6 +179,7 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = 'latest'
         assert docker_image_validator.is_docker_image_latest_tag() is False
+        assert docker_image_validator.is_latest_tag is False
 
 
 def test_is_docker_image_latest_tag_with_latest_tag():
@@ -201,6 +203,7 @@ def test_is_docker_image_latest_tag_with_latest_tag():
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.3'
         assert docker_image_validator.is_docker_image_latest_tag() is True
+        assert docker_image_validator.is_latest_tag is True
 
 
 def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
@@ -224,3 +227,4 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
         assert docker_image_validator.is_docker_image_latest_tag() is False
+        assert docker_image_validator.is_latest_tag is False

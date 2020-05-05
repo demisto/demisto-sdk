@@ -155,7 +155,8 @@ def test_integration_secrets_integration_with_regex_expression(tmp_path):
     a string containing ***.url\n
     ''')
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [SECRETS_CMD, '--input', file_contents_path, '-wl', white_list_path], catch_exceptions=False)
+    result = runner.invoke(main, [SECRETS_CMD, '--input', file_contents_path, '-wl', white_list_path],
+                           catch_exceptions=False)
     assert result.exit_code == 0
     assert not result.stderr
     assert "no secrets were found" in result.stdout
@@ -181,7 +182,24 @@ def test_integration_secrets_integration_positive_with_input_option():
     assert 'Finished validating secrets, no secrets were found' in result.stdout
 
 
-def test_integration_secrets_integration_negative_with_input_option(pack, mocker):
+def test_integration_secrets_integration_negative_with_input_option(tmp_path):
+    """
+    Given
+    - A file containing secret
+    - Default whitelist (no -wl supplied)
+
+    When
+    - Running secrets
+
+    Then
+    - Ensure secrets found.
+    """
+    integration_secrets_path = create_temp_file(tmp_path, 'ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
+    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration_secrets_path])
+    assert 'Secrets were found in the following files' in result.stdout
+
+
+def test_integration_secrets_integration_negative_with_input_option_and_whitelist(pack, mocker):
     """
     Given
     - A file containing secret

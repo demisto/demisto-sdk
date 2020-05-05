@@ -71,11 +71,7 @@ class BaseUpdateYML(BaseUpdate):
 
         yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
         with open(self.output_file, 'w') as f:
-            round_trip_dump(
-                self.data,
-                f,
-                version=(1, 1)
-            )
+            round_trip_dump(self.data, f, version=(1, 1))
 
     def copy_tests_from_old_file(self):
         """Copy the tests key from old file if exists.

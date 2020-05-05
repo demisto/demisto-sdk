@@ -261,8 +261,8 @@ def build_example_dict(command_examples: list, insecure: bool):
 def format_md(md: str):
     if md:
         # The replacement of <br> by <br/> is for compatibility with our docs site
-        md.replace('<br>', '<br/>')
-        md.replace('<BR>', '<br/>')
+        md = md.replace('<br>', '<br/>')
+        md = md.replace('<BR>', '<br/>')
     return md
 
 

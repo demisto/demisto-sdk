@@ -6,6 +6,7 @@ import os
 import shutil
 import tarfile
 from tempfile import mkdtemp
+from typing import Dict, List
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -81,6 +82,16 @@ class Downloader:
     def download(self) -> int:
         """
         Downloads custom content data from Demisto to the output pack in content repository.
+        :return: The exit code
+        """
+        exit_code: int = self.download_manager()
+        self.remove_traces()
+        return exit_code
+
+    def download_manager(self) -> int:
+        """
+        Manages all download command flows
+        :return The exit code of each flow
         """
         if not self.verify_flags():
             return 1
@@ -95,7 +106,6 @@ class Downloader:
         self.build_custom_content()
         self.update_pack_hierarchy()
         self.merge_into_pack()
-        self.remove_traces()
         self.log_files_downloaded()
         self.log_files_not_downloaded()
         return 0
@@ -160,7 +170,13 @@ class Downloader:
         :return: The list of all custom content objects
         """
         custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
-        return [self.build_custom_content_object(file_path) for file_path in custom_content_file_paths]
+        custom_content_objects: List = list()
+        for file_path in custom_content_file_paths:
+            custom_content_object: Dict = self.build_custom_content_object(file_path)
+            if custom_content_object['type']:
+                # If custom content object's type is empty it means the file isn't of support content entity
+                custom_content_objects.append(custom_content_object)
+        return custom_content_objects
 
     def handle_list_files_flag(self) -> bool:
         """

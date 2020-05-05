@@ -258,6 +258,11 @@ class TestFlagHandlers:
             assert answer
 
     def test_handle_list_files_flag_error(self, mocker):
+        """
+        GIVEN a file contained in custom content of not supported type
+        WHEN the user runs demisto-sdk download -lf
+        THEN the handle_list_files_flag method should ignore the file
+        """
         mocker.patch('demisto_sdk.commands.download.downloader.get_dict_from_file', return_value=({}, 'json'))
         mocker.patch('demisto_sdk.commands.download.downloader.get_child_files', return_value=['path'])
         with patch.object(Downloader, "__init__", lambda a, b, c: None):

@@ -181,11 +181,11 @@ def test_integration_secrets_integration_positive_with_input_option():
     assert 'Finished validating secrets, no secrets were found' in result.stdout
 
 
-def test_integration_secrets_integration_negative_with_input_option(tmp_path):
+def test_integration_secrets_integration_negative_with_input_option(pack, mocker):
     """
     Given
     - A file containing secret
-    - Default whitelist (no -wl supplied)
+    - Whitelist of generic strings
 
     When
     - Running secrets
@@ -193,6 +193,11 @@ def test_integration_secrets_integration_negative_with_input_option(tmp_path):
     Then
     - Ensure secrets found.
     """
-    integration_secrets_path = create_temp_file(tmp_path, 'ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
-    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration_secrets_path])
+    # Handle running from root = should be fixed in secrets
+    mocker.patch('demisto_sdk.commands.secrets.secrets.get_pack_name', return_value='CoolName')
+    integration = pack.create_integration()
+    integration.write_code('ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
+    pack.secrets.build(generic_strings=['11111'])
+    result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.py_path, '-wl', pack.secrets.path])
+    assert 1 == result.exit_code
     assert 'Secrets were found in the following files' in result.stdout

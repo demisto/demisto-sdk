@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
@@ -104,7 +104,7 @@ def get_playbook_dependencies(playbook):
     return list(playbooks), list(integrations), list(scripts), list(commands)
 
 
-def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
+def get_inputs(playbook: Dict[str, List[Dict]]) -> Tuple[List[Dict], List[str]]:
     """Gets playbook inputs.
 
     Args:
@@ -119,18 +119,19 @@ def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
     if not playbook.get('inputs'):
         return [], []
 
-    for _input in playbook.get('inputs'):   # type: ignore
+    playbook_inputs: List = playbook.get('inputs', [])
+    for _input in playbook_inputs:
         name = _input.get('key')
         description = string_escape_md(_input.get('description', ''))
         required_status = 'Required' if _input.get('required') else 'Optional'
-        _value = get_input_data(_input)
+        _value: Optional[str] = get_input_data(_input)
 
-        playbook_input_query = _input.get('playbookInputQuery')
+        playbook_input_query: Dict[str, str] = _input.get('playbookInputQuery')
         # a playbook input section whose 'key' key is empty and whose 'playbookInputQuery' key is a dict
         # is an Indicators Query input section
         if not name and isinstance(playbook_input_query, dict):
             name = 'Indicator Query'
-            _value = playbook_input_query.get('query')  # type: ignore
+            _value = playbook_input_query.get('query')
             default_description = 'Indicators matching the indicator query will be used as playbook input'
             description = description if description else default_description
 

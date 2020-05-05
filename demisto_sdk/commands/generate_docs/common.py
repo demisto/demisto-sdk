@@ -261,8 +261,10 @@ def build_example_dict(command_examples: list, insecure: bool):
 def format_md(md: str) -> str:
     """
     Formats a given md string by replacing <br> and <BR> tags with <br/>
-    :param md: string representing mark down
-    :return: formatted string representing mark down
+    :param
+        md (str): String representing mark down.
+    :return:
+        str. Formatted string representing mark down.
     """
     if md:
         # The replacement of <br> by <br/> is for compatibility with our docs site

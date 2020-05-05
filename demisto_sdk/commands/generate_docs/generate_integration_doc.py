@@ -1,6 +1,6 @@
 import os.path
 import re
-from typing import Any, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import DOCS_COMMAND_SECTION_REGEX
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
@@ -47,7 +47,7 @@ def generate_integration_doc(
         output: Optional[str] = None,
         use_cases: Optional[str] = None,
         permissions: Optional[str] = None,
-        command_permissions: Optional[Union[str, list]] = None,
+        command_permissions: Optional[str] = None,
         limitations: Optional[str] = None,
         insecure: bool = False,
         verbose: bool = False,
@@ -83,9 +83,9 @@ def generate_integration_doc(
 
         if permissions == 'per-command':
             command_permissions_dict: Any = {}
-            if command_permissions and os.path.isfile(command_permissions):     # type: ignore
-                command_permissions = get_command_permissions(command_permissions)
-                for command_permission in command_permissions:  # type: ignore
+            if command_permissions and os.path.isfile(command_permissions):
+                permission_list = get_command_permissions(command_permissions)
+                for command_permission in permission_list:
                     # get all the permissions after the command name
                     key, value = command_permission.split(" ", 1)
                     command_permissions_dict.update({key: value})
@@ -352,7 +352,7 @@ def command_example_filter(command):
     return command
 
 
-def get_command_permissions(commands_permissions_file_path):
+def get_command_permissions(commands_permissions_file_path) -> list:
     """
     get command permissions from file
 
@@ -372,11 +372,11 @@ def get_command_permissions(commands_permissions_file_path):
         print('failed to open permissions file')
         permissions = commands_permissions_file_path.split('\n')
 
-    permissions = map(command_permissions_filter, permissions)
-    permissions = list(filter(None, permissions))
+    permissions_map = map(command_permissions_filter, permissions)
+    permissions_list: List = list(filter(None, permissions_map))
 
-    print('found the following commands permissions:\n{}'.format('\n '.join(permissions)))
-    return permissions
+    print('found the following commands permissions:\n{}'.format('\n '.join(permissions_list)))
+    return permissions_list
 
 
 def command_permissions_filter(permission):

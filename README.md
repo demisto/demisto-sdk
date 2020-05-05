@@ -64,11 +64,12 @@ Supported commands:
 8. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
 9. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
 10. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
-11. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/ulpoad/README.md)
-12. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
-13. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
-14. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
-15. [Create-id-set](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/create_id_set/README.md)
+11. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
+12. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
+13. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
+14. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
+15. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
+16. [Create-id-set](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/create_id_set/README.md)
 
 ---
 

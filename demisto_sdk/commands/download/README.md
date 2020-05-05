@@ -61,8 +61,20 @@ Integrations Scripts, and Playbooks folders that does not contain a yml file, wi
 All other folders that do not contain a json file, will be overwritten automatically.
 For clarity, the given pack should be consistent with Content hierarchy structure with no rouge files present.
 
+### Supported File Types
+* Integrations
+* Scripts
+* Playbooks
+* Reports
+* Dashboards
+* Widgets
+* Incdient Fields
+* Indicator Fields
+* Incident Types
+* Layouts
+* Classifiers
 
-### Not Supported
+### Not Supported File Types
 * Downloading Test Playbooks to their place in the output pack.
 * Downloading Beta Integrations to their place in the output pack.
 

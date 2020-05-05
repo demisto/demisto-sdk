@@ -117,7 +117,7 @@ def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
     inputs = []
 
     if not playbook.get('inputs'):
-        return [{}], []
+        return [], []
 
     for _input in playbook.get('inputs'):   # type: ignore
         name = _input.get('key')

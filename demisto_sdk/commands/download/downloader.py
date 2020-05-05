@@ -6,7 +6,7 @@ import os
 import shutil
 import tarfile
 from tempfile import mkdtemp
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -70,7 +70,7 @@ class Downloader:
         self.all_custom_content = all_custom_content
         self.run_format = run_format
         self.client = None
-        self.custom_content_temp_dir: Optional[str] = None
+        self.custom_content_temp_dir = mkdtemp()
         self.all_custom_content_objects: List[dict] = list()
         self.files_not_downloaded: List[list] = list()
         self.custom_content: List[dict] = list()
@@ -82,6 +82,16 @@ class Downloader:
     def download(self) -> int:
         """
         Downloads custom content data from Demisto to the output pack in content repository.
+        :return: The exit code
+        """
+        exit_code: int = self.download_manager()
+        self.remove_traces()
+        return exit_code
+
+    def download_manager(self) -> int:
+        """
+        Manages all download command flows
+        :return The exit code of each flow
         """
         if not self.verify_flags():
             return 1
@@ -96,7 +106,6 @@ class Downloader:
         self.build_custom_content()
         self.update_pack_hierarchy()
         self.merge_into_pack()
-        self.remove_traces()
         self.log_files_downloaded()
         self.log_files_not_downloaded()
         return 0
@@ -131,7 +140,6 @@ class Downloader:
             io_bytes = io.BytesIO(body)
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
-            self.custom_content_temp_dir = mkdtemp()
 
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
@@ -168,7 +176,13 @@ class Downloader:
         :return: The list of all custom content objects
         """
         custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
-        return [self.build_custom_content_object(file_path) for file_path in custom_content_file_paths]
+        custom_content_objects: List = list()
+        for file_path in custom_content_file_paths:
+            custom_content_object: Dict = self.build_custom_content_object(file_path)
+            if custom_content_object['type']:
+                # If custom content object's type is empty it means the file isn't of support content entity
+                custom_content_objects.append(custom_content_object)
+        return custom_content_objects
 
     def handle_list_files_flag(self) -> bool:
         """
@@ -354,8 +368,6 @@ class Downloader:
         file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
         file_type: str = find_type(_dict=file_data, file_type=file_ending)  # For example: integration
         file_entity = ENTITY_TYPE_TO_DIR.get(file_type)  # For example: Integrations
-        if not file_entity:
-            raise KeyError(f'{file_path}: Could not find entity type in file.')
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
 

@@ -74,9 +74,9 @@ For clarity, the given pack should be consistent with Content hierarchy structur
 * Layouts
 * Classifiers
 
-### Not Supported File Types
-* Downloading Test Playbooks to their place in the output pack.
-* Downloading Beta Integrations to their place in the output pack.
+### Known Limitations
+* Downloading Test Playbooks to their designated location in the output pack.
+* Downloading Beta Integrations to their designated location in the output pack.
 
 ### Examples
 ```

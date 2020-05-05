@@ -21,6 +21,11 @@ def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack
     return get_repo(request, tmp_path_factory).create_pack()
 
 
+def get_integration(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Integration:
+    """Mocking tmp_path
+    """
+    return get_pack(request, tmp_path_factory).create_integration()
+
 # Fixtures
 
 
@@ -35,7 +40,7 @@ def pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack:
 def integration(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Integration:
     """Mocking tmp_path
     """
-    return get_pack(request, tmp_path_factory).create_integration()
+    return get_integration(request, tmp_path_factory)
 
 
 @pytest.fixture

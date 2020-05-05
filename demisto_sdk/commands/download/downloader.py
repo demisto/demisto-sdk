@@ -368,8 +368,6 @@ class Downloader:
         file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
         file_type: str = find_type(_dict=file_data, file_type=file_ending)  # For example: integration
         file_entity = ENTITY_TYPE_TO_DIR.get(file_type)  # For example: Integrations
-        if not file_entity:
-            raise KeyError(f'{file_path}: Could not find entity type in file.')
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
 

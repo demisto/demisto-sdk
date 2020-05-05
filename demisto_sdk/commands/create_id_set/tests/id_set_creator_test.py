@@ -1,9 +1,11 @@
 import os
 import shutil
 from tempfile import mkdtemp
+import pytest
 
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.common.update_id_set import has_duplicate, get_layout_data
 
 
 class TestIDSetCreator:
@@ -47,3 +49,34 @@ class TestIDSetCreator:
         assert 'Layouts' in id_set.keys()
         assert 'Reports' in id_set.keys()
         assert 'Widgets' in id_set.keys()
+
+
+INPUT_TEST_HAS_DUPLICATE = [
+    ('Access', False),
+    ('urlRep', True)
+]
+
+ID_SET = [
+    {'Access': {'typeID': 'Access', 'kind': 'edit', 'path': 'Layouts/layout-edit-Access.json'}},
+    {'Access': {'typeID': 'Access', 'fromversion': '4.1.0', 'kind': 'details', 'path': 'layout-Access.json'}},
+    {'urlRep': {'typeID': 'urlRep', 'kind': 'Details', 'path': 'Layouts/layout-Details-url.json'}},
+    {'urlRep': {'typeID': 'urlRep', 'fromversion': '5.0.0', 'kind': 'Details', 'path': 'layout-Details-url_5.4.9.json'}}
+]
+
+
+@pytest.mark.parametrize('list_input, list_output', INPUT_TEST_HAS_DUPLICATE)
+def test_has_duplicate(list_input, list_output):
+    result = has_duplicate(ID_SET, list_input, 'Layouts', False)
+    assert list_output == result
+
+
+def test_get_layout_data():
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/layout-to-test.json'
+    result = get_layout_data(test_dir)
+    result = result.get('urlRep')
+    assert 'kind' in result.keys()
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'toversion' in result.keys()
+    assert 'path' in result.keys()
+    assert 'typeID' in result.keys()

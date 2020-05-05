@@ -257,6 +257,15 @@ class TestFlagHandlers:
                 assert file[1] in stdout
             assert answer
 
+    def test_handle_list_files_flag_error(self, mocker):
+        mocker.patch('demisto_sdk.commands.download.downloader.get_dict_from_file', return_value=({}, 'json'))
+        mocker.patch('demisto_sdk.commands.download.downloader.get_child_files', return_value=['path'])
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.custom_content_temp_dir = INTEGRATION_INSTANCE_PATH
+            downloader.list_files = True
+            assert downloader.handle_list_files_flag()
+
 
 class TestBuildPackContent:
     def test_build_pack_content(self):

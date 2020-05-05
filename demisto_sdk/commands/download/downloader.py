@@ -69,7 +69,7 @@ class Downloader:
         self.all_custom_content = all_custom_content
         self.run_format = run_format
         self.client = None
-        self.custom_content_temp_dir = None
+        self.custom_content_temp_dir = mkdtemp()
         self.all_custom_content_objects = list()
         self.files_not_downloaded = list()
         self.custom_content = list()
@@ -130,7 +130,6 @@ class Downloader:
             io_bytes = io.BytesIO(body)
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
-            self.custom_content_temp_dir = mkdtemp()
 
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))

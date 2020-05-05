@@ -1,5 +1,5 @@
 # Changelog
-* Fixed a bug in the **download** command when file wasn't of content type.
+* Fixed a bug in the **download** command when custom content contained not supported content entity.
 * Fixed a bug in the **unify** command when output path was provided empty.
 * Improved error message for integration with no tests configured.
 * Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.

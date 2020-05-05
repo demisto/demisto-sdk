@@ -117,9 +117,9 @@ def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
     inputs = []
 
     if not playbook.get('inputs'):
-        return {}, []
+        return [{}], []
 
-    for _input in playbook.get('inputs'):
+    for _input in playbook.get('inputs'):   # type: ignore
         name = _input.get('key')
         description = string_escape_md(_input.get('description', ''))
         required_status = 'Required' if _input.get('required') else 'Optional'
@@ -130,7 +130,7 @@ def get_inputs(playbook: Dict) -> Tuple[List[Dict], List[str]]:
         # is an Indicators Query input section
         if not name and isinstance(playbook_input_query, dict):
             name = 'Indicator Query'
-            _value = playbook_input_query.get('query')
+            _value = playbook_input_query.get('query')  # type: ignore
             default_description = 'Indicators matching the indicator query will be used as playbook input'
             description = description if description else default_description
 

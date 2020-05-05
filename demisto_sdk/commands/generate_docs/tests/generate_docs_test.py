@@ -18,18 +18,30 @@ TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integrat
 
 
 def test_format_md():
+    """
+        Given
+            - A string representing a mrakdown returned from server with <br> tag
+
+        When
+            - generating docs
+
+        Then
+            - Ensure all <br> <BR> tags in markdown replaced with <br/> tags
+        """
     from demisto_sdk.commands.generate_docs.common import format_md
     md_returned_from_server = """
     ### Domain List
     |Malicious|Name|
     |---|---|
     | Vendor: HelloWorld<br>Description: Hello World returned reputation 88 | google.com |
+    | Vendor: HelloWorld<BR>Description: Hello World returned reputation 88 | google.com |
     """
     res = format_md(md_returned_from_server)
     expected_res = """
     ### Domain List
     |Malicious|Name|
     |---|---|
+    | Vendor: HelloWorld<br/>Description: Hello World returned reputation 88 | google.com |
     | Vendor: HelloWorld<br/>Description: Hello World returned reputation 88 | google.com |
     """
     assert expected_res == res

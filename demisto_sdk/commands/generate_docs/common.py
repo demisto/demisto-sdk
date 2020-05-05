@@ -178,7 +178,7 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
 def execute_command(command_example, insecure: bool):
     errors = []
     context = {}
-    md_example = ''
+    md_example: str = ''
     cmd = command_example
     try:
         runner = Runner('', insecure=insecure)
@@ -194,7 +194,7 @@ def execute_command(command_example, insecure: bool):
                 context = {k.split('(')[0]: v for k, v in raw_context.items()}
 
             if entry.contents:
-                content = entry.contents
+                content: str = entry.contents
                 if isinstance(content, STRING_TYPES):
                     md_example += content
                 else:
@@ -258,7 +258,12 @@ def build_example_dict(command_examples: list, insecure: bool):
     return examples, errors
 
 
-def format_md(md: str):
+def format_md(md: str) -> str:
+    """
+    Formats a given md string by replacing <br> and <BR> tags with <br/>
+    :param md: string representing mark down
+    :return: formatted string representing mark down
+    """
     if md:
         # The replacement of <br> by <br/> is for compatibility with our docs site
         md = md.replace('<br>', '<br/>')

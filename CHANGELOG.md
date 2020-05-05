@@ -1,6 +1,8 @@
 # Changelog
-* Added formatting to **generate-docs** command replacing all <br> tags with <br/>
+* Added formatting to **generate-docs** command results replacing all <br> tags with <br/>.
 * Fixed a bug in the **download** command when custom content contained not supported content entity.
+
+#### 1.0.1
 * Fixed a bug in the **unify** command when output path was provided empty.
 * Improved error message for integration with no tests configured.
 * Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.

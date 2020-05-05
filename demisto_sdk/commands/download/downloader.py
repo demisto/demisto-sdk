@@ -6,7 +6,7 @@ import os
 import shutil
 import tarfile
 from tempfile import mkdtemp
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -71,10 +71,10 @@ class Downloader:
         self.run_format = run_format
         self.client = None
         self.custom_content_temp_dir = mkdtemp()
-        self.all_custom_content_objects = list()
-        self.files_not_downloaded = list()
-        self.custom_content = list()
-        self.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
+        self.all_custom_content_objects: List[dict] = list()
+        self.files_not_downloaded: List[list] = list()
+        self.custom_content: List[dict] = list()
+        self.pack_content: Dict[str, list] = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
         self.SPECIAL_ENTITIES = {TEST_PLAYBOOKS_DIR: PLAYBOOKS_DIR, BETA_INTEGRATIONS_DIR: INTEGRATIONS_DIR}
         self.num_merged_files = 0
         self.num_added_files = 0
@@ -145,7 +145,13 @@ class Downloader:
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
                 with open(file_path, 'w') as file:
-                    file.write(tar.extractfile(member).read().decode('utf-8'))
+                    extracted_file = tar.extractfile(member)
+                    # File might empty
+                    if extracted_file:
+                        string_to_write = extracted_file.read().decode('utf-8')
+                        file.write(string_to_write)
+                    else:
+                        raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
 
             return True
 
@@ -164,7 +170,7 @@ class Downloader:
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
             return False
 
-    def get_custom_content_objects(self) -> list:
+    def get_custom_content_objects(self) -> List[dict]:
         """
         Creates a list of all custom content objects
         :return: The list of all custom content objects
@@ -184,8 +190,10 @@ class Downloader:
         :return: True if list-files flag is on and listing available files process succeeded, False otherwise
         """
         if self.list_files:
-            self.all_custom_content_objects: list = self.get_custom_content_objects()
-            list_files: list = [[cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects]
+            self.all_custom_content_objects = self.get_custom_content_objects()
+            list_files = [
+                [cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects
+            ]
             print_color('\nThe following files are available to be downloaded from Demisto instance:\n',
                         LOG_COLORS.NATIVE)
             print(tabulate(list_files, headers=['FILE NAME', 'FILE TYPE']))
@@ -231,7 +239,7 @@ class Downloader:
                 # If entity is of type integration/script it will have dirs, otherwise files
                 entity_instances_paths: list = get_child_directories(content_entity_path)
             else:
-                entity_instances_paths: list = get_child_files(content_entity_path)
+                entity_instances_paths = get_child_files(content_entity_path)
             for entity_instance_path in entity_instances_paths:
                 content_object: dict = self.build_pack_content_object(content_entity, entity_instance_path)
                 if content_object:
@@ -315,7 +323,7 @@ class Downloader:
         Build a data structure called pack content that holds basic data for each content entity instances downloaded from Demisto.
         For example check out the CUSTOM_CONTENT variable in downloader_test.py
         """
-        custom_content_objects: list = self.all_custom_content_objects if self.all_custom_content_objects else\
+        custom_content_objects = self.all_custom_content_objects if self.all_custom_content_objects else\
             self.get_custom_content_objects()
         for input_file_name in self.input_files:
             input_file_exist_in_cc: bool = False
@@ -359,7 +367,9 @@ class Downloader:
         """
         file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
         file_type: str = find_type(_dict=file_data, file_type=file_ending)  # For example: integration
-        file_entity: str = ENTITY_TYPE_TO_DIR.get(file_type)  # For example: Integrations
+        file_entity = ENTITY_TYPE_TO_DIR.get(file_type)  # For example: Integrations
+        if not file_entity:
+            raise KeyError(f'{file_path}: Could not find entity type in file.')
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
 
@@ -526,7 +536,7 @@ class Downloader:
         dir_output_path: str = os.path.join(self.output_pack_path, file_entity)
         # dir name should be the same as file name without separators mentioned in constants.py
         dir_name: str = self.create_dir_name(file_name)
-        dir_output_path: str = os.path.join(dir_output_path, dir_name)
+        dir_output_path = os.path.join(dir_output_path, dir_name)
 
         extractor = Extractor(input=file_path, output=dir_output_path, file_type=file_type, base_name=dir_name,
                               no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True)
@@ -612,7 +622,7 @@ class Downloader:
         :return: None
         """
         ryaml = YAML()
-        ryaml.preserve_quotes = True
+        ryaml.preserve_quotes = True  # type: ignore
         pack_obj_data, _ = get_dict_from_file(file_path_to_read)
         fields: list = DELETED_YML_FIELDS_BY_DEMISTO if file_ending == 'yml' else DELETED_JSON_FIELDS_BY_DEMISTO
         # Creates a nested-complex dict of all fields to be deleted by Demisto.

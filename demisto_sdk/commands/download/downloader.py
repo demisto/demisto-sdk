@@ -6,7 +6,7 @@ import os
 import shutil
 import tarfile
 from tempfile import mkdtemp
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException

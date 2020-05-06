@@ -1,7 +1,9 @@
 # Changelog
+* Added formatting to **generate-docs** command results replacing all <br> tags with <br/>.
 * Fixed a bug in the **download** command when custom content contained not supported content entity.
 * Fixed a bug in **format** command in which boolean strings  (e.g. 'yes' or 'no') were converted to boolean values (e.g. 'True' or 'False').
 * **format** command now removes *sourceplaybookid* field.
+
 
 #### 1.0.1
 * Fixed a bug in the **unify** command when output path was provided empty.

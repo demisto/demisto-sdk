@@ -3,6 +3,7 @@ import shutil
 
 import pytest
 import yaml
+
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -171,11 +172,24 @@ PLAYBOOK_TEST = [
 
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', PLAYBOOK_TEST)
 def test_string_condition_in_playbook(source_path, destination_path, formatter, yml_title, file_type):
+    """
+    Given
+    - Valid playbook yml source_path.
+    - destination_path to write the formatted playbook to.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensure the file was created.
+    - Ensure 'yes' string in the playbook condition remains string and do not change to boolean.
+    """
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
     saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
     base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
     base_yml.save_yml_to_destination_file()
+    assert os.path.isfile(saved_file_path)
     with open(saved_file_path, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)

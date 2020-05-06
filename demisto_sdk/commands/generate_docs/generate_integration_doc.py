@@ -1,6 +1,6 @@
 import os.path
 import re
-from typing import Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import DOCS_COMMAND_SECTION_REGEX
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
@@ -72,7 +72,7 @@ def generate_integration_doc(
 
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input))
-        errors = []
+        errors: list = []
         example_dict = {}
         if examples and os.path.isfile(examples):
             command_examples = get_command_examples(examples)
@@ -82,10 +82,10 @@ def generate_integration_doc(
             errors.append(f'Command examples was not found {examples}.')
 
         if permissions == 'per-command':
-            command_permissions_dict = {}
+            command_permissions_dict: Any = {}
             if command_permissions and os.path.isfile(command_permissions):
-                command_permissions = get_command_permissions(command_permissions)
-                for command_permission in command_permissions:
+                permission_list = get_command_permissions(command_permissions)
+                for command_permission in permission_list:
                     # get all the permissions after the command name
                     key, value = command_permission.split(" ", 1)
                     command_permissions_dict.update({key: value})
@@ -194,7 +194,7 @@ def generate_commands_section(
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.'
     ]
     commands = filter(lambda cmd: not cmd.get('deprecated', False), yaml_data['script']['commands'])
-    command_sections = []
+    command_sections: list = []
     if command:
         # for specific command, return it only.
         try:
@@ -352,7 +352,7 @@ def command_example_filter(command):
     return command
 
 
-def get_command_permissions(commands_permissions_file_path):
+def get_command_permissions(commands_permissions_file_path) -> list:
     """
     get command permissions from file
 
@@ -372,11 +372,11 @@ def get_command_permissions(commands_permissions_file_path):
         print('failed to open permissions file')
         permissions = commands_permissions_file_path.split('\n')
 
-    permissions = map(command_permissions_filter, permissions)
-    permissions = list(filter(None, permissions))
+    permissions_map = map(command_permissions_filter, permissions)
+    permissions_list: List = list(filter(None, permissions_map))
 
-    print('found the following commands permissions:\n{}'.format('\n '.join(permissions)))
-    return permissions
+    print('found the following commands permissions:\n{}'.format('\n '.join(permissions_list)))
+    return permissions_list
 
 
 def command_permissions_filter(permission):

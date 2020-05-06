@@ -4,12 +4,11 @@ from typing import Dict, List
 import click
 import yaml
 import yamlordereddictloader
-from ruamel.yaml import YAML
-
 from demisto_sdk.commands.common.tools import (LOG_COLORS, _get_file_id,
                                                get_not_registered_tests,
                                                print_color)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True

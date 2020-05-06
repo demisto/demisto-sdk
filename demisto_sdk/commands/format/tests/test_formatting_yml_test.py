@@ -1,9 +1,7 @@
 import os
 import shutil
 
-import pytest
 import yaml
-
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -14,6 +12,8 @@ from demisto_sdk.tests.constants_test import (
     EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, GIT_ROOT,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY)
+
+import pytest
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',

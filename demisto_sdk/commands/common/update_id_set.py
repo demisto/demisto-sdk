@@ -259,12 +259,14 @@ def get_layout_data(path):
     json_data = get_json(path)
     layout = json_data.get('layout')
     name = layout.get('name', '-')
-    id_ = layout.get('id', '-')
+    id_ = json_data.get('id', layout.get('id', '-'))
     type_ = json_data.get('typeId')
     type_name = json_data.get('TypeName')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
+    kind = json_data.get('kind')
     pack = get_pack_name(path)
+
     if type_:
         data['typeID'] = type_
     if type_name:
@@ -276,6 +278,9 @@ def get_layout_data(path):
         data['fromversion'] = fromversion
     if pack:
         data['pack'] = pack
+    if kind:
+        data['kind'] = kind
+    data['path'] = path
 
     return {id_: data}
 
@@ -820,6 +825,11 @@ def has_duplicate(id_set, id_to_check, object_type=None, print_logs=True):
         if print_logs and dict1['name'] != dict2['name']:
             print_warning('The following {} have the same ID ({}) but different names: '
                           '"{}", "{}".'.format(object_type, id_to_check, dict1['name'], dict2['name']))
+
+        # Checks if the Layouts kind is different then they are not duplicates
+        if object_type == 'Layouts':
+            if dict1.get('kind', '') != dict2.get('kind', ''):
+                return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0

@@ -1,6 +1,5 @@
 import json
 import os
-from os.path import join
 from pathlib import PosixPath
 from typing import List
 
@@ -9,7 +8,6 @@ import yaml
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -232,10 +230,7 @@ def _verify_conf_json_modified(test_playbooks: List, yml_title: str, conf_json_p
         raise
 
 
-DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-
-
-def test_integration_format_remove_playbook_sourceplaybookid():
+def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     """
     Given
     - Playbook with field  `sourceplaybookid`.
@@ -247,19 +242,18 @@ def test_integration_format_remove_playbook_sourceplaybookid():
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
     """
-    source_playbook_path = join(DEMISTO_SDK_PATH, "tests/test_files/format_new_playbook_copy.yml")
-    output_playbook_path = join(DEMISTO_SDK_PATH, "tests/test_files/new_format_new_playbook_copy.yml")
-
-    runner = CliRunner(mix_stderr=False)
-    arguments = [
-        'format',
-        '-i', source_playbook_path,
-        '-o', output_playbook_path
-    ]
-    runner.invoke(main, arguments)
-
-    with open(output_playbook_path, 'r') as f:
+    source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
+    playbook_path = str(tmp_path / 'format_new_playbook_copy.yml')
+    runner = CliRunner()
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path], input='N')
+    prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    assert result.exit_code == 0
+    assert prompt in result.output
+    assert '=======Starting updates for file: ' in result.stdout
+    assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
+    with open(playbook_path, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)
         assert 'sourceplaybookid' not in yaml_content
-    os.remove(output_playbook_path)
+
+    assert not result.exception

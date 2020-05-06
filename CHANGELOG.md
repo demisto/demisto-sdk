@@ -2,7 +2,7 @@
 * Added formatting to **generate-docs** command results replacing all <br> tags with <br/>.
 * Fixed a bug in the **download** command when custom content contained not supported content entity.
 * Fixed a bug in **format** command in which boolean strings  (e.g. 'yes' or 'no') were converted to boolean values (e.g. 'True' or 'False').
-* **format** command now removes *sourceplaybookid* field.
+* **format** command now removes *sourceplaybookid* field from playbook files.
 
 
 #### 1.0.1

@@ -5,6 +5,8 @@ from typing import List
 
 import pytest
 import yaml
+from demisto_sdk.commands.common.git_tools import git_path
+from os.path import join
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
@@ -229,14 +231,10 @@ def _verify_conf_json_modified(test_playbooks: List, yml_title: str, conf_json_p
         raise
 
 
-PLAYBOOK_TEST = [
-    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
-     'playbook')
-]
+DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
-@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', PLAYBOOK_TEST)
-def remove_playbook_sourceplaybookid(source_path, destination_path, formatter, file_type):
+def test_integration_format_remove_playbook_sourceplaybookid():
     """
     Given
     - Playbook with field  `sourceplaybookid`.
@@ -248,15 +246,19 @@ def remove_playbook_sourceplaybookid(source_path, destination_path, formatter, f
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
     """
-    schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
-    saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
-    base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
-    base_yml.delete_sourceplaybookid()
-    base_yml.save_yml_to_destination_file()
+    source_playbook_path = join(DEMISTO_SDK_PATH, "tests/test_files/format_new_playbook_copy.yml")
+    output_playbook_path = join(DEMISTO_SDK_PATH, "tests/test_files/new_format_new_playbook_copy.yml")
 
-    with open(saved_file_path, 'r') as f:
+    runner = CliRunner(mix_stderr=False)
+    arguments = [
+        'format',
+        '-i', source_playbook_path,
+        '-o', output_playbook_path
+    ]
+    runner.invoke(main, arguments)
+
+    with open(output_playbook_path, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)
         assert 'sourceplaybookid' not in yaml_content
-    os.remove(saved_file_path)
+    os.remove(output_playbook_path)

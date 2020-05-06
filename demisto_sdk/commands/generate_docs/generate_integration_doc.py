@@ -74,7 +74,7 @@ def generate_integration_doc(
             output = os.path.dirname(os.path.realpath(input))
         errors: list = []
         example_dict = {}
-        if examples and os.path.isfile(examples):   # type: ignore
+        if examples and os.path.isfile(examples):
             command_examples = get_command_examples(examples)
             example_dict, build_errors = build_example_dict(command_examples, insecure)
             errors.extend(build_errors)

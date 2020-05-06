@@ -350,35 +350,38 @@ class FilesValidator:
             # incident fields and indicator fields are using the same scheme.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
-                if not incident_field_validator.is_valid_file(validate_rn=True):
+                if not incident_field_validator.is_valid_file():
                     self._is_valid = False
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
             elif checked_type(file_path, [REPUTATION_REGEX]):
                 reputation_validator = ReputationValidator(structure_validator)
-                if not reputation_validator.is_valid_file(validate_rn=True):
+                if not reputation_validator.is_valid_file():
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
                 layout_validator = LayoutValidator(structure_validator)
-                if not layout_validator.is_valid_layout(validate_rn=True):
+                if not layout_validator.is_valid_layout():
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES):
                 dashboard_validator = DashboardValidator(structure_validator)
-                if not dashboard_validator.is_valid_dashboard(validate_rn=True):
+                if not dashboard_validator.is_valid_dashboard():
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type(validate_rn=True):
+                if not incident_type_validator.is_valid_incident_type():
                     self._is_valid = False
                 if self.is_backward_check and not incident_type_validator.is_backward_compatible():
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                self.is_valid_release_notes(file_path)
+                print_error(f"CHANGELOG is no longer used. Please run `demisto-sdk "
+                            f"update-release-notes` to generate release notes according to the "
+                            f"new standard and remove {file_path}")
+                self._is_valid = False
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
@@ -426,12 +429,12 @@ class FilesValidator:
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
                 playbook_validator = PlaybookValidator(structure_validator)
-                if not playbook_validator.is_valid_playbook(validate_rn=False):
+                if not playbook_validator.is_valid_playbook():
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_file(validate_rn=False):
+                if not integration_validator.is_valid_file():
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
@@ -441,13 +444,13 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
 
-                if not script_validator.is_valid_file(validate_rn=False):
+                if not script_validator.is_valid_file():
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
-                if not integration_validator.is_valid_beta_integration(validate_rn=False):
+                if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
@@ -460,31 +463,31 @@ class FilesValidator:
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
                 incident_field_validator = IncidentFieldValidator(structure_validator)
-                if not incident_field_validator.is_valid_file(validate_rn=False):
+                if not incident_field_validator.is_valid_file():
                     self._is_valid = False
 
             elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
                 reputation_validator = ReputationValidator(structure_validator)
-                if not reputation_validator.is_valid_file(validate_rn=False):
+                if not reputation_validator.is_valid_file():
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
                 layout_validator = LayoutValidator(structure_validator)
                 # TODO: set validate_rn to False after issue #23398 is fixed.
-                if not layout_validator.is_valid_layout(validate_rn=not file_type):
+                if not layout_validator.is_valid_layout():
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
                 dashboard_validator = DashboardValidator(structure_validator)
-                if not dashboard_validator.is_valid_dashboard(validate_rn=False):
+                if not dashboard_validator.is_valid_dashboard():
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) or file_type == 'incidenttype':
                 incident_type_validator = IncidentTypeValidator(structure_validator)
-                if not incident_type_validator.is_valid_incident_type(validate_rn=False):
+                if not incident_type_validator.is_valid_incident_type():
                     self._is_valid = False
 
-            elif 'CHANGELOG' in file_path:
+            elif 'ReleaseNotes' in file_path:
                 self.is_valid_release_notes(file_path)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
@@ -587,12 +590,12 @@ class FilesValidator:
 
         elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
             playbook_validator = PlaybookValidator(structure_validator)
-            if not playbook_validator.is_valid_playbook(validate_rn=False):
+            if not playbook_validator.is_valid_playbook():
                 self._is_valid = False
 
         elif checked_type(file_path, INTEGRATION_REGXES) or file_type == 'integration':
             integration_validator = IntegrationValidator(structure_validator)
-            if not integration_validator.is_valid_file(validate_rn=False):
+            if not integration_validator.is_valid_file():
                 self._is_valid = False
 
         elif checked_type(file_path, YML_ALL_SCRIPTS_REGEXES) or file_type == 'script':
@@ -600,7 +603,7 @@ class FilesValidator:
             structure_validator.file_path = file_path
             script_validator = ScriptValidator(structure_validator)
 
-            if not script_validator.is_valid_file(validate_rn=False):
+            if not script_validator.is_valid_file():
                 self._is_valid = False
 
         elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
@@ -612,27 +615,27 @@ class FilesValidator:
         elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                 file_type in ('incidentfield', 'indicatorfield'):
             incident_field_validator = IncidentFieldValidator(structure_validator)
-            if not incident_field_validator.is_valid_file(validate_rn=False):
+            if not incident_field_validator.is_valid_file():
                 self._is_valid = False
 
         elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
             reputation_validator = ReputationValidator(structure_validator)
-            if not reputation_validator.is_valid_file(validate_rn=False):
+            if not reputation_validator.is_valid_file():
                 self._is_valid = False
 
         elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
             layout_validator = LayoutValidator(structure_validator)
-            if not layout_validator.is_valid_layout(validate_rn=False):
+            if not layout_validator.is_valid_layout():
                 self._is_valid = False
 
         elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
             dashboard_validator = DashboardValidator(structure_validator)
-            if not dashboard_validator.is_valid_dashboard(validate_rn=False):
+            if not dashboard_validator.is_valid_dashboard():
                 self._is_valid = False
 
         elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) or file_type == 'incidenttype':
             incident_type_validator = IncidentTypeValidator(structure_validator)
-            if not incident_type_validator.is_valid_incident_type(validate_rn=False):
+            if not incident_type_validator.is_valid_incident_type():
                 self._is_valid = False
 
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):

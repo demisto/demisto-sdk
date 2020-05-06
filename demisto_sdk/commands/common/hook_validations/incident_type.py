@@ -25,11 +25,11 @@ class IncidentTypeValidator(BaseValidator):
 
         return not is_bc_broke
 
-    def is_valid_incident_type(self, validate_rn=True):
+    def is_valid_incident_type(self):
         """Check whether the Incident Type is valid or not
         """
         is_incident_type__valid = all([
-            super().is_valid_file(validate_rn),
+            super().is_valid_file(),
             self.is_valid_version()
         ])
 

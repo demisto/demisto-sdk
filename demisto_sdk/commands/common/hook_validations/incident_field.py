@@ -176,12 +176,12 @@ class IncidentFieldValidator(BaseValidator):
 
         return not is_bc_broke
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self):
         """Check whether the Incident Field is valid or not
         """
         return all(
             [
-                super().is_valid_file(validate_rn),
+                super().is_valid_file(),
                 self.is_valid_name(),
                 self.is_valid_type(),
                 self.is_valid_group(),

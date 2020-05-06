@@ -26,13 +26,10 @@ class BaseValidator:
         self.file_path = structure_validator.file_path
         self.is_valid = structure_validator.is_valid
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self):
         tests = [
             self.is_valid_version()
         ]
-        # In case of release branch we allow to remove release notes
-        if validate_rn and not self.is_release_branch():
-            tests.append(self.is_there_release_notes())
         return all(tests)
 
     @abstractmethod
@@ -52,24 +49,6 @@ class BaseValidator:
             print_error(Errors.suggest_fix(self.file_path))
             self.is_valid = False
             return False
-        return True
-
-    def is_there_release_notes(self):
-        """Validate that the file has proper release notes when modified.
-        This function updates the class attribute self._is_valid.
-
-        Returns:
-            (bool): is there release notes
-        """
-        if os.path.isfile(self.file_path):
-            rn_path = get_release_notes_file_path(self.file_path)
-            release_notes = get_latest_release_notes_text(rn_path)
-
-            # check release_notes file exists and contain text
-            if release_notes is None:
-                self.is_valid = False
-                print_error(f'Missing release notes for: {self.file_path} in {rn_path}')
-                return False
         return True
 
     @staticmethod

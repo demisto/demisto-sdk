@@ -54,17 +54,14 @@ class IntegrationValidator(BaseValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True) -> bool:
+    def is_valid_file(self) -> bool:
         """Check whether the Integration is valid or not
-
-            Args:
-                validate_rn (bool): Whether to validate release notes (changelog) or not.
 
             Returns:
                 bool: True if integration is valid, False otherwise.
         """
         answers = [
-            super().is_valid_file(validate_rn),
+            super().is_valid_file(),
             self.is_valid_subtype(),
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),
@@ -91,7 +88,7 @@ class IntegrationValidator(BaseValidator):
         tests = self.current_file.get('tests', [])
         return self.are_tests_registered_in_conf_json_file_or_yml_file(tests)
 
-    def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
+    def is_valid_beta_integration(self) -> bool:
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
@@ -100,7 +97,7 @@ class IntegrationValidator(BaseValidator):
                 bool: True if integration is valid, False otherwise.
         """
         answers = [
-            super().is_valid_file(validate_rn),
+            super().is_valid_file(),
             self.is_valid_default_arguments(),
             self.is_valid_beta(),
             self.is_valid_image(),

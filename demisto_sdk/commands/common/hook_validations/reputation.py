@@ -10,11 +10,11 @@ class ReputationValidator(BaseValidator):
     """ReputationValidator is designed to validate the correctness of the file structure we enter to content repo.
     """
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self):
         """Check whether the reputation file is valid or not
         """
         is_reputation_valid = all([
-            super().is_valid_file(validate_rn),
+            super().is_valid_file(),
             self.is_valid_version(),
             self.is_valid_expiration()
         ])

@@ -371,41 +371,21 @@ def str2bool(v):
 
 
 def get_release_notes_file_path(file_path):
-    dir_name = os.path.dirname(file_path)
-
-    # CHANGELOG in pack sub dirs
-    if re.match(PACKAGE_YML_FILE_REGEX, file_path):
-        return os.path.join(dir_name, 'CHANGELOG.md')
-
-    # We got the CHANGELOG file to get its release notes
-    if file_path.endswith('CHANGELOG.md'):
+    if file_path.endswith('.md'):
         return file_path
-
-    # outside of packages, change log file will include the original file name.
-    file_name = os.path.basename(file_path)
-    return os.path.join(dir_name, os.path.splitext(file_name)[0] + '_CHANGELOG.md')
+    else:
+        print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
 
 
 def get_latest_release_notes_text(rn_path):
-    if not os.path.isfile(rn_path):
-        # releaseNotes were not provided
-        return None
-
     with open(rn_path) as f:
         rn = f.read()
 
     if not rn:
-        # empty releaseNotes is not supported
+        print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
         return None
 
-    new_rn = re.findall(RELEASE_NOTES_REGEX, rn)
-    if new_rn:
-        # get release notes up to release header
-        new_rn = new_rn[0].rstrip()
-    else:
-        new_rn = rn.replace(UNRELEASE_HEADER, '')
-
-    return new_rn if new_rn else None
+    return rn if rn else None
 
 
 def checked_type(file_path, compared_regexes=None, return_regex=False):

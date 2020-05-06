@@ -52,11 +52,11 @@ class ScriptValidator(BaseValidator):
             return not any(is_breaking_backwards[1:])
         return not any(is_breaking_backwards)
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self):
         # type: (bool) -> bool
         """Check whether the script is valid or not"""
         is_script_valid = all([
-            super().is_valid_file(validate_rn),
+            super().is_valid_file(),
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),

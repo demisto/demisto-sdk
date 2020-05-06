@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.tools import print_error
 class PlaybookValidator(BaseValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True) -> bool:
+    def is_valid_playbook(self, is_new_playbook: bool = True) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
@@ -20,7 +20,7 @@ class PlaybookValidator(BaseValidator):
         """
         if is_new_playbook:
             new_playbook_checks = [
-                super().is_valid_file(validate_rn),
+                super().is_valid_file(),
                 self.is_valid_version(),
                 self.is_id_equals_name(),
                 self.is_no_rolename(),

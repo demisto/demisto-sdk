@@ -6,7 +6,6 @@ from pathlib import Path
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.tests.test_tools import create_temp_file
 
 SECRETS_CMD = "secrets"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -136,7 +135,7 @@ def test_integration_secrets_integration_global_whitelist_positive(mocker):
     assert "no secrets were found" in result.stdout
 
 
-def test_integration_secrets_integration_with_regex_expression(tmp_path):
+def test_integration_secrets_integration_with_regex_expression(pack):
     """
     Given
     - White list with a term that can be regex (***.).
@@ -149,20 +148,24 @@ def test_integration_secrets_integration_with_regex_expression(tmp_path):
     - Ensure secrets that the secret isn't in the output.
     - Ensure no error raised
     """
-    white_list_path = create_temp_file(tmp_path, json.dumps({"generic_strings": "***.url\n"}), 'whitelist.txt')
-    file_contents_path = create_temp_file(tmp_path, '''
+    pack.secrets.build(
+        generic_strings='***.url\n'
+    )
+    pack.create_integration()
+    # Can used from integrations list
+    pack.integrations[0].write_code('''
     Random and unmeaningful file content
     a string containing ***.url\n
     ''')
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [SECRETS_CMD, '--input', file_contents_path, '-wl', white_list_path],
+    result = runner.invoke(main, [SECRETS_CMD, '--input', pack.integrations[0].path, '-wl', pack.secrets.path],
                            catch_exceptions=False)
     assert result.exit_code == 0
     assert not result.stderr
     assert "no secrets were found" in result.stdout
 
 
-def test_integration_secrets_integration_positive_with_input_option():
+def test_integration_secrets_integration_positive_with_input_option(integration):
     """
     Given
     - Integration with no secrets in it.
@@ -175,14 +178,13 @@ def test_integration_secrets_integration_positive_with_input_option():
     - Ensure secrets that the secret isn't in the output.
     - Ensure no error raised
     """
-    integration_secrets_path = join(
-        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure/Integrations/FeedAzure/FeedAzure.yml"
-    )
-    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration_secrets_path])
+    # Can pass a specific integration
+    integration.write_code('text that should not get caught')
+    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration.path])
     assert 'Finished validating secrets, no secrets were found' in result.stdout
 
 
-def test_integration_secrets_integration_negative_with_input_option(tmp_path):
+def test_integration_secrets_integration_negative_with_input_option(integration):
     """
     Given
     - A file containing secret
@@ -194,8 +196,8 @@ def test_integration_secrets_integration_negative_with_input_option(tmp_path):
     Then
     - Ensure secrets found.
     """
-    integration_secrets_path = create_temp_file(tmp_path, 'ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
-    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration_secrets_path])
+    integration.write_code('ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
+    result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration.path])
     assert 'Secrets were found in the following files' in result.stdout
 
 
@@ -213,6 +215,7 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     """
     # Handle running from root = should be fixed in secrets
     mocker.patch('demisto_sdk.commands.secrets.secrets.get_pack_name', return_value='CoolName')
+    # Can create an integration and get the object from it
     integration = pack.create_integration()
     integration.write_code('ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
     pack.secrets.build(generic_strings=['11111'])

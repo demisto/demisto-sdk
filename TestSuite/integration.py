@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import yaml
+
 
 class Integration:
     def __init__(self, tmpdir: Path, name):
@@ -14,6 +16,7 @@ class Integration:
         self._py_file = self._tmpdir_integration_path / f'{self.name}.py'
         self.py_path = str(self._py_file)
         self._yml_file = self._tmpdir_integration_path / f'{self.name}.yml'
+        self.yml_path = str(self._yml_file)
         self._readme_file = self._tmpdir_integration_path / 'README.md'
         self._description_file = self._tmpdir_integration_path / f'{self.name}_description.md'
         self._changelog_file = self._tmpdir_integration_path / 'CHANGELOG.md'
@@ -40,3 +43,6 @@ class Integration:
 
     def write_code(self, code: str):
         self._py_file.write_text(code)
+
+    def write_yml(self, yml: dict):
+        self._yml_file.write_text(yaml.dump(yml))

@@ -161,3 +161,37 @@ def test_pwsh_format(tmpdir, yml_file, yml_type):
         data = yaml.safe_load(f)
     assert data['fromversion'] == '5.5.0'
     assert data['commonfields']['version'] == -1
+
+
+PLAYBOOK_TEST = [
+    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
+     'playbook')
+]
+
+
+@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', PLAYBOOK_TEST)
+def test_string_condition_in_playbook(source_path, destination_path, formatter, yml_title, file_type):
+    """
+    Given
+    - Playbook with condition labeled as `yes`.
+    - destination_path to write the formatted playbook to.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensure the file was created.
+    - Ensure 'yes' string in the playbook condition remains string and do not change to boolean.
+    """
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+    saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
+    base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
+    base_yml.save_yml_to_destination_file()
+    assert os.path.isfile(saved_file_path)
+
+    with open(saved_file_path, 'r') as f:
+        content = f.read()
+        yaml_content = yaml.load(content)
+        assert 'yes' in yaml_content['tasks']['27']['nexttasks']
+    os.remove(saved_file_path)

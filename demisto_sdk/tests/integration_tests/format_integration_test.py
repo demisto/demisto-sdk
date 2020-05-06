@@ -4,6 +4,7 @@ from pathlib import PosixPath
 from typing import List
 
 import pytest
+import yaml
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
@@ -226,3 +227,36 @@ def _verify_conf_json_modified(test_playbooks: List, yml_title: str, conf_json_p
                 )
     except Exception:
         raise
+
+
+PLAYBOOK_TEST = [
+    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
+     'playbook')
+]
+
+
+@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', PLAYBOOK_TEST)
+def remove_playbook_sourceplaybookid(source_path, destination_path, formatter, file_type):
+    """
+    Given
+    - Playbook with field  `sourceplaybookid`.
+    - destination_path to write the formatted playbook to.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensure 'sourceplaybookid' was deleted from the yml file.
+    """
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+    saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
+    base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
+    base_yml.delete_sourceplaybookid()
+    base_yml.save_yml_to_destination_file()
+
+    with open(saved_file_path, 'r') as f:
+        content = f.read()
+        yaml_content = yaml.load(content)
+        assert 'sourceplaybookid' not in yaml_content
+    os.remove(saved_file_path)

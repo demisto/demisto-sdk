@@ -66,11 +66,32 @@ ID_SET = [
 
 @pytest.mark.parametrize('list_input, list_output', INPUT_TEST_HAS_DUPLICATE)
 def test_has_duplicate(list_input, list_output):
+    """
+    Given
+        - An list of dict with layout data called ID_SET & layout_id to check duplicate & expected result
+
+    When
+        - checking for duplicate
+
+    Then
+        - Ensure return true for duplicate layout
+        - Ensure return false for layout with different kind
+    """
     result = has_duplicate(ID_SET, list_input, 'Layouts', False)
     assert list_output == result
 
 
 def test_get_layout_data():
+    """
+    Given
+        - An layout file called layout-to-test.json
+
+    When
+        - parsing layout files
+
+    Then
+        - parsing all the data from file successfully
+    """
     test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/layout-to-test.json'
     result = get_layout_data(test_dir)
     result = result.get('urlRep')

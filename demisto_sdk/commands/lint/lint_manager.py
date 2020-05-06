@@ -204,7 +204,7 @@ class LintManager:
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, keep_container: bool,
-                         test_xml: str, json_report: str) -> int:
+                         test_xml: str, failure_report: str) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -219,7 +219,7 @@ class LintManager:
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
-            json_report(str): Path for store json report
+            failure_report(str): Path for store failed unit tests report
 
         Returns:
             int: exit code by falil exit codes by var EXIT_CODES
@@ -303,8 +303,8 @@ class LintManager:
                              return_exit_code=return_exit_code,
                              skipped_code=skipped_code,
                              pkgs_type=pkgs_type)
-        self._create_report(pkgs_status=pkgs_status,
-                            path=json_report)
+        self._create_failed_unit_tests_report(lint_status=lint_status,
+                                              path=failure_report)
 
         return return_exit_code
 
@@ -547,9 +547,8 @@ class LintManager:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod
-    def _create_report(pkgs_status: dict, path: str):
+    def _create_failed_unit_tests_report(lint_status: dict, path: str):
         if path:
-            json_path = Path(path) / "lint_report.json"
-            json.dump(fp=json_path.open(mode='w'),
-                      obj=pkgs_status,
-                      indent=4)
+            file_path = Path(path) / "failed_unit_tests_report.txt"
+            failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])
+            file_path.write_text('\n'.join(failed_ut))

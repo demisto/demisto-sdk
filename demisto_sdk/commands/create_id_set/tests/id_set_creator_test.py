@@ -69,7 +69,7 @@ ID_SET = [
 def test_has_duplicate(list_input, list_output):
     """
     Given
-        - An list of dict with layout data called ID_SET & layout_id to check duplicate & expected result
+        - A list of dictionaries with layout data called ID_SET & layout_id
 
     When
         - checking for duplicate

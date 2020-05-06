@@ -161,3 +161,22 @@ def test_pwsh_format(tmpdir, yml_file, yml_type):
         data = yaml.safe_load(f)
     assert data['fromversion'] == '5.5.0'
     assert data['commonfields']['version'] == -1
+
+
+PLAYBOOK_TEST = [
+    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
+     'playbook')
+]
+
+
+@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', PLAYBOOK_TEST)
+def test_string_condition_in_playbook(source_path, destination_path, formatter, yml_title, file_type):
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+    saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
+    base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
+    base_yml.save_yml_to_destination_file()
+    with open(saved_file_path, 'r') as f:
+        print(f)
+        assert 'yes' in base_yml.data['tasks']['27']['nexttasks']
+    os.remove(saved_file_path)

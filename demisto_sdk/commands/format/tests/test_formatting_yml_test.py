@@ -177,5 +177,7 @@ def test_string_condition_in_playbook(source_path, destination_path, formatter, 
     base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
     base_yml.save_yml_to_destination_file()
     with open(saved_file_path, 'r') as f:
-        assert 'yes' in base_yml.data['tasks']['27']['nexttasks']
+        content = f.read()
+        yaml_content = yaml.load(content)
+        assert 'yes' in yaml_content['tasks']['27']['nexttasks']
     os.remove(saved_file_path)

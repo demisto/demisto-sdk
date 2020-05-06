@@ -190,6 +190,7 @@ def test_string_condition_in_playbook(source_path, destination_path, formatter, 
     base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
     base_yml.save_yml_to_destination_file()
     assert os.path.isfile(saved_file_path)
+
     with open(saved_file_path, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)

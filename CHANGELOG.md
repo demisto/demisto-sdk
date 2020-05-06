@@ -1,5 +1,5 @@
 # Changelog
-* added fields in the id-set.json for the Layouts: file_path, kind.  
+* Added output fields:  file_path and kind for layouts in the id-set.json created by **create-id-set** command.
 * Fixed a bug in the **create-id-set** command Who returns Duplicate for Layouts with a different kind.
 * Fixed a bug in the **download** command when custom content contained not supported content entity.
 * Fixed a bug in the **unify** command when output path was provided empty.

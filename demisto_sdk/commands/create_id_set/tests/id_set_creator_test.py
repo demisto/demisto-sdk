@@ -71,7 +71,7 @@ def test_has_duplicate(list_input, list_output):
 
 
 def test_get_layout_data():
-    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/layout-to-test.json'
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/layout-to-test.json'
     result = get_layout_data(test_dir)
     result = result.get('urlRep')
     assert 'kind' in result.keys()

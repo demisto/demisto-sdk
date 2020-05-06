@@ -173,7 +173,7 @@ PLAYBOOK_TEST = [
 def test_string_condition_in_playbook(source_path, destination_path, formatter, yml_title, file_type):
     """
     Given
-    - Valid playbook yml source_path.
+    - Playbook with condition labeled as `yes`.
     - destination_path to write the formatted playbook to.
 
     When

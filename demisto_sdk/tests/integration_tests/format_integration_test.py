@@ -1,14 +1,15 @@
 import json
 import os
+from os.path import join
 from pathlib import PosixPath
 from typing import List
 
 import pytest
 import yaml
-from demisto_sdk.commands.common.git_tools import git_path
-from os.path import join
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML

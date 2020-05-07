@@ -2,8 +2,6 @@ import json
 from typing import Dict, List
 
 import click
-import yaml
-import yamlordereddictloader
 from demisto_sdk.commands.common.tools import (LOG_COLORS, _get_file_id,
                                                get_not_registered_tests,
                                                print_color)
@@ -12,6 +10,7 @@ from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
+ryaml.preserve_quotes = True
 
 
 class BaseUpdateYML(BaseUpdate):
@@ -61,17 +60,8 @@ class BaseUpdateYML(BaseUpdate):
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
         print(F'Saving output YML file to {self.output_file}')
-        # Configure safe dumper (multiline for strings)
-        yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
-
-        def repr_str(dumper, data):
-            if '\n' in data:
-                return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
-            return dumper.org_represent_str(data)
-
-        yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
         with open(self.output_file, 'w') as f:
-            yaml.dump(self.data, f, sort_keys=False)
+            ryaml.dump(self.data, f)  # ruamel preservers multilines
 
     def copy_tests_from_old_file(self):
         """Copy the tests key from old file if exists.

@@ -18,11 +18,12 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_entity_name_by_entity_type,
                                                get_files_in_dir,
                                                get_last_release_version,
-                                               get_matching_regex,
+                                               get_matching_regex, get_ryaml,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+                                              SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_DASHBOARD_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
@@ -255,3 +256,10 @@ def test_run_command_os(command, cwd):
     assert 0 == return_code
     assert stdout
     assert not stderr
+
+
+class TestGetFile:
+    def test_get_ryaml(self):
+        file_data = get_ryaml(SOURCE_FORMAT_INTEGRATION_COPY)
+        assert file_data
+        assert file_data.get('name') is not None

@@ -10,8 +10,9 @@ from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
+import click
 import git
 import requests
 import urllib3
@@ -26,9 +27,14 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
     TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER,
     WIDGETS_DIR)
+from ruamel.yaml import YAML
 
 # disable insecure warnings
 urllib3.disable_warnings()
+
+ryaml = YAML()
+ryaml.preserve_quotes = True  # type: ignore
+ryaml.allow_duplicate_keys = True
 
 
 class LOG_COLORS:
@@ -279,6 +285,27 @@ def get_file(method, file_path, type_of_file):
 
 def get_yaml(file_path):
     return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
+
+
+def get_ryaml(file_path: str) -> dict:
+    """
+    Get yml file contents using ruaml
+
+    Args:
+        file_path (string): The file path
+
+    Returns:
+        dict. The yml contents
+    """
+    try:
+        with open(os.path.expanduser(file_path), 'r') as yf:
+            data = ryaml.load(yf)
+    except FileNotFoundError as e:
+        click.echo(f'File {file_path} not found. Error was: {str(e)}', nl=True)
+    except Exception as e:
+        click.echo(
+            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)), nl=True)
+    return data
 
 
 def get_json(file_path):
@@ -576,18 +603,21 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str) -> Tuple[Dict, Union[str, None]]:
+def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
+        use_ryaml - Whether to use ryaml for file loading or not
 
     Returns:
         dict representation of the file, and the file_type, either .yml ot .json
     """
     if path:
         if path.endswith('.yml'):
+            if use_ryaml:
+                return get_ryaml(path), 'yml'
             return get_yaml(path), 'yml'
         elif path.endswith('.json'):
             return get_json(path), 'json'
@@ -986,7 +1016,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     """
     # Setting the method that should the curr path
     file_extension = os.path.splitext(file_path)[-1]
-    curr_string_transformer = str
+    curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
         curr_string_transformer = yaml.dump
     elif file_extension == '.json':

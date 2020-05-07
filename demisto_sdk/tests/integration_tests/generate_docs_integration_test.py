@@ -10,7 +10,7 @@ GENERATE_DOCS_CMD = "generate-docs"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
-class TestPlaybooks():
+class TestPlaybooks:
     def test_integration_generate_docs_playbook_positive_with_io(self, tmpdir):
         """
         Given
@@ -83,9 +83,30 @@ class TestPlaybooks():
             assert 'There are no inputs for this playbook.' in contents
             assert 'There are no outputs for this playbook.' in contents
 
+    def test_playbook_dependencies(self, tmpdir):
+        valid_playbook_with_dependencies = join(DEMISTO_SDK_PATH, "tests/test_files/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml")
+        runner = CliRunner(mix_stderr=False)
+        arguments = [
+            GENERATE_DOCS_CMD,
+            '-i', valid_playbook_with_dependencies,
+            '-o', tmpdir
+        ]
+        result = runner.invoke(main, arguments)
+        readme_path = join(tmpdir, 'Cortex_XDR_Incident_Handling_README.md')
+
+        assert result.exit_code == 0
+        assert 'Start generating playbook documentation...' in result.stdout
+        assert not result.stderr
+        assert not result.exception
+        assert Path(readme_path).exists()
+        with open(readme_path, 'r') as readme_file:
+            contents = readme_file.read()
+            assert 'Builtin' in contents
+            assert 'PaloAltoNetworks_XDR' not in contents
+
 
 @pytest.mark.skip(reason='Just place-holder stubs for later implementation')
-class TestScripts():
+class TestScripts:
     def test_integration_generate_docs_script_positive(self):
         pass
 
@@ -94,7 +115,7 @@ class TestScripts():
 
 
 @pytest.mark.skip(reason='Just place-holder stubs for later implementation')
-class TestIntegrations():
+class TestIntegrations:
     def test_integration_generate_docs_integration_positive(self):
         pass
 

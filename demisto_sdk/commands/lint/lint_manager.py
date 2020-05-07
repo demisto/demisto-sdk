@@ -107,7 +107,8 @@ class LintManager:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"])
             logger.debug(f"Test mandatory modules successfully collected")
         except git.GitCommandError as e:
-            print_error("Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
+            print_error(
+                "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
             logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         except (requests.exceptions.ConnectionError, urllib3.exceptions.NewConnectionError) as e:
@@ -203,8 +204,9 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
-                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, keep_container: bool,
-                         test_xml: str, json_report: str) -> int:
+                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+                         keep_container: bool,
+                         test_xml: str, failure_report: str) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -219,21 +221,21 @@ class LintManager:
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
-            json_report(str): Path for store json report
+            failure_report(str): Path for store failed unit tests report
 
         Returns:
             int: exit code by falil exit codes by var EXIT_CODES
         """
         lint_status = {
-            "fail_packs_flake8": [],
-            "fail_packs_bandit": [],
-            "fail_packs_mypy": [],
-            "fail_packs_vulture": [],
-            "fail_packs_pylint": [],
-            "fail_packs_pytest": [],
-            "fail_packs_pwsh_analyze": [],
-            "fail_packs_pwsh_test": [],
-            "fail_packs_image": [],
+            "fail_packs_flake8": set(),
+            "fail_packs_bandit": set(),
+            "fail_packs_mypy": set(),
+            "fail_packs_vulture": set(),
+            "fail_packs_pylint": set(),
+            "fail_packs_pytest": set(),
+            "fail_packs_pwsh_analyze": set(),
+            "fail_packs_pwsh_test": set(),
+            "fail_packs_image": set()
         }
 
         # Python or powershell or both
@@ -303,12 +305,12 @@ class LintManager:
                              return_exit_code=return_exit_code,
                              skipped_code=skipped_code,
                              pkgs_type=pkgs_type)
-        self._create_report(pkgs_status=pkgs_status,
-                            path=json_report)
+        self._create_failed_unit_tests_report(lint_status=lint_status, path=failure_report)
 
         return return_exit_code
 
-    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int, pkgs_type: list):
+    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int,
+                        pkgs_type: list):
         """ Log report to console
 
         Args:
@@ -547,9 +549,26 @@ class LintManager:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod
-    def _create_report(pkgs_status: dict, path: str):
-        if path:
-            json_path = Path(path) / "lint_report.json"
-            json.dump(fp=json_path.open(mode='w'),
-                      obj=pkgs_status,
-                      indent=4)
+    def _create_failed_unit_tests_report(lint_status: dict, path: str):
+        """
+        Creates and saves a file containing all failed unit tests
+        :param lint_status: dict
+            Dictionary containing type of failures and corresponding failing tests. Looks like this:
+             lint_status = {
+            "fail_packs_flake8": [],
+            "fail_packs_bandit": [],
+            "fail_packs_mypy": [],
+            "fail_packs_vulture": [],
+            "fail_packs_pylint": [],
+            "fail_packs_pytest": [],
+            "fail_packs_pwsh_analyze": [],
+            "fail_packs_pwsh_test": [],
+            "fail_packs_image": []
+        }
+        :param path: str
+            The path to save the report.
+        """
+        failed_ut = set.union(*lint_status.values())
+        if path and failed_ut:
+            file_path = Path(path) / "failed_lint_report.txt"
+            file_path.write_text('\n'.join(failed_ut))

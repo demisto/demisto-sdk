@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
@@ -23,7 +23,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
         doc = [description, '', '## Dependencies',
                'This playbook uses the following sub-playbooks, integrations, and scripts.', '']
 
-        playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook)
+        playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, input)
         inputs, inputs_errors = get_inputs(playbook)
         outputs, outputs_errors = get_outputs(playbook)
         playbook_filename = os.path.basename(input).replace('.yml', '')
@@ -74,10 +74,12 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
             return
 
 
-def get_playbook_dependencies(playbook):
+def get_playbook_dependencies(playbook: dict, playbook_path: str) -> Tuple[list, List[Union[Union[bytes, str], Any]],
+                                                                           list, list]:
     """
     Gets playbook dependencies(integrations, playbooks, scripts and commands) from playbook object.
     :param playbook: the playbook object.
+    :param playbook_path: The path of the playbook
     :return: the method returns 4 lists - integrations, playbooks, scripts and commands.
     """
     integrations = set()
@@ -86,14 +88,43 @@ def get_playbook_dependencies(playbook):
     playbooks = set()
 
     playbook_tasks = playbook.get('tasks')
+    playbook_path = os.path.relpath(playbook_path)
+    pack_path = os.path.dirname(os.path.dirname(playbook_path))
+    integration_dir_path = os.path.join(pack_path, 'Integrations')
+    # Get all files in integrations directories
+    pack_files = [os.path.join(r, file) for r, d, f in os.walk(integration_dir_path) for file in f]
+    integrations_files = []
+    for file in pack_files:
+        if file.endswith('.yml'):
+            # Get all yml files
+            integrations_files.append(file)
     for task in playbook_tasks:
         task = playbook_tasks[task]['task']
         if task['iscommand']:
             integration = task['script']
-            integration = integration.split('|||')
-            if integration[0]:
-                integrations.add(integration[0])
-            commands.add(integration[1])
+            brand_integration = task.get('brand')
+            integration_name, command_name = integration.split('|||')
+            if command_name:
+                commands.add(command_name)
+            if integration_name:
+                integrations.add(integration_name)
+                if 'Builtin' in integrations:
+                    integrations.remove('Builtin')
+
+            elif brand_integration:
+                integrations.add(brand_integration)
+
+            elif 'Packs' in playbook_path:
+                for file_ in integrations_files:
+                    with open(file_) as f:
+                        if command_name in f.read():
+                            integration_dependency_path = os.path.dirname(file_)
+                            integration_dependency = os.path.basename(integration_dependency_path)
+                            # Case of old integrations without a package.
+                            if integration_dependency == 'Integrations':
+                                integrations.add(os.path.basename(file_).replace('.yml', ''))
+                            else:
+                                integrations.add(integration_dependency)
         else:
             script_name = task.get('scriptName')
             if script_name:

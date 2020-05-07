@@ -34,6 +34,18 @@ def test_report_failed_image_creation():
 
 
 def test_create_failed_unit_tests_report_with_failed_tests():
+    """
+    Given`:
+        - Lint manager dictionary with two failed packs -Infoblox and HelloWorld
+
+    When:
+        - Creating failed unit tests report
+
+    Then:
+        - Ensure report file is created.
+        - Ensure report file contains exactly two packs.
+        - Ensure both pack appear in the report.
+    """
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {
         "fail_packs_flake8": [],
@@ -60,6 +72,16 @@ def test_create_failed_unit_tests_report_with_failed_tests():
 
 
 def test_create_failed_unit_tests_report_no_failed_tests():
+    """
+    Given:
+        - Lint manager dictionary with no failed packs.
+
+    When:
+        - Creating failed unit tests report.
+
+    Then:
+        - Ensure report file is not created.
+    """
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {
         "fail_packs_flake8": [],

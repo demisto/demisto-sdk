@@ -548,7 +548,7 @@ class LintManager:
 
     @staticmethod
     def _create_failed_unit_tests_report(lint_status: dict, path: str):
-        if path:
+        failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])
+        if path and failed_ut:
             file_path = Path(path) / "failed_unit_tests_report.txt"
-            failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])
             file_path.write_text('\n'.join(failed_ut))

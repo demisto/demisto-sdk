@@ -5,6 +5,7 @@
 * Fixed a bug in the **download** command when custom content contained not supported content entity.
 * Fixed a bug in **format** command in which boolean strings  (e.g. 'yes' or 'no') were converted to boolean values (e.g. 'True' or 'False').
 * **format** command now removes *sourceplaybookid* field from playbook files.
+* Fixed a bug in **generate-docs** command where the command didn't detect integration dependencies.
 
 
 #### 1.0.1

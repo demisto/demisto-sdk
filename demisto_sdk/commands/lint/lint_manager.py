@@ -551,7 +551,7 @@ class LintManager:
     @staticmethod
     def _create_failed_unit_tests_report(lint_status: dict, path: str):
         """
-        Creayes and saves a file containing all failed unit tests
+        Creates and saves a file containing all failed unit tests
         :param lint_status: dict
             Dictionary containing type of failures and corresponding failing tests. Looks like this:
              lint_status = {

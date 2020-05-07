@@ -21,13 +21,13 @@ PACK_INSTANCE_PATH = f'{CONTENT_BASE_PATH}/Packs/TestPack'
 
 INTEGRATION_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Integrations/TestIntegration'
 SCRIPT_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Scripts/TestScript'
-PLAYBOOK_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Playbooks/playbook-TestPlaybook.yml'
+PLAYBOOK_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Playbooks/playbook-DummyPlaybook.yml'
 LAYOUT_INSTANCE_PATH = f'{PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json'
 
 CUSTOM_CONTENT_SCRIPT_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml'
 CUSTOM_CONTENT_INTEGRATION_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml'
 CUSTOM_CONTENT_LAYOUT_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/layout-details-TestLayout.json'
-CUSTOM_CONTENT_PLAYBOOK_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/playbook-TestPlaybook.yml'
+CUSTOM_CONTENT_PLAYBOOK_PATH = f'{CUSTOM_CONTENT_BASE_PATH}/playbook-DummyPlaybook.yml'
 
 INTEGRATION_PACK_OBJECT = {'Test Integration': [
     {'name': 'Test Integration', 'id': 'Test Integration',
@@ -51,8 +51,8 @@ SCRIPT_PACK_OBJECT = {'TestScript': [
     {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'},
     {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/README.md', 'file_ending': 'md'}
 ]}
-PLAYBOOK_PACK_OBJECT = {'FormattingPerformance': [
-    {'name': 'FormattingPerformance', 'id': 'FormattingPerformance', 'path': PLAYBOOK_INSTANCE_PATH,
+PLAYBOOK_PACK_OBJECT = {'DummyPlaybook': [
+    {'name': 'DummyPlaybook', 'id': 'DummyPlaybook', 'path': PLAYBOOK_INSTANCE_PATH,
      'file_ending': 'yml'}
 ]}
 LAYOUT_PACK_OBJECT = {'Hello World Alert': [
@@ -75,7 +75,7 @@ INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Int
 SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
                                 'path': CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
                                 'type': 'script', 'file_ending': 'yml'}
-PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'FormattingPerformance', 'name': 'FormattingPerformance',
+PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'DummyPlaybook', 'name': 'DummyPlaybook',
                                   'path': CUSTOM_CONTENT_PLAYBOOK_PATH, 'entity': 'Playbooks',
                                   'type': 'playbook', 'file_ending': 'yml'}
 LAYOUT_CUSTOM_CONTENT_OBJECT = {'id': 'Hello World Alert', 'name': 'Hello World Alert',

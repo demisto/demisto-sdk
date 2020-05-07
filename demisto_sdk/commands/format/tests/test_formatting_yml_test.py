@@ -31,6 +31,16 @@ BASIC_YML_TEST_PACKS = [
 
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
 def test_yml_preserve_comment(source_path, destination_path, formatter, yml_title, file_type, capsys):
+    """
+    Given
+        - A Integration/Script/Playbook that contains comments in their YAML file
+
+    When
+        - Formatting the Integration/Script/Playbook
+
+    Then
+        - Ensure comments are being preserved
+    """
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
     base_yml = formatter(source_path, path=schema_path)

@@ -12,9 +12,10 @@ from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import git
+import click
+import git  # type: ignore
 import requests
-import urllib3
+import urllib3  # type: ignore
 import yaml
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR,
@@ -32,7 +33,7 @@ from ruamel.yaml import YAML
 urllib3.disable_warnings()
 
 ryaml = YAML()
-ryaml.preserve_quotes = True
+ryaml.preserve_quotes = True  # type: ignore
 ryaml.allow_duplicate_keys = True
 
 
@@ -289,17 +290,21 @@ def get_yaml(file_path):
 def get_ryaml(file_path: str) -> dict:
     """
     Get yml file contents using ruaml
-    :param file_path: The file path
-    :return: The yml contents
+
+    Args:
+        file_path (string): The file path
+
+    Returns:
+        dict. The yml contents
     """
     try:
         with open(os.path.expanduser(file_path), 'r') as yf:
             data = ryaml.load(yf)
     except FileNotFoundError as e:
-        print_error(f'File {file_path} not found. Error wasL {str(e)}')
+        click.echo(f'File {file_path} not found. Error was: {str(e)}', nl=True)
     except Exception as e:
-        print_error(
-            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)))
+        click.echo(
+            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)), nl=True)
     return data
 
 
@@ -604,6 +609,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
 
     Arguments:
         path - a path to the file
+        use_ryaml - Whether to use ryaml for file loading or not
 
     Returns:
         dict representation of the file, and the file_type, either .yml ot .json
@@ -1012,7 +1018,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dump
+        curr_string_transformer = yaml.dump  # type: ignore
     elif file_extension == '.json':
-        curr_string_transformer = partial(json.dumps, indent=4)
+        curr_string_transformer = partial(json.dumps, indent=4)  # type: ignore
     return curr_string_transformer

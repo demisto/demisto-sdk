@@ -178,7 +178,7 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
 def execute_command(command_example, insecure: bool):
     errors = []
     context = {}
-    md_example = ''
+    md_example: str = ''
     cmd = command_example
     try:
         runner = Runner('', insecure=insecure)
@@ -194,11 +194,13 @@ def execute_command(command_example, insecure: bool):
                 context = {k.split('(')[0]: v for k, v in raw_context.items()}
 
             if entry.contents:
-                content = entry.contents
+                content: str = entry.contents
                 if isinstance(content, STRING_TYPES):
                     md_example += content
                 else:
                     md_example += json.dumps(content)
+
+            md_example = format_md(md_example)
 
     except RuntimeError:
         errors.append('The provided example for cmd {} has failed...'.format(cmd))
@@ -254,6 +256,21 @@ def build_example_dict(command_examples: list, insecure: bool):
         if not cmd_errors and cmd not in examples:
             examples[cmd] = (example, md_example, context_example)
     return examples, errors
+
+
+def format_md(md: str) -> str:
+    """
+    Formats a given md string by replacing <br> and <BR> tags with <br/>
+    :param
+        md (str): String representing mark down.
+    :return:
+        str. Formatted string representing mark down.
+    """
+    if md:
+        # The replacement of <br> by <br/> is for compatibility with our docs site
+        md = md.replace('<br>', '<br/>')
+        md = md.replace('<BR>', '<br/>')
+    return md
 
 
 entryTypes = {

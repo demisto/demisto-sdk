@@ -116,7 +116,7 @@ def get_playbook_dependencies(playbook: dict, playbook_path: str):
             elif 'Packs' in playbook_path:
                 for file_ in integrations_files:
                     with open(file_) as f:
-                        if integration[1] in f.read():
+                        if command_name in f.read():
                             integration_dependency_path = os.path.dirname(file_)
                             integration_dependency = os.path.basename(integration_dependency_path)
                             # Case of old integrations without a package.

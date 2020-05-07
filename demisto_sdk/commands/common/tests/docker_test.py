@@ -154,8 +154,11 @@ def test_is_docker_image_latest_tag_with_default_image():
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_modified_file = False
         docker_image_validator.docker_image_tag = '1.3-alpine'
+        docker_image_validator.is_valid = True
+
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
+        assert docker_image_validator.is_docker_image_valid() is False
 
 
 def test_is_docker_image_latest_tag_with_tag_labeled_latest():
@@ -177,9 +180,12 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
         docker_image_validator.docker_image_name = 'demisto/python'
 
         docker_image_validator.is_latest_tag = True
+        docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = 'latest'
+
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
+        assert docker_image_validator.is_docker_image_valid() is False
 
 
 def test_is_docker_image_latest_tag_with_latest_tag():
@@ -201,9 +207,12 @@ def test_is_docker_image_latest_tag_with_latest_tag():
         docker_image_validator.docker_image_name = 'demisto/python'
 
         docker_image_validator.is_latest_tag = True
+        docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = '1.0.3'
+
         assert docker_image_validator.is_docker_image_latest_tag() is True
         assert docker_image_validator.is_latest_tag is True
+        assert docker_image_validator.is_docker_image_valid() is True
 
 
 def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
@@ -217,6 +226,8 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
    Then
    -  If the docker image is numeric and the most update one, it is Valid
    -  If the docker image is not numeric and labeled "latest", it is Invalid
+   - If the docker image is not the most updated one it is still valid
+        (however, a warning will be printed)
   """
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
@@ -226,8 +237,11 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
-        assert docker_image_validator.is_docker_image_latest_tag() is False
-        assert docker_image_validator.is_latest_tag is False
+        docker_image_validator.is_valid = True
+
+        assert docker_image_validator.is_docker_image_latest_tag() is True
+        assert docker_image_validator.is_latest_tag is True
+        assert docker_image_validator.is_docker_image_valid() is True
 
 
 def test_is_docker_image_latest_tag_without_tag():
@@ -250,5 +264,8 @@ def test_is_docker_image_latest_tag_without_tag():
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
+        docker_image_validator.is_valid = True
+
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
+        assert docker_image_validator.is_docker_image_valid() is False

@@ -87,7 +87,7 @@ def get_playbook_dependencies(playbook, input):
 
     playbook_tasks = playbook.get('tasks')
     playbook_path = os.path.relpath(input)
-    pack_path = '/'.join(os.path.dirname(input).split('/')[:2])
+    pack_path = os.path.dirname(os.path.dirname(playbook_path))
     integration_dir_path = os.path.join(pack_path, 'Integrations')
     # Get all files in integrations directories
     pack_files = [os.path.join(r, file) for r, d, f in os.walk(integration_dir_path) for file in f]
@@ -102,20 +102,26 @@ def get_playbook_dependencies(playbook, input):
             integration = task['script']
             brand_integration = task['brand']
             integration = integration.split('|||')
-            if integration[0] and integration[0] != 'Builtin':
+            if integration[0] or brand_integration == 'Builtin':
+                continue
+            elif integration[0]:
                 integrations.add(integration[0])
                 commands.add(integration[1])
 
             elif brand_integration:
-                commands.add(brand_integration)
+                integrations.add(brand_integration)
 
-            elif playbook_path.startswith('Packs'):
+            elif 'Packs' in playbook_path:
                 for file_ in integrations_files:
                     with open(file_) as f:
                         if integration[1] in f.read():
                             integration_dependency_path = os.path.dirname(file_)
                             integration_dependency = os.path.basename(integration_dependency_path)
-                            integrations.add(integration_dependency)
+                            # Case of old integrations without a package.
+                            if integration_dependency == 'Integrations':
+                                integrations.add(os.path.basename(file_).replace('.yml', ''))
+                            else:
+                                integrations.add(integration_dependency)
         else:
             script_name = task.get('scriptName')
             if script_name:

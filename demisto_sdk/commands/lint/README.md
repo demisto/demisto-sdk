@@ -46,8 +46,8 @@ Options:
     Keep the test container
 *  **--test-xml PATH**
     Path to store pytest xml results
-*  **--json-report PATH**
-    Path to store json results
+*  **--failure-report**
+    Path to store failed unit tests report
 *  **-lp, --log-path PATH**
     Path to store all levels of logs
 

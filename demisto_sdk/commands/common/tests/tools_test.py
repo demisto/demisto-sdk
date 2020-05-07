@@ -144,13 +144,32 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
         assert hello_world_readme == {}
 
-    def test_is_not_test_file(self):
-        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
-        assert not test_file
+    def test_should_file_skip_validation_negative(self):
+        should_skip = tools.should_file_skip_validation('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
+        assert not should_skip
 
-    def test_is_test_file(self):
-        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/test_data/search_alerts.json')
-        assert test_file
+    SKIPPED_FILE_PATHS = [
+        'some_text_file.txt',
+        'pack_metadata.json',
+        'testdata/file.json',
+        'test_data/file.json',
+        'data_test/file.json',
+        'testcommandsfunctions/file.json',
+        'testhelperfunctions/file.json',
+        'StixDecodeTest/file.json',
+        'TestCommands/file.json',
+        'SetGridField_test/file.json',
+        'IPNetwork_test/file.json',
+        'test-data/file.json'
+        'some_file/integration_DESCRIPTION.md'
+        'some_file/integration_CHANGELOG.md'
+        'some_file/integration_unified.md'
+    ]
+
+    @pytest.mark.parametrize("file_path", SKIPPED_FILE_PATHS)
+    def test_should_file_skip_validation_positive(self, file_path):
+        should_skip = tools.should_file_skip_validation(file_path)
+        assert should_skip
 
 
 class TestGetMatchingRegex:

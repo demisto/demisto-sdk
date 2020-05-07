@@ -102,10 +102,10 @@ def get_playbook_dependencies(playbook, input):
             integration = task['script']
             brand_integration = task['brand']
             integration = integration.split('|||')
-            if integration[0] or brand_integration == 'Builtin':
-                continue
-            elif integration[0]:
+            if integration[0]:
                 integrations.add(integration[0])
+                if 'Builtin' in integrations:
+                    integrations.remove('Builtin')
                 commands.add(integration[1])
 
             elif brand_integration:

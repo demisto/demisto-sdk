@@ -10,7 +10,7 @@ from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
-ryaml.preserve_quotes = True
+ryaml.preserve_quotes = True  # type: ignore
 
 
 class BaseUpdateYML(BaseUpdate):
@@ -151,3 +151,4 @@ class BaseUpdateYML(BaseUpdate):
                     test_playbooks]
         elif file_type in {'playbook', 'script'}:
             return [{'playbookID': test_playbook_id} for test_playbook_id in test_playbooks]
+        return []

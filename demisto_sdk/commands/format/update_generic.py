@@ -15,7 +15,7 @@ from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
-ryaml.preserve_quotes = True
+ryaml.preserve_quotes = True  # type: ignore
 
 
 class BaseUpdate:

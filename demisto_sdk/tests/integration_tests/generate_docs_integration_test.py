@@ -72,7 +72,6 @@ class TestPlaybooks:
         ]
         result = runner.invoke(main, arguments)
         readme_path = join(tmpdir, 'Playbooks.playbook-test_README.md')
-
         assert result.exit_code == 0
         assert 'Start generating playbook documentation...' in result.stdout
         assert not result.stderr
@@ -83,7 +82,7 @@ class TestPlaybooks:
             assert 'There are no inputs for this playbook.' in contents
             assert 'There are no outputs for this playbook.' in contents
 
-    def test_playbook_dependencies(self, tmpdir):
+    def test_integration_generate_docs_playbook_dependencies(self, tmpdir):
         """
         Given
         - Path to valid playbook yml file to generate docs for.
@@ -115,7 +114,7 @@ class TestPlaybooks:
         with open(readme_path, 'r') as readme_file:
             contents = readme_file.read()
             assert 'Builtin' not in contents
-            assert 'DummyIntegration' in contents
+            assert '### Integrations\n* DummyIntegration\n' in contents
 
 
 @pytest.mark.skip(reason='Just place-holder stubs for later implementation')

@@ -74,10 +74,11 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
             return
 
 
-def get_playbook_dependencies(playbook, input):
+def get_playbook_dependencies(playbook: dict, playbook_path: str):
     """
     Gets playbook dependencies(integrations, playbooks, scripts and commands) from playbook object.
     :param playbook: the playbook object.
+    :param playbook_path: The path of the playbook
     :return: the method returns 4 lists - integrations, playbooks, scripts and commands.
     """
     integrations = set()
@@ -86,27 +87,28 @@ def get_playbook_dependencies(playbook, input):
     playbooks = set()
 
     playbook_tasks = playbook.get('tasks')
-    playbook_path = os.path.relpath(input)
+    playbook_path = os.path.relpath(playbook_path)
     pack_path = os.path.dirname(os.path.dirname(playbook_path))
     integration_dir_path = os.path.join(pack_path, 'Integrations')
     # Get all files in integrations directories
     pack_files = [os.path.join(r, file) for r, d, f in os.walk(integration_dir_path) for file in f]
     integrations_files = []
     for file in pack_files:
-        if file.endswith('.yml') and not os.path.basename(file).startswith('integration'):
+        if file.endswith('.yml'):
             # Get all yml files
             integrations_files.append(file)
     for task in playbook_tasks:
         task = playbook_tasks[task]['task']
         if task['iscommand']:
             integration = task['script']
-            brand_integration = task['brand']
-            integration = integration.split('|||')
-            if integration[0]:
-                integrations.add(integration[0])
+            brand_integration = task.get('brand')
+            integration_name, command_name = integration.split('|||')
+            if command_name:
+                commands.add(command_name)
+            if integration_name:
+                integrations.add(integration_name)
                 if 'Builtin' in integrations:
                     integrations.remove('Builtin')
-                commands.add(integration[1])
 
             elif brand_integration:
                 integrations.add(brand_integration)

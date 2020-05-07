@@ -49,5 +49,5 @@ enabled: true
 scripttarget: 0
 subtype: python3
 runonce: false
-dockerimage: demisto/python3:3.7.3.286
+dockerimage: demisto/python3:3.7.3.286 # comment
 runas: DBotWeakRole

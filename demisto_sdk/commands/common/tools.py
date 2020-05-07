@@ -13,9 +13,9 @@ from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import click
-import git  # type: ignore
+import git
 import requests
-import urllib3  # type: ignore
+import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR,

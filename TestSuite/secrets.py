@@ -14,9 +14,11 @@ class Secrets:
                 temp_path.mkdir()
         self._secrets_path = temp_path / file_name
         self.path = str(self._secrets_path)
-        self.build()
 
-    def build(self, urls=None, ips=None, files=None, generic_strings=None):
+    def write_secrets(self, secrets: list):
+        self._secrets_path.write_text('\n'.join(secrets))
+
+    def write_global_secrets(self, urls=None, ips=None, files=None, generic_strings=None):
         if files is None:
             files = []
         if urls is None:

@@ -6,6 +6,7 @@ from pathlib import Path
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 SECRETS_CMD = "secrets"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -213,12 +214,13 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     Then
     - Ensure secrets found.
     """
+    mocker.patch.object(SecretsValidator, 'get_branch_name', return_value='branch name')
+    mocker.patch('demisto_sdk.commands.secrets.secrets.run_command', return_value=True)
+    os.chdir(pack.repo_path)
     # Handle running from root = should be fixed in secrets
-    mocker.patch('demisto_sdk.commands.secrets.secrets.get_pack_name', return_value='CoolName')
     # Can create an integration and get the object from it
-    integration = pack.create_integration()
+    integration = pack.create_integration(name='integration')
     integration.write_code('ThunderBolt@ndLightningVeryV3ryFr1eghtningM3\n')
-    pack.secrets.build(generic_strings=['11111'])
-    result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.py_path, '-wl', pack.secrets.path])
+    result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.py_path])  # '-wl', pack.secrets.path])
     assert 1 == result.exit_code
     assert 'Secrets were found in the following files' in result.stdout

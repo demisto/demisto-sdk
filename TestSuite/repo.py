@@ -29,11 +29,15 @@ class Repo:
         self._packs_path = tmpdir / 'Packs'
         self._packs_path.mkdir()
         self.path = str(self._tmpdir)
-        self.secrets = Secrets(tmpdir, 'Tests/secrets_white_list_json')
+        self.secrets = Secrets(tmpdir, './Tests/secrets_white_list.json')
+        self.secrets.write_global_secrets()
 
     def create_pack(self, name: Optional[str] = None):
-        if not name:
+        if name is None:
             name = f'pack_{len(self.packs)}'
-        pack = Pack(self._packs_path, name)
+        pack = Pack(self._packs_path, name, self.path)
         self.packs.append(pack)
         return pack
+
+    def build_global_secrets(self, urls=None, ips=None, files=None, generic_strings=None):
+        self.secrets.write_global_secrets(urls, ips, files, generic_strings)

@@ -24,26 +24,46 @@ class Pack:
 
     """
 
-    def __init__(self, packs_dir: Path, name: str):
+    def __init__(self, packs_dir: Path, name: str, repo_path: str):
         # Initiate lists:
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         # Create base pack
+        self.repo_path = repo_path
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
         self.path = str(self._pack_path)
         # Create repo structure
-        self._integrations_path = packs_dir / 'Integrations'
+        self._integrations_path = self._pack_path / 'Integrations'
         self._integrations_path.mkdir()
-        self._scripts_path = packs_dir / 'Scripts'
+        self._scripts_path = self._pack_path / 'Scripts'
         self._scripts_path.mkdir()
-        self._playbooks_path = packs_dir / 'Playbooks'
+        self._playbooks_path = self._pack_path / 'Playbooks'
         self._playbooks_path.mkdir()
         self.secrets = Secrets(self._pack_path)
+        self.secrets.write_secrets([])
 
-    def create_integration(self, name: Optional[str] = None):
-        if not name:
+    def create_integration(
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            code: str = '',
+            readme: str = '',
+            description: str = '',
+            changelog: str = '',
+            image: bytes = b''):
+        if name is None:
             name = f'integration_{len(self.integrations)}'
-        integration = Integration(self._integrations_path, name)
+        if yml is None:
+            yml = {}
+        integration = Integration(self._integrations_path, name, self.repo_path)
+        integration.build(
+            code,
+            yml,
+            readme,
+            description,
+            changelog,
+            image
+        )
         self.integrations.append(integration)
         return integration

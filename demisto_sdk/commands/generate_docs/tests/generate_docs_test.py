@@ -176,7 +176,7 @@ def test_get_playbook_dependencies():
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_playbook_dependencies
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook)
+    playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, input=TEST_PLAYBOOK_PATH)
 
     assert playbooks == ['Get Original Email - Gmail']
     assert integrations == ['Gmail']

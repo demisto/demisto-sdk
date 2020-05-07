@@ -10,7 +10,7 @@ from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import git
@@ -1016,9 +1016,9 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     """
     # Setting the method that should the curr path
     file_extension = os.path.splitext(file_path)[-1]
-    curr_string_transformer = str
+    curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dump  # type: ignore
+        curr_string_transformer = yaml.dump
     elif file_extension == '.json':
-        curr_string_transformer = partial(json.dumps, indent=4)  # type: ignore
+        curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer

@@ -292,8 +292,14 @@ def get_ryaml(file_path: str) -> dict:
     :param file_path: The file path
     :return: The yml contents
     """
-    with open(os.path.expanduser(file_path), 'r') as yf:
-        data = ryaml.load(yf)
+    try:
+        with open(os.path.expanduser(file_path), 'r') as yf:
+            data = ryaml.load(yf)
+    except FileNotFoundError as e:
+        print_error(f'File {file_path} not found. Error wasL {str(e)}')
+    except Exception as e:
+        print_error(
+            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)))
     return data
 
 

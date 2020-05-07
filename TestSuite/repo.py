@@ -4,8 +4,8 @@
 from pathlib import Path
 from typing import List, Optional
 
+from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.pack import Pack
-from TestSuite.secrets import Secrets
 
 
 class Repo:
@@ -29,15 +29,13 @@ class Repo:
         self._packs_path = tmpdir / 'Packs'
         self._packs_path.mkdir()
         self.path = str(self._tmpdir)
-        self.secrets = Secrets(tmpdir, './Tests/secrets_white_list.json')
-        self.secrets.write_global_secrets()
+        self.secrets = GlobalSecrets(tmpdir)
+        self.secrets.write_secrets()
+        self.global_secrets_path = self.secrets.path
 
     def create_pack(self, name: Optional[str] = None):
         if name is None:
             name = f'pack_{len(self.packs)}'
-        pack = Pack(self._packs_path, name, self.path)
+        pack = Pack(self._packs_path, name, self.path, global_secrets=self.secrets)
         self.packs.append(pack)
         return pack
-
-    def build_global_secrets(self, urls=None, ips=None, files=None, generic_strings=None):
-        self.secrets.write_global_secrets(urls, ips, files, generic_strings)

@@ -3,12 +3,14 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+from TestSuite.global_secrets import GlobalSecrets
 
 
 class Integration:
-    def __init__(self, tmpdir: Path, name, repo_path: str):
+    def __init__(self, tmpdir: Path, name, repo_path: str, global_secrets: GlobalSecrets):
         self.name = name
         self.repo_path = repo_path
+        self.global_secrets = global_secrets
         self._integrations_tmpdir = tmpdir
         self._tmpdir_integration_path = self._integrations_tmpdir / f'{self.name}'
         if not self._integrations_tmpdir.exists():

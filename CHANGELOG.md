@@ -1,4 +1,5 @@
 # Changelog
+* Fixed a bug in the **format** command where comments were being removed.
 * Added output fields: _file_path_ and _kind_ for layouts in the id-set.json created by **create-id-set** command.
 * Fixed a bug in the **create-id-set** command Who returns Duplicate for Layouts with a different kind.
 * Added formatting to **generate-docs** command results replacing all `<br>` tags with `<br/>`.

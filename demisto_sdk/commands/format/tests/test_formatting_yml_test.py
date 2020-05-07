@@ -1,8 +1,9 @@
 import os
 import shutil
-
+import sys
 import pytest
 import yaml
+from ruamel.yaml import YAML
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -14,6 +15,10 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY)
 
+ryaml = YAML()
+ryaml.preserve_quotes = True
+ryaml.allow_duplicate_keys = True
+
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
      'integration'),
@@ -21,6 +26,16 @@ BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
      'playbook')
 ]
+
+
+@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
+def test_yml_preserve_comment(source_path, destination_path, formatter, yml_title, file_type, capsys):
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+    base_yml = formatter(source_path, path=schema_path)
+    ryaml.dump(base_yml.data, sys.stdout)
+    stdout, _ = capsys.readouterr()
+    assert '# comment' in stdout
 
 
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)

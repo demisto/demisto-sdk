@@ -217,6 +217,8 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
    Then
    -  If the docker image is numeric and the most update one, it is Valid
    -  If the docker image is not numeric and labeled "latest", it is Invalid
+   - If the docker image is not the most updated one it is still valid
+        (however, a warning will be printed)
   """
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
@@ -226,8 +228,8 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
-        assert docker_image_validator.is_docker_image_latest_tag() is False
-        assert docker_image_validator.is_latest_tag is False
+        assert docker_image_validator.is_docker_image_latest_tag() is True
+        assert docker_image_validator.is_latest_tag is True
 
 
 def test_is_docker_image_latest_tag_without_tag():

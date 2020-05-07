@@ -9,7 +9,8 @@ import shutil
 import zipfile
 from typing import List
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
+from demisto_sdk.commands.common.constants import (BASE_PACK,
+                                                   BETA_INTEGRATIONS_DIR,
                                                    CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -430,6 +431,24 @@ class ContentCreator:
 
         return branch_name
 
+    @staticmethod
+    def copy_docs_files(content_bundle_path, packs_bundle_path):
+        for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
+            if os.path.exists(doc_file):
+                print(f'copying {doc_file} doc to content bundle')
+                shutil.copyfile(doc_file,
+                                os.path.join(content_bundle_path, os.path.basename(doc_file)))
+                # copy doc to packs bundle
+                print(f'copying {doc_file} doc to content pack bundle')
+                base_pack_doc_path = os.path.join(packs_bundle_path, BASE_PACK, "Documentation")
+
+                if not os.path.exists(base_pack_doc_path):
+                    os.mkdir(base_pack_doc_path)
+                shutil.copy(doc_file, os.path.join(base_pack_doc_path, os.path.basename(doc_file)))
+            else:
+                print_warning(f'{doc_file} was not found and '
+                              'therefore was not added to the content bundle')
+
     def create_content(self):
         """
         Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"
@@ -468,14 +487,7 @@ class ContentCreator:
             for bundle_dir in [self.content_bundle, self.test_bundle]:
                 shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
 
-            for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
-                if os.path.exists(doc_file):
-                    print(f'copying {doc_file} doc to content bundle')
-                    shutil.copyfile(doc_file,
-                                    os.path.join(self.content_bundle, os.path.basename(doc_file)))
-                else:
-                    print_warning(f'{doc_file} was not found and '
-                                  'therefore was not added to the content bundle')
+            ContentCreator.copy_docs_files(content_bundle_path=self.content_bundle, packs_bundle_path=self.packs_bundle)
 
             print('Compressing bundles...')
             shutil.make_archive(self.content_zip, 'zip', self.content_bundle)

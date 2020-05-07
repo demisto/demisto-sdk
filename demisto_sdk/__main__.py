@@ -407,7 +407,12 @@ def format_yml(input=None, output=None, from_version=None, no_validate=None):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The path of an integration file or a package directory to upload", required=True)
+    "-i", "--input", help="The path of file or a directory to upload. The following are supported:\n"
+                          "- Pack\n"
+                          "- A content entity directory that is inside a pack. For example: an Integrations "
+                          "directory or a Layouts directory.\n"
+                          "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
+                          "helloWorld.yml", required=True)
 @click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(

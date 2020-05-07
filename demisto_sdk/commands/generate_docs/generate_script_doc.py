@@ -12,9 +12,9 @@ from demisto_sdk.commands.generate_docs.common import (
 def generate_script_doc(input, examples, output: str = None, permissions: str = None,
                         limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
-        doc = []
-        errors = []
-        example_section = []
+        doc: list = []
+        errors: list = []
+        example_section: list = []
 
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input))

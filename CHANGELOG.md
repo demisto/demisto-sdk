@@ -1,11 +1,22 @@
 # Changelog
-* Fixed a bug in the **unify** command when output path was provided empty.
-* Improved error message for integration with no tests configured
-* Fixed a bug in the **create** command where a unified YML with a docker image for 4.5 was copied incorrectly.
+* Added output fields: _file_path_ and _kind_ for layouts in the id-set.json created by **create-id-set** command.
+* Fixed a bug in the **create-id-set** command Who returns Duplicate for Layouts with a different kind.
+* Added formatting to **generate-docs** command results replacing all `<br>` tags with `<br/>`.
+* Fixed a bug in the **download** command when custom content contained not supported content entity.
+* Fixed a bug in **format** command in which boolean strings  (e.g. 'yes' or 'no') were converted to boolean values (e.g. 'True' or 'False').
+* **format** command now removes *sourceplaybookid* field from playbook files.
 
+
+#### 1.0.1
+* Fixed a bug in the **unify** command when output path was provided empty.
+* Improved error message for integration with no tests configured.
+* Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.
+* Fixed a bug in the **create** command where a unified YML with a docker image for 4.5 was copied incorrectly.
 * Missing release notes message are now showing the release notes file path to update.
 * Fixed an issue in the **validate** command in which unified YAML files were not ignored.
 * File format suggestions are now shown in the relevant file format (JSON or YAML).
+* Changed Docker image validation to fail only on non-valid ones.
+* Removed backward compatibility validation when Docker image is updated.
 
 #### 1.0.0
 * Improved the *upload* command to support the upload of all the content entities within a pack.

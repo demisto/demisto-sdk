@@ -1,11 +1,9 @@
 import re
 from datetime import datetime, timedelta
-from distutils.version import LooseVersion
 
 from pkg_resources import parse_version
 
 import requests
-from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
 
@@ -42,36 +40,44 @@ class DockerImageValidator(object):
         if not self.docker_image_latest_tag:
             self.is_valid = False
         elif not self.is_docker_image_latest_tag():
-            print_error(Errors.not_latest_docker(self.file_path, self.docker_image_tag, self.docker_image_latest_tag))
             self.is_valid = False
         return self.is_valid
 
     def is_docker_image_latest_tag(self):
+        if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
+            # the docker image is the default one
+            self.is_latest_tag = False
+            print_error('The current docker image in the yml file is the default one: demisto/python:1.3-alpine,\n'
+                        'Please create or use another docker image\n')
+            return self.is_latest_tag
+
         if not self.docker_image_name or not self.docker_image_latest_tag:
             # If the docker image isn't in the format we expect it to be or we failed fetching the tag
             # We don't want to print any error msgs to user because they have already been printed
             self.is_latest_tag = False
             return self.is_latest_tag
 
-        server_version = LooseVersion(self.from_version)
-        # Case of a modified file with version >= 5.0.0
-        if self.is_modified_file and server_version >= '5.0.0':
-            if self.docker_image_latest_tag != self.docker_image_tag and not \
-                    'demisto/python:1.3-alpine' == '{}:{}'.format(self.docker_image_name, self.docker_image_tag):
-                # If docker image name are different and if the docker image isn't the default one
-                self.is_latest_tag = False
-        # Case of an added file
-        elif not self.is_modified_file:
-            if self.docker_image_latest_tag != self.docker_image_tag:
-                self.is_latest_tag = False
+        if self.docker_image_latest_tag != self.docker_image_tag:
+            # If docker image tag is not the most updated one that exists in docker-hub
+            self.is_latest_tag = False
 
         if not self.is_latest_tag:
-            print_error('The docker image tag is not the latest, please update it.\n'
-                        'The docker image tag in the yml file is: {}\n'
-                        'The latest docker image tag in docker hub is: {}\n'
-                        'You can check for the tags of {} here: https://hub.docker.com/r/{}/tags\n'
-                        .format(self.docker_image_tag, self.docker_image_latest_tag, self.docker_image_name,
-                                self.docker_image_name))
+            self.is_latest_tag = False
+            print_warning('The docker image tag is not the latest, please update it.\n'
+                          'The docker image tag in the yml file is: {}\n'
+                          'The latest docker image tag in docker hub is: {}\n'
+                          'You can check for the most updated version of {} here: https://hub.docker.com/r/{}/tags\n'
+                          .format(self.docker_image_tag, self.docker_image_latest_tag, self.docker_image_name,
+                                  self.docker_image_name))
+
+        # the most updated tag should be numeric and not labeled "latest"
+        if self.docker_image_latest_tag == "latest":
+            self.is_latest_tag = False
+            print_error('"latest" tag is not allowed,\n'
+                        'Please create or update to an updated versioned image\n'
+                        'You can check for the most updated version of {} here: https://hub.docker.com/r/{}/tags\n'
+                        .format(self.docker_image_tag, self.docker_image_name))
+
         return self.is_latest_tag
 
     def get_docker_image_from_yml(self):
@@ -169,9 +175,8 @@ class DockerImageValidator(object):
         return max_tag
 
     @staticmethod
-    def find_latest_tag_by_date(tags):
+    def find_latest_tag_by_date(tags: list) -> str:
         """Get the latest tags by datetime comparison.
-
         Args:
             tags(list): List of dictionaries representing the docker image tags
 
@@ -182,10 +187,9 @@ class DockerImageValidator(object):
         latest_tag_date = datetime.now() - timedelta(days=400000)
         for tag in tags:
             tag_date = datetime.strptime(tag.get('last_updated'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            if tag_date >= latest_tag_date:
+            if tag_date >= latest_tag_date and tag.get('name') != 'latest':
                 latest_tag_date = tag_date
                 latest_tag_name = tag.get('name')
-
         return latest_tag_name
 
     @staticmethod
@@ -277,5 +281,5 @@ class DockerImageValidator(object):
 
             return image, tag
         else:
-            # If the yml file has no docker image we provide the default one 'demisto/python:1.3-alpine'
-            return 'demisto/python', '1.3-alpine'
+            # If the yml file has no docker image we provide a default one with numeric tag
+            return 'demisto/python', '2.7.17.6981'

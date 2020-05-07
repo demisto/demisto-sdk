@@ -42,11 +42,6 @@ class TestScriptValidator:
         (BASE_DOCKER_IMAGE, UPDATED_DOCKER_IMAGE, True),
     ]
 
-    @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_DOCKER_IMAGES)
-    def test_is_docker_image_changed(self, current_file, old_file, answer):
-        validator = get_validator(current_file, old_file)
-        assert validator.is_docker_image_changed() is answer
-
     SANE_DOC_PATH = 'Scripts/SaneDocReport/SaneDocReport.yml'
     SANE_DOC_SUBTYPE = {
         "type": "python",

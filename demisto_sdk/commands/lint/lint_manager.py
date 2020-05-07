@@ -107,7 +107,8 @@ class LintManager:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"])
             logger.debug(f"Test mandatory modules successfully collected")
         except git.GitCommandError as e:
-            print_error("Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
+            print_error(
+                "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
             logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         except (requests.exceptions.ConnectionError, urllib3.exceptions.NewConnectionError) as e:
@@ -203,7 +204,8 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
-                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, keep_container: bool,
+                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+                         keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
         """ Runs the Lint command on all given packages.
 
@@ -303,12 +305,12 @@ class LintManager:
                              return_exit_code=return_exit_code,
                              skipped_code=skipped_code,
                              pkgs_type=pkgs_type)
-        self._create_failed_unit_tests_report(lint_status=lint_status,
-                                              path=failure_report)
+        self._create_failed_unit_tests_report(lint_status=lint_status, path=failure_report)
 
         return return_exit_code
 
-    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int, pkgs_type: list):
+    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int,
+                        pkgs_type: list):
         """ Log report to console
 
         Args:
@@ -548,6 +550,24 @@ class LintManager:
 
     @staticmethod
     def _create_failed_unit_tests_report(lint_status: dict, path: str):
+        """
+        Creayes and saves a file containing all failed unit tests
+        :param lint_status: dict
+            Dictionary containing type of failures and corresponding failing tests. Looks like this:
+             lint_status = {
+            "fail_packs_flake8": [],
+            "fail_packs_bandit": [],
+            "fail_packs_mypy": [],
+            "fail_packs_vulture": [],
+            "fail_packs_pylint": [],
+            "fail_packs_pytest": [],
+            "fail_packs_pwsh_analyze": [],
+            "fail_packs_pwsh_test": [],
+            "fail_packs_image": []
+        }
+        :param path: str
+            The path to save the report.
+        """
         failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])
         if path and failed_ut:
             file_path = Path(path) / "failed_unit_tests_report.txt"

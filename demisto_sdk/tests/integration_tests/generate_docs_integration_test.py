@@ -101,8 +101,8 @@ class TestPlaybooks:
         assert Path(readme_path).exists()
         with open(readme_path, 'r') as readme_file:
             contents = readme_file.read()
-            assert 'Builtin' in contents
-            assert 'PaloAltoNetworks_XDR' not in contents
+            assert 'Builtin' not in contents
+            assert 'PaloAltoNetworks_XDR' in contents
 
 
 @pytest.mark.skip(reason='Just place-holder stubs for later implementation')

@@ -23,7 +23,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
         doc = [description, '', '## Dependencies',
                'This playbook uses the following sub-playbooks, integrations, and scripts.', '']
 
-        playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook)
+        playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, input)
         inputs, inputs_errors = get_inputs(playbook)
         outputs, outputs_errors = get_outputs(playbook)
         playbook_filename = os.path.basename(input).replace('.yml', '')
@@ -74,7 +74,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
             return
 
 
-def get_playbook_dependencies(playbook):
+def get_playbook_dependencies(playbook, input):
     """
     Gets playbook dependencies(integrations, playbooks, scripts and commands) from playbook object.
     :param playbook: the playbook object.
@@ -86,14 +86,36 @@ def get_playbook_dependencies(playbook):
     playbooks = set()
 
     playbook_tasks = playbook.get('tasks')
+    playbook_path = os.path.relpath(input)
+    pack_path = '/'.join(os.path.dirname(input).split('/')[:2])
+    integration_dir_path = os.path.join(pack_path, 'Integrations')
+    # Get all files in integrations directories
+    pack_files = [os.path.join(r, file) for r, d, f in os.walk(integration_dir_path) for file in f]
+    integrations_files = []
+    for file in pack_files:
+        if file.endswith('.yml') and not os.path.basename(file).startswith('integration'):
+            # Get all yml files
+            integrations_files.append(file)
     for task in playbook_tasks:
         task = playbook_tasks[task]['task']
         if task['iscommand']:
             integration = task['script']
+            brand_integration = task['brand']
             integration = integration.split('|||')
-            if integration[0]:
+            if integration[0] and integration[0] != 'Builtin':
                 integrations.add(integration[0])
-            commands.add(integration[1])
+                commands.add(integration[1])
+
+            elif brand_integration:
+                commands.add(brand_integration)
+
+            elif playbook_path.startswith('Packs'):
+                for file_ in integrations_files:
+                    with open(file_) as f:
+                        if integration[1] in f.read():
+                            integration_dependency_path = os.path.dirname(file_)
+                            integration_dependency = os.path.basename(integration_dependency_path)
+                            integrations.add(integration_dependency)
         else:
             script_name = task.get('scriptName')
             if script_name:

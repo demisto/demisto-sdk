@@ -11,8 +11,8 @@ export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 
 
 ### Use Cases
-This command is used in order to download & merge custom content from Demisto instance to local content repository. This is useful when developing custom content in Demisto instance and then to
-download it to the local content repository in order to make a contribution.
+This command is used in order to download & merge custom content from Demisto instance to local content repository. This is useful when developing custom content in Demisto instance and then
+downloading it to the local content repository in order to make a contribution.
 
 
 ### Behavior
@@ -57,14 +57,18 @@ If there are files that exist both in the output directory and are specified in 
 ### Asumptions
 For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration "Test Integration", will be under "~/.../content/Packs/TestPack/Integrations/TestIntegration/".
 
-Integrations Scripts, and Playbooks folders that does not contain a yml file, will be overwritten automatically.
+Integrations, Scripts and Playbooks directories that does not contain a yml file, will be overwritten automatically.
 All other folders that do not contain a json file, will be overwritten automatically.
 For clarity, the given pack should be consistent with Content hierarchy structure with no rouge files present.
 
+We assume that test playbooks contain the 'test' word in their name.
+
 ### Supported File Types
 * Integrations
+* Beta Integrations
 * Scripts
 * Playbooks
+* Test Playbooks
 * Reports
 * Dashboards
 * Widgets
@@ -73,10 +77,6 @@ For clarity, the given pack should be consistent with Content hierarchy structur
 * Incident Types
 * Layouts
 * Classifiers
-
-### Known Limitations
-* Downloading Test Playbooks to their designated location in the output pack.
-* Downloading Beta Integrations to their designated location in the output pack.
 
 ### Examples
 ```

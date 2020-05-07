@@ -76,6 +76,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
             self.update_tests()
             self.update_conf_json('playbook')
             self.add_description()
+            self.delete_sourceplaybookid()
             self.update_playbook_task_name()
             self.save_yml_to_destination_file()
 

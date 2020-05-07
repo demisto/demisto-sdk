@@ -70,11 +70,8 @@ class BaseUpdateYML(BaseUpdate):
             return dumper.org_represent_str(data)
 
         yaml.add_representer(str, repr_str, Dumper=yamlordereddictloader.SafeDumper)
-
         with open(self.output_file, 'w') as f:
-            ryaml.dump(
-                self.data,
-                f)
+            yaml.dump(self.data, f, sort_keys=False)
 
     def copy_tests_from_old_file(self):
         """Copy the tests key from old file if exists.

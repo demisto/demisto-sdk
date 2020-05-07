@@ -25,7 +25,8 @@ class LayoutValidator(BaseValidator):
         Returns:
             True if version is valid, else False.
         """
-        if self.current_file.get('layout', {}).get('version') != self.DEFAULT_VERSION:
+        if self.current_file.get('layout', {}).get('version') != self.DEFAULT_VERSION \
+                or self.current_file.get('version', '') != self.DEFAULT_VERSION:
             print_error(Errors.wrong_version(self.file_path, self.DEFAULT_VERSION))
             return False
         return True

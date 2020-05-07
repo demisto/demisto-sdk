@@ -179,6 +179,15 @@ class EnvironmentGuardian:
 
 
 class TestHelperMethods:
+    @pytest.mark.parametrize('data, type, entity', [
+        ({'name': 'test-pb'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({}, 'integration', INTEGRATIONS_DIR)
+    ])
+    def test_file_type_to_entity(self, data, type, entity):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            assert downloader.file_type_to_entity(data, type) == entity
+
     def test_get_custom_content_objects(self):
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')

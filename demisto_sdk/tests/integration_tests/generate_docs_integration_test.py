@@ -82,7 +82,7 @@ class TestPlaybooks:
             assert 'There are no inputs for this playbook.' in contents
             assert 'There are no outputs for this playbook.' in contents
 
-    def test_integration_generate_docs_playbook_dependencies(self, tmpdir):
+    def test_integration_generate_docs_playbook_dependencies_old_integration(self, tmpdir):
         """
         Given
         - Path to valid playbook yml file to generate docs for.
@@ -115,6 +115,40 @@ class TestPlaybooks:
             contents = readme_file.read()
             assert 'Builtin' not in contents
             assert '### Integrations\n* DummyIntegration\n' in contents
+
+    def test_integration_generate_docs_playbook_pack_dependencies(self, tmpdir):
+        """
+        Given
+        - Path to valid playbook yml file to generate docs for.
+        - Path to directory to write the README.md file.
+
+        When
+        - Running the generate-docs command.
+
+        Then
+        - Ensure README.md is created.
+        - Ensure integration dependencies exists.
+        - Ensure Builtin not in dependencies.
+        """
+        valid_playbook_with_dependencies = join(DEMISTO_SDK_PATH, "tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml")
+        runner = CliRunner(mix_stderr=False)
+        arguments = [
+            GENERATE_DOCS_CMD,
+            '-i', valid_playbook_with_dependencies,
+            '-o', tmpdir
+        ]
+        result = runner.invoke(main, arguments)
+        readme_path = join(tmpdir, 'Cortex_XDR_Incident_Handling_README.md')
+
+        assert result.exit_code == 0
+        assert 'Start generating playbook documentation...' in result.stdout
+        assert not result.stderr
+        assert not result.exception
+        assert Path(readme_path).exists()
+        with open(readme_path, 'r') as readme_file:
+            contents = readme_file.read()
+            assert 'Builtin' not in contents
+            assert '### Integrations\n* PaloAltoNetworks_XDR\n' in contents
 
 
 @pytest.mark.skip(reason='Just place-holder stubs for later implementation')

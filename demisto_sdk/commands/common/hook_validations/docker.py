@@ -62,7 +62,6 @@ class DockerImageValidator(object):
             self.is_latest_tag = False
 
         if not self.is_latest_tag:
-            self.is_latest_tag = False
             print_warning('The docker image tag is not the latest, please update it.\n'
                           'The docker image tag in the yml file is: {}\n'
                           'The latest docker image tag in docker hub is: {}\n'

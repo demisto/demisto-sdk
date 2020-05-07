@@ -4,6 +4,7 @@ from pathlib import PosixPath
 from typing import List
 
 import pytest
+import yaml
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
@@ -226,3 +227,32 @@ def _verify_conf_json_modified(test_playbooks: List, yml_title: str, conf_json_p
                 )
     except Exception:
         raise
+
+
+def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
+    """
+    Given
+    - Playbook with field  `sourceplaybookid`.
+    - destination_path to write the formatted playbook to.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensure 'sourceplaybookid' was deleted from the yml file.
+    """
+    source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
+    playbook_path = str(tmp_path / 'format_new_playbook_copy.yml')
+    runner = CliRunner()
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path], input='N')
+    prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    assert result.exit_code == 0
+    assert prompt in result.output
+    assert '=======Starting updates for file: ' in result.stdout
+    assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
+    with open(playbook_path, 'r') as f:
+        content = f.read()
+        yaml_content = yaml.load(content)
+        assert 'sourceplaybookid' not in yaml_content
+
+    assert not result.exception

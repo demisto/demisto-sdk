@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
@@ -74,7 +74,8 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
             return
 
 
-def get_playbook_dependencies(playbook: dict, playbook_path: str):
+def get_playbook_dependencies(playbook: dict, playbook_path: str) -> Tuple[list, List[Union[Union[bytes, str], Any]],
+                                                                           list, list]:
     """
     Gets playbook dependencies(integrations, playbooks, scripts and commands) from playbook object.
     :param playbook: the playbook object.

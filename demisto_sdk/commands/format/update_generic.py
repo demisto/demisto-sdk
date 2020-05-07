@@ -15,6 +15,7 @@ from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
+ryaml.preserve_quotes = True  # type: ignore
 
 
 class BaseUpdate:
@@ -43,7 +44,7 @@ class BaseUpdate:
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
         try:
-            self.data, self.file_type = get_dict_from_file(self.source_file)
+            self.data, self.file_type = get_dict_from_file(self.source_file, use_ryaml=True)
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()

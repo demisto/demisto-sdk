@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 import pytest
 import yaml
@@ -13,6 +14,11 @@ from demisto_sdk.tests.constants_test import (
     EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, GIT_ROOT,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY)
+from ruamel.yaml import YAML
+
+ryaml = YAML()
+ryaml.preserve_quotes = True
+ryaml.allow_duplicate_keys = True
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
@@ -21,6 +27,26 @@ BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
      'playbook')
 ]
+
+
+@pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
+def test_yml_preserve_comment(source_path, destination_path, formatter, yml_title, file_type, capsys):
+    """
+    Given
+        - A Integration/Script/Playbook that contains comments in their YAML file
+
+    When
+        - Formatting the Integration/Script/Playbook
+
+    Then
+        - Ensure comments are being preserved
+    """
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+    base_yml = formatter(source_path, path=schema_path)
+    ryaml.dump(base_yml.data, sys.stdout)
+    stdout, _ = capsys.readouterr()
+    assert '# comment' in stdout
 
 
 @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)

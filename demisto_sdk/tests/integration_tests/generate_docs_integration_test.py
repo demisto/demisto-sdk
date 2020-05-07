@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.git_tools import git_path
 
 GENERATE_DOCS_CMD = "generate-docs"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-DEMISTO_SDK_TEST_PATH = join(git_path(), "demisto_sdk")
 
 
 class TestPlaybooks:

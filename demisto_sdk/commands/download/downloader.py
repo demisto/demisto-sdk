@@ -56,7 +56,7 @@ class Downloader:
         files_not_downloaded (list): A list of all files didn't succeeded to be downloaded
         custom_content (list): A list of all custom content objects
         pack_content (dict): The pack content that maps the pack
-                SPECIAL_ENTITIES (dict): Used to treat Beta Integrations as regular entities
+        SPECIAL_ENTITIES (dict): Used to treat Beta Integrations as regular entities
     """
 
     def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False,

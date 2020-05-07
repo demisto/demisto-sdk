@@ -1,12 +1,12 @@
 description: Test to ensure that indicator extraction and formatting for 1000 indicator
   string (used as a benchmark amount) executes in less than 1 second.
-id: FormattingPerformance - Test
+id: DummyPlaybook
 inputs: []
-name: FormattingPerformance - Test
-outputs: []
-starttaskid: "0"
 fromversion: TEST
 toversion: TEST
+name: DummyPlaybook
+outputs: []
+starttaskid: "0"
 tasks:
   "0":
     id: "0"
@@ -151,12 +151,12 @@ tasks:
     skipunavailable: false
     task:
       brand: ""
-      id: 87e46f01-2c2a-40ec-8b02-5707a8bf313d
+      id: 50aa05ca-a4ff-4f23-8319-110a3df91d00
       iscommand: false
-      name: Done TEST
+      name: Done
       type: title
       version: -1
-    taskid: 87e46f01-2c2a-40ec-8b02-5707a8bf313d
+    taskid: 50aa05ca-a4ff-4f23-8319-110a3df91d00
     timertriggers: []
     type: title
     view: |-

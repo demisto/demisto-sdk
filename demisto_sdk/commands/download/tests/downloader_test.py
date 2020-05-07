@@ -51,8 +51,8 @@ SCRIPT_PACK_OBJECT = {'TestScript': [
     {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'},
     {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/README.md', 'file_ending': 'md'}
 ]}
-PLAYBOOK_PACK_OBJECT = {'FormattingPerformance - Test': [
-    {'name': 'FormattingPerformance - Test', 'id': 'FormattingPerformance - Test', 'path': PLAYBOOK_INSTANCE_PATH,
+PLAYBOOK_PACK_OBJECT = {'FormattingPerformance': [
+    {'name': 'FormattingPerformance', 'id': 'FormattingPerformance', 'path': PLAYBOOK_INSTANCE_PATH,
      'file_ending': 'yml'}
 ]}
 LAYOUT_PACK_OBJECT = {'Hello World Alert': [
@@ -75,7 +75,7 @@ INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Int
 SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
                                 'path': CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
                                 'type': 'script', 'file_ending': 'yml'}
-PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'FormattingPerformance - Test', 'name': 'FormattingPerformance - Test',
+PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'FormattingPerformance', 'name': 'FormattingPerformance',
                                   'path': CUSTOM_CONTENT_PLAYBOOK_PATH, 'entity': 'Playbooks',
                                   'type': 'playbook', 'file_ending': 'yml'}
 LAYOUT_CUSTOM_CONTENT_OBJECT = {'id': 'Hello World Alert', 'name': 'Hello World Alert',

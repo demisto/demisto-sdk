@@ -1,10 +1,10 @@
 description: Test to ensure that indicator extraction and formatting for 1000 indicator
   string (used as a benchmark amount) executes in less than 1 second.
-id: FormattingPerformance - Test
+id: FormattingPerformance
 inputs: []
 fromversion: TEST
 toversion: TEST
-name: FormattingPerformance - Test
+name: FormattingPerformance
 outputs: []
 starttaskid: "0"
 tasks:

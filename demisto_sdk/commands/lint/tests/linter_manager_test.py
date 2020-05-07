@@ -48,19 +48,19 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     """
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {
-        "fail_packs_flake8": [],
-        "fail_packs_bandit": [],
-        "fail_packs_mypy": [],
-        "fail_packs_vulture": [],
-        "fail_packs_pylint": ['HelloWorld'],
-        "fail_packs_pytest": ['Infoblox'],
-        "fail_packs_pwsh_analyze": [],
-        "fail_packs_pwsh_test": [],
-        "fail_packs_image": [],
+        "fail_packs_flake8": set(),
+        "fail_packs_bandit": set(),
+        "fail_packs_mypy": {'Infoblox'},
+        "fail_packs_vulture": set(),
+        "fail_packs_pylint": {'HelloWorld'},
+        "fail_packs_pytest": {'Infoblox'},
+        "fail_packs_pwsh_analyze": set(),
+        "fail_packs_pwsh_test": set(),
+        "fail_packs_image": set()
     }
     path = f'{git_path()}/demisto_sdk/commands/lint/tests'
     lint_manager.LintManager._create_failed_unit_tests_report(lint_status, path)
-    file_path = f'{path}/failed_unit_tests_report.txt'
+    file_path = f'{path}/failed_lint_report.txt'
     assert os.path.isfile(file_path)
     with open(file_path, 'r') as file:
         content = file.read()
@@ -84,17 +84,17 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     """
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {
-        "fail_packs_flake8": [],
-        "fail_packs_bandit": [],
-        "fail_packs_mypy": [],
-        "fail_packs_vulture": [],
-        "fail_packs_pylint": [],
-        "fail_packs_pytest": [],
-        "fail_packs_pwsh_analyze": [],
-        "fail_packs_pwsh_test": [],
-        "fail_packs_image": [],
+        "fail_packs_flake8": set(),
+        "fail_packs_bandit": set(),
+        "fail_packs_mypy": set(),
+        "fail_packs_vulture": set(),
+        "fail_packs_pylint": set(),
+        "fail_packs_pytest": set(),
+        "fail_packs_pwsh_analyze": set(),
+        "fail_packs_pwsh_test": set(),
+        "fail_packs_image": set(),
     }
     path = f'{git_path()}/demisto_sdk/commands/lint/tests'
     lint_manager.LintManager._create_failed_unit_tests_report(lint_status, path)
-    file_path = f'{path}/failed_unit_tests_report.txt'
+    file_path = f'{path}/failed_lint_report.txt'
     assert not os.path.isfile(file_path)

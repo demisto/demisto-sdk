@@ -227,15 +227,15 @@ class LintManager:
             int: exit code by falil exit codes by var EXIT_CODES
         """
         lint_status = {
-            "fail_packs_flake8": [],
-            "fail_packs_bandit": [],
-            "fail_packs_mypy": [],
-            "fail_packs_vulture": [],
-            "fail_packs_pylint": [],
-            "fail_packs_pytest": [],
-            "fail_packs_pwsh_analyze": [],
-            "fail_packs_pwsh_test": [],
-            "fail_packs_image": [],
+            "fail_packs_flake8": set(),
+            "fail_packs_bandit": set(),
+            "fail_packs_mypy": set(),
+            "fail_packs_vulture": set(),
+            "fail_packs_pylint": set(),
+            "fail_packs_pytest": set(),
+            "fail_packs_pwsh_analyze": set(),
+            "fail_packs_pwsh_test": set(),
+            "fail_packs_image": set()
         }
 
         # Python or powershell or both
@@ -568,7 +568,7 @@ class LintManager:
         :param path: str
             The path to save the report.
         """
-        failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])
+        failed_ut = set.union(*lint_status.values())
         if path and failed_ut:
-            file_path = Path(path) / "failed_unit_tests_report.txt"
+            file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))

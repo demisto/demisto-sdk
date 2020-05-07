@@ -119,7 +119,7 @@ def generate_integration_doc(
             if permissions == 'general':
                 docs.extend(generate_section('Permissions', ''))
             # Setup integration to work with Demisto
-            docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
+            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['name']), ''))
             # Setup integration on Demisto
             docs.extend(generate_setup_section(yml_data))
             # Commands

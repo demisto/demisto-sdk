@@ -266,10 +266,13 @@ def format_md(md: str) -> str:
     :return:
         str. Formatted string representing mark down.
     """
+    replace_tuples = [
+        (r'<br>(</br>)?', '<br/>'),
+        (r'<hr>(</hr>)?', '<hr/>'),
+    ]
     if md:
-        # The replacement of <br> by <br/> is for compatibility with our docs site
-        md = md.replace('<br>', '<br/>')
-        md = md.replace('<BR>', '<br/>')
+        for old, new in replace_tuples:
+            md = re.sub(old, new, md, flags=re.IGNORECASE)
     return md
 
 

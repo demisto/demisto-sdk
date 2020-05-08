@@ -1,9 +1,7 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.common.git_tools import git_path
 
 
 @patch('builtins.print')
@@ -31,70 +29,3 @@ def test_report_failed_image_creation():
                                                           pkgs_status=pkgs_status,
                                                           return_exit_code=EXIT_CODES["image"])
     assert not pkgs_status.called
-
-
-def test_create_failed_unit_tests_report_with_failed_tests():
-    """
-    Given`:
-        - Lint manager dictionary with two failed packs -Infoblox and HelloWorld
-
-    When:
-        - Creating failed unit tests report
-
-    Then:
-        - Ensure report file is created.
-        - Ensure report file contains exactly two packs.
-        - Ensure both pack appear in the report.
-    """
-    from demisto_sdk.commands.lint import lint_manager
-    lint_status = {
-        "fail_packs_flake8": set(),
-        "fail_packs_bandit": set(),
-        "fail_packs_mypy": {'Infoblox'},
-        "fail_packs_vulture": set(),
-        "fail_packs_pylint": {'HelloWorld'},
-        "fail_packs_pytest": {'Infoblox'},
-        "fail_packs_pwsh_analyze": set(),
-        "fail_packs_pwsh_test": set(),
-        "fail_packs_image": set()
-    }
-    path = f'{git_path()}/demisto_sdk/commands/lint/tests'
-    lint_manager.LintManager._create_failed_unit_tests_report(lint_status, path)
-    file_path = f'{path}/failed_lint_report.txt'
-    assert os.path.isfile(file_path)
-    with open(file_path, 'r') as file:
-        content = file.read()
-        fail_list = content.split('\n')
-        assert len(fail_list) == 2
-        assert 'HelloWorld' in fail_list
-        assert 'Infoblox' in fail_list
-    os.remove(file_path)
-
-
-def test_create_failed_unit_tests_report_no_failed_tests():
-    """
-    Given:
-        - Lint manager dictionary with no failed packs.
-
-    When:
-        - Creating failed unit tests report.
-
-    Then:
-        - Ensure report file is not created.
-    """
-    from demisto_sdk.commands.lint import lint_manager
-    lint_status = {
-        "fail_packs_flake8": set(),
-        "fail_packs_bandit": set(),
-        "fail_packs_mypy": set(),
-        "fail_packs_vulture": set(),
-        "fail_packs_pylint": set(),
-        "fail_packs_pytest": set(),
-        "fail_packs_pwsh_analyze": set(),
-        "fail_packs_pwsh_test": set(),
-        "fail_packs_image": set(),
-    }
-    path = f'{git_path()}/demisto_sdk/commands/lint/tests'
-    lint_manager.LintManager._create_failed_unit_tests_report(lint_status, path)
-    file_path = f'{path}/failed_lint_report.txt'
-    assert not os.path.isfile(file_path)

@@ -108,7 +108,7 @@ class TestValidators:
             copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
             structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme='playbook')
             validator = PlaybookValidator(structure)
-            assert validator.is_valid_playbook(validate_rn=False)
+            assert validator.is_valid_playbook()
         finally:
             os.remove(PLAYBOOK_TARGET)
 
@@ -159,36 +159,18 @@ class TestValidators:
             copyfile(source, target)
             structure = StructureValidator(source)
             validator = validator(structure)
-            assert validator.is_valid_file(validate_rn=False) is answer
+            assert validator.is_valid_file() is answer
         finally:
             os.remove(target)
 
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
-        (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, SCRIPT_RELEASE_NOTES_TARGET,
-         ReleaseNotesValidator, True),
-        (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, INTEGRATION_RELEASE_NOTES_TARGET,
-         ReleaseNotesValidator, False),
-        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
-         INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, True),
-        (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
-         SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, False)
+        ('Valid Release Notes', ReleaseNotesValidator, True),
+        ('%%UPDATE_RN%%', ReleaseNotesValidator, False),
     ]
 
-    @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
-                             'validator, answer',
-                             INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
-    def test_is_release_notes_exists(self, source_dummy, target_dummy,
-                                     source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[BaseValidator], Any) -> None
-        try:
-            copyfile(source_dummy, target_dummy)
-            copyfile(source_release_notes, target_release_notes)
-            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
-            validator = ReleaseNotesValidator(target_dummy)
-            assert validator.validate_file_release_notes_exists() is answer
-        finally:
-            os.remove(target_dummy)
-            os.remove(target_release_notes)
+    def test_has_release_notes_been_filled_out(self, release_notes, validator, answer, mocker):
+        # type: (str, Type[BaseValidator], Any) -> None
+        assert validator.has_release_notes_been_filled_out(release_notes) is answer
 
     @staticmethod
     def create_release_notes_structure_test_package():

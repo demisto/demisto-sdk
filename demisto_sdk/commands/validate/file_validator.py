@@ -393,7 +393,6 @@ class FilesValidator:
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
 
-
             else:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("'validate' command supports: Integrations, Scripts, Playbooks, "

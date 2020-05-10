@@ -14,10 +14,11 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_PLAYBOOK_REGEX, CLASSIFIER_REGEX,
     CLASSIFIERS_DIR, DASHBOARD_REGEX, DASHBOARDS_DIR, INCIDENT_FIELD_REGEX,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPE_REGEX, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_FIELDS_REGEX, INTEGRATION_REGEX,
-    INTEGRATION_YML_REGEX, LAYOUT_REGEX, LAYOUTS_DIR, PACKS_CLASSIFIERS_REGEX,
-    PACKS_DASHBOARDS_REGEX, PACKS_INCIDENT_FIELDS_REGEX,
-    PACKS_INCIDENT_TYPES_REGEX, PACKS_INDICATOR_FIELDS_REGEX,
+    INDICATOR_FIELDS_DIR, INDICATOR_FIELDS_REGEX, INDICATOR_TYPES_DIR,
+    INDICATOR_TYPES_REGEX, INTEGRATION_REGEX, INTEGRATION_YML_REGEX,
+    LAYOUT_REGEX, LAYOUTS_DIR, PACKS_CLASSIFIERS_REGEX, PACKS_DASHBOARDS_REGEX,
+    PACKS_INCIDENT_FIELDS_REGEX, PACKS_INCIDENT_TYPES_REGEX,
+    PACKS_INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_TYPES_REGEX,
     PACKS_INTEGRATION_REGEX, PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUTS_REGEX,
     PACKS_PLAYBOOK_YML_REGEX, PACKS_REPORTS_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
@@ -513,6 +514,24 @@ def process_indicator_fields(file_path, print_logs):
     return res
 
 
+def process_indicator_types(file_path, print_logs):
+    """
+    Process a indicator types JSON file
+    Args:
+        file_path: The file path from indicator type folder
+        print_logs: Whether to print logs to stdout
+
+    Returns:
+        a list of indicator type data.
+    """
+    res = []
+    if checked_type(file_path, [INDICATOR_TYPES_REGEX, PACKS_INDICATOR_TYPES_REGEX]):
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
 def process_layouts(file_path, print_logs):
     """
     Process a Layouts JSON file
@@ -635,7 +654,8 @@ def get_general_paths(path):
 def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, print_logs=True):
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
-                             'Dashboards', 'IncidentFields', 'IndicatorFields', 'Layouts', 'Reports', 'Widgets']
+                             'Dashboards', 'IncidentFields', 'IndicatorFields', 'IndicatorTypes',
+                             'Layouts', 'Reports', 'Widgets']
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -647,6 +667,7 @@ def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, 
     incident_fields_list = []
     incident_type_list = []
     indicator_fields_list = []
+    indicator_types_list = []
     layouts_list = []
     reports_list = []
     widgets_list = []
@@ -726,6 +747,14 @@ def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, 
 
         progress_bar.update(1)
 
+        if 'IndicatorTypes' in objects_to_create:
+            print_color("\nStarting iterating over Indicator Types", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_indicator_types, print_logs=print_logs),
+                                get_general_paths(INDICATOR_TYPES_DIR)):
+                indicator_types_list.extend(arr)
+
+        progress_bar.update(1)
+
         if 'Layouts' in objects_to_create:
             print_color("\nStarting iterating over Layouts", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_layouts, print_logs=print_logs), get_general_paths(LAYOUTS_DIR)):
@@ -759,6 +788,7 @@ def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, 
     new_ids_dict['IncidentFields'] = sort(incident_fields_list)
     new_ids_dict['IncidentTypes'] = sort(incident_type_list)
     new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
+    new_ids_dict['IndicatorTypes'] = sort(indicator_types_list)
     new_ids_dict['Layouts'] = sort(layouts_list)
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)

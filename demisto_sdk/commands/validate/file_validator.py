@@ -102,6 +102,7 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
+        self.changed_pack_data = {}
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()

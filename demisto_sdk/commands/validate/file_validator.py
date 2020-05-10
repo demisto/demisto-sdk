@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import (
     JSON_ALL_LAYOUT_REGEXES, JSON_INDICATOR_AND_INCIDENT_FIELDS,
     KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, REPUTATION_REGEX, SCHEMA_REGEX,
+    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, JSON_ALL_INDICATOR_TYPES_REGEXES, SCHEMA_REGEX,
     SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES,
     YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES, Errors)
@@ -355,7 +355,7 @@ class FilesValidator:
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
-            elif checked_type(file_path, [REPUTATION_REGEX]):
+            elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES):
                 reputation_validator = ReputationValidator(structure_validator)
                 if not reputation_validator.is_valid_file(validate_rn=True):
                     self._is_valid = False
@@ -463,7 +463,7 @@ class FilesValidator:
                 if not incident_field_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
-            elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
+            elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES) or file_type == 'reputation':
                 reputation_validator = ReputationValidator(structure_validator)
                 if not reputation_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
@@ -615,7 +615,7 @@ class FilesValidator:
             if not incident_field_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
+        elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES) or file_type == 'reputation':
             reputation_validator = ReputationValidator(structure_validator)
             if not reputation_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False

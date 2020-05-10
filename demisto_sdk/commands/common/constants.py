@@ -544,11 +544,15 @@ PACKS_INDICATOR_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START
                                                                        INDICATOR_FIELDS_DIR)
 PACKS_INDICATOR_TYPES_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                       INDICATOR_TYPES_DIR)
+PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
+                                                                                     PACKS_DIR,
+                                                                                     INDICATOR_TYPES_DIR)
 PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, LAYOUTS_DIR)
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_REPORTS_REGEX = r'{}/([^/]+)/{}/([^.]+)\.json'.format(PACKS_DIR, REPORTS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, RELEASE_NOTES_DIR)
+PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
+                                                                   RELEASE_NOTES_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 
@@ -1028,7 +1032,7 @@ SCHEMA_TO_REGEX = {
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
     'image': [IMAGE_REGEX],
     'reputation': JSON_ALL_INDICATOR_TYPES_REGEXES,
-    'reputations': [INDICATOR_TYPES_REPUTATIONS_REGEX],
+    'reputations': [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX],
     'changelog': [INTEGRATION_CHANGELOG_REGEX, PACKS_CHANGELOG_REGEX, INDICATOR_TYPES_CHANGELOG_REGEX,
                   INCIDENT_TYPE_CHANGELOG_REGEX, INCIDENT_FIELD_CHANGELOG_REGEX, INDICATOR_FIELD_CHANGELOG_REGEX,
                   DASHBOARD_CHANGELOG_REGEX, CLASSIFIER_CHANGELOG_REGEX, LAYOUT_CHANGELOG_REGEX,

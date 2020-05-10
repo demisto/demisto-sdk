@@ -1,8 +1,13 @@
 # Changelog
+* Fixed a bug in the **format** command where comments were being removed from YAML files.
 * Added output fields: _file_path_ and _kind_ for layouts in the id-set.json created by **create-id-set** command.
 * Fixed a bug in the **create-id-set** command Who returns Duplicate for Layouts with a different kind.
 * Added formatting to **generate-docs** command results replacing all `<br>` tags with `<br/>`.
 * Fixed a bug in the **download** command when custom content contained not supported content entity.
+* Fixed a bug in **format** command in which boolean strings  (e.g. 'yes' or 'no') were converted to boolean values (e.g. 'True' or 'False').
+* **format** command now removes *sourceplaybookid* field from playbook files.
+* Fixed a bug in **generate-docs** command in which integration dependencies were not detected when generating documentation for a playbook.
+
 
 #### 1.0.1
 * Fixed a bug in the **unify** command when output path was provided empty.

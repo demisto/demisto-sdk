@@ -36,6 +36,6 @@ class Repo:
     def create_pack(self, name: Optional[str] = None):
         if name is None:
             name = f'pack_{len(self.packs)}'
-        pack = Pack(self._packs_path, name, self.path, global_secrets=self.secrets)
+        pack = Pack(self._packs_path, name, repo=self)
         self.packs.append(pack)
         return pack

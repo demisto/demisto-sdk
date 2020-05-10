@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
 
-from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.integration import Integration
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
@@ -25,13 +24,12 @@ class Pack:
 
     """
 
-    def __init__(self, packs_dir: Path, name: str, repo_path: str, global_secrets: GlobalSecrets):
+    def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
+        self.repo = repo
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         # Create base pack
-        self.global_secrets = global_secrets
-        self.repo_path = repo_path
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
         self.path = str(self._pack_path)
@@ -58,7 +56,7 @@ class Pack:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
             yml = {}
-        integration = Integration(self._integrations_path, name, self.repo_path, self.global_secrets)
+        integration = Integration(self._integrations_path, name, self.repo)
         integration.build(
             code,
             yml,

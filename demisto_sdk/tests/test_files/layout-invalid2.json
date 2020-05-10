@@ -1,10 +1,10 @@
 {
 	"typeId": "ExtraHop Detection",
 	"kind": true,
-	"version": -1,
+	"version": 55,
 	"layout": {
 		"id": "ExtraHop Detection",
-		"version": 55,
+		"version": -1,
 		"modified": "2019-06-20T16:01:05.659574019-07:00",
 		"name": "",
 		"kind": "close",

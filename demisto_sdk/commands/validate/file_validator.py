@@ -282,8 +282,6 @@ class FilesValidator:
                 changed_packs[changed_pack] = False
         for file_path in modified_files:
             old_file_path = None
-            pack_name = get_pack_name(file_path)
-
             # modified_files are returning from running git diff.
             # If modified file was renamed\moved, file_path could be a tuple containing original path and new path
             if isinstance(file_path, tuple):

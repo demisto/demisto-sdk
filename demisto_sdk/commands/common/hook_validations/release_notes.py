@@ -25,6 +25,9 @@ class ReleaseNotesValidator:
         if '%%UPDATE_RN%%' in release_notes_comments:
             print_error(f"Please complete the release notes found at: {self.file_path}")
             return False
+        elif len(release_notes_comments) == 0:
+            print_error(f"Please complete the release notes found at: {self.file_path}")
+            return False
         return True
 
     def is_file_valid(self):

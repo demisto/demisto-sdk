@@ -1,5 +1,5 @@
 # Changelog
-* Fixed the **validate** command on the layout files to check both version fields are -1
+* Fixed a bug in the **validate** command where layouts version was not checked correctly.
 * Fixed a bug in the **format** command where comments were being removed from YAML files.
 * Added output fields: _file_path_ and _kind_ for layouts in the id-set.json created by **create-id-set** command.
 * Fixed a bug in the **create-id-set** command Who returns Duplicate for Layouts with a different kind.

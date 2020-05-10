@@ -92,7 +92,7 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
-    @patch.object(ReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
+    @patch.object(ReleaseNotesValidator, 'has_release_notes_been_filled_out', return_value=True)
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -164,8 +164,8 @@ class TestValidators:
             os.remove(target)
 
     @staticmethod
-    def mock_get_master_diff():
-        return 'Comment.'
+    def mock_has_release_notes_been_filled_out():
+        return True
 
     INPUTS_IS_ID_EQUALS_NAME = [
         (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),

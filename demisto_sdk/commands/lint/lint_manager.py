@@ -221,21 +221,21 @@ class LintManager:
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
-            failure_report(str): Path for store failed unit tests report
+            failure_report(str): Path for store failed packs report
 
         Returns:
             int: exit code by falil exit codes by var EXIT_CODES
         """
         lint_status = {
-            "fail_packs_flake8": set(),
-            "fail_packs_bandit": set(),
-            "fail_packs_mypy": set(),
-            "fail_packs_vulture": set(),
-            "fail_packs_pylint": set(),
-            "fail_packs_pytest": set(),
-            "fail_packs_pwsh_analyze": set(),
-            "fail_packs_pwsh_test": set(),
-            "fail_packs_image": set()
+            "fail_packs_flake8": [],
+            "fail_packs_bandit": [],
+            "fail_packs_mypy": [],
+            "fail_packs_vulture": [],
+            "fail_packs_pylint": [],
+            "fail_packs_pytest": [],
+            "fail_packs_pwsh_analyze": [],
+            "fail_packs_pwsh_test": [],
+            "fail_packs_image": [],
         }
 
         # Python or powershell or both
@@ -305,7 +305,7 @@ class LintManager:
                              return_exit_code=return_exit_code,
                              skipped_code=skipped_code,
                              pkgs_type=pkgs_type)
-        self._create_failed_unit_tests_report(lint_status=lint_status, path=failure_report)
+        self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
         return return_exit_code
 
@@ -549,9 +549,9 @@ class LintManager:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod
-    def _create_failed_unit_tests_report(lint_status: dict, path: str):
+    def _create_failed_packs_report(lint_status: dict, path: str):
         """
-        Creates and saves a file containing all failed unit tests
+        Creates and saves a file containing all lint failed packs
         :param lint_status: dict
             Dictionary containing type of failures and corresponding failing tests. Looks like this:
              lint_status = {
@@ -568,7 +568,7 @@ class LintManager:
         :param path: str
             The path to save the report.
         """
-        failed_ut = set.union(*lint_status.values())
+        failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))

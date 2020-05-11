@@ -279,11 +279,11 @@ def test_get_release_notes_file_path_invalid():
 
 
 def test_git_working_branch():
-    assert get_current_working_branch
+    assert get_current_working_branch()
 
 
 def test_git_diff():
-    assert get_changed_files
+    assert get_changed_files()
 
 
 class TestGetFile:

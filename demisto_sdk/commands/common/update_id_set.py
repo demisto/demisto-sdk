@@ -369,7 +369,7 @@ def add_new_object_to_id_set(obj_id, obj_data, instances_set):
         instances_set.append(obj_data)
 
 
-def process_integration(file_path, print_logs):
+def process_integration(file_path: str, print_logs: bool) -> list:
     """
     Process integration dir or file
 
@@ -399,7 +399,7 @@ def process_integration(file_path, print_logs):
     return res
 
 
-def process_script(file_path, print_logs):
+def process_script(file_path: str, print_logs: bool) -> list:
     res = []
     if os.path.isfile(file_path):
         if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX)):
@@ -417,7 +417,7 @@ def process_script(file_path, print_logs):
     return res
 
 
-def process_playbook(file_path, print_logs):
+def process_playbook(file_path: str, print_logs: bool) -> list:
     res = []
     if checked_type(file_path, (PACKS_PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX, BETA_PLAYBOOK_REGEX)):
         if print_logs:
@@ -426,7 +426,7 @@ def process_playbook(file_path, print_logs):
     return res
 
 
-def process_classifier(file_path, print_logs):
+def process_classifier(file_path: str, print_logs: bool) -> list:
     """
     Process a classifier JSON file
     Args:
@@ -443,7 +443,7 @@ def process_classifier(file_path, print_logs):
     return res
 
 
-def process_dashboards(file_path, print_logs):
+def process_dashboards(file_path: str, print_logs: bool) -> list:
     """
     Process a dashboard JSON file
     Args:
@@ -461,7 +461,7 @@ def process_dashboards(file_path, print_logs):
     return res
 
 
-def process_incident_fields(file_path, print_logs):
+def process_incident_fields(file_path: str, print_logs: bool) -> list:
     """
     Process a incident_fields JSON file
     Args:
@@ -479,7 +479,7 @@ def process_incident_fields(file_path, print_logs):
     return res
 
 
-def process_incident_types(file_path, print_logs):
+def process_incident_types(file_path: str, print_logs: bool) -> list:
     """
     Process a incident_fields JSON file
     Args:
@@ -497,7 +497,7 @@ def process_incident_types(file_path, print_logs):
     return res
 
 
-def process_indicator_fields(file_path, print_logs):
+def process_indicator_fields(file_path: str, print_logs: bool) -> list:
     """
     Process a indicator fields JSON file
     Args:
@@ -515,7 +515,7 @@ def process_indicator_fields(file_path, print_logs):
     return res
 
 
-def process_indicator_types(file_path, print_logs):
+def process_indicator_types(file_path: str, print_logs: bool) -> list:
     """
     Process a indicator types JSON file
     Args:
@@ -535,7 +535,7 @@ def process_indicator_types(file_path, print_logs):
     return res
 
 
-def process_layouts(file_path, print_logs):
+def process_layouts(file_path: str, print_logs: bool) -> list:
     """
     Process a Layouts JSON file
     Args:
@@ -553,7 +553,7 @@ def process_layouts(file_path, print_logs):
     return res
 
 
-def process_reports(file_path, print_logs):
+def process_reports(file_path: str, print_logs: bool) -> list:
     """
     Process a report JSON file
     Args:
@@ -571,7 +571,7 @@ def process_reports(file_path, print_logs):
     return res
 
 
-def process_widgets(file_path, print_logs):
+def process_widgets(file_path: str, print_logs: bool) -> list:
     """
     Process a widgets JSON file
     Args:
@@ -589,7 +589,7 @@ def process_widgets(file_path, print_logs):
     return res
 
 
-def process_test_playbook_path(file_path, print_logs):
+def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     """
     Process a yml file in the testplyabook dir. Maybe either a script or playbook
 
@@ -654,7 +654,7 @@ def get_general_paths(path):
     return files
 
 
-def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, print_logs=True):
+def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, print_logs=True):  # noqa: C901
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                              'Dashboards', 'IncidentFields', 'IndicatorFields', 'IndicatorTypes',

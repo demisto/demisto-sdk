@@ -96,7 +96,7 @@ DESTINATION_FORMAT_INCIDENTTYPE_COPY = f"IncidentTypes/incidenttype-copy.json"
 INCIDENTTYPE_PATH = f"IncidentTypes"
 
 SOURCE_FORMAT_INDICATORFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatorfield-copy.json"
-DESTINATION_FORMAT_INDICATORFIELD_COPY = f"IndicatorFields/incidentfield-copy.json"
+DESTINATION_FORMAT_INDICATORFIELD_COPY = f"IndicatorFields/format_indicatorfield-copy.json"
 INDICATORFIELD_PATH = f"IndicatorFields"
 
 SOURCE_FORMAT_INDICATORTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatortype-copy.json"

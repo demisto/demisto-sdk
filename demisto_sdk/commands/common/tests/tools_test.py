@@ -9,7 +9,9 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PLAYBOOK_YML_REGEX,
                                                    PACKS_TEST_PLAYBOOKS_REGEX,
                                                    PLAYBOOKS_DIR)
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.git_tools import (get_changed_files,
+                                                   get_current_working_branch,
+                                                   git_path)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
                                                find_type, get_depth,
@@ -274,6 +276,14 @@ def test_get_release_notes_file_path_valid():
 def test_get_release_notes_file_path_invalid():
     filepath = '/SomePack/1_1_1.json'
     assert get_release_notes_file_path(filepath) is None
+
+
+def test_git_working_branch():
+    assert get_current_working_branch
+
+
+def test_git_diff():
+    assert get_changed_files
 
 
 class TestGetFile:

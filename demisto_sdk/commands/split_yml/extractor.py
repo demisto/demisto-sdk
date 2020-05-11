@@ -212,7 +212,8 @@ class Extractor:
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
             code_file.write(script)
-            if script[-1] != '\n':  # make sure files end with a new line (pyml seems to strip the last newline)
+            if script and script[-1] != '\n':
+                # make sure files end with a new line (pyml seems to strip the last newline)
                 code_file.write("\n")
         return 0
 

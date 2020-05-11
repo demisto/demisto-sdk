@@ -2,7 +2,7 @@
 Generate a README file for an Integration, Script or a Playbook.
 
 **Use-Cases**
-This command is used to create a documentation file for Demisto content files.
+This command is used to create a documentation file for Cortex XSOAR content files.
 
 **Arguments**:
 * **-i, --input**Path of the yml file.

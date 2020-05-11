@@ -56,7 +56,7 @@ class Downloader:
         files_not_downloaded (list): A list of all files didn't succeeded to be downloaded
         custom_content (list): A list of all custom content objects
         pack_content (dict): The pack content that maps the pack
-        SPECIAL_ENTITIES (dict): Used to treat Test Playbook & Beta Integrations as regular entities
+        SPECIAL_ENTITIES (dict): Used to treat Beta Integrations as regular entities
     """
 
     def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False,
@@ -75,7 +75,7 @@ class Downloader:
         self.files_not_downloaded: List[list] = list()
         self.custom_content: List[dict] = list()
         self.pack_content: Dict[str, list] = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
-        self.SPECIAL_ENTITIES = {TEST_PLAYBOOKS_DIR: PLAYBOOKS_DIR, BETA_INTEGRATIONS_DIR: INTEGRATIONS_DIR}
+        self.SPECIAL_ENTITIES = {BETA_INTEGRATIONS_DIR: INTEGRATIONS_DIR}
         self.num_merged_files = 0
         self.num_added_files = 0
 
@@ -191,9 +191,7 @@ class Downloader:
         """
         if self.list_files:
             self.all_custom_content_objects = self.get_custom_content_objects()
-            list_files = [
-                [cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects
-            ]
+            list_files = [[cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects]
             print_color('\nThe following files are available to be downloaded from Demisto instance:\n',
                         LOG_COLORS.NATIVE)
             print(tabulate(list_files, headers=['FILE NAME', 'FILE TYPE']))
@@ -232,8 +230,6 @@ class Downloader:
         """
         for content_entity_path in get_child_directories(self.output_pack_path):
             raw_content_entity: str = os.path.basename(os.path.normpath(content_entity_path))
-            # Currently we don't support beta integrations and test playbooks because we can't differentiate if a custom
-            # content file is a pb or a test pb, same for beta integration (Prefixed playbook- & integration-).
             content_entity: str = self.SPECIAL_ENTITIES.get(raw_content_entity, raw_content_entity)
             if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                 # If entity is of type integration/script it will have dirs, otherwise files
@@ -359,15 +355,14 @@ class Downloader:
 
         return exist_in_pack
 
-    @staticmethod
-    def build_custom_content_object(file_path: str) -> dict:
+    def build_custom_content_object(self, file_path: str) -> dict:
         """
         Build the custom content object represents a custom content entity instance.
         For example: integration-HelloWorld.yml downloaded from Demisto.
         """
         file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
         file_type: str = find_type(_dict=file_data, file_type=file_ending)  # For example: integration
-        file_entity = ENTITY_TYPE_TO_DIR.get(file_type)  # For example: Integrations
+        file_entity = self.file_type_to_entity(file_data, file_type)  # For example: Integrations
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
 
@@ -379,6 +374,20 @@ class Downloader:
             'type': file_type,
             'file_ending': file_ending,
         }
+
+    @staticmethod
+    def file_type_to_entity(file_data: dict, file_type: str) -> str:
+        """
+        Given the file type returns the file entity
+        :param file_data: The file data
+        :param file_type: The file type, for example: integration
+        :return: The file entity, for example: Integrations
+        """
+        if file_type and file_type == 'playbook':
+            name: str = get_entity_name_by_entity_type(file_data, PLAYBOOKS_DIR)
+            if name and 'test' in name.lower():
+                return TEST_PLAYBOOKS_DIR
+        return ENTITY_TYPE_TO_DIR.get(file_type)
 
     def update_pack_hierarchy(self) -> None:
         """
@@ -619,8 +628,7 @@ class Downloader:
         :param file_ending: The files ending
         :return: None
         """
-        ryaml = YAML()
-        ryaml.preserve_quotes = True  # type: ignore
+
         pack_obj_data, _ = get_dict_from_file(file_path_to_read)
         fields: list = DELETED_YML_FIELDS_BY_DEMISTO if file_ending == 'yml' else DELETED_JSON_FIELDS_BY_DEMISTO
         # Creates a nested-complex dict of all fields to be deleted by Demisto.
@@ -629,6 +637,8 @@ class Downloader:
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
         if file_ending == 'yml':
+            ryaml = YAML()
+            ryaml.preserve_quotes = True  # type: ignore
             with open(file_path_to_write, 'r') as yf:
                 file_yaml_object = ryaml.load(yf)
             merge(file_yaml_object, preserved_data)
@@ -700,17 +710,20 @@ class Downloader:
         """
         log_msg, added_msg, merged_msg = str(), str(), str()
         if self.num_added_files:
-            added_msg = f'{self.num_added_files} files added'
+            files = 'file' if self.num_added_files == 1 else 'files'
+            added_msg = f'{self.num_added_files} {files} added'
         if self.num_merged_files:
-            merged_msg = f'{self.num_merged_files} files merged'
+            files = 'file' if self.num_merged_files == 1 else 'files'
+            merged_msg = f'{self.num_merged_files} {files} merged'
         if added_msg:
             if merged_msg:
                 log_msg = f'\n{added_msg}, {merged_msg}.'
             else:
                 log_msg = f'\n{added_msg}.'
-        else:
+        elif merged_msg:
             log_msg = f'\n{merged_msg}.'
-        print_color(log_msg, LOG_COLORS.NATIVE)
+        if log_msg:
+            print_color(log_msg, LOG_COLORS.NATIVE)
 
     def log_files_not_downloaded(self) -> None:
         """

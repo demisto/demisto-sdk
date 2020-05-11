@@ -33,7 +33,7 @@ INTEGRATION_PACK_OBJECT = {'Test Integration': [
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.py', 'file_ending': 'py'},
     {'name': 'Test Integration', 'id': 'Test Integration',
-     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_test.py', 'file_ending': 'py'},
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_testt.py', 'file_ending': 'py'},
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'file_ending': 'yml'},
     {'name': 'Test Integration', 'id': 'Test Integration',

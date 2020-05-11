@@ -126,8 +126,6 @@ def test_extract_to_package_format_py(tmpdir, mocker):
     extractor.extract_to_package_format()
     with open(out.join('Zoom').join('Zoom.py'), 'r', encoding='utf-8') as f:
         file_data = f.read()
-        print(repr(file_data))
         # check imports are sorted
-        assert 'import datetime\nimport json\nimport shutil\nfrom zipfile import ' \
-               'ZipFile\n\nimport jwt\nimport requests\n\nimport demistomock as demisto\nfrom ' \
-               'CommonServerPython import *\n' in file_data
+        assert 'import datetime\nimport json\nimport shutil\nfrom zipfile import ZipFile\n\nimport requests\n\n' \
+               'import demistomock as demisto\nimport jwt\nfrom CommonServerPython import *\n' in file_data

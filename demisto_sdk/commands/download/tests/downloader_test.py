@@ -441,7 +441,7 @@ class TestMergeExistingFile:
         ('Test Integration', 'py', 'python', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration'][0]),
         ('Test Integration', 'png', 'image', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration'][3]),
         ('Test Integration', 'md', 'description', INTEGRATION_PACK_OBJECT, INTEGRATION_PACK_OBJECT['Test Integration']
-            [5]),
+            [4]),
         ('TestScript', 'yml', 'yaml', SCRIPT_PACK_OBJECT, SCRIPT_PACK_OBJECT['TestScript'][1]),
         ('TestScript', 'py', 'python', SCRIPT_PACK_OBJECT, SCRIPT_PACK_OBJECT['TestScript'][0]),
         ('Fake Name', 'py', 'python', SCRIPT_PACK_OBJECT, {})

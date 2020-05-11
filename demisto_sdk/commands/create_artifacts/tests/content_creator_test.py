@@ -10,6 +10,9 @@ class TestContentCreator:
         tests_dir = f'{git_path()}/demisto_sdk/tests'
         self.scripts_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'Scripts')
         self.integrations_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'Integrations')
+        self.indicator_types_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'IndicatorTypes')
+        self.indicator_fields_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example',
+                                                       'IndicatorFields')
         self.unified_integrations_path = os.path.join(tests_dir, 'test_files', 'UnifiedIntegrations')
         self.TestPlaybooks_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'TestPlaybooks')
         self.Packs_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'Packs')
@@ -60,6 +63,32 @@ class TestContentCreator:
         content_creator.copy_dir_files(self.TestPlaybooks_full_path, content_creator.test_bundle)
         assert filecmp.cmp(f'{self.TestPlaybooks_full_path}/script-Sleep-for-testplaybook.yml',
                            f'{self._test_dir}/script-Sleep-for-testplaybook.yml')
+
+    def test_indicator_types_and_fields(self):
+        """
+        Given
+        - Content dir with indicator types and fields
+        When
+        - copying the content folder to a content bundle
+        Then
+        - ensure files are being copied correctly
+        """
+        content_creator = ContentCreator(artifacts_path=self.content_repo, content_version='2.5.0',
+                                         content_bundle_path=self._bundle_dir,
+                                         test_bundle_path=self._test_dir,
+                                         preserve_bundles=False)
+
+        content_creator.copy_dir_files(self.indicator_fields_full_path, content_creator.content_bundle)
+        assert filecmp.cmp(f'{self.indicator_fields_full_path}/field.json',
+                           f'{self._bundle_dir}/incidentfield-indicatorfield-field.json')
+        assert filecmp.cmp(f'{self.indicator_fields_full_path}/incidentfield-valid.json',
+                           f'{self._bundle_dir}/incidentfield-indicatorfield-valid.json')
+
+        content_creator.copy_dir_files(self.indicator_types_full_path, content_creator.content_bundle)
+        assert filecmp.cmp(f'{self.indicator_types_full_path}/cidr.json',
+                           f'{self._bundle_dir}/reputation-cidr.json')
+        assert filecmp.cmp(f'{self.indicator_types_full_path}/reputation-cve.json',
+                           f'{self._bundle_dir}/reputation-cve.json')
 
     def test_unified_integrations_copy(self):
         from ruamel.yaml import YAML

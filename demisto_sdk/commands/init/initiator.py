@@ -14,9 +14,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR,
                                                    INTEGRATION_CATEGORIES,
                                                    INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, MISC_DIR,
+                                                   LAYOUTS_DIR,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
                                                    PLAYBOOKS_DIR, REPORTS_DIR,
@@ -75,7 +76,7 @@ class Initiator:
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-                MISC_DIR, REPORTS_DIR, WIDGETS_DIR]
+                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR]
 
     def init(self):
         """Starts the init command process.

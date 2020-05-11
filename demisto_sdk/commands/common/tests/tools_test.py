@@ -9,9 +9,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PLAYBOOK_YML_REGEX,
                                                    PACKS_TEST_PLAYBOOKS_REGEX,
                                                    PLAYBOOKS_DIR)
-from demisto_sdk.commands.common.git_tools import (get_changed_files,
-                                                   get_current_working_branch,
-                                                   git_path)
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
                                                find_type, get_depth,
@@ -276,24 +274,6 @@ def test_get_release_notes_file_path_valid():
 def test_get_release_notes_file_path_invalid():
     filepath = '/SomePack/1_1_1.json'
     assert get_release_notes_file_path(filepath) is None
-
-
-class TestGitTools:
-    def test_get_last_release(self, mocker):
-        mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=' some-branch\n* actual-branch')
-        tag = get_current_working_branch()
-
-        assert tag == '* actual-branch'
-
-    def test_git_diff(mocker):
-        mocker.patch('demisto_sdk.commands.common.tools.run_command',
-                     return_value='M       demisto_sdk/commands/common/hook_validations/base_validator.py'
-                                  'M       demisto_sdk/commands/common/hook_validations/dashboard.py'
-                                  'M       demisto_sdk/commands/common/hook_validations/docker.py'
-                                  'M       demisto_sdk/commands/common/hook_validations/incident_field.py'
-                                  'M       demisto_sdk/commands/common/hook_validations/incident_type.py')
-        assert get_changed_files()
-
 
 class TestGetFile:
     def test_get_ryaml(self):

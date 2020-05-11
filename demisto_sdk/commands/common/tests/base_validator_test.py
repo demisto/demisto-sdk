@@ -74,7 +74,8 @@ FIND_TEST_MATCH_INPUT = [
 ]
 
 
-@pytest.mark.parametrize('test_config, integration_id, test_playbook_id, file_type, expected', FIND_TEST_MATCH_INPUT)
+@pytest.mark.parametrize('test_config, integration_id, test_playbook_id, file_type, expected',
+                         FIND_TEST_MATCH_INPUT)
 def test_find_test_match(test_config, integration_id, test_playbook_id, expected, file_type):
     # type: (dict, str, str, bool, str) -> None
     """
@@ -129,7 +130,8 @@ NOT_REGISTERED_TESTS_INPUT = [
 ]
 
 
-@pytest.mark.parametrize('file_path, schema, conf_json_data, content_item_id, expected', NOT_REGISTERED_TESTS_INPUT)
+@pytest.mark.parametrize('file_path, schema, conf_json_data, content_item_id, expected',
+                         NOT_REGISTERED_TESTS_INPUT)
 def test_get_not_registered_tests(file_path, schema, conf_json_data, content_item_id, expected):
     # type: (str, str, list, str, list) -> None
     """
@@ -140,7 +142,8 @@ def test_get_not_registered_tests(file_path, schema, conf_json_data, content_ite
         - Checking if the test playbooks are configured in 'conf.json' file
 
         Then
-        -  Ensure the method 'get_not_registered_tests' return all test playbooks that are not configured
+        -  Ensure the method 'get_not_registered_tests' return all test playbooks that are not
+        configured
     """
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
     tests = structure_validator.current_file.get('tests')

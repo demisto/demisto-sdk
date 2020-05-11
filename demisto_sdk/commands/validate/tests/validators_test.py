@@ -366,6 +366,23 @@ class TestValidators:
         file_validator.run_all_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION)
         assert file_validator._is_valid
 
+    @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
+    def test_is_valid_rn(self, mocker, file_path, file_type):
+        mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_description', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_version', return_value=True)
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(DashboardValidator, 'is_id_equals_name', return_value=True)
+        mocker.patch.object(ReputationValidator, 'is_id_equals_details', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'are_tests_configured', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'are_tests_configured', return_value=True)
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.validate_added_files(file_path, file_type)
+        assert file_validator._is_valid
+
 
 class RNValidatorTest:
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [

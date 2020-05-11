@@ -278,20 +278,21 @@ def test_get_release_notes_file_path_invalid():
     assert get_release_notes_file_path(filepath) is None
 
 
-def test_git_working_branch(mocker):
-    mocker.patch('demisto_sdk.commands.common.tools.run_command',
-                 return_value='* sample-branch')
-    assert get_current_working_branch()
+class TestGitTools:
+    def test_get_last_release(self, mocker):
+        mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=' some-branch\n* actual-branch')
+        tag = get_current_working_branch()
 
+        assert tag == '* actual-branch'
 
-def test_git_diff(mocker):
-    mocker.patch('demisto_sdk.commands.common.tools.run_command',
-                 return_value='M       demisto_sdk/commands/common/hook_validations/base_validator.py'
-                              'M       demisto_sdk/commands/common/hook_validations/dashboard.py'
-                              'M       demisto_sdk/commands/common/hook_validations/docker.py'
-                              'M       demisto_sdk/commands/common/hook_validations/incident_field.py'
-                              'M       demisto_sdk/commands/common/hook_validations/incident_type.py')
-    assert get_changed_files()
+    def test_git_diff(mocker):
+        mocker.patch('demisto_sdk.commands.common.tools.run_command',
+                     return_value='M       demisto_sdk/commands/common/hook_validations/base_validator.py'
+                                  'M       demisto_sdk/commands/common/hook_validations/dashboard.py'
+                                  'M       demisto_sdk/commands/common/hook_validations/docker.py'
+                                  'M       demisto_sdk/commands/common/hook_validations/incident_field.py'
+                                  'M       demisto_sdk/commands/common/hook_validations/incident_type.py')
+        assert get_changed_files()
 
 
 class TestGetFile:

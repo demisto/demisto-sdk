@@ -1,7 +1,7 @@
 In order to release a new version of `demisto-sdk` to the public follow these steps:
 
 1) Make sure the **CHANGELOG.md** file is in order and is updated with all the changes in the current release.
-2) In demisto-sdk, create a new release branch.
+2) In demisto-sdk, create a new release branch, named after the release version in the format `X.X.X`, e.g. `1.0.0`
 3) Update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first.
 4) As the regular Content build runs, initiate a nightly Content build from the Content repository by running: `./Utils/trigger_content_nightly_build.sh <branch_name> <circle_token>`
 5) Look at the CircleCI build:

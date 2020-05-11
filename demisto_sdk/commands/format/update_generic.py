@@ -178,7 +178,7 @@ class BaseUpdate:
             if self.relative_content_path:
                 structure_validator = StructureValidator(self.relative_content_path)
                 validator = validator_type(structure_validator)
-                if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
+                if structure_validator.is_valid_file() and validator.is_valid_file():
                     print_color('The files are valid', LOG_COLORS.GREEN)
                     return SUCCESS_RETURN_CODE
                 else:

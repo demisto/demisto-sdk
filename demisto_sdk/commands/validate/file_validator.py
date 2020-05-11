@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
     JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
+    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
@@ -737,6 +738,10 @@ class FilesValidator:
         Returns:
             (bool). Whether the structure is valid or not.
         """
+        if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
+            # ignore reputations.json
+            return True
+
         if self.validate_all:
             self.validate_all_files()
             return self._is_valid

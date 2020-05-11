@@ -1,11 +1,9 @@
 from distutils.version import LooseVersion
 
-from demisto_sdk.commands.common.constants import (
-    INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX,
-    Errors)
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import checked_type, print_error
+from demisto_sdk.commands.common.tools import print_error
 
 
 class ReputationValidator(BaseValidator):
@@ -15,10 +13,6 @@ class ReputationValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         """Check whether the reputation file is valid or not
         """
-
-        if checked_type(self.file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX]):
-            # ignore reputations.json
-            return True
 
         is_reputation_valid = all([
             super().is_valid_file(validate_rn),

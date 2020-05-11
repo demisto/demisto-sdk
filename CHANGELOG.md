@@ -1,4 +1,5 @@
 # Changelog
+* Fixed a bug in the **validate** command where indicatorField always field.
 * Fixed a bug in the **validate** command where layouts version was not checked correctly.
 * Fixed a bug in the **format** command where comments were being removed from YAML files.
 * Added output fields: _file_path_ and _kind_ for layouts in the id-set.json created by **create-id-set** command.

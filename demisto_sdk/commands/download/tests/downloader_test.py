@@ -33,13 +33,11 @@ INTEGRATION_PACK_OBJECT = {'Test Integration': [
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.py', 'file_ending': 'py'},
     {'name': 'Test Integration', 'id': 'Test Integration',
-     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_testt.py', 'file_ending': 'py'},
+     'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_test.py', 'file_ending': 'py'},
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'file_ending': 'yml'},
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_image.png', 'file_ending': 'png'},
-    {'name': 'Test Integration', 'id': 'Test Integration',
-     'path': f'{INTEGRATION_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'},
     {'name': 'Test Integration', 'id': 'Test Integration',
      'path': f'{INTEGRATION_INSTANCE_PATH}/TestIntegration_description.md', 'file_ending': 'md'},
     {'name': 'Test Integration', 'id': 'Test Integration',
@@ -48,7 +46,6 @@ INTEGRATION_PACK_OBJECT = {'Test Integration': [
 SCRIPT_PACK_OBJECT = {'TestScript': [
     {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/TestScript.py', 'file_ending': 'py'},
     {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/TestScript.yml', 'file_ending': 'yml'},
-    {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/CHANGELOG.md', 'file_ending': 'md'},
     {'name': 'TestScript', 'id': 'TestScript', 'path': f'{SCRIPT_INSTANCE_PATH}/README.md', 'file_ending': 'md'}
 ]}
 PLAYBOOK_PACK_OBJECT = {'FormattingPerformance - Test': [
@@ -509,8 +506,8 @@ class TestMergeExistingFile:
 class TestMergeNewFile:
     @pytest.mark.parametrize('custom_content_object, raw_files', [
         (INTEGRATION_CUSTOM_CONTENT_OBJECT, ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md',
-                                             'odp/README.md', 'odp/CHANGELOG.md']),
-        (SCRIPT_CUSTOM_CONTENT_OBJECT, ['odp/bn.py', 'odp/bn.yml', 'odp/README.md', 'odp/CHANGELOG.md'])
+                                             'odp/README.md']),
+        (SCRIPT_CUSTOM_CONTENT_OBJECT, ['odp/bn.py', 'odp/bn.yml', 'odp/README.md'])
     ])
     def test_merge_and_extract_new_file(self, custom_content_object, raw_files):
         env_guard = EnvironmentGuardian()

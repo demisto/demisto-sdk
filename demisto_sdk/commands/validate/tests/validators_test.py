@@ -382,3 +382,4 @@ class RNValidatorTest:
     def test_has_release_notes_been_filled_out(self, release_notes, validator, answer, mocker):
         # type: (str, Type[BaseValidator], Any) -> None
         assert validator.has_release_notes_been_filled_out(release_notes) is answer
+

@@ -47,6 +47,7 @@ class TestIDSetCreator:
         assert 'IncidentFields' in id_set.keys()
         assert 'IncidentTypes' in id_set.keys()
         assert 'IndicatorFields' in id_set.keys()
+        assert 'IndicatorTypes' in id_set.keys()
         assert 'Layouts' in id_set.keys()
         assert 'Reports' in id_set.keys()
         assert 'Widgets' in id_set.keys()

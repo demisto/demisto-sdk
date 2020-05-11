@@ -1,5 +1,23 @@
 type: map
 mapping:
+  feed:
+    type: bool
+  incidentSamples:
+    type: seq
+    sequence:
+      - type: str
+  indicatorSamples:
+    type: seq
+    sequence:
+      - type: str
+  propagationLabels:
+    type: any
+  isDefault:
+    type: bool
+  fromversion:
+    type: str
+  sortValues:
+    type: any
   id:
     type: str
     required: True

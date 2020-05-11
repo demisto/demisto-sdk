@@ -379,7 +379,7 @@ class TestMergeExistingFile:
                             test_answer = test_answer and True
                         else:
                             test_answer = False
-            with open(INTEGRATION_PACK_OBJECT['Test Integration'][5]['path'], 'r') as description_file:
+            with open(INTEGRATION_PACK_OBJECT['Test Integration'][4]['path'], 'r') as description_file:
                 description_data = description_file.read()
             test_answer = test_answer and 'Test Integration Long Description TEST' in description_data
             with open(INTEGRATION_PACK_OBJECT['Test Integration'][0]['path'], 'r') as code_file:

@@ -275,6 +275,7 @@ def test_get_release_notes_file_path_invalid():
     filepath = '/SomePack/1_1_1.json'
     assert get_release_notes_file_path(filepath) is None
 
+
 class TestGetFile:
     def test_get_ryaml(self):
         file_data = get_ryaml(SOURCE_FORMAT_INTEGRATION_COPY)

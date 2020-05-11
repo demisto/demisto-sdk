@@ -1,6 +1,5 @@
-import pytest
-import os
 import json
+import os
 
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.conf_json import \

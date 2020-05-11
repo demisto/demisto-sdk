@@ -1,6 +1,7 @@
 # Changelog
 * Fixed a bug in **upload** command where created unified docker45 yml files were not deleted.
 * Added support for IndicatorTypes directory in packs (for `reputation` files, instead of Misc).
+* Fixed parsing playbook condition names as string instead of boolean in **validate** command
 
 #### 1.0.3
 * Fixed a bug in the **format** command where comments were being removed from YAML files.

@@ -57,6 +57,10 @@ INTEGRATION_TARGET = "./Integrations/integration-test.yml"
 INCIDENT_FIELD_TARGET = "IncidentFields/incidentfield-test.json"
 INCIDENT_TYPE_TARGET = "IncidentTypes/incidenttype-valid.json"
 PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
+INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
+                                            f'FeedAzure/TestPlaybooks/playbook-FeedAzure_test_copy_no_prefix.yml'
+INVALID_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
+                                       f'FeedAzure/Playbooks/FeedAzure_test.yml'
 SCRIPT_TARGET = "./Scripts/script-test.yml"
 BETA_INTEGRATION_TARGET = "./Beta_Integrations/integration-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = "./Scripts/script-test_CHANGELOG.md"

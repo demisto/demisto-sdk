@@ -482,6 +482,6 @@ class RNValidatorTest:
     ]
 
     @pytest.mark.parametrize('release_notes, validator, answer', INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
-    def test_has_release_notes_been_filled_out(self, release_notes, validator, answer, mocker):
+    def test_has_release_notes_been_filled_out(self, release_notes, validator, answer):
         # type: (str, Type[BaseValidator], Any) -> None
         assert validator.has_release_notes_been_filled_out(release_notes) is answer

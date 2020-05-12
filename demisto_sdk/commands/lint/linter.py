@@ -143,8 +143,7 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Loooking for pkg yaml
-        yml_file: Optional[Path] = self._pack_abs_dir.glob([rf'*.yaml', rf'*.yml', r'!*unified*.yml'],
-                                                           flags=NEGATE)
+        yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', f'*.yml', '!*unified*.yml'], flags=NEGATE)
 
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skiping no yaml file found {yml_file}")
@@ -196,7 +195,8 @@ class Linter:
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
                 # Checking whatever *test* exsits in package
-                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None) else False
+                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
+                                                   None) else False
                 if self._facts["test"]:
                     logger.info(f"{log_prompt} - Tests found")
                 else:
@@ -539,8 +539,9 @@ class Linter:
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
         if not test_image:
-            logger.info(f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
-                        f"time")
+            logger.info(
+                f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
+                f"time")
             try:
                 with io.BytesIO() as f:
                     f.write(dockerfile.encode('utf-8'))
@@ -619,7 +620,8 @@ class Linter:
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=[build_pylint_command(self._facts["lint_files"])],
+                                                               command=[
+                                                                   build_pylint_command(self._facts["lint_files"])],
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
@@ -694,7 +696,8 @@ class Linter:
             # Running pytest container
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=[build_pytest_command(test_xml=test_xml, json=True)],
+                                                               command=[
+                                                                   build_pytest_command(test_xml=test_xml, json=True)],
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])

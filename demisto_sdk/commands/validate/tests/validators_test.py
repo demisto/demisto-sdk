@@ -19,6 +19,8 @@ from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import \
+    ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
@@ -471,3 +473,15 @@ class TestValidators:
         assert file_validator._is_valid
         file_validator.run_all_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION)
         assert file_validator._is_valid
+
+
+class RNValidatorTest:
+    INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
+        ('Valid Release Notes', ReleaseNotesValidator, True),
+        ('%%UPDATE_RN%%', ReleaseNotesValidator, False),
+    ]
+
+    @pytest.mark.parametrize('release_notes, validator, answer', INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
+    def test_has_release_notes_been_filled_out(self, release_notes, validator, answer, mocker):
+        # type: (str, Type[BaseValidator], Any) -> None
+        assert validator.has_release_notes_been_filled_out(release_notes) is answer

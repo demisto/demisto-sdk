@@ -18,8 +18,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_entity_name_by_entity_type,
                                                get_files_in_dir,
                                                get_last_release_version,
-                                               get_matching_regex, get_ryaml,
-                                               retrieve_file_ending,
+                                               get_latest_release_notes_text,
+                                               get_matching_regex,
+                                               get_release_notes_file_path,
+                                               get_ryaml, retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
@@ -263,3 +265,19 @@ class TestGetFile:
         file_data = get_ryaml(SOURCE_FORMAT_INTEGRATION_COPY)
         assert file_data
         assert file_data.get('name') is not None
+
+
+def test_get_latest_release_notes_text_invalid():
+    PATH_TO_HERE = f'{git_path()}/demisto_sdk/tests/test_files/'
+    file_path = os.path.join(PATH_TO_HERE, 'empty-RN.md')
+    assert get_latest_release_notes_text(file_path) is None
+
+
+def test_get_release_notes_file_path_valid():
+    filepath = '/SomePack/1_1_1.md'
+    assert get_release_notes_file_path(filepath) == filepath
+
+
+def test_get_release_notes_file_path_invalid():
+    filepath = '/SomePack/1_1_1.json'
+    assert get_release_notes_file_path(filepath) is None

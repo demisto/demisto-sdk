@@ -42,13 +42,13 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import \
+    OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.old_release_notes import \
-    OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \

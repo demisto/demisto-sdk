@@ -7,11 +7,9 @@ import yaml
 from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (_get_file_id,
-                                               old_get_latest_release_notes_text,
-                                               old_get_release_notes_file_path,
-                                               is_test_config_match,
-                                               print_error, run_command)
+from demisto_sdk.commands.common.tools import (
+    _get_file_id, is_test_config_match, old_get_latest_release_notes_text,
+    old_get_release_notes_file_path, print_error, run_command)
 
 
 class BaseValidator:

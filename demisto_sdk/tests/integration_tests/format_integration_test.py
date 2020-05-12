@@ -6,6 +6,7 @@ from typing import List
 import pytest
 import yaml
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)

@@ -112,6 +112,7 @@ class Linter:
             return self._pkg_lint_status
 
         # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
+
         with add_tmp_lint_files(content_repo=self._content_repo,
                                 pack_path=self._pack_abs_dir,
                                 lint_files=self._facts["lint_files"],
@@ -123,6 +124,7 @@ class Linter:
                                        no_bandit=no_bandit,
                                        no_mypy=no_mypy,
                                        no_vulture=no_vulture)
+
             # Run lint and test check on pack docker image
             if self._facts["docker_engine"]:
                 self._run_lint_on_docker_image(no_pylint=no_pylint,
@@ -162,10 +164,12 @@ class Linter:
         logger.info(f"{log_prompt} - Using yaml file {yml_file}")
         # Parsing pack yaml - inorder to verify if check needed
         try:
+
             script_obj: dict = {}
             yml_obj: dict = YAML().load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
+
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')

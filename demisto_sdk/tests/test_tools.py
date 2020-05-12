@@ -6,6 +6,7 @@ from typing import Callable
 import pytest
 import yaml
 from _pytest import tmpdir
+
 from demisto_sdk.commands.common.tools import get_content_file_type_dump
 
 

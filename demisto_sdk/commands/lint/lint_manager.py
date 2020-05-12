@@ -8,6 +8,7 @@ import sys
 import textwrap
 from typing import Any, Dict, List
 
+import demisto_sdk.commands.common.tools as tools
 # Third party packages
 import docker
 import docker.errors
@@ -81,12 +82,16 @@ class LintManager:
         try:
             git_repo = git.Repo(os.getcwd(),
                                 search_parent_directories=True)
-            if 'content' not in git_repo.remote().urls.__next__():
+            remote_url = git_repo.remote().urls.__next__()
+            if 'content' not in remote_url:
                 raise git.InvalidGitRepositoryError
+
+            is_private_repo = tools.is_private_repository()
+
             facts["content_repo"] = git_repo
             logger.debug(f"Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
-            print_warning("You are running demisto-sdk lint not in content repositorty!")
+            print_warning("You are running demisto-sdk lint not in content repository!")
             logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / 'resources'
@@ -104,7 +109,7 @@ class LintManager:
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
-            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"])
+            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_private_repo=is_private_repo)
             logger.debug(f"Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error(
@@ -122,7 +127,7 @@ class LintManager:
             docker_client.ping()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError):
             facts["docker_engine"] = False
-            print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skiping lint, "
+            print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
                           "test which require docker!")
             logger.info(f"demisto-sdk-Can't communicate with Docker daemon")
         logger.debug(f"Docker daemon test passed")
@@ -253,7 +258,7 @@ class LintManager:
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             return_exit_code: int = 0
             results = []
-            # Executing lint checks in diffrent threads
+            # Executing lint checks in different threads
             for pack in self._pkgs:
                 linter: Linter = Linter(pack_dir=pack,
                                         content_repo="" if not self._facts["content_repo"] else

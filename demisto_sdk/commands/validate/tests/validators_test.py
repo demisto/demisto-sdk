@@ -305,7 +305,7 @@ class TestValidators:
     @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer, is_valid", params)
     def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer,
                                                is_valid, mocker):
-        file_validator = FilesValidator(validate_conf_json=False, prev_ver=prev_var)
+        file_validator = FilesValidator(skip_conf_json=True, prev_ver=prev_var)
         file_validator._is_valid = is_valid
         mocker.patch.object(FilesValidator, 'get_modified_and_added_files', return_value=get_modified_and_added_files)
         mocker.patch.object(FilesValidator, 'get_content_release_identifier', return_value=release_iden)
@@ -331,7 +331,7 @@ class TestValidators:
         # type: (str, str) -> None
         try:
             copyfile(source, target)
-            assert FilesValidator(validate_conf_json=False).is_valid_structure()
+            assert FilesValidator(skip_conf_json=True).is_valid_structure()
         finally:
             os.remove(target)
 
@@ -359,7 +359,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
         mocker.patch.object(IntegrationValidator, 'are_tests_configured', return_value=True)
         mocker.patch.object(PlaybookValidator, 'are_tests_configured', return_value=True)
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
 
@@ -395,12 +395,12 @@ class TestValidators:
         -  If the file is a CHANGELOG  or DESCRIPTION it will be skipped  (will be considered as valid)
         -  In any other case the file will be validated
         """
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.run_all_validations_on_file(file_path, file_type)
         assert file_validator._is_valid
 
     def test_files_validator_validate_pack_unique_files(self,):
-        files_validator = FilesValidator(validate_conf_json=False)
+        files_validator = FilesValidator(skip_conf_json=True)
         files_validator.validate_pack_unique_files({VALID_PACK})
         assert files_validator._is_valid
 
@@ -420,12 +420,12 @@ class TestValidators:
     def test_script_valid_rn(self, mocker, file_path, file_type):
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         self.mock_unifier()
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
 
     def test_pack_validation(self):
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.file_path = VALID_PACK
         file_validator.is_valid_structure()
         assert file_validator._is_valid is False

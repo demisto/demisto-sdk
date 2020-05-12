@@ -191,7 +191,7 @@ class Uploader:
                     unifier = Unifier(input=path, output=path)
                     unified_paths = unifier.merge_script_package_to_yml()
                     path = unified_paths[0]
-                    docker45_path = unified_paths[1]
+                    docker45_path = unified_paths[1] if len(unified_paths) > 1 else ''
                     file_name = os.path.basename(path)
                 except IndexError:
                     print_error(f'Error uploading integration from pack. /'
@@ -240,7 +240,7 @@ class Uploader:
                     unifier = Unifier(input=path, output=path)
                     unified_paths = unifier.merge_script_package_to_yml()
                     path = unified_paths[0]
-                    docker45_path = unified_paths[1]
+                    docker45_path = unified_paths[1] if len(unified_paths) > 1 else ''
                     file_name = os.path.basename(path)
                 except IndexError:
                     print_error(f'Error uploading script from pack. /'

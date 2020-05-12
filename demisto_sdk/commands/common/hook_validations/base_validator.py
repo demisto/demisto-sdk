@@ -8,8 +8,8 @@ from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (_get_file_id,
-                                               get_latest_release_notes_text,
-                                               get_release_notes_file_path,
+                                               old_get_latest_release_notes_text,
+                                               old_get_release_notes_file_path,
                                                is_test_config_match,
                                                print_error, run_command)
 
@@ -62,8 +62,8 @@ class BaseValidator:
             (bool): is there release notes
         """
         if os.path.isfile(self.file_path):
-            rn_path = get_release_notes_file_path(self.file_path)
-            release_notes = get_latest_release_notes_text(rn_path)
+            rn_path = old_get_release_notes_file_path(self.file_path)
+            release_notes = old_get_latest_release_notes_text(rn_path)
 
             # check release_notes file exists and contain text
             if release_notes is None:

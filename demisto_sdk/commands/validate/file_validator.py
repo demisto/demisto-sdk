@@ -6,7 +6,7 @@ This script is used to validate the files in Content repository. Specifically fo
 4) Having ReleaseNotes if applicable.
 
 It can be run to check only committed changes (if the first argument is 'true') or all the files in the repo.
-Note - if it is run for all the files in the repo it won't check releaseNotes, use `release_notes.py`
+Note - if it is run for all the files in the repo it won't check releaseNotes, use `old_release_notes.py`
 for that task.
 """
 from __future__ import print_function
@@ -47,6 +47,8 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import \
+    OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \
@@ -103,6 +105,7 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
+        self.changed_pack_data = {}
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -262,6 +265,11 @@ class FilesValidator:
 
         return packs
 
+    def old_is_valid_release_notes(self, file_path):
+        old_release_notes_validator = OldReleaseNotesValidator(file_path)
+        if not old_release_notes_validator.is_file_valid():
+            self._is_valid = False
+
     def is_valid_release_notes(self, file_path):
         release_notes_validator = ReleaseNotesValidator(file_path)
         if not release_notes_validator.is_file_valid():
@@ -275,6 +283,11 @@ class FilesValidator:
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
+        changed_packs = {}
+        for file_path in modified_files:
+            changed_pack = get_pack_name(file_path)
+            if changed_pack:
+                changed_packs[changed_pack] = False
         for file_path in modified_files:
             old_file_path = None
             # modified_files are returning from running git diff.
@@ -379,7 +392,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                self.is_valid_release_notes(file_path)
+                self.old_is_valid_release_notes(file_path)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
@@ -389,6 +402,8 @@ class FilesValidator:
                 print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
+
+        self.changed_pack_data = changed_packs
 
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
         """Validate the added files from your branch.
@@ -400,6 +415,7 @@ class FilesValidator:
             file_type (str): Used only with -p flag (the type of the file).
         """
         for file_path in added_files:
+            pack_name = get_pack_name(file_path)
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue
@@ -486,6 +502,11 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
+                self.old_is_valid_release_notes(file_path)
+
+            elif 'ReleaseNotes' in file_path:
+                self.changed_pack_data[pack_name] = True
+                print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
@@ -495,6 +516,12 @@ class FilesValidator:
                 print_error("The file type of {} is not supported in validate command".format(file_path))
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
+                self._is_valid = False
+        for pack, status in self.changed_pack_data.items():
+            if status is False:
+                print_error(f"Release notes were not found for {pack}. Please run `demisto-sdk "
+                            f"update-release-notes` to generate release notes according to the "
+                            f"new standard.")
                 self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):

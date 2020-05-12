@@ -109,6 +109,11 @@ LAYOUT_PATH = f"Layouts"
 SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_dashboard-copy.json"
 DESTINATION_FORMAT_DASHBOARD_COPY = f"Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = f"Dashboards"
+
+SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook.yml"
+DESTINATION_FORMAT_PLAYBOOK = f"Playbook/playbook.yml"
+PLAYBOOK_PATH = f"Playbook"
+
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 

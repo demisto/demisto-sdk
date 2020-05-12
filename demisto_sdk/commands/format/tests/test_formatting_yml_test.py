@@ -9,10 +9,11 @@ from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.tests.constants_test import (
-    DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
-    DESTINATION_FORMAT_SCRIPT_COPY, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION,
-    EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, GIT_ROOT,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY,
+    DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK,
+    DESTINATION_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_SCRIPT_COPY,
+    EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
+    EQUAL_VAL_PATH, GIT_ROOT, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION_COPY,
+    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY)
 from ruamel.yaml import YAML
 
@@ -221,3 +222,19 @@ def test_string_condition_in_playbook(source_path, destination_path, formatter, 
         yaml_content = yaml.load(content)
         assert 'yes' in yaml_content['tasks']['27']['nexttasks']
     os.remove(saved_file_path)
+
+
+FORMAT_FILES = [
+    (SOURCE_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK, PLAYBOOK_PATH, 0)
+]
+
+
+@pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
+def test_format_file(source, target, path, answer):
+    os.makedirs(path)
+    shutil.copyfile(source, target)
+    res = format_manager(input=target, output=target)
+    os.remove(target)
+    os.rmdir(path)
+
+    assert res is answer

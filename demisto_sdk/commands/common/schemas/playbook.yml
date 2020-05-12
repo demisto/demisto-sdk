@@ -112,6 +112,8 @@ mapping:
                 required: true
               playbookName:
                 type: str
+              playbookId:
+                type: str
               description:
                 type: str
                 required: true

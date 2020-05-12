@@ -166,7 +166,7 @@ class Unifier:
         image_data, found_img_path = self.get_data("*png")
         image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
-        if yml_data.get('image')and self.use_force is False:
+        if yml_data.get('image') and self.use_force is False:
             raise ValueError('Please move the image from the yml to an image file (.png)'
                              f' in the package: {self.package_path}')
 

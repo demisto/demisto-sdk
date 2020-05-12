@@ -35,8 +35,6 @@ from ruamel.yaml import YAML
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
-logging.disable(logging.CRITICAL)
-
 
 class Downloader:
     """
@@ -61,6 +59,7 @@ class Downloader:
 
     def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False,
                  list_files: bool = False, all_custom_content: bool = False, run_format: bool = False):
+        logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = list(input)
         self.force = force

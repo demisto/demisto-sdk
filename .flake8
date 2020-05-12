@@ -6,6 +6,6 @@
 # F405 may be undefined, or defined from star imports
 # W605 invalid escape sequence
 # E999 Invalid Syntax
-ignore = W293, W504, F405, F403
+ignore = W293, W504, F405, F403, F541
 max-line-length = 160
 max-complexity = 30

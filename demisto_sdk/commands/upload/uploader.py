@@ -182,13 +182,16 @@ class Uploader:
     def integration_uploader(self, path: str):
         is_dir = False
         file_name = os.path.basename(path)
+        docker45_path = ''
 
         try:
             if os.path.isdir(path):  # Create a temporary unified yml file
                 try:
                     is_dir = True
                     unifier = Unifier(input=path, output=path)
-                    path = unifier.merge_script_package_to_yml()[0]
+                    unified_paths = unifier.merge_script_package_to_yml()
+                    path = unified_paths[0]
+                    docker45_path = unified_paths[1]
                     file_name = os.path.basename(path)
                 except IndexError:
                     print_error(f'Error uploading integration from pack. /'
@@ -222,17 +225,22 @@ class Uploader:
             # Remove the temporary file
             if is_dir:
                 self._remove_temp_file(path)
+                if docker45_path:
+                    self._remove_temp_file(docker45_path)
 
     def script_uploader(self, path: str):
         is_dir = False
         file_name = os.path.basename(path)
+        docker45_path = ''
 
         try:
             if os.path.isdir(path):  # Create a temporary unified yml file
                 is_dir = True
                 try:
                     unifier = Unifier(input=path, output=path)
-                    path = unifier.merge_script_package_to_yml()[0]
+                    unified_paths = unifier.merge_script_package_to_yml()
+                    path = unified_paths[0]
+                    docker45_path = unified_paths[1]
                     file_name = os.path.basename(path)
                 except IndexError:
                     print_error(f'Error uploading script from pack. /'
@@ -265,6 +273,8 @@ class Uploader:
             # Remove the temporary file
             if is_dir:
                 self._remove_temp_file(path)
+                if docker45_path:
+                    self._remove_temp_file(docker45_path)
 
     def playbook_uploader(self, path: str):
         file_name = os.path.basename(path)

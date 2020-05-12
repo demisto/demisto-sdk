@@ -1,0 +1,2 @@
+class JSONBased:
+    pass

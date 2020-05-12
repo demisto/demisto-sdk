@@ -1,5 +1,5 @@
 # Changelog
-* Fixed a bug in the **format** command where indicatorField field
+* Fixed a bug in the **format** command where indicatorField field.
 * Added support for IndicatorTypes directory in packs (for `reputation` files, instead of Misc).
 
 #### 1.0.3

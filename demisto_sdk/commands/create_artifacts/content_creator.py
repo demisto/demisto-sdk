@@ -18,9 +18,10 @@ from demisto_sdk.commands.common.constants import (BASE_PACK,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, MISC_DIR,
-                                                   PACKS_DIR, PLAYBOOKS_DIR,
+                                                   LAYOUTS_DIR, PACKS_DIR,
+                                                   PLAYBOOKS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -61,9 +62,9 @@ class ContentCreator:
             INCIDENT_FIELDS_DIR,
             INCIDENT_TYPES_DIR,
             INDICATOR_FIELDS_DIR,
+            INDICATOR_TYPES_DIR,
             INTEGRATIONS_DIR,
             LAYOUTS_DIR,
-            MISC_DIR,
             PLAYBOOKS_DIR,
             REPORTS_DIR,
             SCRIPTS_DIR,
@@ -224,6 +225,9 @@ class ContentCreator:
             if dir_name == 'IncidentTypes':
                 if not dpath.startswith('incidenttype-'):
                     dpath = f'incidenttype-{dpath}'
+            if dir_name == 'IndicatorTypes':
+                if not dpath.startswith('reputation-') and 'reputations.json' not in dpath:
+                    dpath = f'reputation-{dpath}'
             # this part is a workaround because server doesn't support indicatorfield-*.json naming
             if dir_name in ['IndicatorFields', 'IncidentFields']:
                 if not dpath.startswith('incidentfield-'):

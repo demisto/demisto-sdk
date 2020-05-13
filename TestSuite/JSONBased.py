@@ -1,2 +1,13 @@
+import json
+from pathlib import Path
+
+
 class JSONBased:
-    pass
+    def __init__(self, dir_path: Path, name: str, prefix: str):
+        self._dir_path = dir_path
+        self.name = f'{prefix.rstrip("-")}-{name}'
+        self._file_path = dir_path / name
+        self.path = str(self._file_path)
+
+    def write_json(self, obj: dict):
+        self._file_path.write_text(json.dumps(obj))

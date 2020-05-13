@@ -55,13 +55,13 @@ If there are files that exist both in the output directory and are specified in 
 
 
 ### Asumptions
-For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration "Test Integration", will be under "~/.../content/Packs/TestPack/Integrations/TestIntegration/".
+For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../content/Packs/TestPack/Integrations/TestIntegrationFullName/`.
 
 Integrations, Scripts and Playbooks directories that does not contain a yml file, will be overwritten automatically.
 All other folders that do not contain a json file, will be overwritten automatically.
 For clarity, the given pack should be consistent with Content hierarchy structure with no rouge files present.
 
-We assume that test playbooks contain the 'test' word in their name.
+We assume that test playbooks contain the `test` word in their name.
 
 ### Supported File Types
 * Integrations
@@ -82,12 +82,12 @@ We assume that test playbooks contain the 'test' word in their name.
 ```
 demisto-sdk download -o Packs/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook"
 ```
-This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook" only if they don't exists in the output pack.
+This will download the integration `Test Integration`, script `TestScript` & playbook `TestPlaybook` only if they don't exists in the output pack.
 <br/><br/>
 ```
 demisto-sdk download -o Packs/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook" -f
 ```
-This will download the integration "Test Integration", script "TestScript" & playbook "TestPlaybook".
+This will download the integration `Test Integration`, script `TestScript` & playbook `TestPlaybook`.
 If one of the files exists in the output pack, only its changes from Demisto instance will be merged into the existing.
 If the file doesn't exist in the output pack, it will be copied completely from Demisto instance.
 <br/><br/>

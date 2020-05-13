@@ -113,6 +113,7 @@ tasks:
       script: '|||xdr-update-incident'
       type: regular
       iscommand: true
+      skipunavailable: false
       brand: ""
     nexttasks:
       '#none#':

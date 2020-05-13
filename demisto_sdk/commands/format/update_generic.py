@@ -90,7 +90,7 @@ class BaseUpdate:
         """
         # If there is no existing file in content repo
         if not self.old_file:
-            print(F'Setting fromVersion field')
+            print('Setting fromVersion field')
             # If current file does not have fromversion key
             if self.from_version_key not in self.data:
 
@@ -156,7 +156,7 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        print(F'Removing _dev and _copy suffixes from name and display tags')
+        print('Removing _dev and _copy suffixes from name and display tags')
         if self.data['name']:
             self.data['name'] = self.data.get('name', '').replace('_copy', '').replace('_dev', '')
         if self.data.get('display'):

@@ -217,6 +217,7 @@ PLAYBOOK_DATA = {
     ],
     'pack': 'DummyPack',
     "skippable_tasks": [
+        "StopScheduledTask",
         "autofocus-sample-analysis"
     ]
 }

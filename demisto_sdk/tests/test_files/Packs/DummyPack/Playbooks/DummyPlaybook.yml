@@ -405,7 +405,7 @@ tasks:
       scriptName: StopScheduledTask
       type: regular
       iscommand: false
-      skipunavailable: false
+      skipunavailable: true
       brand: ""
     nexttasks:
       '#none#':

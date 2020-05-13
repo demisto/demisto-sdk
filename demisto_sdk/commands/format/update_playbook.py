@@ -24,7 +24,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
-        print(F'Adding empty descriptions to relevant tasks')
+        print('Adding empty descriptions to relevant tasks')
         if 'description' not in self.data:
             self.data['description'] = ''
 
@@ -36,7 +36,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
-        print(F'Updating name of tasks who calls other playbooks to their name')
+        print('Updating name of tasks who calls other playbooks to their name')
 
         for task_id, task in self.data.get('tasks', {}).items():
             if task.get('type', '') == 'playbook':
@@ -46,7 +46,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
     def update_fromversion_by_user(self):
         """If no fromversion is specified, asks the user for it's value and updates the playbook."""
-        print(F'Updating fromversion tag')
+        print('Updating fromversion tag')
 
         if not self.data.get('fromVersion', ''):
             print_color('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
@@ -68,7 +68,7 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
     def delete_sourceplaybookid(self):
         """Delete the not needed sourceplaybookid fields"""
-        print(F'Removing sourceplaybookid field from playbook')
+        print('Removing sourceplaybookid field from playbook')
         if 'sourceplaybookid' in self.data:
             self.data.pop('sourceplaybookid', None)
 

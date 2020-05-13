@@ -780,7 +780,8 @@ def update_pack_releasenotes(**kwargs):
         if _pack:
             if _pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
-                            f"Please update manually or delete {pack_name_to_path(_pack)}")
+                            f"Please update manually or run `demisto-sdk update-release-notes "
+                            f"-p {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
                                           pre_release=pre_release)

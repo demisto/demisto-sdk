@@ -69,7 +69,7 @@ INTEGRATION_RELEASE_NOTES_TARGET = "./Integrations/integration-test_CHANGELOG.md
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"
-DESTINATION_FORMAT_SCRIPT_COPY = f"new_format_New_script_copy.yml"
+DESTINATION_FORMAT_SCRIPT_COPY = "new_format_New_script_copy.yml"
 SOURCE_FORMAT_PLAYBOOK_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_new_playbook_copy.yml"
 DESTINATION_FORMAT_PLAYBOOK_COPY = "playbook-new_format_new_playbook_copy.yml"
 INTEGRATION_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_Integration_with_test_playbooks.yml'
@@ -116,8 +116,8 @@ DESTINATION_FORMAT_DASHBOARD_COPY = "Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = "Dashboards"
 
 SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook.yml"
-DESTINATION_FORMAT_PLAYBOOK = f"Playbook/playbook.yml"
-PLAYBOOK_PATH = f"Playbook"
+DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"
+PLAYBOOK_PATH = "Playbook"
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'

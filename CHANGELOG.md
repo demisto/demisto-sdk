@@ -1,5 +1,5 @@
 # Changelog
-* Fixed a bug in the **validate** command failed on "edit layout" files.
+* Fixed a bug in the **validate** command for layout files that had `sortValues` fields.
 * Added support for IndicatorTypes directory in packs (for `reputation` files, instead of Misc).
 
 #### 1.0.3

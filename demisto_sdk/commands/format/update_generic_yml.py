@@ -54,7 +54,7 @@ class BaseUpdateYML(BaseUpdate):
 
     def update_id_to_equal_name(self):
         """Updates the id of the YML to be the same as it's name."""
-        print(F'Updating YML ID to be the same as YML name')
+        print('Updating YML ID to be the same as YML name')
         self.id_and_version_location['id'] = self.data['name']
 
     def save_yml_to_destination_file(self):

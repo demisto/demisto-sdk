@@ -215,7 +215,10 @@ PLAYBOOK_DATA = {
     "tests": [
         "No Test"
     ],
-    'pack': 'DummyPack'
+    'pack': 'DummyPack',
+    "skippable_tasks": [
+        "autofocus-sample-analysis"
+    ]
 }
 
 
@@ -247,6 +250,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(data['file_path'], PLAYBOOK_DATA['file_path'])
         self.assertEqual(data['fromversion'], PLAYBOOK_DATA['fromversion'])
         self.assertListEqual(data['tests'], PLAYBOOK_DATA['tests'])
+        self.assertListEqual(data['skippable_tasks'], PLAYBOOK_DATA['skippable_tasks'])
         self.assertSetEqual(set(data['implementing_playbooks']), set(PLAYBOOK_DATA['implementing_playbooks']))
         self.assertListEqual(data['tests'], PLAYBOOK_DATA['tests'])
         self.assertDictEqual(data['command_to_integration'], PLAYBOOK_DATA['command_to_integration'])

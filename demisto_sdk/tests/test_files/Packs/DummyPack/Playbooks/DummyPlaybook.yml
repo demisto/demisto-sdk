@@ -217,6 +217,7 @@ tasks:
       script: '|||autofocus-sample-analysis'
       type: regular
       iscommand: true
+      skipunavailable: true
       brand: ""
     nexttasks:
       '#none#':
@@ -404,6 +405,7 @@ tasks:
       scriptName: StopScheduledTask
       type: regular
       iscommand: false
+      skipunavailable: false
       brand: ""
     nexttasks:
       '#none#':

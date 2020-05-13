@@ -22,7 +22,7 @@ Supported content entities:
     The name of the pack you wish to generate release notes for.
 
 * **-u, --update_type**
-    
+
     Optional. If no update_type is defined, the `currentVersion` will not be bumped.
 
     The type of update being done. Available options are:

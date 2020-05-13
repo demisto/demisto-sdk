@@ -25,12 +25,34 @@ diff_package = [(nothing_in_rn, False),
 
 @pytest.mark.parametrize('release_notes, expected_result', diff_package)
 def test_rn_master_diff(release_notes, expected_result, mocker):
+    """
+    Given
+    - Empty release notes.
+    - Not filled out release notes.
+    - Valid release notes
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure validation correctly identifies valid release notes.
+    """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     validator = get_validator(release_notes)
     assert validator.is_file_valid() == expected_result
 
 
 def test_init():
+    """
+    Given
+    - Release notes file path
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure init returns valid file path and release notes contents.
+    """
     filepath = os.path.join(FILES_PATH, 'ReleaseNotes', '1_1_1.md')
     release_notes_validator = ReleaseNotesValidator(filepath)
     release_notes_validator.file_path = 'demisto_sdk/tests/test_files/ReleaseNotes/1_1_1.md'

@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     CHECKED_TYPES_REGEXES, CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES,
     IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
+    PACKS_RELEASE_NOTES_REGEX,
     JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
@@ -105,7 +106,7 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
-        self.changed_pack_data = {}
+        self.changed_pack_data = set()
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -283,11 +284,11 @@ class FilesValidator:
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
-        changed_packs = {}
+        changed_packs = set()
         for file_path in modified_files:
             changed_pack = get_pack_name(file_path)
             if changed_pack:
-                changed_packs[changed_pack] = False
+                changed_packs.add(changed_pack)
         for file_path in modified_files:
             old_file_path = None
             # modified_files are returning from running git diff.
@@ -405,6 +406,19 @@ class FilesValidator:
 
         self.changed_pack_data = changed_packs
 
+    def verify_no_dup_rn(self, added_files):
+        added_rn = set()
+        for file in added_files:
+            if re.search(PACKS_RELEASE_NOTES_REGEX, file):
+                pack_name = get_pack_name(file)
+                if pack_name not in added_rn:
+                    added_rn.add(pack_name)
+                else:
+                    print_error(f"More than one release notes file has been found for {pack_name}."
+                                f"Only one release note file is permitted per release. Please delete"
+                                f" the extra release notes.")
+                    self._is_valid = False
+
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
         """Validate the added files from your branch.
 
@@ -414,6 +428,8 @@ class FilesValidator:
             added_files (set): A set of the modified files in the current branch.
             file_type (str): Used only with -p flag (the type of the file).
         """
+        added_rn = set()
+        self.verify_no_dup_rn(added_files)
         for file_path in added_files:
             pack_name = get_pack_name(file_path)
             # unified files should not be validated
@@ -505,7 +521,7 @@ class FilesValidator:
                 self.old_is_valid_release_notes(file_path)
 
             elif 'ReleaseNotes' in file_path:
-                self.changed_pack_data[pack_name] = True
+                added_rn.add(pack_name)
                 print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path)
 
@@ -517,12 +533,13 @@ class FilesValidator:
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
-        for pack, status in self.changed_pack_data.items():
-            if status is False:
+        missing_rn = self.changed_pack_data.difference(added_rn)
+        if len(missing_rn) > 0:
+            for pack in missing_rn:
                 print_error(f"Release notes were not found for {pack}. Please run `demisto-sdk "
-                            f"update-release-notes` to generate release notes according to the "
-                            f"new standard.")
-                self._is_valid = False
+                            f"update-release-notes -p {pack} -u (major|minor|revision)` to "
+                            f"generate release notes according to the new standard.")
+            self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).

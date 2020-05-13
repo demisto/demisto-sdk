@@ -268,16 +268,46 @@ class TestGetFile:
 
 
 def test_get_latest_release_notes_text_invalid():
+    """
+    Given
+    - Invalid release notes
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure None is returned
+    """
     PATH_TO_HERE = f'{git_path()}/demisto_sdk/tests/test_files/'
     file_path = os.path.join(PATH_TO_HERE, 'empty-RN.md')
     assert get_latest_release_notes_text(file_path) is None
 
 
 def test_get_release_notes_file_path_valid():
+    """
+    Given
+    - Valid release notes path
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure valid file path is returned
+    """
     filepath = '/SomePack/1_1_1.md'
     assert get_release_notes_file_path(filepath) == filepath
 
 
 def test_get_release_notes_file_path_invalid():
+    """
+    Given
+    - Invalid release notes path
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure None is returned
+    """
     filepath = '/SomePack/1_1_1.json'
     assert get_release_notes_file_path(filepath) is None

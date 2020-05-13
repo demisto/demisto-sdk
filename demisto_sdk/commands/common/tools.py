@@ -436,7 +436,13 @@ def old_get_latest_release_notes_text(rn_path):
 
 
 def get_release_notes_file_path(file_path):
-    if file_path.endswith('.md'):
+    """
+    Accepts file path which is alleged to contain release notes. Validates that the naming convention
+    is followed. If the file identified does not match the naming convention, error is returned.
+    :param file_path: str - File path of the suspected release note.
+    :return: file_path: str - Validated release notes path.
+    """
+    if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
         return file_path
     else:
         print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')

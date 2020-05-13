@@ -432,6 +432,28 @@ class TestValidators:
         file_validator.is_valid_structure()
         assert file_validator._is_valid is False
 
+    VALID_ADDED_RELEASE_NOTES = {
+        'Packs/HelloWorld/ReleaseNotes/1_2_0.md',
+        'Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md'
+        'Packs/Tanium/ReleaseNotes/1_1_0.md'
+    }
+    INVALID_ADDED_RELEASE_NOTES = {
+        'Packs/HelloWorld/ReleaseNotes/1_2_0.md',
+        'Packs/HelloWorld/ReleaseNotes/1_3_0.md',
+        'Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md'
+        'Packs/Tanium/ReleaseNotes/1_1_0.md'
+    }
+    VERIFY_NO_DUP_RN_INPUT = [
+        (VALID_ADDED_RELEASE_NOTES, True),
+        (INVALID_ADDED_RELEASE_NOTES, False)
+    ]
+
+    @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
+    def test_verify_no_dup_rn(self, added_files: set, expected: bool):
+        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator.verify_no_dup_rn(added_files)
+        assert file_validator._is_valid is expected
+
     ARE_TEST_CONFIGURED_TEST_INPUT = [
         (VALID_INTEGRATION_TEST_PATH, 'integration', True),
         (INVALID_INTEGRATION_NO_TESTS, 'integration', False),

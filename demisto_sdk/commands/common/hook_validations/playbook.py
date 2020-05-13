@@ -90,6 +90,8 @@ class PlaybookValidator(BaseValidator):
         Return:
             bool. if the Playbook handles all condition branches correctly.
         """
+        if 'TestPlaybooks' in self.file_path:
+            return True
         is_all_condition_branches_handled: bool = True
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
@@ -125,14 +127,16 @@ class PlaybookValidator(BaseValidator):
         for condition in task.get('conditions', []):
             label = condition.get('label')
             if label:
-                task_condition_labels.add(label.upper())
+                # Need to cast it to string because otherwise it's parsed as boolean
+                task_condition_labels.add(str(label).upper())
 
         # REMOVE all used condition branches from task_condition_labels (UPPER)
         next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch in next_tasks.keys():
             try:
                 if next_task_branch:
-                    task_condition_labels.remove(next_task_branch.upper())
+                    # Need to cast it to string because otherwise it's parsed as boolean
+                    task_condition_labels.remove(str(next_task_branch).upper())
             except KeyError:
                 print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
                             f'next task condition "{next_task_branch}". Please remove this task or add '

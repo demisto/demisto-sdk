@@ -213,6 +213,7 @@ class IncidentFieldValidator(BaseValidator):
             "tickets",
             "issues",
         }
+        # TODO remove when demisto/etc#24232 is resolved
         whitelisted_field_names = {
             "XDR Alert Count",
             "XDR High Severity Alert Count",
@@ -220,6 +221,11 @@ class IncidentFieldValidator(BaseValidator):
             "XDR Low Severity Alert Count",
             "XDR Incident ID",
             "Detection Ticketed",
+            "Claroty Alert Resolved",  # Needed for incidentfield-Claroty_Alert_Resolved.json
+            "Claroty Alert Type",  # Needed for incidentfield-Claroty_Alert_Type.json
+            "Code42 Alert Type",  # Needed for incidentfield-Code42_Alert_Type.json
+            "Code42 File Events",  # Needed for incidentfield-Code42_File_Events.json
+            "XDR Alerts"  # Needed for XDR_Alerts.json
         }
         if name not in whitelisted_field_names:
             for word in name.split():

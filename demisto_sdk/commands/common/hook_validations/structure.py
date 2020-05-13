@@ -11,9 +11,10 @@ from typing import Optional
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE, SCHEMA_TO_REGEX,
-    Errors)
-from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
+    ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
+    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX, Errors)
+from demisto_sdk.commands.common.tools import (checked_type,
+                                               get_content_file_type_dump,
                                                get_matching_regex,
                                                get_remote_file, print_error)
 from demisto_sdk.commands.format.format_constants import \
@@ -101,6 +102,9 @@ class StructureValidator:
             bool. Whether the scheme is valid on self.file_path.
         """
         if self.scheme_name in [None, 'image', 'readme', 'changelog']:
+            return True
+        # ignore reputations.json
+        if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
             return True
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid

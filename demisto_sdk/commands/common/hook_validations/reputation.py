@@ -13,6 +13,7 @@ class ReputationValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         """Check whether the reputation file is valid or not
         """
+
         is_reputation_valid = all([
             super().is_valid_file(validate_rn),
             self.is_valid_version(),

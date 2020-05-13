@@ -21,7 +21,7 @@ class LayoutJSONFormat(BaseUpdateJSON):
         super().__init__(input, output, path, from_version, no_validate)
 
     def remove_unnecessary_keys(self):
-        print(F'Removing Unnecessary fields from file')
+        print('Removing Unnecessary fields from file')
         arguments_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
             print(F'Removing Unnecessary fields {key} from file')

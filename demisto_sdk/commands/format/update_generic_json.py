@@ -19,7 +19,7 @@ class BaseUpdateJSON(BaseUpdate):
 
     def set_default_values_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
-        print(F'Updating required default values')
+        print('Updating required default values')
         for field in ARGUMENTS_DEFAULT_VALUES:
             if self.__class__.__name__ in ARGUMENTS_DEFAULT_VALUES[field][1]:
                 self.data[field] = ARGUMENTS_DEFAULT_VALUES[field][0]

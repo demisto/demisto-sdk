@@ -71,7 +71,7 @@ class RNInputValidation(click.ParamType):
                     ctx,
                 )
         else:
-            update_type = 'revision'
+            update_type = None
         return update_type
 
 
@@ -246,6 +246,9 @@ def unify(**kwargs):
 @click.option(
     '-i', '--input', help='The path of the content pack/file to validate specifically.'
 )
+@click.option(
+    '--skip-pack-release-notes', is_flag=True,
+    help='Skip validation of pack release notes.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -262,7 +265,8 @@ def validate(config, **kwargs):
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
                                    file_path=file_path,
                                    validate_all=kwargs.get('validate_all'),
-                                   validate_id_set=kwargs['id_set'])
+                                   validate_id_set=kwargs['id_set'],
+                                   skip_pack_rn_validation=kwargs['skip_pack_release_notes'])
         return validator.run()
 
 
@@ -774,7 +778,7 @@ def update_pack_releasenotes(**kwargs):
         sys.exit(0)
     else:
         if _pack:
-            if _pack in packs_existing_rn:
+            if _pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
                             f"Please update manually or delete {pack_name_to_path(_pack)}")
             else:

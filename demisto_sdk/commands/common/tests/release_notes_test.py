@@ -38,7 +38,7 @@ def test_rn_master_diff(release_notes, expected_result, mocker):
     - Ensure validation correctly identifies valid release notes.
     - Case 1: Should return the prompt "Please complete the release notes found at: {path}" and
               return False
-    - Case 2: Should return the prompt "Please complete the release notes found at: {path}" and
+    - Case 2: Should return the prompt "Please finish filling out the release notes found at: {path}" and
               return False
     - Case 3: Should print nothing and return True
     """

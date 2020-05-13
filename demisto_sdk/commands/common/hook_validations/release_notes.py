@@ -23,7 +23,7 @@ class ReleaseNotesValidator:
     def has_release_notes_been_filled_out(self):
         release_notes_comments = self.latest_release_notes
         if '%%UPDATE_RN%%' in release_notes_comments:
-            print_error(f"Please complete the release notes found at: {self.file_path}")
+            print_error(f"Please finish filling out the release notes found at: {self.file_path}")
             return False
         elif len(release_notes_comments) == 0:
             print_error(f"Please complete the release notes found at: {self.file_path}")

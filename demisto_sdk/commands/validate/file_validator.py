@@ -87,7 +87,7 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, configuration=Configuration()):
+                 validate_all=False, skip_pack_rn_validation=False, configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
@@ -105,6 +105,7 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
+        self.skip_pack_rn_validation = skip_pack_rn_validation
         self.changed_pack_data = set()
 
         if self.validate_conf_json:
@@ -430,6 +431,8 @@ class FilesValidator:
         added_rn = set()
         self.verify_no_dup_rn(added_files)
         for file_path in added_files:
+            if ('ReleaseNotes' in file_path) and self.skip_pack_rn_validation:
+                continue
             pack_name = get_pack_name(file_path)
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
@@ -519,7 +522,7 @@ class FilesValidator:
             elif 'CHANGELOG' in file_path:
                 self.old_is_valid_release_notes(file_path)
 
-            elif 'ReleaseNotes' in file_path:
+            elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
                 added_rn.add(pack_name)
                 print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path)
@@ -533,7 +536,7 @@ class FilesValidator:
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
         missing_rn = self.changed_pack_data.difference(added_rn)
-        if len(missing_rn) > 0:
+        if (len(missing_rn) > 0) and (self.skip_pack_rn_validation is False):
             for pack in missing_rn:
                 print_error(f"Release notes were not found for {pack}. Please run `demisto-sdk "
                             f"update-release-notes -p {pack} -u (major|minor|revision)` to "

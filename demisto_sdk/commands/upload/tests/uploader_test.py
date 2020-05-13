@@ -599,13 +599,13 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
 def test_remove_temp_file(demisto_client_configure, mocker):
     """
     Given
-        - A valid file path
+        - A valid Integration path with `dockerimage` and `dockerimage45` fields.
 
     When
-        - Deleting a temporary file created by the unifier (in cases of integrations and script uploads)
+        - Unifying the integration.
 
     Then
-        - Ensure file is deleted
+        - Ensure the unified file created by the unifier for the upload is deleted after the process is complete.
     """
     mocker.patch("builtins.print")
     integration_pckg_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'

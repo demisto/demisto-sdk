@@ -27,15 +27,20 @@ diff_package = [(nothing_in_rn, False),
 def test_rn_master_diff(release_notes, expected_result, mocker):
     """
     Given
-    - Empty release notes.
-    - Not filled out release notes.
-    - Valid release notes
+    - Case 1: Empty release notes.
+    - Case 2: Not filled out release notes.
+    - Case 3: Valid release notes
 
     When
     - Running validation on release notes.
 
     Then
     - Ensure validation correctly identifies valid release notes.
+    - Case 1: Should return the prompt "Please complete the release notes found at: {path}" and
+              return False
+    - Case 2: Should return the prompt "Please complete the release notes found at: {path}" and
+              return False
+    - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     validator = get_validator(release_notes)

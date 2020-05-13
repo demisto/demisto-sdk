@@ -20,7 +20,7 @@ INVALID_PLAYBOOK_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-in
 INVALID_PLAYBOOK_CONDITION_1 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-Invalid_condition_unhandled_" \
                                f"branch.yml"
 INVALID_IGNORED_UNIFIED_INTEGRATION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration_ignored_invalid_unified.yml'
-SCRIPT_WITH_PLAYBOOK = f'demisto_sdk/tests/test_files/script-with-test-playbook.yml'
+SCRIPT_WITH_PLAYBOOK = 'demisto_sdk/tests/test_files/script-with-test-playbook.yml'
 INVALID_PLAYBOOK_CONDITION_2 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-Invalid_condition_unhandled_" \
                                f"branch_and_unhandled_condition.yml"
 VALID_PLAYBOOK_CONDITION = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-valid_condition.yml"
@@ -57,6 +57,10 @@ INTEGRATION_TARGET = "./Integrations/integration-test.yml"
 INCIDENT_FIELD_TARGET = "IncidentFields/incidentfield-test.json"
 INCIDENT_TYPE_TARGET = "IncidentTypes/incidenttype-valid.json"
 PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
+INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
+                                            f'FeedAzure/TestPlaybooks/playbook-FeedAzure_test_copy_no_prefix.yml'
+INVALID_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
+                                       f'FeedAzure/Playbooks/FeedAzure_test.yml'
 SCRIPT_TARGET = "./Scripts/script-test.yml"
 BETA_INTEGRATION_TARGET = "./Beta_Integrations/integration-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = "./Scripts/script-test_CHANGELOG.md"
@@ -64,7 +68,7 @@ INTEGRATION_RELEASE_NOTES_TARGET = "./Integrations/integration-test_CHANGELOG.md
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"
-DESTINATION_FORMAT_SCRIPT_COPY = f"new_format_New_script_copy.yml"
+DESTINATION_FORMAT_SCRIPT_COPY = "new_format_New_script_copy.yml"
 SOURCE_FORMAT_PLAYBOOK_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_new_playbook_copy.yml"
 DESTINATION_FORMAT_PLAYBOOK_COPY = "playbook-new_format_new_playbook_copy.yml"
 INTEGRATION_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_Integration_with_test_playbooks.yml'
@@ -82,33 +86,33 @@ INVALID_INTEGRATION_YML_4 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integratio
 VALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-valid.json"
 INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-invalid.json"
 EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-invalid-equal.yml"
-EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION = f"Playbooks/playbook-invalid-equal.yml"
-EQUAL_VAL_PATH = f'Playbooks'
+EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION = "Playbooks/playbook-invalid-equal.yml"
+EQUAL_VAL_PATH = 'Playbooks'
 INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-no-hidden-params.yml"
 VALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-no-unallowed-hidden-params.yml"
 GIT_HAVE_MODIFIED_AND_NEW_FILES = f"{GIT_ROOT}/demisto_sdk/tests/test_files/git_have_modified_and_new_files.json"
 SOURCE_FORMAT_INCIDENTFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidentfield-copy.json"
-DESTINATION_FORMAT_INCIDENTFIELD_COPY = f"IncidentFields/incidentfield-copy.json"
-INCIDENTFIELD_PATH = f"IncidentFields"
+DESTINATION_FORMAT_INCIDENTFIELD_COPY = "IncidentFields/incidentfield-copy.json"
+INCIDENTFIELD_PATH = "IncidentFields"
 SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidenttype-copy.json"
-DESTINATION_FORMAT_INCIDENTTYPE_COPY = f"IncidentTypes/incidenttype-copy.json"
-INCIDENTTYPE_PATH = f"IncidentTypes"
+DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"
+INCIDENTTYPE_PATH = "IncidentTypes"
 
 SOURCE_FORMAT_INDICATORFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatorfield-copy.json"
-DESTINATION_FORMAT_INDICATORFIELD_COPY = f"IndicatorFields/incidentfield-copy.json"
-INDICATORFIELD_PATH = f"IndicatorFields"
+DESTINATION_FORMAT_INDICATORFIELD_COPY = "IndicatorFields/incidentfield-copy.json"
+INDICATORFIELD_PATH = "IndicatorFields"
 
 SOURCE_FORMAT_INDICATORTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatortype-copy.json"
-DESTINATION_FORMAT_INDICATORTYPE_COPY = f"Packs/Base/Misc/reputation-copy.json"
-INDICATORTYPE_PATH = f"Packs/Base/Misc"
+DESTINATION_FORMAT_INDICATORTYPE_COPY = "Packs/Base/Misc/reputation-copy.json"
+INDICATORTYPE_PATH = "Packs/Base/Misc"
 
 SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
-DESTINATION_FORMAT_LAYOUT_COPY = f"Layouts/layout-copy.json"
-LAYOUT_PATH = f"Layouts"
+DESTINATION_FORMAT_LAYOUT_COPY = "Layouts/layout-copy.json"
+LAYOUT_PATH = "Layouts"
 
 SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_dashboard-copy.json"
-DESTINATION_FORMAT_DASHBOARD_COPY = f"Dashboards/dashboard-copy.json"
-DASHBOARD_PATH = f"Dashboards"
+DESTINATION_FORMAT_DASHBOARD_COPY = "Dashboards/dashboard-copy.json"
+DASHBOARD_PATH = "Dashboards"
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 

@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    TEST_PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, get_yml_paths_in_dir
+from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.upload.uploader import Uploader
 
 # Taken from https://github.com/pytest-dev/pytest-bdd/issues/155
@@ -593,3 +594,26 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
     assert print.call_args_list[0][0][0] == expected_upload_summary_title
     assert print.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
     assert print.call_args_list[2][0][0] == expected_successfully_uploaded_files
+
+
+def test_remove_temp_file(demisto_client_configure, mocker):
+    """
+    Given
+        - A valid Integration path with `dockerimage` and `dockerimage45` fields.
+
+    When
+        - Unifying the integration.
+
+    Then
+        - Ensure the unified file created by the unifier for the upload is deleted after the process is complete.
+    """
+    mocker.patch("builtins.print")
+    integration_pckg_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
+    uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    unifier = Unifier(input=integration_pckg_path, output=integration_pckg_path)
+    unified_paths = unifier.merge_script_package_to_yml()
+    uploader._remove_temp_file(unified_paths[0])
+    uploader._remove_temp_file(unified_paths[1])
+    assert not os.path.isfile(unified_paths[0])
+    assert not os.path.isfile(unified_paths[1])

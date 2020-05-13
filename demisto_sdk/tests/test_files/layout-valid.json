@@ -31,6 +31,7 @@
 						"version": 0,
 						"modified": "0001-01-01T00:00:00Z",
 						"fieldId": "incident_closenotes",
+						"sortValues": null,
 						"isVisible": true
 					}
 				],

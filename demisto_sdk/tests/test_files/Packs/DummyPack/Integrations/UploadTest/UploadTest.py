@@ -27,7 +27,7 @@ class Client(BaseClient):
     def get_ip_reputation(self, ip: str):
         return self._http_request(
             method='GET',
-            url_suffix=f'/ip',
+            url_suffix='/ip',
             params={
                 'ip': ip
             }
@@ -36,7 +36,7 @@ class Client(BaseClient):
     def get_domain_reputation(self, domain: str):
         return self._http_request(
             method='GET',
-            url_suffix=f'/domain',
+            url_suffix='/domain',
             params={
                 'domain': domain
             }
@@ -62,14 +62,14 @@ class Client(BaseClient):
 
         return self._http_request(
             method='GET',
-            url_suffix=f'/get_alerts',
+            url_suffix='/get_alerts',
             params=request_params
         )
 
     def get_alert(self, alert_id: str):
         return self._http_request(
             method='GET',
-            url_suffix=f'/get_alert_details',
+            url_suffix='/get_alert_details',
             params={
                 'alert_id': alert_id
             }

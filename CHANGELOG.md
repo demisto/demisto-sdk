@@ -1,5 +1,6 @@
 # Changelog
 * Fixed a bug in the **validate** command for layout files that had `sortValues` fields.
+* Fixed a bug in the **format** command where `playbookName` field was not always present in the file.
 * Fixed a bug in the **format** command where indicatorField wasn't part of the SDK schemas.
 * Fixed a bug in **upload** command where created unified docker45 yml files were not deleted.
 * Added support for IndicatorTypes directory in packs (for `reputation` files, instead of Misc).

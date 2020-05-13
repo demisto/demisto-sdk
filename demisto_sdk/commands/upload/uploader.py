@@ -1,7 +1,7 @@
 import json
 import os
 from tempfile import NamedTemporaryFile
-from typing import List
+from typing import List, Tuple
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -34,8 +34,8 @@ class Uploader:
         self.log_verbose = verbose
         self.client = demisto_client.configure(verify_ssl=not insecure)
         self.status_code = 0
-        self.successfully_uploaded_files = []
-        self.failed_uploaded_files = []
+        self.successfully_uploaded_files: List[Tuple[str, str]] = []
+        self.failed_uploaded_files: List[Tuple[str, str]] = []
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.

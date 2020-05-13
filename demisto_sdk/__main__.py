@@ -136,7 +136,7 @@ def main(config, version):
 def extract(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'File is not an Integration or Script.')
+        print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_to_package_format()
@@ -177,7 +177,7 @@ def extract(config, **kwargs):
 def extract_code(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'File is not an Integration or Script.')
+        print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
@@ -568,7 +568,7 @@ def json_to_outputs_command(**kwargs):
 def generate_test_playbook(**kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'Generating test playbook is possible only for an Integration or a Script.')
+        print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
     generator = PlaybookTestsGenerator(file_type=file_type, **kwargs)
     generator.run()
@@ -770,7 +770,7 @@ def update_pack_releasenotes(**kwargs):
                                       pre_release=pre_release)
             update_pack_rn.execute_update()
     elif is_all and _pack:
-        print_error(f"Please remove the --all flag when specifying only one pack.")
+        print_error("Please remove the --all flag when specifying only one pack.")
         sys.exit(0)
     else:
         if _pack:

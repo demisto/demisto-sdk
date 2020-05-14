@@ -1,7 +1,6 @@
 import os
 import shutil
 from pathlib import Path
-from tempfile import mkdtemp
 
 import pytest
 from demisto_sdk.commands.common.constants import (
@@ -50,11 +49,11 @@ class Environment:
         self.LAYOUT_CUSTOM_CONTENT_OBJECT = None
         self.FAKE_CUSTOM_CONTENT_OBJECT = None
         self.CUSTOM_CONTENT = None
-        self.tmp_path = tmp_path
+        self.tmp_path = Path(tmp_path)
         self.setup()
 
     def setup(self):
-        tests_path = Path(self.tmp_path) / 'tests'
+        tests_path = self.tmp_path / 'tests'
         tests_env_path = tests_path / 'tests_env'
         tests_data_path = tests_path / 'tests_data'
         shutil.copytree(src='demisto_sdk/commands/download/tests/tests_env', dst=str(tests_env_path))
@@ -550,9 +549,10 @@ class TestMergeNewFile:
             }
         ]
         for param in parameters:
-            temp_dir = mkdtemp()
+            temp_dir = env.tmp_path / f'temp_dir_{parameters.index(param)}'
+            os.mkdir(temp_dir)
             entity = param['custom_content_object']['entity']
-            downloader = Downloader(output=temp_dir, input='')
+            downloader = Downloader(output=str(temp_dir), input='')
             basename = downloader.create_dir_name(param['custom_content_object']['name'])
             output_entity_dir_path = f'{temp_dir}/{entity}'
             os.mkdir(output_entity_dir_path)
@@ -571,7 +571,8 @@ class TestMergeNewFile:
             {'custom_content_object': env.LAYOUT_CUSTOM_CONTENT_OBJECT}
         ]
         for param in parameters:
-            temp_dir = mkdtemp()
+            temp_dir = env.tmp_path / f'temp_dir_{parameters.index(param)}'
+            os.mkdir(temp_dir)
             entity = param['custom_content_object']['entity']
             output_dir_path = f'{temp_dir}/{entity}'
             os.mkdir(output_dir_path)

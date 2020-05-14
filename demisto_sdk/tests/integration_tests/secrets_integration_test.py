@@ -25,7 +25,8 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
     - Ensure success secrets validation message is printed.
     """
     # Mocking the git functionality (Else it'll raise an error)
-    integration = repo.create_pack('pack').create_integration('integration')
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
     mock_git(mocker)
     # Change working dir to repo
     os.chdir(integration.repo_path)
@@ -57,7 +58,8 @@ def test_integration_secrets_integration_negative(mocker, repo):
     - Ensure secret strings are in failure message.
     """
     # Mocking the git functionality (Else it'll raise an error)
-    integration = repo.create_pack().create_integration('sample')
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('sample')
     mock_git(mocker)
     # Change working dir to repo
     os.chdir(integration.repo_path)
@@ -93,7 +95,8 @@ def test_integration_secrets_integration_positive(mocker, repo):
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Change working dir to repo
-    integration = repo.create_pack().create_integration('sample')
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('sample')
     os.chdir(integration.repo_path)
     secret_string = 'email@white.listed'
     integration.write_yml({'this is a secrets': secret_string})
@@ -125,7 +128,8 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(moc
     - Ensure secrets validation succeed.
     """
     # Mocking the git functionality (Else it'll raise an error)
-    integration = repo.create_pack('pack').create_integration('integration')
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
     mock_git(mocker)
     # Change working dir to repo
     os.chdir(integration.repo_path)
@@ -159,7 +163,7 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
     # Change working dir to repo
     os.chdir(pack.repo_path)
     pack.secrets.write_secrets('***.url\n')
-    integration = pack.create_integration()
+    integration = pack.create_integration('sample_integration')
     # Can used from integrations list
     integration.write_code('''
     Random and unmeaningful file content
@@ -214,7 +218,7 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
     mock_git(mocker)
     # Change working dir to repo
     os.chdir(repo.path)
-    pack = repo.create_pack(name='sample_pack')
+    pack = repo.create_pack('sample_pack')
     integration = pack.create_integration('sample_integration')
     integration.write_code('email@not.whitlisted\n')
     result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration.py_path])

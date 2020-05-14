@@ -18,14 +18,14 @@ import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATIONS_DIR, CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR,
-    CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
-    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES, TYPE_PWSH, UNRELEASE_HEADER,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, BETA_INTEGRATIONS_DIR,
+    CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR, CONTENT_GITHUB_LINK,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS,
+    ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
+    SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER,
     WIDGETS_DIR)
 from ruamel.yaml import YAML
 
@@ -397,7 +397,7 @@ def str2bool(v):
     raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def get_release_notes_file_path(file_path):
+def old_get_release_notes_file_path(file_path):
     dir_name = os.path.dirname(file_path)
 
     # CHANGELOG in pack sub dirs
@@ -413,7 +413,7 @@ def get_release_notes_file_path(file_path):
     return os.path.join(dir_name, os.path.splitext(file_name)[0] + '_CHANGELOG.md')
 
 
-def get_latest_release_notes_text(rn_path):
+def old_get_latest_release_notes_text(rn_path):
     if not os.path.isfile(rn_path):
         # releaseNotes were not provided
         return None
@@ -433,6 +433,30 @@ def get_latest_release_notes_text(rn_path):
         new_rn = rn.replace(UNRELEASE_HEADER, '')
 
     return new_rn if new_rn else None
+
+
+def get_release_notes_file_path(file_path):
+    """
+    Accepts file path which is alleged to contain release notes. Validates that the naming convention
+    is followed. If the file identified does not match the naming convention, error is returned.
+    :param file_path: str - File path of the suspected release note.
+    :return: file_path: str - Validated release notes path.
+    """
+    if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
+        return file_path
+    else:
+        print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+
+
+def get_latest_release_notes_text(rn_path):
+    with open(rn_path) as f:
+        rn = f.read()
+
+    if not rn:
+        print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+        return None
+
+    return rn if rn else None
 
 
 def checked_type(file_path, compared_regexes=None, return_regex=False):
@@ -802,14 +826,25 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         return False, ''
 
 
-def is_test_file(file_: str) -> bool:
-    """Check if the file is a test file under testdata, test_data or data_test
-    Args:
-        file_ (str): The file path which is checked.
-    Returns:
-        bool: True if the file is a test file, False otherwise.
-    """
-    if any(test_file in file_.lower() for test_file in TESTS_DIRECTORIES):
+def should_file_skip_validation(file_path: str) -> bool:
+    """Check if the file cannot be validated under 'run_all_validations_on_file' method for various reasons,
+        either if it's a test file, or if it's a file that's been validated somewhere else
+        Args:
+            file_path (str): The file path which is checked.
+        Returns:
+            bool: True if the file's validation should be skipped, False otherwise.
+        """
+    file_extension = os.path.splitext(file_path)[-1]
+    # We validate only yml json and .md files
+    if file_extension not in ['.yml', '.json', '.md']:
+        return True
+    if any(ignore_pattern in file_path.lower() for ignore_pattern in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
+        return True
+    # Ignoring changelog and description files since these are checked on the integration validation
+    if 'changelog' in file_path.lower() or 'description' in file_path.lower():
+        return True
+    # unified files should not be validated
+    if file_path.endswith('_unified.yml'):
         return True
     return False
 

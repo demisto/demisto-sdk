@@ -110,7 +110,7 @@ class LintManager:
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_private_repo=is_private_repo)
-            logger.debug(f"Test mandatory modules successfully collected")
+            logger.debug("Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error(
                 "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
@@ -129,8 +129,8 @@ class LintManager:
             facts["docker_engine"] = False
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
                           "test which require docker!")
-            logger.info(f"demisto-sdk-Can't communicate with Docker daemon")
-        logger.debug(f"Docker daemon test passed")
+            logger.info("demisto-sdk-Can't communicate with Docker daemon")
+        logger.debug("Docker daemon test passed")
 
         return facts
 
@@ -515,7 +515,7 @@ class LintManager:
                                              subsequent_indent=' ' * len(error_prefix))
         # Log failed images creation
         if EXIT_CODES["image"] & return_exit_code:
-            sentence = f" Image creation errors "
+            sentence = " Image creation errors "
             print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
             print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
             print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
@@ -549,7 +549,7 @@ class LintManager:
         print(f"Packages PASS: {Colors.Fg.green}{len(self._pkgs) - len(failed)}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
         if failed:
-            print(f"Failed packages:")
+            print("Failed packages:")
         for fail_pack in failed:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 

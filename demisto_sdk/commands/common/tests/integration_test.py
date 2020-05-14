@@ -438,18 +438,6 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
 
-    def test_is_valid_image_positive(self, monkeypatch):
-        integration_path = os.path.normpath(
-            os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')
-        )
-        structure = mock_structure(file_path=integration_path)
-        monkeypatch.setattr(
-            'demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGXES',
-            [integration_path]
-        )
-        validator = IntegrationValidator(structure)
-        assert validator.is_valid_image() is True
-
     def test_is_valid_description_positive(self):
         integration_path = os.path.normpath(
             os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')

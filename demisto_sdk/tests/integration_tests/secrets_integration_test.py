@@ -240,8 +240,7 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     pack = repo.create_pack('pack')
-    integration = pack.create_integration(name='sample_integration')
-    integration.create_default_integration()
+    integration = pack.create_integration()
     integration.write_code('email@not.whitlisted\n')
     # Change working dir to repo
     os.chdir(pack.repo_path)

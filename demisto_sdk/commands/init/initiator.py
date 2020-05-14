@@ -391,7 +391,7 @@ class Initiator:
             to_delete = str(input(f"The directory {self.full_output_path} "
                                   f"already exists.\nDo you want to overwrite it? Y/N ")).lower()
             while to_delete != 'y' and to_delete != 'n':
-                to_delete = str(input(f"Your response was invalid.\nDo you want to delete it? Y/N ").lower())
+                to_delete = str(input("Your response was invalid.\nDo you want to delete it? Y/N ").lower())
 
             if to_delete in ['y', 'yes']:
                 shutil.rmtree(path=self.full_output_path, ignore_errors=True)

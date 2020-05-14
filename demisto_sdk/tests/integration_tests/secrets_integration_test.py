@@ -12,7 +12,7 @@ def mock_git(mocker, is_merge: bool = False):
     mocker.patch('demisto_sdk.commands.secrets.secrets.run_command', return_value=is_merge)
 
 
-def test_integration_secrets_incident_field_positive(mocker, integration):
+def test_integration_secrets_incident_field_positive(mocker, repo):
     """
     Given
     - Valid yml file
@@ -25,9 +25,10 @@ def test_integration_secrets_incident_field_positive(mocker, integration):
     - Ensure success secrets validation message is printed.
     """
     # Mocking the git functionality (Else it'll raise an error)
+    integration = repo.create_pack('pack').create_integration('integration')
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(integration.repo.path)
+    os.chdir(integration.repo_path)
     mocker.patch(
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[
@@ -36,14 +37,14 @@ def test_integration_secrets_incident_field_positive(mocker, integration):
     )
     integration.write_yml({'valid yml file': 'really'})
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [SECRETS_CMD, '-wl', integration.repo.secrets.path])
+    result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path])
     assert result.exit_code == 0
     assert "Starting secrets detection" in result.output
     assert "Finished validating secrets, no secrets were found." in result.output
     assert result.stderr == ""
 
 
-def test_integration_secrets_integration_negative(mocker, integration):
+def test_integration_secrets_integration_negative(mocker, repo):
     """
     Given
     - FeedAzure integration yml with secrets.
@@ -56,9 +57,10 @@ def test_integration_secrets_integration_negative(mocker, integration):
     - Ensure secret strings are in failure message.
     """
     # Mocking the git functionality (Else it'll raise an error)
+    integration = repo.create_pack().create_integration('sample')
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(integration.repo.path)
+    os.chdir(integration.repo_path)
     secret_string = 'Dynamics365ForMarketingEmail'
     integration.write_yml({'this is a secrets': secret_string})
     mocker.patch(
@@ -66,7 +68,7 @@ def test_integration_secrets_integration_negative(mocker, integration):
         return_value=[integration.yml_path]
     )
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [SECRETS_CMD, '-wl', integration.repo.secrets.path])
+    result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path])
     assert "Starting secrets detection" in result.output
     assert "Secrets were found in the following files:" in result.output
     assert f"In File: {integration.yml_path}" in result.stdout
@@ -77,7 +79,7 @@ def test_integration_secrets_integration_negative(mocker, integration):
     assert result.exit_code == 1
 
 
-def test_integration_secrets_integration_positive(mocker, integration):
+def test_integration_secrets_integration_positive(mocker, repo):
     """
     Given
     - FeedAzure integration yml with secrets.
@@ -91,10 +93,11 @@ def test_integration_secrets_integration_positive(mocker, integration):
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(integration.repo.path)
+    integration = repo.create_pack().create_integration('sample')
+    os.chdir(integration.repo_path)
     secret_string = 'email@white.listed'
     integration.write_yml({'this is a secrets': secret_string})
-    integration.repo.secrets.write_secrets(
+    repo.secrets.write_secrets(
         generic_strings=[
             secret_string
         ])
@@ -103,13 +106,13 @@ def test_integration_secrets_integration_positive(mocker, integration):
         return_value=[integration.py_path]
     )
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [SECRETS_CMD, '-wl', integration.repo.secrets.path], catch_exceptions=False)
+    result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path], catch_exceptions=False)
     assert 0 == result.exit_code
     assert not result.stderr
     assert "no secrets were found" in result.stdout
 
 
-def test_integration_secrets_integration_global_whitelist_positive_using_git(mocker, integration):
+def test_integration_secrets_integration_global_whitelist_positive_using_git(mocker, repo):
     """
     Given
     - An integration yml with secrets.
@@ -122,9 +125,10 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(moc
     - Ensure secrets validation succeed.
     """
     # Mocking the git functionality (Else it'll raise an error)
+    integration = repo.create_pack('pack').create_integration('integration')
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(integration.repo.path)
+    os.chdir(integration.repo_path)
     # Mock git diff
     mocker.patch(
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
@@ -153,7 +157,7 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(pack.repo.path)
+    os.chdir(pack.repo_path)
     pack.secrets.write_secrets('***.url\n')
     integration = pack.create_integration()
     # Can used from integrations list
@@ -194,7 +198,7 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
     assert 'Finished validating secrets, no secrets were found' in result.stdout
 
 
-def test_integration_secrets_integration_negative_with_input_option(mocker, integration):
+def test_integration_secrets_integration_negative_with_input_option(mocker, repo):
     """
     Given
     - A py code related to an integration.
@@ -209,13 +213,15 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, inte
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(integration.repo.path)
+    os.chdir(repo.path)
+    pack = repo.create_pack(name='sample_pack')
+    integration = pack.create_integration('sample_integration')
     integration.write_code('email@not.whitlisted\n')
     result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, '--input', integration.py_path])
     assert 'Secrets were found in the following files' in result.stdout
 
 
-def test_integration_secrets_integration_negative_with_input_option_and_whitelist(mocker, pack):
+def test_integration_secrets_integration_negative_with_input_option_and_whitelist(mocker, repo):
     """
     Given
     - A file containing secret
@@ -229,10 +235,11 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     """
     # Mocking the git functionality (Else it'll raise an error)
     mock_git(mocker)
+    pack = repo.create_pack('pack')
     # Change working dir to repo
-    os.chdir(pack.repo.path)
+    os.chdir(pack.repo_path)
     integration = pack.create_integration(name='sample_integration')
     integration.write_code('email@not.whitlisted\n')
-    result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.py_path, '-wl', pack.repo.secrets.path])
+    result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.py_path, '-wl', repo.secrets.path])
     assert 1 == result.exit_code
     assert 'Secrets were found in the following files' in result.stdout

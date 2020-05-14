@@ -27,7 +27,8 @@ class Pack:
 
     def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
-        self.repo = repo
+        self._repo = repo
+        self.repo_path = repo.path
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         self.classifiers: List[JSONBased] = list()
@@ -73,7 +74,7 @@ class Pack:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
             yml = {}
-        integration = Integration(self._integrations_path, name, self.repo)
+        integration = Integration(self._integrations_path, name, self._repo)
         integration.build(
             code,
             yml,
@@ -98,7 +99,7 @@ class Pack:
             name = f'script{len(self.integrations)}'
         if yml is None:
             yml = {}
-        script = Script(self._scripts_path, name, self.repo)
+        script = Script(self._scripts_path, name, self._repo)
         script.build(
             code,
             yml,

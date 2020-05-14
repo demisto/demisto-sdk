@@ -9,7 +9,8 @@ import yaml
 class Integration:
     def __init__(self, tmpdir: Path, name, repo):
         self.name = name
-        self.repo = repo
+        self._repo = repo
+        self.repo_path = repo.path
         self._integrations_tmpdir = tmpdir
         self._tmpdir_integration_path = self._integrations_tmpdir / f'{self.name}'
         if not self._integrations_tmpdir.exists():
@@ -55,8 +56,8 @@ class Integration:
 
     @property
     def py_path(self):
-        return os.path.relpath(self.py_abs_path, self.repo.path)
+        return os.path.relpath(self.py_abs_path, self._repo.path)
 
     @property
     def yml_path(self):
-        return os.path.relpath(self.yml_abs_path, self.repo.path)
+        return os.path.relpath(self.yml_abs_path, self._repo.path)

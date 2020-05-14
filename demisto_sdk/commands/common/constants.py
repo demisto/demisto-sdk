@@ -1176,5 +1176,6 @@ ALL_FILES_VALIDATION_IGNORE_WHITELIST = [
     'testcommands',
     'setgridfield_test',
     'ipnetwork_test',
-    'test-data'
+    'test-data',
+    'testplaybook'
 ]

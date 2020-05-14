@@ -406,7 +406,7 @@ class FilesValidator:
                 continue
             print('Validating {}'.format(file_path))
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
 
             elif 'README' in file_path:
@@ -567,11 +567,6 @@ class FilesValidator:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         if not structure_validator.is_valid_file():
             self._is_valid = False
-
-        elif re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-            playbook_validator = PlaybookValidator(structure_validator)
-            if not playbook_validator.is_valid_playbook():
-                self._is_valid = False
 
         elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
             playbook_validator = PlaybookValidator(structure_validator)

@@ -27,7 +27,7 @@ class DashboardJSONFormat(BaseUpdateJSON):
         if 'name' not in self.data:
             print_error(f'Missing "name" field in file {self.source_file} - add this field manually')
             raise Exception(f'Missing "name" field in file {self.source_file} - add this field manually')
-        self.data['id'] = self.data['name']
+        self.data['id'] = self.data.get('name')
 
     def run_format(self) -> int:
         try:

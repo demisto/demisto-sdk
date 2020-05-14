@@ -2,6 +2,8 @@ import os
 import shutil
 
 import pytest
+from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
+                                         update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
@@ -52,7 +54,14 @@ class TestFormattingJson:
 
 
 def test_update_id_indicatortype_positive(mocker, tmpdir):
-    from demisto_sdk.commands.format import update_indicatortype
+    """
+    Given
+        - A dictionary of indicatortype file that the id is not equal to the details
+    When
+        - Ran format on indicatortype file
+    Then
+        - Ensure id updated successfully
+    """
     mocker.patch.object(update_indicatortype, 'IndicatorTypeJSONFormat')
 
     indicator_formater = IndicatorTypeJSONFormat(input='test', output=tmpdir)
@@ -61,8 +70,15 @@ def test_update_id_indicatortype_positive(mocker, tmpdir):
     assert indicator_formater.data['id'] == indicator_formater.data['details']
 
 
-def test_update_id_indicatortype_negativ(mocker, tmpdir):
-    from demisto_sdk.commands.format import update_indicatortype
+def test_update_id_indicatortype_negative(mocker, tmpdir):
+    """
+    Given
+        - A dictionary of indicatortype file that the details field is missing
+    When
+        - Ran format on indicatortype file
+    Then
+        - Ensure the return Exception
+    """
     mocker.patch.object(update_indicatortype, 'IndicatorTypeJSONFormat')
     indicator_formater = IndicatorTypeJSONFormat(input='test', output=tmpdir)
     indicator_formater.data = {'id': '1234'}
@@ -73,7 +89,14 @@ def test_update_id_indicatortype_negativ(mocker, tmpdir):
 
 
 def test_update_id_incidenttype_positive(mocker, tmpdir):
-    from demisto_sdk.commands.format import update_incidenttype
+    """
+    Given
+        - A dictionary of incidenttype file that the id is not equal to the name
+    When
+        - Ran format on incidenttype file
+    Then
+        - Ensure id updated successfully
+    """
     mocker.patch.object(update_incidenttype, 'IncidentTypesJSONFormat')
 
     incident_formater = IncidentTypesJSONFormat(input='test', output=tmpdir)
@@ -82,8 +105,15 @@ def test_update_id_incidenttype_positive(mocker, tmpdir):
     assert incident_formater.data['id'] == incident_formater.data['name']
 
 
-def test_update_id_incidenttype_negativ(mocker, tmpdir):
-    from demisto_sdk.commands.format import update_incidenttype
+def test_update_id_incidenttype_negative(mocker, tmpdir):
+    """
+    Given
+        - A dictionary of incidenttype file that the name field is missing
+    When
+        - Ran format on incidenttype file
+    Then
+        - Ensure the return Exception
+    """
     mocker.patch.object(update_incidenttype, 'IncidentTypesJSONFormat')
     incident_formater = IncidentTypesJSONFormat(input='test', output=tmpdir)
     incident_formater.data = {'id': '1234'}
@@ -94,7 +124,14 @@ def test_update_id_incidenttype_negativ(mocker, tmpdir):
 
 
 def test_update_id_dashboard_positive(mocker, tmpdir):
-    from demisto_sdk.commands.format import update_dashboard
+    """
+    Given
+        - A dictionary of dashboard file that the id is not equal to the name
+    When
+        - Ran format on dashboard file
+    Then
+        - Ensure id updated successfully
+    """
     mocker.patch.object(update_dashboard, 'DashboardJSONFormat')
 
     dashboard_formater = DashboardJSONFormat(input='test', output=tmpdir)
@@ -103,8 +140,15 @@ def test_update_id_dashboard_positive(mocker, tmpdir):
     assert dashboard_formater.data['id'] == dashboard_formater.data['name']
 
 
-def test_update_id_dashboard_negativ(mocker, tmpdir):
-    from demisto_sdk.commands.format import update_dashboard
+def test_update_id_dashboard_negative(mocker, tmpdir):
+    """
+    Given
+        - A dictionary of dashboard file that the name field is missing
+    When
+        - Ran format on dashboard file
+    Then
+        - Ensure the return Exception
+    """
     mocker.patch.object(update_dashboard, 'DashboardJSONFormat')
     dashboard_formater = DashboardJSONFormat(input='test', output=tmpdir)
     dashboard_formater.data = {'id': '1234'}

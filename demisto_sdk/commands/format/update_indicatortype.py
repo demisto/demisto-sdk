@@ -27,7 +27,7 @@ class IndicatorTypeJSONFormat(BaseUpdateJSON):
         if 'details' not in self.data:
             print_error(f'Missing "details" field in file {self.source_file} - add this field manually')
             raise Exception(f'Missing "details" field in file {self.source_file} - add this field manually')
-        self.data['id'] = self.data['details']
+        self.data['id'] = self.data.get('details')
 
     def run_format(self) -> int:
         try:

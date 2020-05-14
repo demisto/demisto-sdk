@@ -2,9 +2,10 @@ from pathlib import Path
 from typing import List, Optional
 
 from TestSuite.integration import Integration
-from TestSuite.JSONBased import JSONBased
+from TestSuite.json_based import JSONBased
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
+from TestSuite.text_based import TextBased
 
 
 class Pack:
@@ -37,29 +38,44 @@ class Pack:
         self.incident_field: List[JSONBased] = list()
         self.indicator_field: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+
         # Create base pack
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
         self.path = str(self._pack_path)
+
         # Create repo structure
         self._integrations_path = self._pack_path / 'Integrations'
         self._integrations_path.mkdir()
+
         self._scripts_path = self._pack_path / 'Scripts'
         self._scripts_path.mkdir()
+
         self._playbooks_path = self._pack_path / 'Playbooks'
         self._playbooks_path.mkdir()
+
         self._classifiers_path = self._pack_path / 'Classifiers'
         self._classifiers_path.mkdir()
+
         self._dashboards_path = self._pack_path / 'Dashboards'
         self._dashboards_path.mkdir()
+
         self._incidents_field_path = self._pack_path / 'IncidentFields'
         self._incidents_field_path.mkdir()
+
         self._incident_types_path = self._pack_path / 'IncidentTypes'
         self._incident_types_path.mkdir()
+
         self._indicator_fields = self._pack_path / 'IndicatorFields'
         self._indicator_fields.mkdir()
+
         self.secrets = Secrets(self._pack_path)
-        self.secrets.write_secrets([])
+
+        self.pack_ignore = TextBased(self._pack_path, '.pack-ignore')
+
+        self.readme = TextBased(self._pack_path, 'README.md')
+
+        self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata.json', '')
 
     def create_integration(
             self,

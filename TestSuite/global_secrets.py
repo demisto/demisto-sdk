@@ -1,13 +1,13 @@
 import json
 from pathlib import Path
 
-from TestSuite.secrets import Secrets
 
-
-class GlobalSecrets(Secrets):
+class GlobalSecrets:
     def __init__(self, tmpdir: Path):
-        global_secrets_path = './Tests/secrets_white_list.json'
-        super().__init__(tmpdir, global_secrets_path)
+        self.tmpdir = tmpdir
+        file_name = 'secrets_white_list.json'
+        self._secrets_path = tmpdir / file_name
+        self.path = str(self._secrets_path)
 
     def write_secrets(self, urls=None, ips=None, files=None, generic_strings=None):
         if files is None:

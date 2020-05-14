@@ -4,6 +4,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from TestSuite.conf_json import ConfJSON
 from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.pack import Pack
 
@@ -29,9 +30,19 @@ class Repo:
         self._packs_path = tmpdir / 'Packs'
         self._packs_path.mkdir()
         self.path = str(self._tmpdir)
-        self.secrets = GlobalSecrets(tmpdir)
+
+        # Initiate ./Tests/ dir
+        self._test_dir = tmpdir / 'Tests'
+        self._test_dir.mkdir()
+
+        # Secrets
+        self.secrets = GlobalSecrets(self._test_dir)
         self.secrets.write_secrets()
         self.global_secrets_path = self.secrets.path
+
+        # Conf.json
+        self.conf = ConfJSON(self._test_dir, 'conf.json', '')
+        self.conf.write_json()
 
     def create_pack(self, name: Optional[str] = None):
         if name is None:

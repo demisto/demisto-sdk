@@ -6,7 +6,7 @@ This script is used to validate the files in Content repository. Specifically fo
 4) Having ReleaseNotes if applicable.
 
 It can be run to check only committed changes (if the first argument is 'true') or all the files in the repo.
-Note - if it is run for all the files in the repo it won't check releaseNotes, use `release_notes.py`
+Note - if it is run for all the files in the repo it won't check releaseNotes, use `old_release_notes.py`
 for that task.
 """
 from __future__ import print_function
@@ -26,9 +26,9 @@ from demisto_sdk.commands.common.constants import (
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX,
-    TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES,
-    YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
+    PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
+    SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR,
+    TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES, Errors)
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
@@ -43,6 +43,8 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import \
+    OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -86,7 +88,7 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, configuration=Configuration()):
+                 validate_all=False, skip_pack_rn_validation=False, configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
@@ -104,6 +106,8 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
+        self.skip_pack_rn_validation = skip_pack_rn_validation
+        self.changed_pack_data = set()
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -263,6 +267,11 @@ class FilesValidator:
 
         return packs
 
+    def old_is_valid_release_notes(self, file_path):
+        old_release_notes_validator = OldReleaseNotesValidator(file_path)
+        if not old_release_notes_validator.is_file_valid():
+            self._is_valid = False
+
     def is_valid_release_notes(self, file_path):
         release_notes_validator = ReleaseNotesValidator(file_path)
         if not release_notes_validator.is_file_valid():
@@ -276,6 +285,11 @@ class FilesValidator:
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
+        changed_packs = set()
+        for file_path in modified_files:
+            changed_pack = get_pack_name(file_path)
+            if changed_pack:
+                changed_packs.add(changed_pack)
         for file_path in modified_files:
             old_file_path = None
             # modified_files are returning from running git diff.
@@ -380,7 +394,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                self.is_valid_release_notes(file_path)
+                self.old_is_valid_release_notes(file_path)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
@@ -391,6 +405,21 @@ class FilesValidator:
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
 
+        self.changed_pack_data = changed_packs
+
+    def verify_no_dup_rn(self, added_files):
+        added_rn = set()
+        for file in added_files:
+            if re.search(PACKS_RELEASE_NOTES_REGEX, file):
+                pack_name = get_pack_name(file)
+                if pack_name not in added_rn:
+                    added_rn.add(pack_name)
+                else:
+                    print_error(f"More than one release notes file has been found for {pack_name}."
+                                f"Only one release note file is permitted per release. Please delete"
+                                f" the extra release notes.")
+                    self._is_valid = False
+
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
         """Validate the added files from your branch.
 
@@ -400,7 +429,12 @@ class FilesValidator:
             added_files (set): A set of the modified files in the current branch.
             file_type (str): Used only with -p flag (the type of the file).
         """
+        added_rn = set()
+        self.verify_no_dup_rn(added_files)
         for file_path in added_files:
+            if ('ReleaseNotes' in file_path) and self.skip_pack_rn_validation:
+                continue
+            pack_name = get_pack_name(file_path)
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue
@@ -487,6 +521,11 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
+                self.old_is_valid_release_notes(file_path)
+
+            elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
+                added_rn.add(pack_name)
+                print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
@@ -497,6 +536,13 @@ class FilesValidator:
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
+        missing_rn = self.changed_pack_data.difference(added_rn)
+        if (len(missing_rn) > 0) and (self.skip_pack_rn_validation is False):
+            for pack in missing_rn:
+                print_error(f"Release notes were not found for {pack}. Please run `demisto-sdk "
+                            f"update-release-notes -p {pack} -u (major|minor|revision)` to "
+                            f"generate release notes according to the new standard.")
+            self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).

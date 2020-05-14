@@ -397,7 +397,7 @@ def str2bool(v):
     raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def get_release_notes_file_path(file_path):
+def old_get_release_notes_file_path(file_path):
     dir_name = os.path.dirname(file_path)
 
     # CHANGELOG in pack sub dirs
@@ -413,7 +413,7 @@ def get_release_notes_file_path(file_path):
     return os.path.join(dir_name, os.path.splitext(file_name)[0] + '_CHANGELOG.md')
 
 
-def get_latest_release_notes_text(rn_path):
+def old_get_latest_release_notes_text(rn_path):
     if not os.path.isfile(rn_path):
         # releaseNotes were not provided
         return None
@@ -433,6 +433,30 @@ def get_latest_release_notes_text(rn_path):
         new_rn = rn.replace(UNRELEASE_HEADER, '')
 
     return new_rn if new_rn else None
+
+
+def get_release_notes_file_path(file_path):
+    """
+    Accepts file path which is alleged to contain release notes. Validates that the naming convention
+    is followed. If the file identified does not match the naming convention, error is returned.
+    :param file_path: str - File path of the suspected release note.
+    :return: file_path: str - Validated release notes path.
+    """
+    if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
+        return file_path
+    else:
+        print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+
+
+def get_latest_release_notes_text(rn_path):
+    with open(rn_path) as f:
+        rn = f.read()
+
+    if not rn:
+        print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+        return None
+
+    return rn if rn else None
 
 
 def checked_type(file_path, compared_regexes=None, return_regex=False):

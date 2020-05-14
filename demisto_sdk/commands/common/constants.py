@@ -1164,3 +1164,18 @@ FETCH_REQUIRED_PARAMS = [
 ]
 
 DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
+# Ignore list for all 'run_all_validations_on_file' method
+ALL_FILES_VALIDATION_IGNORE_WHITELIST = [
+    'pack_metadata.json',  # this file is validated under 'validate_pack_unique_files' method
+    'testdata',
+    'test_data',
+    'data_test',
+    'testcommandsfunctions',
+    'testhelperfunctions',
+    'stixdecodetest',
+    'testcommands',
+    'setgridfield_test',
+    'ipnetwork_test',
+    'test-data',
+    'testplaybook'
+]

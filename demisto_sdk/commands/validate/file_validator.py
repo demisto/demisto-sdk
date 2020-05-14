@@ -15,6 +15,7 @@ import os
 import re
 from glob import glob
 
+import click
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
@@ -62,9 +63,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_remote_file, get_yaml,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
-                                               is_test_file, print_color,
-                                               print_error, print_warning,
-                                               run_command)
+                                               print_color, print_error,
+                                               print_warning, run_command,
+                                               should_file_skip_validation)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -439,7 +440,7 @@ class FilesValidator:
                 continue
             print('Validating {}'.format(file_path))
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
 
             elif 'README' in file_path:
@@ -604,20 +605,6 @@ class FilesValidator:
             file_path: A relative content path to a file to be validated
             file_type: The output of 'find_type' method
         """
-        file_extension = os.path.splitext(file_path)[-1]
-        # We validate only yml json and .md files
-        if file_extension not in ['.yml', '.json', '.md']:
-            return
-
-        # Ignoring changelog and description files since these are checked on the integration validation
-        if 'changelog' in file_path.lower() or 'description' in file_path.lower():
-            return
-        # unified files should not be validated
-        if file_path.endswith('_unified.yml'):
-            return
-
-        print(f'Validating {file_path}')
-
         if 'README' in file_path:
             readme_validator = ReadMeValidator(file_path)
             if not readme_validator.is_valid_file():
@@ -626,11 +613,6 @@ class FilesValidator:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         if not structure_validator.is_valid_file():
             self._is_valid = False
-
-        elif re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-            playbook_validator = PlaybookValidator(structure_validator)
-            if not playbook_validator.is_valid_playbook():
-                self._is_valid = False
 
         elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
             playbook_validator = PlaybookValidator(structure_validator)
@@ -703,23 +685,20 @@ class FilesValidator:
         all_files_to_validate = set()
         for directory in [PACKS_DIR, BETA_INTEGRATIONS_DIR, TEST_PLAYBOOKS_DIR]:
             all_files_to_validate |= {file for file in glob(fr'{directory}/**', recursive=True) if
-                                      not os.path.isdir(file)}
+                                      not should_file_skip_validation(file)}
         print('Validating all Pack and Beta Integration files')
-        for file in all_files_to_validate:
+        for index, file in enumerate(sorted(all_files_to_validate)):
+            click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_pack(self):
         """Validate files in a specified pack"""
         print_color(f'Validating {self.file_path}', LOG_COLORS.GREEN)
-        pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if not os.path.isdir(file)}
+        pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if
+                      not should_file_skip_validation(file)}
         self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
         for file in pack_files:
-            # check if the file_path is part of test_data yml
-            if is_test_file(file):
-                continue
-            # checks already in validate_pack_unique_files()
-            if file.endswith('pack_metadata.json'):
-                continue
+            click.echo(f'Validating {file}')
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_all_files_schema(self):

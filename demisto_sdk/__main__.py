@@ -136,7 +136,7 @@ def main(config, version):
 def extract(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'File is not an Integration or Script.')
+        print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_to_package_format()
@@ -177,7 +177,7 @@ def extract(config, **kwargs):
 def extract_code(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'File is not an Integration or Script.')
+        print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
@@ -348,12 +348,12 @@ def secrets(config, **kwargs):
 @click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
-@click.option("--json-report", help="Path to store json results", type=click.Path(exists=True, resolve_path=True))
+@click.option("--failure-report", help="Path to store failed packs report", type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
-         no_pwsh_test: bool, keep_container: bool, test_xml: str, json_report: str, log_path: str):
+         no_pwsh_test: bool, keep_container: bool, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
@@ -376,7 +376,7 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
                                          no_pwsh_test=no_pwsh_test,
                                          keep_container=keep_container,
                                          test_xml=test_xml,
-                                         json_report=json_report)
+                                         failure_report=failure_report)
 
 
 # ====================== format ====================== #
@@ -568,7 +568,7 @@ def json_to_outputs_command(**kwargs):
 def generate_test_playbook(**kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'Generating test playbook is possible only for an Integration or a Script.')
+        print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
     generator = PlaybookTestsGenerator(file_type=file_type, **kwargs)
     generator.run()
@@ -770,7 +770,7 @@ def update_pack_releasenotes(**kwargs):
                                       pre_release=pre_release)
             update_pack_rn.execute_update()
     elif is_all and _pack:
-        print_error(f"Please remove the --all flag when specifying only one pack.")
+        print_error("Please remove the --all flag when specifying only one pack.")
         sys.exit(0)
     else:
         if _pack:

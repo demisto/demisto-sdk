@@ -311,8 +311,8 @@ def test_generate_commands_section_human_readable():
     hr_section: str = section[section.index('#### Human Readable Output') + 1]
     # get lines except first one which is a \n
     lines = hr_section.splitlines()[1:]
-    for l in lines:
-        assert l.startswith('>')
+    for line in lines:
+        assert line.startswith('>')
     assert lines[0] == '>## this is human readable'
     assert lines[1] == '>This is a line'
 

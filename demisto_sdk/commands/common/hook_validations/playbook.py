@@ -1,8 +1,9 @@
 from typing import Dict
 
+import click
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_error
 
 
 class PlaybookValidator(BaseValidator):
@@ -18,6 +19,9 @@ class PlaybookValidator(BaseValidator):
         Returns:
             bool. Whether the playbook is valid or not
         """
+        if 'TestPlaybooks' in self.file_path:
+            click.echo(f'Skipping validation for Test Playbook {self.file_path}', color=LOG_COLORS.YELLOW)
+            return True
         if is_new_playbook:
             new_playbook_checks = [
                 super().is_valid_file(validate_rn),
@@ -48,9 +52,6 @@ class PlaybookValidator(BaseValidator):
         Checks if the playbook has a TestPlaybook and if the TestPlaybook is configured in conf.json
         And prints an error message accordingly
         """
-        if 'TestPlaybooks' in self.file_path:
-            return True
-
         file_type = self.structure_validator.scheme_name
         tests = self.current_file.get('tests', [])
         return self.yml_has_test_key(tests, file_type)
@@ -90,8 +91,6 @@ class PlaybookValidator(BaseValidator):
         Return:
             bool. if the Playbook handles all condition branches correctly.
         """
-        if 'TestPlaybooks' in self.file_path:
-            return True
         is_all_condition_branches_handled: bool = True
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():

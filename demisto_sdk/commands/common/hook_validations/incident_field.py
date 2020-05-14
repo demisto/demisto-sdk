@@ -225,7 +225,8 @@ class IncidentFieldValidator(BaseValidator):
             "Claroty Alert Type",  # Needed for incidentfield-Claroty_Alert_Type.json
             "Code42 Alert Type",  # Needed for incidentfield-Code42_Alert_Type.json
             "Code42 File Events",  # Needed for incidentfield-Code42_File_Events.json
-            "XDR Alerts"  # Needed for XDR_Alerts.json
+            "XDR Alerts",  # Needed for XDR_Alerts.json
+            "Indeni Issue ID",  # Needed for incidentfield-Indeni_Device_ID.json
         }
         if name not in whitelisted_field_names:
             for word in name.split():

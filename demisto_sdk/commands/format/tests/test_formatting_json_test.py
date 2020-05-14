@@ -73,9 +73,9 @@ def test_update_id_indicatortype_positive(mocker, tmpdir):
 def test_update_id_indicatortype_negative(mocker, tmpdir):
     """
     Given
-        - A dictionary of indicatortype file that the details field is missing
+        - A dictionary of indicator-type file that the details field is missing
     When
-        - Run format on indicatortype file
+        - Run format on indicator-type file
     Then
         - Ensure the return Exception is 'Missing "details" field in file test - add this field manually'
     """
@@ -91,9 +91,9 @@ def test_update_id_indicatortype_negative(mocker, tmpdir):
 def test_update_id_incidenttype_positive(mocker, tmpdir):
     """
     Given
-        - A dictionary of incidenttype file that the id is not equal to the name
+        - A dictionary of incident-type file that the id is not equal to the name
     When
-        - Run format on incidenttype file
+        - Run format on incident-type file
     Then
         - Ensure id updated successfully
     """
@@ -108,9 +108,9 @@ def test_update_id_incidenttype_positive(mocker, tmpdir):
 def test_update_id_incidenttype_negative(mocker, tmpdir):
     """
     Given
-        - A dictionary of incidenttype file that the name field is missing
+        - A dictionary of incident-type file that the name field is missing
     When
-        - Run format on incidenttype file
+        - Run format on incident-type file
     Then
         - Ensure the return Exception is 'Missing "name" field in file test - add this field manually'
     """

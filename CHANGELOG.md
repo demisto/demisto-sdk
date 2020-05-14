@@ -1,5 +1,6 @@
 # Changelog
 * Added support for IndicatorTypes directory in packs (for `reputation` files, instead of Misc).
+* Fix the **format** command to update the `id` field to be equal to `details` field in indicatortype, and to `name` field in incidenttype.
 
 #### 1.0.3
 * Fixed a bug in the **format** command where comments were being removed from YAML files.

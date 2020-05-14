@@ -70,6 +70,7 @@ Supported commands:
 14. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
 15. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
 16. [Create-id-set](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/create_id_set/README.md)
+17. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
 
 ---
 

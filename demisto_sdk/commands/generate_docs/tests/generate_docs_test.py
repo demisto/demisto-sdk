@@ -45,6 +45,12 @@ def test_format_md():
     | Vendor: HelloWorld<br/>Description: Hello World returned reputation 88 | google.com |
     """
     assert expected_res == res
+    # mixed case test
+    assert '<bR>' not in format_md('test<bR>')
+    assert '<HR>' not in format_md('test<HR>')
+    # these are a valid but we replace for completeness
+    assert format_md('test<br></br>\nthis<br>again').count('<br/>') == 2
+    assert format_md('test<hr></hr>\nthis<hr>again').count('<hr/>') == 2
 
 
 def test_stringEscapeMD():
@@ -305,8 +311,8 @@ def test_generate_commands_section_human_readable():
     hr_section: str = section[section.index('#### Human Readable Output') + 1]
     # get lines except first one which is a \n
     lines = hr_section.splitlines()[1:]
-    for l in lines:
-        assert l.startswith('>')
+    for line in lines:
+        assert line.startswith('>')
     assert lines[0] == '>## this is human readable'
     assert lines[1] == '>This is a line'
 

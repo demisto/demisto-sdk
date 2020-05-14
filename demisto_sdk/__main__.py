@@ -11,8 +11,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name,
-                                               pack_name_to_path, print_error,
+                                               get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator

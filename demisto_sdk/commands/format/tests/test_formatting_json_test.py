@@ -58,7 +58,7 @@ def test_update_id_indicatortype_positive(mocker, tmpdir):
     Given
         - A dictionary of indicatortype file that the id is not equal to the details
     When
-        - Ran format on indicatortype file
+        - Run format on indicatortype file
     Then
         - Ensure id updated successfully
     """
@@ -75,9 +75,9 @@ def test_update_id_indicatortype_negative(mocker, tmpdir):
     Given
         - A dictionary of indicatortype file that the details field is missing
     When
-        - Ran format on indicatortype file
+        - Run format on indicatortype file
     Then
-        - Ensure the return Exception
+        - Ensure the return Exception is 'Missing "details" field in file test - add this field manually'
     """
     mocker.patch.object(update_indicatortype, 'IndicatorTypeJSONFormat')
     indicator_formater = IndicatorTypeJSONFormat(input='test', output=tmpdir)
@@ -93,7 +93,7 @@ def test_update_id_incidenttype_positive(mocker, tmpdir):
     Given
         - A dictionary of incidenttype file that the id is not equal to the name
     When
-        - Ran format on incidenttype file
+        - Run format on incidenttype file
     Then
         - Ensure id updated successfully
     """
@@ -110,9 +110,9 @@ def test_update_id_incidenttype_negative(mocker, tmpdir):
     Given
         - A dictionary of incidenttype file that the name field is missing
     When
-        - Ran format on incidenttype file
+        - Run format on incidenttype file
     Then
-        - Ensure the return Exception
+        - Ensure the return Exception is 'Missing "name" field in file test - add this field manually'
     """
     mocker.patch.object(update_incidenttype, 'IncidentTypesJSONFormat')
     incident_formater = IncidentTypesJSONFormat(input='test', output=tmpdir)
@@ -128,7 +128,7 @@ def test_update_id_dashboard_positive(mocker, tmpdir):
     Given
         - A dictionary of dashboard file that the id is not equal to the name
     When
-        - Ran format on dashboard file
+        - Run format on dashboard file
     Then
         - Ensure id updated successfully
     """
@@ -145,9 +145,9 @@ def test_update_id_dashboard_negative(mocker, tmpdir):
     Given
         - A dictionary of dashboard file that the name field is missing
     When
-        - Ran format on dashboard file
+        - Run format on dashboard file
     Then
-        - Ensure the return Exception
+        - Ensure the return Exception is 'Missing "name" field in file test - add this field manually'
     """
     mocker.patch.object(update_dashboard, 'DashboardJSONFormat')
     dashboard_formater = DashboardJSONFormat(input='test', output=tmpdir)

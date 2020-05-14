@@ -26,7 +26,7 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
 
         print('Updating ID')
         if 'name' not in self.data:
-            print_error(f'Missing "details" field in file {self.source_file} - add this field manually')
+            print_error(f'Missing "name" field in file {self.source_file} - add this field manually')
             raise Exception(f'Missing "name" field in file {self.source_file} - add this field manually')
         self.data['id'] = self.data['name']
 

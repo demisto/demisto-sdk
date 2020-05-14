@@ -3,6 +3,7 @@ import shutil
 
 import pytest
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
     IncidentTypesJSONFormat
 from demisto_sdk.commands.format.update_indicatortype import \
@@ -88,5 +89,26 @@ def test_update_id_incidenttype_negativ(mocker, tmpdir):
     incident_formater.data = {'id': '1234'}
     try:
         incident_formater.update_id()
+    except Exception as error:
+        assert error.args[0] == 'Missing "name" field in file test - add this field manually'
+
+
+def test_update_id_dashboard_positive(mocker, tmpdir):
+    from demisto_sdk.commands.format import update_dashboard
+    mocker.patch.object(update_dashboard, 'DashboardJSONFormat')
+
+    dashboard_formater = DashboardJSONFormat(input='test', output=tmpdir)
+    dashboard_formater.data = {'id': '1234', 'name': '12345'}
+    dashboard_formater.update_id()
+    assert dashboard_formater.data['id'] == dashboard_formater.data['name']
+
+
+def test_update_id_dashboard_negativ(mocker, tmpdir):
+    from demisto_sdk.commands.format import update_dashboard
+    mocker.patch.object(update_dashboard, 'DashboardJSONFormat')
+    dashboard_formater = DashboardJSONFormat(input='test', output=tmpdir)
+    dashboard_formater.data = {'id': '1234'}
+    try:
+        dashboard_formater.update_id()
     except Exception as error:
         assert error.args[0] == 'Missing "name" field in file test - add this field manually'

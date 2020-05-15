@@ -445,7 +445,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
     def test_verify_no_dup_rn(self, added_files: set, expected: bool):
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.verify_no_dup_rn(added_files)
         assert file_validator._is_valid is expected
 

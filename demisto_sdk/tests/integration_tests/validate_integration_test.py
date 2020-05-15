@@ -49,7 +49,7 @@ class TestIncidentField:
         """
         pack_incident_field_path = join(AZURE_FEED_PACK_PATH, "IncidentFields/incidentfield-city.json")
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_incident_field_path])
+        result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_incident_field_path, "--no-conf-json"])
         assert_positive(pack_incident_field_path, result)
 
 
@@ -68,7 +68,7 @@ class TestIntegration:
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_integration_path])
+        result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_integration_path, "--no-conf-json"])
         assert result.exit_code == 1
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {pack_integration_path}" in result.stdout
@@ -90,7 +90,7 @@ class TestIntegration:
         """
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", integration_path])
+        result = runner.invoke(main, [VALIDATE_CMD, "-p", integration_path, "--no-conf-json"])
         assert result.exit_code == 1
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {integration_path}" in result.stdout
@@ -110,7 +110,7 @@ class TestIntegration:
         """
         integration_path = join(TEST_FILES_PATH, 'integration-valid-no-unallowed-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", integration_path])
+        result = runner.invoke(main, [VALIDATE_CMD, "-p", integration_path, "--no-conf-json"])
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {integration_path}" in result.stdout
         assert "can't be hidden. Please remove this field" not in result.stdout
@@ -131,7 +131,7 @@ class TestPack:
         """
         mocker.patch.object(BaseValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json"])
         assert "Starting validating files structure" in result.output
         assert f"{VALID_PACK_PATH} unique pack files" in result.output
         assert f"Validating {VALID_PACK_PATH}" in result.output

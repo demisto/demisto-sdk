@@ -156,6 +156,7 @@ class TestPack:
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json"])
         assert "Starting validating files structure" in result.output
+
         assert f'{AZURE_FEED_PACK_PATH}' in result.output
         assert f'{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
         assert f'{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output

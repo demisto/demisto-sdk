@@ -235,10 +235,10 @@ class Initiator:
         while support_url and "http" not in support_url:
             support_url = input("\nIncorrect input. Please enter full valid url: ")
         pack_metadata['url'] = support_url
-        pack_metadata['email'] = input("\nThe email in which you can be contacted in: ")
+        pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
 
         tags = input("\nTags of the pack, comma separated values: ")
-        tags_list = [t.strip() for t in tags.split(',')]
+        tags_list = [t.strip() for t in tags.split(',') if t]
         pack_metadata['tags'] = tags_list
 
         return pack_metadata

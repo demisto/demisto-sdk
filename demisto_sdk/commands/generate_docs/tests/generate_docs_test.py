@@ -45,6 +45,12 @@ def test_format_md():
     | Vendor: HelloWorld<br/>Description: Hello World returned reputation 88 | google.com |
     """
     assert expected_res == res
+    # mixed case test
+    assert '<bR>' not in format_md('test<bR>')
+    assert '<HR>' not in format_md('test<HR>')
+    # these are a valid but we replace for completeness
+    assert format_md('test<br></br>\nthis<br>again').count('<br/>') == 2
+    assert format_md('test<hr></hr>\nthis<hr>again').count('<hr/>') == 2
 
 
 def test_stringEscapeMD():

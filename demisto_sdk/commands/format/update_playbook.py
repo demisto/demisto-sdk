@@ -40,7 +40,9 @@ class PlaybookYMLFormat(BaseUpdateYML):
 
         for task_id, task in self.data.get('tasks', {}).items():
             if task.get('type', '') == 'playbook':
-                task['task']['name'] = task['task']['playbookName']
+                task_name = task.get('task').get('playbookName', task.get('task').get('playbookId', ''))
+                if task_name:
+                    task['task']['name'] = task_name
 
     def update_fromversion_by_user(self):
         """If no fromversion is specified, asks the user for it's value and updates the playbook."""

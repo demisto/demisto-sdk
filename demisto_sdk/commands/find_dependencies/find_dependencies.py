@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import sys
+
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
@@ -384,38 +385,3 @@ class PackDependencies:
         click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
         dependency_result = json.dumps(first_level_dependencies, indent=4)
         click.echo(click.style(dependency_result, bold=True))
-
-
-def main():
-    import networkx as nx
-    from networkx.drawing.nx_agraph import graphviz_layout
-    import matplotlib.pyplot as plt
-
-    pack_name = "ImpossibleTraveler"
-    id_set_path = "/Users/igabashvili/Downloads/id_set.json"
-
-    with open(id_set_path, 'r') as id_set_file:
-        id_set = json.load(id_set_file)
-
-    dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set)
-    first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(dependency_graph, pack_name)
-
-    # dependency_graph.remove_node('Legacy')
-    # dependency_graph.remove_node('Slack')
-    # dependency_graph.remove_node('CVESearch')
-    # isolated = list(nx.isolates(dependency_graph))
-    # dependency_graph.remove_nodes_from(isolated)
-
-    # nx.nx_agraph.write_dot(dependency_graph, 'dot')
-    plt.title(f'{pack_name} pack dependencies:')
-    pos = graphviz_layout(dependency_graph, prog='circo')
-    nx.draw(dependency_graph, pos, with_labels=True, arrows=False)
-    # plt.savefig('nx_test.png')
-    plt.show()
-
-
-if __name__ == "__main__":
-    # os.chdir('/Users/igabashvili/dev/demisto/content')
-    # PackDependencies.find_dependencies(pack_name="ImpossibleTraveler",
-    #                                    id_set_path="/Users/igabashvili/Downloads/id_set.json")
-    main()

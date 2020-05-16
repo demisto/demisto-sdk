@@ -1,8 +1,7 @@
 import glob
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   BETA_INTEGRATION_REGEX,
-                                                   INTEGRATION_REGEX)
+                                                   PACKS_INTEGRATION_YML_REGEX)
 from demisto_sdk.commands.common.tools import (get_yaml, os, print_error,
                                                print_warning, re)
 
@@ -30,7 +29,7 @@ class DescriptionValidator:
         data_dictionary = get_yaml(self.file_path)
         description_in_yml = data_dictionary.get('detaileddescription', '') if data_dictionary else ''
 
-        if not re.match(BETA_INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
+        if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
@@ -68,8 +67,7 @@ class DescriptionValidator:
         is_description_in_package = False
         package_path = None
         md_file_path = None
-        if not re.match(INTEGRATION_REGEX, self.file_path, re.IGNORECASE) \
-                and not re.match(BETA_INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
+        if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]

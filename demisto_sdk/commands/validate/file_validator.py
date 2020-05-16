@@ -18,7 +18,6 @@ from glob import glob
 import click
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
     CHECKED_TYPES_REGEXES, CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES,
     IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
@@ -28,8 +27,8 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
     PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
     SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR,
-    TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
-    YML_INTEGRATION_REGEXES, Errors)
+    TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES,
+    Errors)
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -330,7 +329,7 @@ class FilesValidator:
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
+            elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
@@ -480,8 +479,7 @@ class FilesValidator:
                 if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
-            elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
+            elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
@@ -632,7 +630,7 @@ class FilesValidator:
             if not script_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
+        elif file_type == 'betaintegration':
             integration_validator = IntegrationValidator(structure_validator)
             if not integration_validator.is_valid_beta_integration():
                 self._is_valid = False
@@ -664,6 +662,10 @@ class FilesValidator:
             if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                 self._is_valid = False
 
+        elif 'CHANGELOG' in file_path:
+            # don't check for CHANGELOG files
+            pass
+
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             print(f'Could not find validations for file {file_path}')
 
@@ -683,7 +685,7 @@ class FilesValidator:
         packs = {os.path.basename(pack) for pack in glob(f'{PACKS_DIR}/*')}
         self.validate_pack_unique_files(packs)
         all_files_to_validate = set()
-        for directory in [PACKS_DIR, BETA_INTEGRATIONS_DIR, TEST_PLAYBOOKS_DIR]:
+        for directory in [PACKS_DIR, TEST_PLAYBOOKS_DIR]:
             all_files_to_validate |= {file for file in glob(fr'{directory}/**', recursive=True) if
                                       not should_file_skip_validation(file)}
         print('Validating all Pack and Beta Integration files')

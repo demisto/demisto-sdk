@@ -63,7 +63,6 @@ INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_
 INVALID_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
                                        f'FeedAzure/Playbooks/FeedAzure_test.yml'
 SCRIPT_TARGET = "./Scripts/script-test.yml"
-BETA_INTEGRATION_TARGET = "./Beta_Integrations/integration-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = "./Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = "./Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"

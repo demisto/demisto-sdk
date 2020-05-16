@@ -58,11 +58,11 @@ This will validate only changed files from the branch given (SHA1).
 This indicates that the command runs post commit.
 <br><br>
 
-`demisto-sdk validate -p Integrations/Pwned-V2/Pwned-V2.yml`
-This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
+`demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
+This will validate the file Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml only.
 <br><br>
 `demisto-sdk validate -a`
-This will validate all files under `Packs` and `Beta_Integrations` directories
+This will validate all files under `Packs` directory
 <br><br>
 `demisto-sdk validate -i Packs/HelloWorld`
 This will validate all files under the content pack `HelloWorld`

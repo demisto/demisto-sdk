@@ -18,15 +18,14 @@ import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, BETA_INTEGRATIONS_DIR,
-    CHECKED_TYPES_REGEXES, CLASSIFIERS_DIR, CONTENT_GITHUB_LINK,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS,
-    ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
-    SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER,
-    WIDGETS_DIR)
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
+    CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER,
+    DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -327,7 +326,7 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file id
     """
-    if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR):
+    if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
         return data.get('commonfields', {}).get('id', '')
     elif content_entity == LAYOUTS_DIR:
         return data.get('typeId', '')
@@ -661,6 +660,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
     if file_type == 'yml':
+        if 'beta' in _dict:
+            return 'betaintegration'
         if 'category' in _dict:
             return 'integration'
         elif 'script' in _dict:

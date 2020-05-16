@@ -27,10 +27,10 @@ def demisto_client(mocker):
 def test_integration_download_no_force(demisto_client, tmp_path):
     """
     Given
-    - playbook & script exist in the output pack.
+    - playbook & script exist in the output pack path.
 
     When
-    - Download the playbook & script.
+    - Running demisto-sdk download command.
 
     Then
     - Ensure no download has been made.
@@ -55,10 +55,10 @@ def test_integration_download_no_force(demisto_client, tmp_path):
 def test_integration_download_with_force(demisto_client, tmp_path):
     """
     Given
-    - playbook & script exist in the output pack.
+    - playbook & script exist in the output pack path.
 
     When
-    - Download the playbook & script.
+    - Running demisto-sdk download command.
 
     Then
     - Ensure download has been made successfully.
@@ -79,10 +79,10 @@ def test_integration_download_with_force(demisto_client, tmp_path):
 def test_integration_download_list_files(demisto_client):
     """
     Given
-    - The custom content in Demisto.
+    - lf flag to list all available content items.
 
     When
-    - Running demisto-sdk download -lf.
+    - Running demisto-sdk download command.
 
     Then
     - Ensure list files has been made successfully.

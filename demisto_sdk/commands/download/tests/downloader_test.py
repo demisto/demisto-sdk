@@ -26,6 +26,10 @@ def ordered(obj):
 
 
 class Environment:
+    """
+    Environment is class designed to spin up a virtual, temporary content repo and build all objects related to
+    the Downloader (such as pack content & custom content)
+    """
     def __init__(self, tmp_path):
         self.CONTENT_BASE_PATH = None
         self.CUSTOM_CONTENT_BASE_PATH = None

@@ -35,8 +35,6 @@ from ruamel.yaml import YAML
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
-logging.disable(logging.CRITICAL)
-
 
 class Downloader:
     """
@@ -61,6 +59,7 @@ class Downloader:
 
     def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False,
                  list_files: bool = False, all_custom_content: bool = False, run_format: bool = False):
+        logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = list(input)
         self.force = force
@@ -157,12 +156,12 @@ class Downloader:
 
         except ApiException as e:
             if e.status == 401:
-                print_color(f'\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+                print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
                             LOG_COLORS.RED)
             print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
             return False
         except MaxRetryError as e:
-            print_color(f'\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
+            print_color('\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
                         LOG_COLORS.RED)
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
             return False

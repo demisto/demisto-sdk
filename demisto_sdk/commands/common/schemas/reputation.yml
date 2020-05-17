@@ -24,6 +24,7 @@ mapping:
     type: str
   details:
     type: str
+    required: True
   prevDetails:
     type: str
   reputationScriptName:
@@ -55,7 +56,7 @@ mapping:
   defaultMapping:
     type: any
   manualMapping:
-    type: bool
+    type: any
   fileHashesPriority:
     type: any
   expiration:

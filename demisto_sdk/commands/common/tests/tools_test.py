@@ -18,8 +18,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_entity_name_by_entity_type,
                                                get_files_in_dir,
                                                get_last_release_version,
-                                               get_matching_regex, get_ryaml,
-                                               retrieve_file_ending,
+                                               get_latest_release_notes_text,
+                                               get_matching_regex,
+                                               get_release_notes_file_path,
+                                               get_ryaml, retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
@@ -144,13 +146,32 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
         assert hello_world_readme == {}
 
-    def test_is_not_test_file(self):
-        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
-        assert not test_file
+    def test_should_file_skip_validation_negative(self):
+        should_skip = tools.should_file_skip_validation('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
+        assert not should_skip
 
-    def test_is_test_file(self):
-        test_file = tools.is_test_file('Packs/HelloWorld/Integrations/HelloWorld/test_data/search_alerts.json')
-        assert test_file
+    SKIPPED_FILE_PATHS = [
+        'some_text_file.txt',
+        'pack_metadata.json',
+        'testdata/file.json',
+        'test_data/file.json',
+        'data_test/file.json',
+        'testcommandsfunctions/file.json',
+        'testhelperfunctions/file.json',
+        'StixDecodeTest/file.json',
+        'TestCommands/file.json',
+        'SetGridField_test/file.json',
+        'IPNetwork_test/file.json',
+        'test-data/file.json'
+        'some_file/integration_DESCRIPTION.md'
+        'some_file/integration_CHANGELOG.md'
+        'some_file/integration_unified.md'
+    ]
+
+    @pytest.mark.parametrize("file_path", SKIPPED_FILE_PATHS)
+    def test_should_file_skip_validation_positive(self, file_path):
+        should_skip = tools.should_file_skip_validation(file_path)
+        assert should_skip
 
 
 class TestGetMatchingRegex:
@@ -263,3 +284,49 @@ class TestGetFile:
         file_data = get_ryaml(SOURCE_FORMAT_INTEGRATION_COPY)
         assert file_data
         assert file_data.get('name') is not None
+
+
+def test_get_latest_release_notes_text_invalid():
+    """
+    Given
+    - Invalid release notes
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure None is returned
+    """
+    PATH_TO_HERE = f'{git_path()}/demisto_sdk/tests/test_files/'
+    file_path = os.path.join(PATH_TO_HERE, 'empty-RN.md')
+    assert get_latest_release_notes_text(file_path) is None
+
+
+def test_get_release_notes_file_path_valid():
+    """
+    Given
+    - Valid release notes path
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure valid file path is returned
+    """
+    filepath = '/SomePack/1_1_1.md'
+    assert get_release_notes_file_path(filepath) == filepath
+
+
+def test_get_release_notes_file_path_invalid():
+    """
+    Given
+    - Invalid release notes path
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure None is returned
+    """
+    filepath = '/SomePack/1_1_1.json'
+    assert get_release_notes_file_path(filepath) is None

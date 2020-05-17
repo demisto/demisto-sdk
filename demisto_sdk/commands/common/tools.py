@@ -442,11 +442,15 @@ def get_release_notes_file_path(file_path):
     :param file_path: str - File path of the suspected release note.
     :return: file_path: str - Validated release notes path.
     """
-    if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
-        return file_path
-    else:
-        print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+    if file_path is None:
+        print_warning(f"Release notes were not found at {file_path}.")
         return None
+    else:
+        if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
+            return file_path
+        else:
+            print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+            return None
 
 
 def get_latest_release_notes_text(rn_path):

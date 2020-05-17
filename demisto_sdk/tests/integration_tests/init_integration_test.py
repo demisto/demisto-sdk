@@ -24,17 +24,17 @@ def test_integration_init_integration_positive(tmp_path):
     fill_pack_metadata = "Y"
     pack_display_name = "SuperPackDisplayName"
     pack_desc = "This is a super pack desc"
-    support_type = "1"
+    support_type = "2"
+    pack_category = "4"
     pack_author = "SuperMario"
     pack_url = "https://www.github.com/supermario"
     pack_email = "mario@super.com"
-    pack_category = "4"
     pack_tags = "SuperTag1,SuperTag2"
     create_integration = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
-    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type,
-              pack_author, pack_url, pack_email, pack_category, pack_tags, create_integration, integration_name,
+    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
+              pack_author, pack_url, pack_email, pack_tags, create_integration, integration_name,
               use_dir_name_as_id]
 
     d = tmp_path / 'TestPacks'
@@ -58,20 +58,17 @@ def test_integration_init_integration_positive(tmp_path):
         assert {
             "name": pack_display_name,
             "description": pack_desc,
-            "support": "demisto",
+            "support": "partner",
             "currentVersion": "1.0.0",
             "author": pack_author,
             "url": pack_url,
             "email": pack_email,
             "categories": [
-                "Endpoint"
+                       "Endpoint"
             ],
             "tags": pack_tags.split(","),
-            "beta": False,
-            "deprecated": False,
             "useCases": [],
             "keywords": [],
-            "dependencies": {}
         }.items() <= metadata_json.items()  # testing for subset (<=) to avoid testing created and modified timestamps
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}

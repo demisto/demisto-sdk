@@ -446,9 +446,12 @@ def get_release_notes_file_path(file_path):
         return file_path
     else:
         print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+        return None
 
 
 def get_latest_release_notes_text(rn_path):
+    if rn_path is None:
+        print_error('Path to release notes not found.')
     with open(rn_path) as f:
         rn = f.read()
 

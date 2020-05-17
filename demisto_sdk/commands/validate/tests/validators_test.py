@@ -31,7 +31,7 @@ from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
     BETA_INTEGRATION_TARGET, CONF_JSON_MOCK_PATH, DASHBOARD_TARGET,
-    DEFAULT_IMAGE, GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
+    GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
     INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
@@ -48,13 +48,13 @@ from demisto_sdk.tests.constants_test import (
     LAYOUT_TARGET, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET,
     TEST_PLAYBOOK, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
     VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
-    VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
-    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_NO_HIDDEN_PARAMS,
-    VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
-    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
+    VALID_NO_HIDDEN_PARAMS, VALID_ONE_LINE_CHANGELOG_PATH,
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+    VALID_WIDGET_PATH, WIDGET_TARGET)
 from mock import patch
 
 
@@ -366,11 +366,6 @@ class TestValidators:
         assert file_validator._is_valid
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
-        # ignoring images and change-logs
-        (DEFAULT_IMAGE, ''),
-        (VALID_MULTI_LINE_LIST_CHANGELOG_PATH, ''),
-        (INVALID_ONE_LINE_1_CHANGELOG_PATH, ''),
-        # validating files
         (VALID_INTEGRATION_ID_PATH, 'integration'),
         (VALID_TEST_PLAYBOOK_PATH, 'playbook'),
         (VALID_SCRIPT_PATH, 'script'),
@@ -379,6 +374,8 @@ class TestValidators:
         (VALID_REPUTATION_PATH, 'reputation'),
         (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
         (VALID_BETA_INTEGRATION, 'integration'),
+        (VALID_INDICATOR_FIELD_PATH, 'indicatorfield'),
+        (VALID_LAYOUT_PATH, 'layout'),
         (VALID_MD, '')
     ]
 
@@ -393,9 +390,7 @@ class TestValidators:
         - running run_all_validations_on_file on that file
 
         Then
-        -  If the file is not json,yml or md- it will be skipped (will be considered as valid)
-        -  If the file is a CHANGELOG  or DESCRIPTION it will be skipped  (will be considered as valid)
-        -  In any other case the file will be validated
+        -  The file will be validated
         """
         file_validator = FilesValidator(validate_conf_json=False)
         file_validator.run_all_validations_on_file(file_path, file_type)
@@ -481,10 +476,8 @@ class TestValidators:
         """
             Given
             - A unified yml file
-
             When
             - Validating it
-
             Then
             -  validator should ignore those files
         """
@@ -492,8 +485,6 @@ class TestValidators:
         file_validator.validate_modified_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
-        assert file_validator._is_valid
-        file_validator.run_all_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION)
         assert file_validator._is_valid
 
 

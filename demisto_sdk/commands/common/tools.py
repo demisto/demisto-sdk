@@ -451,7 +451,7 @@ def get_release_notes_file_path(file_path):
 
 def get_latest_release_notes_text(rn_path):
     if rn_path is None:
-        print_error('Path to release notes not found.')
+        print_warning('Path to release notes not found.')
         rn = None
     else:
         with open(rn_path) as f:

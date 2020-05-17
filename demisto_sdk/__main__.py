@@ -7,6 +7,7 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
+import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
@@ -212,8 +213,8 @@ def unify(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-j', '--conf-json', is_flag=True,
-    default=False, show_default=True, help='Validate the conf.json file.')
+    '--no-conf-json', is_flag=True,
+    default=False, show_default=True, help='Skip conf.json validation')
 @click.option(
     '-s', '--id-set', is_flag=True,
     default=False, show_default=True, help='Validate the id_set file.')
@@ -256,16 +257,18 @@ def validate(config, **kwargs):
     if file_path and not os.path.isfile(file_path) and not os.path.isdir(file_path):
         print_error(f'File {file_path} was not found')
         return 1
-
     else:
+        is_private_repo = tools.is_private_repository()
+
         validator = FilesValidator(configuration=config.configuration,
                                    is_backward_check=not kwargs['no_backward_comp'],
-                                   is_circle=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                                   validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
+                                   only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                   skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
                                    file_path=file_path,
                                    validate_all=kwargs.get('validate_all'),
                                    validate_id_set=kwargs['id_set'],
-                                   skip_pack_rn_validation=kwargs['skip_pack_release_notes'])
+                                   skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
+                                   is_private_repo=is_private_repo)
         return validator.run()
 
 

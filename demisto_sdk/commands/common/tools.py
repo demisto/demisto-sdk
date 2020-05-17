@@ -443,7 +443,7 @@ def get_release_notes_file_path(file_path):
     :return: file_path: str - Validated release notes path.
     """
     if file_path is None:
-        print_warning(f"Release notes were not found.")
+        print_warning("Release notes were not found.")
         return None
     else:
         if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):

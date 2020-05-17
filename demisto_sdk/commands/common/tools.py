@@ -449,7 +449,7 @@ def get_release_notes_file_path(file_path):
         if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
             return file_path
         else:
-            print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+            print_warning(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
             return None
 
 

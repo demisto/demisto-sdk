@@ -257,6 +257,7 @@ CLASSIFIERS_DIR = 'Classifiers'
 CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
+TOOLS_DIR = 'Tools'
 RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 
@@ -553,6 +554,7 @@ PACKS_REPORTS_REGEX = r'{}/([^/]+)/{}/([^.]+)\.json'.format(PACKS_DIR, REPORTS_D
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                    RELEASE_NOTES_DIR)
+PACKS_TOOLS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.zip'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, TOOLS_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 
@@ -861,7 +863,8 @@ CHECKED_TYPES_REGEXES = [
     PACKS_LAYOUTS_REGEX,
     PACKS_WIDGETS_REGEX,
     PACKS_REPORTS_REGEX,
-    PACKS_RELEASE_NOTES_REGEX
+    PACKS_RELEASE_NOTES_REGEX,
+    PACKS_TOOLS_REGEX
 ]
 
 CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in

@@ -1,4 +1,7 @@
 # Changelog
+
+
+#### 1.0.4
 * Fix the **format** command to update the `id` field to be equal to `details` field in indicator-type files, and to `name` field in incident-type & dashboard files.
 * Fixed a bug in the **validate** command for layout files that had `sortValues` fields.
 * Fixed a bug in the **format** command where `playbookName` field was not always present in the file.

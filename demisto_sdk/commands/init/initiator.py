@@ -23,7 +23,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    PLAYBOOKS_DIR, REPORTS_DIR,
                                                    SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR)
+                                                   WIDGETS_DIR, XSOAR_AUTHOR,
+                                                   XSOAR_SUPPORT,
+                                                   XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                print_color, print_error,
@@ -163,7 +165,7 @@ class Initiator:
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
-            user_response = input("\nDo you want to fill pack's metadata file? Y/N ").lower()
+            user_response = input("\nWould you like fill pack's metadata file? Y/N ").lower()
             fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)
@@ -190,51 +192,56 @@ class Initiator:
         Returns:
             Dict. Pack metadata JSON content.
         """
-        metadata = {
-            'name': '## FILL OUT MANUALLY ##',
-            'description': '## FILL OUT MANUALLY ##',
-            'support': 'xsoar',
+        pack_metadata = {
+            'name': '## FILL MANDATORY FIELD ##',
+            'description': '## FILL MANDATORY FIELD ##',
+            'support': XSOAR_SUPPORT,
             'currentVersion': PACK_INITIAL_VERSION,
-            'author': 'Cortex XSOAR',
-            'url': 'https://www.paloaltonetworks.com/cortex',
+            'author': XSOAR_AUTHOR,
+            'url': XSOAR_SUPPORT_URL,
             'email': '',
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-            'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-            'beta': False,
-            'deprecated': False,
             'useCases': [],
-            'keywords': [],
-            # 'price': '0',
-            'dependencies': {},
+            'keywords': []
         }
 
         if not fill_manually:
-            return metadata
+            return pack_metadata  # return xsoar template
 
-        metadata['name'] = input("\nDisplay name of the pack: ")
-        metadata['description'] = input("\nDescription of the pack: ")
-        metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
-                                                             option_message="\nSupport type of the pack: \n")
-        metadata['author'] = input("\nAuthor of the pack: ")
+        pack_metadata['name'] = input("\nDisplay name of the pack: ")
+        if not pack_metadata.get('name'):
+            pack_metadata['name'] = '## FILL MANDATORY FIELD ##'
 
+        pack_metadata['description'] = input("\nDescription of the pack: ")
+        if not pack_metadata.get('description'):
+            pack_metadata['description'] = '## FILL MANDATORY FIELD ##'
+
+        pack_metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
+                                                                  option_message="\nSupport type of the pack: \n")
+        pack_metadata['categories'] = [Initiator.get_valid_user_input(options_list=INTEGRATION_CATEGORIES,
+                                                                      option_message="\nPack category options: \n")]
+
+        if pack_metadata.get('support') == XSOAR_SUPPORT:
+            pack_metadata['author'] = XSOAR_AUTHOR
+            pack_metadata['url'] = XSOAR_SUPPORT_URL
+
+            return pack_metadata
+
+        pack_metadata['author'] = input("\nAuthor of the pack: ")
+        # get support details from the user
         support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
         while support_url and "http" not in support_url:
             support_url = input("\nIncorrect input. Please enter full valid url: ")
-        metadata['url'] = support_url
+        pack_metadata['url'] = support_url
+        pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
 
-        metadata['email'] = input("\nThe email in which you can be contacted in: ")
-        metadata['categories'] = [Initiator.get_valid_user_input(options_list=INTEGRATION_CATEGORIES,
-                                                                 option_message="\nPack category options: \n")]
         tags = input("\nTags of the pack, comma separated values: ")
-        tags_list = [t.strip() for t in tags.split(',')]
-        metadata['tags'] = tags_list
-        # TODO: add it back after #23546 is ready.
-        # price = input("\nThe price of the pack: ")
-        # metadata['price'] = price
+        tags_list = [t.strip() for t in tags.split(',') if t]
+        pack_metadata['tags'] = tags_list
 
-        return metadata
+        return pack_metadata
 
     @staticmethod
     def get_valid_user_input(options_list: List[str], option_message: str) -> str:

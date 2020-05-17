@@ -11,6 +11,7 @@ def get_validator(file_path=''):
     release_notes_validator.file_path = file_path
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
+    release_notes_validator.modified_files = None
     return release_notes_validator
 
 

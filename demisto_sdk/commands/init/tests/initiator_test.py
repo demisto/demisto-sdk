@@ -9,7 +9,9 @@ import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    PACK_INITIAL_VERSION,
-                                                   PACK_SUPPORT_OPTIONS)
+                                                   PACK_SUPPORT_OPTIONS,
+                                                   XSOAR_AUTHOR, XSOAR_SUPPORT,
+                                                   XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
 
 DIR_NAME = 'DirName'
@@ -20,6 +22,8 @@ PACK_AUTHOR = 'PackAuthor'
 PACK_URL = 'https://www.github.com/pack'
 PACK_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
+
+
 # PACK_PRICE = '0'
 
 
@@ -31,6 +35,7 @@ def initiator():
 def generate_multiple_inputs(inputs: deque) -> Callable:
     def next_input(_):
         return inputs.popleft()
+
     return next_input
 
 
@@ -74,28 +79,22 @@ def test_get_object_id_custom_name(monkeypatch, initiator):
     assert given_id == initiator.id
 
 
-# TODO: add the validation for price after #23546 is ready.
 def test_create_metadata(monkeypatch, initiator):
     # test create_metadata without user filling manually
     pack_metadata = initiator.create_metadata(False)
     assert pack_metadata == {
-        'name': '## FILL OUT MANUALLY ##',
-        'description': '## FILL OUT MANUALLY ##',
-        'support': 'xsoar',
+        'name': '## FILL MANDATORY FIELD ##',
+        'description': '## FILL MANDATORY FIELD ##',
+        'support': XSOAR_SUPPORT,
         'currentVersion': PACK_INITIAL_VERSION,
-        'author': 'Cortex XSOAR',
-        'url': 'https://www.paloaltonetworks.com/cortex',
+        'author': XSOAR_AUTHOR,
+        'url': XSOAR_SUPPORT_URL,
         'email': '',
+        'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
         'categories': [],
         'tags': [],
-        'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'beta': False,
-        'deprecated': False,
         'useCases': [],
-        'keywords': [],
-        # 'price': '0',
-        'dependencies': {},
+        'keywords': []
     }
 
     # test create_metadata with user filling manually
@@ -103,29 +102,23 @@ def test_create_metadata(monkeypatch, initiator):
         'builtins.input',
         generate_multiple_inputs(
             deque([
-                PACK_NAME, PACK_DESC, '1', PACK_AUTHOR,
-                PACK_URL, PACK_EMAIL, '1', PACK_TAGS
-                # PACK_PRICE
+                PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
+                PACK_URL, PACK_EMAIL, PACK_TAGS
             ])
         )
     )
     pack_metadata = initiator.create_metadata(True)
     assert pack_metadata == {
         'author': PACK_AUTHOR,
-        'beta': False,
         'categories': [INTEGRATION_CATEGORIES[0]],
         'currentVersion': '1.0.0',
-        'dependencies': {},
-        'deprecated': False,
         'description': PACK_DESC,
         'email': PACK_EMAIL,
         'keywords': [],
         'name': PACK_NAME,
-        # 'price': PACK_PRICE,
-        'support': PACK_SUPPORT_OPTIONS[0],
+        'support': PACK_SUPPORT_OPTIONS[1],
         'tags': ['Tag1', 'Tag2'],
         'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
         'url': PACK_URL,
         'useCases': []
     }

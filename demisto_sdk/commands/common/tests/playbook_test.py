@@ -73,7 +73,7 @@ class TestPlaybookValidator:
                             "tasks":
                                 {'1': {'type': 'condition',
                                        'conditions': [{'label': 'yes'}],
-                                       'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
+                                       'nexttasks': {'yes': ['3']}}}}
     CONDITION_EXIST_FULL_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
                                      "tasks":
                                      {'1': {'type': 'condition',

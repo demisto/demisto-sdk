@@ -102,7 +102,7 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     return skipped_code
 
 
-def get_test_modules(content_repo: Optional[git.Repo]) -> Dict[Path, bytes]:
+def get_test_modules(content_repo: Optional[git.Repo], is_private_repo: bool) -> Dict[Path, bytes]:
     """ Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py
     2. Tests/scripts/dev_envs/pytest/conftest.py
@@ -112,11 +112,20 @@ def get_test_modules(content_repo: Optional[git.Repo]) -> Dict[Path, bytes]:
     Returns:
         dict: path and file content - see below modules dict
     """
-    modules = [Path("Tests/demistomock/demistomock.py"),
-               Path("Tests/scripts/dev_envs/pytest/conftest.py"),
-               Path("Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"),
-               Path("Tests/demistomock/demistomock.ps1"),
-               Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1")]
+    if is_private_repo:
+        modules = [Path("demistomock.py"),
+                   Path("dev_envs/pytest/conftest.py"),
+                   Path("CommonServerPython.py"),
+                   Path("demistomock.ps1"),
+                   Path("CommonServerPowerShell.ps1")
+                   ]
+    else:
+        modules = [Path("Tests/demistomock/demistomock.py"),
+                   Path("Tests/scripts/dev_envs/pytest/conftest.py"),
+                   Path("Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"),
+                   Path("Tests/demistomock/demistomock.ps1"),
+                   Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1")
+                   ]
     modules_content = {}
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
@@ -241,7 +250,8 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
 
                     added_modules.append(cur_path)
         yield
-    except Exception:
+    except Exception as e:
+        logger.error(str(e))
         pass
     finally:
         # If we want to change handling of files after finishing - do it here

@@ -226,7 +226,7 @@ class ContentCreator:
                 if not dpath.startswith('incidenttype-'):
                     dpath = f'incidenttype-{dpath}'
             if dir_name == 'IndicatorTypes':
-                if not dpath.startswith('reputation-'):
+                if not dpath.startswith('reputation-') and 'reputations.json' not in dpath:
                     dpath = f'reputation-{dpath}'
             # this part is a workaround because server doesn't support indicatorfield-*.json naming
             if dir_name in ['IndicatorFields', 'IncidentFields']:

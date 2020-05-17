@@ -89,6 +89,8 @@ class TestContentCreator:
                            f'{self._bundle_dir}/reputation-cidr.json')
         assert filecmp.cmp(f'{self.indicator_types_full_path}/reputation-cve.json',
                            f'{self._bundle_dir}/reputation-cve.json')
+        assert filecmp.cmp(f'{self.indicator_types_full_path}/reputations.json',
+                           f'{self._bundle_dir}/reputations.json')
 
     def test_unified_integrations_copy(self):
         from ruamel.yaml import YAML

@@ -1,8 +1,9 @@
 from typing import Dict
 
+import click
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_error
 
 
 class PlaybookValidator(BaseValidator):
@@ -18,7 +19,9 @@ class PlaybookValidator(BaseValidator):
         Returns:
             bool. Whether the playbook is valid or not
         """
-
+        if 'TestPlaybooks' in self.file_path:
+            click.echo(f'Skipping validation for Test Playbook {self.file_path}', color=LOG_COLORS.YELLOW)
+            return True
         if is_new_playbook:
             new_playbook_checks = [
                 super().is_valid_file(validate_rn),
@@ -26,7 +29,8 @@ class PlaybookValidator(BaseValidator):
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
-                self.is_condition_branches_handled()
+                self.is_condition_branches_handled(),
+                self.are_tests_configured()
             ]
             answers = all(new_playbook_checks)
         else:
@@ -36,11 +40,21 @@ class PlaybookValidator(BaseValidator):
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
-                self.is_condition_branches_handled()
+                self.is_condition_branches_handled(),
+                self.are_tests_configured()
             ]
             answers = all(modified_playbook_checks)
 
         return answers
+
+    def are_tests_configured(self) -> bool:
+        """
+        Checks if the playbook has a TestPlaybook and if the TestPlaybook is configured in conf.json
+        And prints an error message accordingly
+        """
+        file_type = self.structure_validator.scheme_name
+        tests = self.current_file.get('tests', [])
+        return self.yml_has_test_key(tests, file_type)
 
     def is_id_equals_name(self):  # type: () -> bool
         """Check whether the playbook ID is equal to its name.
@@ -112,14 +126,16 @@ class PlaybookValidator(BaseValidator):
         for condition in task.get('conditions', []):
             label = condition.get('label')
             if label:
-                task_condition_labels.add(label.upper())
+                # Need to cast it to string because otherwise it's parsed as boolean
+                task_condition_labels.add(str(label).upper())
 
         # REMOVE all used condition branches from task_condition_labels (UPPER)
         next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch in next_tasks.keys():
             try:
                 if next_task_branch:
-                    task_condition_labels.remove(next_task_branch.upper())
+                    # Need to cast it to string because otherwise it's parsed as boolean
+                    task_condition_labels.remove(str(next_task_branch).upper())
             except KeyError:
                 print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
                             f'next task condition "{next_task_branch}". Please remove this task or add '

@@ -1,0 +1,22 @@
+comment: Test Script Comment
+commonfields:
+  id: TestScript
+  version: -1
+dockerimage: demisto/faker3:1.0.0.247
+enabled: true
+name: TestScript
+pswd: ""
+runas: DBotWeakRole
+runonce: false
+script: ''
+fromversion: TEST
+toversion: TEST
+alt_dockerimages: TEST
+scripttarget: 0
+subtype: python3
+tags:
+- indicator-format
+- analytics
+- autoextract
+timeout: 3µs
+type: python

@@ -1,12 +1,54 @@
-## [Unreleased]
-* Improved 'validate' help and documentation description
-
 # Changelog
+* Fix the **format** command to update the `id` field to be equal to `details` field in indicator-type files, and to `name` field in incident-type & dashboard files.
+* Fixed a bug in the **validate** command for layout files that had `sortValues` fields.
+* Fixed a bug in the **format** command where `playbookName` field was not always present in the file.
+* Fixed a bug in the **format** command where indicatorField wasn't part of the SDK schemas.
+* Fixed a bug in **upload** command where created unified docker45 yml files were not deleted.
+* Added support for IndicatorTypes directory in packs (for `reputation` files, instead of Misc).
+* Fixed parsing playbook condition names as string instead of boolean in **validate** command
+* Improved image validation in YAML files.
+
+#### 1.0.3
+* Fixed a bug in the **format** command where comments were being removed from YAML files.
+* Added output fields: _file_path_ and _kind_ for layouts in the id-set.json created by **create-id-set** command.
+* Fixed a bug in the **create-id-set** command Who returns Duplicate for Layouts with a different kind.
+* Added formatting to **generate-docs** command results replacing all `<br>` tags with `<br/>`.
+* Fixed a bug in the **download** command when custom content contained not supported content entity.
+* Fixed a bug in **format** command in which boolean strings  (e.g. 'yes' or 'no') were converted to boolean values (e.g. 'True' or 'False').
+* **format** command now removes *sourceplaybookid* field from playbook files.
+* Fixed a bug in **generate-docs** command in which integration dependencies were not detected when generating documentation for a playbook.
+
+
+#### 1.0.1
+* Fixed a bug in the **unify** command when output path was provided empty.
+* Improved error message for integration with no tests configured.
+* Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.
+* Fixed a bug in the **create** command where a unified YML with a docker image for 4.5 was copied incorrectly.
+* Missing release notes message are now showing the release notes file path to update.
+* Fixed an issue in the **validate** command in which unified YAML files were not ignored.
+* File format suggestions are now shown in the relevant file format (JSON or YAML).
+* Changed Docker image validation to fail only on non-valid ones.
+* Removed backward compatibility validation when Docker image is updated.
+
+#### 1.0.0
+* Improved the *upload* command to support the upload of all the content entities within a pack.
+* The *upload* command now supports the improved pack file structure.
+* Added an interactive option to format integrations, scripts and playbooks with No TestPlaybooks configured.
+* Added an interactive option to configure *conf.json* file with missing test playbooks for integrations, scripts and playbooks
+* Added *download* command to download custom content from Demisto instance to the local content repository.
+* Improved validation failure messages to include a command suggestion, wherever relevant, to fix the raised issue.
+* Improved 'validate' help and documentation description
+* validate - checks that scripts, playbooks, and integrations have the *tests* key.
+* validate - checks that test playbooks are configured in `conf.json`.
 * demisto-sdk lint - Copy dir better handling.
 * demisto-sdk lint - Add error when package missing in docker image.
 * Added *-a , --validate-all* option in *validate* to run all validation on all files.
+* Added *-i , --input* option in *validate* to run validation on a specified pack/file.
+* added *-i, --input* option in *secrets* to run on a specific file.
 * Added an allowed hidden parameter: *longRunning* to the hidden integration parameters validation.
-* Fixed an isssue with **format** command when executing with an output path of a folder and not a file path.
+* Fixed an issue with **format** command when executing with an output path of a folder and not a file path.
+* Bug fixes in generate-docs command given playbook as input.
+* Fixed an issue with lint command in which flake8 was not running on unit test files.
 
 #### 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.

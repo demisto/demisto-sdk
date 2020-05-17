@@ -21,8 +21,8 @@ This is used in our validation process both locally and in Circle CI.
 Whether to check backward compatibility or not.
 * **-j, --conf-json**
 Validate the conf.json file.
-* **-i, --id-set**
-Create the id_set.json file.
+* **-s, --id-set**
+Validate the id_set.json file.
 * **--prev-ver**
 Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**
@@ -35,19 +35,19 @@ Whether the validation should run only on the current branch's committed changed
 Path of file to validate specifically.
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
+* **-i, --input**
+The path of a pack or a file to validate specifically.
+* **---skip-pack-release-notes**
+Validation will not not be performed using the updated pack release notes format.
 
 **Examples**:
-`demisto-sdk validate`
-This will validate all the files in content repo.
-<br><br>
-
 `demisto-sdk validate -g --no-backwards-comp`
 This will validate only changed files from content origin/master branch and will exclude backwards
 compatibility checks.
 <br><br>
 
-`demisto-sdk validate -i -j`
-This will validate all content repo files and including conf.json file and will create the id_set.json file.
+`demisto-sdk validate -j`
+This will validate all content repo files and including conf.json file.
 <br><br>
 
 `demisto-sdk validate --prev-ver SHA1-HASH`
@@ -63,4 +63,7 @@ This will validate the file Integrations/Pwned-V2/Pwned-V2.yml only.
 <br><br>
 `demisto-sdk validate -a`
 This will validate all files under `Packs` and `Beta_Integrations` directories
+<br><br>
+`demisto-sdk validate -i Packs/HelloWorld`
+This will validate all files under the content pack `HelloWorld`
 <br><br>

@@ -1,3 +1,4 @@
+import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
                                                    FEED_REQUIRED_PARAMS,
@@ -14,8 +15,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (get_dockerimage45, print_error,
-                                               print_warning,
+from demisto_sdk.commands.common.tools import (print_error, print_warning,
                                                server_version_compare)
 
 
@@ -43,7 +43,6 @@ class IntegrationValidator(BaseValidator):
 
         answers = [
             self.is_changed_context_path(),
-            self.is_docker_image_changed(),
             self.is_added_required_fields(),
             self.is_changed_command_name_or_arg(),
             self.is_there_duplicate_args(),
@@ -80,8 +79,17 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
+            self.are_tests_configured()
         ]
         return all(answers)
+
+    def are_tests_configured(self) -> bool:
+        """
+        Checks if the integration has a TestPlaybook and if the TestPlaybook is configured in conf.json
+        And prints an error message accordingly
+        """
+        tests = self.current_file.get('tests', [])
+        return self.are_tests_registered_in_conf_json_file_or_yml_file(tests)
 
     def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
@@ -175,6 +183,8 @@ class IntegrationValidator(BaseValidator):
                 if not flag_found_arg:
                     print_error(Errors.no_default_arg(self.file_path, command_name))
                     flag = False
+        if not flag:
+            print_error(Errors.suggest_fix(self.file_path))
         return flag
 
     def is_outputs_for_reputations_commands_valid(self):
@@ -475,19 +485,6 @@ class IntegrationValidator(BaseValidator):
                 is_added_required = True
         return is_added_required
 
-    def is_docker_image_changed(self):
-        """Check if the Docker image was changed or not."""
-        # Unnecessary to check docker image only on 5.0 and up
-        if server_version_compare(self.old_file.get('fromversion', '0'), '5.0.0') < 0:
-            old_docker = get_dockerimage45(self.old_file.get('script', {}))
-            new_docker = get_dockerimage45(self.current_file.get('script', {}))
-            if old_docker != new_docker:
-                print_error(Errors.breaking_backwards_docker(self.file_path, old_docker, new_docker))
-                self.is_valid = False
-                return True
-
-        return False
-
     def is_id_equals_name(self):
         """Check whether the integration's ID is equal to its name
 
@@ -539,6 +536,7 @@ class IntegrationValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 valid_from_version = False
             valid_feed_params = self.all_feed_params_exist()
         return valid_from_version and valid_feed_params
@@ -548,6 +546,7 @@ class IntegrationValidator(BaseValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
+                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
                 return False
         return True
 
@@ -562,10 +561,13 @@ class IntegrationValidator(BaseValidator):
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(f'Integration with fetch-incidents was detected '
-                                f'("isfetch:  true" was found in the YAML file).'
-                                f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                                f'the param is:\n{param}')
+                    print_error(
+                        f'{self.file_path}:'
+                        f'A required parameter "{param.get("name")}" is missing or malformed '
+                        f'in the YAML file.\n'
+                        'The correct format of the parameter should be as follows:'
+                        f'\n{yaml.dump(param)}'
+                    )
                     fetch_params_exist = False
 
         return fetch_params_exist
@@ -583,9 +585,14 @@ class IntegrationValidator(BaseValidator):
                 params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
-                print_error(f'Feed Integration was detected '
-                            f'\nA required parameter is missing or malformed in the file {self.file_path}, '
-                            f'the param should be:\n{param}')
+                print_error(
+                    f'{self.file_path}'
+                    f'Feed Integration was detected '
+                    f'A required parameter "{param.get("name")}" is missing or malformed '
+                    f'in the YAML file.\n'
+                    'The correct format of the parameter should be as follows:'
+                    f'\n{yaml.dump(param)}'
+                )
                 params_exist = False
 
         return params_exist

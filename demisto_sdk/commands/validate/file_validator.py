@@ -6,7 +6,7 @@ This script is used to validate the files in Content repository. Specifically fo
 4) Having ReleaseNotes if applicable.
 
 It can be run to check only committed changes (if the first argument is 'true') or all the files in the repo.
-Note - if it is run for all the files in the repo it won't check releaseNotes, use `release_notes.py`
+Note - if it is run for all the files in the repo it won't check releaseNotes, use `old_release_notes.py`
 for that task.
 """
 from __future__ import print_function
@@ -15,18 +15,20 @@ import os
 import re
 from glob import glob
 
+import click
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
     CHECKED_TYPES_REGEXES, CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES,
     IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
-    JSON_ALL_LAYOUT_REGEXES, JSON_INDICATOR_AND_INCIDENT_FIELDS,
-    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
+    JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
+    JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
+    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, REPUTATION_REGEX, SCHEMA_REGEX,
-    SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES,
-    YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
+    PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
+    SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR,
+    TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES, Errors)
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
@@ -41,6 +43,8 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import \
+    OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -60,7 +64,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command)
+                                               print_warning, run_command,
+                                               should_file_skip_validation)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -83,7 +88,7 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
                  print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, configuration=Configuration()):
+                 validate_all=False, skip_pack_rn_validation=False, configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
@@ -101,6 +106,8 @@ class FilesValidator:
         self.validate_conf_json = validate_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
+        self.skip_pack_rn_validation = skip_pack_rn_validation
+        self.changed_pack_data = set()
 
         if self.validate_conf_json:
             self.conf_json_validator = ConfJsonValidator()
@@ -135,10 +142,10 @@ class FilesValidator:
             (modified_files_list, added_files_list, deleted_files). Tuple of sets.
         """
         all_files = files_string.split('\n')
-        deleted_files = set([])
-        added_files_list = set([])
-        modified_files_list = set([])
-        old_format_files = set([])
+        deleted_files = set()
+        added_files_list = set()
+        modified_files_list = set()
+        old_format_files = set()
         for f in all_files:
             file_data = f.split()
             if not file_data:
@@ -209,7 +216,6 @@ class FilesValidator:
             'git diff --name-status {tag}..{compare_type}refs/heads/{branch}'.format(tag=tag,
                                                                                      branch=self.branch_name,
                                                                                      compare_type=compare_type))
-
         modified_files, added_files, _, old_format_files = self.get_modified_files(
             all_changed_files_string,
             tag=tag,
@@ -261,6 +267,11 @@ class FilesValidator:
 
         return packs
 
+    def old_is_valid_release_notes(self, file_path):
+        old_release_notes_validator = OldReleaseNotesValidator(file_path)
+        if not old_release_notes_validator.is_file_valid():
+            self._is_valid = False
+
     def is_valid_release_notes(self, file_path):
         release_notes_validator = ReleaseNotesValidator(file_path)
         if not release_notes_validator.is_file_valid():
@@ -274,17 +285,27 @@ class FilesValidator:
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
+        changed_packs = set()
+        for file_path in modified_files:
+            changed_pack = get_pack_name(file_path)
+            if changed_pack:
+                changed_packs.add(changed_pack)
         for file_path in modified_files:
             old_file_path = None
+            # modified_files are returning from running git diff.
+            # If modified file was renamed\moved, file_path could be a tuple containing original path and new path
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path
-
+            file_type = find_type(file_path)
+            # unified files should not be validated
+            if file_path.endswith('_unified.yml'):
+                continue
             print('Validating {}'.format(file_path))
             if not checked_type(file_path):
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
             elif 'README' in file_path:
@@ -301,7 +322,7 @@ class FilesValidator:
                 if not self.id_set_validator.is_file_valid_in_set(file_path):
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_INTEGRATION_REGEXES):
+            elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
@@ -309,7 +330,7 @@ class FilesValidator:
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES):
+            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
@@ -320,8 +341,7 @@ class FilesValidator:
                     self._is_valid = False
                 if not script_validator.is_valid_file():
                     self._is_valid = False
-
-            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST):
+            elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST) or file_type == 'playbook':
                 playbook_validator = PlaybookValidator(structure_validator)
                 if not playbook_validator.is_valid_playbook(is_new_playbook=False):
                     self._is_valid = False
@@ -351,7 +371,7 @@ class FilesValidator:
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
-            elif checked_type(file_path, [REPUTATION_REGEX]):
+            elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES):
                 reputation_validator = ReputationValidator(structure_validator)
                 if not reputation_validator.is_valid_file(validate_rn=True):
                     self._is_valid = False
@@ -374,7 +394,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                self.is_valid_release_notes(file_path)
+                self.old_is_valid_release_notes(file_path)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
@@ -385,6 +405,21 @@ class FilesValidator:
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
 
+        self.changed_pack_data = changed_packs
+
+    def verify_no_dup_rn(self, added_files):
+        added_rn = set()
+        for file in added_files:
+            if re.search(PACKS_RELEASE_NOTES_REGEX, file):
+                pack_name = get_pack_name(file)
+                if pack_name not in added_rn:
+                    added_rn.add(pack_name)
+                else:
+                    print_error(f"More than one release notes file has been found for {pack_name}."
+                                f"Only one release note file is permitted per release. Please delete"
+                                f" the extra release notes.")
+                    self._is_valid = False
+
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
         """Validate the added files from your branch.
 
@@ -394,10 +429,18 @@ class FilesValidator:
             added_files (set): A set of the modified files in the current branch.
             file_type (str): Used only with -p flag (the type of the file).
         """
+        added_rn = set()
+        self.verify_no_dup_rn(added_files)
         for file_path in added_files:
+            if ('ReleaseNotes' in file_path) and self.skip_pack_rn_validation:
+                continue
+            pack_name = get_pack_name(file_path)
+            # unified files should not be validated
+            if file_path.endswith('_unified.yml'):
+                continue
             print('Validating {}'.format(file_path))
 
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
 
             elif 'README' in file_path:
@@ -456,7 +499,7 @@ class FilesValidator:
                 if not incident_field_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
-            elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
+            elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES) or file_type == 'reputation':
                 reputation_validator = ReputationValidator(structure_validator)
                 if not reputation_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
@@ -478,6 +521,11 @@ class FilesValidator:
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
+                self.old_is_valid_release_notes(file_path)
+
+            elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
+                added_rn.add(pack_name)
+                print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
@@ -488,6 +536,13 @@ class FilesValidator:
                 print_error("validate command supports: Integrations, Scripts, Playbooks, "
                             "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
                 self._is_valid = False
+        missing_rn = self.changed_pack_data.difference(added_rn)
+        if (len(missing_rn) > 0) and (self.skip_pack_rn_validation is False):
+            for pack in missing_rn:
+                print_error(f"Release notes were not found for {pack}. Please run `demisto-sdk "
+                            f"update-release-notes -p {pack} -u (major|minor|revision)` to "
+                            f"generate release notes according to the new standard.")
+            self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).
@@ -550,16 +605,6 @@ class FilesValidator:
             file_path: A relative content path to a file to be validated
             file_type: The output of 'find_type' method
         """
-        file_extension = os.path.splitext(file_path)[-1]
-        # We validate only yml json and .md files
-        if file_extension not in ['.yml', '.json', '.md']:
-            return
-
-        # Ignoring changelog and description files since these are checked on the integration validation
-        if 'changelog' in file_path.lower() or 'description' in file_path.lower():
-            return
-        print(f'Validating {file_path}')
-
         if 'README' in file_path:
             readme_validator = ReadMeValidator(file_path)
             if not readme_validator.is_valid_file():
@@ -568,11 +613,6 @@ class FilesValidator:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         if not structure_validator.is_valid_file():
             self._is_valid = False
-
-        elif re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-            playbook_validator = PlaybookValidator(structure_validator)
-            if not playbook_validator.is_valid_playbook():
-                self._is_valid = False
 
         elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
             playbook_validator = PlaybookValidator(structure_validator)
@@ -604,7 +644,7 @@ class FilesValidator:
             if not incident_field_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, [REPUTATION_REGEX]) or file_type == 'reputation':
+        elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES) or file_type == 'reputation':
             reputation_validator = ReputationValidator(structure_validator)
             if not reputation_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
@@ -645,9 +685,20 @@ class FilesValidator:
         all_files_to_validate = set()
         for directory in [PACKS_DIR, BETA_INTEGRATIONS_DIR, TEST_PLAYBOOKS_DIR]:
             all_files_to_validate |= {file for file in glob(fr'{directory}/**', recursive=True) if
-                                      not os.path.isdir(file)}
+                                      not should_file_skip_validation(file)}
         print('Validating all Pack and Beta Integration files')
-        for file in all_files_to_validate:
+        for index, file in enumerate(sorted(all_files_to_validate)):
+            click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
+            self.run_all_validations_on_file(file, file_type=find_type(file))
+
+    def validate_pack(self):
+        """Validate files in a specified pack"""
+        print_color(f'Validating {self.file_path}', LOG_COLORS.GREEN)
+        pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if
+                      not should_file_skip_validation(file)}
+        self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
+        for file in pack_files:
+            click.echo(f'Validating {file}')
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_all_files_schema(self):
@@ -732,9 +783,12 @@ class FilesValidator:
 
         else:
             if self.file_path:
-                print('Not using git, validating file: {}'.format(self.file_path))
-                self.is_backward_check = False  # if not using git, no need for BC checks
-                self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                if os.path.isfile(self.file_path):
+                    print('Not using git, validating file: {}'.format(self.file_path))
+                    self.is_backward_check = False  # if not using git, no need for BC checks
+                    self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                elif os.path.isdir(self.file_path):
+                    self.validate_pack()
             else:
                 print('Not using git, validating all files.')
                 self.validate_all_files_schema()

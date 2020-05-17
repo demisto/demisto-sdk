@@ -1,18 +1,20 @@
+import json
 import os
 import re
 from abc import abstractmethod
 
-from demisto_sdk.commands.common.constants import (ID_IN_COMMONFIELDS,
-                                                   ID_IN_ROOT, Errors)
+import yaml
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
-                                               get_release_notes_file_path,
-                                               print_error, run_command)
+from demisto_sdk.commands.common.tools import (
+    _get_file_id, is_test_config_match, old_get_latest_release_notes_text,
+    old_get_release_notes_file_path, print_error, run_command)
 
 
 class BaseValidator:
     DEFAULT_VERSION = -1
+    CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator):
         # type: (StructureValidator) -> None
@@ -45,6 +47,7 @@ class BaseValidator:
         """
         if self.current_file.get('version') != self.DEFAULT_VERSION:
             print_error(Errors.wrong_version(self.file_path, self.DEFAULT_VERSION))
+            print_error(Errors.suggest_fix(self.file_path))
             self.is_valid = False
             return False
         return True
@@ -57,13 +60,13 @@ class BaseValidator:
             (bool): is there release notes
         """
         if os.path.isfile(self.file_path):
-            rn_path = get_release_notes_file_path(self.file_path)
-            release_notes = get_latest_release_notes_text(rn_path)
+            rn_path = old_get_release_notes_file_path(self.file_path)
+            release_notes = old_get_latest_release_notes_text(rn_path)
 
             # check release_notes file exists and contain text
             if release_notes is None:
                 self.is_valid = False
-                print_error("Missing release notes for: {}".format(self.file_path))
+                print_error(f'Missing release notes for: {self.file_path} in {rn_path}')
                 return False
         return True
 
@@ -104,14 +107,6 @@ class BaseValidator:
                 return False
         return True
 
-    def _get_file_id(self, file_type):
-        file_id = ''
-        if file_type in ID_IN_ROOT:
-            file_id = self.current_file.get('id')
-        elif file_type in ID_IN_COMMONFIELDS:
-            file_id = self.current_file.get('commonfields', {}).get('id')
-        return file_id
-
     def _is_id_equals_name(self, file_type):
         """Validate that the id of the file equals to the name.
          Args:
@@ -121,10 +116,95 @@ class BaseValidator:
             bool. Whether the file's id is equal to to its name
         """
 
-        file_id = self._get_file_id(file_type)
+        file_id = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
         if file_id != name:
-            print_error("The File's name, which is: '{0}', should be equal to its ID, which is: '{1}'."
-                        " please update the file (path to file: {2}).".format(name, file_id, self.file_path))
+            print_error("The File's name, which is: '{}', should be equal to its ID, which is: '{}'."
+                        " please update the file (path to file: {}).".format(name, file_id, self.file_path))
+            print_error(Errors.suggest_fix(self.file_path))
+            return False
+        return True
+
+    def _load_conf_file(self):
+        with open(self.CONF_PATH) as data_file:
+            return json.load(data_file)
+
+    def are_tests_registered_in_conf_json_file_or_yml_file(self, test_playbooks: list) -> bool:
+        """
+        If the file is a test playbook:
+            Validates it is registered in conf.json file
+        If the file is an integration:
+            Validating it is registered in conf.json file or that the yml file has 'No tests' under 'tests' key
+        Args:
+            test_playbooks: The yml file's list of test playbooks
+
+        Returns:
+            True if all test playbooks are configured in conf.json
+        """
+        no_tests_explicitly = any(test for test in test_playbooks if 'no test' in test.lower())
+        if no_tests_explicitly:
+            return True
+        conf_json_tests = self._load_conf_file()['tests']
+
+        content_item_id = _get_file_id(self.structure_validator.scheme_name, self.current_file)
+        file_type = self.structure_validator.scheme_name
+        # Test playbook case
+
+        if 'TestPlaybooks' in self.file_path and file_type == 'playbook':
+            is_configured_test = any(test_config for test_config in conf_json_tests if
+                                     is_test_config_match(test_config, test_playbook_id=content_item_id))
+            if not is_configured_test:
+                missing_test_playbook_configurations = json.dumps({'playbookID': content_item_id}, indent=4)
+                missing_integration_configurations = json.dumps(
+                    {'integrations': '<integration ID>', 'playbookID': content_item_id},
+                    indent=4)
+                error_message = \
+                    f'The TestPlaybook {content_item_id} is not registered in {self.CONF_PATH} file.\n' \
+                    f'Please add\n{missing_test_playbook_configurations}\n' \
+                    f'or if this test playbook is for an integration\n{missing_integration_configurations}\n' \
+                    f'to {self.CONF_PATH} path under \'tests\' key.'
+                print_error(error_message)
+                return False
+
+        # Integration case
+        elif file_type == 'integration':
+            is_configured_test = any(
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       integration_id=content_item_id))
+            if not is_configured_test:
+                missing_test_playbook_configurations = json.dumps(
+                    {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
+                    indent=4)
+                no_tests_key = yaml.dump({'tests': ['No tests']})
+                error_message = \
+                    f'The following integration is not registered in {self.CONF_PATH} file.\n' \
+                    f'Please add\n{missing_test_playbook_configurations}\nto {self.CONF_PATH} ' \
+                    f'path under \'tests\' key.\n' \
+                    f'If you don\'t want to add a test playbook for this integration, ' \
+                    f'please add \n{no_tests_key}to the ' \
+                    f'file {self.file_path} or run \'demisto-sdk format -p {self.file_path}\''
+                print_error(error_message)
+                return False
+        return True
+
+    def yml_has_test_key(self, test_playbooks: list, file_type: str) -> bool:
+        """
+        Checks if tests are configured.
+        If not: prints an error message according to the file type and return the check result
+        Args:
+            test_playbooks: The yml file's list of test playbooks
+            file_type: The file type, could be an integration or a playbook.
+
+        Returns:
+            True if tests are configured (not None and not an empty list) otherwise return False.
+        """
+        if not test_playbooks:
+            print_error(
+                f'You don\'t have a TestPlaybook for {file_type} {self.file_path}. '
+                f'If you have a TestPlaybook for this {file_type}, '
+                f'please edit the yml file and add the TestPlaybook under the \'tests\' key. '
+                f'If you don\'t want to create a'
+                f' TestPlaybook for this {file_type}, edit the yml file and add  \ntests:\n -  No tests\n lines'
+                f' to it or run \'demisto-sdk format -i {self.file_path}\'')
             return False
         return True

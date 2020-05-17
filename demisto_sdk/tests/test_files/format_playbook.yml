@@ -1,0 +1,154 @@
+id: 96b4fada-1608-4b29-8ccb-2cdf892a88d7
+version: 1
+name: testformat
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: 76d7bf12-49fa-4bbf-80bd-0ef371b19c81
+    type: start
+    task:
+      id: 76d7bf12-49fa-4bbf-80bd-0ef371b19c81
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "1":
+    id: "1"
+    taskid: 6ac88f05-ecca-4fe9-8d5a-152e54894b91
+    type: regular
+    task:
+      id: 6ac88f05-ecca-4fe9-8d5a-152e54894b91
+      version: -1
+      name: hi
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "2"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 230
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "2":
+    id: "2"
+    taskid: 61dfce61-d3ca-4186-830b-76a26c8ccbd5
+    type: playbook
+    task:
+      id: 61dfce61-d3ca-4186-830b-76a26c8ccbd5
+      version: -1
+      name: PAN-OS - Block IP - Static Address Group
+      type: playbook
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    separatecontext: true
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 410
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "3":
+    id: "3"
+    taskid: 9a5d9270-562f-48ae-8a89-abf4f782ec80
+    type: playbook
+    task:
+      id: 9a5d9270-562f-48ae-8a89-abf4f782ec80
+      version: -1
+      name: Calculate Severity - Generic
+      type: playbook
+      playbookId: Cortex XDR Incident Handling
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "4"
+    separatecontext: true
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 570
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "4":
+    id: "4"
+    taskid: b60d62b8-a695-4314-8131-02686f0958b1
+    type: playbook
+    task:
+      id: b60d62b8-a695-4314-8131-02686f0958b1
+      version: -1
+      name: Cortex XDR Incident Handling
+      type: playbook
+      playbookName: Cortex XDR Incident Handling
+      iscommand: false
+      brand: ""
+    separatecontext: true
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 770
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 815,
+        "width": 380,
+        "x": 450,
+        "y": 50
+      }
+    }
+  }
+inputs: []
+outputs: []
+tests:
+- No tests

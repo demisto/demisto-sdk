@@ -63,7 +63,7 @@ class IDSetValidator:
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
                     print_error("You probably merged from master and your id_set.json has conflicts. "
-                                "Run `python Tests/scripts/update_id_set.py -r`, it should reindex your id_set.json")
+                                "Run `demisto-sdk create-id-set`, it should reindex your id_set.json")
 
                 raise
 
@@ -94,13 +94,13 @@ class IDSetValidator:
                     checked_instance_fromversion == obj_from_version:
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
-                    print_error("You have failed to update id_set.json with the data of {} "
-                                "please run `python Tests/scripts/update_id_set.py`".format(file_path))
+                    print_error(f"You have failed to update id_set.json with the data of {file_path} "
+                                f"please run `demisto-sdk create-id-set`")
                     return False
 
         if not is_found:
-            print_error("You have failed to update id_set.json with the data of {} "
-                        "please run `python Tests/scripts/update_id_set.py`".format(file_path))
+            print_error(f"You have failed to update id_set.json with the data of {file_path} "
+                        f"please run `demisto-sdk create-id-set`")
 
         return is_found
 
@@ -184,7 +184,7 @@ class IDSetValidator:
                         break
 
         if is_duplicated:
-            print_error("The ID {0} already exists, please update the file or update the "
+            print_error("The ID {} already exists, please update the file or update the "
                         "id_set.json toversion field of this id to match the "
                         "old occurrence of this id".format(obj_id))
 

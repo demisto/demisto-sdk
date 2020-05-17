@@ -6,15 +6,15 @@ from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.common import (
     build_example_dict, generate_list_section, generate_numbered_section,
-    generate_section, generate_table_section, save_output, stringEscapeMD)
+    generate_section, generate_table_section, save_output, string_escape_md)
 
 
 def generate_script_doc(input, examples, output: str = None, permissions: str = None,
                         limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
-        doc = []
-        errors = []
-        example_section = []
+        doc: list = []
+        errors: list = []
+        example_section: list = []
 
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input))
@@ -29,8 +29,8 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
             errors.extend(build_errors)
             errors.extend(example_errors)
         else:
-            errors.append(f'Note: Script example was not provided. For a more complete documentation,run with the -e '
-                          f'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
+            errors.append('Note: Script example was not provided. For a more complete documentation,run with the -e '
+                          'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
 
         script = get_yaml(input)
 
@@ -145,7 +145,7 @@ def get_inputs(script):
 
         inputs.append({
             'Argument Name': arg.get('name'),
-            'Description': stringEscapeMD(arg.get('description', ''))
+            'Description': string_escape_md(arg.get('description', ''))
         })
 
     return inputs, errors
@@ -170,7 +170,7 @@ def get_outputs(script):
 
         outputs.append({
             'Path': arg.get('contextPath'),
-            'Description': stringEscapeMD(arg.get('description', '')),
+            'Description': string_escape_md(arg.get('description', '')),
             'Type': arg.get('type', 'Unknown')
         })
 

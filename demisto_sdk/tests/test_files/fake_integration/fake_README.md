@@ -1,6 +1,6 @@
 Use the Zoom integration manage your Zoom users and meetings
 This integration was integrated and tested with version xx of Zoom
-## Configure Zoom on Demisto
+## Configure Zoom on Cortex XSOAR
 
 1. Navigate to **Settings** > **Integrations** > **Servers & Services**.
 2. Search for Zoom.
@@ -21,10 +21,10 @@ After you successfully execute a command, a DBot message appears in the War Room
 Create a new user in zoom account
 
 
-##### Base Command
+#### Base Command
 
 `zoom-create-user`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -34,7 +34,7 @@ Create a new user in zoom account
 | user_type | The type of the newly created user | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
@@ -46,10 +46,11 @@ Create a new user in zoom account
 | Zoom.User.type | number | The type of the user | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-create-meeting
@@ -57,10 +58,10 @@ Create a new user in zoom account
 Create a new zoom meeting (scheduled or instant)
 
 
-##### Base Command
+#### Base Command
 
 `zoom-create-meeting`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -68,11 +69,11 @@ Create a new zoom meeting (scheduled or instant)
 | user | email address or id of user for meeting | Required | 
 | topic | The topic of the meeting | Required | 
 | auto-record-meeting | Record zoom meeting?  | Optional | 
-| start-time | Meeting start time. When using a format like “yyyy-MM-dd’T&#x27;HH:mm:ss&#x27;Z’”, always use GMT time. When using a format like “yyyy-MM-dd’T&#x27;HH:mm:ss”, you should use local time and you will need to specify the time zone. Only used for scheduled meetings and recurring meetings with fixed time. | Optional | 
+| start-time | Meeting start time. When using a format like “yyyy-MM-dd’T'HH:mm:ss'Z’”, always use GMT time. When using a format like “yyyy-MM-dd’T'HH:mm:ss”, you should use local time and you will need to specify the time zone. Only used for scheduled meetings and recurring meetings with fixed time. | Optional | 
 | timezone | Timezone to format start_time. For example, “America/Los_Angeles”. For scheduled meetings only.  | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
@@ -81,10 +82,11 @@ Create a new zoom meeting (scheduled or instant)
 | Zoom.Meeting.start_url | string | The URL to start the meeting | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-fetch-recording
@@ -92,36 +94,37 @@ Create a new zoom meeting (scheduled or instant)
 Get meeting record and save as file in the warroom
 
 
-##### Base Command
+#### Base Command
 
 `zoom-fetch-recording`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
 | meeting_id | Meeting id to get the recording | Required | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
-| File.SHA256 | unknown | Attachment&\#x27;s SHA256 | 
-| File.SHA1 | unknown | Attachment&\#x27;s SHA1 | 
-| File.MD5 | unknown | Attachment&\#x27;s MD5 | 
-| File.Name | unknown | Attachment&\#x27;s Name | 
-| File.Info | unknown | Attachment&\#x27;s Info | 
-| File.Size | unknown | Attachment&\#x27;s Size \(In Bytes\) | 
-| File.Extension | unknown | Attachment&\#x27;s Extension | 
-| File.Type | unknown | Attachment&\#x27;s Type | 
-| File.EntryID | unknown | Attachment&\#x27;s EntryID | 
-| File.SSDeep | unknown | Attachment&\#x27;s SSDeep hash | 
+| File.SHA256 | unknown | Attachment's SHA256 | 
+| File.SHA1 | unknown | Attachment's SHA1 | 
+| File.MD5 | unknown | Attachment's MD5 | 
+| File.Name | unknown | Attachment's Name | 
+| File.Info | unknown | Attachment's Info | 
+| File.Size | unknown | Attachment's Size \(In Bytes\) | 
+| File.Extension | unknown | Attachment's Extension | 
+| File.Type | unknown | Attachment's Type | 
+| File.EntryID | unknown | Attachment's EntryID | 
+| File.SSDeep | unknown | Attachment's SSDeep hash | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-list-users
@@ -129,10 +132,10 @@ Get meeting record and save as file in the warroom
 List the existing users
 
 
-##### Base Command
+#### Base Command
 
 `zoom-list-users`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -141,7 +144,7 @@ List the existing users
 | page-number | Which page of results to return | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
@@ -163,10 +166,11 @@ List the existing users
 | Zoom.User.group_ids | string | Groups user belongs to | 
 
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 
 
 ### zoom-delete-user
@@ -174,10 +178,10 @@ List the existing users
 Delete a user from Zoom
 
 
-##### Base Command
+#### Base Command
 
 `zoom-delete-user`
-##### Input
+#### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
@@ -185,12 +189,13 @@ Delete a user from Zoom
 | action | The action to take | Optional | 
 
 
-##### Context Output
+#### Context Output
 
 There is no context output for this command.
 
-##### Command Example
+#### Command Example
 ``` ```
 
-##### Human Readable Output
+#### Human Readable Output
+
 

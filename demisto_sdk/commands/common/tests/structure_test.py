@@ -170,18 +170,17 @@ class TestStructureValidator:
     expected_error_1 = "Missing category in root"
     pykwalify_error_2 = "'<SchemaError: error code 2: Schema validation failed:\n" \
                         " - Cannot find required key \'id\'. Path: \'/commonfields\'.: Path: \'/\'>'"
-    expected_error_2 = "Missing id in {'version': -1}, Path: 'commonfields'"
+    expected_error_2 = "Missing id in \nversion: -1\n\nPath: 'commonfields'"
     pykwalify_error_3 = "'<SchemaError: error code 2: Schema validation failed:\n" \
                         " - Cannot find required key \'description\'. Path: \'/script/commands/0/arguments/0\'.: " \
                         "Path: \'/\'>'"
-    expected_error_3 = "Missing description in top-priority, Path: 'script'-> 'commands'->" \
-                       " 'integrationTest-search-vulnerabilities'-> 'arguments'-> 'top-priority'"
+    expected_error_3 = "Missing description in \ntop-priority\n...\n\nPath: 'script'-> 'commands'-> " \
+                       "'integrationTest-search-vulnerabilities'-> 'arguments'-> 'top-priority'"
     pykwalify_error_4 = "'<SchemaError: error code 2: Schema validation failed:\n " \
                         "- Cannot find required key \'description\'. Path: \'/script/commands/5/outputs/0\'.: " \
                         "Path: \'/\'>'"
-    expected_error_4 = "Missing description in integrationTest.ConnectorsList.ID, Path:" \
-                       " 'script'-> 'commands'-> 'integrationTest-get-connectors'-> 'outputs'->" \
-                       " 'integrationTest.ConnectorsList.ID'"
+    expected_error_4 = "Missing description in \nintegrationTest.ConnectorsList.ID\n...\n\nPath: 'script'-> " \
+                       "'commands'-> 'integrationTest-get-connectors'-> 'outputs'-> 'integrationTest.ConnectorsList.ID'"
 
     TEST_ERRORS = [
         (INVALID_INTEGRATION_YML_1, 'integration', pykwalify_error_1, expected_error_1),

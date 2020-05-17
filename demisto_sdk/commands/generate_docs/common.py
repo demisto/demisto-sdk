@@ -138,7 +138,7 @@ def add_lines(line):
     return output if output else [line]
 
 
-def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
+def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
     """
        Escape any chars that might break a markdown string
 
@@ -159,7 +159,7 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_ht
        :rtype: ``str``
     """
     if escape_html:
-        st = html.escape(st)
+        st = html.escape(st, quote=False)
 
     if escape_multiline:
         st = st.replace('\r\n', '<br/>')  # Windows
@@ -178,7 +178,7 @@ def stringEscapeMD(st, minimal_escaping=False, escape_multiline=False, escape_ht
 def execute_command(command_example, insecure: bool):
     errors = []
     context = {}
-    md_example = ''
+    md_example: str = ''
     cmd = command_example
     try:
         runner = Runner('', insecure=insecure)
@@ -194,11 +194,13 @@ def execute_command(command_example, insecure: bool):
                 context = {k.split('(')[0]: v for k, v in raw_context.items()}
 
             if entry.contents:
-                content = entry.contents
+                content: str = entry.contents
                 if isinstance(content, STRING_TYPES):
                     md_example += content
                 else:
                     md_example += json.dumps(content)
+
+            md_example = format_md(md_example)
 
     except RuntimeError:
         errors.append('The provided example for cmd {} has failed...'.format(cmd))
@@ -254,6 +256,24 @@ def build_example_dict(command_examples: list, insecure: bool):
         if not cmd_errors and cmd not in examples:
             examples[cmd] = (example, md_example, context_example)
     return examples, errors
+
+
+def format_md(md: str) -> str:
+    """
+    Formats a given md string by replacing <br> and <hr> tags with <br/> or <hr/>
+    :param
+        md (str): String representing mark down.
+    :return:
+        str. Formatted string representing mark down.
+    """
+    replace_tuples = [
+        (r'<br>(</br>)?', '<br/>'),
+        (r'<hr>(</hr>)?', '<hr/>'),
+    ]
+    if md:
+        for old, new in replace_tuples:
+            md = re.sub(old, new, md, flags=re.IGNORECASE)
+    return md
 
 
 entryTypes = {

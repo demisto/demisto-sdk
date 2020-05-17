@@ -1,0 +1,35 @@
+category: IT Services
+commonfields:
+  id: Test Integration
+  version: -1
+configuration:
+- defaultvalue: https://demistodev.com
+  display: Server URL
+  name: url
+  required: true
+  type: 0
+- defaultvalue: ""
+  display: Trust any certificate (not secure)
+  name: insecure
+  required: false
+  type: 8
+- defaultvalue: ""
+  display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+description: Test Integration Description
+display: Test Integration
+name: Test Integration
+fromversion: TEST
+toversion: TEST
+alt_dockerimages: TEST
+tests:
+- TEST
+script:
+  dockerimage: demisto/crypto:1.0.0.6427
+  dockerimage45: TEST
+  runonce: false
+  script: ''
+  subtype: python3
+  type: python

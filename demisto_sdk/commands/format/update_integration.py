@@ -29,7 +29,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
-        print(F'Updating proxy and insecure/unsecure integration arguments description to default')
+        print('Updating proxy and insecure/unsecure integration arguments description to default')
 
         for integration_argument in self.data.get('configuration', {}):
             argument_name = integration_argument.get('name', '')
@@ -39,7 +39,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
-        print(F'Updating reputation commands\' basic arguments to be True for default, isArray and required')
+        print('Updating reputation commands\' basic arguments to be True for default, isArray and required')
 
         integration_commands = self.data.get('script', {}).get('commands', [])
 
@@ -76,6 +76,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             super().update_yml()
+            self.update_tests()
+            self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()
             self.set_reputation_commands_basic_argument_as_needed()
             self.save_yml_to_destination_file()

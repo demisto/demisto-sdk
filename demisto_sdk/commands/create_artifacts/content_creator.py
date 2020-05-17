@@ -1,3 +1,4 @@
+import copy
 import fnmatch
 import glob
 import io
@@ -8,7 +9,8 @@ import shutil
 import zipfile
 from typing import List
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
+from demisto_sdk.commands.common.constants import (BASE_PACK,
+                                                   BETA_INTEGRATIONS_DIR,
                                                    CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -16,9 +18,11 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, MISC_DIR,
-                                                   PACKS_DIR, PLAYBOOKS_DIR,
+                                                   LAYOUTS_DIR, PACKS_DIR,
+                                                   PLAYBOOKS_DIR,
+                                                   RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, WIDGETS_DIR)
@@ -58,9 +62,9 @@ class ContentCreator:
             INCIDENT_FIELDS_DIR,
             INCIDENT_TYPES_DIR,
             INDICATOR_FIELDS_DIR,
+            INDICATOR_TYPES_DIR,
             INTEGRATIONS_DIR,
             LAYOUTS_DIR,
-            MISC_DIR,
             PLAYBOOKS_DIR,
             REPORTS_DIR,
             SCRIPTS_DIR,
@@ -161,11 +165,12 @@ class ContentCreator:
         """
         parent_dir_name = os.path.basename(os.path.dirname(path))
         if parent_dir_name in DIR_TO_PREFIX and not os.path.basename(path).startswith('playbook-'):
+            yml_copy = copy.deepcopy(yml_info)
             script_obj = yml_info
             if parent_dir_name != SCRIPTS_DIR:
                 script_obj = yml_info['script']
             unifier = Unifier(os.path.dirname(path), parent_dir_name, out_path)
-            out_map = unifier.write_yaml_with_docker(yml_info, yml_info, script_obj)
+            out_map = unifier.write_yaml_with_docker(yml_copy, yml_info, script_obj)
 
             if len(out_map.keys()) > 1:
                 print(" - yaml generated multiple files: {}".format(out_map.keys()))
@@ -220,6 +225,9 @@ class ContentCreator:
             if dir_name == 'IncidentTypes':
                 if not dpath.startswith('incidenttype-'):
                     dpath = f'incidenttype-{dpath}'
+            if dir_name == 'IndicatorTypes':
+                if not dpath.startswith('reputation-') and 'reputations.json' not in dpath:
+                    dpath = f'reputation-{dpath}'
             # this part is a workaround because server doesn't support indicatorfield-*.json naming
             if dir_name in ['IndicatorFields', 'IncidentFields']:
                 if not dpath.startswith('incidentfield-'):
@@ -244,6 +252,30 @@ class ContentCreator:
 
             shutil.copyfile(path, os.path.join(bundle, dpath))
 
+    def copy_dir_md(self, dir_path, bundle):
+        """
+        Copy the md files inside a directory to a bundle.
+
+        :param dir_path: source directory
+        :param bundle: destination bundle
+        :return: None
+        """
+        # handle *.md files
+        dir_name = os.path.basename(dir_path)
+        scan_files = glob.glob(os.path.join(dir_path, '*.md'))
+        for path in scan_files:
+            new_path = os.path.basename(path)
+            if dir_name == RELEASE_NOTES_DIR:
+                if os.path.isfile(os.path.join(bundle, new_path)):
+                    raise NameError(
+                        f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
+                    )
+
+            if len(new_path) >= self.file_name_max_size:
+                self.long_file_names.append(os.path.basename(new_path))
+
+            shutil.copyfile(path, os.path.join(bundle, new_path))
+
     def copy_dir_files(self, *args):
         """
         Copy the yml and json files from inside a directory to a bundle.
@@ -255,6 +287,8 @@ class ContentCreator:
         self.copy_dir_json(*args)
         # handle *.yml files
         self.copy_dir_yml(*args)
+        # handle *.md files
+        self.copy_dir_md(*args)
 
     def copy_test_files(self, test_playbooks_dir=TEST_PLAYBOOKS_DIR):
         """
@@ -401,6 +435,24 @@ class ContentCreator:
 
         return branch_name
 
+    @staticmethod
+    def copy_docs_files(content_bundle_path, packs_bundle_path):
+        for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
+            if os.path.exists(doc_file):
+                print(f'copying {doc_file} doc to content bundle')
+                shutil.copyfile(doc_file,
+                                os.path.join(content_bundle_path, os.path.basename(doc_file)))
+                # copy doc to packs bundle
+                print(f'copying {doc_file} doc to content pack bundle')
+                base_pack_doc_path = os.path.join(packs_bundle_path, BASE_PACK, "Documentation")
+
+                if not os.path.exists(base_pack_doc_path):
+                    os.mkdir(base_pack_doc_path)
+                shutil.copy(doc_file, os.path.join(base_pack_doc_path, os.path.basename(doc_file)))
+            else:
+                print_warning(f'{doc_file} was not found and '
+                              'therefore was not added to the content bundle')
+
     def create_content(self):
         """
         Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"
@@ -439,14 +491,7 @@ class ContentCreator:
             for bundle_dir in [self.content_bundle, self.test_bundle]:
                 shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
 
-            for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
-                if os.path.exists(doc_file):
-                    print(f'copying {doc_file} doc to content bundle')
-                    shutil.copyfile(doc_file,
-                                    os.path.join(self.content_bundle, os.path.basename(doc_file)))
-                else:
-                    print_warning(f'{doc_file} was not found and '
-                                  'therefore was not added to the content bundle')
+            ContentCreator.copy_docs_files(content_bundle_path=self.content_bundle, packs_bundle_path=self.packs_bundle)
 
             print('Compressing bundles...')
             shutil.make_archive(self.content_zip, 'zip', self.content_bundle)

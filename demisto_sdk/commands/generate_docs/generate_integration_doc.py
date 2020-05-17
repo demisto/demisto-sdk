@@ -1,6 +1,6 @@
 import os.path
 import re
-from typing import Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import DOCS_COMMAND_SECTION_REGEX
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
-    generate_table_section, save_output, stringEscapeMD)
+    generate_table_section, save_output, string_escape_md)
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, command_name: str) -> Tuple[str, list]:
@@ -72,7 +72,7 @@ def generate_integration_doc(
 
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input))
-        errors = []
+        errors: list = []
         example_dict = {}
         if examples and os.path.isfile(examples):
             command_examples = get_command_examples(examples)
@@ -82,10 +82,10 @@ def generate_integration_doc(
             errors.append(f'Command examples was not found {examples}.')
 
         if permissions == 'per-command':
-            command_permissions_dict = {}
+            command_permissions_dict: Any = {}
             if command_permissions and os.path.isfile(command_permissions):
-                command_permissions = get_command_permissions(command_permissions)
-                for command_permission in command_permissions:
+                permission_list = get_command_permissions(command_permissions)
+                for command_permission in permission_list:
                     # get all the permissions after the command name
                     key, value = command_permission.split(" ", 1)
                     command_permissions_dict.update({key: value})
@@ -119,7 +119,7 @@ def generate_integration_doc(
             if permissions == 'general':
                 docs.extend(generate_section('Permissions', ''))
             # Setup integration to work with Demisto
-            docs.extend(generate_section('Configure {} on Demisto'.format(yml_data['name']), ''))
+            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['name']), ''))
             # Setup integration on Demisto
             docs.extend(generate_setup_section(yml_data))
             # Commands
@@ -160,7 +160,7 @@ def generate_setup_section(yaml_data: dict):
     for conf in yaml_data['configuration']:
         access_data.append(
             {'Parameter': conf.get('name', ''),
-             'Description': stringEscapeMD(conf.get('display', '')),
+             'Description': string_escape_md(conf.get('display', '')),
              'Required': conf.get('required', '')})
 
     section.extend(generate_table_section(access_data, '', horizontal_rule=False))
@@ -194,7 +194,7 @@ def generate_commands_section(
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.'
     ]
     commands = filter(lambda cmd: not cmd.get('deprecated', False), yaml_data['script']['commands'])
-    command_sections = []
+    command_sections: list = []
     if command:
         # for specific command, return it only.
         try:
@@ -216,9 +216,9 @@ def generate_commands_section(
 def generate_single_command_section(cmd: dict, example_dict: dict, command_permissions_dict):
     cmd_example = example_dict.get(cmd['name'])
     if command_permissions_dict:
-        cmd_permission_example = ['##### Required Permissions', command_permissions_dict.get(cmd['name'])]
+        cmd_permission_example = ['#### Required Permissions', command_permissions_dict.get(cmd['name'])]
     elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
-        cmd_permission_example = ['##### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
+        cmd_permission_example = ['#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
     else:  # no permissions for this command
         cmd_permission_example = ['', '']
 
@@ -229,9 +229,9 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         cmd.get('description', ' '),
         cmd_permission_example[0],
         cmd_permission_example[1],
-        '##### Base Command',
+        '#### Base Command',
         '', '`{}`'.format(cmd['name']),
-        '##### Input',
+        '#### Input',
         ''
     ]
 
@@ -249,14 +249,14 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
                 errors.append(
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
             required_status = 'Required' if arg.get('required') else 'Optional'
-            section.append('| {} | {} | {} | '.format(arg['name'], stringEscapeMD(arg.get('description', ''),
-                                                                                  True, True), required_status))
+            section.append('| {} | {} | {} | '.format(arg['name'], string_escape_md(arg.get('description', ''),
+                                                                                    True, True), required_status))
         section.append('')
 
     # Context output
     section.extend([
         '',
-        '##### Context Output',
+        '#### Context Output',
         '',
     ])
     outputs = cmd.get('outputs')
@@ -274,7 +274,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
                                                                                            cmd['name']))
             section.append(
                 '| {} | {} | {} | '.format(output['contextPath'], output.get('type', 'unknown'),
-                                           stringEscapeMD(output.get('description'))))
+                                           string_escape_md(output.get('description'))))
         section.append('')
 
     # Raw output:
@@ -297,21 +297,21 @@ def generate_command_example(cmd, cmd_example=None):
 
     example = [
         '',
-        '##### Command Example',
+        '#### Command Example',
         '```{}```'.format(cmd_example),
         '',
     ]
     if context_example:
         example.extend([
-            '##### Context Example',
+            '#### Context Example',
             '```',
             '{}'.format(context_example),
             '```',
             '',
         ])
     example.extend([
-        '##### Human Readable Output',
-        '{}'.format(md_example),
+        '#### Human Readable Output',
+        '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
         '',
     ])
 
@@ -352,7 +352,7 @@ def command_example_filter(command):
     return command
 
 
-def get_command_permissions(commands_permissions_file_path):
+def get_command_permissions(commands_permissions_file_path) -> list:
     """
     get command permissions from file
 
@@ -372,11 +372,11 @@ def get_command_permissions(commands_permissions_file_path):
         print('failed to open permissions file')
         permissions = commands_permissions_file_path.split('\n')
 
-    permissions = map(command_permissions_filter, permissions)
-    permissions = list(filter(None, permissions))
+    permissions_map = map(command_permissions_filter, permissions)
+    permissions_list: List = list(filter(None, permissions_map))
 
-    print('found the following commands permissions:\n{}'.format('\n '.join(permissions)))
-    return permissions
+    print('found the following commands permissions:\n{}'.format('\n '.join(permissions_list)))
+    return permissions_list
 
 
 def command_permissions_filter(permission):

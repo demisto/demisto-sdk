@@ -35,7 +35,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
 }
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = None, no_validate: str = None):
+def format_manager(input: str = None, output: str = None, from_version: str = None, no_validate: bool = None):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -47,7 +47,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = No
         int 0 in case of success 1 otherwise
     """
     if input:
-        files = get_files_in_dir(input, ("json", "yml"))
+        files = get_files_in_dir(input, ['json', 'yml'])
     else:
         files = [file['name'] for file in
                  get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]
@@ -79,11 +79,11 @@ def format_manager(input: str = None, output: str = None, from_version: str = No
 
     if error_list:
         for string, print_func in log_list:
-            print_func(('\n'.join(string)))
+            print_func('\n'.join(string))
         return 1
 
     for string, print_func in log_list:
-        print_func(('\n'.join(string)))
+        print_func('\n'.join(string))
     return 0
 
 

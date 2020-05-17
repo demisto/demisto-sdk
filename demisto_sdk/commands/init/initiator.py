@@ -14,9 +14,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR,
                                                    INTEGRATION_CATEGORIES,
                                                    INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, MISC_DIR,
+                                                   LAYOUTS_DIR,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
                                                    PLAYBOOKS_DIR, REPORTS_DIR,
@@ -75,7 +76,7 @@ class Initiator:
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-                MISC_DIR, REPORTS_DIR, WIDGETS_DIR]
+                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR]
 
     def init(self):
         """Starts the init command process.
@@ -192,11 +193,10 @@ class Initiator:
         metadata = {
             'name': '## FILL OUT MANUALLY ##',
             'description': '## FILL OUT MANUALLY ##',
-            'support': 'demisto',
-            'serverMinVersion': '## FILL OUT MANUALLY #',
+            'support': 'xsoar',
             'currentVersion': PACK_INITIAL_VERSION,
-            'author': 'demisto',
-            'url': 'https://www.demisto.com',
+            'author': 'Cortex XSOAR',
+            'url': 'https://www.paloaltonetworks.com/cortex',
             'email': '',
             'categories': [],
             'tags': [],
@@ -204,7 +204,6 @@ class Initiator:
             'updated': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'beta': False,
             'deprecated': False,
-            'certification': 'certified',
             'useCases': [],
             'keywords': [],
             # 'price': '0',
@@ -218,7 +217,6 @@ class Initiator:
         metadata['description'] = input("\nDescription of the pack: ")
         metadata['support'] = Initiator.get_valid_user_input(options_list=PACK_SUPPORT_OPTIONS,
                                                              option_message="\nSupport type of the pack: \n")
-        metadata['serverMinVersion'] = input("\nServer min version: ")
         metadata['author'] = input("\nAuthor of the pack: ")
 
         support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
@@ -253,21 +251,17 @@ class Initiator:
             option_message += f"[{index}] {option}\n"
         option_message += "\nEnter option: "
 
-        user_choice = input(option_message)
+        user_input = input(option_message)
 
-        invalid_input = True
-        while invalid_input:
+        while True:
             try:
-                user_choice = int(user_choice)
-
+                user_choice = int(user_input)
                 if user_choice not in range(1, len(options_list) + 1):
-                    user_choice = input(f"\nInvalid option {user_choice}, please enter valid choice: ")
+                    user_input = input(f"\nInvalid option {user_input}, please enter valid choice: ")
                 else:
-                    invalid_input = False
+                    return options_list[user_choice - 1]
             except ValueError:
-                user_choice = input("\nThe option must be integer, please enter valid choice: ")
-
-        return options_list[user_choice - 1]
+                user_input = input("\nThe option must be number, please enter valid choice: ")
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
@@ -397,7 +391,7 @@ class Initiator:
             to_delete = str(input(f"The directory {self.full_output_path} "
                                   f"already exists.\nDo you want to overwrite it? Y/N ")).lower()
             while to_delete != 'y' and to_delete != 'n':
-                to_delete = str(input(f"Your response was invalid.\nDo you want to delete it? Y/N ").lower())
+                to_delete = str(input("Your response was invalid.\nDo you want to delete it? Y/N ").lower())
 
             if to_delete in ['y', 'yes']:
                 shutil.rmtree(path=self.full_output_path, ignore_errors=True)

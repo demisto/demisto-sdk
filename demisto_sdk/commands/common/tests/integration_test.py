@@ -38,12 +38,6 @@ class TestIntegrationValidator:
         (SCRIPT_WITH_DOCKER_IMAGE_1, EMPTY_CASE, True)
     ]
 
-    @pytest.mark.parametrize("current_file, old_file, answer", IS_DOCKER_IMAGE_CHANGED)
-    def test_is_docker_image_changed(self, current_file, old_file, answer):
-        structure = mock_structure("", current_file, old_file)
-        validator = IntegrationValidator(structure)
-        assert validator.is_docker_image_changed() is answer
-
     REQUIED_FIELDS_FALSE = {"configuration": [{"name": "test", "required": False}]}
     REQUIED_FIELDS_TRUE = {"configuration": [{"name": "test", "required": True}]}
     IS_ADDED_REQUIRED_FIELDS_INPUTS = [
@@ -444,18 +438,6 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
 
-    def test_is_valid_image_positive(self, monkeypatch):
-        integration_path = os.path.normpath(
-            os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')
-        )
-        structure = mock_structure(file_path=integration_path)
-        monkeypatch.setattr(
-            'demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGXES',
-            [integration_path]
-        )
-        validator = IntegrationValidator(structure)
-        assert validator.is_valid_image() is True
-
     def test_is_valid_description_positive(self):
         integration_path = os.path.normpath(
             os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')
@@ -490,7 +472,7 @@ class TestIsFetchParamsExist:
         print(self.validator.current_file['configuration'])
         assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
 
-    def test_malformed_field(self):
+    def test_malformed_field(self, capsys):
         # incorrect param
         config = self.validator.current_file['configuration']
         self.validator.current_file['configuration'] = []
@@ -500,9 +482,16 @@ class TestIsFetchParamsExist:
             self.validator.current_file['configuration'].append(t)
 
         assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
+        captured = capsys.readouterr()
+        out = captured.out
+        print(out)
+        assert "display: Incident type" in out
+        assert "name: incidentType" in out
+        assert "required: false" in out
+        assert "type: 13" in out
 
-    def test_not_fetch(self):
-        self.test_malformed_field()
+    def test_not_fetch(self, capsys):
+        self.test_malformed_field(capsys)
         self.validator.is_valid = True
         self.validator.current_file['script']['isfetch'] = False
         assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'

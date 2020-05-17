@@ -118,7 +118,6 @@ class Unifier:
                 self.dest_path: yml_unified,
                 output_path45: yml_unified45,
             }
-
         for file_path, file_data in output_map.items():
             if os.path.isfile(file_path) and self.use_force is False:
                 raise ValueError(f'Output file already exists: {self.dest_path}.'
@@ -140,7 +139,7 @@ class Unifier:
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
         else:
-            self.dest_path = os.path.join(self.dir_name, output_filename)
+            self.dest_path = os.path.join(self.package_path, output_filename)
 
         script_obj = self.yml_data
 
@@ -167,7 +166,7 @@ class Unifier:
         image_data, found_img_path = self.get_data("*png")
         image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
-        if yml_data.get('image')and self.use_force is False:
+        if yml_data.get('image') and self.use_force is False:
             raise ValueError('Please move the image from the yml to an image file (.png)'
                              f' in the package: {self.package_path}')
 

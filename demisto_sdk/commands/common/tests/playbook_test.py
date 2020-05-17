@@ -5,6 +5,9 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.tests.constants_test import (
+    INVALID_PLAYBOOK_UNHANDLED_CONDITION,
+    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
 from mock import patch
 
 
@@ -195,3 +198,21 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.is_root_connected_to_all_tasks() is expected_result
+
+    @pytest.mark.parametrize("playbook_path, expected_result", [(INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, True),
+                                                                (INVALID_PLAYBOOK_UNHANDLED_CONDITION, False)])
+    def test_skipping_test_playbooks(self, playbook_path, expected_result):
+        """
+            Given
+            - A playbook
+
+            When
+            - The playbook has unhandled condition in it
+
+            Then
+            -  Ensure the unhandled condition is ignored if it's a test playbook
+            -  Ensure validation fails if it's a not test playbook
+        """
+        structure = StructureValidator(file_path=playbook_path)
+        validator = PlaybookValidator(structure)
+        assert validator.is_valid_playbook() is expected_result

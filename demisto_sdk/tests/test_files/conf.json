@@ -1,0 +1,16 @@
+{
+    "tests": [
+        {
+            "integrations": "PagerDuty v2",
+            "playbookID": "PagerDuty Test"
+        },
+        {
+            "integrations": "Account Enrichment",
+            "playbookID": "PagerDuty Test"
+        },
+        {
+            "integrations": "TestCreateDuplicates",
+            "playbookID": "PagerDuty Test"
+        }
+    ]
+}

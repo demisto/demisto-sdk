@@ -31,6 +31,7 @@ class ImageValidator:
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
                     self._is_valid = False
+                    self.file_path = ''
                     print_error("You've created/modified a package but failed to provide an image as a .png file, "
                                 "please add an image in order to proceed.")
 
@@ -79,16 +80,17 @@ class ImageValidator:
 
         if data_dictionary.get('image'):
             is_image_in_yml = True
-
         if not re.match(INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
-            if is_image_in_yml:
-                print_error("You have added an image in the yml "
-                            "file, please update the package {}".format(package_path))
-                return False
             image_path = glob.glob(package_path + '/*.png')
             if image_path:
                 is_image_in_package = True
+        if is_image_in_package and is_image_in_yml:
+            print_error(
+                "The file {} has image in both yml and package, remove the 'image' key from the yml file".format(
+                    self.file_path))
+            self._is_valid = False
+            return False
 
         if not (is_image_in_package or is_image_in_yml):
             print_error("You have failed to add an image in the yml/package for {}".format(self.file_path))

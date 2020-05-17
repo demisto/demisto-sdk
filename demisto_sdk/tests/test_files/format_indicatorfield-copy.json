@@ -15,7 +15,7 @@
     "fieldCalcScript": "",
     "group": 0,
     "hidden": false,
-    "id": "incident_accountid",
+    "id": "indicator_accountid",
     "isReadOnly": false,
     "locked": false,
     "name": "Account ID",

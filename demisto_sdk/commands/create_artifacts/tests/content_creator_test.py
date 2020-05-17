@@ -10,6 +10,10 @@ class TestContentCreator:
         tests_dir = f'{git_path()}/demisto_sdk/tests'
         self.scripts_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'Scripts')
         self.integrations_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'Integrations')
+        self.indicator_types_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'IndicatorTypes')
+        self.indicator_fields_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example',
+                                                       'IndicatorFields')
+        self.unified_integrations_path = os.path.join(tests_dir, 'test_files', 'UnifiedIntegrations')
         self.TestPlaybooks_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'TestPlaybooks')
         self.Packs_full_path = os.path.join(tests_dir, 'test_files', 'content_repo_example', 'Packs')
         self._bundle_dir = mkdtemp()
@@ -28,7 +32,7 @@ class TestContentCreator:
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as err:
-                    print('Failed to delete %s. Reason: %s' % (file_path, err))
+                    print('Failed to delete {}. Reason: {}'.format(file_path, err))
 
     def test_copy_dir_files(self):
         """
@@ -52,7 +56,6 @@ class TestContentCreator:
 
         # test Integrations repo copy
         content_creator.copy_dir_files(f'{self.integrations_full_path}/Securonix', content_creator.content_bundle)
-        print(f'{self._bundle_dir}/Panorama.yml')
         assert filecmp.cmp(f'{self.integrations_full_path}/Securonix/Securonix_unified.yml',
                            f'{self._bundle_dir}/Securonix_unified.yml')
 
@@ -60,6 +63,65 @@ class TestContentCreator:
         content_creator.copy_dir_files(self.TestPlaybooks_full_path, content_creator.test_bundle)
         assert filecmp.cmp(f'{self.TestPlaybooks_full_path}/script-Sleep-for-testplaybook.yml',
                            f'{self._test_dir}/script-Sleep-for-testplaybook.yml')
+
+    def test_indicator_types_and_fields(self):
+        """
+        Given
+        - Content dir with indicator types and fields
+        When
+        - copying the content folder to a content bundle
+        Then
+        - ensure files are being copied correctly
+        """
+        content_creator = ContentCreator(artifacts_path=self.content_repo, content_version='2.5.0',
+                                         content_bundle_path=self._bundle_dir,
+                                         test_bundle_path=self._test_dir,
+                                         preserve_bundles=False)
+
+        content_creator.copy_dir_files(self.indicator_fields_full_path, content_creator.content_bundle)
+        assert filecmp.cmp(f'{self.indicator_fields_full_path}/field.json',
+                           f'{self._bundle_dir}/incidentfield-indicatorfield-field.json')
+        assert filecmp.cmp(f'{self.indicator_fields_full_path}/incidentfield-valid.json',
+                           f'{self._bundle_dir}/incidentfield-indicatorfield-valid.json')
+
+        content_creator.copy_dir_files(self.indicator_types_full_path, content_creator.content_bundle)
+        assert filecmp.cmp(f'{self.indicator_types_full_path}/cidr.json',
+                           f'{self._bundle_dir}/reputation-cidr.json')
+        assert filecmp.cmp(f'{self.indicator_types_full_path}/reputation-cve.json',
+                           f'{self._bundle_dir}/reputation-cve.json')
+        assert filecmp.cmp(f'{self.indicator_types_full_path}/reputations.json',
+                           f'{self._bundle_dir}/reputations.json')
+
+    def test_unified_integrations_copy(self):
+        from ruamel.yaml import YAML
+        """
+        Given
+        - content dir with unified YML
+        When
+        - copying the content folder to a content bundle
+        Then
+        - ensure files are being copied correctly
+        - ensure files with dockerimage45 are split into 2 files
+        """
+        content_creator = ContentCreator(artifacts_path=self.content_repo, content_version='2.5.0',
+                                         content_bundle_path=self._bundle_dir,
+                                         test_bundle_path=self._test_dir,
+                                         preserve_bundles=False)
+
+        content_creator.copy_dir_files(f'{self.unified_integrations_path}/Integrations', content_creator.content_bundle)
+        with io.open(f'{self._bundle_dir}/integration-Symantec_Messaging_Gateway.yml', mode='r',
+                     encoding='utf-8') as file_:
+            copied_file_50 = file_.read()
+        with io.open(f'{self._bundle_dir}/integration-Symantec_Messaging_Gateway_45.yml', mode='r',
+                     encoding='utf-8') as file_:
+            copied_file_45 = file_.read()
+        ryaml = YAML()
+        ryaml.preserve_quotes = True
+        ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
+        yml_data50 = ryaml.load(copied_file_50)
+        yml_data45 = ryaml.load(copied_file_45)
+        assert yml_data50['script']['dockerimage'] == 'demisto/bs4:1.0.0.6538'
+        assert yml_data45['script']['dockerimage'] == 'demisto/bs4'
 
     def test_copy_packs_content_to_packs_bundle(self):
         """

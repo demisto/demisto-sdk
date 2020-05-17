@@ -1,4 +1,3 @@
-
 def is_v2_file(current_file):
     """Check if the specific integration of script is a v2
     Returns:

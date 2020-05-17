@@ -1,0 +1,81 @@
+{
+	"TypeName": "test bla",
+	"kind": "details",
+	"layout": {
+		"TypeName": "",
+		"commitMessage": "",
+		"fromServerVersion": "",
+		"id": "test bla",
+		"itemVersion": "",
+		"kind": "details",
+		"modified": "2020-04-20T15:15:06.889131+03:00",
+		"name": "",
+		"packID": "",
+		"prevKind": "details",
+		"prevTypeId": "test bla",
+		"shouldCommit": false,
+		"sortValues": null,
+		"system": false,
+		"tabs": [
+			{
+				"id": "summary",
+				"name": "Legacy Summary",
+				"type": "summary"
+			},
+			{
+				"id": "warRoom",
+				"name": "War Room",
+				"type": "warRoom"
+			},
+			{
+				"id": "workPlan",
+				"name": "Work Plan",
+				"type": "workPlan"
+			},
+			{
+				"id": "evidenceBoard",
+				"name": "Evidence Board",
+				"type": "evidenceBoard"
+			},
+			{
+				"id": "relatedIncidents",
+				"name": "Related Incidents",
+				"type": "relatedIncidents"
+			},
+			{
+				"id": "canvas",
+				"name": "Canvas",
+				"type": "canvas"
+			},
+			{
+				"hidden": false,
+				"id": "k2p4utfxyf",
+				"name": "New tabdjaef",
+				"sections": [
+					{
+						"h": 2,
+						"i": "k2p4utfxyf-6b11f890-82db-11ea-832e-9b785e1d7821",
+						"items": [],
+						"maxW": 3,
+						"minH": 1,
+						"minW": 1,
+						"name": "Bad or Suspicious Indicators",
+						"query": "reputation:Bad or reputation:Suspicious",
+						"queryType": "input",
+						"type": "indicators",
+						"w": 1,
+						"x": 0,
+						"y": 0
+					}
+				],
+				"type": "custom"
+			}
+		],
+		"toServerVersion": "",
+		"typeId": "test bla",
+		"vcShouldIgnore": false,
+		"version": 2
+	},
+	"typeId": "test bla",
+	"version": -1
+}

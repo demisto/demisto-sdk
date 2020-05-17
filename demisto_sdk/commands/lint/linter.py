@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+from copy import deepcopy
 from typing import List, Optional, Tuple
 
 # 3-rd party packages
@@ -62,6 +63,7 @@ class Linter:
             "env_vars": {},
             "test": False,
             "lint_files": [],
+            "lint_unittest_files": [],
             "additional_requirements": [],
             "docker_engine": docker_engine
         }
@@ -141,8 +143,7 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Loooking for pkg yaml
-        yml_file: Optional[Path] = self._pack_abs_dir.glob([rf'*.yaml', rf'*.yml', r'!*unified*.yml'],
-                                                           flags=NEGATE)
+        yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
 
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skiping no yaml file found {yml_file}")
@@ -186,15 +187,16 @@ class Linter:
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
             if self._facts["docker_engine"]:
-                # Getting python version from docker image - verfying if not valid docker image configured
+                # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     py_num: float = get_python_version_from_image(image=image[0])
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
-                # Checking wheter *test* exsits in package
-                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None) else False
+                # Checking whatever *test* exsits in package
+                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
+                                                   None) else False
                 if self._facts["test"]:
                     logger.info(f"{log_prompt} - Tests found")
                 else:
@@ -203,13 +205,13 @@ class Linter:
                 test_requirements = self._pack_abs_dir / 'test-requirements.txt'
                 if test_requirements.exists():
                     try:
-                        additional_req = test_requirements.read_text(encoding='utf-8')
-                        self._facts["additinal_requirements"].extend(additional_req)
+                        additional_req = test_requirements.read_text(encoding='utf-8').strip().split('\n')
+                        self._facts["additional_requirements"].extend(additional_req)
                         logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
                     except (FileNotFoundError, IOError):
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
             # Get lint files
-            lint_files = set(self._pack_abs_dir.glob(["*.py", "!*_test.py", "!test_*.py", "!__init__.py", "!*.tmp"],
+            lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
@@ -230,7 +232,18 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
+        self._split_lint_files()
         return False
+
+    def _split_lint_files(self):
+        """ Remove unit test files from _facts['lint_files'] and put into their own list _facts['lint_unittest_files']
+        This is because not all lintings should be done on unittest files.
+        """
+        lint_files_list = deepcopy(self._facts["lint_files"])
+        for lint_file in lint_files_list:
+            if lint_file.name.startswith('test_') or lint_file.name.endswith('_test.py'):
+                self._facts['lint_unittest_files'].append(lint_file)
+                self._facts["lint_files"].remove(lint_file)
 
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
         """ Run lint check on host
@@ -256,6 +269,16 @@ class Linter:
                 elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
+                if exit_code:
+                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                    self._pkg_lint_status[f"{lint_check}_errors"] = output
+        if self._facts['lint_unittest_files']:
+            for lint_check in ["flake8"]:
+                exit_code: int = SUCCESS
+                output: str = ""
+                if lint_check == "flake8" and not no_flake8:
+                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                                                         lint_files=self._facts["lint_unittest_files"])
                 if exit_code:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
@@ -516,8 +539,9 @@ class Linter:
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
         if not test_image:
-            logger.info(f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
-                        f"time")
+            logger.info(
+                f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
+                f"time")
             try:
                 with io.BytesIO() as f:
                     f.write(dockerfile.encode('utf-8'))
@@ -596,7 +620,8 @@ class Linter:
         try:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=[build_pylint_command(self._facts["lint_files"])],
+                                                               command=[
+                                                                   build_pylint_command(self._facts["lint_files"])],
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
@@ -671,7 +696,8 @@ class Linter:
             # Running pytest container
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
-                                                               command=[build_pytest_command(test_xml=test_xml, json=True)],
+                                                               command=[
+                                                                   build_pytest_command(test_xml=test_xml, json=True)],
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])

@@ -1,18 +1,31 @@
 import glob
 import os
+from pathlib import Path
 
 import pytest
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACKS_PLAYBOOK_YML_REGEX,
-                                                   PACKS_TEST_PLAYBOOKS_REGEX)
+from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR,
+                                                   PACKS_PLAYBOOK_YML_REGEX,
+                                                   PACKS_TEST_PLAYBOOKS_REGEX,
+                                                   PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
-                                               find_type, get_dict_from_file,
+                                               find_type, get_depth,
+                                               get_dict_from_file,
+                                               get_entity_id_by_entity_type,
+                                               get_entity_name_by_entity_type,
+                                               get_files_in_dir,
                                                get_last_release_version,
+                                               get_latest_release_notes_text,
                                                get_matching_regex,
+                                               get_release_notes_file_path,
+                                               get_ryaml, retrieve_file_ending,
+                                               run_command_os,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+                                              SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_DASHBOARD_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
@@ -87,6 +100,14 @@ class TestGenericFunctions:
         assert added == set()
         assert removed == [VALID_MD]
 
+    @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
+    def test_get_depth(self, data, output):
+        assert get_depth(data) == output
+
+    @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
+    def test_retrieve_file_ending(self, path, output):
+        assert retrieve_file_ending(path) == output
+
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
@@ -124,6 +145,33 @@ class TestGetRemoteFile:
     def test_get_remote_md_file_origin(self):
         hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
         assert hello_world_readme == {}
+
+    def test_should_file_skip_validation_negative(self):
+        should_skip = tools.should_file_skip_validation('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
+        assert not should_skip
+
+    SKIPPED_FILE_PATHS = [
+        'some_text_file.txt',
+        'pack_metadata.json',
+        'testdata/file.json',
+        'test_data/file.json',
+        'data_test/file.json',
+        'testcommandsfunctions/file.json',
+        'testhelperfunctions/file.json',
+        'StixDecodeTest/file.json',
+        'TestCommands/file.json',
+        'SetGridField_test/file.json',
+        'IPNetwork_test/file.json',
+        'test-data/file.json'
+        'some_file/integration_DESCRIPTION.md'
+        'some_file/integration_CHANGELOG.md'
+        'some_file/integration_unified.md'
+    ]
+
+    @pytest.mark.parametrize("file_path", SKIPPED_FILE_PATHS)
+    def test_should_file_skip_validation_positive(self, file_path):
+        should_skip = tools.should_file_skip_validation(file_path)
+        assert should_skip
 
 
 class TestGetMatchingRegex:
@@ -181,3 +229,104 @@ class TestReleaseVersion:
         tag = get_last_release_version()
 
         assert tag == '20.0.0'
+
+
+class TestEntityAttributes:
+    @pytest.mark.parametrize('data, entity', [({'commonfields': {'id': 1}}, INTEGRATIONS_DIR),
+                                              ({'typeId': 1}, LAYOUTS_DIR), ({'id': 1}, PLAYBOOKS_DIR)])
+    def test_get_entity_id_by_entity_type(self, data, entity):
+        assert get_entity_id_by_entity_type(data, entity) == 1
+
+    @pytest.mark.parametrize('data, entity', [({'typeId': 'wow'}, LAYOUTS_DIR), ({'name': 'wow'}, PLAYBOOKS_DIR)])
+    def test_get_entity_name_by_entity_type(self, data, entity):
+        assert get_entity_name_by_entity_type(data, entity) == 'wow'
+
+
+class TestGetFilesInDir:
+    def test_project_dir_is_file(self):
+        project_dir = 'demisto_sdk/commands/download/downloader.py'
+        assert get_files_in_dir(project_dir, ['py']) == [project_dir]
+
+    def test_not_recursive(self):
+        project_dir = 'demisto_sdk/commands/download'
+        files = [f'{project_dir}/__init__.py', f'{project_dir}/downloader.py', f'{project_dir}/README.md']
+        assert sorted(get_files_in_dir(project_dir, ['py', 'md'], False)) == sorted(files)
+
+    def test_recursive(self):
+        integrations_dir = 'demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack/Integrations'
+        integration_instance_dir = f'{integrations_dir}/TestIntegration'
+        files = [f'{integration_instance_dir}/TestIntegration.py',
+                 f'{integration_instance_dir}/TestIntegration_testt.py']
+        assert sorted(get_files_in_dir(integrations_dir, ['py'])) == sorted(files)
+
+
+run_command_os_inputs = [
+    ('ls', os.getcwd()),
+    ('ls', Path(os.getcwd()))
+]
+
+
+@pytest.mark.parametrize('command, cwd', run_command_os_inputs)
+def test_run_command_os(command, cwd):
+    """Tests a simple command, to check if it works
+    """
+    stdout, stderr, return_code = run_command_os(
+        command,
+        cwd=cwd
+    )
+    assert 0 == return_code
+    assert stdout
+    assert not stderr
+
+
+class TestGetFile:
+    def test_get_ryaml(self):
+        file_data = get_ryaml(SOURCE_FORMAT_INTEGRATION_COPY)
+        assert file_data
+        assert file_data.get('name') is not None
+
+
+def test_get_latest_release_notes_text_invalid():
+    """
+    Given
+    - Invalid release notes
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure None is returned
+    """
+    PATH_TO_HERE = f'{git_path()}/demisto_sdk/tests/test_files/'
+    file_path = os.path.join(PATH_TO_HERE, 'empty-RN.md')
+    assert get_latest_release_notes_text(file_path) is None
+
+
+def test_get_release_notes_file_path_valid():
+    """
+    Given
+    - Valid release notes path
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure valid file path is returned
+    """
+    filepath = '/SomePack/1_1_1.md'
+    assert get_release_notes_file_path(filepath) == filepath
+
+
+def test_get_release_notes_file_path_invalid():
+    """
+    Given
+    - Invalid release notes path
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure None is returned
+    """
+    filepath = '/SomePack/1_1_1.json'
+    assert get_release_notes_file_path(filepath) is None

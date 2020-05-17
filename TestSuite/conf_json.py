@@ -1,9 +1,16 @@
+import json
+from pathlib import Path
 from typing import List, Optional
 
-from TestSuite.json_based import JSONBased
 
+class ConfJSON:
+    def __init__(self, dir_path: Path, name: str, prefix: str):
+        self._dir_path = dir_path
+        self.name = f'{prefix.rstrip("-")}-{name}'
+        self._file_path = dir_path / name
+        self.path = str(self._file_path)
+        self.write_json()
 
-class ConfJSON(JSONBased):
     def write_json(
             self,
             tests: Optional[List[str]] = None,
@@ -25,11 +32,11 @@ class ConfJSON(JSONBased):
             unmockable_integrations = []
         if docker_thresholds is None:
             docker_thresholds = {}
-        super().write_json({
+        self._file_path.write_text(json.dumps({
             'tests': tests,
             'skipped_tests': skipped_tests,
             'skipped_integrations': skipped_integrations,
             'nightly_integrations': nightly_integrations,
             'unmockable_integrations': unmockable_integrations,
             'docker_thresholds': docker_thresholds
-        })
+        }))

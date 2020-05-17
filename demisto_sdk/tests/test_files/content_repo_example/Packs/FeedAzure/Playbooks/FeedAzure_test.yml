@@ -146,6 +146,13 @@ tasks:
             value:
               simple: first_object.raw_response.value
             iscontext: true
+    - label: maybe
+      condition:
+      - - operator: isNotEmpty
+          left:
+            value:
+              simple: empty_object
+            iscontext: true
     view: |-
       {
         "position": {

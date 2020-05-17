@@ -11,8 +11,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name,
-                                               pack_name_to_path, print_error,
+                                               get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
@@ -71,7 +70,7 @@ class RNInputValidation(click.ParamType):
                     ctx,
                 )
         else:
-            update_type = 'revision'
+            update_type = None
         return update_type
 
 
@@ -136,7 +135,7 @@ def main(config, version):
 def extract(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'File is not an Integration or Script.')
+        print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_to_package_format()
@@ -177,7 +176,7 @@ def extract(config, **kwargs):
 def extract_code(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'File is not an Integration or Script.')
+        print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
@@ -246,6 +245,9 @@ def unify(**kwargs):
 @click.option(
     '-i', '--input', help='The path of the content pack/file to validate specifically.'
 )
+@click.option(
+    '--skip-pack-release-notes', is_flag=True,
+    help='Skip validation of pack release notes.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -262,7 +264,8 @@ def validate(config, **kwargs):
                                    validate_conf_json=kwargs['conf_json'], use_git=kwargs['use_git'],
                                    file_path=file_path,
                                    validate_all=kwargs.get('validate_all'),
-                                   validate_id_set=kwargs['id_set'])
+                                   validate_id_set=kwargs['id_set'],
+                                   skip_pack_rn_validation=kwargs['skip_pack_release_notes'])
         return validator.run()
 
 
@@ -568,7 +571,7 @@ def json_to_outputs_command(**kwargs):
 def generate_test_playbook(**kwargs):
     file_type = find_type(kwargs.get('input'))
     if file_type not in ["integration", "script"]:
-        print_error(F'Generating test playbook is possible only for an Integration or a Script.')
+        print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
     generator = PlaybookTestsGenerator(file_type=file_type, **kwargs)
     generator.run()
@@ -770,13 +773,14 @@ def update_pack_releasenotes(**kwargs):
                                       pre_release=pre_release)
             update_pack_rn.execute_update()
     elif is_all and _pack:
-        print_error(f"Please remove the --all flag when specifying only one pack.")
+        print_error("Please remove the --all flag when specifying only one pack.")
         sys.exit(0)
     else:
         if _pack:
-            if _pack in packs_existing_rn:
+            if _pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
-                            f"Please update manually or delete {pack_name_to_path(_pack)}")
+                            f"Please update manually or run `demisto-sdk update-release-notes "
+                            f"-p {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
                                           pre_release=pre_release)

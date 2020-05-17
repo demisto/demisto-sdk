@@ -64,7 +64,7 @@ def build_bandit_command(files: List[Path]) -> str:
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # only show output in the case of an error
-    command += f" -q"
+    command += " -q"
     # Generating path pattrens - path1,path2,path3,..
     files_list = [str(item) for item in files]
     command += f" -r {','.join(files_list)}"
@@ -173,10 +173,10 @@ def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
     command = "python -m pytest"
     # Generating junit-xml report - used in circle ci
     if test_xml:
-        command += f" --junitxml=/devwork/report_pytest.xml"
+        command += " --junitxml=/devwork/report_pytest.xml"
     # Generating json report
     if json:
-        command += f" --json=/devwork/report_pytest.json"
+        command += " --json=/devwork/report_pytest.json"
 
     return command
 

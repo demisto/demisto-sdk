@@ -37,6 +37,8 @@ Path of file to validate specifically.
 Whether to run all validation on all files or not.
 * **-i, --input**
 The path of a pack or a file to validate specifically.
+* **---skip-pack-release-notes**
+Validation will not not be performed using the updated pack release notes format.
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`

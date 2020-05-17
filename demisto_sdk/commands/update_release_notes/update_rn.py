@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: str, pack_files: set, pre_release: bool = False):
+    def __init__(self, pack: str, update_type: None, pack_files: set, pre_release: bool = False):
 
         self.pack = pack
         self.update_type = update_type
@@ -101,10 +101,12 @@ class UpdateRN:
         return file_name, _file_type
 
     def bump_version_number(self, pre_release: bool = False):
-
         new_version = None  # This will never happen since we pre-validate the argument
         data_dictionary = get_json(self.metadata_path)
-        if self.update_type == 'major':
+        if self.update_type is None:
+            new_version = data_dictionary.get('currentVersion', '99.99.99')
+            return new_version
+        elif self.update_type == 'major':
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[0] = str(int(version[0]) + 1)
@@ -203,9 +205,8 @@ class UpdateRN:
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
         return rn_string
 
-    @staticmethod
-    def create_markdown(release_notes_path: str, rn_string: str):
-        if os.path.exists(release_notes_path):
+    def create_markdown(self, release_notes_path: str, rn_string: str):
+        if os.path.exists(release_notes_path) and self.update_type is not None:
             print_warning(f"Release notes were found at {release_notes_path}. Skipping")
         else:
             with open(release_notes_path, 'w') as fp:

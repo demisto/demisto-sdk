@@ -27,7 +27,7 @@ repos:
     hooks:
     -   id: isort
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
     -   id: pyupgrade
         exclude: demisto_sdk/tests/test_files/*|test_tools.py|demisto_sdk/commands/download/tests/tests_env/*

@@ -260,16 +260,19 @@ def build_example_dict(command_examples: list, insecure: bool):
 
 def format_md(md: str) -> str:
     """
-    Formats a given md string by replacing <br> and <BR> tags with <br/>
+    Formats a given md string by replacing <br> and <hr> tags with <br/> or <hr/>
     :param
         md (str): String representing mark down.
     :return:
         str. Formatted string representing mark down.
     """
+    replace_tuples = [
+        (r'<br>(</br>)?', '<br/>'),
+        (r'<hr>(</hr>)?', '<hr/>'),
+    ]
     if md:
-        # The replacement of <br> by <br/> is for compatibility with our docs site
-        md = md.replace('<br>', '<br/>')
-        md = md.replace('<BR>', '<br/>')
+        for old, new in replace_tuples:
+            md = re.sub(old, new, md, flags=re.IGNORECASE)
     return md
 
 

@@ -551,8 +551,7 @@ PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_REPORTS_REGEX = r'{}/([^/]+)/{}/([^.]+)\.json'.format(PACKS_DIR, REPORTS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                   RELEASE_NOTES_DIR)
+PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, RELEASE_NOTES_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 
@@ -1042,7 +1041,8 @@ SCHEMA_TO_REGEX = {
     'changelog': [INTEGRATION_CHANGELOG_REGEX, PACKS_CHANGELOG_REGEX, INDICATOR_TYPES_CHANGELOG_REGEX,
                   INCIDENT_TYPE_CHANGELOG_REGEX, INCIDENT_FIELD_CHANGELOG_REGEX, INDICATOR_FIELD_CHANGELOG_REGEX,
                   DASHBOARD_CHANGELOG_REGEX, CLASSIFIER_CHANGELOG_REGEX, LAYOUT_CHANGELOG_REGEX,
-                  REPORT_CHANGELOG_REGEX, WIDGETS_CHANGELOG_REGEX, PLAYBOOK_CHANGELOG_REGEX],
+                  REPORT_CHANGELOG_REGEX, WIDGETS_CHANGELOG_REGEX, PLAYBOOK_CHANGELOG_REGEX,
+                  PACKS_RELEASE_NOTES_REGEX],
     'readme': [INTEGRATION_README_REGEX, PACKS_README_REGEX, PACKS_README_REGEX_INNER]
 }
 
@@ -1165,3 +1165,18 @@ FETCH_REQUIRED_PARAMS = [
 ]
 
 DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
+# Ignore list for all 'run_all_validations_on_file' method
+ALL_FILES_VALIDATION_IGNORE_WHITELIST = [
+    'pack_metadata.json',  # this file is validated under 'validate_pack_unique_files' method
+    'testdata',
+    'test_data',
+    'data_test',
+    'testcommandsfunctions',
+    'testhelperfunctions',
+    'stixdecodetest',
+    'testcommands',
+    'setgridfield_test',
+    'ipnetwork_test',
+    'test-data',
+    'testplaybook'
+]

@@ -156,12 +156,12 @@ class Downloader:
 
         except ApiException as e:
             if e.status == 401:
-                print_color(f'\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+                print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
                             LOG_COLORS.RED)
             print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
             return False
         except MaxRetryError as e:
-            print_color(f'\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
+            print_color('\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
                         LOG_COLORS.RED)
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
             return False

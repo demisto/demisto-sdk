@@ -83,8 +83,9 @@ class ScriptValidator(BaseValidator):
         """
         arg_to_required = {}
         args = script_json.get('args', [])
-        for arg in args:
-            arg_to_required[arg.get('name')] = arg.get('required', False)
+        if args:
+            for arg in args:
+                arg_to_required[arg.get('name')] = arg.get('required', False)
         return arg_to_required
 
     def is_changed_subtype(self):
@@ -126,16 +127,23 @@ class ScriptValidator(BaseValidator):
     def is_there_duplicates_args(self):
         # type: () -> bool
         """Check if there are duplicated arguments."""
-        args = [arg['name'] for arg in self.current_file.get('args', [])]
-        if len(args) != len(set(args)):
-            return True
+        args = self.current_file.get('args', [])
+        if args:
+            args = [arg['name'] for arg in args]
+            if len(args) != len(set(args)):
+                return True
         return False
 
     def is_arg_changed(self):
         # type: () -> bool
         """Check if the argument has been changed."""
-        current_args = [arg['name'] for arg in self.current_file.get('args', [])]
-        old_args = [arg['name'] for arg in self.old_file.get('args', [])]
+        current_args = []
+        old_args = []
+
+        if self.current_file.get('args', []):
+            current_args = [arg['name'] for arg in self.current_file.get('args', [])]
+        if self.old_file.get('args', []):
+            old_args = [arg['name'] for arg in self.old_file.get('args', [])]
 
         if not self._is_sub_set(current_args, old_args):
             print_error(Errors.breaking_backwards_arg_changed(self.file_path))

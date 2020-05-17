@@ -88,6 +88,9 @@ class BaseUpdateYML(BaseUpdate):
         If there are no tests configured: Prompts a question to the cli that asks the user whether he wants to add
         'No tests' under 'tests' key or not and format the file according to the answer
         """
+        # No need to add test playbooks for test playbooks
+        if 'TestPlaybooks' in self.source_file:
+            return
         if not self.data.get('tests', ''):
             should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks configured. '
                                                     f'Do you want to configure it with "No tests"?')

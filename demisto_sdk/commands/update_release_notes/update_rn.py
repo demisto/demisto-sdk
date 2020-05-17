@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
+                                               get_latest_release_notes_text,
                                                pack_name_to_path, print_color,
                                                print_error, print_warning)
 
@@ -39,7 +40,7 @@ class UpdateRN:
             fn, ft = self.ident_changed_file_type(packfile)
             changed_files[fn] = ft
         rn_string = self.build_rn_template(changed_files)
-        self.create_markdown(rn_path, rn_string)
+        self.create_markdown(rn_path, rn_string, changed_files)
 
     def _does_pack_metadata_exist(self):
         """Check if pack_metadata.json exists"""
@@ -205,9 +206,30 @@ class UpdateRN:
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
         return rn_string
 
-    def create_markdown(self, release_notes_path: str, rn_string: str):
+    @staticmethod
+    def update_existing_rn(current_rn, changed_files):
+        new_rn = current_rn
+        for k, v in sorted(changed_files.items(), reverse=True):
+            if v in current_rn:
+                if k in current_rn:
+                    continue
+                else:
+                    rn_parts = current_rn.split(v)
+                    new_rn_part = f'\n- __{k}__\n%%UPDATE_RN%%\n'
+                    new_rn = rn_parts[0] + v + new_rn_part + rn_parts[1]
+            else:
+                new_rn_part = f'\n#### {v}\n- __{k}__\n%%UPDATE_RN%%\n'
+                new_rn = current_rn + new_rn_part
+        return new_rn
+
+    def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict):
         if os.path.exists(release_notes_path) and self.update_type is not None:
             print_warning(f"Release notes were found at {release_notes_path}. Skipping")
+        elif self.update_type is None:
+            current_rn = get_latest_release_notes_text(release_notes_path)
+            updated_rn = self.update_existing_rn(current_rn, changed_files)
+            with open(release_notes_path, 'w') as fp:
+                fp.write(updated_rn)
         else:
             with open(release_notes_path, 'w') as fp:
                 fp.write(rn_string)

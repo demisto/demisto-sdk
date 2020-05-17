@@ -271,8 +271,9 @@ class FilesValidator:
         if not old_release_notes_validator.is_file_valid():
             self._is_valid = False
 
-    def is_valid_release_notes(self, file_path):
-        release_notes_validator = ReleaseNotesValidator(file_path)
+    def is_valid_release_notes(self, file_path, pack_name=None, modified_files=None):
+        release_notes_validator = ReleaseNotesValidator(file_path, pack_name=pack_name,
+                                                        modified_files=modified_files)
         if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
@@ -419,7 +420,7 @@ class FilesValidator:
                                 f" the extra release notes.")
                     self._is_valid = False
 
-    def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
+    def validate_added_files(self, added_files, file_type: str = None, modified_files=None):  # noqa: C901
         """Validate the added files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
@@ -525,7 +526,7 @@ class FilesValidator:
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
                 added_rn.add(pack_name)
                 print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
-                self.is_valid_release_notes(file_path)
+                self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
@@ -575,7 +576,7 @@ class FilesValidator:
             self.validate_all_files_schema()
         else:
             self.validate_modified_files(modified_files)
-            self.validate_added_files(added_files)
+            self.validate_added_files(added_files, modified_files=modified_files)
             self.validate_no_old_format(old_format_files)
             self.validate_pack_unique_files(packs)
 

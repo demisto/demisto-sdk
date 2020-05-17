@@ -3,6 +3,7 @@ from __future__ import print_function
 from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
                                                get_release_notes_file_path,
                                                print_error)
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
 class ReleaseNotesValidator:
@@ -15,10 +16,26 @@ class ReleaseNotesValidator:
         master_diff (str): the changes in the changelog file compared to origin/master.
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, modified_files=None, pack_name=None):
         self.file_path = file_path
+        self.modified_files = modified_files
+        self.pack_name = pack_name
         self.release_notes_path = get_release_notes_file_path(self.file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
+
+    def are_release_notes_complete(self):
+        is_valid = True
+        if self.modified_files:
+            for file in self.modified_files:
+                if self.pack_name in file:
+                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None)
+                    fn, ft = update_rn_util.ident_changed_file_type(file)
+                    if ft not in self.latest_release_notes:
+                        print_error(f"No release note entry was found for a {ft.lower()} in the {self.pack_name} pack. "
+                                    f"Please rerun the update-release-notes command without -u to generate an"
+                                    f" updated template.")
+                        is_valid = False
+        return is_valid
 
     def has_release_notes_been_filled_out(self):
         release_notes_comments = self.latest_release_notes
@@ -37,7 +54,8 @@ class ReleaseNotesValidator:
             bool. True if file's release notes are valid, False otherwise.
         """
         validations = [
-            self.has_release_notes_been_filled_out()
+            self.has_release_notes_been_filled_out(),
+            self.are_release_notes_complete()
         ]
 
         return all(validations)

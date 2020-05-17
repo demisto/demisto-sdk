@@ -348,4 +348,4 @@ class TestRNUpdateUnit:
         update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'})
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
-        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string)
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})

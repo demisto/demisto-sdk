@@ -19,16 +19,16 @@ import click
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     CHECKED_TYPES_REGEXES, CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES,
-    IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
+    IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
     JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
-    PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
-    SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR,
-    TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES,
-    Errors)
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_RELEASE_NOTES_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
+    SCHEMA_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TESTS_DIRECTORIES,
+    YML_ALL_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES, Errors)
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -334,7 +334,7 @@ class FilesValidator:
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
-            elif checked_type(file_path, [SCRIPT_REGEX]):
+            elif checked_type(file_path, [PACKS_SCRIPT_NON_SPLIT_YML_REGEX]):
                 script_validator = ScriptValidator(structure_validator)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
@@ -826,12 +826,12 @@ class FilesValidator:
     @staticmethod
     def _is_py_script_or_integration(file_path):
         file_yml = get_yaml(file_path)
-        if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE):
+        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False
             return True
 
-        if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
+        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('type', 'javascript') != 'python':
                 return False
 

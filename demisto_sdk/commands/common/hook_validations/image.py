@@ -1,12 +1,10 @@
 import base64
 import glob
 
-from demisto_sdk.commands.common.constants import (DEFAULT_DBOT_IMAGE_BASE64,
-                                                   DEFAULT_IMAGE_BASE64,
-                                                   IMAGE_REGEX,
-                                                   INTEGRATION_REGEX,
-                                                   INTEGRATION_REGXES,
-                                                   YML_INTEGRATION_REGEXES)
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
+    INTEGRATION_REGXES, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.tools import (checked_type, get_yaml, os,
                                                print_error, re)
 
@@ -80,7 +78,7 @@ class ImageValidator:
 
         if data_dictionary.get('image'):
             is_image_in_yml = True
-        if not re.match(INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
+        if not re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             image_path = glob.glob(package_path + '/*.png')
             if image_path:

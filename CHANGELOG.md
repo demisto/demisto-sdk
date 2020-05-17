@@ -1,4 +1,7 @@
 # Changelog
+* Added pack release notes generation and validation.
+* Improved pack metadata validation.
+* Fixed a bug in **validate** where renamed files caused an error.
 
 
 #### 1.0.4

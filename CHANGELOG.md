@@ -1,8 +1,7 @@
 # Changelog
 * Added pack release notes generation and validation.
 * Improved pack metadata validation.
-* Fixed a bug in **validate** where renamed files caused an error.
-
+* Fixed an issue in **validate** where renamed files caused an error
 
 #### 1.0.4
 * Fix the **format** command to update the `id` field to be equal to `details` field in indicator-type files, and to `name` field in incident-type & dashboard files.

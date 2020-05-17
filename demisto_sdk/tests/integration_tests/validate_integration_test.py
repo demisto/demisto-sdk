@@ -159,7 +159,7 @@ class TestPack:
         assert f'{AZURE_FEED_PACK_PATH}' in result.output
         assert f'{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
         assert f'{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output
-        assert 'Playbook conditional task with id:15 has unhandled condition: #DEFAULT#' in result.output
+        assert 'Playbook conditional task with id:15 has unhandled condition: MAYBE' in result.output
         assert "The files were found as invalid, the exact error message can be located above" in result.stdout
         assert result.stderr == ""
 

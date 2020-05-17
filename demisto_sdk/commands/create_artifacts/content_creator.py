@@ -24,8 +24,8 @@ from demisto_sdk.commands.common.constants import (BASE_PACK,
                                                    PLAYBOOKS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR)
+                                                   TEST_PLAYBOOKS_DIR, TOOL,
+                                                   WIDGETS_DIR)
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
@@ -136,9 +136,9 @@ class ContentCreator:
             unification_tool.merge_script_package_to_yml()
 
     @staticmethod
-    def add_tools_to_bundle(bundle):
-        for directory in glob.glob(os.path.join(TOOLS_DIR, '*')):
-            zipf = zipfile.ZipFile(os.path.join(bundle, f'tools-{os.path.basename(directory)}.zip'), 'w',
+    def add_tools_to_bundle(tools_dir_path, bundle):
+        for directory in glob.glob(os.path.join(tools_dir_path, '*')):
+            zipf = zipfile.ZipFile(os.path.join(bundle, f'{TOOL}-{os.path.basename(directory)}.zip'), 'w',
                                    zipfile.ZIP_DEFLATED)
             zipf.comment = b'{ "system": true }'
             for root, _, files in os.walk(directory):
@@ -278,7 +278,7 @@ class ContentCreator:
 
     def copy_dir_files(self, *args):
         """
-        Copy the yml and json files from inside a directory to a bundle.
+        Copy the yml, md, json and zip files from inside a directory to a bundle.
 
         :param args: (source directory, destination bundle)
         :return: None
@@ -289,6 +289,8 @@ class ContentCreator:
         self.copy_dir_yml(*args)
         # handle *.md files
         self.copy_dir_md(*args)
+        # handle *.zip files
+        self.add_tools_to_bundle(*args)
 
     def copy_test_files(self, test_playbooks_dir=TEST_PLAYBOOKS_DIR):
         """
@@ -467,8 +469,6 @@ class ContentCreator:
             print('creating dir for bundles...')
             for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
                 os.mkdir(bundle_dir)
-
-            self.add_tools_to_bundle(self.content_bundle)
 
             for package_dir in DIR_TO_PREFIX:
                 # handles nested package directories

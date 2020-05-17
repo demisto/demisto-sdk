@@ -257,7 +257,6 @@ CLASSIFIERS_DIR = 'Classifiers'
 CONNECTIONS_DIR = 'Connections'
 BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
-TOOLS_DIR = 'Tools'
 RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 
@@ -274,6 +273,7 @@ DASHBOARD = 'dashboard'
 REPORT = 'report'
 INDICATOR_TYPE = 'reputation'
 WIDGET = 'widget'
+TOOL = 'tools'
 
 ENTITY_TYPE_TO_DIR = {
     INTEGRATION: INTEGRATIONS_DIR,
@@ -585,6 +585,7 @@ DASHBOARD_REGEX = r'{}{}.*dashboard-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, 
 DASHBOARD_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, DASHBOARD_REGEX)
 
 CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CONNECTIONS_DIR)
+
 
 CLASSIFIER_REGEX = r'{}{}.*classifier-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
 CLASSIFIER_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)

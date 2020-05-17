@@ -194,12 +194,22 @@ class TestScriptValidator:
             }
         ]
     }
+
+    EMPTY_ARGS = {
+        'args': []
+    }
+
+    NO_ARGS = {}
+
     INPUTS_ARGS_CHANGED = [
         (CURRENT_ARGS, OLD_ARGS, False),
         (MOVED_ARG, OLD_ARGS, False),
         (CURRENT_MULTI_ARGS, OLD_MULTI_ARGS, False),
         (ADDED_MULTI_ARGS, OLD_MULTI_ARGS, False),
-        (OLD_MULTI_ARGS, ADDED_MULTI_ARGS, True)
+        (OLD_MULTI_ARGS, ADDED_MULTI_ARGS, True),
+        (EMPTY_ARGS, EMPTY_ARGS, False),
+        (NO_ARGS, EMPTY_ARGS, False),
+        (EMPTY_ARGS, OLD_MULTI_ARGS, True)
     ]
 
     @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_ARGS_CHANGED)
@@ -227,9 +237,15 @@ class TestScriptValidator:
             }
         ]
     }
+
+    EMPTY_ARGS_NO_DUP = {
+        'args': []
+    }
+
     INPUTS_DUPLICATES = [
         (DUP_1, True),
-        (NO_DUP, False)
+        (NO_DUP, False),
+        (EMPTY_ARGS_NO_DUP, False)
     ]
 
     @pytest.mark.parametrize('current_file, answer', INPUTS_DUPLICATES)

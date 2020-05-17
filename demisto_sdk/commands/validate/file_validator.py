@@ -256,14 +256,14 @@ class FilesValidator:
             modified_files = modified_files - set(nc_deleted_files)
             added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
 
-        packs = self.get_packs(modified_files, added_files)
+        changed_files = modified_files.union(added_files)
+        packs = self.get_packs(changed_files)
 
         return modified_files, added_files, old_format_files, packs
 
     @staticmethod
-    def get_packs(modified_files, added_files):
+    def get_packs(changed_files):
         packs = set()
-        changed_files = modified_files.union(added_files)
         for changed_file in changed_files:
             if isinstance(changed_file, tuple):
                 changed_file = changed_file[1]
@@ -291,11 +291,7 @@ class FilesValidator:
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
-        changed_packs = set()
-        for file_path in modified_files:
-            changed_pack = get_pack_name(file_path)
-            if changed_pack:
-                changed_packs.add(changed_pack)
+        changed_packs = self.get_packs(modified_files)
         for file_path in modified_files:
             old_file_path = None
             # modified_files are returning from running git diff.

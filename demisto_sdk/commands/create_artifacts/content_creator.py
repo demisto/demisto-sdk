@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (BASE_PACK,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR, TOOL,
-                                                   WIDGETS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
@@ -137,14 +137,16 @@ class ContentCreator:
 
     @staticmethod
     def add_tools_to_bundle(tools_dir_path, bundle):
-        for directory in glob.glob(os.path.join(tools_dir_path, '*')):
-            zipf = zipfile.ZipFile(os.path.join(bundle, f'{TOOL}-{os.path.basename(directory)}.zip'), 'w',
-                                   zipfile.ZIP_DEFLATED)
-            zipf.comment = b'{ "system": true }'
-            for root, _, files in os.walk(directory):
-                for file_name in files:
-                    zipf.write(os.path.join(root, file_name), file_name)
-            zipf.close()
+        dir_name = os.path.basename(tools_dir_path)
+        if dir_name == TOOLS_DIR:
+            for directory in glob.glob(os.path.join(tools_dir_path, '*')):
+                zipf = zipfile.ZipFile(os.path.join(bundle, f'{TOOL}-{os.path.basename(directory)}.zip'), 'w',
+                                       zipfile.ZIP_DEFLATED)
+                zipf.comment = b'{ "system": true }'
+                for root, _, files in os.walk(directory):
+                    for file_name in files:
+                        zipf.write(os.path.join(root, file_name), file_name)
+                zipf.close()
 
     @staticmethod
     def copy_playbook_yml(path, out_path):

@@ -476,12 +476,20 @@ class Errors:
         return f'Detected none valid regex in {file_name} file'
 
     @staticmethod
+    def pack_metadata_name_not_valid():
+        return f'Pack metadata {PACK_METADATA_NAME} field is not valid. Please fill valid pack name.'
+
+    @staticmethod
     def pack_metadata_empty():
         return 'Pack metadata is empty.'
 
     @staticmethod
     def pack_metadata_should_be_dict():
         return 'Pack metadata should be a dictionary.'
+
+    @staticmethod
+    def pack_metadata_field_invalid():
+        return f'Pack metadata {PACK_METADATA_DESC} field is not valid. Please fill valid pack description.'
 
     @staticmethod
     def missing_field_iin_pack_metadata(missing_fields):

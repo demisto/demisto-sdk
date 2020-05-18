@@ -144,14 +144,11 @@ class PackUniqueFilesValidator:
             # check validity of pack metadata mandatory fields
             name_field = metadata.get(PACK_METADATA_NAME, '').lower()
             if not name_field or 'fill mandatory field' in name_field:
-                self._add_error(
-                    'Pack metadata {} field is not valid. Please fill valid pack name.'.format(PACK_METADATA_NAME))
+                self._add_error(Errors.pack_metadata_name_not_valid())
                 return False
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
-                self._add_error(
-                    'Pack metadata {} field is not valid. Please fill valid pack description.'.format(
-                        PACK_METADATA_DESC))
+                self._add_error(Errors.pack_metadata_field_invalid())
                 return False
             # check non mandatory dependency field
             dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})

@@ -136,7 +136,7 @@ class ImageValidator:
         image = self.load_image()
 
         if image in [DEFAULT_IMAGE_BASE64, DEFAULT_DBOT_IMAGE_BASE64]:  # disable-secrets-detection
-            print_error(Errors.default_image_error())
+            print_error(Errors.default_image_error(self.file_path))
             self._is_valid = False
             return False
         return True

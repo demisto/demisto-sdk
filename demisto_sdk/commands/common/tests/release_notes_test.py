@@ -4,6 +4,7 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 
 def get_validator(file_path='', modified_files=None):
@@ -12,6 +13,7 @@ def get_validator(file_path='', modified_files=None):
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files
+    release_notes_validator.pack_name = 'CortexXDR'
     return release_notes_validator
 
 
@@ -67,17 +69,56 @@ def test_init():
     assert release_notes_validator.latest_release_notes == '### Test'
 
 
+NOT_FILLED_OUT_RN = '''
+#### IncidentTypes
+- __Cortex XDR Incident__
+%%UPDATE_RN%%
+
+#### IncidentFields
+- __XDR Alerts__
+%%UPDATE_RN%%
+
+#### Integrations
+- __Cortex XDR - IR__
+%%UPDATE_RN%%
+
+#### Scripts
+- __EntryWidgetNumberHostsXDR__
+%%UPDATE_RN%%
+'''
+FILLED_OUT_RN = '''
+#### IncidentTypes
+- __Cortex XDR Incident__
+Test
+
+#### IncidentFields
+- __XDR Alerts__
+Test
+
+#### Integrations
+- __Cortex XDR - IR__
+Test
+
+#### Scripts
+- __EntryWidgetNumberHostsXDR__
+Test
+'''
+
+
 TEST_RELEASE_NOTES_TEST_BANK = [
     ('', False),  # Completely Empty
     ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
      'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
-     'code description. ', False)
+     'code description. ', False),
+    (NOT_FILLED_OUT_RN, True),
+    (FILLED_OUT_RN, True)
+
 ]
 MODIFIED_FILES = [
-    'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
-    'Packs/HelloWorld/IncidentTypes/incidenttype-Hello_World_Alert.json',
-    'Packs/HelloWorld/IncidentFields/incidentfield-Hello_World_ID.json',
-    'Packs/HelloWorld/Layouts/layout-details-Hello_World_Alert-V2.json'
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml')
 ]
 
 
@@ -101,5 +142,6 @@ def test_are_release_notes_complete(release_notes, expected_result, mocker):
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     validator = get_validator(release_notes, MODIFIED_FILES)
     assert validator.are_release_notes_complete() == expected_result

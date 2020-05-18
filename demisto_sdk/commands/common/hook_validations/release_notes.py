@@ -30,7 +30,7 @@ class ReleaseNotesValidator:
                 if self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None)
                     fn, ft = update_rn_util.ident_changed_file_type(file)
-                    if ft not in self.latest_release_notes:
+                    if ft and fn not in self.latest_release_notes:
                         print_error(f"No release note entry was found for a {ft.lower()} in the {self.pack_name} pack. "
                                     f"Please rerun the update-release-notes command without -u to generate an"
                                     f" updated template.")
@@ -39,11 +39,11 @@ class ReleaseNotesValidator:
 
     def has_release_notes_been_filled_out(self):
         release_notes_comments = self.latest_release_notes
-        if '%%UPDATE_RN%%' in release_notes_comments:
-            print_error(f"Please finish filling out the release notes found at: {self.file_path}")
-            return False
-        elif len(release_notes_comments) == 0:
+        if len(release_notes_comments) == 0:
             print_error(f"Please complete the release notes found at: {self.file_path}")
+            return False
+        elif '%%UPDATE_RN%%' in release_notes_comments:
+            print_error(f"Please finish filling out the release notes found at: {self.file_path}")
             return False
         return True
 

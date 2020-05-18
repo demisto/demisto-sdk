@@ -16,7 +16,7 @@ class Errors:
 
     @staticmethod
     def id_should_equal_name(name, file_id, file_path):
-        return "BA101 - The File's name, which is: '{}', should be equal to its ID, which is: '{}'."\
+        return "BA101 - The File's name, which is: '{}', should be equal to its ID, which is: '{}'." \
                " please update the file (path to file: {}).".format(name, file_id, file_path)
 
     @staticmethod
@@ -205,8 +205,9 @@ class Errors:
     def no_docker_tag():
         return f'DO104 - The docker image in your integration/script does not have a tag.' \
                f'Please create or update to an updated versioned image\n' \
+ \
+            @staticmethod
 
-    @staticmethod
     def docker_not_formatted_correctly(docker_image):
         return f'DO105 - The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
@@ -875,7 +876,8 @@ PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT
 PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
 PACKS_REPORTS_REGEX = r'{}/([^/]+)/{}/([^.]+)\.json'.format(PACKS_DIR, REPORTS_DIR)
 PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, RELEASE_NOTES_DIR)
+PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
+                                                                   RELEASE_NOTES_DIR)
 PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 

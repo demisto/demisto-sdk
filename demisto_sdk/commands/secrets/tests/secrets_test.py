@@ -299,5 +299,3 @@ my_email = "fooo@someorg.com"
 
         secrets_output = self.validator.reformat_secrets_output(self.IP_LIST)
         assert secrets_output == 'ip-172-31-15-237' + '\n' + '1.1.1.1' + '\n' + '12.25.12.14' + '\n'
-
-

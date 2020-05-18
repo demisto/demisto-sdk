@@ -202,8 +202,8 @@ class Errors:
         return f'DO103 - Failed getting tag for: {docker_image_name}. Please check it exists and of demisto format.'
 
     @staticmethod
-    def no_docker_tag():
-        return f'DO104 - The docker image in your integration/script does not have a tag.' \
+    def no_docker_tag(docker_image):
+        return f'DO104 - {docker_image} - The docker image in your integration/script does not have a tag.' \
                f'Please create or update to an updated versioned image\n'
 
     @staticmethod

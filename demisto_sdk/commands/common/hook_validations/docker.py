@@ -265,7 +265,7 @@ class DockerImageValidator(object):
                     image = image_split[0]
                     tag = image_split[1]
                 else:
-                    print_error(Errors.no_docker_tag())
+                    print_error(Errors.no_docker_tag(docker_image))
             except IndexError:
                 print_error(Errors.docker_not_formatted_correctly(docker_image))
 

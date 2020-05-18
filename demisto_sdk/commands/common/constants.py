@@ -10,56 +10,45 @@ class Errors:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
 
     @staticmethod
-    def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "IN125 - {} is a feed and has wrong fromversion. got `{}` expected `{}`" \
-            .format(file_path, given_fromversion, needed_from_version)
-
-    @staticmethod
-    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
-        return (f'IN126 - {file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
-                f' Found version: {given_fromversion}')
-
-    @staticmethod
-    def not_used_display_name(file_path, field_name):
-        return "IN123 - The display details for {} will not be used " \
-               "in the file {} due to the type of the parameter".format(field_name, file_path)
-
-    @staticmethod
-    def empty_display_configuration(file_path, field_name):
-        return "IN124 - No display details were entered for the field {} in the file {}.".format(field_name, file_path)
-
-    @staticmethod
-    def no_yml_file(file_path):
-        return "No yml files were found in {} directory.".format(file_path)
-
-    @staticmethod
-    def wrong_filename(filepath, file_type):
-        return '{} is not a valid {} filename.'.format(filepath, file_type)
-
-    @staticmethod
-    def wrong_path(filepath):
-        return "{} is not a valid filepath.".format(filepath)
-
-    @staticmethod
     def wrong_version(file_path, expected="-1"):
         return "BA100 - {}: The version for our files should always " \
                "be {}, please update the file.".format(file_path, expected)
 
     @staticmethod
-    def wrong_version_reputations(file_path, object_id, version):
-        return "RP100 - {} Reputation object with id {} must have version {}".format(file_path, object_id, version)
+    def id_should_equal_name(name, file_id, file_path):
+        return "BA101 - The File's name, which is: '{}', should be equal to its ID, which is: '{}'."\
+               " please update the file (path to file: {}).".format(name, file_id, file_path)
 
     @staticmethod
-    def dbot_invalid_output(file_path, command_name, missing_outputs, context_standard):
-        return "DB100 - {}: The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. " \
-               "Fix according to context standard {} ".format(file_path, command_name, missing_outputs,
-                                                              context_standard)
+    def wrong_display_name(param_name, param_display):
+        return 'IN101 - The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
     @staticmethod
-    def dbot_invalid_description(file_path, command_name, missing_descriptions, context_standard):
-        return "DB101 - {}: The DBotScore description of the reputation command {} aren't valid. Missing: {}. " \
-               "Fix according to context standard {} " \
-            .format(file_path, command_name, missing_descriptions, context_standard)
+    def wrong_default_parameter_not_empty(param_name, default_value):
+        return 'IN102 - The default value of the {} parameter should be {}'.format(param_name, default_value)
+
+    @staticmethod
+    def wrong_required_value(param_name):
+        return 'IN103 - The required field of the {} parameter should be False'.format(param_name)
+
+    @staticmethod
+    def wrong_required_type(param_name):
+        return 'IN104 - The type field of the {} parameter should be 8'.format(param_name)
+
+    @staticmethod
+    def wrong_category(file_path, category):
+        return "IN105 - {}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
+            .format(file_path, category, '\n'.join(INTEGRATION_CATEGORIES))
+
+    @staticmethod
+    def wrong_default_argument(file_path, arg_name, command_name):
+        return "IN106 - {}: The argument '{}' of the command '{}' is not configured as default" \
+            .format(file_path, arg_name, command_name)
+
+    @staticmethod
+    def no_default_arg(file_path, command_name):
+        return "IN107 - {}: Could not find default argument " \
+               "{} in command {}".format(file_path, command_name, command_name)
 
     @staticmethod
     def missing_reputation(file_path, command_name, reputation_output, context_standard):
@@ -72,11 +61,6 @@ class Errors:
         return "IN111 - {}: The subtype for our yml files should be either python2 or python3, " \
                "please update the file.".format(file_name)
 
-    @staticmethod
-    def beta_in_str(file_path, field):
-        return "{}: Field '{}' should NOT contain the substring \"beta\" in a new beta integration. " \
-               "please change the id in the file.".format(field, file_path)
-
     @classmethod
     def beta_in_id(cls, file_path):
         return "IN113 - " + cls.beta_in_str(file_path, 'id')
@@ -84,6 +68,16 @@ class Errors:
     @classmethod
     def beta_in_name(cls, file_path):
         return "IN114 - " + cls.beta_in_str(file_path, 'name')
+
+    @staticmethod
+    def beta_field_not_found(file_path):
+        return "IN115 - {}: Beta integration yml file should have " \
+               "the field \"beta: true\", but was not found in the file.".format(file_path)
+
+    @staticmethod
+    def no_beta_in_display(file_path):
+        return "IN116 - {} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
+               "but was not found in the file.".format(file_path)
 
     @staticmethod
     def duplicate_arg_in_file(script_path, arg, command_name=None):
@@ -99,21 +93,68 @@ class Errors:
                "file is duplicated, please remove one of its appearances.".format(file_path, param_name)
 
     @staticmethod
+    def invalid_context_output(command_name, output):
+        return f'IN120 - Invalid context output for command {command_name}. Output is {output}'
+
+    @staticmethod
     def added_required_fields(file_path, field):
         return "IN122 - You've added required fields in the file '{}', the field is '{}'".format(file_path, field)
 
     @staticmethod
-    def from_version_modified_after_rename():
-        return "IF110 - fromversion might have been modified, please make sure it hasn't changed."
+    def not_used_display_name(file_path, field_name):
+        return "IN123 - The display details for {} will not be used " \
+               "in the file {} due to the type of the parameter".format(field_name, file_path)
 
     @staticmethod
-    def from_version_modified(file_path):
-        return "ST103 - {}: You've added fromversion to an existing " \
-               "file in the system, this is not allowed, please undo.".format(file_path)
+    def empty_display_configuration(file_path, field_name):
+        return "IN124 - No display details were entered for the field {} in the file {}.".format(field_name, file_path)
 
-    @classmethod
-    def breaking_backwards_no_old_script(cls, e):
-        return "{}\n{}, Could not find the old file.".format(cls.BACKWARDS, str(e))
+    @staticmethod
+    def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
+        return "IN125 - {} is a feed and has wrong fromversion. got `{}` expected `{}`" \
+            .format(file_path, given_fromversion, needed_from_version)
+
+    @staticmethod
+    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
+        return (f'IN126 - {file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
+                f' Found version: {given_fromversion}')
+
+    @staticmethod
+    def parameter_missing_from_yml(file_path, name, correct_format):
+        return f'IN127 - {file_path}: A required parameter "{name}" is missing or malformed ' \
+               f'in the YAML file.\nThe correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    def parameter_missing_for_feed(file_path, name, correct_format):
+        return f'IN128 - {file_path} Feed Integration was detected A required ' \
+               f'parameter "{name}" is missing or malformed in the YAML file.\n' \
+               f'The correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    def invalid_v2_integration_name(file_path):
+        return f"IN129 - The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
+               f"e.g: Kenna v2, Jira v2"
+
+    @staticmethod
+    def found_hidden_param(parameter_name):
+        return f"IN130 - Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+
+    @staticmethod
+    def invalid_v2_script_name(file_path):
+        return f"SC103 - The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
+               f" e.g: DBotTrainTextClassifierV2"
+
+    @staticmethod
+    def dbot_invalid_output(file_path, command_name, missing_outputs, context_standard):
+        return "DB100 - {}: The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. " \
+               "Fix according to context standard {} ".format(file_path, command_name, missing_outputs,
+                                                              context_standard)
+
+    @staticmethod
+    def dbot_invalid_description(file_path, command_name, missing_descriptions, context_standard):
+        return "DB101 - {}: The DBotScore description of the reputation command {} aren't valid. Missing: {}. " \
+               "Fix according to context standard {} " \
+            .format(file_path, command_name, missing_descriptions, context_standard)
 
     @classmethod
     def breaking_backwards_subtype(cls, file_path):
@@ -140,176 +181,6 @@ class Errors:
                " the file, please undo, the command was:\n{}".format(file_path, cls.BACKWARDS, command)
 
     @staticmethod
-    def no_beta_in_display(file_path):
-        return "IN116 - {} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
-               "but was not found in the file.".format(file_path)
-
-    @staticmethod
-    def id_might_changed():
-        return "ID might have changed, please make sure to check you have the correct one."
-
-    @staticmethod
-    def id_changed(file_path):
-        return "{}: You've changed the ID of the file, please undo.".format(file_path)
-
-    @staticmethod
-    def file_id_contains_slashes():
-        return "ST101 - File's ID contains slashes - please remove."
-
-    @staticmethod
-    def missing_release_notes(file_path, rn_path):
-        return 'RN100 - {}:  is missing release notes, Please add it under {}'.format(file_path, rn_path)
-
-    @staticmethod
-    def wrong_file_extension(file_extension, accepted_extensions):
-        return "ST104 - File extension {} is not valid. accepted {}".format(file_extension, accepted_extensions)
-
-    @staticmethod
-    def might_need_release_notes(file_path):
-        return "{}: You might need RN in file, please make sure to check that.".format(file_path)
-
-    @staticmethod
-    def unknown_file(file_path):
-        return "{}:  File type is unknown, check it out.".format(file_path)
-
-    @staticmethod
-    def wrong_default_argument(file_path, arg_name, command_name):
-        return "IN106 - {}: The argument '{}' of the command '{}' is not configured as default" \
-            .format(file_path, arg_name, command_name)
-
-    @staticmethod
-    def wrong_display_name(param_name, param_display):
-        return 'IN101 - The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
-
-    @staticmethod
-    def wrong_default_parameter(param_name):
-        return Errors.wrong_default_parameter_not_empty(param_name, "''")
-
-    @staticmethod
-    def wrong_default_parameter_not_empty(param_name, default_value):
-        return 'IN102 - The default value of the {} parameter should be {}'.format(param_name, default_value)
-
-    @staticmethod
-    def wrong_required_value(param_name):
-        return 'IN103 - The required field of the {} parameter should be False'.format(param_name)
-
-    @staticmethod
-    def wrong_required_type(param_name):
-        return 'IN104 - The type field of the {} parameter should be 8'.format(param_name)
-
-    @staticmethod
-    def beta_field_not_found(file_path):
-        return "IN115 - {}: Beta integration yml file should have " \
-               "the field \"beta: true\", but was not found in the file.".format(file_path)
-
-    @staticmethod
-    def no_default_arg(file_path, command_name):
-        return "IN107 - {}: Could not find default argument " \
-               "{} in command {}".format(file_path, command_name, command_name)
-
-    @staticmethod
-    def wrong_category(file_path, category):
-        return "IN105 - {}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
-            .format(file_path, category, '\n'.join(INTEGRATION_CATEGORIES))
-
-    @staticmethod
-    def no_common_server_python(path):
-        return "Could not get CommonServerPythonScript.py file. Please download it manually from {} and " \
-               "add it to the root of the repository.".format(path)
-
-    @staticmethod
-    def invalid_file_path(file_path):
-        return f"ST105 - Found incompatible file path: {file_path}."
-
-    @staticmethod
-    def invalid_v2_integration_name(file_path):
-        return f"IN129 - The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
-               f"e.g: Kenna v2, Jira v2"
-
-    @staticmethod
-    def invalid_v2_script_name(file_path):
-        return f"SC103 - The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
-               f" e.g: DBotTrainTextClassifierV2"
-
-    @staticmethod
-    def found_hidden_param(parameter_name):
-        return f"IN130 - Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
-
-    @staticmethod
-    def id_should_equal_name(name, file_id, file_path):
-        return "BA101 - The File's name, which is: '{}', should be equal to its ID, which is: '{}'."\
-               " please update the file (path to file: {}).".format(name, file_id, file_path)
-
-    @staticmethod
-    def test_playbook_not_configured(content_item_id, missing_test_playbook_configurations,
-                                     missing_integration_configurations):
-        return f'TP100 - The TestPlaybook {content_item_id} is not registered in {CONF_PATH} file.\n ' \
-               f'Please add\n{missing_test_playbook_configurations}\n ' \
-               f'or if this test playbook is for an integration\n{missing_integration_configurations}\n ' \
-               f'to {CONF_PATH} path under \'tests\' key.'
-
-    @staticmethod
-    def integration_not_registered(file_path, missing_test_playbook_configurations, no_tests_key):
-        return f'IN100 - The following integration is not registered in {CONF_PATH} file.\n' \
-               f'Please add\n{missing_test_playbook_configurations}\nto {CONF_PATH} ' \
-               f'path under \'tests\' key.\n' \
-               f'If you don\'t want to add a test playbook for this integration, please add \n{no_tests_key}to the ' \
-               f'file {file_path} or run \'demisto-sdk format -p {file_path}\''
-
-    @staticmethod
-    def no_test_playbook(file_path, file_type):
-        return f'TP101 - You don\'t have a TestPlaybook for {file_type} {file_path}. ' \
-               f'If you have a TestPlaybook for this {file_type}, ' \
-               f'please edit the yml file and add the TestPlaybook under the \'tests\' key. ' \
-               f'If you don\'t want to create a TestPlaybook for this {file_type}, ' \
-               f'edit the yml file and add  \ntests:\n -  No tests\n lines to it or ' \
-               f'run \'demisto-sdk format -i {file_path}\''
-
-    @staticmethod
-    def test_not_in_conf_json(file_id):
-        return f"CJ101 - You've failed to add the {file_id} to conf.json\n" \
-               f"see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
-
-    @staticmethod
-    def remove_field_from_dashboard(file_path, field):
-        return f'DA100 - {file_path}: the field {field} needs to be removed.\n'
-
-    @staticmethod
-    def remove_field_from_widget(field, widget):
-        return f'WD100 - The field {field} needs to be removed from the widget: {widget}.\n'
-
-    @staticmethod
-    def include_field_in_dashboard(file_path, field):
-        return f'DA101 - {file_path}: the field {field} needs to be included. Please add it.\n'
-
-    @staticmethod
-    def include_field_in_widget(field, widget_name):
-        return f'WD101 - The field {field} needs to be included in the widget: {widget_name}. Please add it.\n'
-
-    @staticmethod
-    def description_missing_in_beta_integration(package_path):
-        return f"DS100 - No detailed description file was found in the package {package_path}. Please add one, " \
-               f"and make sure it includes the beta disclaimer note." \
-               f"It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
-
-    @staticmethod
-    def no_beta_disclaimer_in_description(package_path):
-        return f"DS101 - Detailed description in beta integration package {package_path} " \
-               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
-               f"\"BETA_INTEGRATION_DISCLAIMER\"."
-
-    @staticmethod
-    def no_beta_disclaimer_in_yml(file_path):
-        return f"DS102 - Detailed description field in beta integration {file_path} " \
-               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
-               f" \"BETA_INTEGRATION_DISCLAIMER\"."
-
-    @staticmethod
-    def description_in_package_and_yml(package_path):
-        return f"DS103 - A description was found both in the " \
-               f"package and in the yml, please update the package {package_path}."
-
-    @staticmethod
     def default_docker_error():
         return 'DO100 - The current docker image in the yml file is the default one: demisto/python:1.3-alpine,\n' \
                'Please create or use another docker image\n'
@@ -323,7 +194,8 @@ class Errors:
 
     @staticmethod
     def not_demisto_docker():
-        return 'DO102 - docker image must be a demisto docker image. e.g: demisto/<image>:<tag>'
+        return 'DO102 - docker image must be a demisto docker image. When the docker image is ready, ' \
+               'please rename it to: demisto/<image>:<tag>'
 
     @staticmethod
     def docker_tag_not_fetched(docker_image_name):
@@ -354,6 +226,22 @@ class Errors:
                f"id_set.json toversion field of this id to match the old occurrence of this id"
 
     @staticmethod
+    def remove_field_from_dashboard(file_path, field):
+        return f'DA100 - {file_path}: the field {field} needs to be removed.\n'
+
+    @staticmethod
+    def include_field_in_dashboard(file_path, field):
+        return f'DA101 - {file_path}: the field {field} needs to be included. Please add it.\n'
+
+    @staticmethod
+    def remove_field_from_widget(field, widget):
+        return f'WD100 - The field {field} needs to be removed from the widget: {widget}.\n'
+
+    @staticmethod
+    def include_field_in_widget(field, widget_name):
+        return f'WD101 - The field {field} needs to be included in the widget: {widget_name}. Please add it.\n'
+
+    @staticmethod
     def no_image_given(file_path):
         return f"IM100 - You've created/modified a yml or package but failed to provide an image as " \
                f"a .png file for {file_path}, please add an image in order to proceed."
@@ -381,6 +269,103 @@ class Errors:
     @staticmethod
     def default_image_error(file_path):
         return f"IM106 - {file_path} is the default image, please change to the integration image."
+
+    @staticmethod
+    def description_missing_from_conf_json(problematic_instances):
+        return "CJ100 - Those instances don't have description:\n{}".format('\n'.join(problematic_instances))
+
+    @staticmethod
+    def test_not_in_conf_json(file_id):
+        return f"CJ101 - You've failed to add the {file_id} to conf.json\n" \
+               f"see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
+
+    @staticmethod
+    def integration_not_registered(file_path, missing_test_playbook_configurations, no_tests_key):
+        return f'CJ102 - The following integration is not registered in {CONF_PATH} file.\n' \
+               f'Please add\n{missing_test_playbook_configurations}\nto {CONF_PATH} ' \
+               f'path under \'tests\' key.\n' \
+               f'If you don\'t want to add a test playbook for this integration, please add \n{no_tests_key}to the ' \
+               f'file {file_path} or run \'demisto-sdk format -p {file_path}\''
+
+    @staticmethod
+    def no_test_playbook(file_path, file_type):
+        return f'CJ103 - You don\'t have a TestPlaybook for {file_type} {file_path}. ' \
+               f'If you have a TestPlaybook for this {file_type}, ' \
+               f'please edit the yml file and add the TestPlaybook under the \'tests\' key. ' \
+               f'If you don\'t want to create a TestPlaybook for this {file_type}, ' \
+               f'edit the yml file and add  \ntests:\n -  No tests\n lines to it or ' \
+               f'run \'demisto-sdk format -i {file_path}\''
+
+    @staticmethod
+    def test_playbook_not_configured(content_item_id, missing_test_playbook_configurations,
+                                     missing_integration_configurations):
+        return f'CJ104 - The TestPlaybook {content_item_id} is not registered in {CONF_PATH} file.\n ' \
+               f'Please add\n{missing_test_playbook_configurations}\n ' \
+               f'or if this test playbook is for an integration\n{missing_integration_configurations}\n ' \
+               f'to {CONF_PATH} path under \'tests\' key.'
+
+    @staticmethod
+    def missing_release_notes(file_path, rn_path):
+        return 'RN100 - {}:  is missing release notes, Please add it under {}'.format(file_path, rn_path)
+
+    @staticmethod
+    def no_new_release_notes(release_notes_path):
+        return F'RN101 - No new comment has been added in the release notes file: {release_notes_path}'
+
+    @staticmethod
+    def release_notes_not_formatted_correctly(release_notes_path, link_to_rn_standard):
+        return F'RN102 - File {release_notes_path} is not formatted according to ' \
+               F'release notes standards.\nFix according to {link_to_rn_standard}'
+
+    @staticmethod
+    def release_notes_not_finished(file_path):
+        return f"RN103 - Please finish filling out the release notes found at: {file_path}"
+
+    @staticmethod
+    def release_notes_file_empty(file_path):
+        return f"RN104 - Your release notes file is empty, please complete it - found at: {file_path}"
+
+    @staticmethod
+    def playbook_cant_have_rolename(file_path):
+        return f"PB100 - {file_path} - Playbook can not have a rolename."
+
+    @staticmethod
+    def playbook_unreachable_condition(file_path, task_id, next_task_branch):
+        return f'PB101 - {file_path} Playbook conditional task with id:{task_id} has task with unreachable ' \
+               f'next task condition "{next_task_branch}". Please remove this task or add ' \
+               f'this condition to condition task with id:{task_id}.'
+
+    @staticmethod
+    def playbook_unhandled_condition(file_path, task_id, task_condition_labels):
+        return f'PB102 - {file_path} Playbook conditional task with id:{task_id} has unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    def playbook_unconnected_tasks(file_path, orphan_tasks):
+        return f'PB103 - {file_path} The following tasks ids have no previous tasks: {orphan_tasks}'
+
+    @staticmethod
+    def description_missing_in_beta_integration(package_path):
+        return f"DS100 - No detailed description file was found in the package {package_path}. Please add one, " \
+               f"and make sure it includes the beta disclaimer note." \
+               f"It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
+
+    @staticmethod
+    def no_beta_disclaimer_in_description(package_path):
+        return f"DS101 - Detailed description in beta integration package {package_path} " \
+               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
+               f"\"BETA_INTEGRATION_DISCLAIMER\"."
+
+    @staticmethod
+    def no_beta_disclaimer_in_yml(file_path):
+        return f"DS102 - Detailed description field in beta integration {file_path} " \
+               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
+               f" \"BETA_INTEGRATION_DISCLAIMER\"."
+
+    @staticmethod
+    def description_in_package_and_yml(package_path):
+        return f"DS103 - A description was found both in the " \
+               f"package and in the yml, please update the package {package_path}."
 
     @staticmethod
     def invalid_incident_field_name(word, file_path):
@@ -425,36 +410,16 @@ class Errors:
         return f'IF109 - {file_path}: new incident fields can not be required. change to:\nrequired: false.'
 
     @staticmethod
+    def from_version_modified_after_rename():
+        return "IF110 - fromversion might have been modified, please make sure it hasn't changed."
+
+    @staticmethod
     def incident_field_type_change(file_path):
         return f'IF111 - {file_path}: Changing incident field type is not allowed.'
 
     @staticmethod
     def incident_type_integer_field(file_path, field):
         return f'IF112 - {file_path}: the field {field} needs to be a positive integer. Please add it.\n'
-
-    @staticmethod
-    def invalid_context_output(command_name, output):
-        return f'IN120 - Invalid context output for command {command_name}. Output is {output}'
-
-    @staticmethod
-    def parameter_missing_from_yml(file_path, name, correct_format):
-        return f'IN127 - {file_path}: A required parameter "{name}" is missing or malformed ' \
-               f'in the YAML file.\nThe correct format of the parameter should be as follows:\n{correct_format}'
-
-    @staticmethod
-    def parameter_missing_for_feed(file_path, name, correct_format):
-        return f'IN128 - {file_path} Feed Integration was detected A required ' \
-               f'parameter "{name}" is missing or malformed in the YAML file.\n' \
-               f'The correct format of the parameter should be as follows:\n{correct_format}'
-
-    @staticmethod
-    def no_new_release_notes(release_notes_path):
-        return F'RN101 - No new comment has been added in the release notes file: {release_notes_path}'
-
-    @staticmethod
-    def release_notes_not_formatted_correctly(release_notes_path, link_to_rn_standard):
-        return F'RN102 - File {release_notes_path} is not formatted according to ' \
-               F'release notes standards.\nFix according to {link_to_rn_standard}'
 
     @staticmethod
     def pack_file_does_not_exist(file_name):
@@ -477,10 +442,6 @@ class Errors:
         return f'PU104 - Detected none valid regex in {file_name} file'
 
     @staticmethod
-    def pack_metadata_name_not_valid():
-        return f'PU108 - Pack metadata {PACK_METADATA_NAME} field is not valid. Please fill valid pack name.'
-
-    @staticmethod
     def pack_metadata_empty():
         return 'PU105 - Pack metadata is empty.'
 
@@ -489,12 +450,16 @@ class Errors:
         return f'PU106 - Pack metadata {pack_meta_file} should be a dictionary.'
 
     @staticmethod
-    def pack_metadata_field_invalid():
-        return f'PU109 - Pack metadata {PACK_METADATA_DESC} field is not valid. Please fill valid pack description.'
-
-    @staticmethod
     def missing_field_iin_pack_metadata(pack_meta_file, missing_fields):
         return f'PU107 - {pack_meta_file} - Missing fields in the pack metadata: {missing_fields}'
+
+    @staticmethod
+    def pack_metadata_name_not_valid():
+        return f'PU108 - Pack metadata {PACK_METADATA_NAME} field is not valid. Please fill valid pack name.'
+
+    @staticmethod
+    def pack_metadata_field_invalid():
+        return f'PU109 - Pack metadata {PACK_METADATA_DESC} field is not valid. Please fill valid pack description.'
 
     @staticmethod
     def dependencies_field_should_be_dict(pack_meta_file):
@@ -509,35 +474,12 @@ class Errors:
         return f'PU112 - Could not parse {pack_meta_file} file contents to json format'
 
     @staticmethod
-    def playbook_cant_have_rolename(file_path):
-        return f"PB100 - {file_path} - Playbook can not have a rolename."
-
-    @staticmethod
-    def playbook_unreachable_condition(file_path, task_id, next_task_branch):
-        return f'PB101 - {file_path} Playbook conditional task with id:{task_id} has task with unreachable ' \
-               f'next task condition "{next_task_branch}". Please remove this task or add ' \
-               f'this condition to condition task with id:{task_id}.'
-
-    @staticmethod
-    def playbook_unhandled_condition(file_path, task_id, task_condition_labels):
-        return f'PB102 - {file_path} Playbook conditional task with id:{task_id} has unhandled ' \
-               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
-
-    @staticmethod
-    def playbook_unconnected_tasks(file_path, orphan_tasks):
-        return f'PB103 - {file_path} The following tasks ids have no previous tasks: {orphan_tasks}'
-
-    @staticmethod
     def readme_error(file_path, stderr):
         return f'RM100 - Failed verifying README.md, Path: {file_path}. Error Message is: {stderr}'
 
     @staticmethod
-    def release_notes_not_finished(file_path):
-        return f"RN103 - Please finish filling out the release notes found at: {file_path}"
-
-    @staticmethod
-    def release_notes_file_empty(file_path):
-        return f"RN104 - Your release notes file is empty, please complete it - found at: {file_path}"
+    def wrong_version_reputations(file_path, object_id, version):
+        return "RP100 - {} Reputation object with id {} must have version {}".format(file_path, object_id, version)
 
     @staticmethod
     def reputation_expiration_should_be_numeric(file_path):
@@ -553,12 +495,71 @@ class Errors:
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod
+    def file_id_contains_slashes():
+        return "ST101 - File's ID contains slashes - please remove."
+
+    @staticmethod
     def file_id_changed(file_path, old_version_id, new_file_id):
         return f"ST102 - The file id for {file_path} has changed from {old_version_id} to {new_file_id}"
 
     @staticmethod
-    def description_missing_from_conf_json(problematic_instances):
-        return "CJ100 - Those instances don't have description:\n{}".format('\n'.join(problematic_instances))
+    def from_version_modified(file_path):
+        return "ST103 - {}: You've added fromversion to an existing " \
+               "file in the system, this is not allowed, please undo.".format(file_path)
+
+    @staticmethod
+    def wrong_file_extension(file_extension, accepted_extensions):
+        return "ST104 - File extension {} is not valid. accepted {}".format(file_extension, accepted_extensions)
+
+    @staticmethod
+    def invalid_file_path(file_path):
+        return f"ST105 - Found incompatible file path: {file_path}."
+
+    @staticmethod
+    def no_yml_file(file_path):
+        return "No yml files were found in {} directory.".format(file_path)
+
+    @staticmethod
+    def wrong_filename(filepath, file_type):
+        return '{} is not a valid {} filename.'.format(filepath, file_type)
+
+    @staticmethod
+    def wrong_path(filepath):
+        return "{} is not a valid filepath.".format(filepath)
+
+    @staticmethod
+    def beta_in_str(file_path, field):
+        return "{}: Field '{}' should NOT contain the substring \"beta\" in a new beta integration. " \
+               "please change the id in the file.".format(field, file_path)
+
+    @classmethod
+    def breaking_backwards_no_old_script(cls, e):
+        return "{}\n{}, Could not find the old file.".format(cls.BACKWARDS, str(e))
+
+    @staticmethod
+    def id_might_changed():
+        return "ID might have changed, please make sure to check you have the correct one."
+
+    @staticmethod
+    def id_changed(file_path):
+        return "{}: You've changed the ID of the file, please undo.".format(file_path)
+
+    @staticmethod
+    def might_need_release_notes(file_path):
+        return "{}: You might need RN in file, please make sure to check that.".format(file_path)
+
+    @staticmethod
+    def unknown_file(file_path):
+        return "{}:  File type is unknown, check it out.".format(file_path)
+
+    @staticmethod
+    def wrong_default_parameter(param_name):
+        return Errors.wrong_default_parameter_not_empty(param_name, "''")
+
+    @staticmethod
+    def no_common_server_python(path):
+        return "Could not get CommonServerPythonScript.py file. Please download it manually from {} and " \
+               "add it to the root of the repository.".format(path)
 
 
 # dirs

@@ -199,8 +199,7 @@ class DockerImageValidator(object):
         """
         if yml_docker_image:
             if yml_docker_image.startswith('devdemisto/'):
-                print_warning('docker image must be a demisto docker image. When the docker image is ready,'
-                              ' please rename it to: demisto/<image>:<tag>')
+                print_warning(Errors.not_demisto_docker())
             elif not yml_docker_image.startswith('demisto/'):
                 print_error(Errors.not_demisto_docker())
                 return ''

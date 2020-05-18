@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_YML_REGEX,
     PACKS_LAYOUTS_REGEX, PACKS_PACKAGE_META_REGEX, PACKS_PLAYBOOK_YML_REGEX,
     PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
-    PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX)
+    PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX, PLAYBOOK_CHANGELOG_REGEX)
 from demisto_sdk.commands.common.tools import checked_type
 
 test_packs_regex_params = [
@@ -35,6 +35,16 @@ test_packs_regex_params = [
     (['Packs/XDR/CHANGELOG.md'], ['Packs/Integrations/XDR/CHANGELOG.md'], [PACKS_CHANGELOG_REGEX]),
     (['Packs/Sade/IncidentFields/yarden.json'], ['Packs/Sade/IncidentFields/yarden-json.txt'],
      [PACKS_INCIDENT_FIELDS_REGEX]),
+    (
+        ['Packs/XDR/Playbooks/playbook-Test.yml', 'Packs/XDR/Playbooks/Test.yml'],
+        ['Packs/XDR/Playbooks/playbook-Test_CHANGELOG.md'],
+        [PACKS_PLAYBOOK_YML_REGEX]
+    ),
+    (
+        ['Packs/XDR/Playbooks/playbook-Test_CHANGELOG.md'],
+        ['Packs/XDR/Playbooks/CHANGELOG.md', 'Packs/XDR/Playbooks/Test.yml'],
+        [PLAYBOOK_CHANGELOG_REGEX]
+    )
 ]
 
 

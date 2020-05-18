@@ -90,7 +90,7 @@ class SecretsValidator(object):
                 for file_name in secrets_found:
                     secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
                     secrets_found_string += '\nThe following expressions were marked as secrets: \n'
-                    secrets_found_string += json.dumps(secrets_found[file_name], indent=4)
+                    secrets_found_string += self.reformat_secrets_output(secrets_found[file_name])
 
                 if not is_circle:
                     secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
@@ -103,6 +103,17 @@ class SecretsValidator(object):
                                         'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
                 print_error(secrets_found_string)
         return secrets_found
+
+    def reformat_secrets_output(self, secrets_list):
+        """
+        Get a list of secrets and reformat it's output
+        :param secrets_list: List of secrets
+        :return: str: List of secrets
+        """
+        secrets_str = ''
+        for secret in secrets_list:
+            secrets_str += ''.join(map(str, secret)) + '\n'
+        return secrets_str
 
     def get_all_diff_text_files(self, branch_name, is_circle):
         """

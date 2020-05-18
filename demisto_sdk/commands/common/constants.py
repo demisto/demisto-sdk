@@ -204,10 +204,9 @@ class Errors:
     @staticmethod
     def no_docker_tag():
         return f'DO104 - The docker image in your integration/script does not have a tag.' \
-               f'Please create or update to an updated versioned image\n' \
- \
-            @staticmethod
+               f'Please create or update to an updated versioned image\n'
 
+    @staticmethod
     def docker_not_formatted_correctly(docker_image):
         return f'DO105 - The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 

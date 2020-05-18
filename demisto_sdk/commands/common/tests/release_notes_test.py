@@ -47,6 +47,7 @@ class RNValidationTest:
         mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
         validator = get_validator(release_notes)
         assert validator.is_file_valid() == expected_result
+        assert 1 == 2
 
     @staticmethod
     def test_init():

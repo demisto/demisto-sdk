@@ -156,7 +156,7 @@ class TestIntegrationValidator:
         assert validator.is_valid is False
 
         error_message = print_error.call_args[0][0]
-        assert error_message == 'IN118 - : The parameter \'test\' of the file is duplicated, please remove one of its ' \
+        assert error_message == 'IN114 - : The parameter \'test\' of the file is duplicated, please remove one of its ' \
                                 'appearances.'
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]

@@ -472,8 +472,11 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
-                unifier = Unifier(os.path.dirname(file_path))
-                yml_path, _ = unifier.get_script_package_data()
+                if file_path.endswith('.yml'):
+                    yml_path = file_path
+                else:
+                    unifier = Unifier(os.path.dirname(file_path))
+                    yml_path, _ = unifier.get_script_package_data()
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)

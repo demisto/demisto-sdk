@@ -16,20 +16,20 @@ import re
 from glob import glob
 
 import click
+import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
-    CHECKED_TYPES_REGEXES, CODE_FILES_REGEX, DIR_LIST_FOR_REGULAR_ENTETIES,
+    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
+    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, DIR_LIST_FOR_REGULAR_ENTETIES,
     IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
     JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_DIRECTORIES,
-    PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
-    SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR,
-    TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
-    YML_INTEGRATION_REGEXES, Errors)
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_RELEASE_NOTES_REGEX,
+    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX,
+    TEST_PLAYBOOK_REGEX, TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES,
+    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES, Errors)
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -79,16 +79,16 @@ class FilesValidator:
         use_git (bool): Whether to use git or not.
         is_circle: (bool): Whether the validation was initiated by CircleCI or not.
         print_ignored_files (bool): Whether to print the files that were ignored during the validation or not.
-        validate_conf_json (bool): Whether to validate conf.json or not.
+        skip_conf_json (bool): Whether to validate conf.json or not.
         validate_id_set (bool): Whether to validate id_set or not.
         file_path (string): If validating a specific file, golds it's path.
         validate_all (bool) Whether to validate all files or not.
         configuration (Configuration): Configurations for IDSetValidator.
     """
 
-    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, is_circle=False,
-                 print_ignored_files=False, validate_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, skip_pack_rn_validation=False, configuration=Configuration()):
+    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
+                 print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+                 validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
@@ -101,16 +101,22 @@ class FilesValidator:
         self._is_valid = True
         self.configuration = configuration
         self.is_backward_check = is_backward_check
-        self.is_circle = is_circle
+        self.is_circle = only_committed_files
         self.print_ignored_files = print_ignored_files
-        self.validate_conf_json = validate_conf_json
+        self.skip_conf_json = skip_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
         self.skip_pack_rn_validation = skip_pack_rn_validation
         self.changed_pack_data = set()
 
-        if self.validate_conf_json:
+        self.is_private_repo = is_private_repo
+        if is_private_repo:
+            print('Running in a private repository')
+            self.skip_conf_json = True  # private repository don't have conf.json file
+
+        if not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator()
+
         if self.validate_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=self.configuration)
 
@@ -250,14 +256,14 @@ class FilesValidator:
             modified_files = modified_files - set(nc_deleted_files)
             added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
 
-        packs = self.get_packs(modified_files, added_files)
+        changed_files = modified_files.union(added_files)
+        packs = self.get_packs(changed_files)
 
         return modified_files, added_files, old_format_files, packs
 
     @staticmethod
-    def get_packs(modified_files, added_files):
+    def get_packs(changed_files):
         packs = set()
-        changed_files = modified_files.union(added_files)
         for changed_file in changed_files:
             if isinstance(changed_file, tuple):
                 changed_file = changed_file[1]
@@ -285,11 +291,7 @@ class FilesValidator:
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
-        changed_packs = set()
-        for file_path in modified_files:
-            changed_pack = get_pack_name(file_path)
-            if changed_pack:
-                changed_packs.add(changed_pack)
+        changed_packs = self.get_packs(modified_files)
         for file_path in modified_files:
             old_file_path = None
             # modified_files are returning from running git diff.
@@ -434,7 +436,6 @@ class FilesValidator:
         for file_path in added_files:
             if ('ReleaseNotes' in file_path) and self.skip_pack_rn_validation:
                 continue
-            pack_name = get_pack_name(file_path)
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue
@@ -524,6 +525,7 @@ class FilesValidator:
                 self.old_is_valid_release_notes(file_path)
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
+                pack_name = get_pack_name(file_path)
                 added_rn.add(pack_name)
                 print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path)
@@ -674,18 +676,43 @@ class FilesValidator:
                         'Layouts and Descriptions')
             self._is_valid = False
 
-    def validate_all_files(self):
+    def validate_all_files(self, skip_conf_json):
         print('Validating all files')
-        print('Validating conf.json')
-        conf_json_validator = ConfJsonValidator()
-        if not conf_json_validator.is_valid_conf_json():
-            self._is_valid = False
+
+        if not skip_conf_json:
+            print('Validating conf.json')
+            conf_json_validator = ConfJsonValidator()
+            if not conf_json_validator.is_valid_conf_json():
+                self._is_valid = False
+
         packs = {os.path.basename(pack) for pack in glob(f'{PACKS_DIR}/*')}
         self.validate_pack_unique_files(packs)
         all_files_to_validate = set()
-        for directory in [PACKS_DIR, BETA_INTEGRATIONS_DIR, TEST_PLAYBOOKS_DIR]:
-            all_files_to_validate |= {file for file in glob(fr'{directory}/**', recursive=True) if
-                                      not should_file_skip_validation(file)}
+
+        # go over packs
+        for pack_name in os.listdir(PACKS_DIR):
+            pack_path = os.path.join(PACKS_DIR, pack_name)
+
+            for dir_name in os.listdir(pack_path):
+                dir_path = os.path.join(pack_path, dir_name)
+
+                if dir_name not in CONTENT_ENTITIES_DIRS:
+                    continue
+
+                for file_name in os.listdir(dir_path):
+                    file_path = os.path.join(dir_path, file_name)
+
+                    is_yml_file = file_name.endswith('.yml') and \
+                        dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+
+                    is_json_file = file_name.endswith('.json') and \
+                        dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+
+                    is_md_file = file_name.endswith('.md')
+
+                    if is_yml_file or is_json_file or is_md_file:
+                        all_files_to_validate.add(file_path)
+
         print('Validating all Pack and Beta Integration files')
         for index, file in enumerate(sorted(all_files_to_validate)):
             click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
@@ -704,25 +731,29 @@ class FilesValidator:
     def validate_all_files_schema(self):
         """Validate all files in the repo are in the right format."""
         # go over packs
-        for root, dirs, _ in os.walk(PACKS_DIR):
-            for dir_in_dirs in dirs:
-                for directory in PACKS_DIRECTORIES:
-                    for inner_root, inner_dirs, files in os.walk(os.path.join(root, dir_in_dirs, directory)):
-                        for inner_dir in inner_dirs:
-                            if inner_dir.startswith('.'):
-                                continue
+        for pack_name in os.listdir(PACKS_DIR):
+            pack_path = os.path.join(PACKS_DIR, pack_name)
 
-                            project_dir = os.path.join(inner_root, inner_dir)
-                            _, file_path = get_yml_paths_in_dir(os.path.normpath(project_dir),
-                                                                Errors.no_yml_file(project_dir))
-                            if file_path:
-                                # check if the file_path is part of test_data yml
-                                if any(test_file in file_path.lower() for test_file in TESTS_DIRECTORIES):
-                                    continue
-                                print("Validating {}".format(file_path))
-                                structure_validator = StructureValidator(file_path)
-                                if not structure_validator.is_valid_scheme():
-                                    self._is_valid = False
+            for dir_name in os.listdir(pack_path):
+                dir_path = os.path.join(pack_path, dir_name)
+
+                if dir_name not in CONTENT_ENTITIES_DIRS:
+                    continue
+
+                for file_name in os.listdir(dir_path):
+                    file_path = os.path.join(dir_path, file_name)
+
+                    is_yml_file = file_name.endswith('.yml') and \
+                        dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+
+                    is_json_file = file_name.endswith('.json') and \
+                        dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+
+                    if is_yml_file or is_json_file:
+                        print("Validating {}".format(file_path))
+                        self.is_backward_check = False  # if not using git, no need for BC checks
+
+                        self.validate_added_files({file_path}, file_type=find_type(file_path))
 
         # go over regular content entities
         for directory in DIR_LIST_FOR_REGULAR_ENTETIES:
@@ -763,11 +794,13 @@ class FilesValidator:
             (bool). Whether the structure is valid or not.
         """
         if self.validate_all:
-            self.validate_all_files()
+            self.validate_all_files(self.skip_conf_json)
             return self._is_valid
-        if self.validate_conf_json:
+
+        if not self.skip_conf_json:
             if not self.conf_json_validator.is_valid_conf_json():
                 self._is_valid = False
+
         if self.use_git:
             if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                                  not self.branch_name.startswith('20.')):

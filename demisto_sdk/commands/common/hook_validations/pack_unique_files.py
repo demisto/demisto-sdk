@@ -8,10 +8,10 @@ import re
 
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_DEPENDENCIES,
-    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS,
-    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME, Errors)
+    PACK_METADATA_DESC, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
+    PACK_METADATA_NAME, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PACKS_WHITELIST_FILE_NAME, Errors)
 from demisto_sdk.commands.common.tools import pack_name_to_path
 
 
@@ -141,17 +141,24 @@ class PackUniqueFilesValidator:
             if missing_fields:
                 self._add_error(Errors.missing_field_iin_pack_metadata(missing_fields))
                 return False
-            dependencies_field = metadata[PACK_METADATA_DEPENDENCIES]
+            # check validity of pack metadata mandatory fields
+            name_field = metadata.get(PACK_METADATA_NAME, '').lower()
+            if not name_field or 'fill mandatory field' in name_field:
+                self._add_error(
+                    'Pack metadata {} field is not valid. Please fill valid pack name.'.format(PACK_METADATA_NAME))
+                return False
+            description_name = metadata.get(PACK_METADATA_DESC, '').lower()
+            if not description_name or 'fill mandatory field' in description_name:
+                self._add_error(
+                    'Pack metadata {} field is not valid. Please fill valid pack description.'.format(
+                        PACK_METADATA_DESC))
+                return False
+            # check non mandatory dependency field
+            dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
                 self._add_error(Errors.dependencies_field_should_be_dict())
                 return False
-            # TODO: add it back after #23546 is ready.
-            # price_field = metadata.get(PACK_METADATA_PRICE)
-            # try:
-            #     int(price_field)
-            # except Exception:
-            #     self._add_error('The price field in the pack must be a number.')
-            #     return False
+            # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
                                PACK_METADATA_USE_CASES):
                 field = metadata[list_field]

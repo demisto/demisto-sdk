@@ -1,4 +1,9 @@
 # Changelog
+* Added pack release notes generation and validation.
+* Improved pack metadata validation.
+* Fixed an issue in **validate** where renamed files caused an error
+
+#### 1.0.4
 * Fix the **format** command to update the `id` field to be equal to `details` field in indicator-type files, and to `name` field in incident-type & dashboard files.
 * Fixed a bug in the **validate** command for layout files that had `sortValues` fields.
 * Fixed a bug in the **format** command where `playbookName` field was not always present in the file.
@@ -7,6 +12,7 @@
 * Added support for IndicatorTypes directory in packs (for `reputation` files, instead of Misc).
 * Fixed parsing playbook condition names as string instead of boolean in **validate** command
 * Improved image validation in YAML files.
+* Removed validation for else path in playbook condition tasks.
 
 #### 1.0.3
 * Fixed a bug in the **format** command where comments were being removed from YAML files.

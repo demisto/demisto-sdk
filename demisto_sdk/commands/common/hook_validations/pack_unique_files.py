@@ -135,11 +135,11 @@ class PackUniqueFilesValidator:
                 return False
             metadata = json.loads(pack_meta_file_content)
             if not isinstance(metadata, dict):
-                self._add_error(Errors.pack_metadata_should_be_dict())
+                self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file))
                 return False
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
-                self._add_error(Errors.missing_field_iin_pack_metadata(missing_fields))
+                self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields))
                 return False
             # check validity of pack metadata mandatory fields
             name_field = metadata.get(PACK_METADATA_NAME, '').lower()
@@ -153,7 +153,7 @@ class PackUniqueFilesValidator:
             # check non mandatory dependency field
             dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
-                self._add_error(Errors.dependencies_field_should_be_dict())
+                self._add_error(Errors.dependencies_field_should_be_dict(self.pack_meta_file))
                 return False
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
@@ -162,7 +162,7 @@ class PackUniqueFilesValidator:
                 if field and len(field) == 1:
                     value = field[0]
                     if not value:
-                        self._add_error(Errors.empty_field_in_pack_metadata(list_field))
+                        self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field))
                         return False
         except (ValueError, TypeError):
             self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file))

@@ -81,7 +81,7 @@ class PlaybookValidator(BaseValidator):
         """
         rolename = self.current_file.get('rolename', None)
         if rolename:
-            print_error(Errors.playbook_cant_have_rolename())
+            print_error(Errors.playbook_cant_have_rolename(self.file_path))
             self.is_valid = False
             return False
         return True
@@ -141,12 +141,12 @@ class PlaybookValidator(BaseValidator):
                 # else doesn't have a path, skip error
                 if '#DEFAULT#' == e.args[0]:
                     continue
-                print_error(Errors.playbook_unreachable_condition(task.get('id'), next_task_branch))
+                print_error(Errors.playbook_unreachable_condition(self.file_path, task.get('id'), next_task_branch))
                 self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            print_error(Errors.playbook_unhandled_condition(task.get('id'), task_condition_labels))
+            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), task_condition_labels))
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -176,11 +176,11 @@ class PlaybookValidator(BaseValidator):
                 if next_task_id:
                     unhandled_reply_options.remove(next_task_branch.upper())
             except KeyError:
-                print_error(Errors.playbook_unreachable_condition(task.get('id'), next_task_branch))
+                print_error(Errors.playbook_unreachable_condition(self.file_path, task.get('id'), next_task_branch))
                 self.is_valid = is_all_condition_branches_handled = False
 
         if unhandled_reply_options:
-            print_error(Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options))
+            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), unhandled_reply_options))
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -196,11 +196,11 @@ class PlaybookValidator(BaseValidator):
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
         if '#default#' not in next_tasks:
-            print_error(Errors.playbook_unhandled_condition(task.get('id'), {'else'}))
+            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), {'else'}))
             self.is_valid = is_all_condition_branches_handled = False
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
-            print_error(Errors.playbook_unhandled_condition(task.get('id'), {}))
+            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), {}))
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -222,5 +222,5 @@ class PlaybookValidator(BaseValidator):
                 next_tasks_bucket.update(next_task_ids)
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
-            print_error(Errors.playbook_unconnected_tasks(orphan_tasks))
+            print_error(Errors.playbook_unconnected_tasks(self.file_path, orphan_tasks))
         return tasks_bucket.issubset(next_tasks_bucket)

@@ -158,7 +158,7 @@ class Errors:
 
     @staticmethod
     def missing_release_notes(file_path, rn_path):
-        return 'RN100 - {}:  is missing releaseNotes, Please add it under {}'.format(file_path, rn_path)
+        return 'RN100 - {}:  is missing release notes, Please add it under {}'.format(file_path, rn_path)
 
     @staticmethod
     def wrong_file_extension(file_extension, accepted_extensions):
@@ -267,7 +267,8 @@ class Errors:
 
     @staticmethod
     def test_not_in_conf_json(file_id):
-        return f"CJ101 - You've failed to add the {file_id} to conf.json"
+        return f"CJ101 - You've failed to add the {file_id} to conf.json\n" \
+               f"see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
 
     @staticmethod
     def remove_field_from_dashboard(file_path, field):
@@ -330,11 +331,12 @@ class Errors:
 
     @staticmethod
     def no_docker_tag():
-        return 'DO104 - The docker image in your integration/script does not have a tag, please attach the latest tag'
+        return f'DO104 - The docker image in your integration/script does not have a tag.' \
+               f'Please create or update to an updated versioned image\n' \
 
     @staticmethod
     def docker_not_formatted_correctly(docker_image):
-        return f'DO105 - The docker image: {docker_image} is not of format - demisto/image_name'
+        return f'DO105 - The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
     @staticmethod
     def id_set_conflicts():
@@ -483,47 +485,47 @@ class Errors:
         return 'PU105 - Pack metadata is empty.'
 
     @staticmethod
-    def pack_metadata_should_be_dict():
-        return 'PU106 - Pack metadata should be a dictionary.'
+    def pack_metadata_should_be_dict(pack_meta_file):
+        return f'PU106 - Pack metadata {pack_meta_file} should be a dictionary.'
 
     @staticmethod
     def pack_metadata_field_invalid():
         return f'PU109 - Pack metadata {PACK_METADATA_DESC} field is not valid. Please fill valid pack description.'
 
     @staticmethod
-    def missing_field_iin_pack_metadata(missing_fields):
-        return f'PU107 - Missing fields in the pack metadata: {missing_fields}'
+    def missing_field_iin_pack_metadata(pack_meta_file, missing_fields):
+        return f'PU107 - {pack_meta_file} - Missing fields in the pack metadata: {missing_fields}'
 
     @staticmethod
-    def dependencies_field_should_be_dict():
-        return 'PU110 - The dependencies field in the pack must be a dictionary.'
+    def dependencies_field_should_be_dict(pack_meta_file):
+        return f'PU110 - {pack_meta_file} - The dependencies field in the pack must be a dictionary.'
 
     @staticmethod
-    def empty_field_in_pack_metadata(list_field):
-        return f'PU111 - Empty value in the {list_field} field.'
+    def empty_field_in_pack_metadata(pack_meta_file, list_field):
+        return f'PU111 - {pack_meta_file} - Empty value in the {list_field} field.'
 
     @staticmethod
     def pack_metadata_isnt_json(pack_meta_file):
         return f'PU112 - Could not parse {pack_meta_file} file contents to json format'
 
     @staticmethod
-    def playbook_cant_have_rolename():
-        return "PB100 - Playbook can not have a rolename."
+    def playbook_cant_have_rolename(file_path):
+        return f"PB100 - {file_path} - Playbook can not have a rolename."
 
     @staticmethod
-    def playbook_unreachable_condition(task_id, next_task_branch):
-        return f'PB101 - Playbook conditional task with id:{task_id} has task with unreachable ' \
+    def playbook_unreachable_condition(file_path, task_id, next_task_branch):
+        return f'PB101 - {file_path} Playbook conditional task with id:{task_id} has task with unreachable ' \
                f'next task condition "{next_task_branch}". Please remove this task or add ' \
                f'this condition to condition task with id:{task_id}.'
 
     @staticmethod
-    def playbook_unhandled_condition(task_id, task_condition_labels):
-        return f'PB102 - Playbook conditional task with id:{task_id} has unhandled ' \
+    def playbook_unhandled_condition(file_path, task_id, task_condition_labels):
+        return f'PB102 - {file_path} Playbook conditional task with id:{task_id} has unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 
     @staticmethod
-    def playbook_unconnected_tasks(orphan_tasks):
-        return f'PB103 - The following tasks ids have no previous tasks: {orphan_tasks}'
+    def playbook_unconnected_tasks(file_path, orphan_tasks):
+        return f'PB103 - {file_path} The following tasks ids have no previous tasks: {orphan_tasks}'
 
     @staticmethod
     def readme_error(file_path, stderr):

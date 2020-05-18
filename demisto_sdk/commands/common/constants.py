@@ -21,62 +21,62 @@ class Errors:
 
     @staticmethod
     def wrong_display_name(param_name, param_display):
-        return 'IN101 - The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
+        return 'IN100 - The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
     @staticmethod
     def wrong_default_parameter_not_empty(param_name, default_value):
-        return 'IN102 - The default value of the {} parameter should be {}'.format(param_name, default_value)
+        return 'IN101 - The default value of the {} parameter should be {}'.format(param_name, default_value)
 
     @staticmethod
     def wrong_required_value(param_name):
-        return 'IN103 - The required field of the {} parameter should be False'.format(param_name)
+        return 'IN102 - The required field of the {} parameter should be False'.format(param_name)
 
     @staticmethod
     def wrong_required_type(param_name):
-        return 'IN104 - The type field of the {} parameter should be 8'.format(param_name)
+        return 'IN103 - The type field of the {} parameter should be 8'.format(param_name)
 
     @staticmethod
     def wrong_category(file_path, category):
-        return "IN105 - {}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
+        return "IN104 - {}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
             .format(file_path, category, '\n'.join(INTEGRATION_CATEGORIES))
 
     @staticmethod
     def wrong_default_argument(file_path, arg_name, command_name):
-        return "IN106 - {}: The argument '{}' of the command '{}' is not configured as default" \
+        return "IN105 - {}: The argument '{}' of the command '{}' is not configured as default" \
             .format(file_path, arg_name, command_name)
 
     @staticmethod
     def no_default_arg(file_path, command_name):
-        return "IN107 - {}: Could not find default argument " \
+        return "IN106 - {}: Could not find default argument " \
                "{} in command {}".format(file_path, command_name, command_name)
 
     @staticmethod
     def missing_reputation(file_path, command_name, reputation_output, context_standard):
-        return "IN110 - {}: The outputs of the reputation command {} aren't valid. The {} outputs is missing. " \
+        return "IN107 - {}: The outputs of the reputation command {} aren't valid. The {} outputs is missing. " \
                "Fix according to context standard {} " \
             .format(file_path, command_name, reputation_output, context_standard)
 
     @staticmethod
     def wrong_subtype(file_name):
-        return "IN111 - {}: The subtype for our yml files should be either python2 or python3, " \
+        return "IN108 - {}: The subtype for our yml files should be either python2 or python3, " \
                "please update the file.".format(file_name)
 
     @classmethod
     def beta_in_id(cls, file_path):
-        return "IN113 - " + cls.beta_in_str(file_path, 'id')
+        return "IN109 - " + cls.beta_in_str(file_path, 'id')
 
     @classmethod
     def beta_in_name(cls, file_path):
-        return "IN114 - " + cls.beta_in_str(file_path, 'name')
+        return "IN110 - " + cls.beta_in_str(file_path, 'name')
 
     @staticmethod
     def beta_field_not_found(file_path):
-        return "IN115 - {}: Beta integration yml file should have " \
+        return "IN111 - {}: Beta integration yml file should have " \
                "the field \"beta: true\", but was not found in the file.".format(file_path)
 
     @staticmethod
     def no_beta_in_display(file_path):
-        return "IN116 - {} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
+        return "IN112 - {} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
                "but was not found in the file.".format(file_path)
 
     @staticmethod
@@ -85,59 +85,59 @@ class Errors:
         if command_name:
             err_msg += " in '{}'.".format(command_name)
         err_msg += ", please remove one of its appearances."
-        return "IN117 - " + err_msg
+        return "IN113 - " + err_msg
 
     @staticmethod
     def duplicate_param(param_name, file_path):
-        return "IN118 - {}: The parameter '{}' of the " \
+        return "IN114 - {}: The parameter '{}' of the " \
                "file is duplicated, please remove one of its appearances.".format(file_path, param_name)
 
     @staticmethod
     def invalid_context_output(command_name, output):
-        return f'IN120 - Invalid context output for command {command_name}. Output is {output}'
+        return f'IN115 - Invalid context output for command {command_name}. Output is {output}'
 
     @staticmethod
     def added_required_fields(file_path, field):
-        return "IN122 - You've added required fields in the file '{}', the field is '{}'".format(file_path, field)
+        return "IN116 - You've added required fields in the file '{}', the field is '{}'".format(file_path, field)
 
     @staticmethod
     def not_used_display_name(file_path, field_name):
-        return "IN123 - The display details for {} will not be used " \
+        return "IN117 - The display details for {} will not be used " \
                "in the file {} due to the type of the parameter".format(field_name, file_path)
 
     @staticmethod
     def empty_display_configuration(file_path, field_name):
-        return "IN124 - No display details were entered for the field {} in the file {}.".format(field_name, file_path)
+        return "IN118 - No display details were entered for the field {} in the file {}.".format(field_name, file_path)
 
     @staticmethod
     def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "IN125 - {} is a feed and has wrong fromversion. got `{}` expected `{}`" \
+        return "IN119 - {} is a feed and has wrong fromversion. got `{}` expected `{}`" \
             .format(file_path, given_fromversion, needed_from_version)
 
     @staticmethod
     def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
-        return (f'IN126 - {file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
+        return (f'IN120 - {file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
                 f' Found version: {given_fromversion}')
 
     @staticmethod
     def parameter_missing_from_yml(file_path, name, correct_format):
-        return f'IN127 - {file_path}: A required parameter "{name}" is missing or malformed ' \
+        return f'IN121 - {file_path}: A required parameter "{name}" is missing or malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should be as follows:\n{correct_format}'
 
     @staticmethod
     def parameter_missing_for_feed(file_path, name, correct_format):
-        return f'IN128 - {file_path} Feed Integration was detected A required ' \
+        return f'IN122 - {file_path} Feed Integration was detected A required ' \
                f'parameter "{name}" is missing or malformed in the YAML file.\n' \
                f'The correct format of the parameter should be as follows:\n{correct_format}'
 
     @staticmethod
     def invalid_v2_integration_name(file_path):
-        return f"IN129 - The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
+        return f"IN123 - The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
                f"e.g: Kenna v2, Jira v2"
 
     @staticmethod
     def found_hidden_param(parameter_name):
-        return f"IN130 - Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+        return f"IN124 - Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
 
     @staticmethod
     def invalid_v2_script_name(file_path):

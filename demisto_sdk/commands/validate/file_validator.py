@@ -438,7 +438,6 @@ class FilesValidator:
         for file_path in added_files:
             if ('ReleaseNotes' in file_path) and self.skip_pack_rn_validation:
                 continue
-            pack_name = get_pack_name(file_path)
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue
@@ -528,6 +527,7 @@ class FilesValidator:
                 self.old_is_valid_release_notes(file_path)
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
+                pack_name = get_pack_name(file_path)
                 added_rn.add(pack_name)
                 print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path)

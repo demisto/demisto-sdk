@@ -285,14 +285,15 @@ my_email = "fooo@someorg.com"
     def test_get_white_listed_items_pack(self, monkeypatch):
         monkeypatch.setattr('demisto_sdk.commands.secrets.secrets.PACKS_DIR', self.FILES_PATH)
         final_white_list, ioc_white_list, files_white_list = self.validator.get_white_listed_items(True, 'fake_pack')
-        assert final_white_list == {'https://www.demisto.com', 'https://api.zoom.us', 'PaloAltoNetworksXDR', 'ip-172-31-15-237'}
+        assert final_white_list == {'https://www.demisto.com', 'https://api.zoom.us', 'PaloAltoNetworksXDR',
+                                    'ip-172-31-15-237'}
         assert ioc_white_list == {'https://api.zoom.us'}
         assert files_white_list == set()
 
     def test_reformat_secrets_output(self):
         secrets_output = self.validator.reformat_secrets_output(self.FILE_HASH_LIST)
         assert secrets_output == '123c8fc6532ba547d7ef598' + '\n' + '456c8fc6532ba547d7bb5e880a' + '\n' \
-               + '789c8fc6532ba57ef5985bb5e' + '\n'
+            + '789c8fc6532ba57ef5985bb5e' + '\n'
 
         secrets_output = self.validator.reformat_secrets_output(self.MAIL_LIST)
         assert secrets_output == 'test1@gmail.com' + '\n' + 'test2@gmail.com' + '\n' + 'test3@gmail.com' + '\n'

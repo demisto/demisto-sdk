@@ -141,7 +141,7 @@ class Errors:
 
     @staticmethod
     def invalid_v2_script_name(file_path):
-        return f"SC103 - The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
+        return f"SC100 - The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
                f" e.g: DBotTrainTextClassifierV2"
 
     @staticmethod

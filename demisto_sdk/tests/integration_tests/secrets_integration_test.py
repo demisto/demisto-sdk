@@ -28,20 +28,20 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
     mock_git(mocker)
-    # Change working dir to repo
-    os.chdir(integration.repo_path)
     mocker.patch(
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[
             integration.yml_path
         ]
     )
-    integration.write_yml({'valid yml file': 'really'})
+    integration.create_default_integration()
+    # Change working dir to repo
+    os.chdir(integration.repo_path)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path])
-    assert result.exit_code == 0
     assert "Starting secrets detection" in result.output
     assert "Finished validating secrets, no secrets were found." in result.output
+    assert result.exit_code == 0
     assert result.stderr == ""
 
 
@@ -62,7 +62,7 @@ def test_integration_secrets_integration_negative(mocker, repo):
     integration = pack.create_integration('sample')
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(integration.repo_path)
+    os.chdir(repo.path)
     secret_string = 'Dynamics365ForMarketingEmail'
     integration.write_yml({'this is a secrets': secret_string})
     mocker.patch(
@@ -99,7 +99,7 @@ def test_integration_secrets_integration_positive(mocker, repo):
     integration = pack.create_integration('sample')
     os.chdir(integration.repo_path)
     secret_string = 'email@white.listed'
-    integration.write_yml({'this is a secrets': secret_string})
+    integration.update_description(secret_string)
     repo.secrets.write_secrets(
         generic_strings=[
             secret_string

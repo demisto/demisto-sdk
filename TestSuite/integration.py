@@ -91,6 +91,14 @@ class Integration:
         description.close()
         code.close()
 
+    def update_yml(self, update_obj: dict):
+        yml_contents = yaml.load(self._yml_file)
+        yml_contents.update(update_obj)
+        self.write_yml(yml_contents)
+
+    def update_description(self, description: str):
+        self.update_yml({'description': description})
+
     @property
     def py_path(self):
         return os.path.relpath(self.py_abs_path, self._repo.path)

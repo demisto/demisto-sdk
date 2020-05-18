@@ -92,10 +92,13 @@ class FilesValidator:
         self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
+        self.skip_pack_rn_validation = skip_pack_rn_validation
         if self.use_git:
             print('Using git')
             self.branch_name = self.get_current_working_branch()
             print(f'Running validation on branch {self.branch_name}')
+            if self.branch_name == 'master' or 'test-sdk-master':
+                self.skip_pack_rn_validation = True
 
         self.prev_ver = prev_ver
         self._is_valid = True
@@ -106,7 +109,6 @@ class FilesValidator:
         self.skip_conf_json = skip_conf_json
         self.validate_id_set = validate_id_set
         self.file_path = file_path
-        self.skip_pack_rn_validation = skip_pack_rn_validation
         self.changed_pack_data = set()
 
         self.is_private_repo = is_private_repo

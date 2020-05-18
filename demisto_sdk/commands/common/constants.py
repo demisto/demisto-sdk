@@ -419,7 +419,7 @@ class Errors:
 
     @staticmethod
     def incident_type_integer_field(file_path, field):
-        return f'IT00 - {file_path}: the field {field} needs to be a positive integer. Please add it.\n'
+        return f'IT100 - {file_path}: the field {field} needs to be a positive integer. Please add it.\n'
 
     @staticmethod
     def pack_file_does_not_exist(file_name):

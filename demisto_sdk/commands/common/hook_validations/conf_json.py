@@ -1,5 +1,6 @@
 import json
 
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import print_error
 
 
@@ -45,7 +46,7 @@ class ConfJsonValidator:
 
         if problematic_instances:
             self._is_valid = False
-            print("Those instances don't have description:\n{}".format('\n'.join(problematic_instances)))
+            print_error(Errors.description_missing_from_conf_json(problematic_instances))
 
         return self._is_valid
 
@@ -64,5 +65,5 @@ class ConfJsonValidator:
             if file_id == playbook_id:
                 return True
 
-        print_error("You've failed to add the {} to conf.json".format(file_id))
+        print_error(Errors.test_not_in_conf_json(file_id))
         return False

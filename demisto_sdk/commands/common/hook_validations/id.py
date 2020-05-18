@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATION_REGEX,
                                                    SCRIPT_REGEX,
                                                    SCRIPT_YML_REGEX,
                                                    TEST_PLAYBOOK_REGEX,
-                                                   TEST_SCRIPT_REGEX)
+                                                   TEST_SCRIPT_REGEX, Errors)
 from demisto_sdk.commands.common.tools import (collect_ids,
                                                get_script_or_integration_id,
                                                print_error)
@@ -62,8 +62,7 @@ class IDSetValidator:
                 id_set = json.load(id_set_file)
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
-                    print_error("You probably merged from master and your id_set.json has conflicts. "
-                                "Run `demisto-sdk create-id-set`, it should reindex your id_set.json")
+                    print_error(Errors.id_set_conflicts())
 
                 raise
 
@@ -94,13 +93,11 @@ class IDSetValidator:
                     checked_instance_fromversion == obj_from_version:
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
-                    print_error(f"You have failed to update id_set.json with the data of {file_path} "
-                                f"please run `demisto-sdk create-id-set`")
+                    print_error(Errors.id_set_not_updated(file_path))
                     return False
 
         if not is_found:
-            print_error(f"You have failed to update id_set.json with the data of {file_path} "
-                        f"please run `demisto-sdk create-id-set`")
+            print_error(Errors.id_set_not_updated(file_path))
 
         return is_found
 
@@ -184,9 +181,7 @@ class IDSetValidator:
                         break
 
         if is_duplicated:
-            print_error("The ID {} already exists, please update the file or update the "
-                        "id_set.json toversion field of this id to match the "
-                        "old occurrence of this id".format(obj_id))
+            print_error(Errors.duplicated_id(obj_id))
 
         return is_duplicated
 

@@ -1,6 +1,7 @@
 from typing import Dict
 
 import click
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_error
@@ -80,7 +81,7 @@ class PlaybookValidator(BaseValidator):
         """
         rolename = self.current_file.get('rolename', None)
         if rolename:
-            print_error("Playbook can not have a rolename.")
+            print_error(Errors.playbook_cant_have_rolename())
             self.is_valid = False
             return False
         return True
@@ -137,9 +138,7 @@ class PlaybookValidator(BaseValidator):
                     # Need to cast it to string because otherwise it's parsed as boolean
                     task_condition_labels.remove(str(next_task_branch).upper())
             except KeyError:
-                print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
-                            f'next task condition "{next_task_branch}". Please remove this task or add '
-                            f'this condition to condition task with id:{task.get("id")}.')
+                print_error(Errors.playbook_unreachable_condition(task.get('id'), next_task_branch))
                 self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
@@ -151,8 +150,7 @@ class PlaybookValidator(BaseValidator):
             except KeyError:
                 # there is no #default# task, so we didn't replace it with else and can continue
                 pass
-            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
-                        f'{",".join(map(lambda x: f"{str(x)}", task_condition_labels))}')
+            print_error(Errors.playbook_unhandled_condition(task.get('id'), task_condition_labels))
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -182,14 +180,11 @@ class PlaybookValidator(BaseValidator):
                 if next_task_id:
                     unhandled_reply_options.remove(next_task_branch.upper())
             except KeyError:
-                print_error(f'Playbook conditional Ask task with id:{task.get("id")} has task with unreachable '
-                            f'next task condition "{next_task_branch}". Please remove this task or add '
-                            f'this condition to condition task with id:{task.get("id")}.')
+                print_error(Errors.playbook_unreachable_condition(task.get('id'), next_task_branch))
                 self.is_valid = is_all_condition_branches_handled = False
 
         if unhandled_reply_options:
-            print_error(f'Playbook conditional Ask task with id:{task.get("id")} has unhandled condition: '
-                        f'{",".join(map(lambda x: f"{str(x)}", unhandled_reply_options))}')
+            print_error(Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options))
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -205,11 +200,11 @@ class PlaybookValidator(BaseValidator):
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
         if '#default#' not in next_tasks:
-            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: else')
+            print_error(Errors.playbook_unhandled_condition(task.get('id'), {'else'}))
             self.is_valid = is_all_condition_branches_handled = False
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
-            print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition')
+            print_error(Errors.playbook_unhandled_condition(task.get('id'), {}))
             self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -231,5 +226,5 @@ class PlaybookValidator(BaseValidator):
                 next_tasks_bucket.update(next_task_ids)
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
-            print_error(f'The following tasks ids have no previous tasks: {orphan_tasks}')
+            print_error(Errors.playbook_unconnected_tasks(orphan_tasks))
         return tasks_bucket.issubset(next_tasks_bucket)

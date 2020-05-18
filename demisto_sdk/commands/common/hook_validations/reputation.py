@@ -51,7 +51,7 @@ class ReputationValidator(BaseValidator):
         if LooseVersion(from_version) >= LooseVersion("5.5.0"):
             expiration = self.current_file.get('expiration', "")
             if not isinstance(expiration, int) or expiration < 0:
-                error_msg = f'{self.file_path}: expiration field should have a numeric value.'
+                error_msg = Errors.reputation_expiration_should_be_numeric(self.file_path)
                 is_valid = False
 
         if error_msg:
@@ -66,7 +66,7 @@ class ReputationValidator(BaseValidator):
         id_ = self.current_file.get('id', None)
         details = self.current_file.get('details', None)
         if not id_ or not details or id_ != details:
-            print_error(f'{self.file_path}: id and details fields are not equal.')
+            print_error(Errors.reputation_id_and_details_not_equal(self.file_path))
             is_valid = False
 
         return is_valid

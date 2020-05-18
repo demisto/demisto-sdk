@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import re
 
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import (
     old_get_latest_release_notes_text, old_get_release_notes_file_path,
     print_error, run_command)
@@ -66,7 +67,7 @@ class OldReleaseNotesValidator:
             if adds_in_diff - removes_in_diff > 0:
                 return True
 
-        print_error(F'No new comment has been added in the release notes file: {self.release_notes_path}')
+        print_error(Errors.no_new_release_notes(self.release_notes_path))
         return False
 
     def is_valid_one_line_comment(self, release_notes_comments):
@@ -99,8 +100,8 @@ class OldReleaseNotesValidator:
             return True
 
         elif len(release_notes_comments) <= 1:
-            print_error(F'File {self.release_notes_path} is not formatted according to '
-                        F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
+            print_error(Errors.release_notes_not_formatted_correctly(self.release_notes_path,
+                                                                     self.LINK_TO_RELEASE_NOTES_STANDARD))
             return False
 
         else:
@@ -108,8 +109,8 @@ class OldReleaseNotesValidator:
                 release_notes_comments = release_notes_comments[1:]
 
             if not self.is_valid_multi_line_comment(release_notes_comments):
-                print_error(F'File {self.release_notes_path} is not formatted according to '
-                            F'release notes standards.\nFix according to {self.LINK_TO_RELEASE_NOTES_STANDARD}')
+                print_error(Errors.release_notes_not_formatted_correctly(self.release_notes_path,
+                                                                         self.LINK_TO_RELEASE_NOTES_STANDARD))
                 return False
 
         return True
@@ -122,8 +123,7 @@ class OldReleaseNotesValidator:
         """
         # checks that release notes file exists and contains text
         if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
-            print_error(F'File {self.file_path} is missing release notes, '
-                        F'Please add it under {self.release_notes_path}')
+            print_error(Errors.missing_release_notes(self.file_path, self.release_notes_path))
             return False
 
         return True

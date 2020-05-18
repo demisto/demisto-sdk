@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+    PACKS_WHITELIST_FILE_NAME, Errors)
 from demisto_sdk.commands.common.tools import pack_name_to_path
 
 
@@ -56,7 +56,7 @@ class PackUniqueFilesValidator:
     def _is_pack_file_exists(self, file_name):
         """Check if .secrets-ignore exists"""
         if not os.path.isfile(self._get_pack_file_path(file_name)):
-            self._add_error('"{}" file does not exist, create one in the root of the pack'.format(file_name))
+            self._add_error(Errors.pack_file_does_not_exist(file_name))
             return False
 
         return True
@@ -67,9 +67,9 @@ class PackUniqueFilesValidator:
             with io.open(self._get_pack_file_path(file_name), mode="r", encoding="utf-8") as file:
                 return file.read()
         except IOError:
-            self._add_error('Could not open "{}" file'.format(file_name))
+            self._add_error(Errors.cant_open_pack_file(file_name))
         except ValueError:
-            self._add_error('Could not read the contents of "{}" file'.format(file_name))
+            self._add_error(Errors.cant_read_pack_file(file_name))
 
         return False
 
@@ -80,7 +80,7 @@ class PackUniqueFilesValidator:
             if file_content:
                 return file_content.split(delimiter)
         except ValueError:
-            self._add_error('Could not parse the contents of "{}" file into a list'.format(file_name))
+            self._add_error(Errors.cant_parse_pack_file_to_list(file_name))
 
         return False
 
@@ -114,7 +114,7 @@ class PackUniqueFilesValidator:
             if pack_ignore_regex_list and all(re.compile(regex) for regex in pack_ignore_regex_list):
                 return True
         except re.error:
-            self._add_error('Detected none valid regex in {} file'.format(self.pack_ignore_file))
+            self._add_error(Errors.pack_file_bad_format(self.pack_ignore_file))
 
         return False
 
@@ -131,19 +131,19 @@ class PackUniqueFilesValidator:
         try:
             pack_meta_file_content = self._read_file_content(self.pack_meta_file)
             if not pack_meta_file_content:
-                self._add_error('Pack metadata is empty.')
+                self._add_error(Errors.pack_metadata_empty())
                 return False
             metadata = json.loads(pack_meta_file_content)
             if not isinstance(metadata, dict):
-                self._add_error('Pack metadata should be a dictionary.')
+                self._add_error(Errors.pack_metadata_should_be_dict())
                 return False
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
-                self._add_error('Missing fields in the pack metadata: {}'.format(missing_fields))
+                self._add_error(Errors.missing_field_iin_pack_metadata(missing_fields))
                 return False
             dependencies_field = metadata[PACK_METADATA_DEPENDENCIES]
             if not isinstance(dependencies_field, dict):
-                self._add_error('The dependencies field in the pack must be a dictionary.')
+                self._add_error(Errors.dependencies_field_should_be_dict())
                 return False
             # TODO: add it back after #23546 is ready.
             # price_field = metadata.get(PACK_METADATA_PRICE)
@@ -158,10 +158,10 @@ class PackUniqueFilesValidator:
                 if field and len(field) == 1:
                     value = field[0]
                     if not value:
-                        self._add_error('Empty value in the {} field.'.format(list_field))
+                        self._add_error(Errors.empty_field_in_pack_metadata(list_field))
                         return False
         except (ValueError, TypeError):
-            self._add_error('Could not parse {} file contents to json format'.format(self.pack_meta_file))
+            self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file))
             return False
 
         return True

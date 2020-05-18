@@ -2,7 +2,7 @@ import glob
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    BETA_INTEGRATION_REGEX,
-                                                   INTEGRATION_REGEX)
+                                                   INTEGRATION_REGEX, Errors)
 from demisto_sdk.commands.common.tools import (get_yaml, os, print_error,
                                                print_warning, re)
 
@@ -36,29 +36,20 @@ class DescriptionValidator:
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
                 self._is_valid = False
-                print_error("No detailed description file was found in the package {}. Please add one,"
-                            " and make sure it includes the beta disclaimer note."
-                            "It should contain the string in constant"
-                            "\"BETA_INTEGRATION_DISCLAIMER\"".format(package_path))
+                print_error(Errors.description_missing_in_beta_integration(package_path))
                 return False
 
             with open(md_file_path) as description_file:
                 description = description_file.read()
             if BETA_INTEGRATION_DISCLAIMER not in description:
                 self._is_valid = False
-                print_error("Detailed description in beta integration package {} "
-                            "dose not contain the beta disclaimer note. "
-                            "It should contain the string in constant"
-                            " \"BETA_INTEGRATION_DISCLAIMER\".".format(package_path))
+                print_error(Errors.no_beta_disclaimer_in_description(package_path))
                 return False
             else:
                 return True
         elif BETA_INTEGRATION_DISCLAIMER not in description_in_yml:
             self._is_valid = False
-            print_error("Detailed description field in beta integration {} "
-                        "dose not contain the beta disclaimer note."
-                        "It should contain the string in constant"
-                        " \"BETA_INTEGRATION_DISCLAIMER\".".format(self.file_path))
+            print_error(Errors.no_beta_disclaimer_in_yml(self.file_path))
             return False
         return True
 
@@ -89,8 +80,7 @@ class DescriptionValidator:
 
         if is_description_in_package and is_description_in_yml:
             self._is_valid = False
-            print_error("A description was found both in the package and in the yml, "
-                        "please update the package {}.".format(package_path))
+            print_error(Errors.description_in_package_and_yml(package_path))
             return False
 
         return True

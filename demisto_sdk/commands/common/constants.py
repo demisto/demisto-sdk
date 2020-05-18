@@ -237,6 +237,320 @@ class Errors:
     def found_hidden_param(parameter_name):
         return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
 
+    @staticmethod
+    def id_should_equal_name(name, file_id, file_path):
+        return "The File's name, which is: '{}', should be equal to its ID, which is: '{}'."\
+               " please update the file (path to file: {}).".format(name, file_id, file_path)
+
+    @staticmethod
+    def test_playbook_not_configured(content_item_id, missing_test_playbook_configurations,
+                                     missing_integration_configurations):
+        return f'The TestPlaybook {content_item_id} is not registered in {CONF_PATH} file.\n ' \
+               f'Please add\n{missing_test_playbook_configurations}\n ' \
+               f'or if this test playbook is for an integration\n{missing_integration_configurations}\n ' \
+               f'to {CONF_PATH} path under \'tests\' key.'
+
+    @staticmethod
+    def integration_not_registered(file_path, missing_test_playbook_configurations, no_tests_key):
+        return f'The following integration is not registered in {CONF_PATH} file.\n' \
+               f'Please add\n{missing_test_playbook_configurations}\nto {CONF_PATH} ' \
+               f'path under \'tests\' key.\n' \
+               f'If you don\'t want to add a test playbook for this integration, please add \n{no_tests_key}to the ' \
+               f'file {file_path} or run \'demisto-sdk format -p {file_path}\''
+
+    @staticmethod
+    def no_test_playbook(file_path, file_type):
+        return f'You don\'t have a TestPlaybook for {file_type} {file_path}. ' \
+               f'If you have a TestPlaybook for this {file_type}, ' \
+               f'please edit the yml file and add the TestPlaybook under the \'tests\' key. ' \
+               f'If you don\'t want to create a TestPlaybook for this {file_type}, ' \
+               f'edit the yml file and add  \ntests:\n -  No tests\n lines to it or ' \
+               f'run \'demisto-sdk format -i {file_path}\''
+
+    @staticmethod
+    def test_not_in_conf_json(file_id):
+        return f"You've failed to add the {file_id} to conf.json"
+
+    @staticmethod
+    def remove_field_from_dashboard(file_path, field):
+        return f'{file_path}: the field {field} needs to be removed.\n'
+
+    @staticmethod
+    def remove_field_from_widget(field, widget):
+        return f'The field {field} needs to be removed from the widget: {widget}.\n'
+
+    @staticmethod
+    def include_field_in_dashboard(file_path, field):
+        return f'{file_path}: the field {field} needs to be included. Please add it.\n'
+
+    @staticmethod
+    def include_field_in_widget(field, widget_name):
+        return f'The field {field} needs to be included in the widget: {widget_name}. Please add it.\n'
+
+    @staticmethod
+    def description_missing_in_beta_integration(package_path):
+        return f"No detailed description file was found in the package {package_path}. Please add one, " \
+               f"and make sure it includes the beta disclaimer note." \
+               f"It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
+
+    @staticmethod
+    def no_beta_disclaimer_in_description(package_path):
+        return f"Detailed description in beta integration package {package_path} " \
+               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
+               f"\"BETA_INTEGRATION_DISCLAIMER\"."
+
+    @staticmethod
+    def no_beta_disclaimer_in_yml(file_path):
+        return f"Detailed description field in beta integration {file_path} " \
+               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
+               f" \"BETA_INTEGRATION_DISCLAIMER\"."
+
+    @staticmethod
+    def description_in_package_and_yml(package_path):
+        return f"A description was found both in the package and in the yml, please update the package {package_path}."
+
+    @staticmethod
+    def default_docker_error():
+        return 'The current docker image in the yml file is the default one: demisto/python:1.3-alpine,\n' \
+               'Please create or use another docker image\n'
+
+    @staticmethod
+    def latest_docker_error(docker_image_tag, docker_image_name):
+        return f'"latest" tag is not allowed,\n' \
+               f'Please create or update to an updated versioned image\n' \
+               f'You can check for the most updated version of {docker_image_tag} ' \
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
+
+    @staticmethod
+    def not_demisto_docker():
+        return 'docker image must be a demisto docker image. e.g: demisto/<image>:<tag>'
+
+    @staticmethod
+    def docker_tag_not_fetched(docker_image_name):
+        return f'Failed getting tag for: {docker_image_name}. Please check it exists and of demisto format.'
+
+    @staticmethod
+    def no_docker_tag():
+        return 'The docker image in your integration/script does not have a tag, please attach the latest tag'
+
+    @staticmethod
+    def docker_not_formatted_correctly(docker_image):
+        return f'The docker image: {docker_image} is not of format - demisto/image_name'
+
+    @staticmethod
+    def id_set_conflicts():
+        return "You probably merged from master and your id_set.json has conflicts. Run `demisto-sdk create-id-set`, " \
+               "it should reindex your id_set.json"
+
+    @staticmethod
+    def id_set_not_updated(file_path):
+        return f"You have failed to update id_set.json with the data of {file_path} " \
+               f"please run `demisto-sdk create-id-set`"
+
+    @staticmethod
+    def duplicated_id(obj_id):
+        return f"The ID {obj_id} already exists, please update the file or update the " \
+               f"id_set.json toversion field of this id to match the old occurrence of this id"
+
+    @staticmethod
+    def no_image_given(file_path):
+        return f"You've created/modified a yml or package but failed to provide an image as " \
+               f"a .png file for {file_path}, please add an image in order to proceed."
+
+    @staticmethod
+    def image_too_large(file_path):
+        return f"{file_path} has too large logo, please update the logo to be under 10kB"
+
+    @staticmethod
+    def image_in_package_and_yml(file_path):
+        return f"The file {file_path} has image in both yml and package, remove the 'image' key from the yml file"
+
+    @staticmethod
+    def not_an_image_file(file_path):
+        return f"{file_path} isn't an image file or unified integration file."
+
+    @staticmethod
+    def no_image_field_in_yml(file_path):
+        return f"{file_path} is a yml file but has no image field."
+
+    @staticmethod
+    def image_field_not_in_base64(file_path):
+        return f"{file_path}'s image field isn't in base64 encoding."
+
+    @staticmethod
+    def default_image_error(file_path):
+        return f"{file_path} is the default image, please change to the integration image."
+
+    @staticmethod
+    def invalid_incident_field_name(word, file_path):
+        return f"The word {word} cannot be used as a name, please update the file {file_path}."
+
+    @staticmethod
+    def invalid_incident_field_content_key_value(content_value, file_path):
+        return f"The content key must be set to {content_value}, please update the file '{file_path}'"
+
+    @staticmethod
+    def invalid_incident_field_system_key_value(system_value, file_path):
+        return f"The system key must be set to {system_value}, please update the file '{file_path}'"
+
+    @staticmethod
+    def invalid_incident_field_type(file_path, file_type, TypeFields):
+        return f"{file_path}: type: `{file_type}` is not one of available type.\n" \
+               f"available types: {[value.value for value in TypeFields]}"
+
+    @staticmethod
+    def invalid_incident_field_group_value(file_path, group):
+        return f"{file_path}: group {group} is not a group field."
+
+    @staticmethod
+    def invalid_incident_field_cli_name_regex(file_path, cli_regex):
+        return f"{file_path}: Field `cliName` contains non-alphanumeric letters. " \
+               f"must match regex: {cli_regex}"
+
+    @staticmethod
+    def invalid_incident_field_cli_name_value(file_path, cli_name):
+        return f"{file_path}: cliName field can not be {cli_name} as it's a builtin key."
+
+    @staticmethod
+    def incident_field_or_type_from_version_5(file_path):
+        return f'{file_path}: fromVersion must be at least 5.0.0'
+
+    @staticmethod
+    def invalid_incident_field_or_type_from_version(file_path):
+        return f'{file_path}: "fromVersion" has an invalid value.'
+
+    @staticmethod
+    def new_incident_field_required(file_path):
+        return f'{file_path}: new incident fields can not be required. change to:\nrequired: false.'
+
+    @staticmethod
+    def incident_field_type_change(file_path):
+        return f'{file_path}: Changing incident field type is not allowed.'
+
+    @staticmethod
+    def incident_type_integer_field(file_path, field):
+        return f'{file_path}: the field {field} needs to be a positive integer. Please add it.\n'
+
+    @staticmethod
+    def invalid_context_output(command_name, output):
+        return f'Invalid context output for command {command_name}. Output is {output}'
+
+    @staticmethod
+    def parameter_missing_from_yml(file_path, name, correct_format):
+        return f'{file_path}: A required parameter "{name}" is missing or malformed ' \
+               f'in the YAML file.\nThe correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    def parameter_missing_for_feed(file_path, name, correct_format):
+        return f'{file_path} Feed Integration was detected A required ' \
+               f'parameter "{name}" is missing or malformed in the YAML file.\n' \
+               f'The correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    def no_new_release_notes(release_notes_path):
+        return F'No new comment has been added in the release notes file: {release_notes_path}'
+
+    @staticmethod
+    def release_notes_not_formatted_correctly(release_notes_path, link_to_rn_standard):
+        return F'File {release_notes_path} is not formatted according to ' \
+               F'release notes standards.\nFix according to {link_to_rn_standard}'
+
+    @staticmethod
+    def pack_file_does_not_exist(file_name):
+        return f'"{file_name}" file does not exist, create one in the root of the pack'
+
+    @staticmethod
+    def cant_open_pack_file(file_name):
+        return f'Could not open "{file_name}" file'
+
+    @staticmethod
+    def cant_read_pack_file(file_name):
+        return f'Could not read the contents of "{file_name}" file'
+
+    @staticmethod
+    def cant_parse_pack_file_to_list(file_name):
+        return f'Could not parse the contents of "{file_name}" file into a list'
+
+    @staticmethod
+    def pack_file_bad_format(file_name):
+        return f'Detected none valid regex in {file_name} file'
+
+    @staticmethod
+    def pack_metadata_empty():
+        return 'Pack metadata is empty.'
+
+    @staticmethod
+    def pack_metadata_should_be_dict():
+        return 'Pack metadata should be a dictionary.'
+
+    @staticmethod
+    def missing_field_iin_pack_metadata(missing_fields):
+        return f'Missing fields in the pack metadata: {missing_fields}'
+
+    @staticmethod
+    def dependencies_field_should_be_dict():
+        return 'The dependencies field in the pack must be a dictionary.'
+
+    @staticmethod
+    def empty_field_in_pack_metadata(list_field):
+        return f'Empty value in the {list_field} field.'
+
+    @staticmethod
+    def pack_metadata_isnt_json(pack_meta_file):
+        return f'Could not parse {pack_meta_file} file contents to json format'
+
+    @staticmethod
+    def playbook_cant_have_rolename():
+        return "Playbook can not have a rolename."
+
+    @staticmethod
+    def playbook_unreachable_condition(task_id, next_task_branch):
+        return f'Playbook conditional task with id:{task_id} has task with unreachable ' \
+               f'next task condition "{next_task_branch}". Please remove this task or add ' \
+               f'this condition to condition task with id:{task_id}.'
+
+    @staticmethod
+    def playbook_unhandled_condition(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    def playbook_unconnected_tasks(orphan_tasks):
+        return f'The following tasks ids have no previous tasks: {orphan_tasks}'
+
+    @staticmethod
+    def readme_error(file_path, stderr):
+        return f'Failed verifying README.md, Path: {file_path}. Error Message is: {stderr}'
+
+    @staticmethod
+    def release_notes_not_finished(file_path):
+        return f"Please finish filling out the release notes found at: {file_path}"
+
+    @staticmethod
+    def release_notes_file_empty(file_path):
+        return f"Your release notes file is empty, please complete it - found at: {file_path}"
+
+    @staticmethod
+    def reputation_expiration_should_be_numeric(file_path):
+        return f'{file_path}: expiration field should have a numeric value.'
+
+    @staticmethod
+    def reputation_id_and_details_not_equal(file_path):
+        return f'{file_path}: id and details fields are not equal.'
+
+    @staticmethod
+    def structure_doesnt_match_scheme(file_path, pretty_formatted_string_of_regexes):
+        return f"The file {file_path} does not match any scheme we have please, refer to the following list" \
+               f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
+
+    @staticmethod
+    def file_id_changed(file_path, old_version_id, new_file_id):
+        return f"The file id for {file_path} has changed from {old_version_id} to {new_file_id}"
+
+    @staticmethod
+    def description_missing_from_conf_json(problematic_instances):
+        return "Those instances don't have description:\n{}".format('\n'.join(problematic_instances))
+
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'

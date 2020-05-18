@@ -65,10 +65,10 @@ class IncidentTypeValidator(BaseValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    print_error(f'{self.file_path}: fromVersion must be at least 5.0.0')
+                    print_error(Errors.incident_field_or_type_from_version_5(self.file_path))
                     is_valid = False
             except (AttributeError, ValueError):
-                print_error(f'{self.file_path}: "fromVersion" has an invalid value.')
+                print_error(Errors.invalid_incident_field_or_type_from_version(self.file_path))
                 is_valid = False
 
         return is_valid
@@ -114,10 +114,9 @@ class IncidentTypeValidator(BaseValidator):
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
                         is_valid = False
-                        print_error(f'{self.file_path}: the field {field} needs to be a positive integer.'
-                                    f' Please add it.\n')
+                        print_error(Errors.incident_type_integer_field(self.file_path, field))
         except (AttributeError, ValueError):
-            print_error(f'{self.file_path}: "fromVersion" has an invalid value.')
+            print_error(Errors.invalid_incident_field_or_type_from_version(self.file_path))
             is_valid = False
 
         return is_valid

@@ -421,7 +421,7 @@ class IntegrationValidator(BaseValidator):
                 try:
                     context_list.append(output['contextPath'])
                 except KeyError:
-                    print_error('Invalid context output for command {}. Output is {}'.format(command_name, output))
+                    print_error(Errors.invalid_context_output(command_name, output))
                     self.is_valid = False
             command_to_context_dict[command['name']] = sorted(context_list)
         return command_to_context_dict
@@ -561,13 +561,7 @@ class IntegrationValidator(BaseValidator):
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(
-                        f'{self.file_path}:'
-                        f'A required parameter "{param.get("name")}" is missing or malformed '
-                        f'in the YAML file.\n'
-                        'The correct format of the parameter should be as follows:'
-                        f'\n{yaml.dump(param)}'
-                    )
+                    print_error(Errors.parameter_missing_from_yml(self.file_path, param.get('name'), yaml.dump(param)))
                     fetch_params_exist = False
 
         return fetch_params_exist
@@ -585,14 +579,7 @@ class IntegrationValidator(BaseValidator):
                 params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
-                print_error(
-                    f'{self.file_path}'
-                    f'Feed Integration was detected '
-                    f'A required parameter "{param.get("name")}" is missing or malformed '
-                    f'in the YAML file.\n'
-                    'The correct format of the parameter should be as follows:'
-                    f'\n{yaml.dump(param)}'
-                )
+                print_error(Errors.parameter_missing_for_feed(self.file_path, param.get('name'), yaml.dump(param)))
                 params_exist = False
 
         return params_exist

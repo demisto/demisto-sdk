@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import (get_content_path, print_error,
                                                print_warning, run_command_os)
 
@@ -46,7 +47,7 @@ class ReadMeValidator:
             # run the java script mdx parse validator
             _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path, env=os.environ)
             if is_valid:
-                print_error(f'Failed verifying README.md, Path: {self.file_path}. Error Message is: {stderr}')
+                print_error(Errors.readme_error(self.file_path, stderr))
                 return False
         return True
 

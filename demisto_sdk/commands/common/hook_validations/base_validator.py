@@ -66,7 +66,7 @@ class BaseValidator:
             # check release_notes file exists and contain text
             if release_notes is None:
                 self.is_valid = False
-                print_error(f'Missing release notes for: {self.file_path} in {rn_path}')
+                print_error(Errors.missing_release_notes(file_path=self.file_path, rn_path=rn_path))
                 return False
         return True
 
@@ -119,8 +119,7 @@ class BaseValidator:
         file_id = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
         if file_id != name:
-            print_error("The File's name, which is: '{}', should be equal to its ID, which is: '{}'."
-                        " please update the file (path to file: {}).".format(name, file_id, self.file_path))
+            print_error(Errors.id_should_equal_name(name, file_id, self.file_path))
             print_error(Errors.suggest_fix(self.file_path))
             return False
         return True
@@ -158,12 +157,8 @@ class BaseValidator:
                 missing_integration_configurations = json.dumps(
                     {'integrations': '<integration ID>', 'playbookID': content_item_id},
                     indent=4)
-                error_message = \
-                    f'The TestPlaybook {content_item_id} is not registered in {self.CONF_PATH} file.\n' \
-                    f'Please add\n{missing_test_playbook_configurations}\n' \
-                    f'or if this test playbook is for an integration\n{missing_integration_configurations}\n' \
-                    f'to {self.CONF_PATH} path under \'tests\' key.'
-                print_error(error_message)
+                print_error(Errors.test_playbook_not_configured(content_item_id, missing_test_playbook_configurations,
+                                                                missing_integration_configurations))
                 return False
 
         # Integration case
@@ -176,14 +171,8 @@ class BaseValidator:
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
                 no_tests_key = yaml.dump({'tests': ['No tests']})
-                error_message = \
-                    f'The following integration is not registered in {self.CONF_PATH} file.\n' \
-                    f'Please add\n{missing_test_playbook_configurations}\nto {self.CONF_PATH} ' \
-                    f'path under \'tests\' key.\n' \
-                    f'If you don\'t want to add a test playbook for this integration, ' \
-                    f'please add \n{no_tests_key}to the ' \
-                    f'file {self.file_path} or run \'demisto-sdk format -p {self.file_path}\''
-                print_error(error_message)
+                print_error(Errors.integration_not_registered(self.file_path, missing_test_playbook_configurations,
+                                                              no_tests_key))
                 return False
         return True
 
@@ -199,12 +188,6 @@ class BaseValidator:
             True if tests are configured (not None and not an empty list) otherwise return False.
         """
         if not test_playbooks:
-            print_error(
-                f'You don\'t have a TestPlaybook for {file_type} {self.file_path}. '
-                f'If you have a TestPlaybook for this {file_type}, '
-                f'please edit the yml file and add the TestPlaybook under the \'tests\' key. '
-                f'If you don\'t want to create a'
-                f' TestPlaybook for this {file_type}, edit the yml file and add  \ntests:\n -  No tests\n lines'
-                f' to it or run \'demisto-sdk format -i {self.file_path}\'')
+            print_error(Errors.no_test_playbook(self.file_path, file_type))
             return False
         return True

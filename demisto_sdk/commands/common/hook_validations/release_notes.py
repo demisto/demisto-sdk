@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from demisto_sdk.commands.common.constants import Errors
 from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
                                                get_release_notes_file_path,
                                                print_error)
@@ -23,10 +24,10 @@ class ReleaseNotesValidator:
     def has_release_notes_been_filled_out(self):
         release_notes_comments = self.latest_release_notes
         if '%%UPDATE_RN%%' in release_notes_comments:
-            print_error(f"Please finish filling out the release notes found at: {self.file_path}")
+            print_error(Errors.release_notes_not_finished(self.file_path))
             return False
         elif len(release_notes_comments) == 0:
-            print_error(f"Please complete the release notes found at: {self.file_path}")
+            print_error(Errors.release_notes_file_empty(self.file_path))
             return False
         return True
 

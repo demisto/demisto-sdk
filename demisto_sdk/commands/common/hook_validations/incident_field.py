@@ -231,10 +231,7 @@ class IncidentFieldValidator(BaseValidator):
         if name not in whitelisted_field_names:
             for word in name.split():
                 if word.lower() in bad_words:
-                    print_error(
-                        "The word {} cannot be used as a name, "
-                        "please update the file {}.".format(word, self.file_path)
-                    )
+                    print_error(Errors.invalid_incident_field_name(word, self.file_path))
                     return False
         return True
 
@@ -242,11 +239,7 @@ class IncidentFieldValidator(BaseValidator):
         """Validate that field is marked as content."""
         is_valid_flag = self.current_file.get("content") is content_value
         if not is_valid_flag:
-            print_error(
-                "The content key must be set to {}, please update the file '{}'".format(
-                    content_value, self.file_path
-                )
-            )
+            print_error(Errors.invalid_incident_field_content_key_value(content_value, self.file_path))
 
         return is_valid_flag
 
@@ -254,11 +247,7 @@ class IncidentFieldValidator(BaseValidator):
         """Validate that field is not marked as system."""
         is_valid_flag = self.current_file.get("system", False) is system_value
         if not is_valid_flag:
-            print_error(
-                "The system key must be set to {}, please update the file '{}'".format(
-                    system_value, self.file_path
-                )
-            )
+            print_error(Errors.invalid_incident_field_system_key_value(system_value, self.file_path))
 
         return is_valid_flag
 
@@ -271,10 +260,7 @@ class IncidentFieldValidator(BaseValidator):
         is_valid = TypeFields.is_valid_incident_field(self.current_file.get("type"))
         if is_valid:
             return True
-        print_error(
-            f"{self.file_path}: type: `{self.current_file.get('type')}` is not one of available type.\n"
-            f"available types: {[value.value for value in TypeFields]}"
-        )
+        print_error(Errors.invalid_incident_field_type(self.file_path, self.current_file.get('type'), TypeFields))
         return False
 
     def is_valid_group(self):
@@ -282,7 +268,7 @@ class IncidentFieldValidator(BaseValidator):
         group = self.current_file.get("group")
         if GroupFieldTypes.is_valid_group(group):
             return True
-        print_error(f"{self.file_path}: group {group} is not a group field.")
+        print_error(Errors.invalid_incident_field_group_value(self.file_path, group))
         return False
 
     def is_valid_cliname(self):
@@ -294,10 +280,8 @@ class IncidentFieldValidator(BaseValidator):
         cliname = self.current_file.get("cliName")
         if re.fullmatch(INCIDENT_FIELD_CLINAME_VALIDATION_REGEX, cliname):
             return True
-        print_error(
-            f"{self.file_path}: Field `cliName` contains non-alphanumeric letters. must match regex:"
-            f" {INCIDENT_FIELD_CLINAME_VALIDATION_REGEX}"
-        )
+        print_error(Errors.invalid_incident_field_cli_name_regex(self.file_path,
+                                                                 INCIDENT_FIELD_CLINAME_VALIDATION_REGEX))
         return False
 
     def is_cliname_is_builtin_key(self):
@@ -312,9 +296,7 @@ class IncidentFieldValidator(BaseValidator):
         elif group == GroupFieldTypes.INCIDENT_FIELD:
             is_valid = cliname not in BleveMapping[GroupFieldTypes.INCIDENT_FIELD]
         if not is_valid:
-            print_error(
-                f"{self.file_path}: cliName field can not be {cliname} as it's a builtin key."
-            )
+            print_error(Errors.invalid_incident_field_cli_name_value(self.file_path, cliname))
         return is_valid
 
     def is_current_valid_from_version(self):
@@ -328,10 +310,10 @@ class IncidentFieldValidator(BaseValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    error_msg = f'{self.file_path}: fromVersion must be at least 5.0.0'
+                    error_msg = Errors.incident_field_or_type_from_version_5(self.file_path)
                     is_valid = False
             except (AttributeError, ValueError):
-                error_msg = f'{self.file_path}: "fromVersion" has an invalid value.'
+                error_msg = Errors.invalid_incident_field_or_type_from_version(self.file_path)
                 is_valid = False
 
         if error_msg:
@@ -349,8 +331,7 @@ class IncidentFieldValidator(BaseValidator):
         # as can be seen in this pr: https://github.com/demisto/content/pull/5682
         required = self.current_file.get('required', False)
         if required:
-            error_msg = f'{self.file_path}: new incident fields can not be required.' \
-                        f' change to:\nrequired: false.'
+            error_msg = Errors.new_incident_field_required(self.file_path)
             is_valid = False
 
         if error_msg:
@@ -382,7 +363,7 @@ class IncidentFieldValidator(BaseValidator):
         if self.old_file:
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
-                error_msg = f'{self.file_path}: Changing incident field type is not allowed.'
+                error_msg = Errors.incident_field_type_change(self.file_path)
                 is_type_changed = True
 
         if error_msg:

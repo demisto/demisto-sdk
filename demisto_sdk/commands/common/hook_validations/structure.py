@@ -90,8 +90,7 @@ class StructureValidator:
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        print_error(f"The file {self.file_path} does not match any scheme we have please, refer to the following list"
-                    f" for the various file name options we have in our repo {pretty_formatted_string_of_regexes}")
+        print_error(Errors.structure_doesnt_match_scheme(self.file_path, pretty_formatted_string_of_regexes))
         return None
 
     def is_valid_scheme(self):
@@ -178,7 +177,7 @@ class StructureValidator:
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            print_error(f"The file id for {self.file_path} has changed from {old_version_id} to {new_file_id}")
+            print_error(Errors.file_id_changed(self.file_path, old_version_id, new_file_id))
             return True
 
         # False - the id has not changed.

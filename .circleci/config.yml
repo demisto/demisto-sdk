@@ -37,19 +37,21 @@ jobs:
             command: |
               . .tox/py37/bin/activate
 
-              if [[ $CIRCLE_BRANCH != master ]]; then
-                demisto-sdk validate -i Packs/CortexXDR
-              fi
-
               git clone https://github.com/demisto/content.git
               cd content
+
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
+                demisto-sdk validate -i Packs/CortexXDR
+                exit 0
+              fi
+
               ./Tests/scripts/validate.sh
         - run:
             name: test create content artifacts
             command: |
               . .tox/py37/bin/activate
 
-              if [[ $CIRCLE_BRANCH != master ]]; then
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                 echo "Skipping creating content artifacts on non master branch"
                 exit 0
               fi
@@ -59,7 +61,7 @@ jobs:
             command: |
               . .tox/py37/bin/activate
 
-              if [[ $CIRCLE_BRANCH != master ]]; then
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                   echo "Skipping creating ID set on non master branch"
                   exit 0
               fi

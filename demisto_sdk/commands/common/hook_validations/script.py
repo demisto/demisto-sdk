@@ -1,5 +1,5 @@
-from demisto_sdk.commands.common.constants import (PYTHON_SUBTYPES, TYPE_PWSH,
-                                                   Errors)
+from demisto_sdk.commands.common.constants import PYTHON_SUBTYPES, TYPE_PWSH
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.docker import \

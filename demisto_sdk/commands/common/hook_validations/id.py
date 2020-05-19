@@ -13,7 +13,8 @@ from demisto_sdk.commands.common.constants import (INTEGRATION_REGEX,
                                                    SCRIPT_REGEX,
                                                    SCRIPT_YML_REGEX,
                                                    TEST_PLAYBOOK_REGEX,
-                                                   TEST_SCRIPT_REGEX, Errors)
+                                                   TEST_SCRIPT_REGEX)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (collect_ids,
                                                get_script_or_integration_id,
                                                print_error)

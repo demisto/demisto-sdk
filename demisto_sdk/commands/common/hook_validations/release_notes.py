@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from demisto_sdk.commands.common.constants import Errors
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
                                                get_release_notes_file_path,
                                                print_error)

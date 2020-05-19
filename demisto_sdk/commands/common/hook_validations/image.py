@@ -6,8 +6,8 @@ from demisto_sdk.commands.common.constants import (DEFAULT_DBOT_IMAGE_BASE64,
                                                    IMAGE_REGEX,
                                                    INTEGRATION_REGEX,
                                                    INTEGRATION_REGXES,
-                                                   YML_INTEGRATION_REGEXES,
-                                                   Errors)
+                                                   YML_INTEGRATION_REGEXES)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (checked_type, get_yaml, os,
                                                print_error, re)
 

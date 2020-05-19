@@ -1,6 +1,6 @@
 import json
 
-from demisto_sdk.commands.common.constants import Errors
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import print_error
 
 

@@ -5,8 +5,8 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH,
-                                                   Errors)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.description import \

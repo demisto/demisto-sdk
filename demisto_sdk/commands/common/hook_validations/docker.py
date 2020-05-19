@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pkg_resources import parse_version
 
 import requests
-from demisto_sdk.commands.common.constants import Errors
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_warning)
 

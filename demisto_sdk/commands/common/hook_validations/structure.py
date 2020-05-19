@@ -12,7 +12,8 @@ import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
-    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX, Errors)
+    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (checked_type,
                                                get_content_file_type_dump,
                                                get_matching_regex,

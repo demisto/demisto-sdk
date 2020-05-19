@@ -29,7 +29,8 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_RELEASE_NOTES_REGEX,
     PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX,
     TEST_PLAYBOOK_REGEX, TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES,
-    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES, Errors)
+    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \

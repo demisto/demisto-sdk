@@ -20,6 +20,10 @@ class Errors:
                " please update the file (path to file: {}).".format(name, file_id, file_path)
 
     @staticmethod
+    def no_yml_file(file_path):
+        return "BA102 - No yml files were found in {} directory.".format(file_path)
+
+    @staticmethod
     def wrong_display_name(param_name, param_display):
         return 'IN100 - The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
@@ -423,55 +427,55 @@ class Errors:
 
     @staticmethod
     def pack_file_does_not_exist(file_name):
-        return f'"PU100 - {file_name}" file does not exist, create one in the root of the pack'
+        return f'"PA100 - {file_name}" file does not exist, create one in the root of the pack'
 
     @staticmethod
     def cant_open_pack_file(file_name):
-        return f'PU101 - Could not open "{file_name}" file'
+        return f'PA101 - Could not open "{file_name}" file'
 
     @staticmethod
     def cant_read_pack_file(file_name):
-        return f'PU102 - Could not read the contents of "{file_name}" file'
+        return f'PA102 - Could not read the contents of "{file_name}" file'
 
     @staticmethod
     def cant_parse_pack_file_to_list(file_name):
-        return f'PU103 - Could not parse the contents of "{file_name}" file into a list'
+        return f'PA103 - Could not parse the contents of "{file_name}" file into a list'
 
     @staticmethod
     def pack_file_bad_format(file_name):
-        return f'PU104 - Detected none valid regex in {file_name} file'
+        return f'PA104 - Detected none valid regex in {file_name} file'
 
     @staticmethod
     def pack_metadata_empty():
-        return 'PU105 - Pack metadata is empty.'
+        return 'PA105 - Pack metadata is empty.'
 
     @staticmethod
     def pack_metadata_should_be_dict(pack_meta_file):
-        return f'PU106 - Pack metadata {pack_meta_file} should be a dictionary.'
+        return f'PA106 - Pack metadata {pack_meta_file} should be a dictionary.'
 
     @staticmethod
     def missing_field_iin_pack_metadata(pack_meta_file, missing_fields):
-        return f'PU107 - {pack_meta_file} - Missing fields in the pack metadata: {missing_fields}'
+        return f'PA107 - {pack_meta_file} - Missing fields in the pack metadata: {missing_fields}'
 
     @staticmethod
     def pack_metadata_name_not_valid():
-        return f'PU108 - Pack metadata {PACK_METADATA_NAME} field is not valid. Please fill valid pack name.'
+        return f'PA108 - Pack metadata {PACK_METADATA_NAME} field is not valid. Please fill valid pack name.'
 
     @staticmethod
     def pack_metadata_field_invalid():
-        return f'PU109 - Pack metadata {PACK_METADATA_DESC} field is not valid. Please fill valid pack description.'
+        return f'PA109 - Pack metadata {PACK_METADATA_DESC} field is not valid. Please fill valid pack description.'
 
     @staticmethod
     def dependencies_field_should_be_dict(pack_meta_file):
-        return f'PU110 - {pack_meta_file} - The dependencies field in the pack must be a dictionary.'
+        return f'PA110 - {pack_meta_file} - The dependencies field in the pack must be a dictionary.'
 
     @staticmethod
     def empty_field_in_pack_metadata(pack_meta_file, list_field):
-        return f'PU111 - {pack_meta_file} - Empty value in the {list_field} field.'
+        return f'PA111 - {pack_meta_file} - Empty value in the {list_field} field.'
 
     @staticmethod
     def pack_metadata_isnt_json(pack_meta_file):
-        return f'PU112 - Could not parse {pack_meta_file} file contents to json format'
+        return f'PA112 - Could not parse {pack_meta_file} file contents to json format'
 
     @staticmethod
     def readme_error(file_path, stderr):
@@ -514,10 +518,6 @@ class Errors:
     @staticmethod
     def invalid_file_path(file_path):
         return f"ST105 - Found incompatible file path: {file_path}."
-
-    @staticmethod
-    def no_yml_file(file_path):
-        return "No yml files were found in {} directory.".format(file_path)
 
     @staticmethod
     def wrong_filename(filepath, file_type):

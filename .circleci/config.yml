@@ -47,6 +47,7 @@ jobs:
               fi
 
               chmod +x ./Tests/scripts/validate.sh
+              ./Tests/scripts/validate.sh
         - run:
             name: test create content artifacts
             command: |

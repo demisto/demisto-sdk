@@ -39,8 +39,8 @@ jobs:
               . .tox/py37/bin/activate
 
               git clone https://github.com/demisto/content.git
-              git config diff.renameLimit 5000
               cd content
+              git config diff.renameLimit 5000
 
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                 demisto-sdk validate -i Packs/Gmail

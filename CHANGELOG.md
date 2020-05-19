@@ -1,4 +1,5 @@
 # Changelog
+* Changed the output format of demisto-sdk secrets.
 * Added pack release notes generation and validation.
 * Improved pack metadata validation.
 * Fixed an issue in **validate** where renamed files caused an error

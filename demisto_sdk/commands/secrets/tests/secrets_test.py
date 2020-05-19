@@ -292,11 +292,13 @@ my_email = "fooo@someorg.com"
 
     def test_reformat_secrets_output(self):
         secrets_output = self.validator.reformat_secrets_output(self.FILE_HASH_LIST)
-        assert secrets_output == '123c8fc6532ba547d7ef598' + '\n' + '456c8fc6532ba547d7bb5e880a' + '\n' \
-            + '789c8fc6532ba57ef5985bb5e' + '\n'
+        assert secrets_output == '123c8fc6532ba547d7ef598\n456c8fc6532ba547d7bb5e880a\n789c8fc6532ba57ef5985bb5e'
 
         secrets_output = self.validator.reformat_secrets_output(self.MAIL_LIST)
-        assert secrets_output == 'test1@gmail.com' + '\n' + 'test2@gmail.com' + '\n' + 'test3@gmail.com' + '\n'
+        assert secrets_output == 'test1@gmail.com\ntest2@gmail.com\ntest3@gmail.com'
 
         secrets_output = self.validator.reformat_secrets_output(self.IP_LIST)
-        assert secrets_output == 'ip-172-31-15-237' + '\n' + '1.1.1.1' + '\n' + '12.25.12.14' + '\n'
+        assert secrets_output == 'ip-172-31-15-237\n1.1.1.1\n12.25.12.14'
+
+        secrets_output = self.validator.reformat_secrets_output([])
+        assert secrets_output == ''

@@ -110,10 +110,7 @@ class SecretsValidator(object):
         :param secrets_list: List of secrets
         :return: str: List of secrets
         """
-        secrets_str = ''
-        for secret in secrets_list:
-            secrets_str += ''.join(map(str, secret)) + '\n'
-        return secrets_str
+        return '\n'.join(secrets_list) if secrets_list else ''
 
     def get_all_diff_text_files(self, branch_name, is_circle):
         """

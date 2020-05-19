@@ -278,9 +278,9 @@ class FilesValidator:
         if not old_release_notes_validator.is_file_valid():
             self._is_valid = False
 
-    def is_valid_release_notes(self, file_path, pack_name=None, modified_files=None):
+    def is_valid_release_notes(self, file_path, pack_name=None, modified_files=None, added_files=None):
         release_notes_validator = ReleaseNotesValidator(file_path, pack_name=pack_name,
-                                                        modified_files=modified_files)
+                                                        modified_files=modified_files, added_files=added_files)
         if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
@@ -530,7 +530,7 @@ class FilesValidator:
                 pack_name = get_pack_name(file_path)
                 added_rn.add(pack_name)
                 print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
-                self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name)
+                self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name, added_files=added_files)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass

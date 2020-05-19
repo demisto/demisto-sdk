@@ -16,9 +16,10 @@ class ReleaseNotesValidator:
         master_diff (str): the changes in the changelog file compared to origin/master.
     """
 
-    def __init__(self, file_path, modified_files=None, pack_name=None):
+    def __init__(self, file_path, modified_files=None, pack_name=None, added_files=None):
         self.file_path = file_path
         self.modified_files = modified_files
+        self.added_files = added_files
         self.pack_name = pack_name
         self.release_notes_path = get_release_notes_file_path(self.file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
@@ -28,6 +29,18 @@ class ReleaseNotesValidator:
         if self.modified_files:
             for file in self.modified_files:
                 if 'README' in file:
+                    continue
+                elif self.pack_name in file:
+                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
+                    fn, ft = update_rn_util.ident_changed_file_type(file)
+                    if ft and fn not in self.latest_release_notes:
+                        print_error(f"No release note entry was found for a {ft.lower()} in the {self.pack_name} pack. "
+                                    f"Please rerun the update-release-notes command without -u to generate an"
+                                    f" updated template.")
+                        is_valid = False
+        if self.added_files:
+            for file in self.added_files:
+                if ('README' or 'ReleaseNotes') in file:
                     continue
                 elif self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())

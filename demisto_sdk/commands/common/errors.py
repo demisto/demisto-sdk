@@ -28,6 +28,12 @@ class Errors:
         return "BA102 - No yml files were found in {} directory.".format(file_path)
 
     @staticmethod
+    def file_type_not_supported(file_path):
+        return f"BA103 - The file type of {file_path} is not supported in validate command\n " \
+               f"validate' command supports: Integrations, Scripts, Playbooks, " \
+               f"Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+
+    @staticmethod
     def wrong_display_name(param_name, param_display):
         return 'IN100 - The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
@@ -334,6 +340,17 @@ class Errors:
         return f"RN104 - Your release notes file is empty, please complete it - found at: {file_path}"
 
     @staticmethod
+    def multiple_release_notes_files(pack_name):
+        return f"RN105 - More than one release notes file has been found for {pack_name}." \
+               f"Only one release note file is permitted per release. Please delete the extra release notes."
+
+    @staticmethod
+    def missing_release_notes_for_pack(pack):
+        return f"RN106 - Release notes were not found for {pack}. Please run `demisto-sdk " \
+               f"update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"generate release notes according to the new standard."
+
+    @staticmethod
     def playbook_cant_have_rolename(file_path):
         return f"PB100 - {file_path} - Playbook can not have a rolename."
 
@@ -522,6 +539,12 @@ class Errors:
     @staticmethod
     def invalid_file_path(file_path):
         return f"ST105 - Found incompatible file path: {file_path}."
+
+    @staticmethod
+    def invalid_package_structure(invalid_files):
+        return 'ST106 - You should update the following files to the package format, for further details please visit ' \
+               'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
+               'The files are:\n{}'.format('\n'.join(list(invalid_files)))
 
     @staticmethod
     def wrong_filename(filepath, file_type):

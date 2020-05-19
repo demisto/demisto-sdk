@@ -20,15 +20,14 @@ import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
-    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, DIR_LIST_FOR_REGULAR_ENTETIES,
-    IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
+    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
+    IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
     JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
-    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_RELEASE_NOTES_REGEX,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX,
-    TEST_PLAYBOOK_REGEX, TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES,
+    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
+    PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
+    SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, YML_ALL_SCRIPTS_REGEXES,
     YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -62,7 +61,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,
                                                get_remote_file, get_yaml,
-                                               get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
                                                print_warning, run_command,
@@ -89,7 +87,8 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, configuration=Configuration()):
+                 validate_all=False, is_private_repo=False, skip_pack_rn_validation=False,
+                 configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
         self.use_git = use_git
@@ -405,9 +404,7 @@ class FilesValidator:
                 pass
 
             else:
-                print_error("The file type of {} is not supported in validate command".format(file_path))
-                print_error("'validate' command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
+                print_error(Errors.file_type_not_supported(self.file_path))
                 self._is_valid = False
 
         self.changed_pack_data = changed_packs
@@ -420,9 +417,7 @@ class FilesValidator:
                 if pack_name not in added_rn:
                     added_rn.add(pack_name)
                 else:
-                    print_error(f"More than one release notes file has been found for {pack_name}."
-                                f"Only one release note file is permitted per release. Please delete"
-                                f" the extra release notes.")
+                    print_error(Errors.multiple_release_notes_files(pack_name))
                     self._is_valid = False
 
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
@@ -475,8 +470,11 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
-                unifier = Unifier(os.path.dirname(file_path))
-                yml_path, _ = unifier.get_script_package_data()
+                if not file_path.endswith('.yml'):
+                    unifier = Unifier(os.path.dirname(file_path))
+                    yml_path, _ = unifier.get_script_package_data()
+                else:
+                    yml_path = file_path
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
@@ -537,16 +535,12 @@ class FilesValidator:
                 pass
 
             else:
-                print_error("The file type of {} is not supported in validate command".format(file_path))
-                print_error("validate command supports: Integrations, Scripts, Playbooks, "
-                            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions")
+                print_error(Errors.file_type_not_supported(file_path))
                 self._is_valid = False
         missing_rn = self.changed_pack_data.difference(added_rn)
         if (len(missing_rn) > 0) and (self.skip_pack_rn_validation is False):
             for pack in missing_rn:
-                print_error(f"Release notes were not found for {pack}. Please run `demisto-sdk "
-                            f"update-release-notes -p {pack} -u (major|minor|revision)` to "
-                            f"generate release notes according to the new standard.")
+                print_error(Errors.missing_release_notes_for_pack(pack))
             self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):
@@ -561,9 +555,7 @@ class FilesValidator:
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
                 invalid_files.append(f)
         if invalid_files:
-            print_error('You should update the following files to the package format, for further details please visit '
-                        'https://github.com/demisto/content/tree/master/docs/package_directory_structure. '
-                        'The files are:\n{}'.format('\n'.join(list(invalid_files))))
+            print_error(Errors.invalid_package_structure(invalid_files))
             self._is_valid = False
 
     def validate_committed_files(self):
@@ -673,10 +665,7 @@ class FilesValidator:
             print(f'Could not find validations for file {file_path}')
 
         else:
-            print_error('The file type of {} is not supported in validate command'.format(file_path))
-            print_error('validate command supports: Integrations, Scripts, Playbooks, dashboards, incident types, '
-                        'reputations, Incident fields, Indicator fields, Images, Release notes, '
-                        'Layouts and Descriptions')
+            print_error(Errors.file_type_not_supported(file_path))
             self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):
@@ -747,45 +736,19 @@ class FilesValidator:
                     file_path = os.path.join(dir_path, file_name)
 
                     is_yml_file = file_name.endswith('.yml') and \
-                        dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+                        dir_name in (
+                        constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
                     is_json_file = file_name.endswith('.json') and \
-                        dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+                        dir_name not in (
+                        constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+
+                    if dir_name in [constants.REPORTS_DIR, constants.DASHBOARDS_DIR]:
+                        continue
 
                     if is_yml_file or is_json_file:
                         print("Validating {}".format(file_path))
                         self.is_backward_check = False  # if not using git, no need for BC checks
-
-                        self.validate_added_files({file_path}, file_type=find_type(file_path))
-
-        # go over regular content entities
-        for directory in DIR_LIST_FOR_REGULAR_ENTETIES:
-            print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
-            for root, dirs, files in os.walk(directory):
-                for file_name in files:
-                    file_path = os.path.join(root, file_name)
-                    # skipping hidden files
-                    if not file_name.endswith('.yml'):
-                        continue
-                    print('Validating ' + file_name)
-                    structure_validator = StructureValidator(file_path)
-                    if not structure_validator.is_valid_scheme():
-                        self._is_valid = False
-
-        # go over regular PACKAGE_SUPPORTING_DIRECTORIES entities
-        for directory in PACKAGE_SUPPORTING_DIRECTORIES:
-            for root, dirs, files in os.walk(directory):
-                for inner_dir in dirs:
-                    if inner_dir.startswith('.'):
-                        continue
-
-                    project_dir = os.path.join(root, inner_dir)
-                    _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
-                    if file_path:
-                        # check if the file_path is part of test_data yml
-                        if any(test_file in file_path.lower() for test_file in TESTS_DIRECTORIES):
-                            continue
-                        print('Validating ' + file_path)
                         structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False

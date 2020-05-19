@@ -758,9 +758,9 @@ class FilesValidator:
                     if is_yml_file or is_json_file:
                         print("Validating {}".format(file_path))
                         self.is_backward_check = False  # if not using git, no need for BC checks
-                        # structure_validator = StructureValidator(file_path)
-                        # if not structure_validator.is_valid_scheme():
-                        #     self._is_valid = False
+                        structure_validator = StructureValidator(file_path)
+                        if not structure_validator.is_valid_scheme():
+                            self._is_valid = False
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.
@@ -785,7 +785,7 @@ class FilesValidator:
                     print('Validating committed changed files only')
                 self.validate_committed_files()
             else:
-                # self.validate_against_previous_version(no_error=True)
+                self.validate_against_previous_version(no_error=True)
                 print('Validates all of Content repo directories according to their schemas')
                 self.validate_all_files_schema()
 

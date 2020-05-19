@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
+from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME, IGNORED_PACK_NAMES, ALL_FILES_VALIDATION_IGNORE_WHITELIST
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
@@ -17,7 +17,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: None, pack_files: set, pre_release: bool = False):
+    def __init__(self, pack: str, update_type: None, pack_files: set, added_files: set,
+                 pre_release: bool = False):
 
         self.pack = pack
         self.update_type = update_type
@@ -25,22 +26,33 @@ class UpdateRN:
         self.pack_path = pack_name_to_path(self.pack)
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.pack_files = pack_files
+        self.added_files = added_files
         self.pre_release = pre_release
+        self.metadata_dict = {}
 
     def execute_update(self):
-        try:
-            new_version = self.bump_version_number(self.pre_release)
-        except ValueError as e:
-            print_error(e)
-            sys.exit(1)
-        rn_path = self.return_release_notes_path(new_version)
-        self.check_rn_dir(rn_path)
-        changed_files = {}
-        for packfile in self.pack_files:
-            fn, ft = self.ident_changed_file_type(packfile)
-            changed_files[fn] = ft
-        rn_string = self.build_rn_template(changed_files)
-        self.create_markdown(rn_path, rn_string, changed_files)
+        if self.pack in IGNORED_PACK_NAMES:
+            print_warning(f"Release notes are not required for the {self.pack} pack since this pack"
+                          f" is not versioned.")
+        else:
+            try:
+                new_version = self.bump_version_number(self.pre_release)
+            except ValueError as e:
+                print_error(e)
+                sys.exit(1)
+            rn_path = self.return_release_notes_path(new_version)
+            self.check_rn_dir(rn_path)
+            changed_files = {}
+            self.find_added_pack_files()
+            for packfile in self.pack_files:
+                fn, ft = self.ident_changed_file_type(packfile)
+                changed_files[fn] = ft
+            rn_string = self.build_rn_template(changed_files)
+            if len(rn_string) > 0:
+                self.commit_to_bump()
+                self.create_markdown(rn_path, rn_string, changed_files)
+            else:
+                print_warning("No changes which would belong in release notes were detected.")
 
     def _does_pack_metadata_exist(self):
         """Check if pack_metadata.json exists"""
@@ -49,6 +61,14 @@ class UpdateRN:
             return False
 
         return True
+
+    def find_added_pack_files(self):
+        for a_file in self.added_files:
+            if self.pack in a_file:
+                if any(item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
+                    continue
+                else:
+                    self.pack_files.add(a_file)
 
     def return_release_notes_path(self, input_version: str):
         _new_version = input_version.replace('.', '_')
@@ -80,7 +100,7 @@ class UpdateRN:
     def ident_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
-        if self.pack in file_path:
+        if self.pack in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
             if 'Playbooks' in file_path and ('TestPlaybooks' not in file_path):
@@ -140,13 +160,15 @@ class UpdateRN:
         if pre_release:
             new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version
+        self.metadata_dict = data_dictionary
+        return new_version
 
+    def commit_to_bump(self):
         if self._does_pack_metadata_exist():
             with open(self.metadata_path, 'w') as fp:
-                json.dump(data_dictionary, fp, indent=4)
+                json.dump(self.metadata_dict, fp, indent=4)
                 print_color(f"Updated pack metadata version at path : {self.metadata_path}",
                             LOG_COLORS.GREEN)
-        return new_version
 
     @staticmethod
     def check_rn_dir(rn_path):

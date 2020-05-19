@@ -27,7 +27,9 @@ class ReleaseNotesValidator:
         is_valid = True
         if self.modified_files:
             for file in self.modified_files:
-                if self.pack_name in file:
+                if 'README' in file:
+                    continue
+                elif self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None)
                     fn, ft = update_rn_util.ident_changed_file_type(file)
                     if ft and fn not in self.latest_release_notes:

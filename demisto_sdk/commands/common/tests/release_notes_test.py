@@ -48,7 +48,6 @@ def test_rn_master_diff(release_notes, expected_result, mocker):
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     validator = get_validator(release_notes)
     assert validator.is_file_valid() == expected_result
-    assert 1 == 2
 
 
 def test_init():

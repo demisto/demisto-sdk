@@ -17,13 +17,13 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n- __Hello World Integration__\n%%UPDATE_RN%%\n" \
-                          "\n#### Playbooks\n- __Hello World Playbook__\n%%UPDATE_RN%%\n" \
-                          "\n#### Scripts\n- __Hello World Script__\n%%UPDATE_RN%%\n" \
-                          "\n#### IncidentFields\n- __Hello World IncidentField__\n%%UPDATE_RN%%\n" \
-                          "\n#### Classifiers\n- __Hello World Classifier__\n%%UPDATE_RN%%\n" \
-                          "\n#### Layouts\n- __Hello World Layout__\n%%UPDATE_RN%%\n" \
-                          "\n#### IncidentTypes\n- __Hello World Incident Type__\n%%UPDATE_RN%%\n"
+        expected_result = "\n### Integrations\n- __Hello World Integration__\n%%UPDATE_RN%%\n" \
+                          "\n### Playbooks\n- __Hello World Playbook__\n%%UPDATE_RN%%\n" \
+                          "\n### Scripts\n- __Hello World Script__\n%%UPDATE_RN%%\n" \
+                          "\n### IncidentFields\n- __Hello World IncidentField__\n%%UPDATE_RN%%\n" \
+                          "\n### Classifiers\n- __Hello World Classifier__\n%%UPDATE_RN%%\n" \
+                          "\n### Layouts\n- __Hello World Layout__\n%%UPDATE_RN%%\n" \
+                          "\n### IncidentTypes\n- __Hello World Incident Type__\n%%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         changed_items = {
@@ -86,7 +86,7 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
-        version_number = update_rn.bump_version_number(pre_release=False)
+        version_number, _ = update_rn.bump_version_number(pre_release=False)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
@@ -107,7 +107,7 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
-        version_number = update_rn.bump_version_number(pre_release=False)
+        version_number, _ = update_rn.bump_version_number(pre_release=False)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
@@ -128,7 +128,7 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='revision', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
-        version_number = update_rn.bump_version_number(pre_release=False)
+        version_number, _ = update_rn.bump_version_number(pre_release=False)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),

@@ -87,7 +87,6 @@ class UpdateRN:
         else:
             name = os.path.basename(file_path)
             print_error(f"Could not find name in {file_path}")
-            # sys.exit(1)
         return name
 
     @staticmethod
@@ -126,7 +125,11 @@ class UpdateRN:
 
     def bump_version_number(self, pre_release: bool = False):
         new_version = None  # This will never happen since we pre-validate the argument
-        data_dictionary = get_json(self.metadata_path)
+        try:
+            data_dictionary = get_json(self.metadata_path)
+        except FileNotFoundError:
+            print_error(f"Pack {self.pack} was not found. Please verify the pack name is correct.")
+            sys.exit(1)
         if self.update_type is None:
             new_version = data_dictionary.get('currentVersion', '99.99.99')
             return new_version, data_dictionary

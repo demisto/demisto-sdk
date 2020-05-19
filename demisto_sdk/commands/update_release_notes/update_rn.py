@@ -7,7 +7,9 @@ import json
 import os
 import sys
 
-from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME, IGNORED_PACK_NAMES, ALL_FILES_VALIDATION_IGNORE_WHITELIST
+from demisto_sdk.commands.common.constants import (
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, IGNORED_PACK_NAMES,
+    PACKS_PACK_META_FILE_NAME)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,

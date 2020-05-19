@@ -51,13 +51,13 @@ jobs:
               fi
               demisto-sdk create-content-artifacts -a ./tmp
         - run:
-          name: test create ID set
-          command: |
-            if [[ $CIRCLE_BRANCH != master ]]; then
-                echo "Skipping creating ID set on non master branch"
-                exit 0
-            fi
-            demisto-sdk create-id-set -o ./Tests/id_set.json
+            name: test create ID set
+            command: |
+              if [[ $CIRCLE_BRANCH != master ]]; then
+                  echo "Skipping creating ID set on non master branch"
+                  exit 0
+              fi
+              demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
             name: deploy
             command: |

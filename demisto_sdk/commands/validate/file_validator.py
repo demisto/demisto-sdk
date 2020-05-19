@@ -435,8 +435,6 @@ class FilesValidator:
         added_rn = set()
         self.verify_no_dup_rn(added_files)
         for file_path in added_files:
-            if ('ReleaseNotes' in file_path) and self.skip_pack_rn_validation:
-                continue
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue

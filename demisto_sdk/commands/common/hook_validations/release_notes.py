@@ -30,7 +30,7 @@ class ReleaseNotesValidator:
                 if 'README' in file:
                     continue
                 elif self.pack_name in file:
-                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None)
+                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
                     fn, ft = update_rn_util.ident_changed_file_type(file)
                     if ft and fn not in self.latest_release_notes:
                         print_error(f"No release note entry was found for a {ft.lower()} in the {self.pack_name} pack. "

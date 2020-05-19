@@ -30,7 +30,6 @@ class UpdateRN:
         self.pack_files = pack_files
         self.added_files = added_files
         self.pre_release = pre_release
-        self.metadata_dict = {}
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -38,7 +37,7 @@ class UpdateRN:
                           f" is not versioned.")
         else:
             try:
-                new_version = self.bump_version_number(self.pre_release)
+                new_version, new_metadata = self.bump_version_number(self.pre_release)
             except ValueError as e:
                 print_error(e)
                 sys.exit(1)
@@ -51,7 +50,7 @@ class UpdateRN:
                 changed_files[fn] = ft
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
-                self.commit_to_bump()
+                self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files)
             else:
                 print_warning("No changes which would belong in release notes were detected.")
@@ -102,6 +101,8 @@ class UpdateRN:
     def ident_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
+        if 'ReleaseNotes' in file_path:
+            return file_name, _file_type
         if self.pack in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
@@ -128,7 +129,7 @@ class UpdateRN:
         data_dictionary = get_json(self.metadata_path)
         if self.update_type is None:
             new_version = data_dictionary.get('currentVersion', '99.99.99')
-            return new_version
+            return new_version, data_dictionary
         elif self.update_type == 'major':
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
@@ -162,13 +163,12 @@ class UpdateRN:
         if pre_release:
             new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version
-        self.metadata_dict = data_dictionary
-        return new_version
+        return new_version, data_dictionary
 
-    def commit_to_bump(self):
+    def commit_to_bump(self, metadata_dict):
         if self._does_pack_metadata_exist():
             with open(self.metadata_path, 'w') as fp:
-                json.dump(self.metadata_dict, fp, indent=4)
+                json.dump(metadata_dict, fp, indent=4)
                 print_color(f"Updated pack metadata version at path : {self.metadata_path}",
                             LOG_COLORS.GREEN)
 
@@ -195,37 +195,37 @@ class UpdateRN:
                 continue
             elif v == 'Integration':
                 if integration_header is False:
-                    rn_string += '\n#### Integrations\n'
+                    rn_string += '\n### Integrations\n'
                     integration_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Playbook':
                 if playbook_header is False:
-                    rn_string += '\n#### Playbooks\n'
+                    rn_string += '\n### Playbooks\n'
                     playbook_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Script':
                 if script_header is False:
-                    rn_string += '\n#### Scripts\n'
+                    rn_string += '\n### Scripts\n'
                     script_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'IncidentFields':
                 if inc_flds_header is False:
-                    rn_string += '\n#### IncidentFields\n'
+                    rn_string += '\n### IncidentFields\n'
                     inc_flds_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Classifiers':
                 if classifier_header is False:
-                    rn_string += '\n#### Classifiers\n'
+                    rn_string += '\n### Classifiers\n'
                     classifier_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Layouts':
                 if layout_header is False:
-                    rn_string += '\n#### Layouts\n'
+                    rn_string += '\n### Layouts\n'
                     layout_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'IncidentTypes':
                 if inc_types_header is False:
-                    rn_string += '\n#### IncidentTypes\n'
+                    rn_string += '\n### IncidentTypes\n'
                     inc_types_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
         return rn_string
@@ -234,6 +234,8 @@ class UpdateRN:
     def update_existing_rn(current_rn, changed_files):
         new_rn = current_rn
         for k, v in sorted(changed_files.items(), reverse=True):
+            if v is None:
+                continue
             if v in current_rn:
                 if k in current_rn:
                     continue
@@ -242,7 +244,7 @@ class UpdateRN:
                     new_rn_part = f'\n- __{k}__\n%%UPDATE_RN%%\n'
                     new_rn = rn_parts[0] + v + new_rn_part + rn_parts[1]
             else:
-                new_rn_part = f'\n#### {v}\n- __{k}__\n%%UPDATE_RN%%\n'
+                new_rn_part = f'\n### {v}\n- __{k}__\n%%UPDATE_RN%%\n'
                 new_rn = current_rn + new_rn_part
         return new_rn
 

@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation that checkbox items are not required in integrations.
 * Added pack release notes generation and validation.
 * Improved pack metadata validation.
 * Fixed an issue in **validate** where renamed files caused an error

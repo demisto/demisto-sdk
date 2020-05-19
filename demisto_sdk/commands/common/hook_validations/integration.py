@@ -69,6 +69,7 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
+            self.is_checkbox_param_configured_correctly(),
             self.is_valid_category(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
@@ -118,12 +119,13 @@ class IntegrationValidator(BaseValidator):
             if configuration_param_name == param_name:
                 if configuration_param['display'] != param_display:
                     err_msgs.append(Errors.wrong_display_name(param_name, param_display))
-                elif configuration_param.get('defaultvalue', '') not in ('false', ''):
+                if configuration_param.get('defaultvalue', '') not in ('false', ''):
                     err_msgs.append(Errors.wrong_default_parameter(param_name))
-                elif configuration_param.get('required', False):
+                if configuration_param.get('required', False):
                     err_msgs.append(Errors.wrong_required_value(param_name))
-                elif configuration_param.get('type') != 8:
+                if configuration_param.get('type') != 8:
                     err_msgs.append(Errors.wrong_required_type(param_name))
+
         if err_msgs:
             print_error('{} Received the following error for {} validation:\n{}'
                         .format(self.file_path, param_name, '\n'.join(err_msgs)))
@@ -147,6 +149,40 @@ class IntegrationValidator(BaseValidator):
         if insecure_field_name:
             return self.is_valid_param(insecure_field_name, 'Trust any certificate (not secure)')
         return True
+
+    def is_checkbox_param_configured_correctly(self):
+        # type: () -> bool
+        """Check that if an integration has a checkbox parameter it is configured properly.
+        Returns:
+            bool. True if the checkbox parameter is configured correctly, False otherwise.
+        """
+        err_msgs = []
+        configuration = self.current_file.get('configuration', [])
+        for configuration_param in configuration:
+            param_name = configuration_param['name']
+            if configuration_param['type'] == 8 and param_name not in ('insecure', 'unsecure', 'proxy', 'isFetch'):
+                err_msg = self.is_valid_checkbox_param(configuration_param, param_name)
+                if err_msg:
+                    err_msgs.append(err_msg)
+        if err_msgs:
+            print_error('{} Received the following error for checkbox parameters'
+                        ' validation:\n{}'.format(self.file_path, '\n'.join(err_msgs)))
+            return False
+
+        return True
+
+    def is_valid_checkbox_param(self, configuration_param, param_name):
+        # type: (dict, str) -> str
+        """Check if the given checkbox parameter required field is False.
+        Returns:
+            str. Empty string if valid, error message otherwise.
+        """
+        err_msg = None
+        if configuration_param.get('required', False):
+            err_msg = Errors.wrong_required_value(param_name)
+        if err_msg:
+            self.is_valid = False
+        return err_msg
 
     def is_valid_category(self):
         # type: () -> bool

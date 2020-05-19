@@ -78,3 +78,5 @@ workflows:
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+$/
+      - build:
+          context: test

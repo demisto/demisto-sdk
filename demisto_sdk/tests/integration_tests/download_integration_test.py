@@ -50,6 +50,7 @@ def test_integration_download_no_force(demisto_client, tmp_path):
     assert "To merge existing files use the download command with -f." in result.output
     assert result.exit_code == 0
     assert not result.stderr
+    assert not result.exception
 
 
 def test_integration_download_with_force(demisto_client, tmp_path):
@@ -74,6 +75,7 @@ def test_integration_download_with_force(demisto_client, tmp_path):
     assert "2 files merged." in result.output
     assert result.exit_code == 0
     assert not result.stderr
+    assert not result.exception
 
 
 def test_integration_download_list_files(demisto_client):
@@ -108,3 +110,4 @@ def test_integration_download_list_files(demisto_client):
     assert "guy                                Playbook" in result.output
     assert result.exit_code == 0
     assert not result.stderr
+    assert not result.exception

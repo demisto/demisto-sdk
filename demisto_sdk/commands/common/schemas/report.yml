@@ -23,6 +23,10 @@ mapping:
   createdBy:
     type: str
     required: True
+  latestReportName:
+    type: str
+  modified:
+    type: str
   type:
     type: str
     required: True

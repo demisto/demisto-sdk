@@ -20,16 +20,15 @@ import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
-    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, DIR_LIST_FOR_REGULAR_ENTETIES,
-    IGNORED_TYPES_REGEXES, IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
+    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
+    IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
     JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
     JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
-    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKS_DIR, PACKS_RELEASE_NOTES_REGEX,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX,
-    TEST_PLAYBOOK_REGEX, TESTS_DIRECTORIES, YML_ALL_SCRIPTS_REGEXES,
-    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES, Errors)
+    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
+    PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
+    SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, YML_ALL_SCRIPTS_REGEXES,
+    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -61,7 +60,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,
                                                get_remote_file, get_yaml,
-                                               get_yml_paths_in_dir,
                                                is_file_path_in_pack,
                                                print_color, print_error,
                                                print_warning, run_command,
@@ -474,8 +472,11 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
-                unifier = Unifier(os.path.dirname(file_path))
-                yml_path, _ = unifier.get_script_package_data()
+                if not file_path.endswith('.yml'):
+                    unifier = Unifier(os.path.dirname(file_path))
+                    yml_path, _ = unifier.get_script_package_data()
+                else:
+                    yml_path = file_path
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator)
@@ -746,45 +747,17 @@ class FilesValidator:
                     file_path = os.path.join(dir_path, file_name)
 
                     is_yml_file = file_name.endswith('.yml') and \
-                        dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+                        dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
                     is_json_file = file_name.endswith('.json') and \
-                        dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+                        dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+
+                    if dir_name in [constants.REPORTS_DIR, constants.DASHBOARDS_DIR]:
+                        continue
 
                     if is_yml_file or is_json_file:
                         print("Validating {}".format(file_path))
                         self.is_backward_check = False  # if not using git, no need for BC checks
-
-                        self.validate_added_files({file_path}, file_type=find_type(file_path))
-
-        # go over regular content entities
-        for directory in DIR_LIST_FOR_REGULAR_ENTETIES:
-            print_color('Validating {} directory:'.format(directory), LOG_COLORS.GREEN)
-            for root, dirs, files in os.walk(directory):
-                for file_name in files:
-                    file_path = os.path.join(root, file_name)
-                    # skipping hidden files
-                    if not file_name.endswith('.yml'):
-                        continue
-                    print('Validating ' + file_name)
-                    structure_validator = StructureValidator(file_path)
-                    if not structure_validator.is_valid_scheme():
-                        self._is_valid = False
-
-        # go over regular PACKAGE_SUPPORTING_DIRECTORIES entities
-        for directory in PACKAGE_SUPPORTING_DIRECTORIES:
-            for root, dirs, files in os.walk(directory):
-                for inner_dir in dirs:
-                    if inner_dir.startswith('.'):
-                        continue
-
-                    project_dir = os.path.join(root, inner_dir)
-                    _, file_path = get_yml_paths_in_dir(project_dir, Errors.no_yml_file(project_dir))
-                    if file_path:
-                        # check if the file_path is part of test_data yml
-                        if any(test_file in file_path.lower() for test_file in TESTS_DIRECTORIES):
-                            continue
-                        print('Validating ' + file_path)
                         structure_validator = StructureValidator(file_path)
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False

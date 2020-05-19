@@ -41,7 +41,7 @@ jobs:
               cd content
 
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
-                demisto-sdk validate -i Packs/CortexXDR
+                demisto-sdk validate -i Packs/Gmail
                 exit 0
               fi
 

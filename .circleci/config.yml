@@ -46,7 +46,7 @@ jobs:
                 exit 0
               fi
 
-              ./Tests/scripts/validate.sh
+              chmod +x ./Tests/scripts/validate.sh
         - run:
             name: test create content artifacts
             command: |

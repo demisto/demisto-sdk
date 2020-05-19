@@ -33,6 +33,32 @@ jobs:
               pip install coveralls
               coveralls
         - run:
+            name: test validate files and yaml
+            command: |
+              if [[ $CIRCLE_BRANCH != master ]]; then
+                demisto-sdk validate -i Packs/CortexXDR
+              fi
+
+              git clone https://github.com/demisto/content.git
+              cd content
+              ./Tests/scripts/validate.sh
+        - run:
+            name: test create content artifacts
+            command: |
+              if [[ $CIRCLE_BRANCH != master ]]; then
+                echo "Skipping creating content artifacts on non master branch"
+                exit 0
+              fi
+              demisto-sdk create-content-artifacts -a ./tmp
+        - run:
+          name: test create ID set
+          command: |
+            if [[ $CIRCLE_BRANCH != master ]]; then
+                echo "Skipping creating ID set on non master branch"
+                exit 0
+            fi
+            demisto-sdk create-id-set -o ./Tests/id_set.json
+        - run:
             name: deploy
             command: |
               ./demisto_sdk/utils/deploy.sh

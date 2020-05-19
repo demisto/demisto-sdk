@@ -442,19 +442,28 @@ def get_release_notes_file_path(file_path):
     :param file_path: str - File path of the suspected release note.
     :return: file_path: str - Validated release notes path.
     """
-    if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
-        return file_path
+    if file_path is None:
+        print_warning("Release notes were not found.")
+        return None
     else:
-        print_error(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+        if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
+            return file_path
+        else:
+            print_warning(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+            return None
 
 
 def get_latest_release_notes_text(rn_path):
-    with open(rn_path) as f:
-        rn = f.read()
+    if rn_path is None:
+        print_warning('Path to release notes not found.')
+        rn = None
+    else:
+        with open(rn_path) as f:
+            rn = f.read()
 
-    if not rn:
-        print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
-        return None
+        if not rn:
+            print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+            return None
 
     return rn if rn else None
 
@@ -722,15 +731,25 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
+def is_private_repository():
+    """
+    Returns True if script executed from private repository
+
+    """
+    git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+    return 'content-external-template' in git_repo.remote().urls.__next__()
+
+
 def get_content_path() -> str:
     """ Get abs content path, from any CWD
     Returns:
         str: Absolute content path
     """
     try:
-        git_repo = git.Repo(os.getcwd(),
-                            search_parent_directories=True)
-        if 'content' not in git_repo.remote().urls.__next__():
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        remote_url = git_repo.remote().urls.__next__()
+
+        if 'content' not in remote_url:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
@@ -795,7 +814,7 @@ def get_last_release_version():
 
 
 def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
-    """ Chech if an absolute file_path is part of content repo.
+    """ Check if an absolute file_path is part of content repo.
     Args:
         file_path (str): The file path which is checked.
     Returns:
@@ -804,7 +823,8 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
     """
     git_repo = git.Repo(os.getcwd(),
                         search_parent_directories=True)
-    if 'content' not in git_repo.remote().urls.__next__():
+    remote_url = git_repo.remote().urls.__next__()
+    if 'content' not in remote_url:
         return False, ''
     content_path_parts = Path(git_repo.working_dir).parts
     input_path_parts = Path(file_path).parts

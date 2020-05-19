@@ -122,7 +122,7 @@ class PlaybookValidator(BaseValidator):
         is_all_condition_branches_handled: bool = True
         # ADD all possible conditions to task_condition_labels (UPPER)
         # #default# condition should always exist in a builtin condition
-        task_condition_labels = {'#DEFAULT#'}
+        task_condition_labels = set()
         for condition in task.get('conditions', []):
             label = condition.get('label')
             if label:
@@ -136,7 +136,10 @@ class PlaybookValidator(BaseValidator):
                 if next_task_branch:
                     # Need to cast it to string because otherwise it's parsed as boolean
                     task_condition_labels.remove(str(next_task_branch).upper())
-            except KeyError:
+            except KeyError as e:
+                # else doesn't have a path, skip error
+                if '#DEFAULT#' == e.args[0]:
+                    continue
                 print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
                             f'next task condition "{next_task_branch}". Please remove this task or add '
                             f'this condition to condition task with id:{task.get("id")}.')
@@ -144,13 +147,6 @@ class PlaybookValidator(BaseValidator):
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            try:
-                # try to rename default condition to else for print
-                task_condition_labels.remove('#default#')
-                task_condition_labels.add('else')
-            except KeyError:
-                # there is no #default# task, so we didn't replace it with else and can continue
-                pass
             print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
                         f'{",".join(map(lambda x: f"{str(x)}", task_condition_labels))}')
             self.is_valid = is_all_condition_branches_handled = False

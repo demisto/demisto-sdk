@@ -35,6 +35,8 @@ jobs:
         - run:
             name: test validate files and yaml
             command: |
+              . .tox/py37/bin/activate
+
               if [[ $CIRCLE_BRANCH != master ]]; then
                 demisto-sdk validate -i Packs/CortexXDR
               fi
@@ -45,6 +47,8 @@ jobs:
         - run:
             name: test create content artifacts
             command: |
+              . .tox/py37/bin/activate
+
               if [[ $CIRCLE_BRANCH != master ]]; then
                 echo "Skipping creating content artifacts on non master branch"
                 exit 0
@@ -53,6 +57,8 @@ jobs:
         - run:
             name: test create ID set
             command: |
+              . .tox/py37/bin/activate
+
               if [[ $CIRCLE_BRANCH != master ]]; then
                   echo "Skipping creating ID set on non master branch"
                   exit 0

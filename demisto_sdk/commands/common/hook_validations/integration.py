@@ -170,7 +170,7 @@ class IntegrationValidator(BaseValidator):
         # type: (dict, str) -> bool
         """Check if the given checkbox parameter required field is False.
         Returns:
-            str. Empty string if valid, error message otherwise.
+            bool. True if valid, False otherwise.
         """
         err_msg = None
         if configuration_param.get('required', False):

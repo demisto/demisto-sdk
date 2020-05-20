@@ -243,7 +243,7 @@ class UpdateRN:
                 if k in current_rn:
                     continue
                 else:
-                    rn_parts = current_rn.split(v+'s')
+                    rn_parts = current_rn.split(v + 's')
                     new_rn_part = f'\n- __{k}__\n%%UPDATE_RN%%\n'
                     new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
             else:

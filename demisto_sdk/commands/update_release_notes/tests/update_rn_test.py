@@ -424,6 +424,6 @@ class TestRNUpdateUnit:
         shutil.copy(src=ORIGINAL, dst=TEMP_FILE)
         data_dict = get_json(TEMP_FILE)
         update_rn.metadata_path = TEMP_FILE
-        assert update_rn.commit_to_bump(data_dict)
+        update_rn.commit_to_bump(data_dict)
         os.remove(ORIGINAL)
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)

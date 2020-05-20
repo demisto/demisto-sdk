@@ -470,6 +470,9 @@ class ContentCreator:
         print('Starting to create content artifact...')
 
         try:
+            if os.path.exists('release-notes-test.md'):
+                print('copying release-notes-test.md to artifacts directory "{}"'.format(self.artifacts_path))
+                shutil.copyfile('release-notes-test.md', os.path.join(self.artifacts_path, 'release-notes-test.md'))
             print('creating dir for bundles...')
             for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
                 os.mkdir(bundle_dir)

@@ -41,10 +41,11 @@ from ruamel.yaml import YAML
 class ContentCreator:
 
     def __init__(self, artifacts_path: str, content_version='', content_bundle_path='',
-                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False):
+                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
         self.content_version = content_version
         self.preserve_bundles = preserve_bundles
+        self.only_packs = tools.is_private_repository() or packs
 
         # temp folder names
         self.content_bundle = content_bundle_path if content_bundle_path else os.path.join(self.artifacts_path,
@@ -90,7 +91,7 @@ class ContentCreator:
         Returns:
             int. 1 for failure, 0 for success.
         """
-        self.create_content(is_private_repository=tools.is_private_repository())
+        self.create_content(only_packs=self.only_packs)
         if self.long_file_names:
             print_error(f'The following files exceeded to file name length limit of {self.file_name_max_size}:\n'
                         f'{json.dumps(self.long_file_names, indent=4)}')
@@ -462,7 +463,7 @@ class ContentCreator:
                 print_warning(f'{doc_file} was not found and '
                               'therefore was not added to the content bundle')
 
-    def create_content(self, is_private_repository=False):
+    def create_content(self, only_packs=False):
         """
         Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"
         """
@@ -489,18 +490,18 @@ class ContentCreator:
 
             # handle copying packs content to bundles for zipping to content_new.zip and content_test.zip
             packs = get_child_directories(PACKS_DIR)
-            if not is_private_repository:
+            if not only_packs:
                 self.copy_packs_content_to_old_bundles(packs)
 
             # handle copying packs content to packs_bundle for zipping to `content_packs.zip`
             self.copy_packs_content_to_packs_bundle(packs)
 
-            if not is_private_repository:
+            if not only_packs:
                 print('Copying content descriptor to content and test bundles')
                 for bundle_dir in [self.content_bundle, self.test_bundle]:
                     shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
 
-            if is_private_repository:
+            if only_packs:
                 ContentCreator.copy_docs_files(content_bundle_path=None,
                                                packs_bundle_path=self.packs_bundle)
             else:
@@ -508,7 +509,7 @@ class ContentCreator:
                                                packs_bundle_path=self.packs_bundle)
 
             print('Compressing bundles...')
-            if not is_private_repository:
+            if not only_packs:
                 shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
                 shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
 

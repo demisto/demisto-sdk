@@ -486,13 +486,3 @@ class TestValidators:
         assert file_validator._is_valid
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
-
-    INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
-        ('Valid Release Notes', ReleaseNotesValidator, True),
-        ('%%UPDATE_RN%%', ReleaseNotesValidator, False),
-    ]
-
-    @pytest.mark.parametrize('release_notes, validator, answer', INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
-    def test_has_release_notes_been_filled_out(self, release_notes, validator, answer):
-        # type: (str, Type[BaseValidator], Any) -> None
-        assert validator.has_release_notes_been_filled_out(release_notes) is answer

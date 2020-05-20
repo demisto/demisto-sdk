@@ -152,8 +152,8 @@ TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
     ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
      'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
-     'code description. ', False),
-    (NOT_FILLED_OUT_RN, True),
+     'code description. ', True),
+    (NOT_FILLED_OUT_RN, False),
     (FILLED_OUT_RN, True)
 
 ]

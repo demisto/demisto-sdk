@@ -45,12 +45,26 @@ jobs:
               git config diff.renameLimit 5000
 
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
+                demisto-sdk validate -i Packs/Gmail
+                exit 0
+              fi
+
+              ./Tests/scripts/validate.sh
+        - run:
+            name: test create content artifacts
+            command: |
+              . .tox/py37/bin/activate
+
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                 echo "Skipping creating content artifacts on non master branch"
                 exit 0
               fi
+              cd content
               mkdir ./tmp
 
               demisto-sdk create-content-artifacts -a ./tmp
+        - store_artifacts:
+            path: content/tmp
         - run:
             name: Test create ID set
             command: |
@@ -60,6 +74,8 @@ jobs:
                   echo "Skipping creating ID set on non master branch"
                   exit 0
               fi
+
+              cd content
               demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
             name: Deploy

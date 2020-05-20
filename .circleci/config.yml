@@ -17,6 +17,12 @@ jobs:
             command: |
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
         - run:
+            name: Tox build
+            command: |
+              pip install tox
+              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
+              tox -e py38 -v
+        - run:
             name: Pre-commit
             command: |
               . .tox/py37/bin/activate

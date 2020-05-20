@@ -37,7 +37,7 @@ jobs:
               pip install coveralls
               coveralls
         - run:
-            name: Test create content artifacts
+            name: Test validate files and yaml
             command: |
               . .tox/py37/bin/activate
               git clone https://github.com/demisto/content.git

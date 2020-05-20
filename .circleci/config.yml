@@ -13,12 +13,15 @@ jobs:
       steps:
         - checkout
         - run:
+            name: Environment variables
+            command: |
+              echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
+        - run:
             name: tox build
             command: |
               pip install tox
               tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
               tox -e py38 -v
-              echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
         - run:
             name: pre-commit
             command: |

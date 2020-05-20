@@ -236,6 +236,7 @@ class TestRNUpdateUnit:
     CHANGED_FILES = {
         "Cortex XDR Incident": "IncidentType",
         "XDR Alerts": "IncidentField",
+        "Sample IncidentField": "IncidentField",
         "Cortex XDR - IR": "Integration",
         "Nothing": None
     }
@@ -245,6 +246,9 @@ class TestRNUpdateUnit:
 %%UPDATE_RN%%
 
 ### IncidentFields
+- __Sample IncidentField__
+%%UPDATE_RN%%
+
 - __XDR Alerts__
 %%UPDATE_RN%%
 
@@ -268,6 +272,22 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Integration/VulnDB/VulnDB.py')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
+        result = update_rn.ident_changed_file_type(filepath)
+        assert expected_result == result
+
+    def test_ident_changed_file_type_release_notes(self):
+        """
+            Given:
+                - a filepath of a changed file
+            When:
+                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
+            Then:
+                - return tuple where first value is the pack name, and second is the item type
+        """
+        expected_result = ('N/A', None)
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
+        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_0_1.md')
         result = update_rn.ident_changed_file_type(filepath)
         assert expected_result == result
 
@@ -413,6 +433,7 @@ class TestRNUpdateUnit:
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
+        print(new_rn)
         assert self.EXPECTED_RN_RES == new_rn
 
     def test_commit_to_bump(self):
@@ -427,3 +448,11 @@ class TestRNUpdateUnit:
         update_rn.commit_to_bump(data_dict)
         os.remove(ORIGINAL)
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
+
+    def test_find_added_pack_files(self):
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        added_files = {'HelloWorld/something_new.md', 'HelloWorld/test_data/nothing.md'}
+        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files=set(),
+                             added_files=added_files)
+        update_rn.find_added_pack_files()
+        assert update_rn.pack_files == {'HelloWorld/something_new.md'}

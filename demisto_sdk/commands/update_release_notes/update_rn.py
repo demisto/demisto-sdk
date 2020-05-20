@@ -243,12 +243,12 @@ class UpdateRN:
                 if k in current_rn:
                     continue
                 else:
-                    rn_parts = current_rn.split(v)
+                    rn_parts = current_rn.split(v+'s')
                     new_rn_part = f'\n- __{k}__\n%%UPDATE_RN%%\n'
-                    new_rn = rn_parts[0] + v + new_rn_part + rn_parts[1]
+                    new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
             else:
                 new_rn_part = f'\n### {v}\n- __{k}__\n%%UPDATE_RN%%\n'
-                new_rn = current_rn + new_rn_part
+                new_rn += new_rn_part
         return new_rn
 
     def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict):

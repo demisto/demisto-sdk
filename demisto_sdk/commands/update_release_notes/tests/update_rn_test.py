@@ -204,7 +204,7 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata_.json')
-        self.assertRaises(SystemExit, update_rn.bump_version_number)
+        self.assertRaises(FileNotFoundError, update_rn.bump_version_number)
 
     def test_bump_version_no_version(self):
         """

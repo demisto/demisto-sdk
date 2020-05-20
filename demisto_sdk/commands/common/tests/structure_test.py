@@ -42,10 +42,12 @@ class TestStructureValidator:
             if isfile(target) is True:
                 pytest.fail(f"{target} File in tests already exists!")
         # Creating directory for tests if they're not exists
+
         for directory in DIR_LIST:
-            if not os.path.exists(directory):
-                cls.CREATED_DIRS.append(directory)
-                os.makedirs(directory)
+            d = os.path.join('Packs', 'TestPack', directory)
+            if not os.path.exists(d):
+                cls.CREATED_DIRS.append(d)
+                os.makedirs(d)
 
     @classmethod
     def teardown_class(cls):
@@ -132,7 +134,7 @@ class TestStructureValidator:
         assert validator.is_file_id_without_slashes() is answer, error
 
     INPUTS_IS_PATH_VALID = [
-        ("Reports/report-sade.json", True),
+        ("Packs/Test/Reports/report-sade.json", True),
         ("Notinregex/report-sade.json", False),
         ("Packs/Test/Integrations/Cymon/Cymon.yml", True),
     ]

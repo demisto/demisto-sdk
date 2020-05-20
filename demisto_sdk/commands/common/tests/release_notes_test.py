@@ -157,6 +157,7 @@ def test_are_release_notes_complete(release_notes, complete_expected_result, moc
     validator = get_validator(release_notes, MODIFIED_FILES)
     assert validator.are_release_notes_complete() == complete_expected_result
 
+
 TEST_RELEASE_NOTES_TEST_BANK_ADDED = [
     ('', False),  # Completely Empty
     ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
@@ -166,6 +167,8 @@ TEST_RELEASE_NOTES_TEST_BANK_ADDED = [
     (FILLED_OUT_RN, True)
 
 ]
+
+
 @pytest.mark.parametrize('release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_ADDED)
 def test_are_release_notes_complete_added(release_notes, complete_expected_result, mocker):
     """

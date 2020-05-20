@@ -177,8 +177,6 @@ def get_integration_data(file_path):
         integration_data['deprecated_commands'] = deprecated_commands
     if pack:
         integration_data['pack'] = pack
-    if api_modules:
-        integration_data['api_modules'] = api_modules
     return {id_: integration_data}
 
 

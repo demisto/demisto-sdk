@@ -216,8 +216,17 @@ class Unifier:
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
+        yml_name = os.path.basename(self.yml_path).split('.')[0]
+
         script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
+                                  glob.glob(os.path.join(self.package_path, f'{yml_name}' + script_type))))
+
+        if not script_path:
+            raise Exception(f"The code file name does not match the name of the yml file in the package "
+                            f"{self.package_path}")
+
+        else:
+            script_path = script_path[0]
 
         return script_path
 

@@ -880,18 +880,19 @@ class FilesValidator:
 
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list = []
-        pack_ignore_path = self.get_pack_ignore_file_path(pack_name)
+        if pack_name:
+            pack_ignore_path = self.get_pack_ignore_file_path(pack_name)
 
-        if os.path.isfile(pack_ignore_path):
-            try:
-                config = ConfigParser(allow_no_value=True)
-                config.read(pack_ignore_path)
+            if os.path.isfile(pack_ignore_path):
+                try:
+                    config = ConfigParser(allow_no_value=True)
+                    config.read(pack_ignore_path)
 
-                if 'demisto-sdk' in config:
-                    for key in config['demisto-sdk']:
-                        if key == 'ignore':
-                            ignored_errors_list.extend(str(config['demisto-sdk'][key]).split(','))
-            except MissingSectionHeaderError:
-                pass
+                    if 'demisto-sdk' in config:
+                        for key in config['demisto-sdk']:
+                            if key == 'ignore':
+                                ignored_errors_list.extend(str(config['demisto-sdk'][key]).split(','))
+                except MissingSectionHeaderError:
+                    pass
 
         return ignored_errors_list

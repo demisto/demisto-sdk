@@ -43,6 +43,7 @@ def test_rn_master_diff(release_notes, expected_result, mocker):
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    ReleaseNotesValidator.ignored_errors = []
     validator = get_validator(release_notes)
     assert validator.is_file_valid() == expected_result
 

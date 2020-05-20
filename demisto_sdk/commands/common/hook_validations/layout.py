@@ -26,5 +26,6 @@ class LayoutValidator(ContentEntityValidator):
         """
         if self.current_file.get('layout', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(self.file_path, self.DEFAULT_VERSION)
-            return self.handle_error(error_message, error_code)
+            if self.handle_error(error_message, error_code):
+                return False
         return True

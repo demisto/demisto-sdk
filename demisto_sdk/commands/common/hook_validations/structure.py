@@ -267,7 +267,7 @@ class StructureValidator(BaseValidator):
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
             error_message, error_code = Errors.invalid_file_path(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if not self.handle_error(error_message, error_code):
                 is_valid_path = True
         return is_valid_path
 

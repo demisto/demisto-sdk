@@ -467,7 +467,6 @@ class TestRNUpdateUnit:
 
     def test_execute_update_invalid(self):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        from demisto_sdk.commands.common.tools import LOG_COLORS
         update_rn = UpdateRN(pack="Legacy", update_type='minor', pack_files=set(),
                              added_files=set())
         update_rn.execute_update()

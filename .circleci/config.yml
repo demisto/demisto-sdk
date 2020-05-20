@@ -13,17 +13,17 @@ jobs:
       steps:
         - checkout
         - run:
-            name: Environment variables
+            name: Print environment variables
             command: |
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
         - run:
-            name: tox build
+            name: Tox build
             command: |
               pip install tox
               tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
               tox -e py38 -v
         - run:
-            name: pre-commit
+            name: Pre-commit
             command: |
               . .tox/py37/bin/activate
               pre-commit --version
@@ -32,12 +32,12 @@ jobs:
         - store_artifacts:
             path: coverage_html_report
         - run:
-            name: coveralls upload
+            name: Coveralls upload
             command: |
               pip install coveralls
               coveralls
         - run:
-            name: test validate files and yaml
+            name: Test validate files and yaml
             command: |
               . .tox/py37/bin/activate
 
@@ -53,7 +53,7 @@ jobs:
               chmod +x ./Tests/scripts/validate.sh
               ./Tests/scripts/validate.sh
         - run:
-            name: test create content artifacts
+            name: Test create content artifacts
             command: |
               . .tox/py37/bin/activate
 
@@ -63,7 +63,7 @@ jobs:
               fi
               demisto-sdk create-content-artifacts -a ./tmp
         - run:
-            name: test create ID set
+            name: Test create ID set
             command: |
               . .tox/py37/bin/activate
 
@@ -73,7 +73,7 @@ jobs:
               fi
               demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
-            name: deploy
+            name: Deploy
             command: |
               ./demisto_sdk/utils/deploy.sh
 workflows:

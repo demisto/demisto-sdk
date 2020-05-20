@@ -73,6 +73,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_default_arguments(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
+            self.is_checkbox_param_configured_correctly(),
             self.is_valid_category(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
@@ -126,19 +127,19 @@ class IntegrationValidator(ContentEntityValidator):
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                elif configuration_param.get('defaultvalue', '') not in ('false', ''):
+                if configuration_param.get('defaultvalue', '') not in ('false', ''):
                     error_message, error_code = Errors.wrong_default_parameter(param_name)
                     formatted_message = self.handle_error(error_message, error_code, should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                elif configuration_param.get('required', False):
+                if configuration_param.get('required', False):
                     error_message, error_code = Errors.wrong_required_value(param_name)
                     formatted_message = self.handle_error(error_message, error_code, should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                elif configuration_param.get('type') != 8:
+                if configuration_param.get('type') != 8:
                     error_message, error_code = Errors.wrong_required_type(param_name)
                     formatted_message = self.handle_error(error_message, error_code, should_print=False)
                     if formatted_message:
@@ -166,6 +167,36 @@ class IntegrationValidator(ContentEntityValidator):
                 insecure_field_name = configuration_param['name']
         if insecure_field_name:
             return self.is_valid_param(insecure_field_name, 'Trust any certificate (not secure)')
+        return True
+
+    def is_checkbox_param_configured_correctly(self):
+        # type: () -> bool
+        """Check that if an integration has a checkbox parameter it is configured properly.
+        Returns:
+            bool. True if the checkbox parameter is configured correctly, False otherwise.
+        """
+        configuration = self.current_file.get('configuration', [])
+        for configuration_param in configuration:
+            param_name = configuration_param['name']
+            if configuration_param['type'] == 8 and param_name not in ('insecure', 'unsecure', 'proxy', 'isFetch'):
+                if not self.is_valid_checkbox_param(configuration_param, param_name):
+                    self.is_valid = False
+        if not self.is_valid:
+            return False
+        return True
+
+    def is_valid_checkbox_param(self, configuration_param, param_name):
+        # type: (dict, str) -> bool
+        """Check if the given checkbox parameter required field is False.
+        Returns:
+            bool. True if valid, False otherwise.
+        """
+        err_msg = None
+        if configuration_param.get('required', False):
+            err_msg = Errors.wrong_required_value(param_name)
+        if err_msg:
+            print_error(err_msg)
+            return False
         return True
 
     def is_valid_category(self):

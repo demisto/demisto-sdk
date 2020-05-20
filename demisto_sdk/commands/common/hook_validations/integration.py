@@ -191,12 +191,10 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if valid, False otherwise.
         """
-        err_msg = None
         if configuration_param.get('required', False):
-            err_msg = Errors.wrong_required_value(param_name)
-        if err_msg:
-            print_error(err_msg)
-            return False
+            error_message, error_code = Errors.wrong_required_value(param_name)
+            if self.handle_error(error_message, error_code):
+                return False
         return True
 
     def is_valid_category(self):

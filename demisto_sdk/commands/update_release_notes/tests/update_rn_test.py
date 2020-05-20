@@ -204,7 +204,7 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata_.json')
-        self.assertRaises(FileNotFoundError, update_rn.bump_version_number)
+        self.assertRaises(SystemExit, update_rn.bump_version_number)
 
     def test_bump_version_no_version(self):
         """
@@ -415,17 +415,15 @@ class TestRNUpdateUnit:
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
         assert self.EXPECTED_RN_RES == new_rn
 
-    def test_commit_to_bump(self, mocker):
+    def test_commit_to_bump(self):
+        ORIGINAL = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
+        TEMP_FILE = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json')
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
-        shutil.copy(
-            src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
-            dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
-        data_dict = get_json(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
-        mocker.patch.object(UpdateRN, '_does_pack_metadata_exist', return_value='True')
+        shutil.copy(src=ORIGINAL, dst=TEMP_FILE)
+        data_dict = get_json(TEMP_FILE)
+        update_rn.metadata_path = TEMP_FILE
         assert update_rn.commit_to_bump(data_dict)
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
-        shutil.copy(
-            src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
-            dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
+        os.remove(ORIGINAL)
+        shutil.copy(src=TEMP_FILE, dst=ORIGINAL)

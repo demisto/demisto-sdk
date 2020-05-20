@@ -471,6 +471,3 @@ class TestRNUpdateUnit:
         update_rn = UpdateRN(pack="Legacy", update_type='minor', pack_files=set(),
                              added_files=set())
         update_rn.execute_update()
-        print_args = print.call_args[0][0]
-        warning_msg = 'Release notes are not required for the Legacy pack since this pack is not versioned.'
-        assert print_args == u'{}{}{}'.format(LOG_COLORS.YELLOW, warning_msg, LOG_COLORS.NATIVE)

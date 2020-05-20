@@ -5,6 +5,7 @@ from typing import Any, Type
 
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH, DIR_LIST
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -484,3 +485,22 @@ class TestValidators:
         assert file_validator._is_valid
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
+
+
+def test_is_py_or_yml():
+    files_path = os.path.normpath(
+        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    test_file = os.path.join(files_path, 'CortexXDR',
+                             'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
+    file_validator = FilesValidator()
+    res = file_validator._is_py_script_or_integration(test_file)
+    assert res is False
+
+
+def test_is_py_or_yml_valid():
+    files_path = os.path.normpath(
+        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    test_file = os.path.join(files_path, 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
+    file_validator = FilesValidator()
+    res = file_validator._is_py_script_or_integration(test_file)
+    assert res is False

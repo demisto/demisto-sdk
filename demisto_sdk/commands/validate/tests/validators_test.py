@@ -487,8 +487,6 @@ class TestValidators:
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
 
-
-class RNValidatorTest:
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
         ('Valid Release Notes', ReleaseNotesValidator, True),
         ('%%UPDATE_RN%%', ReleaseNotesValidator, False),

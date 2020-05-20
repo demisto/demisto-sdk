@@ -197,37 +197,37 @@ class UpdateRN:
             if k == 'N/A':
                 continue
             elif v == 'Integration':
-                if integration_header is False:
+                if not integration_header:
                     rn_string += '\n### Integrations\n'
                     integration_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Playbook':
-                if playbook_header is False:
+                if not playbook_header:
                     rn_string += '\n### Playbooks\n'
                     playbook_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Script':
-                if script_header is False:
+                if not script_header:
                     rn_string += '\n### Scripts\n'
                     script_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'IncidentFields':
-                if inc_flds_header is False:
+                if not inc_flds_header:
                     rn_string += '\n### IncidentFields\n'
                     inc_flds_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Classifiers':
-                if classifier_header is False:
+                if not classifier_header:
                     rn_string += '\n### Classifiers\n'
                     classifier_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'Layouts':
-                if layout_header is False:
+                if not layout_header:
                     rn_string += '\n### Layouts\n'
                     layout_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
             elif v == 'IncidentTypes':
-                if inc_types_header is False:
+                if not inc_types_header:
                     rn_string += '\n### IncidentTypes\n'
                     inc_types_header = True
                 rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'

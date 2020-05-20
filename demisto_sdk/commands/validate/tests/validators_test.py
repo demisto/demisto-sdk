@@ -4,7 +4,7 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-from demisto_sdk.commands.common.constants import CONF_PATH, DIR_LIST
+from demisto_sdk.commands.common.constants import CONF_PATH
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -30,8 +30,9 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
-    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, GIT_HAVE_MODIFIED_AND_NEW_FILES,
-    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
+    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST,
+    GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
+    INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
     INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
@@ -64,10 +65,10 @@ class TestValidators:
     def setup_class(cls):
         print("Setups class")
         for dir_to_create in DIR_LIST:
-            d = os.path.join('Packs', 'TestPack', dir_to_create)
-            if not os.path.exists(d):
-                cls.CREATED_DIRS.append(d)
-                os.makedirs(d)
+            if not os.path.exists(dir_to_create):
+                print(dir_to_create)
+                cls.CREATED_DIRS.append(dir_to_create)
+                os.makedirs(dir_to_create)
         copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
 
     @classmethod

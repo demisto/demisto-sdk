@@ -1,3 +1,4 @@
+import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
@@ -129,3 +130,20 @@ VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"
 CONF_JSON_MOCK_PATH = 'demisto_sdk/tests/test_files/conf.json'
+
+DIR_LIST = [
+    f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',
+    f'{PACK_TARGET}/{constants.SCRIPTS_DIR}',
+    f'{PACK_TARGET}/{constants.PLAYBOOKS_DIR}',
+    f'{PACK_TARGET}/{constants.REPORTS_DIR}',
+    f'{PACK_TARGET}/{constants.DASHBOARDS_DIR}',
+    f'{PACK_TARGET}/{constants.WIDGETS_DIR}',
+    f'{PACK_TARGET}/{constants.INCIDENT_TYPES_DIR}',
+    f'{PACK_TARGET}/{constants.INCIDENT_FIELDS_DIR}',
+    f'{PACK_TARGET}/{constants.LAYOUTS_DIR}',
+    f'{PACK_TARGET}/{constants.CLASSIFIERS_DIR}',
+    f'{PACK_TARGET}/{constants.INDICATOR_TYPES_DIR}',
+    f'{PACK_TARGET}/{constants.CONNECTIONS_DIR}',
+    f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
+    constants.TESTS_DIR
+]

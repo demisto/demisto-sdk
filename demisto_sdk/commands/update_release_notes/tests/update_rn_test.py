@@ -456,3 +456,21 @@ class TestRNUpdateUnit:
                              added_files=added_files)
         update_rn.find_added_pack_files()
         assert update_rn.pack_files == {'HelloWorld/something_new.md'}
+
+    def test_does_pack_metadata_exist_no(self):
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files=set(),
+                             added_files=set())
+        update_rn.metadata_path = 'This/Doesnt/Exist'
+        result = update_rn._does_pack_metadata_exist()
+        assert result is False
+
+    def test_execute_update_invalid(self):
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.common.tools import LOG_COLORS
+        update_rn = UpdateRN(pack="Legacy", update_type='minor', pack_files=set(),
+                             added_files=set())
+        update_rn.execute_update()
+        print_args = print.call_args[0][0]
+        warning_msg = 'Release notes are not required for the Legacy pack since this pack is not versioned.'
+        assert print_args == u'{}{}{}'.format(LOG_COLORS.YELLOW, warning_msg, LOG_COLORS.NATIVE)

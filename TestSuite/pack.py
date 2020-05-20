@@ -80,12 +80,13 @@ class Pack:
     def create_integration(
             self,
             name: Optional[str] = None,
+            code: Optional[str] = None,
             yml: Optional[dict] = None,
-            code: str = '',
-            readme: str = '',
-            description: str = '',
-            changelog: str = '',
-            image: bytes = b''):
+            readme: Optional[str] = None,
+            description: Optional[str] = None,
+            changelog: Optional[str] = None,
+            image: Optional[bytes] = None
+    ):
         if name is None:
             name = f'integration_{len(self.integrations)}'
         if yml is None:

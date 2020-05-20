@@ -24,7 +24,10 @@ def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack
 def get_integration(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Integration:
     """Mocking tmp_path
     """
-    return get_pack(request, tmp_path_factory).create_integration()
+    integration = get_pack(request, tmp_path_factory).create_integration()
+    integration.create_default_integration()
+    return integration
+
 
 # Fixtures
 

@@ -34,7 +34,6 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
             integration.yml_path
         ]
     )
-    integration.create_default_integration()
     # Change working dir to repo
     os.chdir(integration.repo_path)
     runner = CliRunner(mix_stderr=False)
@@ -62,13 +61,13 @@ def test_integration_secrets_integration_negative(mocker, repo):
     integration = pack.create_integration('sample')
     mock_git(mocker)
     # Change working dir to repo
-    os.chdir(repo.path)
     secret_string = 'Dynamics365ForMarketingEmail'
     integration.write_yml({'this is a secrets': secret_string})
     mocker.patch(
         "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
         return_value=[integration.yml_path]
     )
+    os.chdir(repo.path)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [SECRETS_CMD, '-wl', repo.secrets.path])
     assert "Starting secrets detection" in result.output

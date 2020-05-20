@@ -1,10 +1,10 @@
 import os
-from os.path import join
 from pathlib import Path
 from typing import Optional
 
 # Do not let GFRUEND change this
 import yaml
+from TestSuite.test_tools import suite_join_path
 
 
 class Integration:
@@ -31,27 +31,31 @@ class Integration:
         self._image_file = self._tmpdir_integration_path / f'{self.name}.png'
 
         # build integration
-        self.build()
+        self.create_default_integration()
 
     def build(
             self,
-            code: str = '',
+            code: Optional[str] = None,
             yml: Optional[dict] = None,
-            readme: str = '',
-            description: str = '',
-            changelog: str = '',
-            image: bytes = b''
+            readme: Optional[str] = None,
+            description: Optional[str] = None,
+            changelog: Optional[str] = None,
+            image: Optional[bytes] = None
     ):
-        """Builds an empty integration to fill up later
+        """Writes not None objects to files.
         """
-        if yml is None:
-            yml = {}
-        self.write_code(code)
-        self.write_yml(yml)
-        self._readme_file.write_text(readme)
-        self._description_file.write_text(description)
-        self._changelog_file.write_text(changelog)
-        self._image_file.write_bytes(image)
+        if code is not None:
+            self.write_code(code)
+        if yml is not None:
+            self.write_yml(yml)
+        if readme is not None:
+            self.write_readme(readme)
+        if description is not None:
+            self.write_description(description)
+        if changelog is not None:
+            self.write_changelog(changelog)
+        if image is not None:
+            self.write_image(image)
 
     def write_code(self, code: str):
         self._py_file.write_text(code)
@@ -72,12 +76,12 @@ class Integration:
         self._readme_file.write_text(changelog)
 
     def create_default_integration(self):
-        default_integration_dir = './TestSuite/assets/default_integration'
-        code = open(join(default_integration_dir, 'sample.py'))
-        yml = open(join(default_integration_dir, 'sample.yml'))
-        image = open(join(default_integration_dir, 'sample_image.png'), 'rb')
-        changelog = open(join(default_integration_dir, 'CHANGELOG.md'))
-        description = open(join(default_integration_dir, 'sample_description.md'))
+        default_integration_dir = 'assets/default_integration'
+        code = open(suite_join_path(default_integration_dir, 'sample.py'))
+        yml = open(suite_join_path(default_integration_dir, 'sample.yml'))
+        image = open(suite_join_path(default_integration_dir, 'sample_image.png'), 'rb')
+        changelog = open(suite_join_path(default_integration_dir, 'CHANGELOG.md'))
+        description = open(suite_join_path(default_integration_dir, 'sample_description.md'))
         self.build(
             code=str(code.read()),
             yml=yaml.load(yml),
@@ -92,7 +96,7 @@ class Integration:
         code.close()
 
     def update_yml(self, update_obj: dict):
-        yml_contents = yaml.load(self._yml_file)
+        yml_contents = yaml.load(self._yml_file.read_text())
         yml_contents.update(update_obj)
         self.write_yml(yml_contents)
 

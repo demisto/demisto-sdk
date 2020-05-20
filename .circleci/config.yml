@@ -37,22 +37,6 @@ jobs:
               pip install coveralls
               coveralls
         - run:
-            name: Test validate files and yaml
-            command: |
-              . .tox/py37/bin/activate
-
-              git clone https://github.com/demisto/content.git
-              cd content
-              git config diff.renameLimit 5000
-
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
-                demisto-sdk validate -i Packs/Gmail
-                exit 0
-              fi
-
-              chmod +x ./Tests/scripts/validate.sh
-              ./Tests/scripts/validate.sh
-        - run:
             name: Test create content artifacts
             command: |
               . .tox/py37/bin/activate

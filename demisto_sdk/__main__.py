@@ -251,6 +251,7 @@ def unify(**kwargs):
     help='Skip validation of pack release notes.')
 @pass_config
 def validate(config, **kwargs):
+    print("testing")
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs['path'] or kwargs['input']
@@ -268,7 +269,7 @@ def validate(config, **kwargs):
                                    validate_all=kwargs.get('validate_all'),
                                    validate_id_set=kwargs['id_set'],
                                    skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
-                                   is_private_repo=is_private_repo)
+                                   is_private_repo=is_private_repo, )
         return validator.run()
 
 

@@ -15,16 +15,17 @@ from demisto_sdk.commands.common.constants import (INTEGRATION_REGEX,
                                                    TEST_PLAYBOOK_REGEX,
                                                    TEST_SCRIPT_REGEX)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import (collect_ids,
-                                               get_script_or_integration_id,
-                                               print_error)
+                                               get_script_or_integration_id)
 from demisto_sdk.commands.common.update_id_set import (get_integration_data,
                                                        get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
-class IDSetValidator:
+class IDSetValidator(BaseValidator):
     """IDSetValidator was designed to make sure we create the id_set.json in the correct way so we can use it later on.
 
     The id_set.json file is created using the update_id_set.py script. It contains all the data from the various
@@ -46,7 +47,8 @@ class IDSetValidator:
 
     ID_SET_PATH = "./Tests/id_set.json"
 
-    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration()):
+    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None):
+        super().__init__(ignored_errors)
         self.is_circle = is_circle
         self.configuration = configuration
         if not is_test_run and self.is_circle:
@@ -63,7 +65,11 @@ class IDSetValidator:
                 id_set = json.load(id_set_file)
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
-                    print_error(Errors.id_set_conflicts())
+                    error_message, error_code = Errors.id_set_conflicts()
+                    if self.handle_error(error_message, error_code):
+                        raise
+                    else:
+                        pass
 
                 raise
 
@@ -94,11 +100,14 @@ class IDSetValidator:
                     checked_instance_fromversion == obj_from_version:
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
-                    print_error(Errors.id_set_not_updated(file_path))
-                    return False
+                    error_message, error_code = Errors.id_set_not_updated(file_path)
+                    if self.handle_error(error_message, error_code):
+                        return False
 
         if not is_found:
-            print_error(Errors.id_set_not_updated(file_path))
+            error_message, error_code = Errors.id_set_not_updated(file_path)
+            if not self.handle_error(error_message, error_code):
+                return True
 
         return is_found
 
@@ -182,7 +191,9 @@ class IDSetValidator:
                         break
 
         if is_duplicated:
-            print_error(Errors.duplicated_id(obj_id))
+            error_message, error_code = Errors.duplicated_id(obj_id)
+            if not self.handle_error(error_message, error_code):
+                return False
 
         return is_duplicated
 

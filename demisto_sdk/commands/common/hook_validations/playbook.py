@@ -2,12 +2,12 @@ from typing import Dict
 
 import click
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_error
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
+from demisto_sdk.commands.common.tools import LOG_COLORS
 
 
-class PlaybookValidator(BaseValidator):
+class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
     def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True) -> bool:
@@ -81,9 +81,11 @@ class PlaybookValidator(BaseValidator):
         """
         rolename = self.current_file.get('rolename', None)
         if rolename:
-            print_error(Errors.playbook_cant_have_rolename(self.file_path))
-            self.is_valid = False
-            return False
+            error_message, error_code = Errors.playbook_cant_have_rolename(self.file_path)
+            if self.handle_error(error_message, error_code):
+                self.is_valid = False
+                return False
+
         return True
 
     def is_condition_branches_handled(self):  # type: () -> bool
@@ -141,13 +143,18 @@ class PlaybookValidator(BaseValidator):
                 # else doesn't have a path, skip error
                 if '#DEFAULT#' == e.args[0]:
                     continue
-                print_error(Errors.playbook_unreachable_condition(self.file_path, task.get('id'), next_task_branch))
-                self.is_valid = is_all_condition_branches_handled = False
+                error_message, error_code = Errors.playbook_unreachable_condition(self.file_path,
+                                                                                  task.get('id'), next_task_branch)
+                if self.handle_error(error_message, error_code):
+                    self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), task_condition_labels))
-            self.is_valid = is_all_condition_branches_handled = False
+            error_message, error_code = Errors.playbook_unhandled_condition(self.file_path,
+                                                                            task.get('id'), task_condition_labels)
+            if self.handle_error(error_message, error_code):
+                self.is_valid = is_all_condition_branches_handled = False
+
         return is_all_condition_branches_handled
 
     def is_ask_condition_branches_handled(self, task: Dict) -> bool:
@@ -176,12 +183,16 @@ class PlaybookValidator(BaseValidator):
                 if next_task_id:
                     unhandled_reply_options.remove(next_task_branch.upper())
             except KeyError:
-                print_error(Errors.playbook_unreachable_condition(self.file_path, task.get('id'), next_task_branch))
-                self.is_valid = is_all_condition_branches_handled = False
+                error_message, error_code = Errors.playbook_unreachable_condition(self.file_path,
+                                                                                  task.get('id'), next_task_branch)
+                if self.handle_error(error_message, error_code):
+                    self.is_valid = is_all_condition_branches_handled = False
 
         if unhandled_reply_options:
-            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), unhandled_reply_options))
-            self.is_valid = is_all_condition_branches_handled = False
+            error_message, error_code = Errors.playbook_unhandled_condition(self.file_path,
+                                                                            task.get('id'), unhandled_reply_options)
+            if self.handle_error(error_message, error_code):
+                self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
     def is_script_condition_branches_handled(self, task: Dict) -> bool:
@@ -196,12 +207,16 @@ class PlaybookValidator(BaseValidator):
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
         if '#default#' not in next_tasks:
-            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), {'else'}))
-            self.is_valid = is_all_condition_branches_handled = False
+            error_message, error_code = Errors.playbook_unhandled_condition(self.file_path, task.get('id'), {'else'})
+            if self.handle_error(error_message, error_code):
+                self.is_valid = is_all_condition_branches_handled = False
+
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
-            print_error(Errors.playbook_unhandled_condition(self.file_path, task.get('id'), {}))
-            self.is_valid = is_all_condition_branches_handled = False
+            error_message, error_code = Errors.playbook_unhandled_condition(self.file_path, task.get('id'), {})
+            if self.handle_error(error_message, error_code):
+                self.is_valid = is_all_condition_branches_handled = False
+
         return is_all_condition_branches_handled
 
     def is_root_connected_to_all_tasks(self):  # type: () -> bool
@@ -222,5 +237,8 @@ class PlaybookValidator(BaseValidator):
                 next_tasks_bucket.update(next_task_ids)
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
-            print_error(Errors.playbook_unconnected_tasks(self.file_path, orphan_tasks))
+            error_message, error_code = Errors.playbook_unconnected_tasks(self.file_path, orphan_tasks)
+            if not self.handle_error(error_message, error_code):
+                return False
+
         return tasks_bucket.issubset(next_tasks_bucket)

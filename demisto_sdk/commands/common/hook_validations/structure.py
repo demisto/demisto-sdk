@@ -14,6 +14,8 @@ from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
     JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import (checked_type,
                                                get_content_file_type_dump,
                                                get_matching_regex,
@@ -23,7 +25,7 @@ from demisto_sdk.commands.format.format_constants import \
 from pykwalify.core import Core
 
 
-class StructureValidator:
+class StructureValidator(BaseValidator):
     """Structure validator is designed to validate the correctness of the file structure we enter to content repo.
 
         Attributes:
@@ -44,8 +46,8 @@ class StructureValidator:
     }
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
-                 configuration=Configuration()):
-        # type: (str, Optional[bool], Optional[str], Optional[str], Configuration, Optional[bool]) -> None
+                 configuration=Configuration(), ignored_errors=None):
+        super().__init__(ignored_errors)
         self.is_valid = True
         self.file_path = file_path.replace('\\', '/')
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
@@ -91,7 +93,10 @@ class StructureValidator:
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        print_error(Errors.structure_doesnt_match_scheme(self.file_path, pretty_formatted_string_of_regexes))
+        error_message, error_code = Errors.structure_doesnt_match_scheme(self.file_path,
+                                                                         pretty_formatted_string_of_regexes)
+        self.handle_error(error_message, error_code)
+
         return None
 
     def is_valid_scheme(self):
@@ -158,9 +163,10 @@ class StructureValidator:
         """
         file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and '/' in file_id:
-            self.is_valid = False
-            print_error(Errors.file_id_contains_slashes())
-            return False
+            error_message, error_code = Errors.file_id_contains_slashes()
+            if self.handle_error(error_message, error_code):
+                self.is_valid = False
+                return False
 
         return True
 
@@ -178,8 +184,9 @@ class StructureValidator:
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            print_error(Errors.file_id_changed(self.file_path, old_version_id, new_file_id))
-            return True
+            error_message, error_code = Errors.file_id_changed(self.file_path, old_version_id, new_file_id)
+            if self.handle_error(error_message, error_code):
+                return True
 
         # False - the id has not changed.
         return False
@@ -202,9 +209,10 @@ class StructureValidator:
             return True
 
         if from_version_old != from_version_new:
-            print_error(Errors.from_version_modified(self.file_path))
-            self.is_valid = False
-            return False
+            error_message, error_code = Errors.from_version_modified(self.file_path)
+            if self.handle_error(error_message, error_code):
+                self.is_valid = False
+                return False
 
         return True
 
@@ -226,7 +234,9 @@ class StructureValidator:
             elif file_extension in ['.png', '.md']:
                 return {}
 
-        print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
+        error_message, error_code = Errors.wrong_file_extension(file_extension,
+                                                                self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys())
+        self.handle_error(error_message, error_code)
         return {}
 
     def get_file_type(self):
@@ -256,7 +266,9 @@ class StructureValidator:
         """
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
-            print_error(Errors.invalid_file_path(self.file_path))
+            error_message, error_code = Errors.invalid_file_path(self.file_path)
+            if self.handle_error(error_message, error_code):
+                is_valid_path = True
         return is_valid_path
 
     def parse_error_msg(self, err) -> str:

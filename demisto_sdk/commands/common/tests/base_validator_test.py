@@ -1,6 +1,6 @@
 import pytest
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (get_not_registered_tests,
@@ -29,7 +29,7 @@ def test_yml_has_test_key(file_path, schema, expected):
         -  Ensure the method 'yml_has_test_key' return answer accordingly
     """
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
-    validator = BaseValidator(structure_validator)
+    validator = ContentEntityValidator(structure_validator)
     tests = structure_validator.current_file.get('tests')
     assert validator.yml_has_test_key(tests, schema) == expected
 

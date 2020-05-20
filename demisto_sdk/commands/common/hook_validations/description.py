@@ -4,11 +4,12 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    BETA_INTEGRATION_REGEX,
                                                    INTEGRATION_REGEX)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.tools import (get_yaml, os, print_error,
-                                               print_warning, re)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.tools import get_yaml, os, print_warning, re
 
 
-class DescriptionValidator:
+class DescriptionValidator(BaseValidator):
     """DescriptionValidator was designed to make sure we provide a detailed description properly.
 
     Attributes:
@@ -16,7 +17,8 @@ class DescriptionValidator:
         _is_valid (bool): the attribute which saves the valid/in-valid status of the current file.
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, ignored_errors=None):
+        super().__init__(ignored_errors)
         self._is_valid = True
 
         self.file_path = file_path
@@ -36,22 +38,26 @@ class DescriptionValidator:
             try:
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
-                self._is_valid = False
-                print_error(Errors.description_missing_in_beta_integration(package_path))
-                return False
+                error_message, error_code = Errors.description_missing_in_beta_integration(package_path)
+                if self.handle_error(error_message, error_code):
+                    self._is_valid = False
+                    return False
 
             with open(md_file_path) as description_file:
                 description = description_file.read()
             if BETA_INTEGRATION_DISCLAIMER not in description:
-                self._is_valid = False
-                print_error(Errors.no_beta_disclaimer_in_description(package_path))
-                return False
+                error_message, error_code = Errors.no_beta_disclaimer_in_description(package_path)
+                if self.handle_error(error_message, error_code):
+                    self._is_valid = False
+                    return False
             else:
                 return True
         elif BETA_INTEGRATION_DISCLAIMER not in description_in_yml:
-            self._is_valid = False
-            print_error(Errors.no_beta_disclaimer_in_yml(self.file_path))
-            return False
+            error_message, error_code = Errors.no_beta_disclaimer_in_yml(self.file_path)
+            if self.handle_error(error_message, error_code):
+                self._is_valid = False
+                return False
+
         return True
 
     def is_duplicate_description(self):
@@ -80,8 +86,9 @@ class DescriptionValidator:
             is_description_in_yml = True
 
         if is_description_in_package and is_description_in_yml:
-            self._is_valid = False
-            print_error(Errors.description_in_package_and_yml(package_path))
-            return False
+            error_message, error_code = Errors.description_in_package_and_yml(package_path)
+            if self.handle_error(error_message, error_code):
+                self._is_valid = False
+                return False
 
         return True

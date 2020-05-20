@@ -13,18 +13,21 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import pack_name_to_path
 
 
-class PackUniqueFilesValidator:
+class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
-    def __init__(self, pack):
+    def __init__(self, pack, ignored_errors=None):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
         """
+        super().__init__(ignored_errors)
         self.pack = pack
         self.pack_path = pack_name_to_path(self.pack)
         self.secrets_file = PACKS_WHITELIST_FILE_NAME
@@ -35,9 +38,15 @@ class PackUniqueFilesValidator:
 
     # error handling
     def _add_error(self, error):
-        """Adds error entry to a list under pack's name"""
-        if error:
-            self._errors.append(error)
+        """Adds error entry to a list under pack's name
+        Returns True if added and false otherwise"""
+        error_message, error_code = error
+        formatted_error = self.handle_error(error_message, error_code, should_print=False)
+        if formatted_error:
+            self._errors.append(formatted_error)
+            return True
+
+        return False
 
     def get_errors(self, raw=False):
         """Get the dict version or string version for print"""
@@ -57,8 +66,8 @@ class PackUniqueFilesValidator:
     def _is_pack_file_exists(self, file_name):
         """Check if .secrets-ignore exists"""
         if not os.path.isfile(self._get_pack_file_path(file_name)):
-            self._add_error(Errors.pack_file_does_not_exist(file_name))
-            return False
+            if self._add_error(Errors.pack_file_does_not_exist(file_name)):
+                return False
 
         return True
 
@@ -68,9 +77,11 @@ class PackUniqueFilesValidator:
             with io.open(self._get_pack_file_path(file_name), mode="r", encoding="utf-8") as file:
                 return file.read()
         except IOError:
-            self._add_error(Errors.cant_open_pack_file(file_name))
+            if not self._add_error(Errors.cant_open_pack_file(file_name)):
+                return "No-Text-Required"
         except ValueError:
-            self._add_error(Errors.cant_read_pack_file(file_name))
+            if not self._add_error(Errors.cant_read_pack_file(file_name)):
+                return "No-Text-Required"
 
         return False
 
@@ -81,7 +92,8 @@ class PackUniqueFilesValidator:
             if file_content:
                 return file_content.split(delimiter)
         except ValueError:
-            self._add_error(Errors.cant_parse_pack_file_to_list(file_name))
+            if not self._add_error(Errors.cant_parse_pack_file_to_list(file_name)):
+                return True
 
         return False
 
@@ -115,7 +127,8 @@ class PackUniqueFilesValidator:
             if pack_ignore_regex_list and all(re.compile(regex) for regex in pack_ignore_regex_list):
                 return True
         except re.error:
-            self._add_error(Errors.pack_file_bad_format(self.pack_ignore_file))
+            if not self._add_error(Errors.pack_file_bad_format(self.pack_ignore_file)):
+                return True
 
         return False
 
@@ -132,30 +145,30 @@ class PackUniqueFilesValidator:
         try:
             pack_meta_file_content = self._read_file_content(self.pack_meta_file)
             if not pack_meta_file_content:
-                self._add_error(Errors.pack_metadata_empty())
-                return False
+                if self._add_error(Errors.pack_metadata_empty()):
+                    return False
             metadata = json.loads(pack_meta_file_content)
             if not isinstance(metadata, dict):
-                self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file))
-                return False
+                if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file)):
+                    return False
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
-                self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields))
-                return False
+                if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields)):
+                    return False
             # check validity of pack metadata mandatory fields
             name_field = metadata.get(PACK_METADATA_NAME, '').lower()
             if not name_field or 'fill mandatory field' in name_field:
-                self._add_error(Errors.pack_metadata_name_not_valid())
-                return False
+                if self._add_error(Errors.pack_metadata_name_not_valid()):
+                    return False
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
-                self._add_error(Errors.pack_metadata_field_invalid())
-                return False
+                if self._add_error(Errors.pack_metadata_field_invalid()):
+                    return False
             # check non mandatory dependency field
             dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
-                self._add_error(Errors.dependencies_field_should_be_dict(self.pack_meta_file))
-                return False
+                if self._add_error(Errors.dependencies_field_should_be_dict(self.pack_meta_file)):
+                    return False
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
                                PACK_METADATA_USE_CASES):
@@ -163,11 +176,11 @@ class PackUniqueFilesValidator:
                 if field and len(field) == 1:
                     value = field[0]
                     if not value:
-                        self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field))
-                        return False
+                        if self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field)):
+                            return False
         except (ValueError, TypeError):
-            self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file))
-            return False
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file)):
+                return False
 
         return True
 

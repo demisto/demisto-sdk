@@ -2,14 +2,16 @@ import os
 from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.tools import (get_content_path, print_error,
-                                               print_warning, run_command_os)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
+                                               run_command_os)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
 
 
-class ReadMeValidator:
+class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
         In order to run the validator correctly please make sure:
         - Node is installed on you machine
@@ -21,7 +23,8 @@ class ReadMeValidator:
             export DEMISTO_README_VALIDATION=True
     """
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, ignored_errors=None):
+        super().__init__(ignored_errors)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -47,8 +50,10 @@ class ReadMeValidator:
             # run the java script mdx parse validator
             _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path, env=os.environ)
             if is_valid:
-                print_error(Errors.readme_error(self.file_path, stderr))
-                return False
+                error_message, error_code = Errors.readme_error(self.file_path, stderr)
+                if self.handle_error(error_message, error_code):
+                    return False
+
         return True
 
     def are_modules_installed_for_verify(self) -> bool:

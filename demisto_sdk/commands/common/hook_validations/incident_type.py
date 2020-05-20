@@ -1,12 +1,11 @@
 from distutils.version import LooseVersion
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 
 
-class IncidentTypeValidator(BaseValidator):
+class IncidentTypeValidator(ContentEntityValidator):
     """IncidentTypeValidator is designed to validate the correctness of the file structure we enter to content repo.
     And also try to catch possible Backward compatibility breaks due to the performed changes.
     """
@@ -65,11 +64,13 @@ class IncidentTypeValidator(BaseValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    print_error(Errors.incident_field_or_type_from_version_5(self.file_path))
-                    is_valid = False
+                    error_message, error_code = Errors.incident_field_or_type_from_version_5(self.file_path)
+                    if self.handle_error(error_message, error_code):
+                        is_valid = False
             except (AttributeError, ValueError):
-                print_error(Errors.invalid_incident_field_or_type_from_version(self.file_path))
-                is_valid = False
+                error_message, error_code = Errors.invalid_incident_field_or_type_from_version(self.file_path)
+                if self.handle_error(error_message, error_code):
+                    is_valid = False
 
         return is_valid
 
@@ -94,8 +95,9 @@ class IncidentTypeValidator(BaseValidator):
         if old_from_version:
             current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
-                print_error(Errors.from_version_modified_after_rename())
-                is_bc_broke = True
+                error_message, error_code = Errors.from_version_modified_after_rename()
+                if self.handle_error(error_message, error_code):
+                    is_bc_broke = True
         return is_bc_broke
 
     def is_including_int_fields(self):
@@ -113,10 +115,13 @@ class IncidentTypeValidator(BaseValidator):
                 for field in fields_to_include:
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
-                        is_valid = False
-                        print_error(Errors.incident_type_integer_field(self.file_path, field))
+                        error_message, error_code = Errors.incident_type_integer_field(self.file_path, field)
+                        if self.handle_error(error_message, error_code):
+                            is_valid = False
+
         except (AttributeError, ValueError):
-            print_error(Errors.invalid_incident_field_or_type_from_version(self.file_path))
-            is_valid = False
+            error_message, error_code = Errors.invalid_incident_field_or_type_from_version(self.file_path)
+            if self.handle_error(error_message, error_code):
+                is_valid = False
 
         return is_valid

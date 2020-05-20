@@ -4,12 +4,14 @@ import os
 import re
 
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import (
     old_get_latest_release_notes_text, old_get_release_notes_file_path,
-    print_error, run_command)
+    run_command)
 
 
-class OldReleaseNotesValidator:
+class OldReleaseNotesValidator(BaseValidator):
     """Release notes validator is designed to ensure the existence and correctness of the release notes in content repo.
 
     Attributes:
@@ -23,7 +25,8 @@ class OldReleaseNotesValidator:
     MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
     LINK_TO_RELEASE_NOTES_STANDARD = 'https://xsoar.pan.dev/docs/integrations/changelog'
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, ignored_errors=None):
+        super().__init__(ignored_errors)
         self.file_path = file_path
         self.release_notes_path = old_get_release_notes_file_path(self.file_path)
         self.latest_release_notes = old_get_latest_release_notes_text(self.release_notes_path)
@@ -67,8 +70,11 @@ class OldReleaseNotesValidator:
             if adds_in_diff - removes_in_diff > 0:
                 return True
 
-        print_error(Errors.no_new_release_notes(self.release_notes_path))
-        return False
+        error_message, error_code = Errors.no_new_release_notes(self.release_notes_path)
+        if self.handle_error(error_message, error_code):
+            return False
+
+        return True
 
     def is_valid_one_line_comment(self, release_notes_comments):
         if re.match(self.SINGLE_LINE_REAL_COMMENT_REGEX, release_notes_comments[0]) or \
@@ -100,18 +106,20 @@ class OldReleaseNotesValidator:
             return True
 
         elif len(release_notes_comments) <= 1:
-            print_error(Errors.release_notes_not_formatted_correctly(self.release_notes_path,
-                                                                     self.LINK_TO_RELEASE_NOTES_STANDARD))
-            return False
+            error_message, error_code = Errors.release_notes_not_formatted_correctly(
+                self.release_notes_path, self.LINK_TO_RELEASE_NOTES_STANDARD)
+            if self.handle_error(error_message, error_code):
+                return False
 
         else:
             if self.is_valid_one_line_comment(release_notes_comments):
                 release_notes_comments = release_notes_comments[1:]
 
             if not self.is_valid_multi_line_comment(release_notes_comments):
-                print_error(Errors.release_notes_not_formatted_correctly(self.release_notes_path,
-                                                                         self.LINK_TO_RELEASE_NOTES_STANDARD))
-                return False
+                error_message, error_code = Errors.release_notes_not_formatted_correctly(
+                    self.release_notes_path, self.LINK_TO_RELEASE_NOTES_STANDARD)
+                if self.handle_error(error_message, error_code):
+                    return False
 
         return True
 
@@ -123,8 +131,9 @@ class OldReleaseNotesValidator:
         """
         # checks that release notes file exists and contains text
         if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
-            print_error(Errors.missing_release_notes(self.file_path, self.release_notes_path))
-            return False
+            error_message, error_code = Errors.missing_release_notes(self.file_path, self.release_notes_path)
+            if self.handle_error(error_message, error_code):
+                return False
 
         return True
 

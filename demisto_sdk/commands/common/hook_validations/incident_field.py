@@ -6,8 +6,8 @@ from distutils.version import LooseVersion
 from enum import Enum, IntEnum
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.tools import print_error
 
 
@@ -156,7 +156,7 @@ BleveMapping = {
 INCIDENT_FIELD_CLINAME_VALIDATION_REGEX = r"[0-9a-z]+$"
 
 
-class IncidentFieldValidator(BaseValidator):
+class IncidentFieldValidator(ContentEntityValidator):
     """IncidentFieldValidator is designed to validate the correctness of the file structure we enter to content repo.
     And also try to catch possible Backward compatibility breaks due to the performed changes.
     """
@@ -231,15 +231,18 @@ class IncidentFieldValidator(BaseValidator):
         if name not in whitelisted_field_names:
             for word in name.split():
                 if word.lower() in bad_words:
-                    print_error(Errors.invalid_incident_field_name(word, self.file_path))
-                    return False
+                    error_message, error_code = Errors.invalid_incident_field_name(word, self.file_path)
+                    if self.handle_error(error_message, error_code):
+                        return False
         return True
 
     def is_valid_content_flag(self, content_value=True):
         """Validate that field is marked as content."""
         is_valid_flag = self.current_file.get("content") is content_value
         if not is_valid_flag:
-            print_error(Errors.invalid_incident_field_content_key_value(content_value, self.file_path))
+            error_message, error_code = Errors.invalid_incident_field_content_key_value(content_value, self.file_path)
+            if not self.handle_error(error_message, error_code):
+                is_valid_flag = True
 
         return is_valid_flag
 
@@ -247,7 +250,9 @@ class IncidentFieldValidator(BaseValidator):
         """Validate that field is not marked as system."""
         is_valid_flag = self.current_file.get("system", False) is system_value
         if not is_valid_flag:
-            print_error(Errors.invalid_incident_field_system_key_value(system_value, self.file_path))
+            error_message, error_code = Errors.invalid_incident_field_system_key_value(system_value, self.file_path)
+            if not self.handle_error(error_message, error_code):
+                is_valid_flag = True
 
         return is_valid_flag
 
@@ -260,16 +265,21 @@ class IncidentFieldValidator(BaseValidator):
         is_valid = TypeFields.is_valid_incident_field(self.current_file.get("type"))
         if is_valid:
             return True
-        print_error(Errors.invalid_incident_field_type(self.file_path, self.current_file.get('type'), TypeFields))
-        return False
+        error_message, error_code = Errors.invalid_incident_field_type(self.file_path,
+                                                                       self.current_file.get('type'), TypeFields)
+        if self.handle_error(error_message, error_code):
+            return False
+        return True
 
     def is_valid_group(self):
         # type: () -> bool
         group = self.current_file.get("group")
         if GroupFieldTypes.is_valid_group(group):
             return True
-        print_error(Errors.invalid_incident_field_group_value(self.file_path, group))
-        return False
+        error_message, error_code = Errors.invalid_incident_field_group_value(self.file_path, group)
+        if self.handle_error(error_message, error_code):
+            return False
+        return True
 
     def is_valid_cliname(self):
         # type: () -> bool
@@ -280,9 +290,11 @@ class IncidentFieldValidator(BaseValidator):
         cliname = self.current_file.get("cliName")
         if re.fullmatch(INCIDENT_FIELD_CLINAME_VALIDATION_REGEX, cliname):
             return True
-        print_error(Errors.invalid_incident_field_cli_name_regex(self.file_path,
-                                                                 INCIDENT_FIELD_CLINAME_VALIDATION_REGEX))
-        return False
+        error_message, error_code = Errors.invalid_incident_field_cli_name_regex(
+            self.file_path, INCIDENT_FIELD_CLINAME_VALIDATION_REGEX)
+        if self.handle_error(error_message, error_code):
+            return False
+        return True
 
     def is_cliname_is_builtin_key(self):
         # type: () -> bool
@@ -296,7 +308,9 @@ class IncidentFieldValidator(BaseValidator):
         elif group == GroupFieldTypes.INCIDENT_FIELD:
             is_valid = cliname not in BleveMapping[GroupFieldTypes.INCIDENT_FIELD]
         if not is_valid:
-            print_error(Errors.invalid_incident_field_cli_name_value(self.file_path, cliname))
+            error_message, error_code = Errors.invalid_incident_field_cli_name_value(self.file_path, cliname)
+            if not self.handle_error(error_message, error_code):
+                is_valid = True
         return is_valid
 
     def is_current_valid_from_version(self):
@@ -310,11 +324,18 @@ class IncidentFieldValidator(BaseValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    error_msg = Errors.incident_field_or_type_from_version_5(self.file_path)
-                    is_valid = False
+                    error_message, error_code = Errors.incident_field_or_type_from_version_5(self.file_path)
+                    formatted_error = self.handle_error(error_message, error_code, should_print=False)
+                    if formatted_error:
+                        error_msg = formatted_error
+                        is_valid = False
+
             except (AttributeError, ValueError):
-                error_msg = Errors.invalid_incident_field_or_type_from_version(self.file_path)
-                is_valid = False
+                error_message, error_code = Errors.invalid_incident_field_or_type_from_version(self.file_path)
+                formatted_error = self.handle_error(error_message, error_code, should_print=False)
+                if formatted_error:
+                    error_msg = formatted_error
+                    is_valid = False
 
         if error_msg:
             print_error(error_msg)
@@ -323,7 +344,6 @@ class IncidentFieldValidator(BaseValidator):
     def is_valid_required(self):
         # type: () -> bool
         """Validate that the incident field is not required."""
-        error_msg = None
         is_valid = True
 
         # due to a current platform limitation, incident fields can not be set to required
@@ -331,11 +351,10 @@ class IncidentFieldValidator(BaseValidator):
         # as can be seen in this pr: https://github.com/demisto/content/pull/5682
         required = self.current_file.get('required', False)
         if required:
-            error_msg = Errors.new_incident_field_required(self.file_path)
-            is_valid = False
+            error_message, error_code = Errors.new_incident_field_required(self.file_path)
+            if self.handle_error(error_message, error_code):
+                is_valid = False
 
-        if error_msg:
-            print_error(error_msg)
         return is_valid
 
     def is_changed_from_version(self):
@@ -350,22 +369,22 @@ class IncidentFieldValidator(BaseValidator):
         if old_from_version:
             current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
-                print_error(Errors.from_version_modified_after_rename())
-                is_fromversion_changed = True
+                error_message, error_code = Errors.from_version_modified_after_rename()
+                if self.handle_error(error_message, error_code):
+                    is_fromversion_changed = True
+
         return is_fromversion_changed
 
     def is_changed_type(self):
         # type: () -> bool
         """Validate that the type was not changed."""
-        error_msg = None
         is_type_changed = False
         current_type = self.current_file.get('type', "")
         if self.old_file:
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
-                error_msg = Errors.incident_field_type_change(self.file_path)
-                is_type_changed = True
+                error_message, error_code = Errors.incident_field_type_change(self.file_path)
+                if self.handle_error(error_message, error_code):
+                    is_type_changed = True
 
-        if error_msg:
-            print_error(error_msg)
         return is_type_changed

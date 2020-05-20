@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import os
 import re
+from configparser import ConfigParser, MissingSectionHeaderError
 from glob import glob
 
 import click
@@ -26,10 +27,13 @@ from demisto_sdk.commands.common.constants import (
     JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
-    PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
-    SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX, YML_ALL_SCRIPTS_REGEXES,
-    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES)
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX,
+    PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
+    YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
+    YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -121,6 +125,8 @@ class FilesValidator:
 
         if self.validate_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=self.configuration)
+
+        self.handle_error = BaseValidator().handle_error
 
     def run(self):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
@@ -275,13 +281,13 @@ class FilesValidator:
 
         return packs
 
-    def old_is_valid_release_notes(self, file_path):
-        old_release_notes_validator = OldReleaseNotesValidator(file_path)
+    def old_is_valid_release_notes(self, file_path, ignored_errors_list):
+        old_release_notes_validator = OldReleaseNotesValidator(file_path, ignored_errors=ignored_errors_list)
         if not old_release_notes_validator.is_file_valid():
             self._is_valid = False
 
-    def is_valid_release_notes(self, file_path):
-        release_notes_validator = ReleaseNotesValidator(file_path)
+    def is_valid_release_notes(self, file_path, ignored_errors_list):
+        release_notes_validator = ReleaseNotesValidator(file_path, ignored_errors=ignored_errors_list)
         if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
@@ -301,6 +307,8 @@ class FilesValidator:
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path
             file_type = find_type(file_path)
+            pack_name = get_pack_name(file_path)
+            ignored_errors_list = self.get_error_ignore_list(pack_name)
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue
@@ -313,12 +321,13 @@ class FilesValidator:
                 continue
 
             elif 'README' in file_path:
-                readme_validator = ReadMeValidator(file_path)
+                readme_validator = ReadMeValidator(file_path, ignored_errors=ignored_errors_list)
                 if not readme_validator.is_valid_file():
                     self._is_valid = False
                 continue
 
-            structure_validator = StructureValidator(file_path, old_file_path=old_file_path)
+            structure_validator = StructureValidator(file_path, old_file_path=old_file_path,
+                                                     ignored_errors=ignored_errors_list)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
 
@@ -327,7 +336,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
-                integration_validator = IntegrationValidator(structure_validator)
+                integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -335,18 +344,18 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
-                integration_validator = IntegrationValidator(structure_validator)
+                integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
             elif checked_type(file_path, [SCRIPT_REGEX]):
-                script_validator = ScriptValidator(structure_validator)
+                script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
                 if not script_validator.is_valid_file():
                     self._is_valid = False
             elif checked_type(file_path, PLAYBOOKS_REGEXES_LIST) or file_type == 'playbook':
-                playbook_validator = PlaybookValidator(structure_validator)
+                playbook_validator = PlaybookValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not playbook_validator.is_valid_playbook(is_new_playbook=False):
                     self._is_valid = False
 
@@ -355,7 +364,7 @@ class FilesValidator:
                 yml_path, _ = unifier.get_script_package_data()
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
-                script_validator = ScriptValidator(structure_validator)
+                script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -363,49 +372,51 @@ class FilesValidator:
                     self._is_valid = False
 
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
-                image_validator = ImageValidator(file_path)
+                image_validator = ImageValidator(file_path, ignored_errors=ignored_errors_list)
                 if not image_validator.is_valid():
                     self._is_valid = False
 
             # incident fields and indicator fields are using the same scheme.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS):
-                incident_field_validator = IncidentFieldValidator(structure_validator)
+                incident_field_validator = IncidentFieldValidator(structure_validator,
+                                                                  ignored_errors=ignored_errors_list)
                 if not incident_field_validator.is_valid_file(validate_rn=True):
                     self._is_valid = False
                 if self.is_backward_check and not incident_field_validator.is_backward_compatible():
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES):
-                reputation_validator = ReputationValidator(structure_validator)
+                reputation_validator = ReputationValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not reputation_validator.is_valid_file(validate_rn=True):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
-                layout_validator = LayoutValidator(structure_validator)
+                layout_validator = LayoutValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not layout_validator.is_valid_layout(validate_rn=True):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES):
-                dashboard_validator = DashboardValidator(structure_validator)
+                dashboard_validator = DashboardValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not dashboard_validator.is_valid_dashboard(validate_rn=True):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES):
-                incident_type_validator = IncidentTypeValidator(structure_validator)
+                incident_type_validator = IncidentTypeValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not incident_type_validator.is_valid_incident_type(validate_rn=True):
                     self._is_valid = False
                 if self.is_backward_check and not incident_type_validator.is_backward_compatible():
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                self.old_is_valid_release_notes(file_path)
+                self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
 
             else:
-                print_error(Errors.file_type_not_supported(self.file_path))
-                self._is_valid = False
+                error_message, error_code = Errors.file_type_not_supported(self.file_path)
+                if self.handle_error(error_message, error_code):
+                    self._is_valid = False
 
         self.changed_pack_data = changed_packs
 
@@ -417,8 +428,9 @@ class FilesValidator:
                 if pack_name not in added_rn:
                     added_rn.add(pack_name)
                 else:
-                    print_error(Errors.multiple_release_notes_files(pack_name))
-                    self._is_valid = False
+                    error_message, error_code = Errors.multiple_release_notes_files(pack_name)
+                    if self.handle_error(error_message, error_code):
+                        self._is_valid = False
 
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
         """Validate the added files from your branch.
@@ -432,6 +444,8 @@ class FilesValidator:
         added_rn = set()
         self.verify_no_dup_rn(added_files)
         for file_path in added_files:
+            pack_name = get_pack_name(file_path)
+            ignored_errors_list = self.get_error_ignore_list(pack_name)
             if ('ReleaseNotes' in file_path) and self.skip_pack_rn_validation:
                 continue
             # unified files should not be validated
@@ -443,12 +457,13 @@ class FilesValidator:
                 continue
 
             elif 'README' in file_path:
-                readme_validator = ReadMeValidator(file_path)
+                readme_validator = ReadMeValidator(file_path, ignored_errors=ignored_errors_list)
                 if not readme_validator.is_valid_file():
                     self._is_valid = False
                 continue
 
-            structure_validator = StructureValidator(file_path, is_new_file=True, predefined_scheme=file_type)
+            structure_validator = StructureValidator(file_path, is_new_file=True, predefined_scheme=file_type,
+                                                     ignored_errors=ignored_errors_list)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
 
@@ -460,12 +475,12 @@ class FilesValidator:
                     self._is_valid = False
 
             elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
-                playbook_validator = PlaybookValidator(structure_validator)
+                playbook_validator = PlaybookValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not playbook_validator.is_valid_playbook(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
-                integration_validator = IntegrationValidator(structure_validator)
+                integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not integration_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
@@ -477,19 +492,19 @@ class FilesValidator:
                     yml_path = file_path
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
-                script_validator = ScriptValidator(structure_validator)
+                script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list)
 
                 if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
-                integration_validator = IntegrationValidator(structure_validator)
+                integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
 
             elif re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
-                image_validator = ImageValidator(file_path)
+                image_validator = ImageValidator(file_path, ignored_errors=ignored_errors_list)
                 if not image_validator.is_valid():
                     self._is_valid = False
 
@@ -497,51 +512,59 @@ class FilesValidator:
             # TODO: add validation for classification(21630) and set validate_rn to False after issue #23398 is fixed.
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
-                incident_field_validator = IncidentFieldValidator(structure_validator)
+                incident_field_validator = IncidentFieldValidator(structure_validator,
+                                                                  ignored_errors=ignored_errors_list)
                 if not incident_field_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES) or file_type == 'reputation':
-                reputation_validator = ReputationValidator(structure_validator)
+                reputation_validator = ReputationValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not reputation_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
-                layout_validator = LayoutValidator(structure_validator)
+                layout_validator = LayoutValidator(structure_validator, ignored_errors=ignored_errors_list)
                 # TODO: set validate_rn to False after issue #23398 is fixed.
                 if not layout_validator.is_valid_layout(validate_rn=not file_type):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
-                dashboard_validator = DashboardValidator(structure_validator)
+                dashboard_validator = DashboardValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not dashboard_validator.is_valid_dashboard(validate_rn=False):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) or file_type == 'incidenttype':
-                incident_type_validator = IncidentTypeValidator(structure_validator)
+                incident_type_validator = IncidentTypeValidator(structure_validator, ignored_errors=ignored_errors_list)
                 if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False
 
             elif 'CHANGELOG' in file_path:
-                self.old_is_valid_release_notes(file_path)
+                self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
-                pack_name = get_pack_name(file_path)
                 added_rn.add(pack_name)
                 print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
-                self.is_valid_release_notes(file_path)
+                self.is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
 
             else:
-                print_error(Errors.file_type_not_supported(file_path))
-                self._is_valid = False
+                error_message, error_code = Errors.file_type_not_supported(file_path)
+                if self.handle_error(error_message, error_code):
+                    self._is_valid = False
+
         missing_rn = self.changed_pack_data.difference(added_rn)
+        should_fail = True
         if (len(missing_rn) > 0) and (self.skip_pack_rn_validation is False):
             for pack in missing_rn:
-                print_error(Errors.missing_release_notes_for_pack(pack))
-            self._is_valid = False
+                ignored_errors_list = self.get_error_ignore_list(pack)
+                error_message, error_code = Errors.missing_release_notes_for_pack(pack)
+                if not BaseValidator(ignored_errors=ignored_errors_list).handle_error(error_message, error_code):
+                    should_fail = False
+
+            if should_fail:
+                self._is_valid = False
 
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).
@@ -555,8 +578,9 @@ class FilesValidator:
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
                 invalid_files.append(f)
         if invalid_files:
-            print_error(Errors.invalid_package_structure(invalid_files))
-            self._is_valid = False
+            error_message, error_code = Errors.invalid_package_structure(invalid_files)
+            if self.handle_error(error_message, error_code):
+                self._is_valid = False
 
     def validate_committed_files(self):
         """Validate that all the committed files in your branch are valid"""
@@ -589,7 +613,8 @@ class FilesValidator:
         """
         for pack in packs:
             print(f'Validating {pack} unique pack files')
-            pack_unique_files_validator = PackUniqueFilesValidator(pack)
+            pack_error_ignore_list = self.get_error_ignore_list(pack)
+            pack_unique_files_validator = PackUniqueFilesValidator(pack, ignored_errors=pack_error_ignore_list)
             pack_errors = pack_unique_files_validator.validate_pack_unique_files()
             if pack_errors:
                 print_error(pack_errors)
@@ -602,62 +627,65 @@ class FilesValidator:
             file_path: A relative content path to a file to be validated
             file_type: The output of 'find_type' method
         """
+        pack_name = get_pack_name(file_path)
+        ignored_errors_list = self.get_error_ignore_list(pack_name)
         if 'README' in file_path:
-            readme_validator = ReadMeValidator(file_path)
+            readme_validator = ReadMeValidator(file_path, ignored_errors=ignored_errors_list)
             if not readme_validator.is_valid_file():
                 self._is_valid = False
             return
-        structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
+        structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
+                                                 ignored_errors=ignored_errors_list)
         if not structure_validator.is_valid_file():
             self._is_valid = False
 
         elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE) or file_type == 'playbook':
-            playbook_validator = PlaybookValidator(structure_validator)
+            playbook_validator = PlaybookValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not playbook_validator.is_valid_playbook(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, INTEGRATION_REGXES) or file_type == 'integration':
-            integration_validator = IntegrationValidator(structure_validator)
+            integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not integration_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, YML_ALL_SCRIPTS_REGEXES) or file_type == 'script':
             # Set file path to the yml file
             structure_validator.file_path = file_path
-            script_validator = ScriptValidator(structure_validator)
+            script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list)
 
             if not script_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
-            integration_validator = IntegrationValidator(structure_validator)
+            integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not integration_validator.is_valid_beta_integration():
                 self._is_valid = False
 
         # incident fields and indicator fields are using the same scheme.
         elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                 file_type in ('incidentfield', 'indicatorfield'):
-            incident_field_validator = IncidentFieldValidator(structure_validator)
+            incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not incident_field_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, JSON_ALL_INDICATOR_TYPES_REGEXES) or file_type == 'reputation':
-            reputation_validator = ReputationValidator(structure_validator)
+            reputation_validator = ReputationValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not reputation_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES) or file_type == 'layout':
-            layout_validator = LayoutValidator(structure_validator)
+            layout_validator = LayoutValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not layout_validator.is_valid_layout(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, JSON_ALL_DASHBOARDS_REGEXES) or file_type == 'dashboard':
-            dashboard_validator = DashboardValidator(structure_validator)
+            dashboard_validator = DashboardValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not dashboard_validator.is_valid_dashboard(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, JSON_ALL_INCIDENT_TYPES_REGEXES) or file_type == 'incidenttype':
-            incident_type_validator = IncidentTypeValidator(structure_validator)
+            incident_type_validator = IncidentTypeValidator(structure_validator, ignored_errors=ignored_errors_list)
             if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                 self._is_valid = False
 
@@ -665,8 +693,9 @@ class FilesValidator:
             print(f'Could not find validations for file {file_path}')
 
         else:
-            print_error(Errors.file_type_not_supported(file_path))
-            self._is_valid = False
+            error_message, error_code = Errors.file_type_not_supported(file_path)
+            if self.handle_error(error_message, error_code):
+                self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):
         print('Validating all files')
@@ -725,6 +754,7 @@ class FilesValidator:
         # go over packs
         for pack_name in os.listdir(PACKS_DIR):
             pack_path = os.path.join(PACKS_DIR, pack_name)
+            ignore_errors_list = self.get_error_ignore_list(pack_name)
 
             for dir_name in os.listdir(pack_path):
                 dir_path = os.path.join(pack_path, dir_name)
@@ -749,7 +779,7 @@ class FilesValidator:
                     if is_yml_file or is_json_file:
                         print("Validating {}".format(file_path))
                         self.is_backward_check = False  # if not using git, no need for BC checks
-                        structure_validator = StructureValidator(file_path)
+                        structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list)
                         if not structure_validator.is_valid_scheme():
                             self._is_valid = False
 
@@ -843,3 +873,25 @@ class FilesValidator:
             return
         else:
             return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
+
+    @staticmethod
+    def get_pack_ignore_file_path(pack_name):
+        return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+
+    def get_error_ignore_list(self, pack_name):
+        ignored_errors_list = []
+        pack_ignore_path = self.get_pack_ignore_file_path(pack_name)
+
+        if os.path.isfile(pack_ignore_path):
+            try:
+                config = ConfigParser(allow_no_value=True)
+                config.read(pack_ignore_path)
+
+                if 'demisto-sdk' in config:
+                    for key in config['demisto-sdk']:
+                        if key == 'ignore':
+                            ignored_errors_list.extend(str(config['demisto-sdk'][key]).split(','))
+            except MissingSectionHeaderError:
+                pass
+
+        return ignored_errors_list

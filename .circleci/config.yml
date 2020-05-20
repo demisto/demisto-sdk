@@ -45,8 +45,9 @@ jobs:
                 echo "Skipping creating content artifacts on non master branch"
                 exit 0
               fi
+              mkdir ./tmp
 
-              demisto-sdk create-content-artifacts
+              demisto-sdk create-content-artifacts -a ./tmp
         - run:
             name: Test create ID set
             command: |

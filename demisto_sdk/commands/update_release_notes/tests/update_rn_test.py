@@ -3,6 +3,7 @@ import shutil
 import unittest
 
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.tools import get_json
 
 
 class TestRNUpdate(unittest.TestCase):
@@ -191,9 +192,66 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
 
+    def test_bump_version_file_not_found(self):
+        """
+            Given:
+                - a pack name and a metadata which does not exist
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return ValueError
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata_.json')
+        self.assertRaises(SystemExit, update_rn.bump_version_number)
+
+    def test_bump_version_no_version(self):
+        """
+            Given:
+                - a pack name and a version before an overflow condition
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return ValueError
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type=None, pack_files={'HelloWorld'}, added_files=set())
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
+        version, data = update_rn.bump_version_number()
+        assert version == '99.99.99'
+
 
 class TestRNUpdateUnit:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    CURRENT_RN = """
+### IncidentTypes
+- __Cortex XDR Incident__
+%%UPDATE_RN%%
+
+### IncidentFields
+- __XDR Alerts__
+%%UPDATE_RN%%
+"""
+    CHANGED_FILES = {
+        "Cortex XDR Incident": "IncidentType",
+        "XDR Alerts": "IncidentField",
+        "Cortex XDR - IR": "Integration",
+        "Nothing": None
+    }
+    EXPECTED_RN_RES = """
+### IncidentTypes
+- __Cortex XDR Incident__
+%%UPDATE_RN%%
+
+### IncidentFields
+- __XDR Alerts__
+%%UPDATE_RN%%
+
+### Integration
+- __Cortex XDR - IR__
+%%UPDATE_RN%%
+"""
 
     def test_ident_changed_file_type_integration(self, mocker):
         """
@@ -349,3 +407,25 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
         update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
+
+    def test_update_existing_rn(self):
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
+                             added_files=set())
+        new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
+        assert self.EXPECTED_RN_RES == new_rn
+
+    def test_commit_to_bump(self, mocker):
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
+                             added_files=set())
+        shutil.copy(
+            src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
+        data_dict = get_json(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
+        mocker.patch.object(UpdateRN, '_does_pack_metadata_exist', return_value='True')
+        assert update_rn.commit_to_bump(data_dict)
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
+        shutil.copy(
+            src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))

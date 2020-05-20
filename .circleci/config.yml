@@ -17,12 +17,6 @@ jobs:
             command: |
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
         - run:
-            name: Tox build
-            command: |
-              pip install tox
-              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
-              tox -e py38 -v
-        - run:
             name: Pre-commit
             command: |
               . .tox/py37/bin/activate
@@ -45,6 +39,8 @@ jobs:
                 echo "Skipping creating content artifacts on non master branch"
                 exit 0
               fi
+              mkdir ./tmp
+
               demisto-sdk create-content-artifacts -a ./tmp/bundle_content
         - run:
             name: Test create ID set

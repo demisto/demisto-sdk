@@ -130,6 +130,7 @@ MODIFIED_FILES = [
 ADDED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'ReleaseNotes/1_0_0.md'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
 ]
 
 

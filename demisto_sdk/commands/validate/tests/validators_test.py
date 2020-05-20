@@ -19,8 +19,6 @@ from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator

@@ -14,6 +14,7 @@ def get_validator(file_path='', modified_files=None):
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files
+    release_notes_validator.added_files = None
     release_notes_validator.pack_name = 'CortexXDR'
     return release_notes_validator
 
@@ -105,7 +106,7 @@ Test
 '''
 
 
-TEST_RELEASE_NOTES_TEST_BANK = [
+TEST_RELEASE_NOTES_TEST_BANK_1 = [
     ('', False),  # Completely Empty
     ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
      'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
@@ -122,8 +123,8 @@ MODIFIED_FILES = [
 ]
 
 
-@pytest.mark.parametrize('release_notes, expected_result', TEST_RELEASE_NOTES_TEST_BANK)
-def test_are_release_notes_complete(release_notes, expected_result, mocker):
+@pytest.mark.parametrize('release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_1)
+def test_are_release_notes_complete(release_notes, complete_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -144,4 +145,40 @@ def test_are_release_notes_complete(release_notes, expected_result, mocker):
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     validator = get_validator(release_notes, MODIFIED_FILES)
-    assert validator.are_release_notes_complete() == expected_result
+    assert validator.are_release_notes_complete() == complete_expected_result
+
+
+TEST_RELEASE_NOTES_TEST_BANK_2 = [
+    ('', False),  # Completely Empty
+    ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
+     'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
+     'code description. ', False),
+    (NOT_FILLED_OUT_RN, True),
+    (FILLED_OUT_RN, True)
+
+]
+
+
+@pytest.mark.parametrize('release_notes, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_2)
+def test_has_release_notes_been_filled_out(release_notes, filled_expected_result, mocker):
+    """
+    Given
+    - Case 1: Empty release notes.
+    - Case 2: Not filled out release notes.
+    - Case 3: Valid release notes
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure validation correctly identifies valid release notes.
+    - Case 1: Should return the prompt "Please complete the release notes found at: {path}" and
+              return False
+    - Case 2: Should return the prompt "Please finish filling out the release notes found at: {path}" and
+              return False
+    - Case 3: Should print nothing and return True
+    """
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    validator = get_validator(release_notes, MODIFIED_FILES)
+    assert validator.has_release_notes_been_filled_out() == filled_expected_result

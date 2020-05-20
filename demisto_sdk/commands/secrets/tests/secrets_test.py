@@ -41,6 +41,9 @@ class TestSecrets:
     TEST_WHITELIST_FILE = TEST_BASE_PATH + 'fake_secrets_white_list.json'
     TEST_BASE_64_STRING = 'OCSn7JGqKehoyIyMCm7gPFjKXpawXvh2M32' * 20 + ' sade'
     WHITE_LIST_FILE_NAME = 'secrets_white_list.json'
+    FILE_HASH_LIST = ['123c8fc6532ba547d7ef598', '456c8fc6532ba547d7bb5e880a', '789c8fc6532ba57ef5985bb5e']
+    MAIL_LIST = ['test1@gmail.com', 'test2@gmail.com', 'test3@gmail.com']
+    IP_LIST = ['ip-172-31-15-237', '1.1.1.1', '12.25.12.14']
 
     TEMP_DIR = os.path.join(FILES_PATH, 'temp')
     TEST_FILE_WITH_SECRETS = os.path.join(TEMP_DIR, 'file_with_secrets_in_it.yml')
@@ -281,6 +284,20 @@ my_email = "fooo@someorg.com"
     def test_get_white_listed_items_pack(self, monkeypatch):
         monkeypatch.setattr('demisto_sdk.commands.secrets.secrets.PACKS_DIR', self.FILES_PATH)
         final_white_list, ioc_white_list, files_white_list = self.validator.get_white_listed_items(True, 'fake_pack')
-        assert final_white_list == {'https://www.demisto.com', 'https://api.zoom.us', 'PaloAltoNetworksXDR', 'ip-172-31-15-237'}
+        assert final_white_list == {'https://www.demisto.com', 'https://api.zoom.us', 'PaloAltoNetworksXDR',
+                                    'ip-172-31-15-237'}
         assert ioc_white_list == {'https://api.zoom.us'}
         assert files_white_list == set()
+
+    def test_reformat_secrets_output(self):
+        secrets_output = self.validator.reformat_secrets_output(self.FILE_HASH_LIST)
+        assert secrets_output == '123c8fc6532ba547d7ef598\n456c8fc6532ba547d7bb5e880a\n789c8fc6532ba57ef5985bb5e'
+
+        secrets_output = self.validator.reformat_secrets_output(self.MAIL_LIST)
+        assert secrets_output == 'test1@gmail.com\ntest2@gmail.com\ntest3@gmail.com'
+
+        secrets_output = self.validator.reformat_secrets_output(self.IP_LIST)
+        assert secrets_output == 'ip-172-31-15-237\n1.1.1.1\n12.25.12.14'
+
+        secrets_output = self.validator.reformat_secrets_output([])
+        assert secrets_output == ''

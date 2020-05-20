@@ -160,14 +160,14 @@ class IntegrationValidator(BaseValidator):
         for configuration_param in configuration:
             param_name = configuration_param['name']
             if configuration_param['type'] == 8 and param_name not in ('insecure', 'unsecure', 'proxy', 'isFetch'):
-                self.is_valid_checkbox_param(configuration_param, param_name)
+                if not self.is_valid_checkbox_param(configuration_param, param_name):
+                    self.is_valid = False
         if not self.is_valid:
             return False
-
         return True
 
     def is_valid_checkbox_param(self, configuration_param, param_name):
-        # type: (dict, str) -> None
+        # type: (dict, str) -> bool
         """Check if the given checkbox parameter required field is False.
         Returns:
             str. Empty string if valid, error message otherwise.
@@ -176,8 +176,9 @@ class IntegrationValidator(BaseValidator):
         if configuration_param.get('required', False):
             err_msg = Errors.wrong_required_value(param_name)
         if err_msg:
-            self.is_valid = False
             print_error(err_msg)
+            return False
+        return True
 
     def is_valid_category(self):
         # type: () -> bool

@@ -8,13 +8,13 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 
 
-def get_validator(file_path='', modified_files=None):
+def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator = ReleaseNotesValidator("")
     release_notes_validator.file_path = file_path
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files
-    release_notes_validator.added_files = None
+    release_notes_validator.added_files = added_files
     release_notes_validator.pack_name = 'CortexXDR'
     return release_notes_validator
 
@@ -103,6 +103,10 @@ Test
 #### Scripts
 - __EntryWidgetNumberHostsXDR__
 Test
+
+### Playbooks
+- __Cortex XDR Incident Handling__
+test
 '''
 
 
@@ -119,7 +123,13 @@ MODIFIED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'),
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
-    os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml')
+    os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
+
+]
+ADDED_FILES = [
+    os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'ReleaseNotes/1_0_0.md'),
 ]
 
 
@@ -148,6 +158,31 @@ def test_are_release_notes_complete(release_notes, complete_expected_result, moc
     assert validator.are_release_notes_complete() == complete_expected_result
 
 
+@pytest.mark.parametrize('release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_1)
+def test_are_release_notes_complete_added(release_notes, complete_expected_result, mocker):
+    """
+    Given
+    - Case 1: Empty release notes.
+    - Case 2: Not filled out release notes.
+    - Case 3: Valid release notes
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure validation correctly identifies valid release notes.
+    - Case 1: Should return the prompt "Please complete the release notes found at: {path}" and
+              return False
+    - Case 2: Should return the prompt "Please finish filling out the release notes found at: {path}" and
+              return False
+    - Case 3: Should print nothing and return True
+    """
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    validator = get_validator(release_notes, MODIFIED_FILES, ADDED_FILES)
+    assert validator.are_release_notes_complete() == complete_expected_result
+
+
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
     ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
@@ -173,7 +208,7 @@ def test_has_release_notes_been_filled_out(release_notes, filled_expected_result
     Then
     - Ensure validation correctly identifies valid release notes.
     - Case 1: Should return the prompt "Please complete the release notes found at: {path}" and
-              return False
+              return True
     - Case 2: Should return the prompt "Please finish filling out the release notes found at: {path}" and
               return False
     - Case 3: Should print nothing and return True

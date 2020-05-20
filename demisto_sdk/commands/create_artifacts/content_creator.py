@@ -9,6 +9,7 @@ import shutil
 import zipfile
 from typing import List
 
+import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import (BASE_PACK,
                                                    BETA_INTEGRATIONS_DIR,
                                                    CLASSIFIERS_DIR,
@@ -89,7 +90,7 @@ class ContentCreator:
         Returns:
             int. 1 for failure, 0 for success.
         """
-        self.create_content()
+        self.create_content(is_private_repository=tools.is_private_repository())
         if self.long_file_names:
             print_error(f'The following files exceeded to file name length limit of {self.file_name_max_size}:\n'
                         f'{json.dumps(self.long_file_names, indent=4)}')
@@ -445,9 +446,11 @@ class ContentCreator:
     def copy_docs_files(content_bundle_path, packs_bundle_path):
         for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
             if os.path.exists(doc_file):
-                print(f'copying {doc_file} doc to content bundle')
-                shutil.copyfile(doc_file,
-                                os.path.join(content_bundle_path, os.path.basename(doc_file)))
+                if content_bundle_path:
+                    print(f'copying {doc_file} doc to content bundle')
+                    shutil.copyfile(doc_file,
+                                    os.path.join(content_bundle_path, os.path.basename(doc_file)))
+
                 # copy doc to packs bundle
                 print(f'copying {doc_file} doc to content pack bundle')
                 base_pack_doc_path = os.path.join(packs_bundle_path, BASE_PACK, "Documentation")
@@ -459,7 +462,7 @@ class ContentCreator:
                 print_warning(f'{doc_file} was not found and '
                               'therefore was not added to the content bundle')
 
-    def create_content(self):
+    def create_content(self, is_private_repository=False):
         """
         Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"
         """
@@ -486,22 +489,33 @@ class ContentCreator:
 
             # handle copying packs content to bundles for zipping to content_new.zip and content_test.zip
             packs = get_child_directories(PACKS_DIR)
-            self.copy_packs_content_to_old_bundles(packs)
+            if not is_private_repository:
+                self.copy_packs_content_to_old_bundles(packs)
 
             # handle copying packs content to packs_bundle for zipping to `content_packs.zip`
             self.copy_packs_content_to_packs_bundle(packs)
 
-            print('Copying content descriptor to content and test bundles')
-            for bundle_dir in [self.content_bundle, self.test_bundle]:
-                shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
+            if not is_private_repository:
+                print('Copying content descriptor to content and test bundles')
+                for bundle_dir in [self.content_bundle, self.test_bundle]:
+                    shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
 
-            ContentCreator.copy_docs_files(content_bundle_path=self.content_bundle, packs_bundle_path=self.packs_bundle)
+            if is_private_repository:
+                ContentCreator.copy_docs_files(content_bundle_path=None,
+                                               packs_bundle_path=self.packs_bundle)
+            else:
+                ContentCreator.copy_docs_files(content_bundle_path=self.content_bundle,
+                                               packs_bundle_path=self.packs_bundle)
 
             print('Compressing bundles...')
-            shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
-            shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
+            if not is_private_repository:
+                shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
+                shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
+
+                shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
+
             shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
-            shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
+
             if os.path.exists('release-notes.md'):
                 print('copying release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
                 shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))

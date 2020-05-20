@@ -142,23 +142,6 @@ def get_commmands_from_playbook(data_dict):
     return command_to_integration
 
 
-def check_api_module_imports(script_code: str) -> str:
-    """
-    Checks integration code for API module imports
-    :param script_code: The integration code
-    :return: the imported module name
-    """
-
-    # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
-    module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
-
-    module_match = re.search(module_regex, script_code)
-    if module_match:
-        return module_match.group(1)
-
-    return ''
-
-
 def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
@@ -172,7 +155,6 @@ def get_integration_data(file_path):
     commands = data_dictionary.get('script', {}).get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
-    api_modules = check_api_module_imports(data_dictionary.get('script', {}).get('script', []))
 
     deprecated_commands = []
     for command in commands:

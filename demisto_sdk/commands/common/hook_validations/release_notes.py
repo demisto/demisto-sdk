@@ -33,7 +33,7 @@ class ReleaseNotesValidator:
                 elif self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)
-                    if (file_type and file_name) not in self.latest_release_notes:
+                    if not all(x in self.latest_release_notes for x in [file_type, file_name]):
                         print_error(f"No release note entry was found for a {file_type.lower()} in the {self.pack_name} pack. "
                                     f"Please rerun the update-release-notes command without -u to generate an"
                                     f" updated template.")
@@ -45,7 +45,7 @@ class ReleaseNotesValidator:
                 elif self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)
-                    if (file_type and file_name) not in self.latest_release_notes:
+                    if not all(x in self.latest_release_notes for x in [file_type, file_name]):
                         print_error(f"No release note entry was found for a {file_type.lower()} in the {self.pack_name} pack. "
                                     f"Please rerun the update-release-notes command without -u to generate an"
                                     f" updated template.")

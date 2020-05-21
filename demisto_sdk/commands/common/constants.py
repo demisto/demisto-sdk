@@ -1185,3 +1185,12 @@ ALL_FILES_VALIDATION_IGNORE_WHITELIST = [
     'test-data',
     'testplaybook'
 ]
+VALIDATED_PACK_ITEM_TYPES = [
+    'Playbooks',
+    'Integration',
+    'Script',
+    'IncidentFields',
+    'IncidentTypes',
+    'Classifiers',
+    'Layouts'
+]

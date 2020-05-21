@@ -72,6 +72,8 @@ schema;section_schema:
       type: any
     queryType:
       type: str
+    sortValues:
+      type: str
     fields:
       type: seq
       sequence:
@@ -90,3 +92,5 @@ schema;field_schema:
         type: str
       isVisible:
         type: bool
+      sortValues:
+        type: str

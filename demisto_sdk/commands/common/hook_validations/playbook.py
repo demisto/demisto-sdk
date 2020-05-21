@@ -1,8 +1,9 @@
 from typing import Dict
 
+import click
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_error
 
 
 class PlaybookValidator(BaseValidator):
@@ -18,6 +19,9 @@ class PlaybookValidator(BaseValidator):
         Returns:
             bool. Whether the playbook is valid or not
         """
+        if 'TestPlaybooks' in self.file_path:
+            click.echo(f'Skipping validation for Test Playbook {self.file_path}', color=LOG_COLORS.YELLOW)
+            return True
         if is_new_playbook:
             new_playbook_checks = [
                 super().is_valid_file(validate_rn),
@@ -48,9 +52,6 @@ class PlaybookValidator(BaseValidator):
         Checks if the playbook has a TestPlaybook and if the TestPlaybook is configured in conf.json
         And prints an error message accordingly
         """
-        if 'TestPlaybooks' in self.file_path:
-            return True
-
         file_type = self.structure_validator.scheme_name
         tests = self.current_file.get('tests', [])
         return self.yml_has_test_key(tests, file_type)
@@ -90,8 +91,6 @@ class PlaybookValidator(BaseValidator):
         Return:
             bool. if the Playbook handles all condition branches correctly.
         """
-        if 'TestPlaybooks' in self.file_path:
-            return True
         is_all_condition_branches_handled: bool = True
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
@@ -123,7 +122,7 @@ class PlaybookValidator(BaseValidator):
         is_all_condition_branches_handled: bool = True
         # ADD all possible conditions to task_condition_labels (UPPER)
         # #default# condition should always exist in a builtin condition
-        task_condition_labels = {'#DEFAULT#'}
+        task_condition_labels = set()
         for condition in task.get('conditions', []):
             label = condition.get('label')
             if label:
@@ -137,7 +136,10 @@ class PlaybookValidator(BaseValidator):
                 if next_task_branch:
                     # Need to cast it to string because otherwise it's parsed as boolean
                     task_condition_labels.remove(str(next_task_branch).upper())
-            except KeyError:
+            except KeyError as e:
+                # else doesn't have a path, skip error
+                if '#DEFAULT#' == e.args[0]:
+                    continue
                 print_error(f'Playbook conditional task with id:{task.get("id")} has task with unreachable '
                             f'next task condition "{next_task_branch}". Please remove this task or add '
                             f'this condition to condition task with id:{task.get("id")}.')
@@ -145,13 +147,6 @@ class PlaybookValidator(BaseValidator):
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            try:
-                # try to rename default condition to else for print
-                task_condition_labels.remove('#default#')
-                task_condition_labels.add('else')
-            except KeyError:
-                # there is no #default# task, so we didn't replace it with else and can continue
-                pass
             print_error(f'Playbook conditional task with id:{task.get("id")} has unhandled condition: '
                         f'{",".join(map(lambda x: f"{str(x)}", task_condition_labels))}')
             self.is_valid = is_all_condition_branches_handled = False

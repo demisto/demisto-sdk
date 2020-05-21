@@ -15,6 +15,8 @@ from demisto_sdk.commands.common.hook_validations.incident_field import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import \
+    OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
@@ -29,7 +31,7 @@ from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
     BETA_INTEGRATION_TARGET, CONF_JSON_MOCK_PATH, DASHBOARD_TARGET,
-    DEFAULT_IMAGE, GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
+    GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
     INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
@@ -92,7 +94,7 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
-    @patch.object(ReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
+    @patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -165,13 +167,13 @@ class TestValidators:
 
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
         (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, SCRIPT_RELEASE_NOTES_TARGET,
-         ReleaseNotesValidator, True),
+         OldReleaseNotesValidator, True),
         (VALID_SCRIPT_PATH, SCRIPT_TARGET, VALID_ONE_LINE_CHANGELOG_PATH, INTEGRATION_RELEASE_NOTES_TARGET,
-         ReleaseNotesValidator, False),
+         OldReleaseNotesValidator, False),
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
-         INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, True),
+         INTEGRATION_RELEASE_NOTES_TARGET, OldReleaseNotesValidator, True),
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, VALID_ONE_LINE_CHANGELOG_PATH,
-         SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, False)
+         SCRIPT_RELEASE_NOTES_TARGET, OldReleaseNotesValidator, False)
     ]
 
     @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
@@ -183,8 +185,8 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
-            validator = ReleaseNotesValidator(target_dummy)
+            mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
+            validator = OldReleaseNotesValidator(target_dummy)
             assert validator.validate_file_release_notes_exists() is answer
         finally:
             os.remove(target_dummy)
@@ -216,10 +218,10 @@ class TestValidators:
             for (release_notes_file, answer) in changelog_files_answer:
                 if file_type == 'Script':
                     test_package.append((dummy_file, SCRIPT_TARGET, release_notes_file,
-                                         SCRIPT_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
+                                         SCRIPT_RELEASE_NOTES_TARGET, OldReleaseNotesValidator, answer))
                 elif file_type == 'Integration':
                     test_package.append((dummy_file, INTEGRATION_TARGET, release_notes_file,
-                                         INTEGRATION_RELEASE_NOTES_TARGET, ReleaseNotesValidator, answer))
+                                         INTEGRATION_RELEASE_NOTES_TARGET, OldReleaseNotesValidator, answer))
 
         return test_package
 
@@ -233,8 +235,8 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
-            mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
-            validator = ReleaseNotesValidator(target_dummy)
+            mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
+            validator = OldReleaseNotesValidator(target_dummy)
             assert validator.is_valid_release_notes_structure() is answer
         finally:
             os.remove(target_dummy)
@@ -305,7 +307,7 @@ class TestValidators:
     @pytest.mark.parametrize("prev_var, get_modified_and_added_files, release_iden, answer, is_valid", params)
     def test_validate_against_previous_version(self, prev_var, get_modified_and_added_files, release_iden, answer,
                                                is_valid, mocker):
-        file_validator = FilesValidator(validate_conf_json=False, prev_ver=prev_var)
+        file_validator = FilesValidator(skip_conf_json=True, prev_ver=prev_var)
         file_validator._is_valid = is_valid
         mocker.patch.object(FilesValidator, 'get_modified_and_added_files', return_value=get_modified_and_added_files)
         mocker.patch.object(FilesValidator, 'get_content_release_identifier', return_value=release_iden)
@@ -331,7 +333,7 @@ class TestValidators:
         # type: (str, str) -> None
         try:
             copyfile(source, target)
-            assert FilesValidator(validate_conf_json=False).is_valid_structure()
+            assert FilesValidator(skip_conf_json=True).is_valid_structure()
         finally:
             os.remove(target)
 
@@ -347,7 +349,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
     def test_is_valid_rn(self, mocker, file_path, file_type):
-        mocker.patch.object(ReleaseNotesValidator, 'get_master_diff', sreturn_value=None)
+        mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', sreturn_value=None)
         mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)
@@ -359,16 +361,11 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'is_valid_beta', return_value=True)
         mocker.patch.object(IntegrationValidator, 'are_tests_configured', return_value=True)
         mocker.patch.object(PlaybookValidator, 'are_tests_configured', return_value=True)
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
-        # ignoring images and change-logs
-        (DEFAULT_IMAGE, ''),
-        (VALID_MULTI_LINE_LIST_CHANGELOG_PATH, ''),
-        (INVALID_ONE_LINE_1_CHANGELOG_PATH, ''),
-        # validating files
         (VALID_INTEGRATION_ID_PATH, 'integration'),
         (VALID_TEST_PLAYBOOK_PATH, 'playbook'),
         (VALID_SCRIPT_PATH, 'script'),
@@ -378,6 +375,7 @@ class TestValidators:
         (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
         (VALID_BETA_INTEGRATION, 'integration'),
         (VALID_INDICATOR_FIELD_PATH, 'indicatorfield'),
+        (VALID_LAYOUT_PATH, 'layout'),
         (VALID_MD, '')
     ]
 
@@ -392,16 +390,14 @@ class TestValidators:
         - running run_all_validations_on_file on that file
 
         Then
-        -  If the file is not json,yml or md- it will be skipped (will be considered as valid)
-        -  If the file is a CHANGELOG  or DESCRIPTION it will be skipped  (will be considered as valid)
-        -  In any other case the file will be validated
+        -  The file will be validated
         """
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.run_all_validations_on_file(file_path, file_type)
         assert file_validator._is_valid
 
     def test_files_validator_validate_pack_unique_files(self,):
-        files_validator = FilesValidator(validate_conf_json=False)
+        files_validator = FilesValidator(skip_conf_json=True)
         files_validator.validate_pack_unique_files({VALID_PACK})
         assert files_validator._is_valid
 
@@ -421,15 +417,37 @@ class TestValidators:
     def test_script_valid_rn(self, mocker, file_path, file_type):
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         self.mock_unifier()
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.validate_added_files(file_path, file_type)
         assert file_validator._is_valid
 
     def test_pack_validation(self):
-        file_validator = FilesValidator(validate_conf_json=False)
+        file_validator = FilesValidator(skip_conf_json=True)
         file_validator.file_path = VALID_PACK
         file_validator.is_valid_structure()
         assert file_validator._is_valid is False
+
+    VALID_ADDED_RELEASE_NOTES = {
+        'Packs/HelloWorld/ReleaseNotes/1_2_0.md',
+        'Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md'
+        'Packs/Tanium/ReleaseNotes/1_1_0.md'
+    }
+    INVALID_ADDED_RELEASE_NOTES = {
+        'Packs/HelloWorld/ReleaseNotes/1_2_0.md',
+        'Packs/HelloWorld/ReleaseNotes/1_3_0.md',
+        'Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md'
+        'Packs/Tanium/ReleaseNotes/1_1_0.md'
+    }
+    VERIFY_NO_DUP_RN_INPUT = [
+        (VALID_ADDED_RELEASE_NOTES, True),
+        (INVALID_ADDED_RELEASE_NOTES, False)
+    ]
+
+    @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
+    def test_verify_no_dup_rn(self, added_files: set, expected: bool):
+        file_validator = FilesValidator(skip_conf_json=True)
+        file_validator.verify_no_dup_rn(added_files)
+        assert file_validator._is_valid is expected
 
     ARE_TEST_CONFIGURED_TEST_INPUT = [
         (VALID_INTEGRATION_TEST_PATH, 'integration', True),
@@ -458,10 +476,8 @@ class TestValidators:
         """
             Given
             - A unified yml file
-
             When
             - Validating it
-
             Then
             -  validator should ignore those files
         """
@@ -470,5 +486,15 @@ class TestValidators:
         assert file_validator._is_valid
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
-        file_validator.run_all_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION)
-        assert file_validator._is_valid
+
+
+class RNValidatorTest:
+    INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
+        ('Valid Release Notes', ReleaseNotesValidator, True),
+        ('%%UPDATE_RN%%', ReleaseNotesValidator, False),
+    ]
+
+    @pytest.mark.parametrize('release_notes, validator, answer', INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
+    def test_has_release_notes_been_filled_out(self, release_notes, validator, answer):
+        # type: (str, Type[BaseValidator], Any) -> None
+        assert validator.has_release_notes_been_filled_out(release_notes) is answer

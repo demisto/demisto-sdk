@@ -73,7 +73,7 @@ class TestPlaybookValidator:
                             "tasks":
                                 {'1': {'type': 'condition',
                                        'conditions': [{'label': 'yes'}],
-                                       'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
+                                       'nexttasks': {'yes': ['3']}}}}
     CONDITION_EXIST_FULL_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
                                      "tasks":
                                      {'1': {'type': 'condition',
@@ -201,7 +201,7 @@ class TestPlaybookValidator:
 
     @pytest.mark.parametrize("playbook_path, expected_result", [(INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, True),
                                                                 (INVALID_PLAYBOOK_UNHANDLED_CONDITION, False)])
-    def test_unhandled_condition_skipping(self, playbook_path, expected_result):
+    def test_skipping_test_playbooks(self, playbook_path, expected_result):
         """
             Given
             - A playbook
@@ -215,4 +215,4 @@ class TestPlaybookValidator:
         """
         structure = StructureValidator(file_path=playbook_path)
         validator = PlaybookValidator(structure)
-        assert validator.is_condition_branches_handled() is expected_result
+        assert validator.is_valid_playbook() is expected_result

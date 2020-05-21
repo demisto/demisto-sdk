@@ -185,4 +185,3 @@ class TestContentCreator:
         file_path = os.path.join(self._files_to_artifacts_dir, filename)
         content_creator.copy_file_to_artifacts(file_path)
         assert filecmp.cmp(file_path, os.path.join(self.content_repo, filename))
-

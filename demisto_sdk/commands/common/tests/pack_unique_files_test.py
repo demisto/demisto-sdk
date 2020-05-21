@@ -15,8 +15,8 @@ class TestPackUniqueFilesValidator:
 
     def test_is_error_added(self):
         self.validator._add_error(('boop', '101'), 'file_path')
-        assert 'file_path: [101] - boop' in self.validator.get_errors(True)
-        assert 'file_path: [101] - boop' in self.validator.get_errors()
+        assert 'file_path: [101] - boop\n' in self.validator.get_errors(True)
+        assert 'file_path: [101] - boop\n' in self.validator.get_errors()
         self.validator._errors = []
 
     def test_is_file_exist(self):

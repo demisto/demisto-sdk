@@ -11,10 +11,10 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    INTEGRATIONS_DIR,
                                                    SCRIPTS_DIR,
                                                    TYPE_TO_EXTENSION, Errors)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                get_yml_paths_in_dir,
                                                print_color, print_error,
-                                               print_warning, find_type,
+                                               print_warning,
                                                server_version_compare)
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
@@ -260,7 +260,7 @@ class Unifier:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')
 
-        if find_type(yml_path) is 'script':
+        if find_type(yml_path) == 'script':
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')

@@ -325,10 +325,13 @@ class TestIntegrationValidator:
         {"name": "insecure", "type": 8, "display": "Use system proxy settings", "required": False}]
     UNSECURE_WRONG_DISPLAY = [
         {"name": "unsecure", "type": 8, "display": "Use system proxy settings", "required": False}]
+    UNSECURE_WRONG_DISPLAY_AND_TYPE = [
+        {"name": "unsecure", "type": 7, "display": "Use system proxy settings", "required": False}]
     IS_INSECURE_INPUTS = [
         (UNSECURE_VALID, True),
         (INSECURE_WRONG_DISPLAY, False),
-        (UNSECURE_WRONG_DISPLAY, False)
+        (UNSECURE_WRONG_DISPLAY, False),
+        (UNSECURE_WRONG_DISPLAY_AND_TYPE, False)
     ]
 
     @pytest.mark.parametrize("current, answer", IS_INSECURE_INPUTS)
@@ -338,6 +341,24 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_insecure_configured_correctly() is answer
+
+    VALID_CHECKBOX_PARAM = [
+        {"name": "test1", "type": 8, "display": "test1", "required": False}]
+    INVALID_CHECKBOX_PARAM = [
+        {"name": "test2", "type": 8, "display": "test2", "required": True}]
+
+    IS_INSECURE_INPUTS = [
+        (VALID_CHECKBOX_PARAM, True),
+        (INVALID_CHECKBOX_PARAM, False)
+    ]
+
+    @pytest.mark.parametrize("current, answer", IS_INSECURE_INPUTS)
+    def test_is_checkbox_param_configured_correctly(self, current, answer):
+        current = {"configuration": current}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_checkbox_param_configured_correctly() is answer
 
     INVALID_CATEGORY = {"category": "Analytics & SIEMM"}
     VALID_CATEGORY = {"category": "Endpoint"}

@@ -238,7 +238,8 @@ class TestRNUpdateUnit:
         "XDR Alerts": "IncidentField",
         "Sample IncidentField": "IncidentField",
         "Cortex XDR - IR": "Integration",
-        "Nothing": None
+        "Nothing": None,
+        "Sample": "Integration",
     }
     EXPECTED_RN_RES = """
 ### IncidentTypes
@@ -253,6 +254,9 @@ class TestRNUpdateUnit:
 %%UPDATE_RN%%
 
 ### Integration
+- __Sample__
+%%UPDATE_RN%%
+
 - __Cortex XDR - IR__
 %%UPDATE_RN%%
 """
@@ -434,7 +438,7 @@ class TestRNUpdateUnit:
                              added_files=set())
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
         print(new_rn)
-        assert self.EXPECTED_RN_RES == new_rn
+        assert new_rn == self.EXPECTED_RN_RES
 
     def test_commit_to_bump(self):
         ORIGINAL = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')

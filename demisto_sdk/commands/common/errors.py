@@ -160,9 +160,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_type_not_supported():
-        return f"The file type is not supported in validate command\n " \
-               f"validate' command supports: Integrations, Scripts, Playbooks, " \
-               f"Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+        return "The file type is not supported in validate command\n " \
+               "validate' command supports: Integrations, Scripts, Playbooks, " \
+               "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
 
     @staticmethod
     @error_code_decorator
@@ -307,8 +307,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_v2_integration_name():
-        return f"The display name of this v2 integration is incorrect , should be **name** v2.\n" \
-               f"e.g: Kenna v2, Jira v2"
+        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
+               "e.g: Kenna v2, Jira v2"
 
     @staticmethod
     @error_code_decorator
@@ -318,8 +318,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_v2_script_name():
-        return f"The name of this v2 script is incorrect , should be **name**V2." \
-               f" e.g: DBotTrainTextClassifierV2"
+        return "The name of this v2 script is incorrect , should be **name**V2." \
+               " e.g: DBotTrainTextClassifierV2"
 
     @staticmethod
     @error_code_decorator
@@ -441,39 +441,39 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def no_image_given():
-        return f"You've created/modified a yml or package but failed to provide an image as " \
-               f"a .png file for it, please add an image in order to proceed."
+        return "You've created/modified a yml or package but failed to provide an image as " \
+               "a .png file for it, please add an image in order to proceed."
 
     @staticmethod
     @error_code_decorator
     def image_too_large():
-        return f"Too large logo, please update the logo to be under 10kB"
+        return "Too large logo, please update the logo to be under 10kB"
 
     @staticmethod
     @error_code_decorator
     def image_in_package_and_yml():
-        return f"Image in both yml and package, remove the 'image' " \
-               f"key from the yml file"
+        return "Image in both yml and package, remove the 'image' " \
+               "key from the yml file"
 
     @staticmethod
     @error_code_decorator
     def not_an_image_file():
-        return f"This isn't an image file or unified integration file."
+        return "This isn't an image file or unified integration file."
 
     @staticmethod
     @error_code_decorator
     def no_image_field_in_yml():
-        return f"This is a yml file but has no image field."
+        return "This is a yml file but has no image field."
 
     @staticmethod
     @error_code_decorator
     def image_field_not_in_base64():
-        return f"The image field isn't in base64 encoding."
+        return "The image field isn't in base64 encoding."
 
     @staticmethod
     @error_code_decorator
     def default_image_error():
-        return f"This is the default image, please change to the integration image."
+        return "This is the default image, please change to the integration image."
 
     @staticmethod
     @error_code_decorator
@@ -483,8 +483,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def test_not_in_conf_json(file_id):
-        return f"You've failed to add the {file_id} to conf.json\n" \
-               f"see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
+        return "You've failed to add the {file_id} to conf.json\n" \
+               "see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
 
     @staticmethod
     @error_code_decorator
@@ -533,18 +533,18 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_not_finished():
-        return f"Please finish filling out the release notes"
+        return "Please finish filling out the release notes"
 
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return f"Your release notes file is empty, please complete it."
+        return "Your release notes file is empty, please complete it."
 
     @staticmethod
     @error_code_decorator
     def multiple_release_notes_files():
-        return f"More than one release notes file has been found." \
-               f"Only one release note file is permitted per release. Please delete the extra release notes."
+        return "More than one release notes file has been found." \
+               "Only one release note file is permitted per release. Please delete the extra release notes."
 
     @staticmethod
     @error_code_decorator
@@ -556,7 +556,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def playbook_cant_have_rolename():
-        return f"Playbook can not have a rolename."
+        return "Playbook can not have a rolename."
 
     @staticmethod
     @error_code_decorator
@@ -579,29 +579,29 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return f"No detailed description file was found in the package. Please add one, " \
-               f"and make sure it includes the beta disclaimer note." \
-               f"It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
+        return "No detailed description file was found in the package. Please add one, " \
+               "and make sure it includes the beta disclaimer note." \
+               "It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_description():
-        return f"The detailed description in beta integration package " \
-               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
-               f"\"BETA_INTEGRATION_DISCLAIMER\"."
+        return "The detailed description in beta integration package " \
+               "dose not contain the beta disclaimer note. It should contain the string in constant" \
+               "\"BETA_INTEGRATION_DISCLAIMER\"."
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_yml():
-        return f"The detailed description field in beta integration " \
-               f"dose not contain the beta disclaimer note. It should contain the string in constant" \
-               f" \"BETA_INTEGRATION_DISCLAIMER\"."
+        return "The detailed description field in beta integration " \
+               "dose not contain the beta disclaimer note. It should contain the string in constant" \
+               " \"BETA_INTEGRATION_DISCLAIMER\"."
 
     @staticmethod
     @error_code_decorator
     def description_in_package_and_yml():
-        return f"A description was found both in the " \
-               f"package and in the yml, please update the package."
+        return "A description was found both in the " \
+               "package and in the yml, please update the package."
 
     @staticmethod
     @error_code_decorator
@@ -643,17 +643,17 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def incident_field_or_type_from_version_5():
-        return f'fromVersion must be at least 5.0.0'
+        return 'fromVersion must be at least 5.0.0'
 
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_or_type_from_version():
-        return f'"fromVersion" has an invalid value.'
+        return '"fromVersion" has an invalid value.'
 
     @staticmethod
     @error_code_decorator
     def new_incident_field_required():
-        return f'New incident fields can not be required. change to:\nrequired: false.'
+        return 'New incident fields can not be required. change to:\nrequired: false.'
 
     @staticmethod
     @error_code_decorator
@@ -663,7 +663,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def incident_field_type_change():
-        return f'Changing incident field type is not allowed.'
+        return 'Changing incident field type is not allowed.'
 
     @staticmethod
     @error_code_decorator
@@ -748,12 +748,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def reputation_expiration_should_be_numeric():
-        return f'Expiration field should have a numeric value.'
+        return 'Expiration field should have a numeric value.'
 
     @staticmethod
     @error_code_decorator
     def reputation_id_and_details_not_equal():
-        return f'id and details fields are not equal.'
+        return 'id and details fields are not equal.'
 
     @staticmethod
     @error_code_decorator
@@ -785,7 +785,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_file_path():
-        return f"Found incompatible file path."
+        return "Found incompatible file path."
 
     @staticmethod
     @error_code_decorator

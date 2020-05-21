@@ -50,7 +50,8 @@ class ContentEntityValidator(BaseValidator):
         """
         if self.current_file.get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(self.file_path, self.DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=Errors.suggest_fix(self.file_path)):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 self.is_valid = False
                 return False
         return True
@@ -125,7 +126,8 @@ class ContentEntityValidator(BaseValidator):
         name = self.current_file.get('name', '')
         if file_id != name:
             error_message, error_code = Errors.id_should_equal_name(name, file_id, self.file_path)
-            if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=Errors.suggest_fix(self.file_path)):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 
         return True

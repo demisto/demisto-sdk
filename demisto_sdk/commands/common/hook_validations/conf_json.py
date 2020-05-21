@@ -1,5 +1,6 @@
 import json
 
+from demisto_sdk.commands.common.constants import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -48,7 +49,7 @@ class ConfJsonValidator(BaseValidator):
 
         if problematic_instances:
             error_message, error_code = Errors.description_missing_from_conf_json(problematic_instances)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=CONF_PATH):
                 self._is_valid = False
 
         return self._is_valid
@@ -69,6 +70,6 @@ class ConfJsonValidator(BaseValidator):
                 return True
 
         error_message, error_code = Errors.test_not_in_conf_json(file_id)
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=CONF_PATH):
             return False
         return True

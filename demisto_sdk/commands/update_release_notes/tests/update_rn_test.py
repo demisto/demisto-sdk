@@ -276,7 +276,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Integration/VulnDB/VulnDB.py')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_ident_changed_file_type_release_notes(self):
@@ -292,7 +292,7 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_0_1.md')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_ident_changed_file_type_script(self, mocker):
@@ -310,7 +310,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Script/VulnDB/VulnDB.py')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_ident_changed_file_type_playbooks(self, mocker):
@@ -328,7 +328,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Playbooks/VulnDB/VulnDB_playbook.yml')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_ident_changed_file_type_incident_fields(self, mocker):
@@ -346,7 +346,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'IncidentFields/VulnDB/VulnDB.json')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_ident_changed_file_type_incident_types(self, mocker):
@@ -364,7 +364,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'IncidentTypes/VulnDB/VulnDB.json')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_ident_changed_file_type_classifiers(self, mocker):
@@ -382,7 +382,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Classifiers/VulnDB/VulnDB.json')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_ident_changed_file_type_layouts(self, mocker):
@@ -400,7 +400,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Layouts/VulnDB/VulnDB.json')
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.ident_changed_file_type(filepath)
+        result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
     def test_check_rn_directory(self):

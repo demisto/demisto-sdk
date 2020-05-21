@@ -32,9 +32,9 @@ class ReleaseNotesValidator:
                     continue
                 elif self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
-                    fn, ft = update_rn_util.ident_changed_file_type(file)
-                    if ft and fn not in self.latest_release_notes:
-                        print_error(f"No release note entry was found for a {ft.lower()} in the {self.pack_name} pack. "
+                    file_name, file_type = update_rn_util.identify_changed_file_type(file)
+                    if (file_type and file_name) not in self.latest_release_notes:
+                        print_error(f"No release note entry was found for a {file_type.lower()} in the {self.pack_name} pack. "
                                     f"Please rerun the update-release-notes command without -u to generate an"
                                     f" updated template.")
                         is_valid = False
@@ -44,9 +44,9 @@ class ReleaseNotesValidator:
                     continue
                 elif self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
-                    fn, ft = update_rn_util.ident_changed_file_type(file)
-                    if ft and fn not in self.latest_release_notes:
-                        print_error(f"No release note entry was found for a {ft.lower()} in the {self.pack_name} pack. "
+                    file_name, file_type = update_rn_util.identify_changed_file_type(file)
+                    if (file_type and file_name) not in self.latest_release_notes:
+                        print_error(f"No release note entry was found for a {file_type.lower()} in the {self.pack_name} pack. "
                                     f"Please rerun the update-release-notes command without -u to generate an"
                                     f" updated template.")
                         is_valid = False

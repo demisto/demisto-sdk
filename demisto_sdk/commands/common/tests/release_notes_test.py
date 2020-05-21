@@ -125,7 +125,6 @@ MODIFIED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
     os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
-
 ]
 ADDED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
@@ -156,6 +155,41 @@ def test_are_release_notes_complete(release_notes, complete_expected_result, moc
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     validator = get_validator(release_notes, MODIFIED_FILES)
+    assert validator.are_release_notes_complete() == complete_expected_result
+
+
+MODIFIED_FILES_INVALID = [
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'TestPlaybooks/Cortex_XDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', '.secrets-ignore'),
+]
+
+
+@pytest.mark.parametrize('release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_1)
+def test_are_release_notes_complete_invalid_file_type(release_notes, complete_expected_result, mocker):
+    """
+    Given
+    - Case 1: Empty release notes.
+    - Case 2: Not filled out release notes.
+    - Case 3: Valid release notes
+
+    When
+    - Running validation on release notes.
+
+    Then
+    - Ensure validation correctly identifies valid release notes.
+    - Case 1: Should return the prompt "Please complete the release notes found at: {path}" and
+              return False
+    - Case 2: Should return the prompt "Please finish filling out the release notes found at: {path}" and
+              return False
+    - Case 3: Should print nothing and return True
+    """
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    validator = get_validator(release_notes, MODIFIED_FILES_INVALID)
     assert validator.are_release_notes_complete() == complete_expected_result
 
 

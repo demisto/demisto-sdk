@@ -46,8 +46,8 @@ class UpdateRN:
             changed_files = {}
             self.find_added_pack_files()
             for packfile in self.pack_files:
-                fn, ft = self.ident_changed_file_type(packfile)
-                changed_files[fn] = ft
+                file_name, file_type = self.identify_changed_file_type(packfile)
+                changed_files[file_name] = file_type
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 self.commit_to_bump(new_metadata)
@@ -96,7 +96,7 @@ class UpdateRN:
             yml_filepath = file_path
         return yml_filepath
 
-    def ident_changed_file_type(self, file_path):
+    def identify_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
         if 'ReleaseNotes' in file_path:
@@ -169,8 +169,8 @@ class UpdateRN:
 
     def commit_to_bump(self, metadata_dict):
         if self._does_pack_metadata_exist():
-            with open(self.metadata_path, 'w') as fp:
-                json.dump(metadata_dict, fp, indent=4)
+            with open(self.metadata_path, 'w') as file_path:
+                json.dump(metadata_dict, file_path, indent=4)
                 print_color(f"Updated pack metadata version at path : {self.metadata_path}",
                             LOG_COLORS.GREEN)
 

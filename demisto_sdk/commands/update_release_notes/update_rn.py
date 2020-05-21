@@ -239,6 +239,7 @@ class UpdateRN:
             if v is None:
                 continue
             if v in current_rn:
+                v = v[:-1] if v.endswith('s') else v
                 if k in current_rn:
                     continue
                 else:

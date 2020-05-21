@@ -631,7 +631,7 @@ class IntegrationValidator(ContentEntityValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 error_message, error_code = Errors.feed_wrong_from_version(self.file_path, from_version)
-                if self.handle_error(error_message, error_code,
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     valid_from_version = False
 
@@ -643,7 +643,7 @@ class IntegrationValidator(ContentEntityValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 error_message, error_code = Errors.pwsh_wrong_version(self.file_path, from_version)
-                if self.handle_error(error_message, error_code,
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     return False
         return True

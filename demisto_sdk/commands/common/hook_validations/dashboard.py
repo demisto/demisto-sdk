@@ -69,7 +69,7 @@ class DashboardValidator(ContentEntityValidator):
 
         for field in fields_to_exclude:
             if self.current_file.get(field) is not None:
-                error_message, error_code = Errors.remove_field_from_dashboard(self.file_path, field)
+                error_message, error_code = Errors.remove_field_from_dashboard(field)
                 formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                 if formatted_message:
                     is_valid = False
@@ -102,7 +102,7 @@ class DashboardValidator(ContentEntityValidator):
 
         for field in fields_to_include:
             if not self.current_file.get(field):
-                error_message, error_code = Errors.include_field_in_dashboard(self.file_path, field)
+                error_message, error_code = Errors.include_field_in_dashboard(field)
                 formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                 if formatted_message:
                     is_valid = False

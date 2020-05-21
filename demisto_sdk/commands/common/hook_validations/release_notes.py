@@ -26,11 +26,11 @@ class ReleaseNotesValidator(BaseValidator):
     def has_release_notes_been_filled_out(self):
         release_notes_comments = self.latest_release_notes
         if '%%UPDATE_RN%%' in release_notes_comments:
-            error_message, error_code = Errors.release_notes_not_finished(self.file_path)
+            error_message, error_code = Errors.release_notes_not_finished()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         elif len(release_notes_comments) == 0:
-            error_message, error_code = Errors.release_notes_file_empty(self.file_path)
+            error_message, error_code = Errors.release_notes_file_empty()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

@@ -10,8 +10,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
                                                    SCRIPTS_DIR,
-                                                   TYPE_TO_EXTENSION)
-from demisto_sdk.commands.common.errors import Errors
+                                                   TYPE_TO_EXTENSION, Errors)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                get_yml_paths_in_dir,
                                                print_color, print_error,

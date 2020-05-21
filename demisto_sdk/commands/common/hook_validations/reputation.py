@@ -36,8 +36,7 @@ class ReputationValidator(ContentEntityValidator):
         internal_version = self.current_file.get('version')
         if internal_version != self.DEFAULT_VERSION:
             object_id = self.current_file.get('id')
-            error_message, error_code = Errors.wrong_version_reputations(self.file_path,
-                                                                         object_id, self.DEFAULT_VERSION)
+            error_message, error_code = Errors.wrong_version_reputations(object_id, self.DEFAULT_VERSION)
 
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
@@ -51,7 +50,7 @@ class ReputationValidator(ContentEntityValidator):
         if LooseVersion(from_version) >= LooseVersion("5.5.0"):
             expiration = self.current_file.get('expiration', "")
             if not isinstance(expiration, int) or expiration < 0:
-                error_message, error_code = Errors.reputation_expiration_should_be_numeric(self.file_path)
+                error_message, error_code = Errors.reputation_expiration_should_be_numeric()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
@@ -65,7 +64,7 @@ class ReputationValidator(ContentEntityValidator):
         id_ = self.current_file.get('id', None)
         details = self.current_file.get('details', None)
         if not id_ or not details or id_ != details:
-            error_message, error_code = Errors.reputation_id_and_details_not_equal(self.file_path)
+            error_message, error_code = Errors.reputation_id_and_details_not_equal()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 

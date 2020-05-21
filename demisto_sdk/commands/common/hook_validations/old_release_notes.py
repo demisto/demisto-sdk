@@ -108,7 +108,7 @@ class OldReleaseNotesValidator(BaseValidator):
         elif len(release_notes_comments) <= 1:
             error_message, error_code = Errors.release_notes_not_formatted_correctly(
                 self.release_notes_path, self.LINK_TO_RELEASE_NOTES_STANDARD)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
                 return False
 
         else:
@@ -118,7 +118,7 @@ class OldReleaseNotesValidator(BaseValidator):
             if not self.is_valid_multi_line_comment(release_notes_comments):
                 error_message, error_code = Errors.release_notes_not_formatted_correctly(
                     self.release_notes_path, self.LINK_TO_RELEASE_NOTES_STANDARD)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
                     return False
 
         return True
@@ -131,7 +131,7 @@ class OldReleaseNotesValidator(BaseValidator):
         """
         # checks that release notes file exists and contains text
         if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
-            error_message, error_code = Errors.missing_release_notes(self.file_path, self.release_notes_path)
+            error_message, error_code = Errors.missing_release_notes(self.release_notes_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 

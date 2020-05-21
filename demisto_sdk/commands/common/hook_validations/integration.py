@@ -32,7 +32,7 @@ class IntegrationValidator(ContentEntityValidator):
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
             return True
 
-        error_message, error_code = Errors.wrong_version(self.file_path)
+        error_message, error_code = Errors.wrong_version()
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             self.is_valid = False
             return False
@@ -202,7 +202,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Check that the integration category is in the schema."""
         category = self.current_file.get('category', None)
         if category not in INTEGRATION_CATEGORIES:
-            error_message, error_code = Errors.wrong_category(self.file_path, category)
+            error_message, error_code = Errors.wrong_category(category)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -228,14 +228,14 @@ class IntegrationValidator(ContentEntityValidator):
                     if arg_name == command_name:
                         flag_found_arg = True
                         if arg.get('default') is False:
-                            error_message, error_code = Errors.wrong_default_argument(self.file_path, arg_name,
+                            error_message, error_code = Errors.wrong_default_argument(arg_name,
                                                                                       command_name)
                             if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False
 
                 if not flag_found_arg:
-                    error_message, error_code = Errors.no_default_arg(self.file_path, command_name)
+                    error_message, error_code = Errors.no_default_arg(command_name)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         flag = False
 
@@ -277,8 +277,7 @@ class IntegrationValidator(ContentEntityValidator):
                             # self.is_valid = False - Do not fail build over wrong description
 
                 if missing_outputs:
-                    error_message, error_code = Errors.dbot_invalid_output(self.file_path,
-                                                                           command_name, missing_outputs,
+                    error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
                                                                            context_standard)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
@@ -286,13 +285,12 @@ class IntegrationValidator(ContentEntityValidator):
 
                 if missing_descriptions:
                     print_warning(Errors.dbot_invalid_description(
-                        self.file_path, command_name, missing_descriptions, context_standard))
+                        command_name, missing_descriptions, context_standard))
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
                 if reputation_output and not reputation_output.intersection(context_outputs_paths):
-                    error_message, error_code = Errors.missing_reputation(self.file_path,
-                                                                          command_name, reputation_output,
+                    error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
                                                                           context_standard)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
@@ -307,7 +305,7 @@ class IntegrationValidator(ContentEntityValidator):
         if type_ == 'python':
             subtype = self.current_file.get('script', {}).get('subtype')
             if subtype not in PYTHON_SUBTYPES:
-                error_message, error_code = Errors.wrong_subtype(self.file_path)
+                error_message, error_code = Errors.wrong_subtype()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
@@ -323,7 +321,7 @@ class IntegrationValidator(ContentEntityValidator):
             if self.old_file:
                 old_subtype = self.old_file.get('script', {}).get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    error_message, error_code = Errors.breaking_backwards_subtype(self.file_path)
+                    error_message, error_code = Errors.breaking_backwards_subtype()
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         return True
@@ -349,7 +347,7 @@ class IntegrationValidator(ContentEntityValidator):
         common_fields = self.current_file.get('commonfields', {})
         integration_id = common_fields.get('id', '')
         if 'beta' in integration_id.lower():
-            error_message, error_code = Errors.beta_in_id(self.file_path)
+            error_message, error_code = Errors.beta_in_id()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -360,7 +358,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Checks that 'name' field dose not include the substring 'beta'"""
         name = self.current_file.get('name', '')
         if 'beta' in name.lower():
-            error_message, error_code = Errors.beta_in_name(self.file_path)
+            error_message, error_code = Errors.beta_in_name()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -371,7 +369,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Checks that integration has 'beta' field with value set to true"""
         beta = self.current_file.get('beta', False)
         if not beta:
-            error_message, error_code = Errors.beta_field_not_found(self.file_path)
+            error_message, error_code = Errors.beta_field_not_found()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -382,7 +380,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Checks that 'display' field includes the substring 'beta'"""
         display = self.current_file.get('display', '')
         if 'beta' not in display.lower():
-            error_message, error_code = Errors.no_beta_in_display(self.file_path)
+            error_message, error_code = Errors.no_beta_in_display()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -401,8 +399,7 @@ class IntegrationValidator(ContentEntityValidator):
             arg_list = []  # type: list
             for arg in command.get('arguments', []):
                 if arg in arg_list:
-                    error_message, error_code = Errors.duplicate_arg_in_file(self.file_path,
-                                                                             arg['name'], command['name'])
+                    error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         is_there_duplicates = True
@@ -425,7 +422,7 @@ class IntegrationValidator(ContentEntityValidator):
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
-                error_message, error_code = Errors.duplicate_param(param_name, self.file_path)
+                error_message, error_code = Errors.duplicate_param(param_name)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     has_duplicate_params = True
@@ -467,7 +464,7 @@ class IntegrationValidator(ContentEntityValidator):
         for command, args_dict in old_command_to_args.items():
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
-                error_message, error_code = Errors.breaking_backwards_command_arg_changed(self.file_path, command)
+                error_message, error_code = Errors.breaking_backwards_command_arg_changed(command)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return True
@@ -527,7 +524,7 @@ class IntegrationValidator(ContentEntityValidator):
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
-                    error_message, error_code = Errors.breaking_backwards_command(self.file_path, old_command)
+                    error_message, error_code = Errors.breaking_backwards_command(old_command)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         return True
@@ -560,14 +557,14 @@ class IntegrationValidator(ContentEntityValidator):
             if field in old_field_to_required.keys():
                 # if required is True and old_field is False.
                 if required and required != old_field_to_required[field]:
-                    error_message, error_code = Errors.added_required_fields(self.file_path, field)
+                    error_message, error_code = Errors.added_required_fields(field)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         is_added_required = True
 
             # if required is True but no old field.
             elif required:
-                error_message, error_code = Errors.added_required_fields(self.file_path, field)
+                error_message, error_code = Errors.added_required_fields(field)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     is_added_required = True
@@ -597,16 +594,14 @@ class IntegrationValidator(ContentEntityValidator):
             # This parameter type will not use the display value.
             if field_type == self.EXPIRATION_FIELD_TYPE:
                 if configuration_display:
-                    error_message, error_code = Errors.not_used_display_name(self.file_path,
-                                                                             configuration_param['name'])
+                    error_message, error_code = Errors.not_used_display_name(configuration_param['name'])
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         return True
 
             elif not is_field_hidden and not configuration_display \
                     and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
-                error_message, error_code = Errors.empty_display_configuration(self.file_path,
-                                                                               configuration_param['name'])
+                error_message, error_code = Errors.empty_display_configuration(configuration_param['name'])
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return True
@@ -630,7 +625,7 @@ class IntegrationValidator(ContentEntityValidator):
         if self.current_file.get("script", {}).get("feed"):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
-                error_message, error_code = Errors.feed_wrong_from_version(self.file_path, from_version)
+                error_message, error_code = Errors.feed_wrong_from_version(from_version)
                 if self.handle_error(error_message, error_code,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     valid_from_version = False
@@ -642,7 +637,7 @@ class IntegrationValidator(ContentEntityValidator):
         if self.current_file.get("script", {}).get("type") == TYPE_PWSH:
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
-                error_message, error_code = Errors.pwsh_wrong_version(self.file_path, from_version)
+                error_message, error_code = Errors.pwsh_wrong_version(from_version)
                 if self.handle_error(error_message, error_code,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     return False
@@ -659,7 +654,7 @@ class IntegrationValidator(ContentEntityValidator):
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    error_message, error_code = Errors.parameter_missing_from_yml(self.file_path, param.get('name'),
+                    error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
                                                                                   yaml.dump(param))
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         fetch_params_exist = False
@@ -679,8 +674,7 @@ class IntegrationValidator(ContentEntityValidator):
                 params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
-                error_message, error_code = Errors.parameter_missing_for_feed(self.file_path,
-                                                                              param.get('name'), yaml.dump(param))
+                error_message, error_code = Errors.parameter_missing_for_feed(param.get('name'), yaml.dump(param))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     params_exist = False
 
@@ -694,7 +688,7 @@ class IntegrationValidator(ContentEntityValidator):
             display_name = self.current_file.get('display')
             correct_name = " v2"
             if not display_name.endswith(correct_name):
-                error_message, error_code = Errors.invalid_v2_integration_name(self.file_path)
+                error_message, error_code = Errors.invalid_v2_integration_name()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

@@ -430,7 +430,7 @@ class FilesValidator:
                 pass
 
             else:
-                error_message, error_code = Errors.file_type_not_supported(self.file_path)
+                error_message, error_code = Errors.file_type_not_supported()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
@@ -444,8 +444,8 @@ class FilesValidator:
                 if pack_name not in added_rn:
                     added_rn.add(pack_name)
                 else:
-                    error_message, error_code = Errors.multiple_release_notes_files(pack_name)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    error_message, error_code = Errors.multiple_release_notes_files()
+                    if self.handle_error(error_message, error_code, file_path=pack_name):
                         self._is_valid = False
 
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
@@ -577,7 +577,7 @@ class FilesValidator:
                 pass
 
             else:
-                error_message, error_code = Errors.file_type_not_supported(file_path)
+                error_message, error_code = Errors.file_type_not_supported()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
@@ -734,7 +734,7 @@ class FilesValidator:
             print(f'Could not find validations for file {file_path}')
 
         else:
-            error_message, error_code = Errors.file_type_not_supported(file_path)
+            error_message, error_code = Errors.file_type_not_supported()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 

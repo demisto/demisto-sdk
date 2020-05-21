@@ -50,7 +50,7 @@ class ReadMeValidator(BaseValidator):
             # run the java script mdx parse validator
             _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path, env=os.environ)
             if is_valid:
-                error_message, error_code = Errors.readme_error(self.file_path, stderr)
+                error_message, error_code = Errors.readme_error(stderr)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

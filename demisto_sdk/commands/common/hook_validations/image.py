@@ -33,7 +33,7 @@ class ImageValidator(BaseValidator):
                 try:
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
-                    error_message, error_code = Errors.no_image_given(file_path)
+                    error_message, error_code = Errors.no_image_given()
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
 
@@ -57,7 +57,7 @@ class ImageValidator(BaseValidator):
         """Check if the image if over sized, bigger than IMAGE_MAX_SIZE"""
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             if os.path.getsize(self.file_path) > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                error_message, error_code = Errors.image_too_large(self.file_path)
+                error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
@@ -70,7 +70,7 @@ class ImageValidator(BaseValidator):
             image = data_dictionary.get('image', '')
 
             if ((len(image) - 22) / 4.0) * 3 > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                error_message, error_code = Errors.image_too_large(self.file_path)
+                error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
@@ -92,13 +92,13 @@ class ImageValidator(BaseValidator):
             if image_path:
                 is_image_in_package = True
         if is_image_in_package and is_image_in_yml:
-            error_message, error_code = Errors.image_in_package_and_yml(self.file_path)
+            error_message, error_code = Errors.image_in_package_and_yml()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
 
         if not (is_image_in_package or is_image_in_yml):
-            error_message, error_code = Errors.no_image_given(self.file_path)
+            error_message, error_code = Errors.no_image_given()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
@@ -109,14 +109,14 @@ class ImageValidator(BaseValidator):
         data_dictionary = get_yaml(self.file_path)
 
         if not data_dictionary:
-            error_message, error_code = Errors.not_an_image_file(self.file_path)
+            error_message, error_code = Errors.not_an_image_file()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
         image = data_dictionary.get('image', '')
 
         if not image:
-            error_message, error_code = Errors.no_image_field_in_yml(self.file_path)
+            error_message, error_code = Errors.no_image_field_in_yml()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
@@ -125,7 +125,7 @@ class ImageValidator(BaseValidator):
             return image_data[1]
 
         else:
-            error_message, error_code = Errors.image_field_not_in_base64(self.file_path)
+            error_message, error_code = Errors.image_field_not_in_base64()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
@@ -147,7 +147,7 @@ class ImageValidator(BaseValidator):
         image = self.load_image()
 
         if image in [DEFAULT_IMAGE_BASE64, DEFAULT_DBOT_IMAGE_BASE64]:  # disable-secrets-detection
-            error_message, error_code = Errors.default_image_error(self.file_path)
+            error_message, error_code = Errors.default_image_error()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

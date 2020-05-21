@@ -49,7 +49,7 @@ class ContentEntityValidator(BaseValidator):
             True if version is valid, else False
         """
         if self.current_file.get('version') != self.DEFAULT_VERSION:
-            error_message, error_code = Errors.wrong_version(self.file_path, self.DEFAULT_VERSION)
+            error_message, error_code = Errors.wrong_version(self.DEFAULT_VERSION)
             if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=Errors.suggest_fix(self.file_path)):
                 self.is_valid = False
                 return False
@@ -68,7 +68,7 @@ class ContentEntityValidator(BaseValidator):
 
             # check release_notes file exists and contain text
             if release_notes is None:
-                error_message, error_code = Errors.missing_release_notes(file_path=self.file_path, rn_path=rn_path)
+                error_message, error_code = Errors.missing_release_notes(rn_path=rn_path)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
@@ -124,7 +124,7 @@ class ContentEntityValidator(BaseValidator):
         file_id = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
         if file_id != name:
-            error_message, error_code = Errors.id_should_equal_name(name, file_id, self.file_path)
+            error_message, error_code = Errors.id_should_equal_name(name, file_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 

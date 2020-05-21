@@ -93,8 +93,7 @@ class StructureValidator(BaseValidator):
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        error_message, error_code = Errors.structure_doesnt_match_scheme(self.file_path,
-                                                                         pretty_formatted_string_of_regexes)
+        error_message, error_code = Errors.structure_doesnt_match_scheme(pretty_formatted_string_of_regexes)
         self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return None
@@ -184,7 +183,7 @@ class StructureValidator(BaseValidator):
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            error_message, error_code = Errors.file_id_changed(self.file_path, old_version_id, new_file_id)
+            error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return True
 
@@ -209,7 +208,7 @@ class StructureValidator(BaseValidator):
             return True
 
         if from_version_old != from_version_new:
-            error_message, error_code = Errors.from_version_modified(self.file_path)
+            error_message, error_code = Errors.from_version_modified()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -266,7 +265,7 @@ class StructureValidator(BaseValidator):
         """
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
-            error_message, error_code = Errors.invalid_file_path(self.file_path)
+            error_message, error_code = Errors.invalid_file_path()
             if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid_path = True
         return is_valid_path

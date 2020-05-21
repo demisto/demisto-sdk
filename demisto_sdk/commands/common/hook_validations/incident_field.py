@@ -231,7 +231,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if name not in whitelisted_field_names:
             for word in name.split():
                 if word.lower() in bad_words:
-                    error_message, error_code = Errors.invalid_incident_field_name(word, self.file_path)
+                    error_message, error_code = Errors.invalid_incident_field_name(word)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
         return True
@@ -240,7 +240,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         """Validate that field is marked as content."""
         is_valid_flag = self.current_file.get("content") is content_value
         if not is_valid_flag:
-            error_message, error_code = Errors.invalid_incident_field_content_key_value(content_value, self.file_path)
+            error_message, error_code = Errors.invalid_incident_field_content_key_value(content_value)
             if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid_flag = True
 
@@ -250,7 +250,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         """Validate that field is not marked as system."""
         is_valid_flag = self.current_file.get("system", False) is system_value
         if not is_valid_flag:
-            error_message, error_code = Errors.invalid_incident_field_system_key_value(system_value, self.file_path)
+            error_message, error_code = Errors.invalid_incident_field_system_key_value(system_value)
             if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid_flag = True
 
@@ -265,8 +265,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_valid = TypeFields.is_valid_incident_field(self.current_file.get("type"))
         if is_valid:
             return True
-        error_message, error_code = Errors.invalid_incident_field_type(self.file_path,
-                                                                       self.current_file.get('type'), TypeFields)
+        error_message, error_code = Errors.invalid_incident_field_type(self.current_file.get('type'), TypeFields)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
         return True
@@ -276,7 +275,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         group = self.current_file.get("group")
         if GroupFieldTypes.is_valid_group(group):
             return True
-        error_message, error_code = Errors.invalid_incident_field_group_value(self.file_path, group)
+        error_message, error_code = Errors.invalid_incident_field_group_value(group)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
         return True
@@ -291,7 +290,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if re.fullmatch(INCIDENT_FIELD_CLINAME_VALIDATION_REGEX, cliname):
             return True
         error_message, error_code = Errors.invalid_incident_field_cli_name_regex(
-            self.file_path, INCIDENT_FIELD_CLINAME_VALIDATION_REGEX)
+            INCIDENT_FIELD_CLINAME_VALIDATION_REGEX)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
         return True
@@ -308,7 +307,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         elif group == GroupFieldTypes.INCIDENT_FIELD:
             is_valid = cliname not in BleveMapping[GroupFieldTypes.INCIDENT_FIELD]
         if not is_valid:
-            error_message, error_code = Errors.invalid_incident_field_cli_name_value(self.file_path, cliname)
+            error_message, error_code = Errors.invalid_incident_field_cli_name_value(cliname)
             if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = True
         return is_valid
@@ -324,14 +323,14 @@ class IncidentFieldValidator(ContentEntityValidator):
             try:
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    error_message, error_code = Errors.incident_field_or_type_from_version_5(self.file_path)
+                    error_message, error_code = Errors.incident_field_or_type_from_version_5()
                     formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                     if formatted_error:
                         error_msg = formatted_error
                         is_valid = False
 
             except (AttributeError, ValueError):
-                error_message, error_code = Errors.invalid_incident_field_or_type_from_version(self.file_path)
+                error_message, error_code = Errors.invalid_incident_field_or_type_from_version()
                 formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                 if formatted_error:
                     error_msg = formatted_error
@@ -351,7 +350,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         # as can be seen in this pr: https://github.com/demisto/content/pull/5682
         required = self.current_file.get('required', False)
         if required:
-            error_message, error_code = Errors.new_incident_field_required(self.file_path)
+            error_message, error_code = Errors.new_incident_field_required()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
@@ -383,7 +382,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if self.old_file:
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
-                error_message, error_code = Errors.incident_field_type_change(self.file_path)
+                error_message, error_code = Errors.incident_field_type_change()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_type_changed = True
 

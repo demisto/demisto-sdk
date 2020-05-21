@@ -145,20 +145,20 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def wrong_version(file_path, expected="-1"):
-        return "{}: The version for our files should always " \
-               "be {}, please update the file.".format(file_path, expected)
+    def wrong_version(expected="-1"):
+        return "The version for our files should always " \
+               "be {}, please update the file.".format(expected)
 
     @staticmethod
     @error_code_decorator
-    def id_should_equal_name(name, file_id, file_path):
+    def id_should_equal_name(name, file_id):
         return "The File's name, which is: '{}', should be equal to its ID, which is: '{}'." \
-               " please update the file (path to file: {}).".format(name, file_id, file_path)
+               " please update the file.".format(name, file_id)
 
     @staticmethod
     @error_code_decorator
-    def file_type_not_supported(file_path):
-        return f"The file type of {file_path} is not supported in validate command\n " \
+    def file_type_not_supported():
+        return f"The file type is not supported in validate command\n " \
                f"validate' command supports: Integrations, Scripts, Playbooks, " \
                f"Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
 
@@ -189,61 +189,61 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def wrong_category(file_path, category):
-        return "{}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
-            .format(file_path, category, '\n'.join(INTEGRATION_CATEGORIES))
+    def wrong_category(category):
+        return "The category '{}' is not in the integration schemas, the valid options are:\n{}" \
+            .format(category, '\n'.join(INTEGRATION_CATEGORIES))
 
     @staticmethod
     @error_code_decorator
-    def wrong_default_argument(file_path, arg_name, command_name):
-        return "{}: The argument '{}' of the command '{}' is not configured as default" \
-            .format(file_path, arg_name, command_name)
+    def wrong_default_argument(arg_name, command_name):
+        return "The argument '{}' of the command '{}' is not configured as default" \
+            .format(arg_name, command_name)
 
     @staticmethod
     @error_code_decorator
-    def no_default_arg(file_path, command_name):
-        return "{}: Could not find default argument " \
-               "{} in command {}".format(file_path, command_name, command_name)
+    def no_default_arg(command_name):
+        return "Could not find default argument " \
+               "{} in command {}".format(command_name, command_name)
 
     @staticmethod
     @error_code_decorator
-    def missing_reputation(file_path, command_name, reputation_output, context_standard):
-        return "{}: The outputs of the reputation command {} aren't valid. The {} outputs is missing. " \
+    def missing_reputation(command_name, reputation_output, context_standard):
+        return "The outputs of the reputation command {} aren't valid. The {} outputs is missing. " \
                "Fix according to context standard {} " \
-            .format(file_path, command_name, reputation_output, context_standard)
+            .format(command_name, reputation_output, context_standard)
 
     @staticmethod
     @error_code_decorator
-    def wrong_subtype(file_name):
-        return "{}: The subtype for our yml files should be either python2 or python3, " \
-               "please update the file.".format(file_name)
+    def wrong_subtype():
+        return "The subtype for our yml files should be either python2 or python3, " \
+               "please update the file."
 
     @classmethod
     @error_code_decorator
-    def beta_in_id(cls, file_path):
-        return cls.beta_in_str(file_path, 'id')
+    def beta_in_id(cls):
+        return cls.beta_in_str('id')
 
     @classmethod
     @error_code_decorator
-    def beta_in_name(cls, file_path):
-        return cls.beta_in_str(file_path, 'name')
+    def beta_in_name(cls):
+        return cls.beta_in_str('name')
 
     @staticmethod
     @error_code_decorator
-    def beta_field_not_found(file_path):
-        return "{}: Beta integration yml file should have " \
-               "the field \"beta: true\", but was not found in the file.".format(file_path)
+    def beta_field_not_found():
+        return "Beta integration yml file should have " \
+               "the field \"beta: true\", but was not found in the file."
 
     @staticmethod
     @error_code_decorator
-    def no_beta_in_display(file_path):
-        return "{} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
-               "but was not found in the file.".format(file_path)
+    def no_beta_in_display():
+        return "Field 'display' in Beta integration yml file should include the string \"beta\", " \
+               "but was not found in the file."
 
     @staticmethod
     @error_code_decorator
-    def duplicate_arg_in_file(script_path, arg, command_name=None):
-        err_msg = "{}: The argument '{}' is duplicated".format(script_path, arg)
+    def duplicate_arg_in_file(arg, command_name=None):
+        err_msg = "The argument '{}' is duplicated".format(arg)
         if command_name:
             err_msg += " in '{}'.".format(command_name)
         err_msg += ", please remove one of its appearances."
@@ -251,9 +251,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def duplicate_param(param_name, file_path):
-        return "{}: The parameter '{}' of the " \
-               "file is duplicated, please remove one of its appearances.".format(file_path, param_name)
+    def duplicate_param(param_name):
+        return "The parameter '{}' of the " \
+               "file is duplicated, please remove one of its appearances.".format(param_name)
 
     @staticmethod
     @error_code_decorator
@@ -262,51 +262,50 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def added_required_fields(file_path, field):
-        return "You've added required fields in the file '{}', the field is '{}'".format(file_path, field)
+    def added_required_fields(field):
+        return "You've added required, the field is '{}'".format(field)
 
     @staticmethod
     @error_code_decorator
-    def not_used_display_name(file_path, field_name):
+    def not_used_display_name(field_name):
         return "The display details for {} will not be used " \
-               "in the file {} due to the type of the parameter".format(field_name, file_path)
+               "due to the type of the parameter".format(field_name)
 
     @staticmethod
     @error_code_decorator
-    def empty_display_configuration(file_path, field_name):
-        return "No display details were entered for the field {} " \
-               "in the file {}.".format(field_name, file_path)
+    def empty_display_configuration(field_name):
+        return "No display details were entered for the field {}".format(field_name)
 
     @staticmethod
     @error_code_decorator
-    def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
-            .format(file_path, given_fromversion, needed_from_version)
+    def feed_wrong_from_version(given_fromversion, needed_from_version="5.5.0"):
+        return "This is a feed and has wrong fromversion. got `{}` expected `{}`" \
+            .format(given_fromversion, needed_from_version)
 
     @staticmethod
     @error_code_decorator
-    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
-        return f'{file_path}: detected type: powershell and fromversion less than {needed_from_version}.' \
+    def pwsh_wrong_version(given_fromversion, needed_from_version='5.5.0'):
+        return f'Detected type: powershell and fromversion less than {needed_from_version}.' \
                f' Found version: {given_fromversion}'
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_from_yml(file_path, name, correct_format):
-        return f'{file_path}: A required parameter "{name}" is missing or malformed ' \
+    def parameter_missing_from_yml(name, correct_format):
+        return f'A required parameter "{name}" is missing or malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_for_feed(file_path, name, correct_format):
-        return f'{file_path} Feed Integration was detected A required ' \
+    def parameter_missing_for_feed(name, correct_format):
+        return f'Feed Integration was detected A required ' \
                f'parameter "{name}" is missing or malformed in the YAML file.\n' \
                f'The correct format of the parameter should be as follows:\n{correct_format}'
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_integration_name(file_path):
-        return f"The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
+    def invalid_v2_integration_name():
+        return f"The display name of this v2 integration is incorrect , should be **name** v2.\n" \
                f"e.g: Kenna v2, Jira v2"
 
     @staticmethod
@@ -316,52 +315,52 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_script_name(file_path):
-        return f"The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
+    def invalid_v2_script_name():
+        return f"The name of this v2 script is incorrect , should be **name**V2." \
                f" e.g: DBotTrainTextClassifierV2"
 
     @staticmethod
     @error_code_decorator
-    def dbot_invalid_output(file_path, command_name, missing_outputs, context_standard):
-        return "{}: The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. " \
-               "Fix according to context standard {} ".format(file_path, command_name, missing_outputs,
+    def dbot_invalid_output(command_name, missing_outputs, context_standard):
+        return "The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. " \
+               "Fix according to context standard {} ".format(command_name, missing_outputs,
                                                               context_standard)
 
     @staticmethod
     @error_code_decorator
-    def dbot_invalid_description(file_path, command_name, missing_descriptions, context_standard):
-        return "{}: The DBotScore description of the reputation command {} aren't valid. Missing: {}. " \
+    def dbot_invalid_description(command_name, missing_descriptions, context_standard):
+        return "The DBotScore description of the reputation command {} aren't valid. Missing: {}. " \
                "Fix according to context standard {} " \
-            .format(file_path, command_name, missing_descriptions, context_standard)
+            .format(command_name, missing_descriptions, context_standard)
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_subtype(cls, file_path):
-        return "{}: {}, You've changed the subtype, please undo.".format(file_path, cls.BACKWARDS)
+    def breaking_backwards_subtype(cls):
+        return "{}, You've changed the subtype, please undo.".format(cls.BACKWARDS)
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_context(cls, file_path):
-        return "{}: {}, You've changed the context in the file," \
-               " please undo.".format(file_path, cls.BACKWARDS)
+    def breaking_backwards_context(cls):
+        return "{}, You've changed the context in the file," \
+               " please undo.".format(cls.BACKWARDS)
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_command(cls, file_path, old_command):
-        return "{}: {}, You've changed the context in the file,please " \
-               "undo. the command is:\n{}".format(file_path, cls.BACKWARDS, old_command)
+    def breaking_backwards_command(cls, old_command):
+        return "{}, You've changed the context in the file,please " \
+               "undo. the command is:\n{}".format(cls.BACKWARDS, old_command)
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_arg_changed(cls, file_path):
-        return "{}: {}, You've changed the name of an arg in " \
-               "the file, please undo.".format(file_path, cls.BACKWARDS)
+    def breaking_backwards_arg_changed(cls):
+        return "{}, You've changed the name of an arg in " \
+               "the file, please undo.".format(cls.BACKWARDS)
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_command_arg_changed(cls, file_path, command):
-        return "{}: {}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(file_path, cls.BACKWARDS, command)
+    def breaking_backwards_command_arg_changed(cls, command):
+        return "{}, You've changed the name of a command or its arg in" \
+               " the file, please undo, the command was:\n{}".format(cls.BACKWARDS, command)
 
     @staticmethod
     @error_code_decorator
@@ -419,13 +418,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def remove_field_from_dashboard(file_path, field):
-        return f'{file_path}: the field {field} needs to be removed.'
+    def remove_field_from_dashboard(field):
+        return f'the field {field} needs to be removed.'
 
     @staticmethod
     @error_code_decorator
-    def include_field_in_dashboard(file_path, field):
-        return f'{file_path}: the field {field} needs to be included. Please add it.'
+    def include_field_in_dashboard(field):
+        return f'The field {field} needs to be included. Please add it.'
 
     @staticmethod
     @error_code_decorator
@@ -439,40 +438,40 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def no_image_given(file_path):
+    def no_image_given():
         return f"You've created/modified a yml or package but failed to provide an image as " \
-               f"a .png file for {file_path}, please add an image in order to proceed."
+               f"a .png file for it, please add an image in order to proceed."
 
     @staticmethod
     @error_code_decorator
-    def image_too_large(file_path):
-        return f"{file_path} has too large logo, please update the logo to be under 10kB"
+    def image_too_large():
+        return f"Too large logo, please update the logo to be under 10kB"
 
     @staticmethod
     @error_code_decorator
-    def image_in_package_and_yml(file_path):
-        return f"The file {file_path} has image in both yml and package, remove the 'image' " \
+    def image_in_package_and_yml():
+        return f"Image in both yml and package, remove the 'image' " \
                f"key from the yml file"
 
     @staticmethod
     @error_code_decorator
-    def not_an_image_file(file_path):
-        return f"{file_path} isn't an image file or unified integration file."
+    def not_an_image_file():
+        return f"This isn't an image file or unified integration file."
 
     @staticmethod
     @error_code_decorator
-    def no_image_field_in_yml(file_path):
-        return f"{file_path} is a yml file but has no image field."
+    def no_image_field_in_yml():
+        return f"This is a yml file but has no image field."
 
     @staticmethod
     @error_code_decorator
-    def image_field_not_in_base64(file_path):
-        return f"{file_path}'s image field isn't in base64 encoding."
+    def image_field_not_in_base64():
+        return f"The image field isn't in base64 encoding."
 
     @staticmethod
     @error_code_decorator
-    def default_image_error(file_path):
-        return f"{file_path} is the default image, please change to the integration image."
+    def default_image_error():
+        return f"This is the default image, please change to the integration image."
 
     @staticmethod
     @error_code_decorator
@@ -515,8 +514,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_release_notes(file_path, rn_path):
-        return '{}:  is missing release notes, Please add it under {}'.format(file_path, rn_path)
+    def missing_release_notes(rn_path):
+        return 'Missing release notes, Please add it under {}'.format(rn_path)
 
     @staticmethod
     @error_code_decorator
@@ -525,134 +524,134 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_not_formatted_correctly(release_notes_path, link_to_rn_standard):
-        return F'File {release_notes_path} is not formatted according to ' \
+    def release_notes_not_formatted_correctly(link_to_rn_standard):
+        return F'Not formatted according to ' \
                F'release notes standards.\nFix according to {link_to_rn_standard}'
 
     @staticmethod
     @error_code_decorator
-    def release_notes_not_finished(file_path):
-        return f"Please finish filling out the release notes found at: {file_path}"
+    def release_notes_not_finished():
+        return f"Please finish filling out the release notes"
 
     @staticmethod
     @error_code_decorator
-    def release_notes_file_empty(file_path):
-        return f"Your release notes file is empty, please complete it - found at: {file_path}"
+    def release_notes_file_empty():
+        return f"Your release notes file is empty, please complete it."
 
     @staticmethod
     @error_code_decorator
-    def multiple_release_notes_files(pack_name):
-        return f"More than one release notes file has been found for {pack_name}." \
+    def multiple_release_notes_files():
+        return f"More than one release notes file has been found." \
                f"Only one release note file is permitted per release. Please delete the extra release notes."
 
     @staticmethod
     @error_code_decorator
     def missing_release_notes_for_pack(pack):
-        return f"Release notes were not found for {pack}. Please run `demisto-sdk " \
+        return f"Release notes were not found for. Please run `demisto-sdk " \
                f"update-release-notes -p {pack} -u (major|minor|revision)` to " \
                f"generate release notes according to the new standard."
 
     @staticmethod
     @error_code_decorator
-    def playbook_cant_have_rolename(file_path):
-        return f"{file_path} - Playbook can not have a rolename."
+    def playbook_cant_have_rolename():
+        return f"Playbook can not have a rolename."
 
     @staticmethod
     @error_code_decorator
-    def playbook_unreachable_condition(file_path, task_id, next_task_branch):
-        return f'{file_path} Playbook conditional task with id:{task_id} has task with unreachable ' \
+    def playbook_unreachable_condition(task_id, next_task_branch):
+        return f'Playbook conditional task with id:{task_id} has task with unreachable ' \
                f'next task condition "{next_task_branch}". Please remove this task or add ' \
                f'this condition to condition task with id:{task_id}.'
 
     @staticmethod
     @error_code_decorator
-    def playbook_unhandled_condition(file_path, task_id, task_condition_labels):
-        return f'{file_path} Playbook conditional task with id:{task_id} has unhandled ' \
+    def playbook_unhandled_condition(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 
     @staticmethod
     @error_code_decorator
-    def playbook_unconnected_tasks(file_path, orphan_tasks):
-        return f'{file_path} The following tasks ids have no previous tasks: {orphan_tasks}'
+    def playbook_unconnected_tasks(orphan_tasks):
+        return f'The following tasks ids have no previous tasks: {orphan_tasks}'
 
     @staticmethod
     @error_code_decorator
-    def description_missing_in_beta_integration(package_path):
-        return f"No detailed description file was found in the package {package_path}. Please add one, " \
+    def description_missing_in_beta_integration():
+        return f"No detailed description file was found in the package. Please add one, " \
                f"and make sure it includes the beta disclaimer note." \
                f"It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
 
     @staticmethod
     @error_code_decorator
-    def no_beta_disclaimer_in_description(package_path):
-        return f"Detailed description in beta integration package {package_path} " \
+    def no_beta_disclaimer_in_description():
+        return f"The detailed description in beta integration package " \
                f"dose not contain the beta disclaimer note. It should contain the string in constant" \
                f"\"BETA_INTEGRATION_DISCLAIMER\"."
 
     @staticmethod
     @error_code_decorator
-    def no_beta_disclaimer_in_yml(file_path):
-        return f"Detailed description field in beta integration {file_path} " \
+    def no_beta_disclaimer_in_yml():
+        return f"The detailed description field in beta integration " \
                f"dose not contain the beta disclaimer note. It should contain the string in constant" \
                f" \"BETA_INTEGRATION_DISCLAIMER\"."
 
     @staticmethod
     @error_code_decorator
-    def description_in_package_and_yml(package_path):
+    def description_in_package_and_yml():
         return f"A description was found both in the " \
-               f"package and in the yml, please update the package {package_path}."
+               f"package and in the yml, please update the package."
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_name(word, file_path):
-        return f"The word {word} cannot be used as a name, please update the file {file_path}."
+    def invalid_incident_field_name(word):
+        return f"The word {word} cannot be used as a name, please update the file."
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_content_key_value(content_value, file_path):
-        return f"The content key must be set to {content_value}, please update the file '{file_path}'"
+    def invalid_incident_field_content_key_value(content_value):
+        return f"The content key must be set to {content_value}."
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_system_key_value(system_value, file_path):
-        return f"The system key must be set to {system_value}, please update the file '{file_path}'"
+    def invalid_incident_field_system_key_value(system_value):
+        return f"The system key must be set to {system_value}"
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_type(file_path, file_type, TypeFields):
-        return f"{file_path}: type: `{file_type}` is not one of available type.\n" \
+    def invalid_incident_field_type(file_type, TypeFields):
+        return f"Type: `{file_type}` is not one of available type.\n" \
                f"available types: {[value.value for value in TypeFields]}"
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_group_value(file_path, group):
-        return f"{file_path}: group {group} is not a group field."
+    def invalid_incident_field_group_value(group):
+        return f"Group {group} is not a group field."
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_cli_name_regex(file_path, cli_regex):
-        return f"{file_path}: Field `cliName` contains non-alphanumeric letters. " \
+    def invalid_incident_field_cli_name_regex(cli_regex):
+        return f"Field `cliName` contains non-alphanumeric letters. " \
                f"must match regex: {cli_regex}"
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_cli_name_value(file_path, cli_name):
-        return f"{file_path}: cliName field can not be {cli_name} as it's a builtin key."
+    def invalid_incident_field_cli_name_value(cli_name):
+        return f"cliName field can not be {cli_name} as it's a builtin key."
 
     @staticmethod
     @error_code_decorator
-    def incident_field_or_type_from_version_5(file_path):
-        return f'{file_path}: fromVersion must be at least 5.0.0'
+    def incident_field_or_type_from_version_5():
+        return f'fromVersion must be at least 5.0.0'
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_or_type_from_version(file_path):
-        return f'{file_path}: "fromVersion" has an invalid value.'
+    def invalid_incident_field_or_type_from_version():
+        return f'"fromVersion" has an invalid value.'
 
     @staticmethod
     @error_code_decorator
-    def new_incident_field_required(file_path):
-        return f'{file_path}: new incident fields can not be required. change to:\nrequired: false.'
+    def new_incident_field_required():
+        return f'New incident fields can not be required. change to:\nrequired: false.'
 
     @staticmethod
     @error_code_decorator
@@ -661,13 +660,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incident_field_type_change(file_path):
-        return f'{file_path}: Changing incident field type is not allowed.'
+    def incident_field_type_change():
+        return f'Changing incident field type is not allowed.'
 
     @staticmethod
     @error_code_decorator
-    def incident_type_integer_field(file_path, field):
-        return f'{file_path}: the field {field} needs to be a positive integer. Please add it.\n'
+    def incident_type_integer_field(field):
+        return f'The field {field} needs to be a positive integer. Please add it.\n'
 
     @staticmethod
     @error_code_decorator
@@ -736,28 +735,28 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def readme_error(file_path, stderr):
-        return f'Failed verifying README.md, Path: {file_path}. Error Message is: {stderr}'
+    def readme_error(stderr):
+        return f'Failed verifying README.md Error Message is: {stderr}'
 
     @staticmethod
     @error_code_decorator
-    def wrong_version_reputations(file_path, object_id, version):
-        return "{} Reputation object with id {} must have version {}".format(file_path, object_id, version)
+    def wrong_version_reputations(object_id, version):
+        return "Reputation object with id {} must have version {}".format(object_id, version)
 
     @staticmethod
     @error_code_decorator
-    def reputation_expiration_should_be_numeric(file_path):
-        return f'{file_path}: expiration field should have a numeric value.'
+    def reputation_expiration_should_be_numeric():
+        return f'Expiration field should have a numeric value.'
 
     @staticmethod
     @error_code_decorator
-    def reputation_id_and_details_not_equal(file_path):
-        return f'{file_path}: id and details fields are not equal.'
+    def reputation_id_and_details_not_equal():
+        return f'id and details fields are not equal.'
 
     @staticmethod
     @error_code_decorator
-    def structure_doesnt_match_scheme(file_path, pretty_formatted_string_of_regexes):
-        return f"The file {file_path} does not match any scheme we have please, refer to the following list" \
+    def structure_doesnt_match_scheme(pretty_formatted_string_of_regexes):
+        return f"The file does not match any scheme we have please, refer to the following list" \
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod
@@ -767,14 +766,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_id_changed(file_path, old_version_id, new_file_id):
-        return f"The file id for {file_path} has changed from {old_version_id} to {new_file_id}"
+    def file_id_changed(old_version_id, new_file_id):
+        return f"The file id has changed from {old_version_id} to {new_file_id}"
 
     @staticmethod
     @error_code_decorator
-    def from_version_modified(file_path):
-        return "{}: You've added fromversion to an existing " \
-               "file in the system, this is not allowed, please undo.".format(file_path)
+    def from_version_modified():
+        return "You've added fromversion to an existing " \
+               "file in the system, this is not allowed, please undo."
 
     @staticmethod
     @error_code_decorator
@@ -783,8 +782,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_file_path(file_path):
-        return f"Found incompatible file path: {file_path}.", "ST105"
+    def invalid_file_path():
+        return f"Found incompatible file path."
 
     @staticmethod
     @error_code_decorator
@@ -794,17 +793,17 @@ class Errors:
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
 
     @staticmethod
-    def wrong_filename(filepath, file_type):
-        return '{} is not a valid {} filename.'.format(filepath, file_type)
+    def wrong_filename(file_type):
+        return 'This is not a valid {} filename.'.format(file_type)
 
     @staticmethod
-    def wrong_path(filepath):
-        return "{} is not a valid filepath.".format(filepath)
+    def wrong_path():
+        return "This is not a valid filepath."
 
     @staticmethod
-    def beta_in_str(file_path, field):
-        return "{}: Field '{}' should NOT contain the substring \"beta\" in a new beta integration. " \
-               "please change the id in the file.".format(field, file_path)
+    def beta_in_str(field):
+        return "Field '{}' should NOT contain the substring \"beta\" in a new beta integration. " \
+               "please change the id in the file.".format(field)
 
     @classmethod
     def breaking_backwards_no_old_script(cls, e):
@@ -815,16 +814,16 @@ class Errors:
         return "ID might have changed, please make sure to check you have the correct one."
 
     @staticmethod
-    def id_changed(file_path):
-        return "{}: You've changed the ID of the file, please undo.".format(file_path)
+    def id_changed():
+        return "You've changed the ID of the file, please undo."
 
     @staticmethod
-    def might_need_release_notes(file_path):
-        return "{}: You might need RN in file, please make sure to check that.".format(file_path)
+    def might_need_release_notes():
+        return "You might need RN in file, please make sure to check that."
 
     @staticmethod
-    def unknown_file(file_path):
-        return "{}:  File type is unknown, check it out.".format(file_path)
+    def unknown_file():
+        return "File type is unknown, check it out."
 
     @staticmethod
     def no_common_server_python(path):

@@ -16,7 +16,7 @@ class ScriptValidator(ContentEntityValidator):
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
-            error_message, error_code = Errors.wrong_version(self.file_path)
+            error_message, error_code = Errors.wrong_version()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -95,7 +95,7 @@ class ScriptValidator(ContentEntityValidator):
             if self.old_file:
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    error_message, error_code = Errors.breaking_backwards_subtype(self.file_path)
+                    error_message, error_code = Errors.breaking_backwards_subtype()
                     if self.handle_error(error_message, error_message):
                         return True
 
@@ -107,7 +107,7 @@ class ScriptValidator(ContentEntityValidator):
         if type_ == 'python':
             subtype = self.current_file.get('subtype')
             if subtype not in PYTHON_SUBTYPES:
-                error_message, error_code = Errors.wrong_subtype(self.file_path)
+                error_message, error_code = Errors.wrong_subtype()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
@@ -122,7 +122,7 @@ class ScriptValidator(ContentEntityValidator):
             if required:
                 if (arg not in old_args_to_required) or \
                         (arg in old_args_to_required and required != old_args_to_required[arg]):
-                    error_message, error_code = Errors.added_required_fields(self.file_path, arg)
+                    error_message, error_code = Errors.added_required_fields(arg)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return True
         return False
@@ -142,7 +142,7 @@ class ScriptValidator(ContentEntityValidator):
         old_args = [arg['name'] for arg in self.old_file.get('args', [])]
 
         if not self._is_sub_set(current_args, old_args):
-            error_message, error_code = Errors.breaking_backwards_arg_changed(self.file_path)
+            error_message, error_code = Errors.breaking_backwards_arg_changed()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return True
 
@@ -155,7 +155,7 @@ class ScriptValidator(ContentEntityValidator):
         old_context = [output['contextPath'] for output in self.old_file.get('outputs', [])]
 
         if not self._is_sub_set(current_context, old_context):
-            error_message, error_code = Errors.breaking_backwards_context(self.file_path)
+            error_message, error_code = Errors.breaking_backwards_context()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return True
 
@@ -186,7 +186,7 @@ class ScriptValidator(ContentEntityValidator):
             name = self.current_file.get('name')
             correct_name = "V2"
             if not name.endswith(correct_name):
-                error_message, error_code = Errors.invalid_v2_script_name(self.file_path)
+                error_message, error_code = Errors.invalid_v2_script_name()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
@@ -196,7 +196,7 @@ class ScriptValidator(ContentEntityValidator):
         if self.current_file.get("type") == TYPE_PWSH:
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
-                error_message, error_code = Errors.pwsh_wrong_version(self.file_path, from_version)
+                error_message, error_code = Errors.pwsh_wrong_version(from_version)
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     return False

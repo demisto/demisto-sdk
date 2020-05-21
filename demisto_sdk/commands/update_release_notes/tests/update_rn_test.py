@@ -433,6 +433,14 @@ class TestRNUpdateUnit:
         update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
 
     def test_update_existing_rn(self):
+        """
+            Given:
+                - Existing release notes and set of changed files
+            When:
+                - rerunning the update command
+            Then:
+                - return updated release notes while preserving the integrity of the existing notes.
+        """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
@@ -441,6 +449,14 @@ class TestRNUpdateUnit:
         assert new_rn == self.EXPECTED_RN_RES
 
     def test_commit_to_bump(self):
+        """
+            Given:
+                - No inputs, but a condition where bumping the version is ready
+            When:
+                - running update
+            Then:
+                - update the metadata json by the version designated.
+        """
         ORIGINAL = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         TEMP_FILE = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json')
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -454,6 +470,14 @@ class TestRNUpdateUnit:
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
 
     def test_find_added_pack_files(self):
+        """
+            Given:
+                - List of added files
+            When:
+                - searching for relevant pack files
+            Then:
+                - return a list of relevant pack files which were added.
+        """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         added_files = {'HelloWorld/something_new.md', 'HelloWorld/test_data/nothing.md'}
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files=set(),
@@ -462,6 +486,14 @@ class TestRNUpdateUnit:
         assert update_rn.pack_files == {'HelloWorld/something_new.md'}
 
     def test_does_pack_metadata_exist_no(self):
+        """
+            Given:
+                - Checking for the existance of a pack metadata file
+            When:
+                - metadata path is invalid
+            Then:
+                - return False to indicate it does not exist.
+        """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files=set(),
                              added_files=set())
@@ -470,6 +502,14 @@ class TestRNUpdateUnit:
         assert result is False
 
     def test_execute_update_invalid(self):
+        """
+            Given:
+                - A protected pack name
+            When:
+                - running the update command
+            Then:
+                - return an error message and exit.
+        """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="Legacy", update_type='minor', pack_files=set(),
                              added_files=set())

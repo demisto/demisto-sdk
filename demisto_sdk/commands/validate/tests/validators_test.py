@@ -414,6 +414,14 @@ class TestValidators:
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATH)
     def test_script_valid_rn(self, mocker, file_path, file_type):
+        """
+            Given:
+                - A valid script path
+            When:
+                - checking validity of added files
+            Then:
+                - return a True validation response
+        """
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         self.mock_unifier()
         file_validator = FilesValidator(skip_conf_json=True)
@@ -444,6 +452,16 @@ class TestValidators:
 
     @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
     def test_verify_no_dup_rn(self, added_files: set, expected: bool):
+        """
+            Given:
+                - A list of added files
+            When:
+                - verifying there are no other new release notes.
+            Then:
+                - return a validation response
+            Case 1: Release notes in different packs.
+            Case 2: Release notes where one is in the same pack
+        """
         file_validator = FilesValidator(skip_conf_json=True)
         file_validator.verify_no_dup_rn(added_files)
         assert file_validator._is_valid is expected
@@ -488,6 +506,14 @@ class TestValidators:
 
 
 def test_is_py_or_yml():
+    """
+        Given:
+            - A file path which contains a python script
+        When:
+            - verifying the yml is valid
+        Then:
+            - return a False validation response
+    """
     files_path = os.path.normpath(
         os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     test_file = os.path.join(files_path, 'CortexXDR',
@@ -497,7 +523,15 @@ def test_is_py_or_yml():
     assert res is False
 
 
-def test_is_py_or_yml_valid():
+def test_is_py_or_yml_invalid():
+    """
+        Given:
+            - A file path which contains a python script in a legacy yml schema
+        When:
+            - verifying the yml is valid
+        Then:
+            - return a False validation response
+    """
     files_path = os.path.normpath(
         os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     test_file = os.path.join(files_path, 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')

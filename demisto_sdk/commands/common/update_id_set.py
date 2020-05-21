@@ -142,9 +142,22 @@ def get_commmands_from_playbook(data_dict):
     return command_to_integration
 
 
-def get_integration_data(file_path):
+def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
+    unifier = Unifier(file_path)
+    if is_unified_integration:
+        integration_script_code = data_dictionary.get('script', {}).get('script', '')
+    else:
+        _, integration_script_code = unifier.get_script_package_data()
+
+    return unifier.check_api_module_imports(integration_script_code)
+
+
+def get_integration_data(file_path, is_unified_integration):
+    package_name = os.path.basename(file_path)
+    integration_file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+
     integration_data = OrderedDict()
-    data_dictionary = get_yaml(file_path)
+    data_dictionary = get_yaml(integration_file_path)
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
 
@@ -155,6 +168,7 @@ def get_integration_data(file_path):
     commands = data_dictionary.get('script', {}).get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
+    integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
 
     deprecated_commands = []
     for command in commands:
@@ -177,6 +191,8 @@ def get_integration_data(file_path):
         integration_data['deprecated_commands'] = deprecated_commands
     if pack:
         integration_data['pack'] = pack
+    if integration_api_modules:
+        integration_data['api_modules'] = integration_api_modules
     return {id_: integration_data}
 
 
@@ -385,16 +401,14 @@ def process_integration(file_path: str, print_logs: bool) -> list:
         if checked_type(file_path, (INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, PACKS_INTEGRATION_REGEX)):
             if print_logs:
                 print("adding {} to id_set".format(file_path))
-            res.append(get_integration_data(file_path))
+            res.append(get_integration_data(file_path, is_unified_integration=True))
     else:
         # package integration
-        package_name = os.path.basename(file_path)
-        file_path = os.path.join(file_path, '{}.yml'.format(package_name))
         if os.path.isfile(file_path):
             # locally, might have leftover dirs without committed files
             if print_logs:
                 print("adding {} to id_set".format(file_path))
-            res.append(get_integration_data(file_path))
+            res.append(get_integration_data(file_path, is_unified_integration=False))
 
     return res
 

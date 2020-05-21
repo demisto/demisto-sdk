@@ -215,7 +215,8 @@ PLAYBOOK_DATA = {
     "tests": [
         "No Test"
     ],
-    'pack': 'DummyPack'
+    'pack': 'DummyPack',
+    'api_modules': 'MicrosoftApiModule'
 }
 
 
@@ -226,7 +227,7 @@ class TestIntegration(unittest.TestCase):
         """
         # mocker.patch.object('get_pack_name', return_value='DummyPack')
         file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/DummyIntegration.yml'
-        data = get_integration_data(file_path)
+        data = get_integration_data(file_path, is_unified_integration=False)
         self.assertDictEqual(data, INTEGRATION_DATA)
 
     def test_get_script_data(self):

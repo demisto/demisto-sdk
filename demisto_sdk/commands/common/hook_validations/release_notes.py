@@ -17,8 +17,8 @@ class ReleaseNotesValidator(BaseValidator):
         master_diff (str): the changes in the changelog file compared to origin/master.
     """
 
-    def __init__(self, file_path, ignored_errors=None):
-        super().__init__(ignored_errors)
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.file_path = file_path
         self.release_notes_path = get_release_notes_file_path(self.file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)

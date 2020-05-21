@@ -25,8 +25,8 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 
 class DockerImageValidator(BaseValidator):
 
-    def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None):
-        super().__init__(ignored_errors)
+    def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration

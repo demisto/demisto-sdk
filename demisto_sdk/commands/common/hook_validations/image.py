@@ -22,8 +22,8 @@ class ImageValidator(BaseValidator):
     """
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
 
-    def __init__(self, file_path, ignored_errors=None):
-        super().__init__(ignored_errors)
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self._is_valid = True
 
         if checked_type(file_path, INTEGRATION_REGXES) or re.match(IMAGE_REGEX, file_path, re.IGNORECASE):

@@ -47,8 +47,9 @@ class IDSetValidator(BaseValidator):
 
     ID_SET_PATH = "./Tests/id_set.json"
 
-    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None):
-        super().__init__(ignored_errors)
+    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
+                 print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_circle = is_circle
         self.configuration = configuration
         if not is_test_run and self.is_circle:

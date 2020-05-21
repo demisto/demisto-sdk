@@ -39,6 +39,8 @@ Whether to run all validation on all files or not.
 The path of a pack or a file to validate specifically.
 * **---skip-pack-release-notes**
 Validation will not not be performed using the updated pack release notes format.
+* **--print-ignored-errors**
+Whether to print ignored errors as warnings.
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`

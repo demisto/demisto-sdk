@@ -172,7 +172,8 @@ class ScriptValidator(ContentEntityValidator):
     def is_docker_image_valid(self):
         # type: () -> bool
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False,
-                                                      ignored_errors=self.ignored_errors)
+                                                      ignored_errors=self.ignored_errors,
+                                                      print_as_warnings=self.print_as_warnings)
         if docker_image_validator.is_docker_image_valid():
             return True
         return False

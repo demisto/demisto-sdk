@@ -23,8 +23,8 @@ class ReadMeValidator(BaseValidator):
             export DEMISTO_README_VALIDATION=True
     """
 
-    def __init__(self, file_path: str, ignored_errors=None):
-        super().__init__(ignored_errors)
+    def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent

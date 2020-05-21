@@ -249,6 +249,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-release-notes', is_flag=True,
     help='Skip validation of pack release notes.')
+@click.option(
+    '--print-ignored-errors', is_flag=True,
+    help='Print ignored errors as warnings.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -268,6 +271,7 @@ def validate(config, **kwargs):
                                    validate_all=kwargs.get('validate_all'),
                                    validate_id_set=kwargs['id_set'],
                                    skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
+                                   print_ignored_errors=kwargs['print_ignored_errors'],
                                    is_private_repo=is_private_repo, )
         return validator.run()
 

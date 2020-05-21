@@ -42,6 +42,7 @@ class LOG_COLORS:
     RED = '\033[01;31m'
     GREEN = '\033[01;32m'
     YELLOW = '\033[0;33m'
+    WHITE_BOLD = "\033[1m"
 
 
 LOG_VERBOSE = False
@@ -79,7 +80,7 @@ def print_color(obj, color):
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
-    Gets the project directory and returns the path of all yml and json files in it
+    Gets the project directory and returns the path of all yml, json and py files in it
     Args:
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
@@ -654,6 +655,8 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
             return get_yaml(path), 'yml'
         elif path.endswith('.json'):
             return get_json(path), 'json'
+        elif path.endswith('.py'):
+            return {}, 'py'
     return {}, None
 
 
@@ -669,6 +672,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     """
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
+
+    if file_type == 'py':
+        return 'pythonfile'
+
     if file_type == 'yml':
         if 'category' in _dict:
             return 'integration'

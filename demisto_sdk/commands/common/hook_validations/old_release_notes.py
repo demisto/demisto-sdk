@@ -107,7 +107,7 @@ class OldReleaseNotesValidator(BaseValidator):
 
         elif len(release_notes_comments) <= 1:
             error_message, error_code = Errors.release_notes_not_formatted_correctly(
-                self.release_notes_path, self.LINK_TO_RELEASE_NOTES_STANDARD)
+                self.LINK_TO_RELEASE_NOTES_STANDARD)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
                 return False
 
@@ -117,7 +117,7 @@ class OldReleaseNotesValidator(BaseValidator):
 
             if not self.is_valid_multi_line_comment(release_notes_comments):
                 error_message, error_code = Errors.release_notes_not_formatted_correctly(
-                    self.release_notes_path, self.LINK_TO_RELEASE_NOTES_STANDARD)
+                    self.LINK_TO_RELEASE_NOTES_STANDARD)
                 if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
                     return False
 

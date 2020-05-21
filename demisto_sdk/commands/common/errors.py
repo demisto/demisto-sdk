@@ -5,10 +5,12 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
-PRESET_ERROR_LIST = {
-    "deprecated": ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS",
-                   "IM", "IF", "IT", "RN", "RM", "PA", "PB", "WD", "RP"],
+PRESET_ERROR_TO_IGNORE = {
     "no-bc-check": ["BC100", "BC101", "BC102", "BC103", "BC104"]
+}
+
+PRESET_ERROR_TO_CHECK = {
+    "deprecated": ['ST', 'BC', 'BA']
 }
 
 ERROR_CODE = {

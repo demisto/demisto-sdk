@@ -31,8 +31,9 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
     YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES)
-from demisto_sdk.commands.common.errors import (ERROR_CODE, PRESET_ERROR_LIST,
-                                                Errors)
+from demisto_sdk.commands.common.errors import (ERROR_CODE,
+                                                PRESET_ERROR_TO_CHECK,
+                                                PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -923,9 +924,14 @@ class FilesValidator:
 
     @staticmethod
     def create_ignored_errors_list(errors_to_check):
-        all_errors = set(ERROR_CODE.values())
-        errors_to_check = set(errors_to_check)
-        return list(all_errors - errors_to_check)
+        ignored_error_list = []
+        all_errors = ERROR_CODE.values()
+        for error_code in all_errors:
+            error_type = error_code[:2]
+            if error_code not in errors_to_check and error_type not in errors_to_check:
+                ignored_error_list.append(error_code)
+
+        return ignored_error_list
 
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list = []
@@ -942,8 +948,12 @@ class FilesValidator:
                             if key == 'ignore':
                                 ignored_errors_list.extend(str(config['demisto-sdk'][key]).split(','))
 
-                            if key in PRESET_ERROR_LIST:
-                                ignored_errors_list.extend(PRESET_ERROR_LIST.get(key))
+                            if key in PRESET_ERROR_TO_IGNORE:
+                                ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
+
+                            if key in PRESET_ERROR_TO_CHECK:
+                                ignored_errors_list.extend(
+                                    self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
 
                 except MissingSectionHeaderError:
                     pass

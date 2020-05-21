@@ -494,6 +494,13 @@ class TestValidators:
         ignore_errors_list = file_validator.get_error_ignore_list("fake")
         assert ignore_errors_list == ['IN100', 'IN101']
 
+    def test_create_ignored_errors_list(self, mocker):
+        file_validator = FilesValidator()
+        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+                           "WD", "RP", "BA100", "BC100", "ST"]
+        ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
+        assert ignored_list == ["BA101", "BA102", "BC101", "BC102", "BC103", "BC104"]
+
 
 class RNValidatorTest:
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [

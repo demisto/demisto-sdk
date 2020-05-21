@@ -37,11 +37,11 @@ class PackUniqueFilesValidator(BaseValidator):
         self._errors = []
 
     # error handling
-    def _add_error(self, error):
+    def _add_error(self, error, file_path):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
-        formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
+        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False)
         if formatted_error:
             self._errors.append(formatted_error)
             return True
@@ -66,7 +66,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def _is_pack_file_exists(self, file_name):
         """Check if .secrets-ignore exists"""
         if not os.path.isfile(self._get_pack_file_path(file_name)):
-            if self._add_error(Errors.pack_file_does_not_exist(file_name)):
+            if self._add_error(Errors.pack_file_does_not_exist(file_name), file_name):
                 return False
 
         return True
@@ -77,10 +77,10 @@ class PackUniqueFilesValidator(BaseValidator):
             with io.open(self._get_pack_file_path(file_name), mode="r", encoding="utf-8") as file:
                 return file.read()
         except IOError:
-            if not self._add_error(Errors.cant_open_pack_file(file_name)):
+            if not self._add_error(Errors.cant_open_pack_file(file_name), file_name):
                 return "No-Text-Required"
         except ValueError:
-            if not self._add_error(Errors.cant_read_pack_file(file_name)):
+            if not self._add_error(Errors.cant_read_pack_file(file_name), file_name):
                 return "No-Text-Required"
 
         return False
@@ -92,7 +92,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if file_content:
                 return file_content.split(delimiter)
         except ValueError:
-            if not self._add_error(Errors.cant_parse_pack_file_to_list(file_name)):
+            if not self._add_error(Errors.cant_parse_pack_file_to_list(file_name), file_name):
                 return True
 
         return False
@@ -127,7 +127,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if pack_ignore_regex_list and all(re.compile(regex) for regex in pack_ignore_regex_list):
                 return True
         except re.error:
-            if not self._add_error(Errors.pack_file_bad_format(self.pack_ignore_file)):
+            if not self._add_error(Errors.pack_file_bad_format(self.pack_ignore_file), self.pack_ignore_file):
                 return True
 
         return False
@@ -145,29 +145,30 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             pack_meta_file_content = self._read_file_content(self.pack_meta_file)
             if not pack_meta_file_content:
-                if self._add_error(Errors.pack_metadata_empty()):
+                if self._add_error(Errors.pack_metadata_empty(), self.pack_meta_file):
                     return False
             metadata = json.loads(pack_meta_file_content)
             if not isinstance(metadata, dict):
-                if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file)):
+                if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file), self.pack_meta_file):
                     return False
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
-                if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields)):
+                if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields),
+                                   self.pack_meta_file):
                     return False
             # check validity of pack metadata mandatory fields
             name_field = metadata.get(PACK_METADATA_NAME, '').lower()
             if not name_field or 'fill mandatory field' in name_field:
-                if self._add_error(Errors.pack_metadata_name_not_valid()):
+                if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
-                if self._add_error(Errors.pack_metadata_field_invalid()):
+                if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
                     return False
             # check non mandatory dependency field
             dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
-                if self._add_error(Errors.dependencies_field_should_be_dict(self.pack_meta_file)):
+                if self._add_error(Errors.dependencies_field_should_be_dict(self.pack_meta_file), self.pack_meta_file):
                     return False
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
@@ -176,10 +177,11 @@ class PackUniqueFilesValidator(BaseValidator):
                 if field and len(field) == 1:
                     value = field[0]
                     if not value:
-                        if self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field)):
+                        if self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field),
+                                           self.pack_meta_file):
                             return False
         except (ValueError, TypeError):
-            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file)):
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
 
         return True

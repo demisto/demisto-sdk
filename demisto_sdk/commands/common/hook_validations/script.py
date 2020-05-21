@@ -96,7 +96,7 @@ class ScriptValidator(ContentEntityValidator):
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
-                    if self.handle_error(error_message, error_message):
+                    if self.handle_error(error_message, error_message, file_path=self.file_path):
                         return True
 
         return False

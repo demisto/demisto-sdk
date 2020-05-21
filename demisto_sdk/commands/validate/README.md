@@ -74,7 +74,7 @@ This will validate all files under the content pack `HelloWorld`
 ### Error Codes and Ignoring Them
 Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error
 code attached to it - the code can be found in brackets preceding the error itself.
-For example: `(IN103) The type field of the proxy parameter should be 8`
+For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
 
 The first 2 letters indicate the error type and can be used to easily identify the cause of the error.
 | Code | Type |

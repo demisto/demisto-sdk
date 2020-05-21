@@ -123,25 +123,29 @@ class IntegrationValidator(ContentEntityValidator):
             if configuration_param_name == param_name:
                 if configuration_param['display'] != param_display:
                     error_message, error_code = Errors.wrong_display_name(param_name, param_display)
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('defaultvalue', '') not in ('false', ''):
                     error_message, error_code = Errors.wrong_default_parameter(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('required', False):
                     error_message, error_code = Errors.wrong_required_value(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('type') != 8:
                     error_message, error_code = Errors.wrong_required_type(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
@@ -626,7 +630,7 @@ class IntegrationValidator(ContentEntityValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
                 error_message, error_code = Errors.feed_wrong_from_version(from_version)
-                if self.handle_error(error_message, error_code,
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     valid_from_version = False
 
@@ -638,7 +642,7 @@ class IntegrationValidator(ContentEntityValidator):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
                 error_message, error_code = Errors.pwsh_wrong_version(from_version)
-                if self.handle_error(error_message, error_code,
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     return False
         return True

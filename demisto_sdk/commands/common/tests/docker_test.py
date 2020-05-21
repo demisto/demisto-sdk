@@ -202,6 +202,7 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
         docker_image_validator.ignored_errors = []
         docker_image_validator.docker_image_latest_tag = 'latest'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.file_path = "PATH"
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True

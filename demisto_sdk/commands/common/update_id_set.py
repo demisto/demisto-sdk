@@ -143,21 +143,18 @@ def get_commmands_from_playbook(data_dict):
 
 
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
-    unifier = Unifier(file_path)
+    unifier = Unifier(os.path.dirname(file_path))
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
         _, integration_script_code = unifier.get_script_package_data()
 
-    return unifier.check_api_module_imports(integration_script_code)
+    return unifier.check_api_module_imports(integration_script_code)[1]
 
 
 def get_integration_data(file_path, is_unified_integration):
-    package_name = os.path.basename(file_path)
-    integration_file_path = os.path.join(file_path, '{}.yml'.format(package_name))
-
     integration_data = OrderedDict()
-    data_dictionary = get_yaml(integration_file_path)
+    data_dictionary = get_yaml(file_path)
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
 
@@ -404,6 +401,8 @@ def process_integration(file_path: str, print_logs: bool) -> list:
             res.append(get_integration_data(file_path, is_unified_integration=True))
     else:
         # package integration
+        package_name = os.path.basename(file_path)
+        file_path = os.path.join(file_path, '{}.yml'.format(package_name))
         if os.path.isfile(file_path):
             # locally, might have leftover dirs without committed files
             if print_logs:

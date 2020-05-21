@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                get_yml_paths_in_dir,
                                                print_color, print_error,
-                                               print_warning,
+                                               print_warning, find_type,
                                                server_version_compare)
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
@@ -260,7 +260,10 @@ class Unifier:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')
 
-        code_type = get_yaml(yml_path).get('type')
+        if find_type(yml_path) is 'script':
+            code_type = get_yaml(yml_path).get('type')
+        else:
+            code_type = get_yaml(yml_path).get('script', {}).get('type')
         unifier = Unifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
         with open(code_path, 'r') as code_file:

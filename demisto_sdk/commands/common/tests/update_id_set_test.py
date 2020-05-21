@@ -181,7 +181,8 @@ INTEGRATION_DATA = {
                      'xdr-get-distribution-url',
                      'xdr-get-create-distribution-status',
                      'xdr-get-audit-management-logs',
-                     'xdr-get-audit-agent-reports']
+                     'xdr-get-audit-agent-reports'],
+        "api_modules": "HTTPFeedApiModule"
     }
 }
 
@@ -215,8 +216,7 @@ PLAYBOOK_DATA = {
     "tests": [
         "No Test"
     ],
-    'pack': 'DummyPack',
-    'api_modules': 'MicrosoftApiModule'
+    'pack': 'DummyPack'
 }
 
 
@@ -226,7 +226,7 @@ class TestIntegration(unittest.TestCase):
         Test for getting all the integration data
         """
         # mocker.patch.object('get_pack_name', return_value='DummyPack')
-        file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/DummyIntegration.yml'
+        file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml'
         data = get_integration_data(file_path, is_unified_integration=False)
         self.assertDictEqual(data, INTEGRATION_DATA)
 

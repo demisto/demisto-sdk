@@ -431,7 +431,7 @@ class FilesValidator:
 
             else:
                 error_message, error_code = Errors.file_type_not_supported(self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
         self.changed_pack_data = changed_packs
@@ -445,7 +445,7 @@ class FilesValidator:
                     added_rn.add(pack_name)
                 else:
                     error_message, error_code = Errors.multiple_release_notes_files(pack_name)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
 
     def validate_added_files(self, added_files, file_type: str = None):  # noqa: C901
@@ -578,7 +578,7 @@ class FilesValidator:
 
             else:
                 error_message, error_code = Errors.file_type_not_supported(file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
         missing_rn = self.changed_pack_data.difference(added_rn)
@@ -588,8 +588,8 @@ class FilesValidator:
                 ignored_errors_list = self.get_error_ignore_list(pack)
                 error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
-                                     print_as_warnings=self.print_ignored_errors).handle_error(error_message,
-                                                                                               error_code):
+                                     print_as_warnings=self.print_ignored_errors).handle_error(
+                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
                     should_fail = False
 
             if should_fail:
@@ -608,7 +608,7 @@ class FilesValidator:
                 invalid_files.append(f)
         if invalid_files:
             error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
     def validate_committed_files(self):
@@ -735,7 +735,7 @@ class FilesValidator:
 
         else:
             error_message, error_code = Errors.file_type_not_supported(file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):

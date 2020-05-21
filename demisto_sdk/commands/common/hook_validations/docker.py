@@ -49,7 +49,7 @@ class DockerImageValidator(BaseValidator):
         if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
             # the docker image is the default one
             error_message, error_code = Errors.default_docker_error()
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_latest_tag = False
 
             return self.is_latest_tag
@@ -77,7 +77,7 @@ class DockerImageValidator(BaseValidator):
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
             error_message, error_code = Errors.latest_docker_error(self.docker_image_tag, self.docker_image_name)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_latest_tag = False
 
         return self.is_latest_tag
@@ -207,11 +207,11 @@ class DockerImageValidator(BaseValidator):
         if yml_docker_image:
             if yml_docker_image.startswith('devdemisto/'):
                 error_message, error_code = Errors.not_demisto_docker()
-                self.handle_error(error_message, error_code)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
 
             elif not yml_docker_image.startswith('demisto/'):
                 error_message, error_code = Errors.not_demisto_docker()
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return ''
                 return "no-tag-required"
         try:
@@ -252,7 +252,7 @@ class DockerImageValidator(BaseValidator):
             if not docker_image_name:
                 docker_image_name = yml_docker_image
             error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return ''
 
             return "no-tag-required"
@@ -279,11 +279,11 @@ class DockerImageValidator(BaseValidator):
                     tag = image_split[1]
                 else:
                     error_message, error_code = Errors.no_docker_tag(docker_image)
-                    self.handle_error(error_message, error_code)
+                    self.handle_error(error_message, error_code, file_path=self.file_path)
 
             except IndexError:
                 error_message, error_code = Errors.docker_not_formatted_correctly(docker_image)
-                self.handle_error(error_message, error_code)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
 
             return image, tag
         else:

@@ -39,7 +39,7 @@ class ReputationValidator(ContentEntityValidator):
             error_message, error_code = Errors.wrong_version_reputations(self.file_path,
                                                                          object_id, self.DEFAULT_VERSION)
 
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
         return is_valid
@@ -52,7 +52,7 @@ class ReputationValidator(ContentEntityValidator):
             expiration = self.current_file.get('expiration', "")
             if not isinstance(expiration, int) or expiration < 0:
                 error_message, error_code = Errors.reputation_expiration_should_be_numeric(self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -66,7 +66,7 @@ class ReputationValidator(ContentEntityValidator):
         details = self.current_file.get('details', None)
         if not id_ or not details or id_ != details:
             error_message, error_code = Errors.reputation_id_and_details_not_equal(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
         return is_valid

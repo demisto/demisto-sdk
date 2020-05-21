@@ -48,7 +48,7 @@ class ConfJsonValidator(BaseValidator):
 
         if problematic_instances:
             error_message, error_code = Errors.description_missing_from_conf_json(problematic_instances)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
         return self._is_valid
@@ -69,6 +69,6 @@ class ConfJsonValidator(BaseValidator):
                 return True
 
         error_message, error_code = Errors.test_not_in_conf_json(file_id)
-        if self.handle_error(error_message, error_code):
+        if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
         return True

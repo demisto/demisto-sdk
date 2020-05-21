@@ -95,7 +95,7 @@ class StructureValidator(BaseValidator):
 
         error_message, error_code = Errors.structure_doesnt_match_scheme(self.file_path,
                                                                          pretty_formatted_string_of_regexes)
-        self.handle_error(error_message, error_code)
+        self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return None
 
@@ -164,7 +164,7 @@ class StructureValidator(BaseValidator):
         file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and '/' in file_id:
             error_message, error_code = Errors.file_id_contains_slashes()
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -185,7 +185,7 @@ class StructureValidator(BaseValidator):
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
             error_message, error_code = Errors.file_id_changed(self.file_path, old_version_id, new_file_id)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return True
 
         # False - the id has not changed.
@@ -210,7 +210,7 @@ class StructureValidator(BaseValidator):
 
         if from_version_old != from_version_new:
             error_message, error_code = Errors.from_version_modified(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -236,7 +236,7 @@ class StructureValidator(BaseValidator):
 
         error_message, error_code = Errors.wrong_file_extension(file_extension,
                                                                 self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys())
-        self.handle_error(error_message, error_code)
+        self.handle_error(error_message, error_code, file_path=self.file_path)
         return {}
 
     def get_file_type(self):
@@ -267,7 +267,7 @@ class StructureValidator(BaseValidator):
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
             error_message, error_code = Errors.invalid_file_path(self.file_path)
-            if not self.handle_error(error_message, error_code):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid_path = True
         return is_valid_path
 

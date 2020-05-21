@@ -39,7 +39,7 @@ class DescriptionValidator(BaseValidator):
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
                 error_message, error_code = Errors.description_missing_in_beta_integration(package_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
                     return False
 
@@ -47,14 +47,14 @@ class DescriptionValidator(BaseValidator):
                 description = description_file.read()
             if BETA_INTEGRATION_DISCLAIMER not in description:
                 error_message, error_code = Errors.no_beta_disclaimer_in_description(package_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
                     return False
             else:
                 return True
         elif BETA_INTEGRATION_DISCLAIMER not in description_in_yml:
             error_message, error_code = Errors.no_beta_disclaimer_in_yml(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
 
@@ -87,7 +87,7 @@ class DescriptionValidator(BaseValidator):
 
         if is_description_in_package and is_description_in_yml:
             error_message, error_code = Errors.description_in_package_and_yml(package_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
 

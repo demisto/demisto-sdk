@@ -33,7 +33,7 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         error_message, error_code = Errors.wrong_version(self.file_path)
-        if self.handle_error(error_message, error_code):
+        if self.handle_error(error_message, error_code, file_path=self.file_path):
             self.is_valid = False
             return False
 
@@ -123,25 +123,25 @@ class IntegrationValidator(ContentEntityValidator):
             if configuration_param_name == param_name:
                 if configuration_param['display'] != param_display:
                     error_message, error_code = Errors.wrong_display_name(param_name, param_display)
-                    formatted_message = self.handle_error(error_message, error_code, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('defaultvalue', '') not in ('false', ''):
                     error_message, error_code = Errors.wrong_default_parameter(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('required', False):
                     error_message, error_code = Errors.wrong_required_value(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('type') != 8:
                     error_message, error_code = Errors.wrong_required_type(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, should_print=False)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
@@ -193,7 +193,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         if configuration_param.get('required', False):
             error_message, error_code = Errors.wrong_required_value(param_name)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 
@@ -203,7 +203,7 @@ class IntegrationValidator(ContentEntityValidator):
         category = self.current_file.get('category', None)
         if category not in INTEGRATION_CATEGORIES:
             error_message, error_code = Errors.wrong_category(self.file_path, category)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -230,13 +230,13 @@ class IntegrationValidator(ContentEntityValidator):
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(self.file_path, arg_name,
                                                                                       command_name)
-                            if self.handle_error(error_message, error_code):
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False
 
                 if not flag_found_arg:
                     error_message, error_code = Errors.no_default_arg(self.file_path, command_name)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         flag = False
 
         if not flag:
@@ -280,7 +280,7 @@ class IntegrationValidator(ContentEntityValidator):
                     error_message, error_code = Errors.dbot_invalid_output(self.file_path,
                                                                            command_name, missing_outputs,
                                                                            context_standard)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         output_for_reputation_valid = False
 
@@ -294,7 +294,7 @@ class IntegrationValidator(ContentEntityValidator):
                     error_message, error_code = Errors.missing_reputation(self.file_path,
                                                                           command_name, reputation_output,
                                                                           context_standard)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         output_for_reputation_valid = False
 
@@ -308,7 +308,7 @@ class IntegrationValidator(ContentEntityValidator):
             subtype = self.current_file.get('script', {}).get('subtype')
             if subtype not in PYTHON_SUBTYPES:
                 error_message, error_code = Errors.wrong_subtype(self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
 
@@ -324,7 +324,7 @@ class IntegrationValidator(ContentEntityValidator):
                 old_subtype = self.old_file.get('script', {}).get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype(self.file_path)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         return True
 
@@ -350,7 +350,7 @@ class IntegrationValidator(ContentEntityValidator):
         integration_id = common_fields.get('id', '')
         if 'beta' in integration_id.lower():
             error_message, error_code = Errors.beta_in_id(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -361,7 +361,7 @@ class IntegrationValidator(ContentEntityValidator):
         name = self.current_file.get('name', '')
         if 'beta' in name.lower():
             error_message, error_code = Errors.beta_in_name(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -372,7 +372,7 @@ class IntegrationValidator(ContentEntityValidator):
         beta = self.current_file.get('beta', False)
         if not beta:
             error_message, error_code = Errors.beta_field_not_found(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -383,7 +383,7 @@ class IntegrationValidator(ContentEntityValidator):
         display = self.current_file.get('display', '')
         if 'beta' not in display.lower():
             error_message, error_code = Errors.no_beta_in_display(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -403,7 +403,7 @@ class IntegrationValidator(ContentEntityValidator):
                 if arg in arg_list:
                     error_message, error_code = Errors.duplicate_arg_in_file(self.file_path,
                                                                              arg['name'], command['name'])
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         is_there_duplicates = True
 
@@ -426,7 +426,7 @@ class IntegrationValidator(ContentEntityValidator):
             param_name = configuration_param['name']
             if param_name in param_list:
                 error_message, error_code = Errors.duplicate_param(param_name, self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     has_duplicate_params = True
 
@@ -468,7 +468,7 @@ class IntegrationValidator(ContentEntityValidator):
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
                 error_message, error_code = Errors.breaking_backwards_command_arg_changed(self.file_path, command)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return True
 
@@ -503,7 +503,7 @@ class IntegrationValidator(ContentEntityValidator):
                     context_list.append(output['contextPath'])
                 except KeyError:
                     error_message, error_code = Errors.invalid_context_output(command_name, output)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
 
             command_to_context_dict[command['name']] = sorted(context_list)
@@ -528,7 +528,7 @@ class IntegrationValidator(ContentEntityValidator):
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
                     error_message, error_code = Errors.breaking_backwards_command(self.file_path, old_command)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         return True
 
@@ -561,14 +561,14 @@ class IntegrationValidator(ContentEntityValidator):
                 # if required is True and old_field is False.
                 if required and required != old_field_to_required[field]:
                     error_message, error_code = Errors.added_required_fields(self.file_path, field)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         is_added_required = True
 
             # if required is True but no old field.
             elif required:
                 error_message, error_code = Errors.added_required_fields(self.file_path, field)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     is_added_required = True
 
@@ -599,7 +599,7 @@ class IntegrationValidator(ContentEntityValidator):
                 if configuration_display:
                     error_message, error_code = Errors.not_used_display_name(self.file_path,
                                                                              configuration_param['name'])
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         return True
 
@@ -607,7 +607,7 @@ class IntegrationValidator(ContentEntityValidator):
                     and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
                 error_message, error_code = Errors.empty_display_configuration(self.file_path,
                                                                                configuration_param['name'])
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return True
 
@@ -661,7 +661,7 @@ class IntegrationValidator(ContentEntityValidator):
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(self.file_path, param.get('name'),
                                                                                   yaml.dump(param))
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         fetch_params_exist = False
 
         return fetch_params_exist
@@ -681,7 +681,7 @@ class IntegrationValidator(ContentEntityValidator):
             if param not in params:
                 error_message, error_code = Errors.parameter_missing_for_feed(self.file_path,
                                                                               param.get('name'), yaml.dump(param))
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     params_exist = False
 
         return params_exist
@@ -695,7 +695,7 @@ class IntegrationValidator(ContentEntityValidator):
             correct_name = " v2"
             if not display_name.endswith(correct_name):
                 error_message, error_code = Errors.invalid_v2_integration_name(self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
             return True
@@ -713,7 +713,7 @@ class IntegrationValidator(ContentEntityValidator):
             param_name = int_parameter.get('name')
             if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
                 error_message, error_code = Errors.found_hidden_param(param_name)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     ans = False
 
         return ans

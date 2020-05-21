@@ -41,7 +41,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
-        formatted_error = self.handle_error(error_message, error_code, should_print=False)
+        formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
         if formatted_error:
             self._errors.append(formatted_error)
             return True

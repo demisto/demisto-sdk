@@ -67,7 +67,7 @@ class IDSetValidator(BaseValidator):
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
                     error_message, error_code = Errors.id_set_conflicts()
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         raise
                     else:
                         pass
@@ -102,12 +102,12 @@ class IDSetValidator(BaseValidator):
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
                     error_message, error_code = Errors.id_set_not_updated(file_path)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
 
         if not is_found:
             error_message, error_code = Errors.id_set_not_updated(file_path)
-            if not self.handle_error(error_message, error_code):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 return True
 
         return is_found
@@ -193,7 +193,7 @@ class IDSetValidator(BaseValidator):
 
         if is_duplicated:
             error_message, error_code = Errors.duplicated_id(obj_id)
-            if not self.handle_error(error_message, error_code):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return is_duplicated

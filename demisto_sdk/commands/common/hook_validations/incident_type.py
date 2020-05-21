@@ -65,11 +65,11 @@ class IncidentTypeValidator(ContentEntityValidator):
                 from_version = self.current_file.get("fromVersion", "0.0.0")
                 if LooseVersion(from_version) < LooseVersion("5.0.0"):
                     error_message, error_code = Errors.incident_field_or_type_from_version_5(self.file_path)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         is_valid = False
             except (AttributeError, ValueError):
                 error_message, error_code = Errors.invalid_incident_field_or_type_from_version(self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 
         return is_valid
@@ -96,7 +96,7 @@ class IncidentTypeValidator(ContentEntityValidator):
             current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_bc_broke = True
         return is_bc_broke
 
@@ -116,12 +116,12 @@ class IncidentTypeValidator(ContentEntityValidator):
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
                         error_message, error_code = Errors.incident_type_integer_field(self.file_path, field)
-                        if self.handle_error(error_message, error_code):
+                        if self.handle_error(error_message, error_code, file_path=self.file_path):
                             is_valid = False
 
         except (AttributeError, ValueError):
             error_message, error_code = Errors.invalid_incident_field_or_type_from_version(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
         return is_valid

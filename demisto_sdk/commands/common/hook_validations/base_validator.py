@@ -22,7 +22,7 @@ class BaseValidator:
 
         return False
 
-    def handle_error(self, error_massage, error_code, should_print=True, suggested_fix=None):
+    def handle_error(self, error_massage, error_code, file_path, should_print=True, suggested_fix=None):
         """Handle an error that occurred during validation
 
         Args:
@@ -34,7 +34,7 @@ class BaseValidator:
         Returns:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
-        formatted_error = "(" + error_code + ")" + " " + error_massage
+        formatted_error = f"{file_path}: [{error_code}] - {error_massage}\n"
 
         if self.should_ignore_error(error_code):
             if should_print and self.print_as_warnings:
@@ -42,9 +42,9 @@ class BaseValidator:
             return None
 
         if should_print:
-            click.secho(formatted_error, fg="red")
+            click.secho(formatted_error, fg="bright_red")
 
-        if suggested_fix:
-            click.secho(suggested_fix, fg="red")
+            if suggested_fix:
+                click.secho(suggested_fix + "\n", fg="bright_red")
 
         return formatted_error

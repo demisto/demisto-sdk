@@ -34,7 +34,7 @@ class ImageValidator(BaseValidator):
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
                     error_message, error_code = Errors.no_image_given(file_path)
-                    if self.handle_error(error_message, error_code):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
 
                     self.file_path = ''
@@ -58,7 +58,7 @@ class ImageValidator(BaseValidator):
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             if os.path.getsize(self.file_path) > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large(self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
         else:
@@ -71,7 +71,7 @@ class ImageValidator(BaseValidator):
 
             if ((len(image) - 22) / 4.0) * 3 > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large(self.file_path)
-                if self.handle_error(error_message, error_code):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
     def is_existing_image(self):
@@ -93,13 +93,13 @@ class ImageValidator(BaseValidator):
                 is_image_in_package = True
         if is_image_in_package and is_image_in_yml:
             error_message, error_code = Errors.image_in_package_and_yml(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
 
         if not (is_image_in_package or is_image_in_yml):
             error_message, error_code = Errors.no_image_given(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
 
@@ -110,14 +110,14 @@ class ImageValidator(BaseValidator):
 
         if not data_dictionary:
             error_message, error_code = Errors.not_an_image_file(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
         image = data_dictionary.get('image', '')
 
         if not image:
             error_message, error_code = Errors.no_image_field_in_yml(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
         image_data = image.split('base64,')
@@ -126,7 +126,7 @@ class ImageValidator(BaseValidator):
 
         else:
             error_message, error_code = Errors.image_field_not_in_base64(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
     def load_image(self):
@@ -148,7 +148,7 @@ class ImageValidator(BaseValidator):
 
         if image in [DEFAULT_IMAGE_BASE64, DEFAULT_DBOT_IMAGE_BASE64]:  # disable-secrets-detection
             error_message, error_code = Errors.default_image_error(self.file_path)
-            if self.handle_error(error_message, error_code):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
         return True

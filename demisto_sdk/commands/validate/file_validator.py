@@ -31,7 +31,8 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
     YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES)
-from demisto_sdk.commands.common.errors import PRESET_ERROR_LIST, Errors
+from demisto_sdk.commands.common.errors import (ERROR_CODE, PRESET_ERROR_LIST,
+                                                Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -919,6 +920,12 @@ class FilesValidator:
     @staticmethod
     def get_pack_ignore_file_path(pack_name):
         return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+
+    @staticmethod
+    def create_ignored_errors_list(errors_to_check):
+        all_errors = set(ERROR_CODE.values())
+        errors_to_check = set(errors_to_check)
+        return list(all_errors - errors_to_check)
 
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list = []

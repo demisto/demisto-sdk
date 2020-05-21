@@ -20,6 +20,7 @@ class TestContentCreator:
         self._bundle_dir = mkdtemp()
         self._test_dir = mkdtemp()
         self.content_repo = os.path.join(tests_dir, 'test_files', 'content_repo_example')
+        self._files_to_artifacts_dir = os.path.join(tests_dir, 'test_files', 'FilesToArtifacts')
 
     def teardown(self):
         # delete all files in the content_bundle
@@ -169,3 +170,19 @@ class TestContentCreator:
                            f'{self._test_dir}/script-just_a_test_script.yml')
         assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/script-prefixed_automation.yml',
                            f'{self._test_dir}/script-prefixed_automation.yml')
+
+    def test_copy_file_to_artifacts(self):
+        """
+        Given
+        - Content dir with tools
+        When
+        - copying files to the content artifacts
+        Then
+        - ensure files are being copied correctly
+        """
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        filename = 'test_file.md'
+        file_path = os.path.join(self._files_to_artifacts_dir, filename)
+        content_creator.copy_file_to_artifacts(file_path)
+        assert filecmp.cmp(file_path, os.path.join(self.content_repo, filename))
+

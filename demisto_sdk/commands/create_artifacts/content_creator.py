@@ -459,6 +459,15 @@ class ContentCreator:
                 print_warning(f'{doc_file} was not found and '
                               'therefore was not added to the content bundle')
 
+    def copy_file_to_artifacts(self, file_path):
+        if os.path.exists(file_path):
+            filename = os.path.basename(file_path)
+            print('copying {} to artifacts directory "{}"'.format(file_path, self.artifacts_path))
+            shutil.copyfile(file_path, os.path.join(self.artifacts_path, filename))
+        else:
+            print_warning('{} was not found in the content directory and therefore not '
+                          'copied over to the artifacts directory'.format(file_path))
+
     def create_content(self):
         """
         Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"
@@ -470,9 +479,6 @@ class ContentCreator:
         print('Starting to create content artifact...')
 
         try:
-            if os.path.exists('packs-release-notes.md'):
-                print('copying packs-release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
-                shutil.copyfile('packs-release-notes.md', os.path.join(self.artifacts_path, 'packs-release-notes.md'))
             print('creating dir for bundles...')
             for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
                 os.mkdir(bundle_dir)
@@ -505,18 +511,10 @@ class ContentCreator:
             shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
             shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
             shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
-            if os.path.exists('release-notes.md'):
-                print('copying release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
-                shutil.copyfile('release-notes.md', os.path.join(self.artifacts_path, 'release-notes.md'))
-            else:
-                print_warning('release-notes.md was not found in the content directory and therefore not '
-                              'copied over to the artifacts directory')
-            if os.path.exists('beta-release-notes.md'):
-                print('copying beta-release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
-                shutil.copyfile('beta-release-notes.md', os.path.join(self.artifacts_path, 'beta-release-notes.md'))
-            else:
-                print_warning('beta-release-notes.md was not found in the content directory and therefore not '
-                              'copied over to the artifacts directory')
+
+            self.copy_file_to_artifacts('release-notes.md')
+            self.copy_file_to_artifacts('beta-release-notes.md')
+            self.copy_file_to_artifacts('packs-release-notes.md')
             print(f'finished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
         finally:
             if not self.preserve_bundles:

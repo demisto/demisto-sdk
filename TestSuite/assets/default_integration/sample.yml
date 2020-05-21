@@ -1,0 +1,41 @@
+commonfields:
+  id: Sample
+  version: -1
+name: Sample
+display: Sample
+category: Authentication
+description: This is a sample integration
+configuration:
+- display: Server URL (e.g. https://soar.monstersofhack.com)
+  name: url
+  defaultvalue: https://soar.monstersofhack.com
+  type: 0
+  required: true
+- display: API Key
+  name: apikey
+  defaultvalue: ""
+  type: 4
+  required: true
+- display: Trust any certificate (not secure)
+  name: insecure
+  defaultvalue: ""
+  type: 8
+  required: false
+- display: Use system proxy settings
+  name: proxy
+  defaultvalue: ""
+  type: 8
+  required: false
+script:
+  script: ''
+  type: python
+  commands:
+  - name: test-command
+    arguments:
+    - name: test_arg
+      defaultValue: arg
+      description: test argument
+    description: A test command
+  dockerimage: demisto/python3:3.8.2.6981
+  runonce: false
+  subtype: python3

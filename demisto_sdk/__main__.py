@@ -251,7 +251,6 @@ def unify(**kwargs):
     help='Skip validation of pack release notes.')
 @pass_config
 def validate(config, **kwargs):
-    print("testing")
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs['path'] or kwargs['input']

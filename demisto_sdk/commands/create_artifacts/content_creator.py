@@ -472,7 +472,7 @@ class ContentCreator:
         try:
             if os.path.exists('packs-release-notes.md'):
                 print('copying packs-release-notes.md to artifacts directory "{}"'.format(self.artifacts_path))
-                shutil.copyfile('packs-release-notes.md', os.path.join(self.artifacts_path, 'release-notes-test.md'))
+                shutil.copyfile('packs-release-notes.md', os.path.join(self.artifacts_path, 'packs-release-notes.md'))
             print('creating dir for bundles...')
             for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
                 os.mkdir(bundle_dir)

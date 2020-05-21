@@ -1,4 +1,8 @@
 # Changelog
+
+
+
+#### 1.0.8
 * Changed the output format of demisto-sdk secrets.
 * Added a validation that checkbox items are not required in integrations.
 * Added pack release notes generation and validation.

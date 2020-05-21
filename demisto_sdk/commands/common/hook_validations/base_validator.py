@@ -9,6 +9,19 @@ class BaseValidator:
         self.ignored_errors = ignored_errors
         self.print_as_warnings = print_as_warnings
 
+    def should_ignore_error(self, error_code):
+        """Return True is code should be ignored and False otherwise"""
+        # check if specific codes are ignored
+        if error_code in self.ignored_errors:
+            return True
+
+        # in case a whole section of codes are selected
+        code_type = error_code[:2]
+        if code_type in self.ignored_errors:
+            return True
+
+        return False
+
     def handle_error(self, error_massage, error_code, should_print=True, suggested_fix=None):
         """Handle an error that occurred during validation
 
@@ -23,7 +36,7 @@ class BaseValidator:
         """
         formatted_error = "(" + error_code + ")" + " " + error_massage
 
-        if error_code in self.ignored_errors:
+        if self.should_ignore_error(error_code):
             if should_print and self.print_as_warnings:
                 click.secho(formatted_error, fg="yellow")
             return None

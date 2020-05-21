@@ -103,7 +103,8 @@ The first 2 letters indicate the error type and can be used to easily identify t
 If you wish to ignore an error in the validation insert the following to the `pack-ignore` file.
 ```buildoutcfg
 [demisto-sdk]
-ignore=IN100,BA100
+ignore=IN100,BA100,BC
 ```
+This will ignore error codes `IN100`, `BA100` and all of `BC` error codes.
 
 *Note*: Conf-json and id-set errors cannot be ignored.

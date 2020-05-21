@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
     YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES)
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import PRESET_ERROR_LIST, Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -934,6 +934,10 @@ class FilesValidator:
                         for key in config['demisto-sdk']:
                             if key == 'ignore':
                                 ignored_errors_list.extend(str(config['demisto-sdk'][key]).split(','))
+
+                            if key in PRESET_ERROR_LIST:
+                                ignored_errors_list.extend(PRESET_ERROR_LIST.get(key))
+
                 except MissingSectionHeaderError:
                     pass
 

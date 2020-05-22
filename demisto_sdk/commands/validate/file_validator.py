@@ -433,7 +433,7 @@ class FilesValidator:
 
             else:
                 error_message, error_code = Errors.file_type_not_supported()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=file_path):
                     self._is_valid = False
 
         self.changed_pack_data = changed_packs
@@ -580,7 +580,7 @@ class FilesValidator:
 
             else:
                 error_message, error_code = Errors.file_type_not_supported()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=file_path):
                     self._is_valid = False
 
         missing_rn = self.changed_pack_data.difference(added_rn)
@@ -610,7 +610,7 @@ class FilesValidator:
                 invalid_files.append(f)
         if invalid_files:
             error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path="General-Error"):
                 self._is_valid = False
 
     def validate_committed_files(self):
@@ -737,7 +737,7 @@ class FilesValidator:
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=file_path):
                 self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):

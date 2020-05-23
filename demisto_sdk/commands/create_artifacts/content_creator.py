@@ -476,11 +476,12 @@ class ContentCreator:
         """
         Creates the content artifact zip files "content_test.zip", "content_new.zip", and "content_packs.zip"
         """
-        # update content_version in commonServerPython
-        self.update_content_version(self.content_version)
-        branch_name = self.update_branch()
-        print(f'Updated CommonServerPython with branch {branch_name} and content version {self.content_version}')
-        print('Starting to create content artifact...')
+        if not only_packs:
+            # update content_version in commonServerPython
+            self.update_content_version(self.content_version)
+            branch_name = self.update_branch()
+            print(f'Updated CommonServerPython with branch {branch_name} and content version {self.content_version}')
+            print('Starting to create content artifact...')
 
         try:
             print('creating dir for bundles...')

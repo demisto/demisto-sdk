@@ -19,6 +19,7 @@ import click
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
     CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
     IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
@@ -292,7 +293,11 @@ class FilesValidator:
         Args:
             modified_files (set): A set of the modified files in the current branch.
         """
-        changed_packs = self.get_packs(modified_files)
+        _modified_files = set()
+        for mod_file in modified_files:
+            if not any(non_permitted_type in mod_file.lower() for non_permitted_type in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
+                modified_files.add(mod_file)
+        changed_packs = self.get_packs(_modified_files)
         for file_path in modified_files:
             old_file_path = None
             # modified_files are returning from running git diff.

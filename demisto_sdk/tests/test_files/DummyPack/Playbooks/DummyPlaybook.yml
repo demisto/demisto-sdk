@@ -113,6 +113,7 @@ tasks:
       script: '|||xdr-update-incident'
       type: regular
       iscommand: true
+      skipunavailable: false
       brand: ""
     nexttasks:
       '#none#':
@@ -217,6 +218,7 @@ tasks:
       script: '|||autofocus-sample-analysis'
       type: regular
       iscommand: true
+      skipunavailable: true
       brand: ""
     nexttasks:
       '#none#':
@@ -404,6 +406,7 @@ tasks:
       scriptName: StopScheduledTask
       type: regular
       iscommand: false
+      skipunavailable: true
       brand: ""
     nexttasks:
       '#none#':

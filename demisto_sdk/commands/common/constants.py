@@ -884,6 +884,8 @@ PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIO
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
+IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
+
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+/)?(?:Integrations|Scripts|Beta_Integrations)/([^\\/]+)/([^\\/]+).yml'
 
 OLD_YML_FORMAT_FILE = [INTEGRATION_REGEX, SCRIPT_REGEX]
@@ -1182,4 +1184,13 @@ ALL_FILES_VALIDATION_IGNORE_WHITELIST = [
     'ipnetwork_test',
     'test-data',
     'testplaybook'
+]
+VALIDATED_PACK_ITEM_TYPES = [
+    'Playbooks',
+    'Integration',
+    'Script',
+    'IncidentFields',
+    'IncidentTypes',
+    'Classifiers',
+    'Layouts'
 ]

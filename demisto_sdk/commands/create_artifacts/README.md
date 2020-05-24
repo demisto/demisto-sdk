@@ -10,6 +10,8 @@ This command is primarily intended for internal use. During our CI/CD build proc
 The path of the directory in which you want to save the created content artifacts
 * *-p, --preserve_bundles*
 Flag for if you'd like to keep the bundles created in the process of making the content artifacts
+* *--packs*
+If passed, will create only content_packs.zip
 
 **Examples**:
 `demisto-sdk create -a .`

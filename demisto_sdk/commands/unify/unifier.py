@@ -253,7 +253,7 @@ class Unifier:
 
         return yml_unified, script_path
 
-    def get_script_package_data(self):
+    def get_script_or_integration_package_data(self):
         # should be static method
         _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
         if not yml_path:

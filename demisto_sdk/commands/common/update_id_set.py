@@ -155,7 +155,7 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
-        _, integration_script_code = unifier.get_script_package_data()
+        _, integration_script_code = unifier.get_script_or_integration_package_data()
 
     return unifier.check_api_module_imports(integration_script_code)[1]
 
@@ -436,7 +436,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
     else:
         # package script
         unifier = Unifier(file_path)
-        yml_path, code = unifier.get_script_package_data()
+        yml_path, code = unifier.get_script_or_integration_package_data()
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_script_data(yml_path, script_code=code))
@@ -997,7 +997,7 @@ def update_id_set():
     if added_scripts:
         for added_script_package in added_scripts:
             unifier = Unifier(added_script_package)
-            yml_path, code = unifier.get_script_package_data()
+            yml_path, code = unifier.get_script_or_integration_package_data()
             add_new_object_to_id_set(get_script_or_integration_id(yml_path),
                                      get_script_data(yml_path, script_code=code), script_set)
             print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))
@@ -1005,7 +1005,7 @@ def update_id_set():
     if modified_scripts:
         for modified_script_package in added_scripts:
             unifier = Unifier(modified_script_package)
-            yml_path, code = unifier.get_script_package_data()
+            yml_path, code = unifier.get_script_or_integration_package_data()
             update_object_in_id_set(get_script_or_integration_id(yml_path),
                                     get_script_data(yml_path, script_code=code), yml_path, script_set)
             print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))

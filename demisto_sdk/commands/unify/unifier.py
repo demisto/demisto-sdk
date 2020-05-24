@@ -203,10 +203,6 @@ class Unifier:
         :return: path to found code file
         :rtype: str
         """
-
-        ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
-                        r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py'
-                        r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
         if self.package_path.endswith('/'):
             self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
         if self.package_path.endswith('Scripts/CommonServerPython'):
@@ -216,12 +212,10 @@ class Unifier:
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
-        yml_name = os.path.basename(self.yml_path).split('.')[0]
+        yml_name = os.path.splitext(self.yml_path)[0]
+        script_path = os.path.join(self.package_path, f'{yml_name}.{script_type}')
 
-        script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(os.path.join(self.package_path, f'{yml_name}' + script_type))))
-
-        if not script_path:
+        if not script_path or not os.path.isfile(script_path):
             raise Exception(f"The code file name does not match the name of the yml file in the package "
                             f"{self.package_path}")
 

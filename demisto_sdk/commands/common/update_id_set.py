@@ -160,9 +160,12 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     return unifier.check_api_module_imports(integration_script_code)[1]
 
 
-def get_integration_data(file_path, is_unified_integration):
+def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
+
+    is_unified_integration = data_dictionary.get('script', {}).get('script', '') != '-'
+
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
 
@@ -412,7 +415,7 @@ def process_integration(file_path: str, print_logs: bool) -> list:
         if checked_type(file_path, (INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, PACKS_INTEGRATION_REGEX)):
             if print_logs:
                 print("adding {} to id_set".format(file_path))
-            res.append(get_integration_data(file_path, is_unified_integration=True))
+            res.append(get_integration_data(file_path))
     else:
         # package integration
         package_name = os.path.basename(file_path)
@@ -421,7 +424,7 @@ def process_integration(file_path: str, print_logs: bool) -> list:
             # locally, might have leftover dirs without committed files
             if print_logs:
                 print("adding {} to id_set".format(file_path))
-            res.append(get_integration_data(file_path, is_unified_integration=False))
+            res.append(get_integration_data(file_path))
 
     return res
 

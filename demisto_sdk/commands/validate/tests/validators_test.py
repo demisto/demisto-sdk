@@ -6,8 +6,8 @@ from typing import Any, Type
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH, DIR_LIST
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
@@ -115,7 +115,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_valid_version(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[BaseValidator]) -> None
+        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -155,7 +155,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[BaseValidator]) -> None
+        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -180,7 +180,7 @@ class TestValidators:
                              INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
     def test_is_release_notes_exists(self, source_dummy, target_dummy,
                                      source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[BaseValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -230,7 +230,7 @@ class TestValidators:
                              'validator, answer', test_package)
     def test_valid_release_notes_structure(self, source_dummy, target_dummy,
                                            source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[BaseValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -256,7 +256,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
     def test_is_id_equals_name(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[BaseValidator]) -> None
+        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(str(source), target)
             structure = StructureValidator(str(source))
@@ -503,6 +503,20 @@ class TestValidators:
         assert file_validator._is_valid
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
+
+    def test_get_error_ignore_list(self, mocker):
+        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path',
+                            return_value='demisto_sdk/tests/test_files/fake_pack/.pack-ignore')
+        file_validator = FilesValidator()
+        ignore_errors_list = file_validator.get_error_ignore_list("fake")
+        assert ignore_errors_list == ['IN100', 'IN101']
+
+    def test_create_ignored_errors_list(self, mocker):
+        file_validator = FilesValidator()
+        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+                           "WD", "RP", "BA100", "BC100", "ST"]
+        ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
+        assert ignored_list == ["BA101", "BA102", "BC101", "BC102", "BC103", "BC104"]
 
 
 def test_is_py_or_yml():

@@ -4,8 +4,10 @@ from datetime import datetime, timedelta
 from pkg_resources import parse_version
 
 import requests
-from demisto_sdk.commands.common.tools import (get_yaml, print_error,
-                                               print_warning)
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.tools import get_yaml, print_warning
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()
@@ -21,9 +23,10 @@ TIMEOUT = 10
 DEFAULT_REGISTRY = 'registry-1.docker.io'
 
 
-class DockerImageValidator(object):
+class DockerImageValidator(BaseValidator):
 
-    def __init__(self, yml_file_path, is_modified_file, is_integration):
+    def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
@@ -31,10 +34,9 @@ class DockerImageValidator(object):
         self.yml_file = get_yaml(yml_file_path)
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get('fromversion', '0')
-        self.docker_image_name, self.docker_image_tag = DockerImageValidator.parse_docker_image(self.yml_docker_image)
+        self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
-        self.docker_image_latest_tag = DockerImageValidator.get_docker_image_latest_tag(self.docker_image_name,
-                                                                                        self.yml_docker_image)
+        self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image)
 
     def is_docker_image_valid(self):
         if not self.docker_image_latest_tag:
@@ -46,14 +48,20 @@ class DockerImageValidator(object):
     def is_docker_image_latest_tag(self):
         if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
             # the docker image is the default one
-            self.is_latest_tag = False
-            print_error('The current docker image in the yml file is the default one: demisto/python:1.3-alpine,\n'
-                        'Please create or use another docker image\n')
+            error_message, error_code = Errors.default_docker_error()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_latest_tag = False
+
+            return self.is_latest_tag
+
+        # ignore tag or non-demisto docker issues
+        if self.docker_image_latest_tag == "no-tag-required":
             return self.is_latest_tag
 
         if not self.docker_image_name or not self.docker_image_latest_tag:
             # If the docker image isn't in the format we expect it to be or we failed fetching the tag
             # We don't want to print any error msgs to user because they have already been printed
+            # see parse_docker_image for the errors
             self.is_latest_tag = False
             return self.is_latest_tag
 
@@ -68,11 +76,9 @@ class DockerImageValidator(object):
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
-            self.is_latest_tag = False
-            print_error('"latest" tag is not allowed,\n'
-                        'Please create or update to an updated versioned image\n'
-                        'You can check for the most updated version of {} here: https://hub.docker.com/r/{}/tags\n'
-                        .format(self.docker_image_tag, self.docker_image_name))
+            error_message, error_code = Errors.latest_docker_error(self.docker_image_tag, self.docker_image_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_latest_tag = False
 
         return self.is_latest_tag
 
@@ -188,8 +194,7 @@ class DockerImageValidator(object):
                 latest_tag_name = tag.get('name')
         return latest_tag_name
 
-    @staticmethod
-    def get_docker_image_latest_tag(docker_image_name, yml_docker_image):
+    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image):
         """Returns the docker image latest tag of the given docker image
 
         Args:
@@ -201,11 +206,14 @@ class DockerImageValidator(object):
         """
         if yml_docker_image:
             if yml_docker_image.startswith('devdemisto/'):
-                print_warning('docker image must be a demisto docker image. When the docker image is ready,'
-                              ' please rename it to: demisto/<image>:<tag>')
+                error_message, error_code = Errors.not_demisto_docker()
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+
             elif not yml_docker_image.startswith('demisto/'):
-                print_error('docker image must be a demisto docker image. e.g: demisto/<image>:<tag>')
-                return ''
+                error_message, error_code = Errors.not_demisto_docker()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return ''
+                return "no-tag-required"
         try:
             tag = ''
             auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
@@ -243,12 +251,13 @@ class DockerImageValidator(object):
         except (requests.exceptions.RequestException, Exception):
             if not docker_image_name:
                 docker_image_name = yml_docker_image
-            print_error('Failed getting tag for: {}. Please check it exists and of demisto format.'
-                        .format(docker_image_name))
-            return ''
+            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return ''
 
-    @staticmethod
-    def parse_docker_image(docker_image):
+            return "no-tag-required"
+
+    def parse_docker_image(self, docker_image):
         """Verify that the docker image is of demisto format & parse the name and tag
 
         Args:
@@ -269,11 +278,12 @@ class DockerImageValidator(object):
                     image = image_split[0]
                     tag = image_split[1]
                 else:
-                    print_error('The docker image in your integration/script does not have a tag, please attach the '
-                                'latest tag')
+                    error_message, error_code = Errors.no_docker_tag(docker_image)
+                    self.handle_error(error_message, error_code, file_path=self.file_path)
+
             except IndexError:
-                print_error('The docker image: {} is not of format - demisto/image_name'
-                            .format(docker_image))
+                error_message, error_code = Errors.docker_not_formatted_correctly(docker_image)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
 
             return image, tag
         else:

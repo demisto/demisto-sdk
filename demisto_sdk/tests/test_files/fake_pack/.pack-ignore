@@ -1,0 +1,2 @@
+[demisto-sdk]
+ignore = IN100,IN101

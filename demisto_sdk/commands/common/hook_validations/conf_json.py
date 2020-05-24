@@ -1,9 +1,12 @@
 import json
 
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.constants import CONF_PATH
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 
 
-class ConfJsonValidator:
+class ConfJsonValidator(BaseValidator):
     """ConfJsonValidator has been designed to make sure we are following the standards for the conf.json file.
 
     Attributes:
@@ -12,7 +15,8 @@ class ConfJsonValidator:
     """
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self):
+    def __init__(self, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self._is_valid = True
         self.conf_data = self.load_conf_file()
 
@@ -44,8 +48,9 @@ class ConfJsonValidator:
                 problematic_instances.append(instance)
 
         if problematic_instances:
-            self._is_valid = False
-            print("Those instances don't have description:\n{}".format('\n'.join(problematic_instances)))
+            error_message, error_code = Errors.description_missing_from_conf_json(problematic_instances)
+            if self.handle_error(error_message, error_code, file_path=CONF_PATH):
+                self._is_valid = False
 
         return self._is_valid
 
@@ -64,5 +69,7 @@ class ConfJsonValidator:
             if file_id == playbook_id:
                 return True
 
-        print_error("You've failed to add the {} to conf.json".format(file_id))
-        return False
+        error_message, error_code = Errors.test_not_in_conf_json(file_id)
+        if self.handle_error(error_message, error_code, file_path=CONF_PATH):
+            return False
+        return True

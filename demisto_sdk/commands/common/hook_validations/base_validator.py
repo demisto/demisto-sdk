@@ -4,9 +4,7 @@ import click
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False):
-        if ignored_errors is None:
-            ignored_errors = []
-        self.ignored_errors = ignored_errors
+        self.ignored_errors = ignored_errors if ignored_errors else []
         self.print_as_warnings = print_as_warnings
 
     def should_ignore_error(self, error_code):
@@ -28,6 +26,7 @@ class BaseValidator:
         Args:
             suggested_fix(str): A suggested fix
             error_massage(str): The error message
+            file_path(str): The file from which the error occurred
             error_code(str): The error code
             should_print(bool): whether the command should be printed
 

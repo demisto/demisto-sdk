@@ -254,7 +254,6 @@ def unify(**kwargs):
     help='Print ignored errors as warnings.')
 @pass_config
 def validate(config, **kwargs):
-    print("WOOOOOOOOW")
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs['path'] or kwargs['input']

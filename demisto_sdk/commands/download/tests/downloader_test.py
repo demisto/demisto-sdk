@@ -125,10 +125,11 @@ class Environment:
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration',
                                                   'path': self.CUSTOM_CONTENT_INTEGRATION_PATH,
-                                                  'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml'}
+                                                  'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml',
+                                                  'code_lang': 'python'}
         self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
                                              'path': self.CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
-                                             'type': 'script', 'file_ending': 'yml'}
+                                             'type': 'script', 'file_ending': 'yml', 'code_lang': 'python'}
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'DummyPlaybook',
                                                'name': 'DummyPlaybook',
                                                'path': self.CUSTOM_CONTENT_PLAYBOOK_PATH, 'entity': 'Playbooks',

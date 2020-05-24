@@ -66,7 +66,6 @@ class TestValidators:
         print("Setups class")
         for dir_to_create in DIR_LIST:
             if not os.path.exists(dir_to_create):
-                print(dir_to_create)
                 cls.CREATED_DIRS.append(dir_to_create)
                 os.makedirs(dir_to_create)
         copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)

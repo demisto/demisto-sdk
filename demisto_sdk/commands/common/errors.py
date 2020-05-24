@@ -83,6 +83,7 @@ ERROR_CODE = {
     "release_notes_file_empty": "RN104",
     "multiple_release_notes_files": "RN105",
     "missing_release_notes_for_pack": "RN106",
+    "missing_release_notes_entry": "RN107",
     "playbook_cant_have_rolename": "PB100",
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
@@ -552,6 +553,12 @@ class Errors:
         return f"Release notes were not found for. Please run `demisto-sdk " \
                f"update-release-notes -p {pack} -u (major|minor|revision)` to " \
                f"generate release notes according to the new standard."
+
+    @staticmethod
+    @error_code_decorator
+    def missing_release_notes_entry(file_type, pack_name):
+        return f"No release note entry was found for a {file_type.lower()} in the {pack_name} pack. " \
+               f"Please rerun the update-release-notes command without -u to generate an updated template."
 
     @staticmethod
     @error_code_decorator

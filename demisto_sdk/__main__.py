@@ -254,6 +254,7 @@ def unify(**kwargs):
     help='Print ignored errors as warnings.')
 @pass_config
 def validate(config, **kwargs):
+    print("WOOOOOOOOW")
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs['path'] or kwargs['input']
@@ -777,7 +778,7 @@ def update_pack_releasenotes(**kwargs):
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
             update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
-                                      pre_release=pre_release)
+                                      pre_release=pre_release, added_files=added)
             update_pack_rn.execute_update()
     elif is_all and _pack:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -790,7 +791,7 @@ def update_pack_releasenotes(**kwargs):
                             f"-p {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
-                                          pre_release=pre_release)
+                                          pre_release=pre_release, added_files=added)
                 update_pack_rn.execute_update()
 
 

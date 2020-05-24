@@ -147,6 +147,20 @@ class Environment:
 
 
 class TestHelperMethods:
+    @pytest.mark.parametrize('code_lang, file_type, file_name, err_msg, output', [
+        ('javascript', 'integration', 'file name',
+         'Downloading of an integration written in JavaScript is not supported.', False),
+        ('javascript', 'script', 'file name', 'Downloading of a script written in JavaScript is not supported.', False),
+        ('python', 'integration', 'file name', '', True),
+    ])
+    def test_verify_code_lang(self, code_lang, file_type, file_name, err_msg, output):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.files_not_downloaded = []
+            assert downloader.verify_code_lang(code_lang, file_type, file_name) is output
+            if not output:
+                assert [file_name, err_msg] in downloader.files_not_downloaded
+
     @pytest.mark.parametrize('data, file_type, entity', [
         ({'name': 'test-pb'}, 'playbook', TEST_PLAYBOOKS_DIR),
         ({}, 'integration', INTEGRATIONS_DIR)
@@ -348,11 +362,13 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.files_not_downloaded = []
             downloader.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
             js_custom_content_object = {
                 'id': 'SumoLogic', 'name': 'SumoLogic',
                 'path': 'demisto_sdk/commands/download/tests/tests_data/integration-DummyJSIntegration.yml',
-                'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml', 'exist_in_pack': True
+                'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml', 'exist_in_pack': True,
+                'code_lang': 'javascript'
             }
             downloader.merge_and_extract_existing_file(js_custom_content_object)
 

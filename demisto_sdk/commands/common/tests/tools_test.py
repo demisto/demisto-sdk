@@ -8,12 +8,12 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
                                                    PACKS_PLAYBOOK_YML_REGEX,
                                                    PACKS_TEST_PLAYBOOKS_REGEX,
-                                                   PLAYBOOKS_DIR)
+                                                   PLAYBOOKS_DIR, SCRIPTS_DIR)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
-                                               find_type, get_depth,
-                                               get_dict_from_file,
+                                               find_type, get_code_lang,
+                                               get_depth, get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_files_in_dir,
@@ -107,6 +107,14 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
     def test_retrieve_file_ending(self, path, output):
         assert retrieve_file_ending(path) == output
+
+    @pytest.mark.parametrize('data, entity, output', [
+        ({'script': {'type': 'javascript'}}, INTEGRATIONS_DIR, 'javascript'),
+        ({'type': 'javascript'}, SCRIPTS_DIR, 'javascript'),
+        ({}, LAYOUTS_DIR, '')
+    ])
+    def test_get_code_lang(self, data, entity, output):
+        assert get_code_lang(data, entity) == output
 
 
 class TestGetRemoteFile:

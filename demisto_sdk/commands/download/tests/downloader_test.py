@@ -339,6 +339,31 @@ class TestPackHierarchy:
 
 
 class TestMergeExistingFile:
+    def test_merge_and_extract_existing_file_corrupted_dir(self, tmp_path, mocker):
+        """
+        Given
+            - The integration exist in output pack, the directory is corrupted
+            (i.e. a file is missing, for example: the image file)
+
+        When
+            - An integration about to be downloaded
+
+        Then
+            - Ensure integration is downloaded successfully
+        """
+        env = Environment(tmp_path)
+        mocker.patch.object(Downloader, 'get_corresponding_pack_file_object', return_value={})
+        downloader = Downloader('', '')
+        ryaml = YAML()
+        ryaml.preserve_quotes = True
+        downloader.log_verbose = False
+        downloader.pack_content = env.PACK_CONTENT
+        downloader.run_format = False
+        downloader.num_merged_files = 0
+        downloader.num_added_files = 0
+        downloader.log_verbose = False
+        downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
+
     def test_merge_and_extract_existing_file(self, tmp_path):
         env = Environment(tmp_path)
 

@@ -5,8 +5,9 @@ from typing import Any, Type
 
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
@@ -19,8 +20,6 @@ from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
@@ -116,7 +115,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_valid_version(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[BaseValidator]) -> None
+        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -156,7 +155,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[BaseValidator]) -> None
+        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -181,7 +180,7 @@ class TestValidators:
                              INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
     def test_is_release_notes_exists(self, source_dummy, target_dummy,
                                      source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[BaseValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -231,7 +230,7 @@ class TestValidators:
                              'validator, answer', test_package)
     def test_valid_release_notes_structure(self, source_dummy, target_dummy,
                                            source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[BaseValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -257,7 +256,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
     def test_is_id_equals_name(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[BaseValidator]) -> None
+        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(str(source), target)
             structure = StructureValidator(str(source))
@@ -414,6 +413,14 @@ class TestValidators:
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATH)
     def test_script_valid_rn(self, mocker, file_path, file_type):
+        """
+            Given:
+                - A valid script path
+            When:
+                - checking validity of added files
+            Then:
+                - return a True validation response
+        """
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         self.mock_unifier()
         file_validator = FilesValidator(skip_conf_json=True)
@@ -444,6 +451,16 @@ class TestValidators:
 
     @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
     def test_verify_no_dup_rn(self, added_files: set, expected: bool):
+        """
+            Given:
+                - A list of added files
+            When:
+                - verifying there are no other new release notes.
+            Then:
+                - return a validation response
+            Case 1: Release notes in different packs.
+            Case 2: Release notes where one is in the same pack
+        """
         file_validator = FilesValidator(skip_conf_json=True)
         file_validator.verify_no_dup_rn(added_files)
         assert file_validator._is_valid is expected
@@ -486,14 +503,51 @@ class TestValidators:
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
 
+    def test_get_error_ignore_list(self, mocker):
+        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path',
+                            return_value='demisto_sdk/tests/test_files/fake_pack/.pack-ignore')
+        file_validator = FilesValidator()
+        ignore_errors_list = file_validator.get_error_ignore_list("fake")
+        assert ignore_errors_list == ['IN100', 'IN101']
 
-class RNValidatorTest:
-    INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
-        ('Valid Release Notes', ReleaseNotesValidator, True),
-        ('%%UPDATE_RN%%', ReleaseNotesValidator, False),
-    ]
+    def test_create_ignored_errors_list(self, mocker):
+        file_validator = FilesValidator()
+        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+                           "WD", "RP", "BA100", "BC100", "ST"]
+        ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
+        assert ignored_list == ["BA101", "BA102", "BC101", "BC102", "BC103", "BC104"]
 
-    @pytest.mark.parametrize('release_notes, validator, answer', INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
-    def test_has_release_notes_been_filled_out(self, release_notes, validator, answer):
-        # type: (str, Type[BaseValidator], Any) -> None
-        assert validator.has_release_notes_been_filled_out(release_notes) is answer
+
+def test_is_py_or_yml():
+    """
+        Given:
+            - A file path which contains a python script
+        When:
+            - verifying the yml is valid
+        Then:
+            - return a False validation response
+    """
+    files_path = os.path.normpath(
+        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    test_file = os.path.join(files_path, 'CortexXDR',
+                             'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
+    file_validator = FilesValidator()
+    res = file_validator._is_py_script_or_integration(test_file)
+    assert res is False
+
+
+def test_is_py_or_yml_invalid():
+    """
+        Given:
+            - A file path which contains a python script in a legacy yml schema
+        When:
+            - verifying the yml is valid
+        Then:
+            - return a False validation response
+    """
+    files_path = os.path.normpath(
+        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    test_file = os.path.join(files_path, 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
+    file_validator = FilesValidator()
+    res = file_validator._is_py_script_or_integration(test_file)
+    assert res is False

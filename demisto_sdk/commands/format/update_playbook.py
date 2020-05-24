@@ -19,20 +19,16 @@ class PlaybookYMLFormat(BaseUpdateYML):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
         print('Adding empty descriptions to relevant tasks')
-        if 'description' not in self.data:
-            self.data['description'] = ''
-
         for task_id, task in self.data.get('tasks', {}).items():
-            if task['task'].get('description'):
-                continue  # In case we already have a description we should skip the setting of an empty value
-
-            task['task'].update({'description': ''})
+            if not task['task'].get('description') and task['type'] in ['title', 'start', 'playbook']:
+                task['task'].update({'description': ''})
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""

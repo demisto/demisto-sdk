@@ -106,35 +106,43 @@ def get_integration_commands(file_path):
     return cmd_list
 
 
-def get_task_ids_from_playbook(param_to_enrich_by, data_dict):
+def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict) -> tuple:
     implementing_ids = set()
+    implementing_ids_skippable = set()
     tasks = data_dict.get('tasks', {})
 
     for task in tasks.values():
         task_details = task.get('task', {})
 
         enriched_id = task_details.get(param_to_enrich_by)
+        skippable = task_details.get('skipunavailable', False)
         if enriched_id:
             implementing_ids.add(enriched_id)
+            if skippable:
+                implementing_ids_skippable.add(enriched_id)
 
-    return list(implementing_ids)
+    return list(implementing_ids), list(implementing_ids_skippable)
 
 
-def get_commmands_from_playbook(data_dict):
+def get_commmands_from_playbook(data_dict: dict) -> tuple:
     command_to_integration = {}
+    command_to_integration_skippable = set()
     tasks = data_dict.get('tasks', [])
 
     for task in tasks.values():
         task_details = task.get('task', {})
 
         command = task_details.get('script')
+        skippable = task_details.get('skipunavailable', False)
         if command:
             splitted_cmd = command.split('|')
 
             if 'Builtin' not in command:
                 command_to_integration[splitted_cmd[-1]] = splitted_cmd[0]
+                if skippable:
+                    command_to_integration_skippable.add(splitted_cmd[-1])
 
-    return command_to_integration
+    return command_to_integration, list(command_to_integration_skippable)
 
 
 def get_integration_data(file_path):
@@ -175,7 +183,7 @@ def get_integration_data(file_path):
     return {id_: integration_data}
 
 
-def get_playbook_data(file_path):
+def get_playbook_data(file_path: str) -> dict:
     playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
     id_ = data_dictionary.get('id', '-')
@@ -185,9 +193,12 @@ def get_playbook_data(file_path):
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
-    implementing_scripts = get_task_ids_from_playbook('scriptName', data_dictionary)
-    implementing_playbooks = get_task_ids_from_playbook('playbookName', data_dictionary)
-    command_to_integration = get_commmands_from_playbook(data_dictionary)
+    implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook('scriptName', data_dictionary)
+    implementing_playbooks, implementing_playbooks_skippable = get_task_ids_from_playbook('playbookName',
+                                                                                          data_dictionary)
+    command_to_integration, command_to_integration_skippable = get_commmands_from_playbook(data_dictionary)
+    skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
+                       command_to_integration_skippable)
     pack = get_pack_name(file_path)
 
     playbook_data['name'] = name
@@ -196,6 +207,7 @@ def get_playbook_data(file_path):
         playbook_data['toversion'] = toversion
     if fromversion:
         playbook_data['fromversion'] = fromversion
+
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
     if implementing_playbooks:
@@ -208,6 +220,8 @@ def get_playbook_data(file_path):
         playbook_data['deprecated'] = deprecated
     if pack:
         playbook_data['pack'] = pack
+    if skippable_tasks:
+        playbook_data['skippable_tasks'] = skippable_tasks
 
     return {id_: playbook_data}
 
@@ -645,7 +659,7 @@ def get_general_paths(path):
     return files
 
 
-def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, print_logs=True):  # noqa: C901
+def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None, print_logs: bool = True):  # noqa: C901
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                              'Dashboards', 'IncidentFields', 'IndicatorFields', 'IndicatorTypes',

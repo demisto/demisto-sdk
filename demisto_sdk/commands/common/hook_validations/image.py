@@ -5,11 +5,13 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
     INTEGRATION_REGXES, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     YML_INTEGRATION_REGEXES)
-from demisto_sdk.commands.common.tools import (checked_type, get_yaml, os,
-                                               print_error, re)
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.tools import checked_type, get_yaml, os, re
 
 
-class ImageValidator:
+class ImageValidator(BaseValidator):
     """ImageValidator was designed to make sure we use images within the permitted limits.
 
     Attributes:
@@ -18,7 +20,8 @@ class ImageValidator:
     """
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self._is_valid = True
 
         if checked_type(file_path, INTEGRATION_REGXES) or re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
@@ -28,10 +31,11 @@ class ImageValidator:
                 try:
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
-                    self._is_valid = False
+                    error_message, error_code = Errors.no_image_given()
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self._is_valid = False
+
                     self.file_path = ''
-                    print_error("You've created/modified a package but failed to provide an image as a .png file, "
-                                "please add an image in order to proceed.")
 
     def is_valid(self):
         """Validate that the image exists and that it is in the permitted size limits."""
@@ -51,8 +55,9 @@ class ImageValidator:
         """Check if the image if over sized, bigger than IMAGE_MAX_SIZE"""
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             if os.path.getsize(self.file_path) > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                print_error("{} has too large logo, please update the logo to be under 10kB".format(self.file_path))
-                self._is_valid = False
+                error_message, error_code = Errors.image_too_large()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
 
         else:
             data_dictionary = get_yaml(self.file_path)
@@ -63,8 +68,9 @@ class ImageValidator:
             image = data_dictionary.get('image', '')
 
             if ((len(image) - 22) / 4.0) * 3 > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                print_error("{} has too large logo, please update the logo to be under 10kB".format(self.file_path))
-                self._is_valid = False
+                error_message, error_code = Errors.image_too_large()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
 
     def is_existing_image(self):
         """Check if the integration has an image."""
@@ -84,16 +90,16 @@ class ImageValidator:
             if image_path:
                 is_image_in_package = True
         if is_image_in_package and is_image_in_yml:
-            print_error(
-                "The file {} has image in both yml and package, remove the 'image' key from the yml file".format(
-                    self.file_path))
-            self._is_valid = False
-            return False
+            error_message, error_code = Errors.image_in_package_and_yml()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
 
         if not (is_image_in_package or is_image_in_yml):
-            print_error("You have failed to add an image in the yml/package for {}".format(self.file_path))
-            self._is_valid = False
-            return False
+            error_message, error_code = Errors.no_image_given()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
 
         return True
 
@@ -101,22 +107,25 @@ class ImageValidator:
         data_dictionary = get_yaml(self.file_path)
 
         if not data_dictionary:
-            print_error("{} isn't an image file or unified integration file.".format(self.file_path))
-            self._is_valid = False
+            error_message, error_code = Errors.not_an_image_file()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
 
         image = data_dictionary.get('image', '')
 
         if not image:
-            print_error("{} is a yml file but has no image field.".format(self.file_path))
-            self._is_valid = False
+            error_message, error_code = Errors.no_image_field_in_yml()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
 
         image_data = image.split('base64,')
         if image_data and len(image_data) == 2:
             return image_data[1]
 
         else:
-            print_error("{}'s image field isn't in base64 encoding.".format(self.file_path))
-            self._is_valid = False
+            error_message, error_code = Errors.image_field_not_in_base64()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
 
     def load_image(self):
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
@@ -136,8 +145,8 @@ class ImageValidator:
         image = self.load_image()
 
         if image in [DEFAULT_IMAGE_BASE64, DEFAULT_DBOT_IMAGE_BASE64]:  # disable-secrets-detection
-            print_error("{} is the default image, please change to the "
-                        "integration image.".format(self.file_path))
-            self._is_valid = False
-            return False
+            error_message, error_code = Errors.default_image_error()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
         return True

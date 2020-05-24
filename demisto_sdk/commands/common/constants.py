@@ -1,242 +1,5 @@
 import re
-from typing import Any, List
-
-
-class Errors:
-    BACKWARDS = "Possible backwards compatibility break"
-
-    @staticmethod
-    def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
-        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
-
-    @staticmethod
-    def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
-            .format(file_path, given_fromversion, needed_from_version)
-
-    @staticmethod
-    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
-        return (f'{file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
-                f' Found version: {given_fromversion}')
-
-    @staticmethod
-    def not_used_display_name(file_path, field_name):
-        return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
-            field_name, file_path)
-
-    @staticmethod
-    def empty_display_configuration(file_path, field_name):
-        return "No display details were entered for the field {} in the file {}.".format(field_name, file_path)
-
-    @staticmethod
-    def no_yml_file(file_path):
-        return "No yml files were found in {} directory.".format(file_path)
-
-    @staticmethod
-    def wrong_filename(filepath, file_type):
-        return '{} is not a valid {} filename.'.format(filepath, file_type)
-
-    @staticmethod
-    def wrong_path(filepath):
-        return "{} is not a valid filepath.".format(filepath)
-
-    @staticmethod
-    def wrong_version(file_path, expected="-1"):
-        return "{}: The version for our files should always be {}, please update the file.".format(file_path, expected)
-
-    @staticmethod
-    def wrong_version_reputations(file_path, object_id, version):
-        return "{} Reputation object with id {} must have version {}".format(file_path, object_id, version)
-
-    @staticmethod
-    def dbot_invalid_output(file_path, command_name, missing_outputs, context_standard):
-        return "{}: The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. " \
-               "Fix according to context standard {} ".format(file_path, command_name, missing_outputs,
-                                                              context_standard)
-
-    @staticmethod
-    def dbot_invalid_description(file_path, command_name, missing_descriptions, context_standard):
-        return "{}: The DBotScore description of the reputation command {} aren't valid. Missing: {}. " \
-               "Fix according to context standard {} " \
-            .format(file_path, command_name, missing_descriptions, context_standard)
-
-    @staticmethod
-    def missing_reputation(file_path, command_name, reputation_output, context_standard):
-        return "{}: The outputs of the reputation command {} aren't valid. The {} outputs is missing. " \
-               "Fix according to context standard {} " \
-            .format(file_path, command_name, reputation_output, context_standard)
-
-    @staticmethod
-    def wrong_subtype(file_name):
-        return "{}: The subtype for our yml files should be either python2 or python3, " \
-               "please update the file.".format(file_name)
-
-    @staticmethod
-    def beta_in_str(file_path, field):
-        return "{}: Field '{}' should NOT contain the substring \"beta\" in a new beta integration. " \
-               "please change the id in the file.".format(field, file_path)
-
-    @classmethod
-    def beta_in_id(cls, file_path):
-        return cls.beta_in_str(file_path, 'id')
-
-    @classmethod
-    def beta_in_name(cls, file_path):
-        return cls.beta_in_str(file_path, 'name')
-
-    @staticmethod
-    def duplicate_arg_in_file(script_path, arg, command_name=None):
-        err_msg = "{}: The argument '{}' is duplicated".format(script_path, arg)
-        if command_name:
-            err_msg += " in '{}'.".format(command_name)
-        err_msg += ", please remove one of its appearances."
-        return err_msg
-
-    @staticmethod
-    def duplicate_param(param_name, file_path):
-        return "{}: The parameter '{}' of the " \
-               "file is duplicated, please remove one of its appearances.".format(file_path, param_name)
-
-    @staticmethod
-    def added_required_fields(file_path, field):
-        return "You've added required fields in the file '{}', the field is '{}'".format(file_path, field)
-
-    @staticmethod
-    def from_version_modified_after_rename():
-        return "fromversion might have been modified, please make sure it hasn't changed."
-
-    @staticmethod
-    def from_version_modified(file_path):
-        return "{}: You've added fromversion to an existing file in the system, this is not allowed, please undo." \
-            .format(file_path)
-
-    @classmethod
-    def breaking_backwards_no_old_script(cls, e):
-        return "{}\n{}, Could not find the old file.".format(cls.BACKWARDS, str(e))
-
-    @classmethod
-    def breaking_backwards_subtype(cls, file_path):
-        return "{}: {}, You've changed the subtype, please undo.".format(file_path, cls.BACKWARDS)
-
-    @classmethod
-    def breaking_backwards_context(cls, file_path):
-        return "{}: {}, You've changed the context in the file," \
-               " please undo.".format(file_path, cls.BACKWARDS)
-
-    @classmethod
-    def breaking_backwards_command(cls, file_path, old_command):
-        return "{}: {}, You've changed the context in the file,please " \
-               "undo. the command is:\n{}".format(file_path, cls.BACKWARDS, old_command)
-
-    @classmethod
-    def breaking_backwards_arg_changed(cls, file_path):
-        return "{}: {}, You've changed the name of an arg in " \
-               "the file, please undo.".format(file_path, cls.BACKWARDS)
-
-    @classmethod
-    def breaking_backwards_command_arg_changed(cls, file_path, command):
-        return "{}: {}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(file_path, cls.BACKWARDS, command)
-
-    @staticmethod
-    def no_beta_in_display(file_path):
-        return "{} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
-               "but was not found in the file.".format(file_path)
-
-    @staticmethod
-    def id_might_changed():
-        return "ID might have changed, please make sure to check you have the correct one."
-
-    @staticmethod
-    def id_changed(file_path):
-        return "{}: You've changed the ID of the file, please undo.".format(file_path)
-
-    @staticmethod
-    def file_id_contains_slashes():
-        return "File's ID contains slashes - please remove."
-
-    @staticmethod
-    def missing_release_notes(file_path, rn_path):
-        return '{}:  is missing releaseNotes, Please add it under {}'.format(file_path, rn_path)
-
-    @staticmethod
-    def display_param(param_name, param_display):
-        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
-
-    @staticmethod
-    def wrong_file_extension(file_extension, accepted_extensions):
-        return "File extension {} is not valid. accepted {}".format(file_extension, accepted_extensions)
-
-    @staticmethod
-    def might_need_release_notes(file_path):
-        return "{}: You might need RN in file, please make sure to check that.".format(file_path)
-
-    @staticmethod
-    def unknown_file(file_path):
-        return "{}:  File type is unknown, check it out.".format(file_path)
-
-    @staticmethod
-    def wrong_default_argument(file_path, arg_name, command_name):
-        return "{}: The argument '{}' of the command '{}' is not configured as default" \
-            .format(file_path, arg_name, command_name)
-
-    @staticmethod
-    def wrong_display_name(param_name, param_display):
-        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
-
-    @staticmethod
-    def wrong_default_parameter(param_name):
-        return Errors.wrong_default_parameter_not_empty(param_name, "''")
-
-    @staticmethod
-    def wrong_default_parameter_not_empty(param_name, default_value):
-        return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
-
-    @staticmethod
-    def wrong_required_value(param_name):
-        return 'The required field of the {} parameter should be False'.format(param_name)
-
-    @staticmethod
-    def wrong_required_type(param_name):
-        return 'The type field of the {} parameter should be 8'.format(param_name)
-
-    @staticmethod
-    def beta_field_not_found(file_path):
-        return "{}: Beta integration yml file should have the field \"beta: true\", but was not found in the file." \
-            .format(file_path)
-
-    @staticmethod
-    def no_default_arg(file_path, command_name):
-        return "{}: Could not find default argument {} in command {}".format(file_path, command_name, command_name)
-
-    @staticmethod
-    def wrong_category(file_path, category):
-        return "{}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
-            .format(file_path, category, '\n'.join(INTEGRATION_CATEGORIES))
-
-    @staticmethod
-    def no_common_server_python(path):
-        return "Could not get CommonServerPythonScript.py file. Please download it manually from {} and " \
-               "add it to the root of the repository.".format(path)
-
-    @staticmethod
-    def invalid_file_path(file_path):
-        return f"Found incompatible file path: {file_path}."
-
-    @staticmethod
-    def invalid_v2_integration_name(file_path):
-        return f"The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
-               f"e.g: Kenna v2, Jira v2"
-
-    @staticmethod
-    def invalid_v2_script_name(file_path):
-        return f"The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
-               f" e.g: DBotTrainTextClassifierV2"
-
-    @staticmethod
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
-
+from typing import List
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
@@ -869,6 +632,8 @@ PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
+IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
+
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml'
 
 OLD_YML_FORMAT_FILE = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX]
@@ -1145,4 +910,13 @@ ALL_FILES_VALIDATION_IGNORE_WHITELIST = [
     'ipnetwork_test',
     'test-data',
     'testplaybook'
+]
+VALIDATED_PACK_ITEM_TYPES = [
+    'Playbooks',
+    'Integration',
+    'Script',
+    'IncidentFields',
+    'IncidentTypes',
+    'Classifiers',
+    'Layouts'
 ]

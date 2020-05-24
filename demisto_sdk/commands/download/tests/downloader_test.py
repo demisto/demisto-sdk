@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATIONS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR,
-    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+    BETA_INTEGRATIONS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR,
+    CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,
+    DELETED_YML_FIELDS_BY_DEMISTO, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
@@ -339,6 +339,23 @@ class TestPackHierarchy:
 
 
 class TestMergeExistingFile:
+    def test_merge_and_extract_existing_file_js(self, tmp_path):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            ryaml = YAML()
+            ryaml.preserve_quotes = True
+            downloader.log_verbose = False
+            downloader.num_merged_files = 0
+            downloader.num_added_files = 0
+            downloader.log_verbose = False
+            downloader.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
+            js_custom_content_object = {
+                'id': 'SumoLogic', 'name': 'SumoLogic',
+                'path': 'demisto_sdk/commands/download/tests/tests_data/integration-DummyJSIntegration.yml',
+                'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml', 'exist_in_pack': True
+            }
+            downloader.merge_and_extract_existing_file(js_custom_content_object)
+
     def test_merge_and_extract_existing_file(self, tmp_path):
         env = Environment(tmp_path)
 

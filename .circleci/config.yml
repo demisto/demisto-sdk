@@ -52,6 +52,7 @@ jobs:
               ./Tests/scripts/validate.sh
         - run:
             name: Test create ID set
+            when: always
             command: |
               . .tox/py37/bin/activate
 
@@ -64,6 +65,7 @@ jobs:
               demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
             name: test create content artifacts
+            when: always
             command: |
               . .tox/py37/bin/activate
 

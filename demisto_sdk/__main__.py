@@ -290,6 +290,9 @@ def validate(config, **kwargs):
 @click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
+@click.option(
+    '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
+)
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
     return content_creator.run()

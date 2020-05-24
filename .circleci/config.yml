@@ -37,12 +37,24 @@ jobs:
               pip install coveralls
               coveralls
         - run:
-            name: Test create ID set
-            when: always
+            name: Test validate files and yaml
             command: |
               . .tox/py37/bin/activate
               git clone https://github.com/demisto/content.git
               cd content
+              git config diff.renameLimit 5000
+
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
+                demisto-sdk validate -i Packs/Gmail
+                exit 0
+              fi
+
+              ./Tests/scripts/validate.sh
+        - run:
+            name: Test create ID set
+            when: always
+            command: |
+              . .tox/py37/bin/activate
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                   echo "Skipping creating ID set on non master branch"
                   exit 0

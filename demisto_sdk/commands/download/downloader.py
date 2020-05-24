@@ -478,7 +478,11 @@ class Downloader:
             searched_basename: str = self.get_searched_basename(file_name, ex_file_ending, ex_file_detail)
             corresponding_pack_file_object: dict = self.get_corresponding_pack_file_object(searched_basename,
                                                                                            corresponding_pack_object)
-            corresponding_pack_file_path: str = corresponding_pack_file_object['path']
+            if not corresponding_pack_file_object:
+                corresponding_pack_file_path: str = os.path.join(self.output_pack_path, file_entity,
+                                                                 self.create_dir_name(file_name), searched_basename)
+            else:
+                corresponding_pack_file_path = corresponding_pack_file_object['path']
             # We use "smart" merge only for yml files (py, png  & md files to be moved regularly)
             if ex_file_ending == 'yml':
                 # adding the deleted fields (by Demisto) of the old yml/json file to the custom content file.
@@ -488,7 +492,7 @@ class Downloader:
             except shutil.Error as e:
                 print_color(e, LOG_COLORS.RED)
                 raise
-            self.format_file(corresponding_pack_file_path, corresponding_pack_file_object['file_ending'])
+            self.format_file(corresponding_pack_file_path, ex_file_ending)
 
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -640,13 +644,15 @@ class Downloader:
             ryaml.preserve_quotes = True  # type: ignore
             with open(file_path_to_write, 'r') as yf:
                 file_yaml_object = ryaml.load(yf)
-            merge(file_yaml_object, preserved_data)
+            if pack_obj_data:
+                merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
                 ryaml.dump(file_yaml_object, yf)
 
         elif file_ending == 'json':
             file_data: dict = get_json(file_path_to_write)
-            merge(file_data, preserved_data)
+            if pack_obj_data:
+                merge(file_data, preserved_data)
             json_depth: int = get_depth(file_data)
             with open(file_path_to_write, 'w') as jf:
                 json.dump(obj=file_data, fp=jf, indent=json_depth)

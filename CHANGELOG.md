@@ -1,4 +1,5 @@
 # Changelog
+* Fixed a bug where a javascript integration/script was downloaded using **download** command.
 
 #### 1.0.9
 * Fixed a bug where misleading error was presented when pack name was not found.

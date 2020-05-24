@@ -290,6 +290,10 @@ def validate(config, **kwargs):
 @click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
+@click.option(
+    '--packs', is_flag=True,
+    help='If passed, will create only content_packs.zip'
+)
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
     return content_creator.run()
@@ -773,7 +777,7 @@ def update_pack_releasenotes(**kwargs):
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
             update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
-                                      pre_release=pre_release)
+                                      pre_release=pre_release, added_files=added)
             update_pack_rn.execute_update()
     elif is_all and _pack:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -786,7 +790,7 @@ def update_pack_releasenotes(**kwargs):
                             f"-p {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
-                                          pre_release=pre_release)
+                                          pre_release=pre_release, added_files=added)
                 update_pack_rn.execute_update()
 
 

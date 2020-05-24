@@ -1,6 +1,10 @@
 # Changelog
 
-
+#### 1.0.9
+* Fixed a bug where misleading error was presented when pack name was not found.
+* **Update-release-notes** now detects added files for packs with versions.
+* Readme files are now ignored by **update-release-notes** and validation of release notes.
+* Empty release notes no longer cause an uncaught error during validation.
 
 #### 1.0.8
 * Changed the output format of demisto-sdk secrets.

@@ -256,8 +256,8 @@ class TestIntegration(unittest.TestCase):
         non_unified_file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml'
         unified_file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/integration-DummyIntegration.yml'
 
-        non_unified_integration_data = get_integration_data(non_unified_file_path, is_unified_integration=False)
-        unified_integration_data = get_integration_data(unified_file_path, is_unified_integration=True)
+        non_unified_integration_data = get_integration_data(non_unified_file_path)
+        unified_integration_data = get_integration_data(unified_file_path)
 
         self.assertDictEqual(non_unified_integration_data, INTEGRATION_DATA)
         self.assertDictEqual(unified_integration_data, UNIFIED_INTEGRATION_DATA)

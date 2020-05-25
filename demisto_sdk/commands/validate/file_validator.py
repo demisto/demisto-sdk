@@ -299,13 +299,14 @@ class FilesValidator:
         if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
-    def validate_modified_files(self, modified_files):  # noqa: C901
+    def validate_modified_files(self, modified_files, tag='master'):  # noqa: C901
         """Validate the modified files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
 
         Args:
             modified_files (set): A set of the modified files in the current branch.
+            tag (str): The reference point to the branch with which we are comparing the modified files.
         """
         changed_packs = self.get_packs(modified_files)
         for file_path in modified_files:
@@ -337,7 +338,7 @@ class FilesValidator:
 
             structure_validator = StructureValidator(file_path, old_file_path=old_file_path,
                                                      ignored_errors=ignored_errors_list,
-                                                     print_as_warnings=self.print_ignored_errors)
+                                                     print_as_warnings=self.print_ignored_errors, tag=tag)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
 
@@ -887,7 +888,7 @@ class FilesValidator:
         print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
         modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
         prev_self_valid = self._is_valid
-        self.validate_modified_files(modified_files)
+        self.validate_modified_files(modified_files, tag=self.prev_ver)
         if no_error:
             self._is_valid = prev_self_valid
 

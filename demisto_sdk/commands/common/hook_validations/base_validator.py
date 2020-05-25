@@ -48,7 +48,7 @@ class BaseValidator:
 
         if self.should_ignore_error(error_code, self.ignored_errors.get('pack')) or \
                 self.should_ignore_error(error_code, self.ignored_errors.get(file_name)):
-            if should_print and self.print_as_warnings:
+            if self.print_as_warnings:
                 click.secho(formatted_error, fg="yellow")
             return None
 

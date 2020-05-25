@@ -700,7 +700,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_file_bad_format(file_name):
-        return f'Detected none valid regex in {file_name} file'
+        return f'Detected invalid {file_name} file'
 
     @staticmethod
     @error_code_decorator

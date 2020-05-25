@@ -309,9 +309,11 @@ class FilesValidator:
         """
         _modified_files = set()
         for mod_file in modified_files:
+            if isinstance(mod_file, tuple):
+                continue
             if not any(non_permitted_type in mod_file.lower() for non_permitted_type in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
                 if 'ReleaseNotes' not in mod_file.lower():
-                    modified_files.add(mod_file)
+                    _modified_files.add(mod_file)
         changed_packs = self.get_packs(_modified_files)
         for file_path in modified_files:
             old_file_path = None

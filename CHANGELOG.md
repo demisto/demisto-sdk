@@ -1,8 +1,8 @@
-# Changelog
+ע# Changelog
 
 #### 1.0.10
 * Added error codes to all ***validate*** errors.
-* You can now ignore errors iin ***validate*** using a pack's `pack-ignore` file.
+* You can now ignore ***validate*** errors using a pack's `pack-ignore` file.
 
 #### 1.0.9
 * Fixed a bug where misleading error was presented when pack name was not found.

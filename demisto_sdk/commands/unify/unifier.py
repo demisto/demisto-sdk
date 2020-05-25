@@ -219,9 +219,6 @@ class Unifier:
             raise Exception(f"The code file name does not match the name of the yml file in the package "
                             f"{self.package_path}")
 
-        else:
-            script_path = script_path[0]
-
         return script_path
 
     def insert_script_to_yml(self, script_type, yml_unified, yml_data):

@@ -952,21 +952,17 @@ class FilesValidator:
             pack_ignore_path = self.get_pack_ignore_file_path(pack_name)
 
             if os.path.isfile(pack_ignore_path):
-                config = ConfigParser(allow_no_value=True)
-                config.read(pack_ignore_path)
-
-                # create pack ignored errors list
                 try:
+                    config = ConfigParser(allow_no_value=True)
+                    config.read(pack_ignore_path)
+
+                    # create pack ignored errors list
                     if 'demisto-sdk' in config:
                         ignored_errors_list['pack'] = []
                         for key in config['demisto-sdk']:
                             self.add_ignored_errors_to_list(config, 'demisto-sdk', key, ignored_errors_list['pack'])
 
-                except MissingSectionHeaderError:
-                    pass
-
-                # create file specific ignored errors list
-                try:
+                    # create file specific ignored errors list
                     for section in config.sections():
                         if section.startswith("file:"):
                             file_name = section[5:]

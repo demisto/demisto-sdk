@@ -121,10 +121,9 @@ class PackUniqueFilesValidator(BaseValidator):
         return False
 
     def _is_pack_ignore_file_structure_valid(self):
-        """Check if .pack-ignore structure is parse-able & has valid regex"""
+        """Check if .pack-ignore structure is parse-able"""
         try:
-            pack_ignore_regex_list = self._parse_file_into_list(self.pack_ignore_file)
-            if pack_ignore_regex_list and all(re.compile(regex) for regex in pack_ignore_regex_list):
+            if self._parse_file_into_list(self.pack_ignore_file):
                 return True
         except re.error:
             if not self._add_error(Errors.pack_file_bad_format(self.pack_ignore_file), self.pack_ignore_file):

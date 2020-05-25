@@ -406,10 +406,10 @@ class TestValidators:
 
     @staticmethod
     def mock_unifier():
-        def get_script_package_data_mock(*args, **kwargs):
+        def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
         with patch.object(Unifier, '__init__', lambda a, b: None):
-            Unifier.get_script_package_data = get_script_package_data_mock
+            Unifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
             return Unifier('')
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATH)

@@ -935,27 +935,44 @@ class FilesValidator:
 
         return ignored_error_list
 
+    def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
+        if key == 'ignore':
+            ignored_errors_list.extend(str(config[section][key]).split(','))
+
+        if key in PRESET_ERROR_TO_IGNORE:
+            ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
+
+        if key in PRESET_ERROR_TO_CHECK:
+            ignored_errors_list.extend(
+                self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
+
     def get_error_ignore_list(self, pack_name):
-        ignored_errors_list = []
+        ignored_errors_list = {}
         if pack_name:
             pack_ignore_path = self.get_pack_ignore_file_path(pack_name)
 
             if os.path.isfile(pack_ignore_path):
+                config = ConfigParser(allow_no_value=True)
+                config.read(pack_ignore_path)
+
+                # create pack ignored errors list
                 try:
-                    config = ConfigParser(allow_no_value=True)
-                    config.read(pack_ignore_path)
-
                     if 'demisto-sdk' in config:
+                        ignored_errors_list['pack'] = []
                         for key in config['demisto-sdk']:
-                            if key == 'ignore':
-                                ignored_errors_list.extend(str(config['demisto-sdk'][key]).split(','))
+                            self.add_ignored_errors_to_list(config, 'demisto-sdk', key, ignored_errors_list['pack'])
 
-                            if key in PRESET_ERROR_TO_IGNORE:
-                                ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
+                except MissingSectionHeaderError:
+                    pass
 
-                            if key in PRESET_ERROR_TO_CHECK:
-                                ignored_errors_list.extend(
-                                    self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
+                # create file specific ignored errors list
+                try:
+                    for section in config.sections():
+                        if section.startswith("file:"):
+                            file_name = section[5:]
+                            ignored_errors_list[file_name] = []
+                            for key in config[section]:
+                                self.add_ignored_errors_to_list(config, section, key, ignored_errors_list[file_name])
 
                 except MissingSectionHeaderError:
                     pass

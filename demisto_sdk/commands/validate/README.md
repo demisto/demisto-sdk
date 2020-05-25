@@ -100,11 +100,17 @@ The first 2 letters indicate the error type and can be used to easily identify t
 | ST | Structure error |
 | WD | Widget error |
 
-If you wish to ignore an error in the validation insert the following to the `pack-ignore` file.
+If you wish to ignore an error from all the files in a pack in the validation insert the following to the `pack-ignore` file.
 ```buildoutcfg
 [demisto-sdk]
 ignore=IN100,BA100,BC
 ```
-This will ignore error codes `IN100`, `BA100` and all of `BC` error codes.
+This will ignore error codes `IN100`, `BA100` and all of `BC` error codes for all files in the pack.
+
+If you with to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
+```buildoutcfg
+[file:FILE_NAME]
+ignore=IN100,BA100,BC
+```
 
 *Note*: Conf-json and id-set errors cannot be ignored.

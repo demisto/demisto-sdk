@@ -1,4 +1,6 @@
 # Changelog
+#### 1.0.10
+* Fixed error where changes to only non-validated files would fail validation.
 
 #### 1.0.9
 * Fixed a bug where misleading error was presented when pack name was not found.

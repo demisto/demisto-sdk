@@ -46,7 +46,7 @@ class StructureValidator(BaseValidator):
     }
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
-                 configuration=Configuration(), ignored_errors=None, print_as_warnings=False):
+                 configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master'):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_valid = True
         self.file_path = file_path.replace('\\', '/')
@@ -57,7 +57,7 @@ class StructureValidator(BaseValidator):
         if is_new_file or predefined_scheme:
             self.old_file = {}
         else:
-            self.old_file = get_remote_file(old_file_path if old_file_path else file_path)
+            self.old_file = get_remote_file(old_file_path if old_file_path else file_path, tag=tag)
         self.configuration = configuration
 
     def is_valid_file(self):

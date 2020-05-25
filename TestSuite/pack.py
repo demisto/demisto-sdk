@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
+from TestSuite.release_notes import ReleaseNotes
 from TestSuite.text_based import TextBased
 
 
@@ -30,6 +31,9 @@ class Pack:
         # Initiate lists:
         self._repo = repo
         self.repo_path = repo.path
+        self.pack_name = name
+        self.temp_path = packs_dir
+        self.added_files: Set[Path] = set()
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         self.classifiers: List[JSONBased] = list()
@@ -40,7 +44,7 @@ class Pack:
         self.layouts: List[JSONBased] = list()
 
         # Create base pack
-        self._pack_path = packs_dir / name
+        self._pack_path = packs_dir / self.pack_name
         self._pack_path.mkdir()
         self.path = str(self._pack_path)
 
@@ -101,6 +105,7 @@ class Pack:
             image
         )
         self.integrations.append(integration)
+        self.added_files.add(self._integrations_path / name / name + '.yml')
         return integration
 
     def create_script(
@@ -126,6 +131,7 @@ class Pack:
             image
         )
         self.scripts.append(script)
+        self.added_files.add(self._scripts_path / name / name + '.yml')
         return script
 
     def create_json_based(
@@ -187,3 +193,13 @@ class Pack:
         prefix = 'incident-field'
         indicator_field = self.create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
+
+    def update_release_notes(
+            self,
+            update_type: str = None,
+            pre_release: bool = False):
+        pack_files = set()
+        release_notes = ReleaseNotes(self.temp_path, self.pack_name, pack_files,
+                                     self.added_files, update_type, pre_release)
+        release_notes.execute_update()
+        self.added_files = set()

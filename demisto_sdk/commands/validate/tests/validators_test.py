@@ -509,7 +509,8 @@ class TestValidators:
                             return_value='demisto_sdk/tests/test_files/fake_pack/.pack-ignore')
         file_validator = FilesValidator()
         ignore_errors_list = file_validator.get_error_ignore_list("fake")
-        assert ignore_errors_list == ['IN100', 'IN101']
+        assert ignore_errors_list['pack'] == ['IN100', 'IN101']
+        assert ignore_errors_list['file_name'] == ['DO101', 'BA100']
 
     def test_create_ignored_errors_list(self, mocker):
         file_validator = FilesValidator()

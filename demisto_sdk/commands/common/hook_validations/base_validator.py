@@ -1,21 +1,27 @@
+import os
+
 import click
 
 
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False):
-        self.ignored_errors = ignored_errors if ignored_errors else []
+        self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
 
-    def should_ignore_error(self, error_code):
+    @staticmethod
+    def should_ignore_error(error_code, ignored_errors):
         """Return True is code should be ignored and False otherwise"""
+        if ignored_errors is None:
+            return False
+
         # check if specific codes are ignored
-        if error_code in self.ignored_errors:
+        if error_code in ignored_errors:
             return True
 
         # in case a whole section of codes are selected
         code_type = error_code[:2]
-        if code_type in self.ignored_errors:
+        if code_type in ignored_errors:
             return True
 
         return False
@@ -35,7 +41,13 @@ class BaseValidator:
         """
         formatted_error = f"{file_path}: [{error_code}] - {error_massage}".rstrip("\n") + "\n"
 
-        if self.should_ignore_error(error_code):
+        if file_path:
+            file_name = os.path.basename(file_path)
+        else:
+            file_name = 'No-Name'
+
+        if self.should_ignore_error(error_code, self.ignored_errors.get('pack')) or \
+                self.should_ignore_error(error_code, self.ignored_errors.get(file_name)):
             if should_print and self.print_as_warnings:
                 click.secho(formatted_error, fg="yellow")
             return None

@@ -107,7 +107,7 @@ ignore=IN100,BA100,BC
 ```
 This will ignore error codes `IN100`, `BA100` and all of `BC` error codes for all files in the pack.
 
-If you with to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
+If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
 ```buildoutcfg
 [file:FILE_NAME]
 ignore=IN100,BA100,BC

@@ -1,10 +1,9 @@
-from demisto_sdk.commands.common.constants import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 
 
-class LayoutValidator(BaseValidator):
+class LayoutValidator(ContentEntityValidator):
 
     def is_valid_layout(self, validate_rn=True):  # type: () -> bool
         """Check whether the layout is valid or not.
@@ -26,6 +25,7 @@ class LayoutValidator(BaseValidator):
             True if version is valid, else False.
         """
         if self.current_file.get('layout', {}).get('version') != self.DEFAULT_VERSION:
-            print_error(Errors.wrong_version(self.file_path, self.DEFAULT_VERSION))
-            return False
+            error_message, error_code = Errors.wrong_version(self.DEFAULT_VERSION)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
         return True

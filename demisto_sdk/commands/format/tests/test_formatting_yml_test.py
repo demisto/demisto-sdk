@@ -238,3 +238,52 @@ def test_format_file(source, target, path, answer):
     os.rmdir(path)
 
     assert res is answer
+
+
+def test_add_playbooks_description():
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
+    base_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path)
+    base_yml.data = {
+        "tasks": {
+            "1": {
+                "type": "playbook",
+                "task": {
+                }
+            },
+            "2": {
+                "type": "something",
+                "task": {
+                    "description": "else"
+                }
+            },
+            "3": {
+                "type": "something",
+                "task": {
+                }
+            },
+            "4": {
+                "type": "playbook",
+                "task": {
+                }
+            },
+            "5": {
+                "type": "start",
+                "task": {
+                }
+            },
+            "6": {
+                "type": "title",
+                "task": {
+                }
+            },
+        }
+    }
+    base_yml.add_description()
+    assert 'description' not in base_yml.data
+    assert base_yml.data['tasks']['1']['task']['description'] == ''
+    assert base_yml.data['tasks']['2']['task']['description'] == 'else'
+    assert 'description' not in base_yml.data['tasks']['3']['task']
+    assert base_yml.data['tasks']['4']['task']['description'] == ''
+    assert base_yml.data['tasks']['5']['task']['description'] == ''
+    assert base_yml.data['tasks']['6']['task']['description'] == ''

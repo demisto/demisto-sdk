@@ -3,8 +3,8 @@ from os.path import join
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 
 VALIDATE_CMD = "validate"
 TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files")
@@ -129,7 +129,7 @@ class TestPack:
         Then
         - See that the validation succeed.
         """
-        mocker.patch.object(BaseValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
+        mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json"])
         assert "Starting validating files structure" in result.output
@@ -152,7 +152,7 @@ class TestPack:
         - Ensure validation fails.
         - Ensure error message regarding unhandled conditional task in playbook.
         """
-        mocker.patch.object(BaseValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
+        mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json"])
         assert "Starting validating files structure" in result.output

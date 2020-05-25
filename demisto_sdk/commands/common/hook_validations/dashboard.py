@@ -1,9 +1,10 @@
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.tools import print_error
 
 
-class DashboardValidator(BaseValidator):
+class DashboardValidator(ContentEntityValidator):
     @staticmethod
     def get_widgets_from_dashboard(dashboard):
         # type: () -> list
@@ -68,14 +69,22 @@ class DashboardValidator(BaseValidator):
 
         for field in fields_to_exclude:
             if self.current_file.get(field) is not None:
-                is_valid = False
-                error_msg += f'{self.file_path}: the field {field} needs to be removed.\n'
+                error_message, error_code = Errors.remove_field_from_dashboard(field)
+                formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                      should_print=False)
+                if formatted_message:
+                    is_valid = False
+                    error_msg += formatted_message
             # iterate over the widgets if exist
             if widgets:
                 for widget in widgets:
                     if widget.get(field):
-                        is_valid = False
-                        error_msg += f'The field {field} needs to be removed from the widget: {widget}.\n'
+                        error_message, error_code = Errors.remove_field_from_widget(field, widget)
+                        formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                              should_print=False)
+                        if formatted_message:
+                            is_valid = False
+                            error_msg += formatted_message
         if error_msg:
             print_error(error_msg)
         return is_valid
@@ -95,16 +104,23 @@ class DashboardValidator(BaseValidator):
 
         for field in fields_to_include:
             if not self.current_file.get(field):
-                is_valid = False
-                error_msg += f'{self.file_path}: the field {field} needs to be included. Please add it.\n'
+                error_message, error_code = Errors.include_field_in_dashboard(field)
+                formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                      should_print=False)
+                if formatted_message:
+                    is_valid = False
+                    error_msg += formatted_message
             # iterate over the widgets if exist
             if widgets:
                 for widget in widgets:
                     if not widget.get(field):
-                        is_valid = False
                         widget_name = widget.get("name")
-                        error_msg += f'The field {field} needs to be included in the widget: {widget_name}.' \
-                                     f' Please add it.\n'
+                        error_message, error_code = Errors.include_field_in_widget(field, widget_name)
+                        formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                              should_print=False)
+                        if formatted_message:
+                            is_valid = False
+                            error_msg += formatted_message
         if error_msg:
             print_error(error_msg)
         return is_valid

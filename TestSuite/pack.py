@@ -32,7 +32,6 @@ class Pack:
         self._repo = repo
         self.repo_path = repo.path
         self.pack_name = name
-        self.temp_path = packs_dir
         self.added_files: Set[Path] = set()
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
@@ -42,6 +41,7 @@ class Pack:
         self.incident_field: List[JSONBased] = list()
         self.indicator_field: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+        self.release_notes: List[ReleaseNotes] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.pack_name
@@ -80,6 +80,7 @@ class Pack:
         self.readme = TextBased(self._pack_path, 'README.md')
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata.json', '')
+        self.pack_metadata.write_json(self.create_metadata_content())
 
     def create_integration(
             self,
@@ -105,7 +106,8 @@ class Pack:
             image
         )
         self.integrations.append(integration)
-        self.added_files.add(self._integrations_path / name / name + '.yml')
+        int_filename = name + '.yml'
+        self.added_files.add(self._integrations_path / name / int_filename)
         return integration
 
     def create_script(
@@ -194,12 +196,20 @@ class Pack:
         indicator_field = self.create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
 
+    def create_metadata_content(self):
+        return {
+            'name': self.pack_name,
+            'id': self.pack_name,
+            'currentVersion': '1.0.0'
+        }
+
     def update_release_notes(
             self,
             update_type: str = None,
             pre_release: bool = False):
-        pack_files = set()
-        release_notes = ReleaseNotes(self.temp_path, self.pack_name, pack_files,
+        release_notes = ReleaseNotes(self.repo_path, self.pack_name, self.pack_metadata.path,
                                      self.added_files, update_type, pre_release)
         release_notes.execute_update()
         self.added_files = set()
+        self.release_notes.append(release_notes)
+

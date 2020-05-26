@@ -84,7 +84,7 @@ class Integration:
         description = open(suite_join_path(default_integration_dir, 'sample_description.md'))
         self.build(
             code=str(code.read()),
-            yml=yaml.load(yml),
+            yml=yaml.safe_load(yml),
             image=image.read(),
             changelog=str(changelog.read()),
             description=str(description.read())

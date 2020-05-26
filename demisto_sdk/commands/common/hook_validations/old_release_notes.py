@@ -145,7 +145,7 @@ class OldReleaseNotesValidator(BaseValidator):
 
         return True
 
-    def is_file_valid(self):
+    def is_file_valid(self, branch_name=''):
         """Checks if given file is valid.
 
         Return:
@@ -155,9 +155,15 @@ class OldReleaseNotesValidator(BaseValidator):
         if not self.validate_file_release_notes_exists():
             return False
 
-        validations = [
-            self.is_release_notes_changed(),
-            self.is_valid_release_notes_structure(),
-        ]
+        if branch_name != 'master':
+            validations = [
+                self.is_release_notes_changed(),
+                self.is_valid_release_notes_structure(),
+            ]
+
+        else:
+            validations = [
+                self.is_valid_release_notes_structure()
+            ]
 
         return all(validations)

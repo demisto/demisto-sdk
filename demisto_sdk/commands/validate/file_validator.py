@@ -269,7 +269,6 @@ class FilesValidator:
 
         changed_files = modified_files.union(added_files)
         packs = self.get_packs(changed_files)
-
         return modified_files, added_files, old_format_files, packs
 
     @staticmethod
@@ -287,7 +286,7 @@ class FilesValidator:
     def old_is_valid_release_notes(self, file_path, ignored_errors_list):
         old_release_notes_validator = OldReleaseNotesValidator(file_path, ignored_errors=ignored_errors_list,
                                                                print_as_warnings=self.print_ignored_errors)
-        if not old_release_notes_validator.is_file_valid():
+        if not old_release_notes_validator.is_file_valid(self.branch_name):
             self._is_valid = False
 
     def is_valid_release_notes(self, file_path, pack_name=None, modified_files=None, added_files=None,

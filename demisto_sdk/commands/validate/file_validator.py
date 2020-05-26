@@ -735,6 +735,18 @@ class FilesValidator:
             if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                 self._is_valid = False
 
+        elif 'CHANGELOG' in file_path:
+            # since the changelog has not changed, we can ignore "no release notes" and "no new RN entry" errors
+            rn_ignore_errors = ignored_errors_list
+            file_name = file_path.split('/')[-1]
+            if file_name in rn_ignore_errors:
+                rn_ignore_errors[file_name].append("RN100", "RN101")
+
+            else:
+                rn_ignore_errors[file_name] = ["RN100", "RN101"]
+
+            self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
+
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             print(f'Could not find validations for file {file_path}')
 
@@ -769,18 +781,32 @@ class FilesValidator:
                 for file_name in os.listdir(dir_path):
                     file_path = os.path.join(dir_path, file_name)
 
-                    is_yml_file = file_name.endswith('.yml') and \
-                        dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+                    if os.path.isfile(file_path):
+                        is_yml_file = file_path.endswith('.yml') and \
+                            dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
-                    is_json_file = file_name.endswith('.json') and \
-                        dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR)
+                        is_json_file = file_path.endswith('.json') and \
+                            dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
-                    is_md_file = file_name.endswith('.md')
+                        is_md_file = file_path.endswith('.md')
 
-                    if is_yml_file or is_json_file or is_md_file:
-                        all_files_to_validate.add(file_path)
+                        if is_yml_file or is_json_file or is_md_file:
+                            all_files_to_validate.add(file_path)
 
-        print('Validating all Pack and Beta Integration files')
+                    else:
+                        inner_dir_path = file_path
+                        for inner_file_name in os.listdir(inner_dir_path):
+                            inner_file_path = os.path.join(inner_dir_path, inner_file_name)
+
+                            is_yml_file = inner_file_path.endswith('.yml')
+
+                            is_md_file = inner_file_path.endswith('CHANGELOG.md') or inner_file_path.endswith('README.md')
+
+                            if is_yml_file or is_md_file:
+                                all_files_to_validate.add(inner_file_path)
+
+        click.secho(f'\nValidating all {len(all_files_to_validate)} Pack and Beta Integration files\n',
+                    fg="bright_cyan")
         for index, file in enumerate(sorted(all_files_to_validate)):
             click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
             self.run_all_validations_on_file(file, file_type=find_type(file))

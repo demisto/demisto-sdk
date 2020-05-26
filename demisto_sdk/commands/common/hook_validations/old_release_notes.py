@@ -22,7 +22,7 @@ class OldReleaseNotesValidator(BaseValidator):
     """
     COMMENT_FILLER_REGEX = r'- ?$'
     SINGLE_LINE_REAL_COMMENT_REGEX = r'[a-zA-Z0-9].*\.$'
-    MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
+    MULTI_LINE_REAL_COMMENT_REGEX = r'(\s+| {2,4})- .*\.$'
     LINK_TO_RELEASE_NOTES_STANDARD = 'https://xsoar.pan.dev/docs/integrations/changelog'
 
     def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
@@ -97,7 +97,15 @@ class OldReleaseNotesValidator(BaseValidator):
         Returns:
             bool. True if release notes structure valid, False otherwise
         """
-        release_notes_comments = self.latest_release_notes.split('\n')
+        if self.latest_release_notes:
+            release_notes_comments = self.latest_release_notes.split('\n')
+
+        else:
+            error_message, error_code = Errors.no_new_release_notes(self.release_notes_path)
+            if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
+                return False
+
+            return True
 
         if not release_notes_comments[-1]:
             release_notes_comments = release_notes_comments[:-1]

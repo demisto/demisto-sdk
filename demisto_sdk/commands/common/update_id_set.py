@@ -13,20 +13,19 @@ import click
 from demisto_sdk.commands.common.constants import (
     CLASSIFIER_REGEX, CLASSIFIERS_DIR, DASHBOARD_REGEX, DASHBOARDS_DIR,
     INCIDENT_FIELD_REGEX, INCIDENT_FIELDS_DIR, INCIDENT_TYPE_REGEX,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_FIELDS_REGEX,
-    INDICATOR_TYPES_DIR, INDICATOR_TYPES_REGEX,
-    INDICATOR_TYPES_REPUTATIONS_REGEX, LAYOUT_REGEX, LAYOUTS_DIR,
-    PACKS_CLASSIFIERS_REGEX, PACKS_DASHBOARDS_REGEX,
-    PACKS_INCIDENT_FIELDS_REGEX, PACKS_INCIDENT_TYPES_REGEX,
-    PACKS_INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_TYPES_REGEX,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INDICATOR_TYPES_REGEX, INDICATOR_TYPES_REPUTATIONS_REGEX, LAYOUT_REGEX,
+    LAYOUTS_DIR, PACKS_CLASSIFIER_JSON_REGEX, PACKS_DASHBOARD_JSON_REGEX,
+    PACKS_INCIDENT_FIELD_JSON_REGEX, PACKS_INCIDENT_TYPE_JSON_REGEX,
+    PACKS_INDICATOR_FIELD_JSON_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_YML_REGEX,
-    PACKS_LAYOUTS_REGEX, PACKS_PLAYBOOK_YML_REGEX, PACKS_REPORTS_REGEX,
+    PACKS_LAYOUT_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
-    PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX, PLAYBOOK_REGEX,
-    REPORT_REGEX, REPORTS_DIR, SCRIPTS_DIR, SCRIPTS_REGEX_LIST,
-    TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TEST_SCRIPT_REGEX, WIDGETS_DIR,
-    WIDGETS_REGEX)
+    PACKS_WIDGET_JSON_REGEX, PLAYBOOK_REGEX, PLAYBOOK_YML_REGEX, REPORT_REGEX,
+    REPORTS_DIR, SCRIPTS_DIR, SCRIPTS_REGEX_LIST, TEST_PLAYBOOK_REGEX,
+    TEST_PLAYBOOK_YML_REGEX, TEST_PLAYBOOKS_DIR, TEST_SCRIPT_REGEX,
+    WIDGETS_DIR, WIDGETS_REGEX)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_from_version,
                                                get_json, get_pack_name,
                                                get_to_version, get_yaml,
@@ -42,12 +41,9 @@ CHECKED_TYPES_REGEXES = (
     PACKS_SCRIPT_YML_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
     # Playbooks
-    PLAYBOOK_REGEX,
-    TEST_PLAYBOOK_REGEX,
-    PACKS_PLAYBOOK_YML_REGEX,
-    PACKS_TEST_PLAYBOOKS_REGEX,
+    PLAYBOOK_YML_REGEX,
     # Classifiers
-    PACKS_CLASSIFIERS_REGEX,
+    PACKS_CLASSIFIER_JSON_REGEX,
     CLASSIFIER_REGEX
 )
 
@@ -428,7 +424,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
 
 def process_playbook(file_path: str, print_logs: bool) -> list:
     res = []
-    if checked_type(file_path, (PACKS_PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX)):
+    if checked_type(file_path, (PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX)):
         if print_logs:
             print('adding {} to id_set'.format(file_path))
         res.append(get_playbook_data(file_path))
@@ -445,7 +441,7 @@ def process_classifier(file_path: str, print_logs: bool) -> list:
         a list of classifier data.
     """
     res = []
-    if checked_type(file_path, (CLASSIFIER_REGEX, PACKS_CLASSIFIERS_REGEX)):
+    if checked_type(file_path, (CLASSIFIER_REGEX, PACKS_CLASSIFIER_JSON_REGEX)):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -463,7 +459,7 @@ def process_dashboards(file_path: str, print_logs: bool) -> list:
         a list of dashboard data.
     """
     res = []
-    if checked_type(file_path, (DASHBOARD_REGEX, PACKS_DASHBOARDS_REGEX)):
+    if checked_type(file_path, (DASHBOARD_REGEX, PACKS_DASHBOARD_JSON_REGEX)):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -481,7 +477,7 @@ def process_incident_fields(file_path: str, print_logs: bool) -> list:
         a list of incident field data.
     """
     res = []
-    if checked_type(file_path, (INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX)):
+    if checked_type(file_path, (INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX)):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -499,7 +495,7 @@ def process_incident_types(file_path: str, print_logs: bool) -> list:
         a list of incident field data.
     """
     res = []
-    if checked_type(file_path, (INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPES_REGEX)):
+    if checked_type(file_path, (INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPE_JSON_REGEX)):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -517,7 +513,7 @@ def process_indicator_fields(file_path: str, print_logs: bool) -> list:
         a list of indicator field data.
     """
     res = []
-    if checked_type(file_path, [INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_FIELDS_REGEX]):
+    if checked_type(file_path, [PACKS_INDICATOR_FIELD_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -535,7 +531,7 @@ def process_indicator_types(file_path: str, print_logs: bool) -> list:
         a list of indicator type data.
     """
     res = []
-    if (checked_type(file_path, [INDICATOR_TYPES_REGEX, PACKS_INDICATOR_TYPES_REGEX]) and
+    if (checked_type(file_path, [INDICATOR_TYPES_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX]) and
             # ignore reputations.json
             not checked_type(file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX])):
         if print_logs:
@@ -555,7 +551,7 @@ def process_layouts(file_path: str, print_logs: bool) -> list:
         a list of layout data.
     """
     res = []
-    if checked_type(file_path, (LAYOUT_REGEX, PACKS_LAYOUTS_REGEX)):
+    if checked_type(file_path, (LAYOUT_REGEX, PACKS_LAYOUT_JSON_REGEX)):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_layout_data(file_path))
@@ -573,7 +569,7 @@ def process_reports(file_path: str, print_logs: bool) -> list:
         a list of report data.
     """
     res = []
-    if checked_type(file_path, [REPORT_REGEX, PACKS_REPORTS_REGEX]):
+    if checked_type(file_path, [REPORT_REGEX, PACKS_REPORT_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -591,7 +587,7 @@ def process_widgets(file_path: str, print_logs: bool) -> list:
         a list of widgets data.
     """
     res = []
-    if checked_type(file_path, [WIDGETS_REGEX, PACKS_WIDGETS_REGEX]):
+    if checked_type(file_path, [WIDGETS_REGEX, PACKS_WIDGET_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -613,7 +609,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
         print("adding {} to id_set".format(file_path))
     script = None
     playbook = None
-    if checked_type(file_path, (TEST_SCRIPT_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, TEST_PLAYBOOK_REGEX)):
+    if checked_type(file_path, (TEST_SCRIPT_REGEX, TEST_PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_REGEX)):
         yml_data = get_yaml(file_path)
         if 'commonfields' in yml_data:
             # script files contain this key

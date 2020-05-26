@@ -24,6 +24,7 @@ class Pack:
         secrets (Secrets): Exception error code.
         integrations: A list contains any created integration
         scripts:  A list contains any created Script
+        release_notes: A list of the generated pack's ReleaseNotes
 
     """
 
@@ -106,6 +107,7 @@ class Pack:
             image
         )
         self.integrations.append(integration)
+
         int_filename = name + '.yml'
         self.added_files.add(self._integrations_path / name / int_filename)
         return integration
@@ -133,7 +135,9 @@ class Pack:
             image
         )
         self.scripts.append(script)
-        self.added_files.add(self._scripts_path / name / name + '.yml')
+
+        script_filename = name + '.yml'
+        self.added_files.add(self._scripts_path / name / script_filename)
         return script
 
     def create_json_based(

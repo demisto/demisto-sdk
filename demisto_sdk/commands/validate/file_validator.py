@@ -49,8 +49,8 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
-from demisto_sdk.commands.common.hook_validations.old_release_notes import \
-    OldReleaseNotesValidator
+# from demisto_sdk.commands.common.hook_validations.old_release_notes import \
+#     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -283,11 +283,11 @@ class FilesValidator:
 
         return packs
 
-    def old_is_valid_release_notes(self, file_path, ignored_errors_list):
-        old_release_notes_validator = OldReleaseNotesValidator(file_path, ignored_errors=ignored_errors_list,
-                                                               print_as_warnings=self.print_ignored_errors)
-        if not old_release_notes_validator.is_file_valid(self.branch_name):
-            self._is_valid = False
+    # def old_is_valid_release_notes(self, file_path, ignored_errors_list):
+    #     old_release_notes_validator = OldReleaseNotesValidator(file_path, ignored_errors=ignored_errors_list,
+    #                                                            print_as_warnings=self.print_ignored_errors)
+    #     if not old_release_notes_validator.is_file_valid(self.branch_name):
+    #         self._is_valid = False
 
     def is_valid_release_notes(self, file_path, pack_name=None, modified_files=None, added_files=None,
                                ignored_errors_list=None):
@@ -435,9 +435,6 @@ class FilesValidator:
                 if self.is_backward_check and not incident_type_validator.is_backward_compatible():
                     self._is_valid = False
 
-            elif 'CHANGELOG' in file_path:
-                self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
-
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
 
@@ -574,9 +571,6 @@ class FilesValidator:
                                                                 print_as_warnings=self.print_ignored_errors)
                 if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False
-
-            elif 'CHANGELOG' in file_path:
-                self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
                 added_rn.add(pack_name)
@@ -741,18 +735,6 @@ class FilesValidator:
             if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                 self._is_valid = False
 
-        elif 'CHANGELOG' in file_path:
-            # since the changelog has not changed, we can ignore "no release notes" and "no new RN entry" errors
-            rn_ignore_errors = ignored_errors_list
-            file_name = file_path.split('/')[-1]
-            if file_name in rn_ignore_errors:
-                rn_ignore_errors[file_name].append("RN100", "RN101")
-
-            else:
-                rn_ignore_errors[file_name] = ["RN100", "RN101"]
-
-            self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
-
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             print(f'Could not find validations for file {file_path}')
 
@@ -806,7 +788,7 @@ class FilesValidator:
 
                             is_yml_file = inner_file_path.endswith('.yml')
 
-                            is_md_file = inner_file_path.endswith('CHANGELOG.md') or inner_file_path.endswith('README.md')
+                            is_md_file = inner_file_path.endswith('README.md')
 
                             if is_yml_file or is_md_file:
                                 all_files_to_validate.add(inner_file_path)

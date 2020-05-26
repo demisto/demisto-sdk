@@ -81,7 +81,7 @@ class Pack:
         self.readme = TextBased(self._pack_path, 'README.md')
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata.json', '')
-        self.pack_metadata.write_json(self.create_metadata_content())
+        self.create_pack_metadata_content()
 
     def create_integration(
             self,
@@ -200,12 +200,13 @@ class Pack:
         indicator_field = self.create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
 
-    def create_metadata_content(self):
-        return {
+    def create_pack_metadata_content(self):
+        metadata_dict = {
             'name': self.pack_name,
             'id': self.pack_name,
             'currentVersion': '1.0.0'
         }
+        self.pack_metadata.write_json(metadata_dict)
 
     def update_release_notes(
             self,

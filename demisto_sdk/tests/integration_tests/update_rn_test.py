@@ -13,7 +13,7 @@ def create_integration_and_release_notes(pack, update_type, idx, update_rn_conte
     pack.create_integration('FakeIntegration_' + str(idx))
     pack.update_release_notes(update_type)
     if update_rn_content:
-        pack.release_notes[idx].fill('This is a release note.')
+        pack.release_notes[idx].fill()
 
 
 def is_release_note_valid(mocker, pack, idx):
@@ -24,29 +24,67 @@ def is_release_note_valid(mocker, pack, idx):
     return files_validator._is_valid
 
 
-def test_update_release_notes(mocker, repo):
+def update_release_notes_1_0_1(mocker, pack):
     """
     Given
     - A valid pack with integrations.
 
     When
-    - Updating release notes.
+    - Adding integrations and updating release notes.
 
     Then
     - Ensure release notes update is valid.
     """
-    pack = repo.create_pack('FakePack')
+    create_integration_and_release_notes(pack, 'revision', idx=0)
+    assert is_release_note_valid(mocker, pack, idx=0)
+    assert '1_0_1.md' in os.listdir(os.path.join(pack.path, 'ReleaseNotes'))
+
+
+def update_release_notes_1_1_0(mocker, pack):
+    """
+    Given
+    - A valid pack with integrations.
+
+    When
+    - Adding integrations and updating release notes.
+
+    Then
+    - Ensure release notes update is valid.
+    """
+    create_integration_and_release_notes(pack, 'minor', idx=1)
+    assert is_release_note_valid(mocker, pack, idx=1)
+    assert '1_1_0.md' in os.listdir(os.path.join(pack.path, 'ReleaseNotes'))
+
+
+def update_release_notes_2_0_0(mocker, pack):
+    """
+    Given
+    - A valid pack with integrations.
+
+    When
+    - Adding integrations and updating release notes without changing `%%UPDATE_RN%%` in the file.
+
+    Then
+    - Ensure release notes update is NOT valid.
+    """
+    create_integration_and_release_notes(pack, 'major', idx=2, update_rn_content=False)
+    assert not is_release_note_valid(mocker, pack, idx=2)
+    assert '2_0_0.md' in os.listdir(os.path.join(pack.path, 'ReleaseNotes'))
+
+
+def test_update_release_notes(mocker, pack):
+    """
+    Given
+    - A valid pack with integrations.
+
+    When
+    - Adding integrations and updating release notes.
+
+    Then
+    - Ensure release notes update is as expected.
+    """
+    # we have to use the same pack object, therefore can't split into different test functions.
     with ChangeCWD(pack.repo_path):
-        create_integration_and_release_notes(pack, 'revision', idx=0)
-        assert is_release_note_valid(mocker, pack, idx=0)
-        assert '1_0_1.md' in os.listdir(os.path.join(pack.path, 'ReleaseNotes'))
-
-        create_integration_and_release_notes(pack, 'minor', idx=1)
-        assert is_release_note_valid(mocker, pack, idx=1)
-        assert '1_1_0.md' in os.listdir(os.path.join(pack.path, 'ReleaseNotes'))
-
-        # without updating the release notes file, the validator should fail
-        create_integration_and_release_notes(pack, 'major', idx=2, update_rn_content=False)
-        assert not is_release_note_valid(mocker, pack, idx=2)
-        assert '2_0_0.md' in os.listdir(os.path.join(pack.path, 'ReleaseNotes'))
-
+        update_release_notes_1_0_1(mocker, pack)
+        update_release_notes_1_1_0(mocker, pack)
+        update_release_notes_2_0_0(mocker, pack)

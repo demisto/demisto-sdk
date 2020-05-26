@@ -97,7 +97,7 @@ class OldReleaseNotesValidator(BaseValidator):
         Returns:
             bool. True if release notes structure valid, False otherwise
         """
-        if self.latest_release_notes:
+        if self.latest_release_notes is not None:
             release_notes_comments = self.latest_release_notes.split('\n')
 
         else:

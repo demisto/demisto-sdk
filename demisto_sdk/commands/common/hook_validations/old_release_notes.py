@@ -22,7 +22,7 @@ class OldReleaseNotesValidator(BaseValidator):
     """
     COMMENT_FILLER_REGEX = r'- ?$'
     SINGLE_LINE_REAL_COMMENT_REGEX = r'[a-zA-Z0-9].*\.$'
-    MULTI_LINE_REAL_COMMENT_REGEX = r'(\s+| {2,4})- .*\.$'
+    MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
     LINK_TO_RELEASE_NOTES_STANDARD = 'https://xsoar.pan.dev/docs/integrations/changelog'
 
     def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):

@@ -838,30 +838,44 @@ class FilesValidator:
             for dir_name in os.listdir(pack_path):
                 dir_path = os.path.join(pack_path, dir_name)
 
-                if dir_name not in CONTENT_ENTITIES_DIRS:
+                if dir_name not in CONTENT_ENTITIES_DIRS or \
+                        dir_name in [constants.REPORTS_DIR, constants.DASHBOARDS_DIR]:
                     continue
 
                 for file_name in os.listdir(dir_path):
                     file_path = os.path.join(dir_path, file_name)
 
-                    is_yml_file = file_name.endswith('.yml') and \
-                        dir_name in (
-                        constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+                    if os.path.isfile(file_path):
+                        is_yml_file = file_path.endswith('.yml') and \
+                            dir_name in (
+                            constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
-                    is_json_file = file_name.endswith('.json') and \
-                        dir_name not in (
-                        constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+                        is_json_file = file_path.endswith('.json') and \
+                            dir_name not in (
+                            constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
-                    if dir_name in [constants.REPORTS_DIR, constants.DASHBOARDS_DIR]:
-                        continue
+                        if is_yml_file or is_json_file:
+                            print("Validating {}".format(file_path))
+                            self.is_backward_check = False  # if not using git, no need for BC checks
+                            structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list,
+                                                                     print_as_warnings=self.print_ignored_errors)
+                            if not structure_validator.is_valid_scheme():
+                                self._is_valid = False
 
-                    if is_yml_file or is_json_file:
-                        print("Validating {}".format(file_path))
-                        self.is_backward_check = False  # if not using git, no need for BC checks
-                        structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list,
-                                                                 print_as_warnings=self.print_ignored_errors)
-                        if not structure_validator.is_valid_scheme():
-                            self._is_valid = False
+                    else:
+                        inner_dir_path = file_path
+                        for inner_file_name in os.listdir(inner_dir_path):
+                            inner_file_path = os.path.join(inner_dir_path, inner_file_name)
+
+                            is_yml_file = inner_file_path.endswith('.yml')
+
+                            if is_yml_file:
+                                print("Validating {}".format(file_path))
+                                self.is_backward_check = False  # if not using git, no need for BC checks
+                                structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list,
+                                                                         print_as_warnings=self.print_ignored_errors)
+                                if not structure_validator.is_valid_scheme():
+                                    self._is_valid = False
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.

@@ -53,3 +53,21 @@ def test_check_deprecated_where_ignored_list_does_not_exist():
     base_validator = BaseValidator(ignored_errors={})
     base_validator.check_deprecated(test_file)
     assert base_validator.ignored_errors['DummyDeprecatedIntegration.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+
+
+def test_check_deprecated_non_deprecated_integration_no_ignored_errors():
+    files_path = os.path.normpath(
+        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    test_file = os.path.join(files_path, 'DummyPack/Integrations/DummyIntegration/DummyIntegration.yml')
+    base_validator = BaseValidator(ignored_errors={})
+    base_validator.check_deprecated(test_file)
+    assert 'DummyIntegration' not in base_validator.ignored_errors
+
+
+def test_check_deprecated_non_deprecated_integration_with_ignored_errors():
+    files_path = os.path.normpath(
+        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    test_file = os.path.join(files_path, 'DummyPack/Integrations/DummyIntegration/DummyIntegration.yml')
+    base_validator = BaseValidator(ignored_errors={'DummyIntegration': ["BA101"]})
+    base_validator.check_deprecated(test_file)
+    assert base_validator.ignored_errors['DummyIntegration'] == ['BA101']

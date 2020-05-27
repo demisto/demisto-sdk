@@ -50,7 +50,7 @@ class Unifier:
             # Also,
             # we don't take the unified file by default because
             # there might be packages that were not created by the plugin.
-            if 'unified' not in path:
+            if 'unified' not in path and os.path.basename(os.path.dirname(path)) not in [SCRIPTS_DIR, INTEGRATIONS_DIR]:
                 self.yml_path = path
                 break
 

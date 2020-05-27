@@ -17,26 +17,30 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from glob import glob
 
 import click
+
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, BETA_INTEGRATION_REGEX,
     BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES, CODE_FILES_REGEX,
     CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES, IMAGE_REGEX,
-    INTEGRATION_REGEX, INTEGRATION_REGXES, JSON_ALL_DASHBOARDS_REGEXES,
+    INTEGRATION_REGEX, INTEGRATION_REGXES, JSON_ALL_CLASSIFIER_REGEXES,
+    JSON_ALL_CLASSIFIER_REGEXES_5_9_9, JSON_ALL_DASHBOARDS_REGEXES,
     JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_INDICATOR_TYPES_REGEXES,
-    JSON_ALL_LAYOUT_REGEXES, JSON_INDICATOR_AND_INCIDENT_FIELDS, JSON_ALL_MAPPER_REGEXES,
-    JSON_ALL_CLASSIFIER_REGEXES, JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
-    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
-    PACKS_DIR, PACKS_PACK_IGNORE_FILE_NAME, PACKS_RELEASE_NOTES_REGEX,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX,
-    TEST_PLAYBOOK_REGEX, YML_ALL_SCRIPTS_REGEXES,
-    YML_BETA_INTEGRATIONS_REGEXES, YML_INTEGRATION_REGEXES)
+    JSON_ALL_LAYOUT_REGEXES, JSON_ALL_MAPPER_REGEXES,
+    JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
+    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX,
+    PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
+    YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
+    YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.errors import (ERROR_CODE,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.classifier import \
+    ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -50,6 +54,7 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
@@ -64,10 +69,6 @@ from demisto_sdk.commands.common.hook_validations.reputation import \
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.hook_validations.classifier import \
-    ClassifierValidator
-from demisto_sdk.commands.common.hook_validations.mapper import \
-    MapperValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,

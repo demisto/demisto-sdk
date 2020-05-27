@@ -1,8 +1,8 @@
+from distutils.version import LooseVersion
+
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-
-from distutils.version import LooseVersion
-from demisto_sdk.commands.common.errors import Errors
 
 FROM_VERSION_FOR_NEW_CLASSIFIER = '6.0.0'
 TO_VERSION_FOR_OLD_CLASSIFIER = '5.9.9'

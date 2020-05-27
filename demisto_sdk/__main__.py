@@ -295,6 +295,9 @@ def validate(config, **kwargs):
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
 @click.option(
+    '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
+)
+@click.option(
     '--packs', is_flag=True,
     help='If passed, will create only content_packs.zip'
 )

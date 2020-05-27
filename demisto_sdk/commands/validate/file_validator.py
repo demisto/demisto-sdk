@@ -848,11 +848,14 @@ class FilesValidator:
 
                     else:
                         inner_dir_path = file_path
+                        inner_dir_name = file_name
                         for inner_file_name in os.listdir(inner_dir_path):
                             inner_file_path = os.path.join(inner_dir_path, inner_file_name)
 
                             if os.path.isfile(inner_file_path):
-                                is_yml_file = inner_file_path.endswith('.yml')
+                                is_yml_file = inner_file_path.endswith('.yml') and \
+                                    inner_dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR,
+                                                       constants.PLAYBOOKS_DIR)
 
                                 if is_yml_file:
                                     print("Validating {}".format(inner_file_path))

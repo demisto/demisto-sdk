@@ -871,9 +871,10 @@ class FilesValidator:
                                 is_yml_file = inner_file_path.endswith('.yml')
 
                                 if is_yml_file:
-                                    print("Validating {}".format(file_path))
+                                    print("Validating {}".format(inner_file_path))
                                     self.is_backward_check = False  # if not using git, no need for BC checks
-                                    structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list,
+                                    structure_validator = StructureValidator(inner_file_path,
+                                                                             ignored_errors=ignore_errors_list,
                                                                              print_as_warnings=self.print_ignored_errors)
                                     if not structure_validator.is_valid_scheme():
                                         self._is_valid = False
@@ -902,7 +903,7 @@ class FilesValidator:
                 self.validate_committed_files()
             else:
                 self.validate_against_previous_version(no_error=True)
-                print('Validates all of Content repo directories according to their schemas')
+                click.secho('\nValidates all of Content repo directories according to their schemas\n', fg='bright_cyan')
                 self.validate_all_files_schema()
 
         else:

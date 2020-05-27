@@ -804,12 +804,13 @@ class FilesValidator:
                         for inner_file_name in os.listdir(inner_dir_path):
                             inner_file_path = os.path.join(inner_dir_path, inner_file_name)
 
-                            is_yml_file = inner_file_path.endswith('.yml')
+                            if os.path.isfile(inner_file_path):
+                                is_yml_file = inner_file_path.endswith('.yml')
 
-                            is_md_file = inner_file_path.endswith('CHANGELOG.md') or inner_file_path.endswith('README.md')
+                                is_md_file = inner_file_path.endswith('CHANGELOG.md') or inner_file_path.endswith('README.md')
 
-                            if is_yml_file or is_md_file:
-                                all_files_to_validate.add(inner_file_path)
+                                if is_yml_file or is_md_file:
+                                    all_files_to_validate.add(inner_file_path)
 
         click.secho(f'\nValidating all {len(all_files_to_validate)} Pack and Beta Integration files\n',
                     fg="bright_cyan")
@@ -866,15 +867,16 @@ class FilesValidator:
                         for inner_file_name in os.listdir(inner_dir_path):
                             inner_file_path = os.path.join(inner_dir_path, inner_file_name)
 
-                            is_yml_file = inner_file_path.endswith('.yml')
+                            if os.path.isfile(inner_file_path):
+                                is_yml_file = inner_file_path.endswith('.yml')
 
-                            if is_yml_file:
-                                print("Validating {}".format(file_path))
-                                self.is_backward_check = False  # if not using git, no need for BC checks
-                                structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list,
-                                                                         print_as_warnings=self.print_ignored_errors)
-                                if not structure_validator.is_valid_scheme():
-                                    self._is_valid = False
+                                if is_yml_file:
+                                    print("Validating {}".format(file_path))
+                                    self.is_backward_check = False  # if not using git, no need for BC checks
+                                    structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list,
+                                                                             print_as_warnings=self.print_ignored_errors)
+                                    if not structure_validator.is_valid_scheme():
+                                        self._is_valid = False
 
     def is_valid_structure(self):
         """Check if the structure is valid for the case we are in, master - all files, branch - changed files.

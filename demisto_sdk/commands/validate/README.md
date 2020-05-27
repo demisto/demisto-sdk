@@ -39,6 +39,8 @@ Whether to run all validation on all files or not.
 The path of a pack or a file to validate specifically.
 * **---skip-pack-release-notes**
 Validation will not not be performed using the updated pack release notes format.
+* **--print-ignored-errors**
+Whether to print ignored errors as warnings.
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`
@@ -67,3 +69,48 @@ This will validate all files under `Packs` and `Beta_Integrations` directories
 `demisto-sdk validate -i Packs/HelloWorld`
 This will validate all files under the content pack `HelloWorld`
 <br><br>
+
+
+### Error Codes and Ignoring Them
+Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error
+code attached to it - the code can be found in brackets preceding the error itself.
+For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
+
+The first 2 letters indicate the error type and can be used to easily identify the cause of the error.
+| Code | Type |
+| --- | --- |
+| BA | Basic error |
+| BC | Backwards compatibility error |
+| CJ | Conf json error |
+| DA | Dashboard error |
+| DB | DBootScore error |
+| DO | Docker error |
+| DS | Description error |
+| ID | Id set error |
+| IF | Incident field or type error |
+| IM | Image error |
+| IN | Integration or script error |
+| IT | Incident type error |
+| PA | Pack files error (pack-metadata, pack-secrets, pack-ignore) |
+| PB | Playbook error |
+| RM | Readme error |
+| RN | Release notes error |
+| RP | Reputation error |
+| SC | Script error |
+| ST | Structure error |
+| WD | Widget error |
+
+If you wish to ignore an error from all the files in a pack in the validation insert the following to the `pack-ignore` file.
+```buildoutcfg
+[demisto-sdk]
+ignore=IN100,BA100,BC
+```
+This will ignore error codes `IN100`, `BA100` and all of `BC` error codes for all files in the pack.
+
+If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
+```buildoutcfg
+[file:FILE_NAME]
+ignore=IN100,BA100,BC
+```
+
+*Note*: Conf-json and id-set errors cannot be ignored.

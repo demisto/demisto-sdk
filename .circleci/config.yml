@@ -13,13 +13,17 @@ jobs:
       steps:
         - checkout
         - run:
-            name: tox build
+            name: Print environment variables
+            command: |
+              echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
+        - run:
+            name: Tox build
             command: |
               pip install tox
               tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
               tox -e py38 -v
         - run:
-            name: pre-commit
+            name: Pre-commit
             command: |
               . .tox/py37/bin/activate
               pre-commit --version
@@ -28,12 +32,54 @@ jobs:
         - store_artifacts:
             path: coverage_html_report
         - run:
-            name: coveralls upload
+            name: Coveralls upload
             command: |
               pip install coveralls
               coveralls
         - run:
-            name: deploy
+            name: Test validate files and yaml
+            command: |
+              . .tox/py37/bin/activate
+              git clone https://github.com/demisto/content.git
+              cd content
+              git config diff.renameLimit 5000
+
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
+                demisto-sdk validate -i Packs/Gmail
+                exit 0
+              fi
+
+              ./Tests/scripts/validate.sh
+        - run:
+            name: Test create ID set
+            when: always
+            command: |
+              . .tox/py37/bin/activate
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
+                  echo "Skipping creating ID set on non master branch"
+                  exit 0
+              fi
+
+              cd content
+              demisto-sdk create-id-set -o ./Tests/id_set.json
+        - run:
+            name: test create content artifacts
+            when: always
+            command: |
+              . .tox/py37/bin/activate
+
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
+                echo "Skipping creating content artifacts on non master branch"
+                exit 0
+              fi
+              cd content
+              mkdir ./tmp
+
+              demisto-sdk create-content-artifacts -a ./tmp
+        - store_artifacts:
+            path: content/tmp
+        - run:
+            name: Deploy
             command: |
               ./demisto_sdk/utils/deploy.sh
 workflows:

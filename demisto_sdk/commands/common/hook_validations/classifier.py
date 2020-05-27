@@ -1,8 +1,8 @@
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 
 
-class ClassifierValidator(BaseValidator):
+class ClassifierValidator(ContentEntityValidator):
     def is_valid_version(self):
         """Return if version is valid. uses default method.
 

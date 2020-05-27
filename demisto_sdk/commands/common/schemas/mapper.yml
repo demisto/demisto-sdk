@@ -26,5 +26,6 @@ mapping:
   mapping:
     type: map
     required: True
+    allowempty: True
   defaultIncidentType:
     type: str

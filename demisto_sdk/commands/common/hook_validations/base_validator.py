@@ -72,7 +72,6 @@ class BaseValidator:
             yml_dict = get_yaml(file_path)
             if 'deprecated' in yml_dict and yml_dict['deprecated'] is True:
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
-                print(self.ignored_errors[os.path.basename(file_path)])
 
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):

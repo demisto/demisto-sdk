@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 
 FROM_VERSION_FOR_NEW_CLASSIFIER = '6.0.0'
 TO_VERSION_FOR_OLD_CLASSIFIER = '5.9.9'
-VALID_TYPE = 'classification'
+CLASSIFICATION_TYPE = 'classification'
 
 
 class ClassifierValidator(ContentEntityValidator):
@@ -112,7 +112,7 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if type field is valid, else False.
         """
-        if self.new_classifier_version and self.current_file.get('type') != VALID_TYPE:
+        if self.new_classifier_version and self.current_file.get('type') != CLASSIFICATION_TYPE:
             error_message, error_code = Errors.invalid_type_in_new_classifiers()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

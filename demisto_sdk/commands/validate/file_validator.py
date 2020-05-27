@@ -49,8 +49,6 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
-from demisto_sdk.commands.common.hook_validations.old_release_notes import \
-    OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -283,12 +281,6 @@ class FilesValidator:
 
         return packs
 
-    def old_is_valid_release_notes(self, file_path, ignored_errors_list):
-        old_release_notes_validator = OldReleaseNotesValidator(file_path, ignored_errors=ignored_errors_list,
-                                                               print_as_warnings=self.print_ignored_errors)
-        if not old_release_notes_validator.is_file_valid(self.branch_name):
-            self._is_valid = False
-
     def is_valid_release_notes(self, file_path, pack_name=None, modified_files=None, added_files=None,
                                ignored_errors_list=None):
         release_notes_validator = ReleaseNotesValidator(file_path, pack_name=pack_name,
@@ -354,7 +346,8 @@ class FilesValidator:
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                             print_as_warnings=self.print_ignored_errors)
+                                                             print_as_warnings=self.print_ignored_errors,
+                                                             branch_name=self.branch_name)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -363,13 +356,15 @@ class FilesValidator:
 
             elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                             print_as_warnings=self.print_ignored_errors)
+                                                             print_as_warnings=self.print_ignored_errors,
+                                                             branch_name=self.branch_name)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
             elif checked_type(file_path, [SCRIPT_REGEX]):
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                   print_as_warnings=self.print_ignored_errors)
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   branch_name=self.branch_name)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
                 if not script_validator.is_valid_file():
@@ -386,7 +381,8 @@ class FilesValidator:
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                   print_as_warnings=self.print_ignored_errors)
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   branch_name=self.branch_name)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -434,9 +430,6 @@ class FilesValidator:
                     self._is_valid = False
                 if self.is_backward_check and not incident_type_validator.is_backward_compatible():
                     self._is_valid = False
-
-            elif 'CHANGELOG' in file_path:
-                self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
@@ -510,7 +503,8 @@ class FilesValidator:
 
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                             print_as_warnings=self.print_ignored_errors)
+                                                             print_as_warnings=self.print_ignored_errors,
+                                                             branch_name=self.branch_name)
                 if not integration_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
@@ -523,7 +517,8 @@ class FilesValidator:
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                   print_as_warnings=self.print_ignored_errors)
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   branch_name=self.branch_name)
 
                 if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
@@ -531,7 +526,8 @@ class FilesValidator:
             elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
                     re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                             print_as_warnings=self.print_ignored_errors)
+                                                             print_as_warnings=self.print_ignored_errors,
+                                                             branch_name=self.branch_name)
                 if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
 
@@ -574,9 +570,6 @@ class FilesValidator:
                                                                 print_as_warnings=self.print_ignored_errors)
                 if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False
-
-            elif 'CHANGELOG' in file_path:
-                self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
                 added_rn.add(pack_name)
@@ -690,7 +683,8 @@ class FilesValidator:
 
         elif checked_type(file_path, INTEGRATION_REGXES) or file_type == 'integration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                         print_as_warnings=self.print_ignored_errors)
+                                                         print_as_warnings=self.print_ignored_errors,
+                                                         branch_name=self.branch_name)
             if not integration_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
@@ -698,14 +692,16 @@ class FilesValidator:
             # Set file path to the yml file
             structure_validator.file_path = file_path
             script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                               print_as_warnings=self.print_ignored_errors)
+                                               print_as_warnings=self.print_ignored_errors,
+                                               branch_name=self.branch_name)
 
             if not script_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
         elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                         print_as_warnings=self.print_ignored_errors)
+                                                         print_as_warnings=self.print_ignored_errors,
+                                                         branch_name=self.branch_name)
             if not integration_validator.is_valid_beta_integration():
                 self._is_valid = False
 
@@ -740,18 +736,6 @@ class FilesValidator:
                                                             print_as_warnings=self.print_ignored_errors)
             if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                 self._is_valid = False
-
-        elif 'CHANGELOG' in file_path:
-            # since the changelog has not changed, we can ignore "no release notes" and "no new RN entry" errors
-            rn_ignore_errors = ignored_errors_list
-            file_name = file_path.split('/')[-1]
-            if file_name in rn_ignore_errors:
-                rn_ignore_errors[file_name].append("RN100", "RN101")
-
-            else:
-                rn_ignore_errors[file_name] = ["RN100", "RN101"]
-
-            self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             print(f'Could not find validations for file {file_path}')
@@ -807,7 +791,7 @@ class FilesValidator:
                             if os.path.isfile(inner_file_path):
                                 is_yml_file = inner_file_path.endswith('.yml')
 
-                                is_md_file = inner_file_path.endswith('CHANGELOG.md') or inner_file_path.endswith('README.md')
+                                is_md_file = inner_file_path.endswith('README.md')
 
                                 if is_yml_file or is_md_file:
                                     all_files_to_validate.add(inner_file_path)
@@ -985,10 +969,7 @@ class FilesValidator:
 
         return ignored_error_list
 
-    def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
-        if key == 'ignore':
-            ignored_errors_list.extend(str(config[section][key]).split(','))
-
+    def add_ignored_errors_to_list(self, key, ignored_errors_list):
         if key in PRESET_ERROR_TO_IGNORE:
             ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
 
@@ -1006,19 +987,13 @@ class FilesValidator:
                     config = ConfigParser(allow_no_value=True)
                     config.read(pack_ignore_path)
 
-                    # create pack ignored errors list
-                    if 'demisto-sdk' in config:
-                        ignored_errors_list['pack'] = []
-                        for key in config['demisto-sdk']:
-                            self.add_ignored_errors_to_list(config, 'demisto-sdk', key, ignored_errors_list['pack'])
-
                     # create file specific ignored errors list
                     for section in config.sections():
                         if section.startswith("file:"):
                             file_name = section[5:]
                             ignored_errors_list[file_name] = []
                             for key in config[section]:
-                                self.add_ignored_errors_to_list(config, section, key, ignored_errors_list[file_name])
+                                self.add_ignored_errors_to_list(key, ignored_errors_list[file_name])
 
                 except MissingSectionHeaderError:
                     pass

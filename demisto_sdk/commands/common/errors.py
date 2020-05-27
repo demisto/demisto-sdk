@@ -6,12 +6,11 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    PACK_METADATA_NAME)
 
 PRESET_ERROR_TO_IGNORE = {
-    "no-bc-check": ["BC100", "BC101", "BC102", "BC103", "BC104"]
+    "ignore-ba101": ["BA101"]
 }
 
 PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA'],
-    "ignore-all": []
 }
 
 ERROR_CODE = {

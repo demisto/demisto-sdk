@@ -164,7 +164,7 @@ class Pack:
     ):
         prefix = 'classifier-mapper'
         mapper = self.create_json_based(name, prefix, content)
-        self.classifiers.append(mapper)
+        self.mapper.append(mapper)
         return mapper
 
     def create_dashboard(

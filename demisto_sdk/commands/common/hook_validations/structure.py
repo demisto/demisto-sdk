@@ -341,10 +341,14 @@ class StructureValidator(BaseValidator):
                                                                               str(key_list).strip('[]').replace(',',
                                                                                                                 '->')))
         else:
-            if 'key' in str(err):
-                key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            else:
-                key_from_error = str(err).split('Key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            return (
-                'Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), "root",
-                                                              ))
+            err_msg = str(err).lower()
+            if 'key' in err_msg:
+                key_from_error = err_msg.split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+
+                if 'not defined' in err_msg:
+                    return (
+                        'Failed: {} failed.\nThe field {} was not defined in the scheme\n'.format(self.file_path,
+                                                                                                  str(key_from_error)))
+                else:
+                    return (
+                        'Failed: {} failed.\nMissing {} in root\n'.format(self.file_path, str(key_from_error)))

@@ -686,8 +686,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             return 'incidenttype'
         elif 'regex' in _dict:
             return 'reputation'
-        elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
+        elif 'brandName' in _dict and 'transformer' in _dict:
+            return 'classifier_5_9_9'
+        elif 'transformer' in _dict and 'keyTypeMap' in _dict:
             return 'classifier'
+        elif 'mapping' in _dict:
+            return 'mapper'
         elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'

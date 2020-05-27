@@ -129,6 +129,19 @@ ERROR_CODE = {
     "wrong_file_extension": "ST104",
     "invalid_file_path": "ST105",
     "invalid_package_structure": "ST106",
+    "invalid_to_version_in_new_classifiers": "CL100",
+    "invalid_to_version_in_old_classifiers": "CL101",
+    "invalid_from_version_in_new_classifiers": "CL102",
+    "invalid_from_version_in_old_classifiers": "CL103",
+    "missing_from_version_in_new_classifiers": "CL104",
+    "missing_to_version_in_old_classifiers": "CL105",
+    "from_version_higher_to_version": "CL106",
+    "invalid_type_in_new_classifiers": "CL107",
+    "invalid_from_version_in_mapper": "MP100",
+    "invalid_to_version_in_mapper": "MP101",
+    "invalid_mapper_file_name": "MP102",
+    "missing_from_version_in_mapper": "MP103",
+    "invalid_type_in_mapper": "MP104"
 }
 
 
@@ -795,6 +808,71 @@ class Errors:
         return 'You should update the following files to the package format, for further details please visit ' \
                'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_to_version_in_new_classifiers():
+        return 'toVersion field in new classifiers needs to be higher than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_to_version_in_old_classifiers():
+        return 'toVersion field in old classifiers needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_version_in_new_classifiers():
+        return 'fromVersion field in new classifiers needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_version_in_old_classifiers():
+        return 'fromVersion field in old classifiers needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_from_version_in_new_classifiers():
+        return 'Must have fromVersion field in new classifiers'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_to_version_in_old_classifiers():
+        return 'Must have toVersion field in old classifiers'
+
+    @staticmethod
+    @error_code_decorator
+    def from_version_higher_to_version():
+        return 'fromVersion field can not be higher than toVersion field'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_type_in_new_classifiers():
+        return 'Classifiers type must be classification'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_version_in_mapper():
+        return 'fromVersion field in mapper needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_to_version_in_mapper():
+        return 'toVersion field in mapper needs to be higher than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_mapper_file_name():
+        return 'Invalid file name for mapper. Need to change to classifier-mapper-NAME.json'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_from_version_in_mapper():
+        return 'Must have fromVersion field in mapper'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_type_in_mapper():
+        return 'Mappers type must be mapper-incoming or mapper-outgoing'
 
     @staticmethod
     def wrong_filename(file_type):

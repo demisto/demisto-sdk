@@ -111,40 +111,61 @@ def get_integration_commands(file_path):
     return cmd_list
 
 
-def get_task_ids_from_playbook(param_to_enrich_by, data_dict):
+def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict) -> tuple:
     implementing_ids = set()
+    implementing_ids_skippable = set()
     tasks = data_dict.get('tasks', {})
 
     for task in tasks.values():
         task_details = task.get('task', {})
 
         enriched_id = task_details.get(param_to_enrich_by)
+        skippable = task_details.get('skipunavailable', False)
         if enriched_id:
             implementing_ids.add(enriched_id)
+            if skippable:
+                implementing_ids_skippable.add(enriched_id)
 
-    return list(implementing_ids)
+    return list(implementing_ids), list(implementing_ids_skippable)
 
 
-def get_commmands_from_playbook(data_dict):
+def get_commmands_from_playbook(data_dict: dict) -> tuple:
     command_to_integration = {}
+    command_to_integration_skippable = set()
     tasks = data_dict.get('tasks', [])
 
     for task in tasks.values():
         task_details = task.get('task', {})
 
         command = task_details.get('script')
+        skippable = task_details.get('skipunavailable', False)
         if command:
             splitted_cmd = command.split('|')
 
             if 'Builtin' not in command:
                 command_to_integration[splitted_cmd[-1]] = splitted_cmd[0]
+                if skippable:
+                    command_to_integration_skippable.add(splitted_cmd[-1])
 
-    return command_to_integration
+    return command_to_integration, list(command_to_integration_skippable)
+
+
+def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
+    unifier = Unifier(os.path.dirname(file_path))
+    if is_unified_integration:
+        integration_script_code = data_dictionary.get('script', {}).get('script', '')
+    else:
+        _, integration_script_code = unifier.get_script_or_integration_package_data()
+
+    return unifier.check_api_module_imports(integration_script_code)[1]
 
 
 def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
+
+    is_unified_integration = data_dictionary.get('script', {}).get('script', '') != '-'
+
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
 
@@ -155,6 +176,7 @@ def get_integration_data(file_path):
     commands = data_dictionary.get('script', {}).get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
+    integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
 
     deprecated_commands = []
     for command in commands:
@@ -177,10 +199,12 @@ def get_integration_data(file_path):
         integration_data['deprecated_commands'] = deprecated_commands
     if pack:
         integration_data['pack'] = pack
+    if integration_api_modules:
+        integration_data['api_modules'] = integration_api_modules
     return {id_: integration_data}
 
 
-def get_playbook_data(file_path):
+def get_playbook_data(file_path: str) -> dict:
     playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
     id_ = data_dictionary.get('id', '-')
@@ -190,9 +214,12 @@ def get_playbook_data(file_path):
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
-    implementing_scripts = get_task_ids_from_playbook('scriptName', data_dictionary)
-    implementing_playbooks = get_task_ids_from_playbook('playbookName', data_dictionary)
-    command_to_integration = get_commmands_from_playbook(data_dictionary)
+    implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook('scriptName', data_dictionary)
+    implementing_playbooks, implementing_playbooks_skippable = get_task_ids_from_playbook('playbookName',
+                                                                                          data_dictionary)
+    command_to_integration, command_to_integration_skippable = get_commmands_from_playbook(data_dictionary)
+    skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
+                       command_to_integration_skippable)
     pack = get_pack_name(file_path)
 
     playbook_data['name'] = name
@@ -201,6 +228,7 @@ def get_playbook_data(file_path):
         playbook_data['toversion'] = toversion
     if fromversion:
         playbook_data['fromversion'] = fromversion
+
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
     if implementing_playbooks:
@@ -213,6 +241,8 @@ def get_playbook_data(file_path):
         playbook_data['deprecated'] = deprecated
     if pack:
         playbook_data['pack'] = pack
+    if skippable_tasks:
+        playbook_data['skippable_tasks'] = skippable_tasks
 
     return {id_: playbook_data}
 
@@ -409,7 +439,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
     else:
         # package script
         unifier = Unifier(file_path)
-        yml_path, code = unifier.get_script_package_data()
+        yml_path, code = unifier.get_script_or_integration_package_data()
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_script_data(yml_path, script_code=code))
@@ -654,7 +684,7 @@ def get_general_paths(path):
     return files
 
 
-def re_create_id_set(id_set_path="./Tests/id_set.json", objects_to_create=None, print_logs=True):  # noqa: C901
+def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None, print_logs: bool = True):  # noqa: C901
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                              'Dashboards', 'IncidentFields', 'IndicatorFields', 'IndicatorTypes',
@@ -970,7 +1000,7 @@ def update_id_set():
     if added_scripts:
         for added_script_package in added_scripts:
             unifier = Unifier(added_script_package)
-            yml_path, code = unifier.get_script_package_data()
+            yml_path, code = unifier.get_script_or_integration_package_data()
             add_new_object_to_id_set(get_script_or_integration_id(yml_path),
                                      get_script_data(yml_path, script_code=code), script_set)
             print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))
@@ -978,7 +1008,7 @@ def update_id_set():
     if modified_scripts:
         for modified_script_package in added_scripts:
             unifier = Unifier(modified_script_package)
-            yml_path, code = unifier.get_script_package_data()
+            yml_path, code = unifier.get_script_or_integration_package_data()
             update_object_in_id_set(get_script_or_integration_id(yml_path),
                                     get_script_data(yml_path, script_code=code), yml_path, script_set)
             print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))

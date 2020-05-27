@@ -249,6 +249,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-release-notes', is_flag=True,
     help='Skip validation of pack release notes.')
+@click.option(
+    '--print-ignored-errors', is_flag=True,
+    help='Print ignored errors as warnings.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -268,7 +271,8 @@ def validate(config, **kwargs):
                                    validate_all=kwargs.get('validate_all'),
                                    validate_id_set=kwargs['id_set'],
                                    skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
-                                   is_private_repo=is_private_repo)
+                                   print_ignored_errors=kwargs['print_ignored_errors'],
+                                   is_private_repo=is_private_repo, )
         return validator.run()
 
 
@@ -290,6 +294,13 @@ def validate(config, **kwargs):
 @click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
+@click.option(
+    '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
+)
+@click.option(
+    '--packs', is_flag=True,
+    help='If passed, will create only content_packs.zip'
+)
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
     return content_creator.run()
@@ -773,7 +784,7 @@ def update_pack_releasenotes(**kwargs):
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
             update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
-                                      pre_release=pre_release)
+                                      pre_release=pre_release, added_files=added)
             update_pack_rn.execute_update()
     elif is_all and _pack:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -786,7 +797,7 @@ def update_pack_releasenotes(**kwargs):
                             f"-p {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
-                                          pre_release=pre_release)
+                                          pre_release=pre_release, added_files=added)
                 update_pack_rn.execute_update()
 
 

@@ -1,15 +1,14 @@
-from demisto_sdk.commands.common.constants import (PYTHON_SUBTYPES, TYPE_PWSH,
-                                                   Errors)
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.constants import PYTHON_SUBTYPES, TYPE_PWSH
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (print_error,
-                                               server_version_compare)
+from demisto_sdk.commands.common.tools import server_version_compare
 
 
-class ScriptValidator(BaseValidator):
+class ScriptValidator(ContentEntityValidator):
     """ScriptValidator is designed to validate the correctness of the file structure we enter to content repo. And
         also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
@@ -17,8 +16,10 @@ class ScriptValidator(BaseValidator):
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
-            print_error(Errors.wrong_version(self.file_path))
-            return False
+            error_message, error_code = Errors.wrong_version()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True
 
     @classmethod
@@ -94,8 +95,10 @@ class ScriptValidator(BaseValidator):
             if self.old_file:
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    print_error(Errors.breaking_backwards_subtype(self.file_path))
-                    return True
+                    error_message, error_code = Errors.breaking_backwards_subtype()
+                    if self.handle_error(error_message, error_message, file_path=self.file_path):
+                        return True
+
         return False
 
     def is_valid_subtype(self):
@@ -104,8 +107,9 @@ class ScriptValidator(BaseValidator):
         if type_ == 'python':
             subtype = self.current_file.get('subtype')
             if subtype not in PYTHON_SUBTYPES:
-                print_error(Errors.wrong_subtype(self.file_path))
-                return False
+                error_message, error_code = Errors.wrong_subtype()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
 
         return True
 
@@ -118,8 +122,9 @@ class ScriptValidator(BaseValidator):
             if required:
                 if (arg not in old_args_to_required) or \
                         (arg in old_args_to_required and required != old_args_to_required[arg]):
-                    print_error(Errors.added_required_fields(self.file_path, arg))
-                    return True
+                    error_message, error_code = Errors.added_required_fields(arg)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        return True
         return False
 
     def is_there_duplicates_args(self):
@@ -137,8 +142,10 @@ class ScriptValidator(BaseValidator):
         old_args = [arg['name'] for arg in self.old_file.get('args', [])]
 
         if not self._is_sub_set(current_args, old_args):
-            print_error(Errors.breaking_backwards_arg_changed(self.file_path))
-            return True
+            error_message, error_code = Errors.breaking_backwards_arg_changed()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return True
+
         return False
 
     def is_context_path_changed(self):
@@ -148,8 +155,10 @@ class ScriptValidator(BaseValidator):
         old_context = [output['contextPath'] for output in self.old_file.get('outputs', [])]
 
         if not self._is_sub_set(current_context, old_context):
-            print_error(Errors.breaking_backwards_context(self.file_path))
-            return True
+            error_message, error_code = Errors.breaking_backwards_context()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return True
+
         return False
 
     def is_id_equals_name(self):
@@ -162,7 +171,9 @@ class ScriptValidator(BaseValidator):
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False)
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False,
+                                                      ignored_errors=self.ignored_errors,
+                                                      print_as_warnings=self.print_as_warnings)
         if docker_image_validator.is_docker_image_valid():
             return True
         return False
@@ -175,15 +186,19 @@ class ScriptValidator(BaseValidator):
             name = self.current_file.get('name')
             correct_name = "V2"
             if not name.endswith(correct_name):
-                print_error(Errors.invalid_v2_script_name(self.file_path))
-                return False
+                error_message, error_code = Errors.invalid_v2_script_name()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
             return True
 
     def is_valid_pwsh(self) -> bool:
         if self.current_file.get("type") == TYPE_PWSH:
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
-                print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
-                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
-                return False
+                error_message, error_code = Errors.pwsh_wrong_version(from_version)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
+                    return False
+
         return True

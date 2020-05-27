@@ -790,9 +790,9 @@ class FilesValidator:
 
                             if os.path.isfile(inner_file_path):
                                 is_yml_file = inner_file_path.endswith('.yml') and \
-                                    (constants.INTEGRATIONS_DIR in inner_dir_path or
-                                     constants.SCRIPTS_DIR in inner_dir_path or
-                                     constants.PLAYBOOKS_DIR in inner_dir_path)
+                                    (f'/{constants.INTEGRATIONS_DIR}/' in inner_file_path or
+                                     f'/{constants.SCRIPTS_DIR}/' in inner_file_path or
+                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path)
 
                                 is_md_file = inner_file_path.endswith('README.md')
 
@@ -856,9 +856,9 @@ class FilesValidator:
 
                             if os.path.isfile(inner_file_path):
                                 is_yml_file = inner_file_path.endswith('.yml') and \
-                                    (constants.INTEGRATIONS_DIR in inner_dir_path or
-                                     constants.SCRIPTS_DIR in inner_dir_path or
-                                     constants.PLAYBOOKS_DIR in inner_dir_path)
+                                    (f'/{constants.INTEGRATIONS_DIR}/' in inner_file_path or
+                                     f'/{constants.SCRIPTS_DIR}/' in inner_file_path or
+                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path)
 
                                 if is_yml_file:
                                     print("Validating {}".format(inner_file_path))

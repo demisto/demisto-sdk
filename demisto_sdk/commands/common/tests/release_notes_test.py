@@ -16,6 +16,7 @@ def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator.modified_files = modified_files
     release_notes_validator.added_files = added_files
     release_notes_validator.pack_name = 'CortexXDR'
+    release_notes_validator.ignored_errors = {}
     return release_notes_validator
 
 

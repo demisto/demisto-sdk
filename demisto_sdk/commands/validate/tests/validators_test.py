@@ -405,10 +405,10 @@ class TestValidators:
 
     @staticmethod
     def mock_unifier():
-        def get_script_package_data_mock(*args, **kwargs):
+        def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
         with patch.object(Unifier, '__init__', lambda a, b: None):
-            Unifier.get_script_package_data = get_script_package_data_mock
+            Unifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
             return Unifier('')
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATH)
@@ -508,7 +508,8 @@ class TestValidators:
                             return_value='demisto_sdk/tests/test_files/fake_pack/.pack-ignore')
         file_validator = FilesValidator()
         ignore_errors_list = file_validator.get_error_ignore_list("fake")
-        assert ignore_errors_list == ['IN100', 'IN101']
+        assert ignore_errors_list['pack'] == ['IN100', 'IN101']
+        assert ignore_errors_list['file_name'] == ['DO101', 'BA100']
 
     def test_create_ignored_errors_list(self, mocker):
         file_validator = FilesValidator()

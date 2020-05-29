@@ -10,7 +10,8 @@ PRESET_ERROR_TO_IGNORE = {
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA']
+    "deprecated": ['ST', 'BC', 'BA'],
+    "ignore-all": []
 }
 
 ERROR_CODE = {
@@ -19,7 +20,6 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
-    "wrong_default_parameter": "IN101",
     "wrong_required_value": "IN102",
     "wrong_required_type": "IN103",
     "wrong_category": "IN104",
@@ -174,11 +174,6 @@ class Errors:
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
         return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
-
-    @staticmethod
-    @error_code_decorator
-    def wrong_default_parameter(param_name):
-        return Errors.wrong_default_parameter_not_empty(param_name, "''")
 
     @staticmethod
     @error_code_decorator
@@ -394,7 +389,7 @@ class Errors:
     @error_code_decorator
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
-               f'Please create or update to an updated versioned image\n'
+               f' Please create or update to an updated versioned image\n'
 
     @staticmethod
     @error_code_decorator
@@ -700,7 +695,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_file_bad_format(file_name):
-        return f'Detected none valid regex in {file_name} file'
+        return f'Detected invalid {file_name} file'
 
     @staticmethod
     @error_code_decorator

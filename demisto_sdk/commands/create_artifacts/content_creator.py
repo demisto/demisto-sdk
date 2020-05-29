@@ -39,11 +39,13 @@ from ruamel.yaml import YAML
 class ContentCreator:
 
     def __init__(self, artifacts_path: str, content_version='', content_bundle_path='',
-                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False):
+                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False,
+                 no_update_commonserver=False):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
         self.content_version = content_version
         self.preserve_bundles = preserve_bundles
         self.only_packs = tools.is_private_repository() or packs
+        self.no_update_commonserverpython = no_update_commonserver
 
         # temp folder names
         self.content_bundle = content_bundle_path if content_bundle_path else os.path.join(self.artifacts_path,
@@ -398,8 +400,7 @@ class ContentCreator:
                 else:
                     self.copy_dir_files(content_dir, dest_dir)
 
-    @staticmethod
-    def update_content_version(content_ver: str = '', path: str = ''):
+    def update_content_version(self, content_ver: str = '', path: str = ''):
         regex = r'CONTENT_RELEASE_VERSION = .*'
         if not content_ver:
             try:
@@ -411,6 +412,9 @@ class ContentCreator:
                 return
 
         try:
+            if self.no_update_commonserverpython:
+                return
+
             if not path:
                 path = get_common_server_path('.')
             with open(path, 'r+') as file_:
@@ -421,8 +425,9 @@ class ContentCreator:
         except Exception as ex:
             print_warning(f'Could not open CommonServerPython File - {ex}')
 
-    @staticmethod
-    def update_branch(path: str = ''):
+    def update_branch(self, path: str = ''):
+        if self.no_update_commonserverpython:
+            return
 
         regex = r'CONTENT_BRANCH_NAME = .*'
         branch_name = get_current_working_branch()

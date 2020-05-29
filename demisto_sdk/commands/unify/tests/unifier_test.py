@@ -101,16 +101,16 @@ def test_get_code_file():
                                            f"CalculateGeoDistance.py"
 
 
-def test_get_script_package_data():
+def test_get_script_or_integration_package_data():
     from demisto_sdk.commands.unify.unifier import Unifier
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):
-        unifier.get_script_package_data()
+        unifier.get_script_or_integration_package_data()
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance")
     with open(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py", "r") as \
             code_file:
         code = code_file.read()
-    yml_path, code_data = unifier.get_script_package_data()
+    yml_path, code_data = unifier.get_script_or_integration_package_data()
     assert yml_path == f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.yml"
     assert code_data == code
 

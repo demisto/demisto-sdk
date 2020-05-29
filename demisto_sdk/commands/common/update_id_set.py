@@ -141,9 +141,22 @@ def get_commmands_from_playbook(data_dict: dict) -> tuple:
     return command_to_integration, list(command_to_integration_skippable)
 
 
+def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
+    unifier = Unifier(os.path.dirname(file_path))
+    if is_unified_integration:
+        integration_script_code = data_dictionary.get('script', {}).get('script', '')
+    else:
+        _, integration_script_code = unifier.get_script_or_integration_package_data()
+
+    return unifier.check_api_module_imports(integration_script_code)[1]
+
+
 def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
+
+    is_unified_integration = data_dictionary.get('script', {}).get('script', '') != '-'
+
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
 
@@ -154,6 +167,7 @@ def get_integration_data(file_path):
     commands = data_dictionary.get('script', {}).get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
+    integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
 
     deprecated_commands = []
     for command in commands:
@@ -176,6 +190,8 @@ def get_integration_data(file_path):
         integration_data['deprecated_commands'] = deprecated_commands
     if pack:
         integration_data['pack'] = pack
+    if integration_api_modules:
+        integration_data['api_modules'] = integration_api_modules
     return {id_: integration_data}
 
 
@@ -414,7 +430,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
     else:
         # package script
         unifier = Unifier(file_path)
-        yml_path, code = unifier.get_script_package_data()
+        yml_path, code = unifier.get_script_or_integration_package_data()
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_script_data(yml_path, script_code=code))

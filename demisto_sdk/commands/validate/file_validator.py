@@ -803,6 +803,11 @@ class FilesValidator:
             pack_path = os.path.join(PACKS_DIR, pack_name)
             ignore_errors_list = self.get_error_ignore_list(pack_name)
 
+            if not os.path.isdir(pack_path):
+                # there are files that are not directories but returned from listdir like Packs/.DS_Store
+                # skip them
+                continue
+
             for dir_name in os.listdir(pack_path):
                 dir_path = os.path.join(pack_path, dir_name)
 

@@ -403,7 +403,7 @@ def process_integration(file_path: str, print_logs: bool) -> list:
     """
     res = []
     if os.path.isfile(file_path):
-        if checked_type(file_path, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX):
+        if checked_type(file_path, [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]):
             if print_logs:
                 print("adding {} to id_set".format(file_path))
             res.append(get_integration_data(file_path))

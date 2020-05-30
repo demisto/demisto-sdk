@@ -2,13 +2,15 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_DASHBOARD_JSON_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX,
-    PACKS_INCIDENT_TYPE_JSON_REGEX, PACKS_INTEGRATION_PY_REGEX,
-    PACKS_INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_YML_REGEX,
-    PACKS_LAYOUT_JSON_REGEX, PACKS_PACKAGE_META_REGEX, PACKS_SCRIPT_PY_REGEX,
+    PACKS_INCIDENT_TYPE_JSON_REGEX, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_INTEGRATION_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX,
+    PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUT_JSON_REGEX,
+    PACKS_PACKAGE_META_REGEX, PACKS_SCRIPT_PY_REGEX,
     PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_CHANGELOG_REGEX, PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX)
-from demisto_sdk.commands.common.tools import checked_type
+# from demisto_sdk.commands.common.tools import checked_type
+from demisto_sdk.commands.common.update_id_set import checked_type
 
 test_packs_regex_params = [
     (['Packs/XDR/Integrations/XDR/XDR.yml', 'Packs/XDR/Scripts/Random/Random.yml'],
@@ -45,6 +47,11 @@ test_packs_regex_params = [
         ['Packs/XDR/Playbooks/playbook-Test_CHANGELOG.md'],
         ['Packs/XDR/Playbooks/CHANGELOG.md', 'Packs/XDR/Playbooks/Test.yml'],
         [PLAYBOOK_CHANGELOG_REGEX]
+    ),
+    (
+        ['Packs/OpenPhish/Integrations/integration-OpenPhish.yml'],
+        ['Packs/OpenPhish/Integrations/OpenPhish/OpenPhish.yml'],
+        [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
     )
 ]
 

@@ -23,6 +23,7 @@ PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
 RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
+DOC_FILES_DIR = 'doc_files'
 
 SCRIPT = 'script'
 INTEGRATION = 'integration'

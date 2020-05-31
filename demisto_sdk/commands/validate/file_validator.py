@@ -778,7 +778,7 @@ class FilesValidator:
                         is_json_file = file_path.endswith('.json') and \
                             dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
-                        is_md_file = file_path.endswith('.md')
+                        is_md_file = file_path.endswith('.md') and 'CHANGELOG' not in file_path
 
                         if is_yml_file or is_json_file or is_md_file:
                             all_files_to_validate.add(file_path)

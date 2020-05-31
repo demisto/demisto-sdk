@@ -368,11 +368,11 @@ def test_upload_pack(demisto_client_configure, mocker):
 ├─────────────────────────────────────────┼────────────────┤
 │ incidenttype-Hello_World_Alert.json     │ Incident Type  │
 ├─────────────────────────────────────────┼────────────────┤
-│ incidentfield-Hello_World_Status.json   │ Incident Field │
+│ incidentfield-Hello_World_ID.json       │ Incident Field │
 ├─────────────────────────────────────────┼────────────────┤
 │ incidentfield-Hello_World_Type.json     │ Incident Field │
 ├─────────────────────────────────────────┼────────────────┤
-│ incidentfield-Hello_World_ID.json       │ Incident Field │
+│ incidentfield-Hello_World_Status.json   │ Incident Field │
 ├─────────────────────────────────────────┼────────────────┤
 │ classifier-aws_sns_test_classifier.json │ Classifier     │
 ├─────────────────────────────────────────┼────────────────┤

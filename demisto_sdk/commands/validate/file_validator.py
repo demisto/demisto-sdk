@@ -474,7 +474,7 @@ class FilesValidator:
         self.verify_no_dup_rn(added_files)
 
         for file_path in added_files:
-            # file_type = find_type(file_path) if not file_type else file_type
+            file_type = find_type(file_path) if not file_type else file_type
 
             pack_name = get_pack_name(file_path)
             ignored_errors_list = self.get_error_ignore_list(pack_name)

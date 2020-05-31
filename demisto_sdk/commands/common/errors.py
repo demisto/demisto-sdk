@@ -6,7 +6,6 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    PACK_METADATA_NAME)
 
 PRESET_ERROR_TO_IGNORE = {
-    "ignore-ba101": ["BA101"]
 }
 
 PRESET_ERROR_TO_CHECK = {

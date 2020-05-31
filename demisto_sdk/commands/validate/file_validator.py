@@ -970,7 +970,11 @@ class FilesValidator:
 
         return ignored_error_list
 
-    def add_ignored_errors_to_list(self, key, ignored_errors_list):
+    def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
+        # For now one can only ignore BA101 error.
+        if key == 'ignore' and 'BA101' in str(config[section][key]).split(','):
+            ignored_errors_list.extend(['BA101'])
+
         if key in PRESET_ERROR_TO_IGNORE:
             ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
 
@@ -994,7 +998,7 @@ class FilesValidator:
                             file_name = section[5:]
                             ignored_errors_list[file_name] = []
                             for key in config[section]:
-                                self.add_ignored_errors_to_list(key, ignored_errors_list[file_name])
+                                self.add_ignored_errors_to_list(config, section, key, ignored_errors_list[file_name])
 
                 except MissingSectionHeaderError:
                     pass

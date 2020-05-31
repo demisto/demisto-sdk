@@ -12,6 +12,7 @@ class BaseValidator:
     def __init__(self, ignored_errors=None, print_as_warnings=False):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
+        self.checked_files = []
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -68,12 +69,14 @@ class BaseValidator:
         return formatted_error
 
     def check_deprecated(self, file_path):
-        if file_path.endswith('.yml'):
+        file_name = os.path.basename(file_path)
+        if file_path.endswith('.yml') and file_name not in self.checked_files:
             yml_dict = get_yaml(file_path)
             if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
-                    (os.path.basename(file_path).startswith('playbook') and 'hidden' in yml_dict and
+                    (file_name.startswith('playbook') and 'hidden' in yml_dict and
                      yml_dict['hidden'] is True):
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
+            self.checked_files.append(file_name)
 
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):

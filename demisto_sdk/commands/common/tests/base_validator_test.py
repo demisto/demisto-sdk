@@ -1,9 +1,7 @@
-import os
-
 from demisto_sdk.commands.common.errors import PRESET_ERROR_TO_CHECK
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from TestSuite.test_tools import ChangeCWD
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK['deprecated'])
 
@@ -32,7 +30,7 @@ def test_handle_error():
     assert formatted_error is None
 
 
-def test_check_deprecated_where_ignored_list_exists():
+def test_check_deprecated_where_ignored_list_exists(repo):
     """
     Given
     - An deprecated integration yml.
@@ -44,15 +42,17 @@ def test_check_deprecated_where_ignored_list_exists():
     Then
     - Ensure the resulting ignored errors list included the existing errors as well as the deprecated default error list.
     """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'DummyPack/Integrations/DummyDeprecatedIntegration/DummyDeprecatedIntegration.yml')
-    base_validator = BaseValidator(ignored_errors={'DummyDeprecatedIntegration.yml': ['BA101']})
-    base_validator.check_deprecated(test_file)
-    assert base_validator.ignored_errors['DummyDeprecatedIntegration.yml'] == ["BA101"] + DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.write_yml({'deprecated': True})
+    files_path = integration.yml_path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={'integration.yml': ['BA101']})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['integration.yml'] == ["BA101"] + DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
 
 
-def test_check_deprecated_where_ignored_list_does_not_exist():
+def test_check_deprecated_where_ignored_list_does_not_exist(repo):
     """
     Given
     - An deprecated integration yml.
@@ -64,15 +64,17 @@ def test_check_deprecated_where_ignored_list_does_not_exist():
     Then
     - Ensure the resulting ignored errors list included the deprecated default error list only.
     """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'DummyPack/Integrations/DummyDeprecatedIntegration/DummyDeprecatedIntegration.yml')
-    base_validator = BaseValidator(ignored_errors={})
-    base_validator.check_deprecated(test_file)
-    assert base_validator.ignored_errors['DummyDeprecatedIntegration.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.write_yml({'deprecated': True})
+    files_path = integration.yml_path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['integration.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
 
 
-def test_check_deprecated_non_deprecated_integration_no_ignored_errors():
+def test_check_deprecated_non_deprecated_integration_no_ignored_errors(repo):
     """
     Given
     - An non-deprecated integration yml.
@@ -84,15 +86,17 @@ def test_check_deprecated_non_deprecated_integration_no_ignored_errors():
     Then
     - Ensure there is no resulting ignored errors list.
     """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'DummyPack/Integrations/DummyIntegration/DummyIntegration.yml')
-    base_validator = BaseValidator(ignored_errors={})
-    base_validator.check_deprecated(test_file)
-    assert 'DummyIntegration' not in base_validator.ignored_errors
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.write_yml({'deprecated': False})
+    files_path = integration.yml_path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.check_deprecated(files_path)
+    assert 'integration' not in base_validator.ignored_errors
 
 
-def test_check_deprecated_non_deprecated_integration_with_ignored_errors():
+def test_check_deprecated_non_deprecated_integration_with_ignored_errors(repo):
     """
     Given
     - An non-deprecated integration yml.
@@ -104,15 +108,17 @@ def test_check_deprecated_non_deprecated_integration_with_ignored_errors():
     Then
     - Ensure the resulting ignored errors list is the pre-existing one.
     """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'DummyPack/Integrations/DummyIntegration/DummyIntegration.yml')
-    base_validator = BaseValidator(ignored_errors={'DummyIntegration.yml': ["BA101"]})
-    base_validator.check_deprecated(test_file)
-    assert base_validator.ignored_errors['DummyIntegration.yml'] == ['BA101']
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.write_yml({'deprecated': False})
+    files_path = integration.yml_path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={'integration.yml': ["BA101"]})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['integration.yml'] == ['BA101']
 
 
-def test_check_deprecated_playbook():
+def test_check_deprecated_playbook(repo):
     """
     Given
     - An non-deprecated playbook yml.
@@ -123,9 +129,11 @@ def test_check_deprecated_playbook():
     Then
     - Ensure the resulting ignored errors list included the deprecated default error list only.
     """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'DummyPack/Playbooks/playbook-DummyDeprecatedPlaybook.yml')
-    base_validator = BaseValidator(ignored_errors={})
-    base_validator.check_deprecated(test_file)
-    assert base_validator.ignored_errors['playbook-DummyDeprecatedPlaybook.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    pack = repo.create_pack('pack')
+    playbook = pack.create_integration('playbook-somePlaybook')
+    playbook.write_yml({'hidden': True})
+    files_path = playbook.yml_path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['playbook-somePlaybook.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST

@@ -29,3 +29,5 @@ mapping:
     allowempty: True
   defaultIncidentType:
     type: str
+  feed:
+    type: bool

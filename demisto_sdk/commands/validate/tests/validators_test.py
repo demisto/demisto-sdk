@@ -530,7 +530,7 @@ def test_added_files_type_using_function(repo):
         When:
             - verifying added files are valid
         Then:
-            - verify that the type
+            - verify that the validation detects the correct file type and passes successfully
     """
     saved_stdout = sys.stdout
 

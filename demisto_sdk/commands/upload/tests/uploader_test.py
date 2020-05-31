@@ -384,9 +384,9 @@ def test_upload_pack(demisto_client_configure, mocker):
 ╘═════════════════════════════════════════╧════════════════╛
 """
     assert status_code == 0
-    assert len(print.call_args_list) == 20
-    assert print.call_args_list[19][0][0] == u'{}{}{}'.format(LOG_COLORS.GREEN, expected_uploaded_items_table,
+    assert print.call_args_list[-1][0][0] == u'{}{}{}'.format(LOG_COLORS.GREEN, expected_uploaded_items_table,
                                                               LOG_COLORS.NATIVE)
+    assert len(print.call_args_list) == 20
 
 
 def test_upload_invalid_path(demisto_client_configure):

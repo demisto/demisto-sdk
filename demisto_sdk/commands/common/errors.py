@@ -129,6 +129,10 @@ ERROR_CODE = {
     "wrong_file_extension": "ST104",
     "invalid_file_path": "ST105",
     "invalid_package_structure": "ST106",
+    "pykwalify_missing_parameter": "ST107",
+    "pykwalify_field_undefined": "ST108",
+    "pykwalify_missing_in_root": "ST109",
+    "pykwalify_general_error": "ST110",
     "invalid_to_version_in_new_classifiers": "CL100",
     "invalid_to_version_in_old_classifiers": "CL101",
     "invalid_from_version_in_new_classifiers": "CL102",
@@ -808,6 +812,26 @@ class Errors:
         return 'You should update the following files to the package format, for further details please visit ' \
                'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_missing_parameter(key_from_error, current_string, path):
+        return f'Missing {key_from_error} in \n{current_string}\nPath: {path}'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_field_undefined(key_from_error):
+        return f'The field {key_from_error} was not defined in the scheme'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_missing_in_root(key_from_error):
+        return f'Missing {key_from_error} in root'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_general_error(error):
+        return f'in {error}'
 
     @staticmethod
     @error_code_decorator

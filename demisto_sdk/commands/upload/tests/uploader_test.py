@@ -54,7 +54,7 @@ def test_upload_script_positive(demisto_client_configure, mocker):
         - Ensure success upload message is printed as expected
     """
     mocker.patch("builtins.print")
-    script_name = "DummyScript.yml"
+    script_name = "DummyScriptUnified.yml"
     script_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_name}"
     uploader = Uploader(input=script_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')

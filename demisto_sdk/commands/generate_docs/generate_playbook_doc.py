@@ -17,6 +17,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
         errors = []
 
         description = playbook.get('description', '')
+        _name = playbook.get('name', 'Unknown')
         if not description:
             errors.append('Error! You are missing description for the playbook')
 
@@ -55,7 +56,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
         if limitations:
             doc.extend(generate_numbered_section('Known Limitations', limitations))
 
-        doc.append('<!-- Playbook PNG image comes here -->')
+        doc.append(f'![{_name}](Fill in the link to your image here please)')
 
         doc_text = '\n'.join(doc)
 

@@ -1,5 +1,6 @@
 # Changelog
 #### 1.0.10
+* Fixed error in **upload** command where unified YMLs were not uploaded as expected if the given input was a pack.
 * Fixed error where changes to only non-validated files would fail validation.
 * Fixed a bug in **validate** command where moved files were failing validation for new packs.
 

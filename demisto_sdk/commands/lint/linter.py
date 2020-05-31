@@ -527,7 +527,8 @@ class Linter:
         try:
             dockerfile = template.render(image=docker_base_image[0],
                                          pypi_packs=requirements + self._facts["additional_requirements"],
-                                         pack_type=self._pkg_lint_status["pack_type"])
+                                         pack_type=self._pkg_lint_status["pack_type"],
+                                         copy_pack=False)
         except exceptions.TemplateError as e:
             logger.debug(f"{log_prompt} - Error when build image - {e.message()}")
             return test_image_id, str(e)
@@ -568,32 +569,28 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
 
+        docker_image_final = None
         for trial in range(2):
             try:
                 logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
-                container_obj = self._docker_client.containers.create(image=test_image_name,
-                                                                      command="update-ca-certificates")
-                copy_dir_to_container(container_obj=container_obj,
-                                      host_path=self._pack_abs_dir,
-                                      container_path=Path('/devwork'))
-                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and \
-                        self._pkg_lint_status["pack_type"] == TYPE_PWSH:
-                    copy_dir_to_container(container_obj=container_obj,
-                                          host_path=Path(__file__).parent / 'resources' / 'certificates',
-                                          container_path=Path('/usr/local/share/ca-certificates/'))
-                    container_obj.start()
-                    container_obj.wait()
-                test_image_id = container_obj.commit().short_id
-                container_obj.remove()
-                break
-            except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError) as e:
+                dockerfile = template.render(image=test_image_name,
+                                             copy_pack=True)
+                dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+                dockerfile_path.write_text(dockerfile)
+                docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
+                                                                      dockerfile=dockerfile_path.stem,
+                                                                      forcerm=True)
+                test_image_name = docker_image_final[0].short_id
+                dockerfile_path.unlink()
+            except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
+                    exceptions.TemplateError) as e:
                 logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
                 if trial == 2:
                     errors = str(e)
         if test_image_id:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")
 
-        return test_image_id, errors
+        return test_image_name, errors
 
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image

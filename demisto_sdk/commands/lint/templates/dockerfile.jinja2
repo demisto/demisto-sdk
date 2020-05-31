@@ -1,5 +1,7 @@
 {# Declare image to build from #}
 FROM {{ image }}
+{# Check if Dockerfile target is to copy package#}
+{% if not copy_pack %}
 {# Creating test main directory #}
 RUN mkdir -p /devwork/
 {# Define workir #}
@@ -24,4 +26,8 @@ RUN pwsh -Command Set-PSRepository -name PSGallery -installationpolicy trusted
 RUN pwsh -Command Install-Module -Name Pester -Scope AllUsers -Force | pwsh -Command Out-Null
 RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force | pwsh -Command Out-Null
 {# Container entry point (Every command will start with /bin/sh) #}
+{% endif %}
+{% else %}
+WORKDIR /devwork
+COPY . .
 {% endif %}

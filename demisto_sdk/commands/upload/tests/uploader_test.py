@@ -25,7 +25,6 @@ if not hasattr(inspect, '_orig_findsource'):
             return inspect._orig_findsource(*args, **kwargs)
         except IndexError:
             raise IOError("Invalid line")
-
     inspect._orig_findsource = inspect.findsource
     inspect.findsource = findsource
 
@@ -356,8 +355,38 @@ def test_upload_pack(demisto_client_configure, mocker):
     uploader = Uploader(input=pack_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     status_code = uploader.upload()
+    expected_uploaded_items_table = """╒═════════════════════════════════════════╤════════════════╕
+│ NAME                                    │ TYPE           │
+╞═════════════════════════════════════════╪════════════════╡
+│ DummyIntegration.yml                    │ Integration    │
+├─────────────────────────────────────────┼────────────────┤
+│ integration-UploadTest.yml              │ Integration    │
+├─────────────────────────────────────────┼────────────────┤
+│ script-DummyScript.yml                  │ Script         │
+├─────────────────────────────────────────┼────────────────┤
+│ DummyPlaybook.yml                       │ Playbook       │
+├─────────────────────────────────────────┼────────────────┤
+│ incidenttype-Hello_World_Alert.json     │ Incident Type  │
+├─────────────────────────────────────────┼────────────────┤
+│ incidentfield-Hello_World_Status.json   │ Incident Field │
+├─────────────────────────────────────────┼────────────────┤
+│ incidentfield-Hello_World_Type.json     │ Incident Field │
+├─────────────────────────────────────────┼────────────────┤
+│ incidentfield-Hello_World_ID.json       │ Incident Field │
+├─────────────────────────────────────────┼────────────────┤
+│ classifier-aws_sns_test_classifier.json │ Classifier     │
+├─────────────────────────────────────────┼────────────────┤
+│ widget-ActiveIncidentsByRole.json       │ Widget         │
+├─────────────────────────────────────────┼────────────────┤
+│ layout-details-test_bla-V2.json         │ Layout         │
+├─────────────────────────────────────────┼────────────────┤
+│ upload_test_dashboard.json              │ Dashboard      │
+╘═════════════════════════════════════════╧════════════════╛
+"""
     assert status_code == 0
-    assert len(print.call_args_list) == 19
+    assert len(print.call_args_list) == 20
+    assert print.call_args_list[19][0][0] == u'{}{}{}'.format(LOG_COLORS.GREEN, expected_uploaded_items_table,
+                                                              LOG_COLORS.NATIVE)
 
 
 def test_upload_invalid_path(demisto_client_configure):

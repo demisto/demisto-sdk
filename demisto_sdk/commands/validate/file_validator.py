@@ -833,9 +833,7 @@ class FilesValidator:
                     file_path = os.path.join(dir_path, file_name)
 
                     if os.path.isfile(file_path):
-                        is_yml_file = file_path.endswith('.yml') and \
-                            dir_name in (
-                            constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+                        is_yml_file = file_path.endswith('.yml')
 
                         is_json_file = file_path.endswith('.json') and \
                             dir_name not in (
@@ -855,10 +853,7 @@ class FilesValidator:
                             inner_file_path = os.path.join(inner_dir_path, inner_file_name)
 
                             if os.path.isfile(inner_file_path):
-                                is_yml_file = inner_file_path.endswith('.yml') and \
-                                    (f'/{constants.INTEGRATIONS_DIR}/' in inner_file_path or
-                                     f'/{constants.SCRIPTS_DIR}/' in inner_file_path or
-                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path)
+                                is_yml_file = inner_file_path.endswith('.yml')
 
                                 if is_yml_file:
                                     print("Validating {}".format(inner_file_path))

@@ -608,7 +608,7 @@ class TestMapper:
         mocker.patch.object(tools, 'is_private_repository', return_value=True)
         pack = repo.create_pack('PackName')
         del MAPPER['id']
-        mapper = pack.create_classifier('mapper', MAPPER)
+        mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
@@ -631,7 +631,7 @@ class TestMapper:
         pack = repo.create_pack('PackName')
         MAPPER['toVersion'] = '6.0.2'
         MAPPER['fromVersion'] = '6.0.5'
-        mapper = pack.create_classifier('mapper', MAPPER)
+        mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
@@ -653,7 +653,7 @@ class TestMapper:
         mocker.patch.object(tools, 'is_private_repository', return_value=True)
         pack = repo.create_pack('PackName')
         MAPPER['type'] = 'test'
-        mapper = pack.create_classifier('mapper', MAPPER)
+        mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)

@@ -18,13 +18,13 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n### Integrations\n- __Hello World Integration__\n%%UPDATE_RN%%\n" \
-                          "\n### Playbooks\n- __Hello World Playbook__\n%%UPDATE_RN%%\n" \
-                          "\n### Scripts\n- __Hello World Script__\n%%UPDATE_RN%%\n" \
-                          "\n### IncidentFields\n- __Hello World IncidentField__\n%%UPDATE_RN%%\n" \
-                          "\n### Classifiers\n- __Hello World Classifier__\n%%UPDATE_RN%%\n" \
-                          "\n### Layouts\n- __Hello World Layout__\n%%UPDATE_RN%%\n" \
-                          "\n### IncidentTypes\n- __Hello World Incident Type__\n%%UPDATE_RN%%\n"
+        expected_result = "\n### Integrations\n#### Hello World Integration\n- %%UPDATE_RN%%\n" \
+                          "\n### Playbooks\n#### Hello World Playbook\n- %%UPDATE_RN%%\n" \
+                          "\n### Scripts\n#### Hello World Script\n- %%UPDATE_RN%%\n" \
+                          "\n### IncidentFields\n#### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
+                          "\n### Classifiers\n#### Hello World Classifier\n- %%UPDATE_RN%%\n" \
+                          "\n### Layouts\n#### Hello World Layout\n- %%UPDATE_RN%%\n" \
+                          "\n### IncidentTypes\n#### Hello World Incident Type\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         changed_items = {
@@ -226,12 +226,12 @@ class TestRNUpdateUnit:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     CURRENT_RN = """
 ### IncidentTypes
-- __Cortex XDR Incident__
-%%UPDATE_RN%%
+#### Cortex XDR Incident
+- %%UPDATE_RN%%
 
 ### IncidentFields
-- __XDR Alerts__
-%%UPDATE_RN%%
+#### XDR Alerts
+- %%UPDATE_RN%%
 """
     CHANGED_FILES = {
         "Cortex XDR Incident": "IncidentType",
@@ -243,22 +243,22 @@ class TestRNUpdateUnit:
     }
     EXPECTED_RN_RES = """
 ### IncidentTypes
-- __Cortex XDR Incident__
-%%UPDATE_RN%%
+#### Cortex XDR Incident
+- %%UPDATE_RN%%
 
 ### IncidentFields
-- __Sample IncidentField__
-%%UPDATE_RN%%
+#### Sample IncidentField
+- %%UPDATE_RN%%
 
-- __XDR Alerts__
-%%UPDATE_RN%%
+#### XDR Alerts
+- %%UPDATE_RN%%
 
 ### Integration
-- __Sample__
-%%UPDATE_RN%%
+#### Sample
+- %%UPDATE_RN%%
 
-- __Cortex XDR - IR__
-%%UPDATE_RN%%
+#### Cortex XDR - IR
+- %%UPDATE_RN%%
 """
 
     def test_ident_changed_file_type_integration(self, mocker):

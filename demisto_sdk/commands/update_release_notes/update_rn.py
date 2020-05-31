@@ -199,37 +199,37 @@ class UpdateRN:
                 if not integration_header:
                     rn_string += '\n### Integrations\n'
                     integration_header = True
-                rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Playbook':
                 if not playbook_header:
                     rn_string += '\n### Playbooks\n'
                     playbook_header = True
-                rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Script':
                 if not script_header:
                     rn_string += '\n### Scripts\n'
                     script_header = True
-                rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'IncidentFields':
                 if not inc_flds_header:
                     rn_string += '\n### IncidentFields\n'
                     inc_flds_header = True
-                rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Classifiers':
                 if not classifier_header:
                     rn_string += '\n### Classifiers\n'
                     classifier_header = True
-                rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Layouts':
                 if not layout_header:
                     rn_string += '\n### Layouts\n'
                     layout_header = True
-                rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'IncidentTypes':
                 if not inc_types_header:
                     rn_string += '\n### IncidentTypes\n'
                     inc_types_header = True
-                rn_string += f'- __{k}__\n%%UPDATE_RN%%\n'
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 
     @staticmethod
@@ -244,7 +244,7 @@ class UpdateRN:
                     continue
                 else:
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n- __{k}__\n%%UPDATE_RN%%\n'
+                    new_rn_part = f'\n#### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
@@ -252,13 +252,13 @@ class UpdateRN:
             else:
                 if v in new_rn:
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n- __{k}__\n%%UPDATE_RN%%\n'
+                    new_rn_part = f'\n#### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = f'\n### {v}\n- __{k}__\n%%UPDATE_RN%%\n'
+                    new_rn_part = f'\n### {v}\n#### {k}\n- %%UPDATE_RN%%\n'
                     new_rn += new_rn_part
         return new_rn
 

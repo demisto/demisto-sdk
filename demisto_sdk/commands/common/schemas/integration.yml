@@ -42,11 +42,11 @@ mapping:
     type: str
     required: true
   defaultMapperIn:
-    type: string
+    type: str
   defaultMapperOut:
-    type: string
+    type: str
   defaultClassifier:
-    type: string
+    type: str
   detaileddescription:
     type: str
   configuration:

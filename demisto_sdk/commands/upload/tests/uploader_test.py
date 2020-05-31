@@ -349,44 +349,23 @@ def test_upload_pack(demisto_client_configure, mocker):
         - Ensure pack is uploaded successfully
         - Ensure status code is as expected
         - Ensure amount of messages is as expected
+        - Check that all expected content entities that appear in the pack are reported as uploaded.
     """
     mocker.patch("builtins.print")
     pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
     uploader = Uploader(input=pack_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     status_code = uploader.upload()
-    expected_uploaded_items_table = """╒═════════════════════════════════════════╤════════════════╕
-│ NAME                                    │ TYPE           │
-╞═════════════════════════════════════════╪════════════════╡
-│ DummyIntegration.yml                    │ Integration    │
-├─────────────────────────────────────────┼────────────────┤
-│ integration-UploadTest.yml              │ Integration    │
-├─────────────────────────────────────────┼────────────────┤
-│ script-DummyScript.yml                  │ Script         │
-├─────────────────────────────────────────┼────────────────┤
-│ DummyPlaybook.yml                       │ Playbook       │
-├─────────────────────────────────────────┼────────────────┤
-│ incidenttype-Hello_World_Alert.json     │ Incident Type  │
-├─────────────────────────────────────────┼────────────────┤
-│ incidentfield-Hello_World_ID.json       │ Incident Field │
-├─────────────────────────────────────────┼────────────────┤
-│ incidentfield-Hello_World_Type.json     │ Incident Field │
-├─────────────────────────────────────────┼────────────────┤
-│ incidentfield-Hello_World_Status.json   │ Incident Field │
-├─────────────────────────────────────────┼────────────────┤
-│ classifier-aws_sns_test_classifier.json │ Classifier     │
-├─────────────────────────────────────────┼────────────────┤
-│ widget-ActiveIncidentsByRole.json       │ Widget         │
-├─────────────────────────────────────────┼────────────────┤
-│ layout-details-test_bla-V2.json         │ Layout         │
-├─────────────────────────────────────────┼────────────────┤
-│ upload_test_dashboard.json              │ Dashboard      │
-╘═════════════════════════════════════════╧════════════════╛
-"""
+    expected_entities = ['DummyIntegration.yml', 'integration-UploadTest.yml', 'DummyScriptUnified.yml',
+                         'script-DummyScript.yml', 'DummyPlaybook.yml', 'incidenttype-Hello_World_Alert.json',
+                         'incidentfield-Hello_World_ID.json', 'incidentfield-Hello_World_Type.json',
+                         'incidentfield-Hello_World_Status.json', 'classifier-aws_sns_test_classifier.json',
+                         'widget-ActiveIncidentsByRole.json', 'layout-details-test_bla-V2.json',
+                         'upload_test_dashboard.json']
     assert status_code == 0
-    assert print.call_args_list[-1][0][0] == u'{}{}{}'.format(LOG_COLORS.GREEN, expected_uploaded_items_table,
-                                                              LOG_COLORS.NATIVE)
-    assert len(print.call_args_list) == 20
+    assert len(print.call_args_list) == 21
+    for entity in expected_entities:
+        assert entity in print.call_args_list[20][0][0]
 
 
 def test_upload_invalid_path(demisto_client_configure):

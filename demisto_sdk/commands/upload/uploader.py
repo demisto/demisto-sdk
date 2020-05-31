@@ -144,7 +144,7 @@ class Uploader:
             list_unified_scripts = get_child_files(path)
             for unified_script in list_unified_scripts:
                 file_type = find_type(unified_script)
-                if file_type == 'integration':
+                if file_type == 'script':
                     self.integration_uploader(unified_script)
             # Upload spliced scripts
             list_script = get_child_directories(path)

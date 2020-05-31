@@ -526,7 +526,7 @@ class TestValidators:
 def test_added_files_type_using_function(repo):
     """
         Given:
-            - A file path to a new script, that is not located in a "regular" scriptts path
+            - A file path to a new script, that is not located in a "regular" scripts path
         When:
             - verifying added files are valid
         Then:

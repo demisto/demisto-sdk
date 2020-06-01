@@ -33,6 +33,7 @@ class Pack:
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         self.classifiers: List[JSONBased] = list()
+        self.mapper: List[JSONBased] = list()
         self.dashboards: List[JSONBased] = list()
         self.incident_types: List[JSONBased] = list()
         self.incident_field: List[JSONBased] = list()
@@ -56,6 +57,8 @@ class Pack:
 
         self._classifiers_path = self._pack_path / 'Classifiers'
         self._classifiers_path.mkdir()
+
+        self._mappers_path = self._classifiers_path
 
         self._dashboards_path = self._pack_path / 'Dashboards'
         self._dashboards_path.mkdir()
@@ -128,15 +131,24 @@ class Pack:
         self.scripts.append(script)
         return script
 
+    def create_test_script(self):
+        script = self.create_script('sample_script')
+        script.create_default_script()
+        return script
+
     def create_json_based(
             self,
             name,
             prefix: str,
             content: dict = None,
+            dir_path: Path = None
     ):
         if content is None:
             content = {}
-        obj = JSONBased(self._pack_path, name, prefix)
+        if dir_path:
+            obj = JSONBased(dir_path, name, prefix)
+        else:
+            obj = JSONBased(self._pack_path, name, prefix)
         obj.write_json(content)
         return obj
 
@@ -146,9 +158,19 @@ class Pack:
             content: dict = None
     ):
         prefix = 'classifier'
-        classifier = self.create_json_based(name, prefix, content)
+        classifier = self.create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
         return classifier
+
+    def create_mapper(
+            self,
+            name,
+            content: dict = None
+    ):
+        prefix = 'classifier-mapper'
+        mapper = self.create_json_based(name, prefix, content)
+        self.mapper.append(mapper)
+        return mapper
 
     def create_dashboard(
             self,

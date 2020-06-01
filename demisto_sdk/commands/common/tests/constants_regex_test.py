@@ -1,11 +1,12 @@
 import pytest
 from demisto_sdk.commands.common.constants import (
-    PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
+    PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX,
+    PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_DASHBOARD_JSON_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX,
     PACKS_INCIDENT_TYPE_JSON_REGEX, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_INTEGRATION_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX,
     PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUT_JSON_REGEX,
-    PACKS_PACKAGE_META_REGEX, PACKS_SCRIPT_PY_REGEX,
+    PACKS_MAPPER_JSON_REGEX, PACKS_PACKAGE_META_REGEX, PACKS_SCRIPT_PY_REGEX,
     PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_CHANGELOG_REGEX, PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX)
@@ -27,7 +28,12 @@ test_packs_regex_params = [
     (['Packs/XDR/Scripts/Random/Random_test.py'], ['Packs/Sade/Scripts/test_yarden.pt'], [PACKS_SCRIPT_TEST_PY_REGEX]),
     (['Packs/XDR/Playbooks/XDR.yml'], ['Packs/Playbooks/XDR/XDR_test.py'], [PLAYBOOK_YML_REGEX]),
     (['Packs/XDR/TestPlaybooks/playbook.yml'], ['Packs/TestPlaybooks/nonpb.xml'], [TEST_PLAYBOOK_YML_REGEX]),
-    (['Packs/Sade/Classifiers/yarden.json'], ['Packs/Sade/Classifiers/yarden-json.txt'], [PACKS_CLASSIFIER_JSON_REGEX]),
+    (['Packs/Sade/Classifiers/classifier-yarden.json'], ['Packs/Sade/Classifiers/classifier-yarden-json.txt'],
+     [PACKS_CLASSIFIER_JSON_REGEX]),
+    (['Packs/Sade/Classifiers/classifier-test_5_9_9.json'], ['Packs/Sade/Classifiers/classifier-test_5_9_9-json.txt'],
+     [PACKS_CLASSIFIER_JSON_5_9_9_REGEX]),
+    (['Packs/Sade/Classifiers/classifier-mapper-test.json'], ['Packs/Sade/Classifiers/classifier-mapper-test.txt'],
+     [PACKS_MAPPER_JSON_REGEX]),
     (['Packs/Sade/Dashboards/yarden.json'], ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_DASHBOARD_JSON_REGEX]),
     (['Packs/Sade/IncidentTypes/yarden.json'], ['Packs/Sade/IncidentTypes/yarden-json.txt'],
      [PACKS_INCIDENT_TYPE_JSON_REGEX]),

@@ -499,6 +499,7 @@ class FilesValidator:
         self.verify_no_dup_rn(added_files)
 
         for file_path in added_files:
+
             file_type = find_type(file_path) if not received_file_type else received_file_type
 
             pack_name = get_pack_name(file_path)

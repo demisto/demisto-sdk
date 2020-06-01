@@ -56,6 +56,7 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
         if limitations:
             doc.extend(generate_numbered_section('Known Limitations', limitations))
 
+        doc.append('## Playbook Image\n---')
         doc.append(f'![{_name}](Insert the link to your image here)')
 
         doc_text = '\n'.join(doc)

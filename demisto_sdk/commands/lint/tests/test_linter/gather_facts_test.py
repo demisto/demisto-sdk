@@ -38,7 +38,7 @@ class TestYamlParse:
                                docker_engine=False)
         assert runner._gather_facts(modules={})
 
-    def test_checks_common_server_python(self, repo, demisto_content: Callable):
+    def test_checks_common_server_python(self, repo):
         """
 
         Given

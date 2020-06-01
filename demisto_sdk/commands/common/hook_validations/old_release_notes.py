@@ -97,7 +97,15 @@ class OldReleaseNotesValidator(BaseValidator):
         Returns:
             bool. True if release notes structure valid, False otherwise
         """
-        release_notes_comments = self.latest_release_notes.split('\n')
+        if self.latest_release_notes is not None:
+            release_notes_comments = self.latest_release_notes.split('\n')
+
+        else:
+            error_message, error_code = Errors.no_new_release_notes(self.release_notes_path)
+            if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
+                return False
+
+            return True
 
         if not release_notes_comments[-1]:
             release_notes_comments = release_notes_comments[:-1]
@@ -137,7 +145,7 @@ class OldReleaseNotesValidator(BaseValidator):
 
         return True
 
-    def is_file_valid(self):
+    def is_file_valid(self, branch_name=''):
         """Checks if given file is valid.
 
         Return:
@@ -147,9 +155,15 @@ class OldReleaseNotesValidator(BaseValidator):
         if not self.validate_file_release_notes_exists():
             return False
 
-        validations = [
-            self.is_release_notes_changed(),
-            self.is_valid_release_notes_structure(),
-        ]
+        if branch_name != 'master':
+            validations = [
+                self.is_release_notes_changed(),
+                self.is_valid_release_notes_structure(),
+            ]
+
+        else:
+            validations = [
+                self.is_valid_release_notes_structure()
+            ]
 
         return all(validations)

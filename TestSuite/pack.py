@@ -128,6 +128,11 @@ class Pack:
         self.scripts.append(script)
         return script
 
+    def create_test_script(self):
+        script = self.create_script('sample_script')
+        script.create_default_script()
+        return script
+
     def create_json_based(
             self,
             name,

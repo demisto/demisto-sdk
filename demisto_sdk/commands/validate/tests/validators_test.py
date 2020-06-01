@@ -522,35 +522,33 @@ class TestValidators:
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BC101", "BC102", "BC103", "BC104"]
 
+    def test_added_files_type_using_function(self, repo):
+        """
+            Given:
+                - A file path to a new script, that is not located in a "regular" scripts path
+            When:
+                - verifying added files are valid
+            Then:
+                - verify that the validation detects the correct file type and passes successfully
+        """
+        saved_stdout = sys.stdout
 
-def test_added_files_type_using_function(repo):
-    """
-        Given:
-            - A file path to a new script, that is not located in a "regular" scripts path
-        When:
-            - verifying added files are valid
-        Then:
-            - verify that the validation detects the correct file type and passes successfully
-    """
-    saved_stdout = sys.stdout
+        pack = repo.create_pack('pack')
+        pack.create_test_script()
+        with ChangeCWD(pack.repo_path):
+            os.mkdir('Packs/pack/TestPlaybooks/')
+            os.system('mv Packs/pack/Scripts/sample_script/sample_script.yml Packs/pack/TestPlaybooks/')
+            x = FilesValidator()
+            try:
+                out = StringIO()
+                sys.stdout = out
 
-    pack = repo.create_pack('pack')
-    script = pack.create_script(name='script')
-    script.create_default_script()
-    with ChangeCWD(pack.repo_path):
-        os.mkdir('Packs/pack/TestPlaybooks/')
-        os.system('mv Packs/pack/Scripts/script/script.yml Packs/pack/TestPlaybooks/')
-        x = FilesValidator()
-        try:
-            out = StringIO()
-            sys.stdout = out
-
-            x.validate_added_files({'Packs/pack/TestPlaybooks/script.yml'})
-            assert 'Missing id in root' not in out.getvalue()
-        except Exception:
-            assert False
-        finally:
-            sys.stdout = saved_stdout
+                x.validate_added_files({'Packs/pack/TestPlaybooks/sample_script.yml'})
+                assert 'Missing id in root' not in out.getvalue()
+            except Exception:
+                assert False
+            finally:
+                sys.stdout = saved_stdout
 
 
 def test_is_py_or_yml():

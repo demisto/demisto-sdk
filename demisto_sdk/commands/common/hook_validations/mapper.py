@@ -5,8 +5,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 
 FROM_VERSION = '6.0.0'
-VALID_TYPE_INCOMING = 'mapper-incoming'
-VALID_TYPE_OUTGOING = 'mapper-outgoing'
+VALID_TYPE_INCOMING = 'mapping-incoming'
+VALID_TYPE_OUTGOING = 'mapping-outgoing'
 
 
 class MapperValidator(ContentEntityValidator):

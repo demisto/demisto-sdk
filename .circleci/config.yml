@@ -38,6 +38,7 @@ jobs:
               coveralls
         - run:
             name: Test validate files and yaml
+            when: always
             command: |
               . .tox/py37/bin/activate
               git clone https://github.com/demisto/content.git

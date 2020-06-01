@@ -41,6 +41,12 @@ mapping:
   description:
     type: str
     required: true
+  defaultMapperIn:
+    type: str
+  defaultMapperOut:
+    type: str
+  defaultClassifier:
+    type: str
   detaileddescription:
     type: str
   configuration:

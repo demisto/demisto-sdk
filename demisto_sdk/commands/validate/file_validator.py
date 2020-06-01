@@ -485,21 +485,21 @@ class FilesValidator:
                     if self.handle_error(error_message, error_code, file_path=pack_name):
                         self._is_valid = False
 
-    def validate_added_files(self, added_files, file_type: str = None, modified_files=None):  # noqa: C901
+    def validate_added_files(self, added_files, received_file_type: str = None, modified_files=None):  # noqa: C901
         """Validate the added files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
 
         Args:
             added_files (set): A set of the modified files in the current branch.
-            file_type (str): Used only with -p flag (the type of the file).
+            received_file_type (str): Used only with -p flag (the type of the file).
         """
-        click.secho("Running validation on newly added files", fg='bright_cyan')
+        click.secho("\nRunning validation on newly added files", fg='bright_cyan')
         added_rn = set()
         self.verify_no_dup_rn(added_files)
 
         for file_path in added_files:
-            file_type = find_type(file_path) if not file_type else file_type
+            file_type = find_type(file_path) if not received_file_type else received_file_type
 
             pack_name = get_pack_name(file_path)
             ignored_errors_list = self.get_error_ignore_list(pack_name)
@@ -822,7 +822,7 @@ class FilesValidator:
                 self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):
-        print('\nValidating all files')
+        click.secho('\nValidating all files', fg="bright_cyan")
 
         if not skip_conf_json:
             print('Validating conf.json')
@@ -976,7 +976,7 @@ class FilesValidator:
                 if os.path.isfile(self.file_path):
                     print('Not using git, validating file: {}'.format(self.file_path))
                     self.is_backward_check = False  # if not using git, no need for BC checks
-                    self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                    self.validate_added_files({self.file_path}, received_file_type=find_type(self.file_path))
                 elif os.path.isdir(self.file_path):
                     self.validate_pack()
             else:

@@ -1,6 +1,6 @@
 # Changelog
-* Add support for new classifiers and mappers
 * Fixed a bug where the **download** command was crashing when received as input a JS integration/script
+* Add support for new classifiers and mappers
 
 
 #### 1.0.10

@@ -166,7 +166,7 @@ def test_had_duplicates(id_set, id_to_check, result):
 INTEGRATION_DATA = {
     "Dummy Integration": {
         "name": "Dummy Integration",
-        "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration.yml",
+        "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
         "fromversion": "4.1.0",
         "commands": ['xdr-get-incidents',
                      'xdr-get-incident-extra-data',
@@ -181,7 +181,31 @@ INTEGRATION_DATA = {
                      'xdr-get-distribution-url',
                      'xdr-get-create-distribution-status',
                      'xdr-get-audit-management-logs',
-                     'xdr-get-audit-agent-reports']
+                     'xdr-get-audit-agent-reports'],
+        "api_modules": "HTTPFeedApiModule"
+    }
+}
+
+UNIFIED_INTEGRATION_DATA = {
+    "Dummy Integration": {
+        "name": "Dummy Integration",
+        "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
+        "fromversion": "4.1.0",
+        "commands": ['xdr-get-incidents',
+                     'xdr-get-incident-extra-data',
+                     'xdr-update-incident',
+                     'xdr-insert-parsed-alert',
+                     'xdr-insert-cef-alerts',
+                     'xdr-isolate-endpoint',
+                     'xdr-unisolate-endpoint',
+                     'xdr-get-endpoints',
+                     'xdr-get-distribution-versions',
+                     'xdr-create-distribution',
+                     'xdr-get-distribution-url',
+                     'xdr-get-create-distribution-status',
+                     'xdr-get-audit-management-logs',
+                     'xdr-get-audit-agent-reports'],
+        "api_modules": "HTTPFeedApiModule"
     }
 }
 
@@ -229,9 +253,14 @@ class TestIntegration(unittest.TestCase):
         Test for getting all the integration data
         """
         # mocker.patch.object('get_pack_name', return_value='DummyPack')
-        file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/DummyIntegration.yml'
-        data = get_integration_data(file_path)
-        self.assertDictEqual(data, INTEGRATION_DATA)
+        non_unified_file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml'
+        unified_file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/integration-DummyIntegration.yml'
+
+        non_unified_integration_data = get_integration_data(non_unified_file_path)
+        unified_integration_data = get_integration_data(unified_file_path)
+
+        self.assertDictEqual(non_unified_integration_data, INTEGRATION_DATA)
+        self.assertDictEqual(unified_integration_data, UNIFIED_INTEGRATION_DATA)
 
     def test_get_script_data(self):
         """

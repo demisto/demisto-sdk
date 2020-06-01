@@ -148,7 +148,7 @@ class IDSetValidator(BaseValidator):
                     re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE):
 
                 unifier = Unifier(os.path.dirname(file_path))
-                yml_path, code = unifier.get_script_package_data()
+                yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
                 is_valid = self.is_valid_in_id_set(yml_path, script_data, self.script_set)
 
@@ -238,7 +238,7 @@ class IDSetValidator(BaseValidator):
                     re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE):
 
                 unifier = Unifier(os.path.dirname(os.path.dirname(file_path)))
-                yml_path, code = unifier.get_script_package_data()
+                yml_path, code = unifier.get_script_or_integration_package_data()
 
                 obj_data = get_script_data(yml_path, script_code=code)
 

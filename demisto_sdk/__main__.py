@@ -185,7 +185,9 @@ def extract_code(config, **kwargs):
 
 # ====================== unify ====================== #
 @main.command(name="unify",
-              short_help='Unify code, image, description and yml files to a single Demisto yml file.')
+              short_help='Unify code, image, description and yml files to a single Demisto yml file. Note that '
+                         'this should be used on a single integration/script and not a pack '
+                         'not multiple scripts/integrations')
 @click.help_option(
     '-h', '--help'
 )
@@ -294,6 +296,9 @@ def validate(config, **kwargs):
 @click.option(
     '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
     help='Keep the bundles created in the process of making the content artifacts')
+@click.option(
+    '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
+)
 @click.option(
     '--packs', is_flag=True,
     help='If passed, will create only content_packs.zip'

@@ -437,10 +437,10 @@ class Downloader:
         """
         if not code_lang or code_lang == 'javascript':
             if file_type == 'integration':
-                reason = 'Downloading of an integration written in JavaScript is not supported.'
+                reason = 'Downloading an integration written in JavaScript is not supported.'
                 self.files_not_downloaded.append([file_name, reason])
             elif file_type == 'script':
-                reason = 'Downloading of a script written in JavaScript is not supported.'
+                reason = 'Downloading a script written in JavaScript is not supported.'
                 self.files_not_downloaded.append([file_name, reason])
             return False
         return True

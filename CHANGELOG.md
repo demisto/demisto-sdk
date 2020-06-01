@@ -8,7 +8,9 @@
 * Removed support of old RN format validation.
 * Updated **secrets** command output format.
 * Added support for error ignore on deprecated files in **validate** command.
-
+* Improved errors outputs in **validate** command.
+* Added support for linting an entire pack.
+ 
 #### 1.0.9
 * Fixed a bug where misleading error was presented when pack name was not found.
 * **Update-release-notes** now detects added files for packs with versions.

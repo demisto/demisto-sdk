@@ -76,7 +76,7 @@ NEW_CLASSIFIER = {
 MAPPER = {
     "defaultIncidentType": "test",
     "id": "testing",
-    "type": "mapper-incoming",
+    "type": "mapping-incoming",
     "name": "test Mapper",
     "description": "Mapper test",
     "mapping": {
@@ -658,4 +658,4 @@ class TestMapper:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
-        assert 'Mappers type must be mapper-incoming or mapper-outgoing' in result.stdout
+        assert 'Mappers type must be mapping-incoming or mapping-outgoing' in result.stdout

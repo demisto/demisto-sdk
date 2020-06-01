@@ -896,7 +896,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_type_in_mapper():
-        return 'Mappers type must be mapper-incoming or mapper-outgoing'
+        return 'Mappers type must be mapping-incoming or mapping-outgoing'
 
     @staticmethod
     def wrong_filename(file_type):

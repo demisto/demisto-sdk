@@ -348,7 +348,6 @@ def test_upload_pack(demisto_client_configure, mocker):
     Then
         - Ensure pack is uploaded successfully
         - Ensure status code is as expected
-        - Ensure amount of messages is as expected
         - Check that all expected content entities that appear in the pack are reported as uploaded.
     """
     mocker.patch("builtins.print")

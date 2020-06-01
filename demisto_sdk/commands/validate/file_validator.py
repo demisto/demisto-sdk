@@ -310,7 +310,7 @@ class FilesValidator:
             if isinstance(mod_file, tuple):
                 continue
             if not any(non_permitted_type in mod_file.lower() for non_permitted_type in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
-                if 'ReleaseNotes' not in mod_file.lower():
+                if 'releasenotes' not in mod_file.lower():
                     _modified_files.add(mod_file)
         changed_packs = self.get_packs(_modified_files)
         for file_path in modified_files:
@@ -509,6 +509,13 @@ class FilesValidator:
             if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
 
+            elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
+                added_rn.add(pack_name)
+                print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
+                self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name,
+                                            added_files=added_files, ignored_errors_list=ignored_errors_list)
+                continue
+
             elif 'README' in file_path:
                 readme_validator = ReadMeValidator(file_path, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors)
@@ -624,12 +631,6 @@ class FilesValidator:
                                                                 print_as_warnings=self.print_ignored_errors)
                 if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False
-
-            elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
-                added_rn.add(pack_name)
-                print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
-                self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name,
-                                            added_files=added_files, ignored_errors_list=ignored_errors_list)
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass

@@ -443,17 +443,22 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9):
-                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False)
+                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
+                                                           ignored_errors=ignored_errors_list,
+                                                           print_as_warnings=self.print_ignored_errors)
                 if not classifier_validator.is_valid_classifier(validate_rn=True):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES):
-                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=True)
+                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=True,
+                                                           ignored_errors=ignored_errors_list,
+                                                           print_as_warnings=self.print_ignored_errors)
                 if not classifier_validator.is_valid_classifier(validate_rn=True):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_MAPPER_REGEXES):
-                mapper_validator = MapperValidator(structure_validator)
+                mapper_validator = MapperValidator(structure_validator, ignored_errors=ignored_errors_list,
+                                                   print_as_warnings=self.print_ignored_errors)
                 if not mapper_validator.is_valid_mapper(validate_rn=True):
                     self._is_valid = False
 

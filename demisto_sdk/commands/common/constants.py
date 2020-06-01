@@ -23,6 +23,7 @@ PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
 RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
+DOC_FILES_DIR = 'doc_files'
 
 SCRIPT = 'script'
 INTEGRATION = 'integration'
@@ -300,7 +301,14 @@ PACKS_SCRIPT_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(CAN_S
 PACKS_PLAYBOOK_YML_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, PLAYBOOKS_DIR)
 PACKS_TEST_PLAYBOOKS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                     TEST_PLAYBOOKS_DIR)
-PACKS_CLASSIFIERS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, CLASSIFIERS_DIR)
+PACKS_CLASSIFIERS_REGEX = r'{}{}/([^/]+)/{}/*classifier-(?!mapper).*(?<!5_9_9)\.json'.format(
+    CAN_START_WITH_DOT_SLASH, PACKS_DIR, CLASSIFIERS_DIR)
+
+PACKS_CLASSIFIERS_5_9_9_REGEX = r'{}{}/([^/]+)/{}/*classifier-(?!mapper).*_5_9_9\.json'.format(
+    CAN_START_WITH_DOT_SLASH, PACKS_DIR, CLASSIFIERS_DIR)
+PACKS_MAPPERS_REGEX = r'{}{}/([^/]+)/{}/classifier-(?=mapper).*\.json'.format(CAN_START_WITH_DOT_SLASH,
+                                                                              PACKS_DIR, CLASSIFIERS_DIR)
+
 PACKS_DASHBOARDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, DASHBOARDS_DIR)
 PACKS_INCIDENT_TYPES_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                      INCIDENT_TYPES_DIR)
@@ -353,8 +361,16 @@ DASHBOARD_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SL
 
 CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CONNECTIONS_DIR)
 
-CLASSIFIER_REGEX = r'{}{}.*classifier-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
-CLASSIFIER_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
+CLASSIFIER_REGEX = r'{}{}.*classifier-(?!mapper).*\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
+CLASSIFIER_CHANGELOG_REGEX = r'{}{}.*classifier-(?!mapper).*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH,
+                                                                                   CLASSIFIERS_DIR)
+
+CLASSIFIER_REGEX_5_9_9 = r'{}{}.*classifier-.*_5_9_9\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
+CLASSIFIER_CHANGELOG_REGEX_5_9_9 = r'{}{}.*_CHANGELOG_5_9_9.md$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
+
+MAPPER_REGEX = r'{}{}.*classifier-(?=mapper).*\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
+MAPPER_CHANGELOG_REGEX = r'{}{}.*classifier-(?=mapper).*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH,
+                                                                               CLASSIFIERS_DIR)
 
 LAYOUT_REGEX = r'{}{}.*layout-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, LAYOUTS_DIR)
 LAYOUT_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, LAYOUTS_DIR)
@@ -536,6 +552,16 @@ JSON_ALL_CLASSIFIER_REGEXES = [
     PACKS_CLASSIFIERS_REGEX,
 ]
 
+JSON_ALL_CLASSIFIER_REGEXES_5_9_9 = [
+    CLASSIFIER_REGEX_5_9_9,
+    PACKS_CLASSIFIERS_5_9_9_REGEX,
+]
+
+JSON_ALL_MAPPER_REGEXES = [
+    MAPPER_REGEX,
+    PACKS_MAPPERS_REGEX,
+]
+
 JSON_ALL_LAYOUT_REGEXES = [
     LAYOUT_REGEX,
     PACKS_LAYOUTS_REGEX,
@@ -605,6 +631,8 @@ CHECKED_TYPES_REGEXES = [
     DASHBOARD_REGEX,
     CONNECTIONS_REGEX,
     CLASSIFIER_REGEX,
+    CLASSIFIER_REGEX_5_9_9,
+    MAPPER_REGEX,
     # Layouts
     LAYOUT_REGEX,
     PACKS_LAYOUTS_REGEX,
@@ -620,6 +648,8 @@ CHECKED_TYPES_REGEXES = [
     INTEGRATION_OLD_README_REGEX,
     # Pack Misc
     PACKS_CLASSIFIERS_REGEX,
+    PACKS_CLASSIFIERS_5_9_9_REGEX,
+    PACKS_MAPPERS_REGEX,
     PACKS_DASHBOARDS_REGEX,
     PACKS_INCIDENT_TYPES_REGEX,
     PACKS_INCIDENT_FIELDS_REGEX,
@@ -804,7 +834,9 @@ SCHEMA_TO_REGEX = {
     'widget': JSON_ALL_WIDGETS_REGEXES,
     'dashboard': JSON_ALL_DASHBOARDS_REGEXES,
     'canvas-context-connections': JSON_ALL_CONNECTIONS_REGEXES,
+    'classifier_5_9_9': JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
     'classifier': JSON_ALL_CLASSIFIER_REGEXES,
+    'mapper': JSON_ALL_MAPPER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,

@@ -508,12 +508,15 @@ class TestValidators:
         assert file_validator._is_valid
 
     def test_get_error_ignore_list(self, mocker):
-        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path',
-                            return_value='demisto_sdk/tests/test_files/fake_pack/.pack-ignore')
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
+
+        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path', return_value=test_file)
+
         file_validator = FilesValidator()
         ignore_errors_list = file_validator.get_error_ignore_list("fake")
-        assert ignore_errors_list['pack'] == ['IN100', 'IN101']
-        assert ignore_errors_list['file_name'] == ['DO101', 'BA100']
+        assert ignore_errors_list['file_name'] == ['BA101']
 
     def test_create_ignored_errors_list(self, mocker):
         file_validator = FilesValidator()

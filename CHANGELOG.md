@@ -1,6 +1,6 @@
 # Changelog
 
-#### 1.0.10
+#### 1.1.0
 * Fixed an issue where changes to only non-validated files would fail validation.
 * Fixed an issue in **validate** command where moved files were failing validation for new packs.
 * Fixed an issue in **validate** command where added files were failing validation due to wrong file type detection.

@@ -38,6 +38,33 @@ class TestYamlParse:
                                docker_engine=False)
         assert runner._gather_facts(modules={})
 
+    def test_checks_common_server_python(self, repo, demisto_content: Callable):
+        """
+
+        Given
+        - Repo with CommonServerPython script
+
+        When
+        - Running lint on a repo with a change to CommonServerPython
+
+        Then
+        - Validate that the CommonServerPython is in the file list to check
+        """
+        from demisto_sdk.commands.lint import linter
+        from wcmatch.pathlib import Path
+        pack = repo.create_pack('CommonServerPython')
+        script = pack.create_script('CommonServerPython')
+        script.create_default_script()
+        script_path = Path(script.path)
+        runner = linter.Linter(content_repo=pack.path,
+                               pack_dir=script_path,
+                               req_2=[],
+                               req_3=[],
+                               docker_engine=False)
+        runner._gather_facts(modules={})
+        common_server_python_path = runner._facts.get('lint_files')[0]
+        assert 'Packs/CommonServerPython/Scripts/CommonServerPython/CommonServerPython.py' in str(common_server_python_path)
+
 
 class TestPythonPack:
     def test_package_is_python_pack(self, demisto_content: Callable, create_integration: Callable):

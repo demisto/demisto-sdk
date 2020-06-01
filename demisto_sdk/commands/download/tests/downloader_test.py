@@ -150,8 +150,8 @@ class Environment:
 class TestHelperMethods:
     @pytest.mark.parametrize('code_lang, file_type, file_name, err_msg, output', [
         ('javascript', 'integration', 'file name',
-         'Downloading of an integration written in JavaScript is not supported.', False),
-        ('javascript', 'script', 'file name', 'Downloading of a script written in JavaScript is not supported.', False),
+         'Downloading an integration written in JavaScript is not supported.', False),
+        ('javascript', 'script', 'file name', 'Downloading a script written in JavaScript is not supported.', False),
         ('python', 'integration', 'file name', '', True),
     ])
     def test_verify_code_lang(self, code_lang, file_type, file_name, err_msg, output):

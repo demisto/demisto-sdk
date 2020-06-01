@@ -225,6 +225,8 @@ class Linter:
         if 'commonserver' in self._pack_abs_dir.name.lower():
             if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                 self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+            elif self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]
         else:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)

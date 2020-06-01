@@ -38,6 +38,7 @@ jobs:
               coveralls
         - run:
             name: Test validate files and yaml
+            when: always
             command: |
               . .tox/py37/bin/activate
               git clone https://github.com/demisto/content.git
@@ -52,9 +53,9 @@ jobs:
               ./Tests/scripts/validate.sh
         - run:
             name: Test create ID set
+            when: always
             command: |
               . .tox/py37/bin/activate
-
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                   echo "Skipping creating ID set on non master branch"
                   exit 0
@@ -64,6 +65,7 @@ jobs:
               demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
             name: test create content artifacts
+            when: always
             command: |
               . .tox/py37/bin/activate
 

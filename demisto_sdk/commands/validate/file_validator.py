@@ -20,11 +20,13 @@ import click
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES,
-    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
-    IMAGE_REGEX, INTEGRATION_REGEX, INTEGRATION_REGXES,
-    JSON_ALL_DASHBOARDS_REGEXES, JSON_ALL_INCIDENT_TYPES_REGEXES,
-    JSON_ALL_INDICATOR_TYPES_REGEXES, JSON_ALL_LAYOUT_REGEXES,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, BETA_INTEGRATION_REGEX,
+    BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES, CODE_FILES_REGEX,
+    CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES, IMAGE_REGEX,
+    INTEGRATION_REGEX, INTEGRATION_REGXES, JSON_ALL_CLASSIFIER_REGEXES,
+    JSON_ALL_CLASSIFIER_REGEXES_5_9_9, JSON_ALL_DASHBOARDS_REGEXES,
+    JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_INDICATOR_TYPES_REGEXES,
+    JSON_ALL_LAYOUT_REGEXES, JSON_ALL_MAPPER_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME, PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX,
@@ -36,6 +38,8 @@ from demisto_sdk.commands.common.errors import (ERROR_CODE,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.classifier import \
+    ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -49,6 +53,7 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
@@ -299,15 +304,23 @@ class FilesValidator:
         if not release_notes_validator.is_file_valid():
             self._is_valid = False
 
-    def validate_modified_files(self, modified_files):  # noqa: C901
+    def validate_modified_files(self, modified_files, tag='master'):  # noqa: C901
         """Validate the modified files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
 
         Args:
             modified_files (set): A set of the modified files in the current branch.
+            tag (str): The reference point to the branch with which we are comparing the modified files.
         """
-        changed_packs = self.get_packs(modified_files)
+        _modified_files = set()
+        for mod_file in modified_files:
+            if isinstance(mod_file, tuple):
+                continue
+            if not any(non_permitted_type in mod_file.lower() for non_permitted_type in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
+                if 'ReleaseNotes' not in mod_file.lower():
+                    _modified_files.add(mod_file)
+        changed_packs = self.get_packs(_modified_files)
         for file_path in modified_files:
             old_file_path = None
             # modified_files are returning from running git diff.
@@ -320,7 +333,7 @@ class FilesValidator:
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue
-            print('Validating {}'.format(file_path))
+            print('\nValidating {}'.format(file_path))
             if not checked_type(file_path):
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
@@ -337,7 +350,7 @@ class FilesValidator:
 
             structure_validator = StructureValidator(file_path, old_file_path=old_file_path,
                                                      ignored_errors=ignored_errors_list,
-                                                     print_as_warnings=self.print_ignored_errors)
+                                                     print_as_warnings=self.print_ignored_errors, tag=tag)
             if not structure_validator.is_valid_file():
                 self._is_valid = False
 
@@ -375,7 +388,7 @@ class FilesValidator:
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES):
                 unifier = Unifier(os.path.dirname(file_path))
-                yml_path, _ = unifier.get_script_package_data()
+                yml_path, _ = unifier.get_script_or_integration_package_data()
                 # Set file path to the yml file
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
@@ -428,6 +441,26 @@ class FilesValidator:
                 if self.is_backward_check and not incident_type_validator.is_backward_compatible():
                     self._is_valid = False
 
+            elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) and file_type == 'mapper':
+                error_message, error_code = Errors.invalid_mapper_file_name()
+                if self.handle_error(error_message, error_code, file_path=file_path):
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9):
+                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False)
+                if not classifier_validator.is_valid_classifier(validate_rn=True):
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES):
+                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=True)
+                if not classifier_validator.is_valid_classifier(validate_rn=True):
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_MAPPER_REGEXES):
+                mapper_validator = MapperValidator(structure_validator)
+                if not mapper_validator.is_valid_mapper(validate_rn=True):
+                    self._is_valid = False
+
             elif 'CHANGELOG' in file_path:
                 self.old_is_valid_release_notes(file_path, ignored_errors_list=ignored_errors_list)
 
@@ -470,7 +503,7 @@ class FilesValidator:
             # unified files should not be validated
             if file_path.endswith('_unified.yml'):
                 continue
-            print('Validating {}'.format(file_path))
+            print('\nValidating {}'.format(file_path))
 
             if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
@@ -510,7 +543,7 @@ class FilesValidator:
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
                 if not file_path.endswith('.yml'):
                     unifier = Unifier(os.path.dirname(file_path))
-                    yml_path, _ = unifier.get_script_package_data()
+                    yml_path, _ = unifier.get_script_or_integration_package_data()
                 else:
                     yml_path = file_path
                 # Set file path to the yml file
@@ -535,6 +568,26 @@ class FilesValidator:
 
             # incident fields and indicator fields are using the same scheme.
             # TODO: add validation for classification(21630) and set validate_rn to False after issue #23398 is fixed.
+            elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9) or file_type == 'classifier_5_9_9':
+                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
+                                                           ignored_errors=ignored_errors_list,
+                                                           print_as_warnings=self.print_ignored_errors)
+                if not classifier_validator.is_valid_classifier(validate_rn=False):
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
+                classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=True,
+                                                           ignored_errors=ignored_errors_list,
+                                                           print_as_warnings=self.print_ignored_errors)
+                if not classifier_validator.is_valid_classifier(validate_rn=False):
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_MAPPER_REGEXES) or file_type == 'mapper':
+                mapper_validator = MapperValidator(structure_validator, ignored_errors=ignored_errors_list,
+                                                   print_as_warnings=self.print_ignored_errors)
+                if not mapper_validator.is_valid_mapper(validate_rn=False):
+                    self._is_valid = False
+
             elif checked_type(file_path, JSON_INDICATOR_AND_INCIDENT_FIELDS) or \
                     file_type in ('incidentfield', 'indicatorfield'):
                 incident_field_validator = IncidentFieldValidator(structure_validator,
@@ -734,6 +787,25 @@ class FilesValidator:
             if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                 self._is_valid = False
 
+        elif checked_type(file_path, JSON_ALL_MAPPER_REGEXES) or file_type == 'mapper':
+            mapper_validator = MapperValidator(structure_validator, ignored_errors=ignored_errors_list,
+                                               print_as_warnings=self.print_ignored_errors)
+            if not mapper_validator.is_valid_mapper(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
+            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=ignored_errors_list,
+                                                       print_as_warnings=self.print_ignored_errors)
+            if not classifier_validator.is_valid_classifier(validate_rn=False):
+                self._is_valid = False
+
+        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9) or file_type == 'classifier_5_9_9':
+            classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
+                                                       ignored_errors=ignored_errors_list,
+                                                       print_as_warnings=self.print_ignored_errors)
+            if not classifier_validator.is_valid_classifier(validate_rn=False):
+                self._is_valid = False
+
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             print(f'Could not find validations for file {file_path}')
 
@@ -743,7 +815,7 @@ class FilesValidator:
                 self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):
-        print('Validating all files')
+        print('\nValidating all files')
 
         if not skip_conf_json:
             print('Validating conf.json')
@@ -887,7 +959,7 @@ class FilesValidator:
         print_color('Starting validation against {}'.format(self.prev_ver), LOG_COLORS.GREEN)
         modified_files, _, _, _ = self.get_modified_and_added_files(self.prev_ver)
         prev_self_valid = self._is_valid
-        self.validate_modified_files(modified_files)
+        self.validate_modified_files(modified_files, tag=self.prev_ver)
         if no_error:
             self._is_valid = prev_self_valid
 
@@ -935,8 +1007,19 @@ class FilesValidator:
 
         return ignored_error_list
 
+    def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
+        if key == 'ignore':
+            ignored_errors_list.extend(str(config[section][key]).split(','))
+
+        if key in PRESET_ERROR_TO_IGNORE:
+            ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
+
+        if key in PRESET_ERROR_TO_CHECK:
+            ignored_errors_list.extend(
+                self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
+
     def get_error_ignore_list(self, pack_name):
-        ignored_errors_list = []
+        ignored_errors_list = {}
         if pack_name:
             pack_ignore_path = self.get_pack_ignore_file_path(pack_name)
 
@@ -945,17 +1028,19 @@ class FilesValidator:
                     config = ConfigParser(allow_no_value=True)
                     config.read(pack_ignore_path)
 
+                    # create pack ignored errors list
                     if 'demisto-sdk' in config:
+                        ignored_errors_list['pack'] = []
                         for key in config['demisto-sdk']:
-                            if key == 'ignore':
-                                ignored_errors_list.extend(str(config['demisto-sdk'][key]).split(','))
+                            self.add_ignored_errors_to_list(config, 'demisto-sdk', key, ignored_errors_list['pack'])
 
-                            if key in PRESET_ERROR_TO_IGNORE:
-                                ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
-
-                            if key in PRESET_ERROR_TO_CHECK:
-                                ignored_errors_list.extend(
-                                    self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
+                    # create file specific ignored errors list
+                    for section in config.sections():
+                        if section.startswith("file:"):
+                            file_name = section[5:]
+                            ignored_errors_list[file_name] = []
+                            for key in config[section]:
+                                self.add_ignored_errors_to_list(config, section, key, ignored_errors_list[file_name])
 
                 except MissingSectionHeaderError:
                     pass

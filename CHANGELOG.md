@@ -1,5 +1,11 @@
 # Changelog
+* Add support for new classifiers and mappers
 * Fixed a bug where the **download** command was crashing when received as input a JS integration/script
+
+
+#### 1.0.10
+* Fixed error where changes to only non-validated files would fail validation.
+* Fixed a bug in **validate** command where moved files were failing validation for new packs.
 
 #### 1.0.9
 * Fixed a bug where misleading error was presented when pack name was not found.

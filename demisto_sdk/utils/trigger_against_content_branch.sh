@@ -9,7 +9,7 @@ trigger_build_url=https://circleci.com/api/v1/project/demisto/demisto-sdk/tree/$
 post_data=$(cat <<EOF
 {
   "build_parameters": {
-    "CONTENT_BRANCH_NAME": ${_content_branch},
+    "CONTENT_BRANCH_NAME": "${_content_branch}",
     "CIRCLE_JOB": "toxify"
   }
 }

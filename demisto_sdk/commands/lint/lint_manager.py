@@ -155,7 +155,8 @@ class LintManager:
         else:
             pkgs = []
             for item in input.split(','):
-                if os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME)):
+                is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
+                if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
                 else:
                     pkgs.append(Path(item))

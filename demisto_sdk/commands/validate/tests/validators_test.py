@@ -518,7 +518,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self, mocker):
         file_validator = FilesValidator()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BC101", "BC102", "BC103", "BC104"]
 

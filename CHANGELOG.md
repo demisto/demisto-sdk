@@ -1,4 +1,6 @@
 # Changelog
+* Add support for new classifiers and mappers
+
 #### 1.0.10
 * Fixed error where changes to only non-validated files would fail validation.
 * Fixed a bug in **validate** command where moved files were failing validation for new packs.

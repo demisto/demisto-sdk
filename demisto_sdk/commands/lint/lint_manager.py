@@ -15,7 +15,8 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
+                                                   TYPE_PWSH, TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (print_error, print_v,
@@ -140,7 +141,7 @@ class LintManager:
         Args:
             content_repo(git.Repo): Content repository object.
             input(str): dir pack specified as argument.
-            git(bool): Perform lint and test only on chaged packs.
+            git(bool): Perform lint and test only on changed packs.
             all_packs(bool): Whether to run on all packages.
 
         Returns:
@@ -152,7 +153,14 @@ class LintManager:
         elif not all_packs and not git and not input:
             pkgs = [Path().cwd()]
         else:
-            pkgs = [Path(item) for item in input.split(',')]
+            pkgs = []
+            for item in input.split(','):
+                is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
+                if is_pack:
+                    pkgs.extend(LintManager._get_all_packages(content_dir=item))
+                else:
+                    pkgs.append(Path(item))
+
         total_found = len(pkgs)
         if git:
             pkgs = LintManager._filter_changed_packages(content_repo=content_repo,

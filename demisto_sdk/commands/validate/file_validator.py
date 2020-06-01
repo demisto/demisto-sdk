@@ -305,6 +305,7 @@ class FilesValidator:
             modified_files (set): A set of the modified files in the current branch.
             tag (str): The reference point to the branch with which we are comparing the modified files.
         """
+        click.secho("\nRunning validation on modified files", fg='bright_cyan')
         _modified_files = set()
         for mod_file in modified_files:
             if isinstance(mod_file, tuple):
@@ -493,6 +494,7 @@ class FilesValidator:
             added_files (set): A set of the modified files in the current branch.
             file_type (str): Used only with -p flag (the type of the file).
         """
+        click.secho("Running validation on newly added files", fg='bright_cyan')
         added_rn = set()
         self.verify_no_dup_rn(added_files)
 
@@ -511,7 +513,6 @@ class FilesValidator:
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
                 added_rn.add(pack_name)
-                print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
                 self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name,
                                             added_files=added_files, ignored_errors_list=ignored_errors_list)
                 continue

@@ -30,29 +30,24 @@ mapping:
     type: str
   toversion:
     type: str
-  name:
-    type: str
-    required: True
-  type:
-    type: str
-    required: True
-  description:
+  brandName:
     type: str
     required: True
   modified:
     type: str
   defaultIncidentType:
     type: str
+  mapping:
+    type: map
+    allowempty: True
   unclassifiedCases:
     type: map
     allowempty: True
   transformer:
     type: map
-    required: True
     allowempty: True
   keyTypeMap:
     type: map
-    required: True
     allowempty: True
   custom:
     type: bool

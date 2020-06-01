@@ -363,9 +363,8 @@ def test_upload_pack(demisto_client_configure, mocker):
                          'widget-ActiveIncidentsByRole.json', 'layout-details-test_bla-V2.json',
                          'upload_test_dashboard.json']
     assert status_code == 0
-    assert len(print.call_args_list) == 21
     for entity in expected_entities:
-        assert entity in print.call_args_list[20][0][0]
+        assert entity in print.call_args_list[-1][0][0]
 
 
 def test_upload_invalid_path(demisto_client_configure):

@@ -87,6 +87,7 @@ jobs:
             path: content/tmp
         - run:
             name: Deploy
+            when: always
             command: |
               ./demisto_sdk/utils/deploy.sh
 workflows:

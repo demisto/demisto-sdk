@@ -33,7 +33,8 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
     YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES)
-from demisto_sdk.commands.common.errors import (ERROR_CODE,
+from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
+                                                ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
@@ -138,7 +139,7 @@ class FilesValidator:
     def run(self):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
         if self.is_valid_structure():
-            print_color('The files are valid', LOG_COLORS.GREEN)
+            print_color('\nThe files are valid', LOG_COLORS.GREEN)
             return 0
         else:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
@@ -825,7 +826,7 @@ class FilesValidator:
                 self._is_valid = False
 
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-            print(f'Could not find validations for file {file_path}')
+            click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -899,8 +900,9 @@ class FilesValidator:
         pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if
                       not should_file_skip_validation(file)}
         self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
+        click.secho("================= Validating other pack files =================", fg="bright_cyan")
         for file in pack_files:
-            click.echo(f'Validating {file}')
+            click.echo(f'\nValidating {file}')
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_all_files_schema(self):
@@ -914,7 +916,7 @@ class FilesValidator:
                 dir_path = os.path.join(pack_path, dir_name)
 
                 if dir_name not in CONTENT_ENTITIES_DIRS or \
-                        dir_name in [constants.REPORTS_DIR, constants.DASHBOARDS_DIR]:
+                        dir_name in [constants.DASHBOARDS_DIR]:
                     continue
 
                 for file_name in os.listdir(dir_path):
@@ -1063,10 +1065,18 @@ class FilesValidator:
 
         return ignored_error_list
 
+    @staticmethod
+    def get_alowed_ignored_errors_from_list(error_list):
+        allowed_ignore_list = []
+        for error in error_list:
+            if error in ALLOWED_IGNORE_ERRORS:
+                allowed_ignore_list.append(error)
+
+        return allowed_ignore_list
+
     def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
-        # For now one can only ignore BA101 error.
-        if key == 'ignore' and 'BA101' in str(config[section][key]).split(','):
-            ignored_errors_list.extend(['BA101'])
+        if key == 'ignore':
+            ignored_errors_list.extend(self.get_alowed_ignored_errors_from_list(str(config[section][key]).split(',')))
 
         if key in PRESET_ERROR_TO_IGNORE:
             ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))

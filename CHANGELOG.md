@@ -2,6 +2,7 @@
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.
+* Added better outputs for validate command
 
 #### 1.1.0
 * Fixed an issue where changes to only non-validated files would fail validation.

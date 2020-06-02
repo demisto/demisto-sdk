@@ -1,10 +1,18 @@
 # Changelog
-* Add support for new classifiers and mappers
 
-#### 1.0.10
-* Fixed error where changes to only non-validated files would fail validation.
-* Fixed a bug in **validate** command where moved files were failing validation for new packs.
-* Fixed a bug in **validate** command where added files were failing validation due to wrong file type detection.
+#### 1.1.1
+* fixed and issue where file types were not recognized correctly in **validate** command.
+
+#### 1.1.0
+* Fixed an issue where changes to only non-validated files would fail validation.
+* Fixed an issue in **validate** command where moved files were failing validation for new packs.
+* Fixed an issue in **validate** command where added files were failing validation due to wrong file type detection.
+* Added support for new classifiers and mappers in **validate** command.
+* Removed support of old RN format validation.
+* Updated **secrets** command output format.
+* Added support for error ignore on deprecated files in **validate** command.
+* Improved errors outputs in **validate** command.
+* Added support for linting an entire pack.
 
 #### 1.0.9
 * Fixed a bug where misleading error was presented when pack name was not found.

@@ -16,6 +16,8 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
+from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.format import update_generic
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
@@ -56,6 +58,7 @@ CONF_JSON_ORIGINAL_CONTENT = {
         }
     ]
 }
+
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
@@ -256,3 +259,138 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
         assert 'sourceplaybookid' not in yaml_content
 
     assert not result.exception
+
+
+def test_format_on_valid_py(mocker, repo):
+    """
+    Given
+    - A valid python file.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    valid_py = 'test\n'
+    integration.write_code(valid_py)
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=True)
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running black on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert valid_py == integration.read_code()
+    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_invalid_py_empty_lines(mocker, repo):
+    """
+    Given
+    - Invalid python file - empty lines at the end of file.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = 'test\n\n\n\n'
+    integration.write_code(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
+
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running black on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.read_code()
+    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_invalid_py_dict(mocker, repo):
+    """
+    Given
+    - Invalid python file - missing spaces in dict.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = "{'test':'testing','test1':'testing1'}"
+    integration.write_code(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
+
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running black on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.read_code()
+    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_invalid_py_long_dict(mocker, repo):
+    """
+    Given
+    - Invalid python file - long dict.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = "{'test':'testing','test1':'testing1','test2':'testing2','test3':'testing3'," \
+                 "'test4':'testing4','test5':'testing5','test6':'testing6'}"
+    integration.write_code(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
+
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running black on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.read_code()
+    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_unformattable_py(mocker, repo):
+    """
+    Given
+    - Unformattable python file - problomatic if-else
+
+    When
+    - Running format
+
+    Then
+    - Ensure format failed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    unformattable_py = "if test:\n\t pass \n\telse: pass"
+    integration.write_code(unformattable_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
+
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running black on file' in result.stdout
+    assert 'Failed' in result.stdout
+    assert unformattable_py == integration.read_code()

@@ -11,6 +11,9 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdate
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 
 
+BLACK_INTERNAL_ERROR = 123
+
+
 class PythonFileFormat(BaseUpdate):
     """PythonFileFormat class is designed to update python file according to Demisto's convention.
 
@@ -24,22 +27,28 @@ class PythonFileFormat(BaseUpdate):
         super().__init__(input, output, path, from_version, no_validate)
         self.no_validate = True
 
-    def validate_with_black(self, code_file):
-        print("\nRunning black on file: {}\n".format(code_file))
+    def is_format_by_black(self, py_file_path):
+        """Run black formatter on python file.
+        Args:
+            py_file_path (str): The python file path.
+        Returns:
+            bool. True if succeed to run black on file, False otherwise.
+        """
+        print("\nRunning black on file: {}\n".format(py_file_path))
         try:
-            # Black return an internal error
-            if subprocess.call(["black", "--skip-string-normalization", code_file]) == 123:
+            if subprocess.call(["black", "--skip-string-normalization", "-v", "--line-length", "120", py_file_path])\
+                    == BLACK_INTERNAL_ERROR:
                 return False
             return True
         except FileNotFoundError:
             return "black skipped! It doesn't seem you have black installed.\n " \
                    "Make sure to install it with: pip install black.\n " \
-                   "Then run: black {}".format(code_file)
+                   "Then run: black {}".format(py_file_path)
 
     def run_format(self) -> int:
         print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE_BOLD)
 
-        is_black_passed = self.validate_with_black(self.source_file)
+        is_black_passed = self.is_format_by_black(str(self.source_file))
         if is_black_passed:
             print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE_BOLD)
             return SUCCESS_RETURN_CODE

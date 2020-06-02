@@ -196,6 +196,7 @@ class UpdateRN:
         classifier_header = False
         layout_header = False
         inc_types_header = False
+        ind_types_header = False
         for k, v in changed_items.items():
             if k == 'N/A':
                 continue
@@ -235,9 +236,9 @@ class UpdateRN:
                     inc_types_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'IndicatorTypes':
-                if not inc_flds_header:
+                if not ind_types_header:
                     rn_string += '\n### IndicatorTypes\n'
-                    inc_flds_header = True
+                    ind_types_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 

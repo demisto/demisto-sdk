@@ -1,9 +1,6 @@
-from typing import List, Tuple
+from typing import Tuple
 import subprocess
 
-from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES, TYPE_PWSH
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_VALIDATE_PY_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)

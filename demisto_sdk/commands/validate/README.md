@@ -82,6 +82,7 @@ The first 2 letters indicate the error type and can be used to easily identify t
 | BA | Basic error |
 | BC | Backwards compatibility error |
 | CJ | Conf json error |
+| CL | Classifier error |
 | DA | Dashboard error |
 | DB | DBootScore error |
 | DO | Docker error |
@@ -91,6 +92,7 @@ The first 2 letters indicate the error type and can be used to easily identify t
 | IM | Image error |
 | IN | Integration or script error |
 | IT | Incident type error |
+| MA | Mapper error |
 | PA | Pack files error (pack-metadata, pack-secrets, pack-ignore) |
 | PB | Playbook error |
 | RM | Readme error |
@@ -100,11 +102,11 @@ The first 2 letters indicate the error type and can be used to easily identify t
 | ST | Structure error |
 | WD | Widget error |
 
-If you wish to ignore an error in the validation insert the following to the `pack-ignore` file.
-```buildoutcfg
-[demisto-sdk]
-ignore=IN100,BA100,BC
-```
-This will ignore error codes `IN100`, `BA100` and all of `BC` error codes.
 
-*Note*: Conf-json and id-set errors cannot be ignored.
+If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
+```buildoutcfg
+[file:FILE_NAME]
+ignore=BA101
+```
+
+*Note*: Currently only `BA101` is ignorable.

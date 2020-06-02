@@ -1,5 +1,7 @@
 import json
 import os
+import sys
+from io import StringIO
 from shutil import copyfile
 from typing import Any, Type
 
@@ -55,6 +57,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH, WIDGET_TARGET)
 from mock import patch
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestValidators:
@@ -406,10 +409,10 @@ class TestValidators:
 
     @staticmethod
     def mock_unifier():
-        def get_script_package_data_mock(*args, **kwargs):
+        def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
         with patch.object(Unifier, '__init__', lambda a, b: None):
-            Unifier.get_script_package_data = get_script_package_data_mock
+            Unifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
             return Unifier('')
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATH)
@@ -505,18 +508,50 @@ class TestValidators:
         assert file_validator._is_valid
 
     def test_get_error_ignore_list(self, mocker):
-        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path',
-                            return_value='demisto_sdk/tests/test_files/fake_pack/.pack-ignore')
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
+
+        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path', return_value=test_file)
+
         file_validator = FilesValidator()
         ignore_errors_list = file_validator.get_error_ignore_list("fake")
-        assert ignore_errors_list == ['IN100', 'IN101']
+        assert ignore_errors_list['file_name'] == ['BA101']
 
     def test_create_ignored_errors_list(self, mocker):
         file_validator = FilesValidator()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BC101", "BC102", "BC103", "BC104"]
+
+    def test_added_files_type_using_function(self, repo):
+        """
+            Given:
+                - A file path to a new script, that is not located in a "regular" scripts path
+            When:
+                - verifying added files are valid
+            Then:
+                - verify that the validation detects the correct file type and passes successfully
+        """
+        saved_stdout = sys.stdout
+
+        pack = repo.create_pack('pack')
+        pack.create_test_script()
+        with ChangeCWD(pack.repo_path):
+            os.mkdir('Packs/pack/TestPlaybooks/')
+            os.system('mv Packs/pack/Scripts/sample_script/sample_script.yml Packs/pack/TestPlaybooks/')
+            x = FilesValidator()
+            try:
+                out = StringIO()
+                sys.stdout = out
+
+                x.validate_added_files({'Packs/pack/TestPlaybooks/sample_script.yml'})
+                assert 'Missing id in root' not in out.getvalue()
+            except Exception:
+                assert False
+            finally:
+                sys.stdout = saved_stdout
 
 
 def test_is_py_or_yml():

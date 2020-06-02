@@ -16,6 +16,8 @@ jobs:
             name: Print environment variables
             command: |
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
+              echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
+
         - run:
             name: Tox build
             command: |
@@ -38,23 +40,28 @@ jobs:
               coveralls
         - run:
             name: Test validate files and yaml
+            when: always
             command: |
               . .tox/py37/bin/activate
               git clone https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
 
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
+              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true && -z "${CONTENT_BRANCH_NAME}" ]]; then
                 demisto-sdk validate -i Packs/Gmail
                 exit 0
+              fi
+
+              if [ -n "${CONTENT_BRANCH_NAME}" ]; then
+                git checkout ${CONTENT_BRANCH_NAME}
               fi
 
               ./Tests/scripts/validate.sh
         - run:
             name: Test create ID set
+            when: always
             command: |
               . .tox/py37/bin/activate
-
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                   echo "Skipping creating ID set on non master branch"
                   exit 0
@@ -64,6 +71,7 @@ jobs:
               demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
             name: test create content artifacts
+            when: always
             command: |
               . .tox/py37/bin/activate
 

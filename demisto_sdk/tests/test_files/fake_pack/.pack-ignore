@@ -1,2 +1,2 @@
-[demisto-sdk]
-ignore = IN100,IN101
+[file:file_name]
+ignore=BA101

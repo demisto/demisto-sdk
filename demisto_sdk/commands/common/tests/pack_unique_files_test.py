@@ -13,10 +13,16 @@ class TestPackUniqueFilesValidator:
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
 
-    def test_is_error_added(self):
-        self.validator._add_error(('boop', '101'), 'file_path')
-        assert 'file_path: [101] - boop\n' in self.validator.get_errors(True)
-        assert 'file_path: [101] - boop\n' in self.validator.get_errors()
+    def test_is_error_added_name_only(self):
+        self.validator._add_error(('boop', '101'), 'file_name')
+        assert f'{self.validator.pack_path}/file_name: [101] - boop\n' in self.validator.get_errors(True)
+        assert f'{self.validator.pack_path}/file_name: [101] - boop\n' in self.validator.get_errors()
+        self.validator._errors = []
+
+    def test_is_error_added_full_path(self):
+        self.validator._add_error(('boop', '101'), f'{self.validator.pack_path}/file/name')
+        assert f'{self.validator.pack_path}/file/name: [101] - boop\n' in self.validator.get_errors(True)
+        assert f'{self.validator.pack_path}/file/name: [101] - boop\n' in self.validator.get_errors()
         self.validator._errors = []
 
     def test_is_file_exist(self):

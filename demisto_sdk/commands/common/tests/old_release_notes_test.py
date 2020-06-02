@@ -9,7 +9,7 @@ def get_validator(file_path='', diff=''):
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.release_notes = file_path
     release_notes_validator.master_diff = diff
-    release_notes_validator.ignored_errors = []
+    release_notes_validator.ignored_errors = {}
     return release_notes_validator
 
 

@@ -3,7 +3,6 @@ from typing import List, Union
 
 import yaml
 from ruamel.yaml import YAML
-
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,

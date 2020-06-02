@@ -5,6 +5,8 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
+FOUND_FILES_AND_ERRORS = []
+
 PRESET_ERROR_TO_IGNORE = {
 }
 

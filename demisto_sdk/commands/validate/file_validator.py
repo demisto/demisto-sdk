@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.constants import (
     YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.errors import (ERROR_CODE,
+                                                FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -140,6 +141,9 @@ class FilesValidator:
             print_color('The files are valid', LOG_COLORS.GREEN)
             return 0
         else:
+            all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            click.secho(f"=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
+                        fg="bright_red")
             print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
             return 1
 
@@ -305,7 +309,7 @@ class FilesValidator:
             modified_files (set): A set of the modified files in the current branch.
             tag (str): The reference point to the branch with which we are comparing the modified files.
         """
-        click.secho("\nRunning validation on modified files", fg='bright_cyan')
+        click.secho("\n================= Running validation on modified files =================", fg='bright_cyan')
         _modified_files = set()
         for mod_file in modified_files:
             if isinstance(mod_file, tuple):
@@ -494,7 +498,7 @@ class FilesValidator:
             added_files (set): A set of the modified files in the current branch.
             received_file_type (str): Used only with -p flag (the type of the file).
         """
-        click.secho("\nRunning validation on newly added files", fg='bright_cyan')
+        click.secho("\n================= Running validation on newly added files =================", fg='bright_cyan')
         added_rn = set()
         self.verify_no_dup_rn(added_files)
 
@@ -642,19 +646,24 @@ class FilesValidator:
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     self._is_valid = False
 
-        missing_rn = self.changed_pack_data.difference(added_rn)
-        should_fail = True
-        if (len(missing_rn) > 0) and (self.skip_pack_rn_validation is False):
-            for pack in missing_rn:
-                ignored_errors_list = self.get_error_ignore_list(pack)
-                error_message, error_code = Errors.missing_release_notes_for_pack(pack)
-                if not BaseValidator(ignored_errors=ignored_errors_list,
-                                     print_as_warnings=self.print_ignored_errors).handle_error(
-                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
-                    should_fail = False
+        if self.skip_pack_rn_validation is False:
+            click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
+            missing_rn = self.changed_pack_data.difference(added_rn)
+            should_fail = True
+            if len(missing_rn) > 0:
+                for pack in missing_rn:
+                    ignored_errors_list = self.get_error_ignore_list(pack)
+                    error_message, error_code = Errors.missing_release_notes_for_pack(pack)
+                    if not BaseValidator(ignored_errors=ignored_errors_list,
+                                         print_as_warnings=self.print_ignored_errors).handle_error(
+                            error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                        should_fail = False
 
-            if should_fail:
-                self._is_valid = False
+                if should_fail:
+                    self._is_valid = False
+            else:
+                click.secho("No missing release notes found.\n", fg="bright_green")
+
         return self._is_valid
 
     def validate_no_old_format(self, old_format_files):
@@ -702,8 +711,9 @@ class FilesValidator:
         Args:
             packs: A set of pack paths i.e {Packs/<pack-name1>, Packs/<pack-name2>}
         """
+        click.secho("================= Validating pack unique files =================\n", fg="bright_cyan")
         for pack in packs:
-            print(f'Validating {pack} unique pack files')
+            print(f'Validating {pack} unique pack files\n')
             pack_error_ignore_list = self.get_error_ignore_list(pack)
             pack_unique_files_validator = PackUniqueFilesValidator(pack, ignored_errors=pack_error_ignore_list,
                                                                    print_as_warnings=self.print_ignored_errors)
@@ -823,7 +833,7 @@ class FilesValidator:
                 self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):
-        click.secho('\nValidating all files', fg="bright_cyan")
+        click.secho('\n================= Validating all files =================', fg="bright_cyan")
 
         if not skip_conf_json:
             print('Validating conf.json')
@@ -876,7 +886,8 @@ class FilesValidator:
                                 if is_yml_file or is_md_file:
                                     all_files_to_validate.add(inner_file_path)
 
-        click.secho(f'\nValidating all {len(all_files_to_validate)} Pack and Beta Integration files\n',
+        click.secho(f'\n================= Validating all {len(all_files_to_validate)} '
+                    f'Pack and Beta Integration files =================\n',
                     fg="bright_cyan")
         for index, file in enumerate(sorted(all_files_to_validate)):
             click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
@@ -969,7 +980,8 @@ class FilesValidator:
                 self.validate_committed_files()
             else:
                 self.validate_against_previous_version(no_error=True)
-                click.secho('\nValidates all of Content repo directories according to their schemas\n', fg='bright_cyan')
+                click.secho('\n================= Validates all of Content repo directories according '
+                            'to their schemas =================\n', fg='bright_cyan')
                 self.validate_all_files_schema()
 
         else:

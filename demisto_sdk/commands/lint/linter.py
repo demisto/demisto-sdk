@@ -24,7 +24,6 @@ from demisto_sdk.commands.lint.commands_builder import (
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, add_tmp_lint_files,
                                                add_typing_module,
-                                               copy_dir_to_container,
                                                get_file_from_container,
                                                get_python_version_from_image,
                                                stream_docker_container_output)

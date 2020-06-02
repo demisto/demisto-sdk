@@ -115,6 +115,8 @@ class UpdateRN:
             # incident fields and indicator fields are using the same scheme.
             elif 'IncidentFields' in file_path:
                 _file_type = 'IncidentFields'
+            elif 'IndicatorTypes' in file_path:
+                _file_type = 'IndicatorTypes'
             elif 'IncidentTypes' in file_path:
                 _file_type = 'IncidentTypes'
             elif 'Classifiers' in file_path:
@@ -231,6 +233,11 @@ class UpdateRN:
                 if not inc_types_header:
                     rn_string += '\n### IncidentTypes\n'
                     inc_types_header = True
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'IndicatorTypes':
+                if not inc_flds_header:
+                    rn_string += '\n### IndicatorTypes\n'
+                    inc_flds_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 

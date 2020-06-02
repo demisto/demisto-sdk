@@ -7,7 +7,9 @@ from demisto_sdk.commands.lint.linter import Linter
 
 
 class TestCreateImage:
-    def test_build_image_no_errors(self, linter_obj: Linter, mocker):
+    def test_build_image_no_errors(self, demisto_content, create_integration, mocker, linter_obj):
+        content_path = demisto_content
+        create_integration(content_path=content_path)
         # Expected returns
         exp_test_image_id = 'test-image'
         exp_errors = ""
@@ -32,7 +34,7 @@ class TestCreateImage:
         mocker.patch.object(linter_obj, '_docker_client')
         docker_build_response = mocker.MagicMock()
         docker_build_response.short_id = exp_test_image_id
-        linter_obj._docker_client.containers.create().commit().short_id = exp_test_image_id
+        linter_obj._docker_client.images.build().__getitem__().short_id = exp_test_image_id
 
         act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, 3.7])
 

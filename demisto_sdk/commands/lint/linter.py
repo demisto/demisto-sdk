@@ -569,14 +569,15 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
 
-        docker_image_final = None
         for trial in range(2):
             try:
                 logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
                 dockerfile = template.render(image=test_image_name,
                                              copy_pack=True)
-                dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
-                dockerfile_path.write_text(dockerfile)
+                dockerfile_path = Path(self._pack_abs_dir / "Dockerfile")
+                with open(file=dockerfile_path, mode="+x") as f:
+                    f.write(str(dockerfile))
+
                 docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
                                                                       dockerfile=dockerfile_path.stem,
                                                                       forcerm=True)

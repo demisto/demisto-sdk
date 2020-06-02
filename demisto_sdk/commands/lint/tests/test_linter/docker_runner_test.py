@@ -7,7 +7,7 @@ from demisto_sdk.commands.lint.linter import Linter
 
 
 class TestCreateImage:
-    def test_build_image_no_errors(self, demisto_content, create_integration, mocker, linter_obj):
+    def test_build_image_no_errors(self, linter_obj: Linter, demisto_content, create_integration, mocker,):
         content_path = demisto_content
         create_integration(content_path=content_path)
         # Expected returns
@@ -41,6 +41,7 @@ class TestCreateImage:
 
         assert act_test_image_id == exp_test_image_id
         assert act_errors == exp_errors
+        # Due to some mocker issues
         assert linter_obj._docker_client.images.build().__getitem__.call_count == 2
 
 

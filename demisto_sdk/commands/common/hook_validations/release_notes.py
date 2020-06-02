@@ -39,11 +39,15 @@ class ReleaseNotesValidator(BaseValidator):
                 if not (permitted_type in file for permitted_type in VALIDATED_PACK_ITEM_TYPES):
                     continue
                 elif self.pack_name in file:
-                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
+                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None,
+                                              added_files=set())
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)
                     if file_name and file_type:
-                        if (file_type not in self.latest_release_notes) and (file_name not in self.latest_release_notes):
-                            error_message, error_code = Errors.missing_release_notes_entry(file_type, self.pack_name)
+                        if (file_type not in self.latest_release_notes) and (
+                                file_name not in self.latest_release_notes):
+                            entity_name = update_rn_util.get_display_name(file)
+                            error_message, error_code = Errors.missing_release_notes_entry(file_type, self.pack_name,
+                                                                                           entity_name)
                             if self.handle_error(error_message, error_code, self.file_path):
                                 is_valid = False
         return is_valid

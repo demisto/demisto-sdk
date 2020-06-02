@@ -78,12 +78,14 @@ class UpdateRN:
 
     @staticmethod
     def get_display_name(file_path):
-        struct = StructureValidator(file_path=file_path)
+        struct = StructureValidator(file_path=file_path, is_new_file=True)
         file_data = struct.load_data_from_file()
         if 'name' in file_data:
             name = file_data.get('name', None)
         elif 'TypeName' in file_data:
             name = file_data.get('TypeName', None)
+        elif 'brandName' in file_data:
+            name = file_data.get('brandName', None)
         else:
             name = os.path.basename(file_path)
         return name

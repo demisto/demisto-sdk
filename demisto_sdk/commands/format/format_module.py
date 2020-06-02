@@ -19,9 +19,8 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_layout import LayoutJSONFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
-from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
-
+from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,

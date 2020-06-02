@@ -1,12 +1,10 @@
-from typing import Tuple
 import subprocess
+from typing import Tuple
 
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SKIP_VALIDATE_PY_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
-from demisto_sdk.commands.format.update_generic_yml import BaseUpdate
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
-
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE, SKIP_VALIDATE_PY_RETURN_CODE, SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.update_generic_yml import BaseUpdate
 
 BLACK_INTERNAL_ERROR = 123
 
@@ -19,8 +17,8 @@ class PythonFileFormat(BaseUpdate):
             output (str): the desired file name to save the updated version of the python file to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = ''
-                 , no_validate: bool = False):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
         self.no_validate = True
 
@@ -55,4 +53,3 @@ class PythonFileFormat(BaseUpdate):
         """Manager function for the integration python updater."""
         format = self.run_format()
         return format, SKIP_VALIDATE_PY_RETURN_CODE
-

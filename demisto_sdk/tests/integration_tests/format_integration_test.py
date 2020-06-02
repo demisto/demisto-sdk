@@ -6,9 +6,11 @@ from typing import List
 import pytest
 import yaml
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
+from demisto_sdk.commands.format import update_generic
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -17,7 +19,6 @@ from demisto_sdk.tests.constants_test import (
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.format import update_generic
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
@@ -58,7 +59,6 @@ CONF_JSON_ORIGINAL_CONTENT = {
         }
     ]
 }
-
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)

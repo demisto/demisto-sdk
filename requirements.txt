@@ -1,4 +1,5 @@
 bandit>=1.6.2
+black>=19.10b0
 bs4>=0.0.1
 click>=7.0
 colorama==0.4.3
@@ -27,4 +28,3 @@ urllib3>=1.25.7
 vulture>=1.3
 wcmatch>=5.1
 yamlordereddictloader>=0.4.0
-black>=19.10b0

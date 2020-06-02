@@ -6,7 +6,7 @@ import os
 import re
 import shlex
 import sys
-from distutils.version import LooseVersion
+from distutils.version import LooseVersion, StrictVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
@@ -497,7 +497,7 @@ def server_version_compare(v1, v2):
         negative if v2 later version than v1.
     """
 
-    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    _v1, _v2 = StrictVersion(v1), StrictVersion(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:

@@ -583,14 +583,14 @@ class Linter:
                                                                       dockerfile=dockerfile_path.stem,
                                                                       forcerm=True)
                 test_image_name = docker_image_final[0].short_id
+                break
             except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
                     exceptions.TemplateError) as e:
                 logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
                 if trial == 2:
                     errors = str(e)
-            finally:
-                if dockerfile_path:
-                    dockerfile_path.unlink()
+        if dockerfile_path.exists():
+            dockerfile_path.unlink()
 
         if test_image_id:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")

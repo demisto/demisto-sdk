@@ -1,17 +1,15 @@
 {# Declare image to build from #}
 FROM {{ image }}
 {# Check if Dockerfile target is to copy package#}
-
 {% if not copy_pack %}
 {# Creating test main directory #}
 RUN mkdir -p /devwork/
-{# Define workגir #}
+{# Define workdir #}
 WORKDIR /devwork
 {# Build for python based image #}
-
 {% if pack_type == 'python' %}
 {# Change group owner and permissions - Due to container security issues #}
-RUN chown -R :4000 /devwork/
+RUN chown -R :4000 /devwork
 RUN chmod -R 775 /devwork
 {# Install requirments and missing deps #}
 RUN printf "{{ pypi_packs | join('\\n') }}" > /devwork/test-requirements.txt
@@ -22,7 +20,6 @@ if echo "$OS_RELEASE" | grep -q "alpine"; then apk del .build-deps; fi;
 {# Container entry point (Every command will start with /bin/sh) #}
 ENTRYPOINT ["/bin/sh", "-c"]
 {# Build for python based image #}
-
 {% elif pack_type == "powershell" %}
 {#  Install powershell requirements for analyze and tests  #}
 RUN pwsh -Command Set-PSRepository -name PSGallery -installationpolicy trusted
@@ -30,13 +27,10 @@ RUN pwsh -Command Install-Module -Name Pester -Scope AllUsers -Force | pwsh -Com
 RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force | pwsh -Command Out-Null
 {# Container entry point (Every command will start with /bin/sh) #}
 {% endif %}
-
 {% else %}
 {# Creating test main directory #}
 RUN mkdir -p /devwork/
 {# Define workdir #}
 WORKDIR /devwork
-COPY . .
-RUN chown -R :4000 /devwork/
-RUN chmod -R 775 /devwork
+COPY [--chown=:4000] . .
 {% endif %}

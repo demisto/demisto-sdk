@@ -41,6 +41,10 @@ class PackUniqueFilesValidator(BaseValidator):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
+
+        if self.pack_path not in file_path:
+            file_path = os.path.join(self.pack_path, file_path)
+
         formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False)
         if formatted_error:
             self._errors.append(formatted_error)
@@ -121,10 +125,9 @@ class PackUniqueFilesValidator(BaseValidator):
         return False
 
     def _is_pack_ignore_file_structure_valid(self):
-        """Check if .pack-ignore structure is parse-able & has valid regex"""
+        """Check if .pack-ignore structure is parse-able"""
         try:
-            pack_ignore_regex_list = self._parse_file_into_list(self.pack_ignore_file)
-            if pack_ignore_regex_list and all(re.compile(regex) for regex in pack_ignore_regex_list):
+            if self._parse_file_into_list(self.pack_ignore_file):
                 return True
         except re.error:
             if not self._add_error(Errors.pack_file_bad_format(self.pack_ignore_file), self.pack_ignore_file):

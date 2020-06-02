@@ -13,6 +13,7 @@ from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
+import colorama
 import git
 import requests
 import urllib3
@@ -32,16 +33,19 @@ from ruamel.yaml import YAML
 # disable insecure warnings
 urllib3.disable_warnings()
 
+# inialize color palette
+colorama.init()
+
 ryaml = YAML()
 ryaml.preserve_quotes = True  # type: ignore
 ryaml.allow_duplicate_keys = True
 
 
 class LOG_COLORS:
-    NATIVE = '\033[m'
-    RED = '\033[01;31m'
-    GREEN = '\033[01;32m'
-    YELLOW = '\033[0;33m'
+    NATIVE = colorama.Style.RESET_ALL
+    RED = colorama.Fore.RED
+    GREEN = colorama.Fore.GREEN
+    YELLOW = colorama.Fore.YELLOW
 
 
 LOG_VERBOSE = False
@@ -687,8 +691,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             return 'incidenttype'
         elif 'regex' in _dict:
             return 'reputation'
-        elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
+        elif 'brandName' in _dict and 'transformer' in _dict:
+            return 'classifier_5_9_9'
+        elif 'transformer' in _dict and 'keyTypeMap' in _dict:
             return 'classifier'
+        elif 'mapping' in _dict:
+            return 'mapper'
         elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'

@@ -129,7 +129,7 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('defaultvalue', '') not in ('false', ''):
-                    error_message, error_code = Errors.wrong_default_parameter(param_name)
+                    error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
                     formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                           should_print=False)
                     if formatted_message:
@@ -614,6 +614,10 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_docker_image_valid(self):
         # type: () -> bool
+        # dockers should not be checked on master branch
+        if self.branch_name == 'master':
+            return True
+
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,
                                                       ignored_errors=self.ignored_errors,
                                                       print_as_warnings=self.print_as_warnings)

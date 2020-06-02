@@ -5,12 +5,13 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
+FOUND_FILES_AND_ERRORS = []
+
 PRESET_ERROR_TO_IGNORE = {
-    "no-bc-check": ["BC100", "BC101", "BC102", "BC103", "BC104"]
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA']
+    "deprecated": ['ST', 'BC', 'BA'],
 }
 
 ERROR_CODE = {
@@ -19,7 +20,6 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
-    "wrong_default_parameter": "IN101",
     "wrong_required_value": "IN102",
     "wrong_required_type": "IN103",
     "wrong_category": "IN104",
@@ -129,6 +129,23 @@ ERROR_CODE = {
     "wrong_file_extension": "ST104",
     "invalid_file_path": "ST105",
     "invalid_package_structure": "ST106",
+    "pykwalify_missing_parameter": "ST107",
+    "pykwalify_field_undefined": "ST108",
+    "pykwalify_missing_in_root": "ST109",
+    "pykwalify_general_error": "ST110",
+    "invalid_to_version_in_new_classifiers": "CL100",
+    "invalid_to_version_in_old_classifiers": "CL101",
+    "invalid_from_version_in_new_classifiers": "CL102",
+    "invalid_from_version_in_old_classifiers": "CL103",
+    "missing_from_version_in_new_classifiers": "CL104",
+    "missing_to_version_in_old_classifiers": "CL105",
+    "from_version_higher_to_version": "CL106",
+    "invalid_type_in_new_classifiers": "CL107",
+    "invalid_from_version_in_mapper": "MP100",
+    "invalid_to_version_in_mapper": "MP101",
+    "invalid_mapper_file_name": "MP102",
+    "missing_from_version_in_mapper": "MP103",
+    "invalid_type_in_mapper": "MP104"
 }
 
 
@@ -174,11 +191,6 @@ class Errors:
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
         return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
-
-    @staticmethod
-    @error_code_decorator
-    def wrong_default_parameter(param_name):
-        return Errors.wrong_default_parameter_not_empty(param_name, "''")
 
     @staticmethod
     @error_code_decorator
@@ -394,7 +406,7 @@ class Errors:
     @error_code_decorator
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
-               f'Please create or update to an updated versioned image\n'
+               f' Please create or update to an updated versioned image\n'
 
     @staticmethod
     @error_code_decorator
@@ -556,9 +568,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_release_notes_entry(file_type, pack_name):
-        return f"No release note entry was found for a {file_type.lower()} in the {pack_name} pack. " \
-               f"Please rerun the update-release-notes command without -u to generate an updated template."
+    def missing_release_notes_entry(file_type, pack_name, entity_name):
+        return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
+               f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
+               f"generate an updated template."
 
     @staticmethod
     @error_code_decorator
@@ -700,7 +713,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_file_bad_format(file_name):
-        return f'Detected none valid regex in {file_name} file'
+        return f'Detected invalid {file_name} file'
 
     @staticmethod
     @error_code_decorator
@@ -800,6 +813,91 @@ class Errors:
         return 'You should update the following files to the package format, for further details please visit ' \
                'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_missing_parameter(key_from_error, current_string, path):
+        return f'Missing {key_from_error} in \n{current_string}\nPath: {path}'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_field_undefined(key_from_error):
+        return f'The field {key_from_error} was not defined in the scheme'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_missing_in_root(key_from_error):
+        return f'Missing {key_from_error} in root'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_general_error(error):
+        return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_to_version_in_new_classifiers():
+        return 'toVersion field in new classifiers needs to be higher than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_to_version_in_old_classifiers():
+        return 'toVersion field in old classifiers needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_version_in_new_classifiers():
+        return 'fromVersion field in new classifiers needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_version_in_old_classifiers():
+        return 'fromVersion field in old classifiers needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_from_version_in_new_classifiers():
+        return 'Must have fromVersion field in new classifiers'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_to_version_in_old_classifiers():
+        return 'Must have toVersion field in old classifiers'
+
+    @staticmethod
+    @error_code_decorator
+    def from_version_higher_to_version():
+        return 'fromVersion field can not be higher than toVersion field'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_type_in_new_classifiers():
+        return 'Classifiers type must be classification'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_version_in_mapper():
+        return 'fromVersion field in mapper needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_to_version_in_mapper():
+        return 'toVersion field in mapper needs to be higher than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_mapper_file_name():
+        return 'Invalid file name for mapper. Need to change to classifier-mapper-NAME.json'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_from_version_in_mapper():
+        return 'Must have fromVersion field in mapper'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_type_in_mapper():
+        return 'Mappers type must be mapping-incoming or mapping-outgoing'
 
     @staticmethod
     def wrong_filename(file_type):

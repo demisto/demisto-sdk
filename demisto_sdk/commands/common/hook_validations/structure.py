@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.tools import (checked_type,
                                                get_content_file_type_dump,
                                                get_matching_regex,
-                                               get_remote_file, print_error)
+                                               get_remote_file)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 from pykwalify.core import Core
@@ -105,7 +105,7 @@ class StructureValidator(BaseValidator):
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, 'image', 'readme', 'changelog']:
+        if self.scheme_name in [None, 'image', 'readme', 'release-notes']:
             return True
         # ignore reputations.json
         if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
@@ -121,12 +121,16 @@ class StructureValidator(BaseValidator):
             core.validate(raise_exception=True)
         except Exception as err:
             try:
-                print_error(self.parse_error_msg(err))
-                print_error(Errors.suggest_fix(self.file_path))
+                error_message, error_code = self.parse_error_msg(err)
+                if self.handle_error(error_message, error_code, self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
+                    self.is_valid = False
+                    return False
             except Exception:
-                print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
-            self.is_valid = False
-            return False
+                error_message, error_code = Errors.pykwalify_general_error(err)
+                if self.handle_error(error_message, error_code, self.file_path):
+                    self.is_valid = False
+                    return False
         return True
 
     @staticmethod
@@ -321,30 +325,26 @@ class StructureValidator(BaseValidator):
 
             # if the error is from arguments of file
             if curr.get('name'):
-                return ('Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
-                                                                                  curr_string_transformer(
-                                                                                      curr.get('name')),
-                                                                                  str(key_list).strip('[]').replace(
-                                                                                      ',', '->')))
+                return Errors.pykwalify_missing_parameter(str(key_from_error),
+                                                          curr_string_transformer(curr.get('name')),
+                                                          str(key_list).strip('[]').replace(',', '->'))
+
             # if the error is from outputs of file
             elif curr.get('contextPath'):
-                return ('Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
-                                                                                  curr_string_transformer(
-                                                                                      curr.get('contextPath')),
-                                                                                  str(key_list).strip('[]').replace(
-                                                                                      ',', '->')))
+                return Errors.pykwalify_missing_parameter(str(key_from_error),
+                                                          curr_string_transformer(curr.get('contextPath')),
+                                                          str(key_list).strip('[]').replace(',', '->'))
             # if the error is from neither arguments , outputs nor root
             else:
-                return (
-                    'Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
-                                                                              curr_string_transformer(curr),
-                                                                              str(key_list).strip('[]').replace(',',
-                                                                                                                '->')))
+                return Errors.pykwalify_missing_parameter(str(key_from_error), curr_string_transformer(curr),
+                                                          str(key_list).strip('[]').replace(',', '->'))
         else:
-            if 'key' in str(err):
-                key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            else:
-                key_from_error = str(err).split('Key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            return (
-                'Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), "root",
-                                                              ))
+            err_msg = str(err).lower()
+            if 'key' in err_msg:
+                key_from_error = err_msg.split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+
+                if 'not defined' in err_msg:
+                    return Errors.pykwalify_field_undefined(str(key_from_error))
+
+                else:
+                    return Errors.pykwalify_missing_in_root(str(key_from_error))

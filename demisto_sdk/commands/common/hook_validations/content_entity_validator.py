@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from abc import abstractmethod
 
@@ -9,16 +8,16 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (
-    _get_file_id, is_test_config_match, old_get_latest_release_notes_text,
-    old_get_release_notes_file_path, run_command)
+from demisto_sdk.commands.common.tools import (_get_file_id,
+                                               is_test_config_match,
+                                               run_command)
 
 
 class ContentEntityValidator(BaseValidator):
     DEFAULT_VERSION = -1
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False):
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, branch_name=''):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         # type: (StructureValidator) -> None
         self.structure_validator = structure_validator
@@ -26,14 +25,12 @@ class ContentEntityValidator(BaseValidator):
         self.old_file = structure_validator.old_file
         self.file_path = structure_validator.file_path
         self.is_valid = structure_validator.is_valid
+        self.branch_name = branch_name
 
     def is_valid_file(self, validate_rn=True):
         tests = [
             self.is_valid_version()
         ]
-        # In case of release branch we allow to remove release notes
-        if validate_rn and not self.is_release_branch():
-            tests.append(self.is_there_release_notes())
         return all(tests)
 
     @abstractmethod
@@ -54,26 +51,6 @@ class ContentEntityValidator(BaseValidator):
                                  suggested_fix=Errors.suggest_fix(self.file_path)):
                 self.is_valid = False
                 return False
-        return True
-
-    def is_there_release_notes(self):
-        """Validate that the file has proper release notes when modified.
-        This function updates the class attribute self._is_valid.
-
-        Returns:
-            (bool): is there release notes
-        """
-        if os.path.isfile(self.file_path):
-            rn_path = old_get_release_notes_file_path(self.file_path)
-            release_notes = old_get_latest_release_notes_text(rn_path)
-
-            # check release_notes file exists and contain text
-            if release_notes is None:
-                error_message, error_code = Errors.missing_release_notes(rn_path=rn_path)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self.is_valid = False
-                    return False
-
         return True
 
     @staticmethod

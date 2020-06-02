@@ -1,0 +1,33 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: True
+  name:
+    type: str
+    required: True
+  type:
+    type: str
+    required: True
+  description:
+    type: str
+    required: True
+  version:
+    type: number
+    required: True
+  fromVersion:
+    type: str
+  fromversion:
+    type: str
+  toVersion:
+    type: str
+  toversion:
+    type: str
+  mapping:
+    type: map
+    required: True
+    allowempty: True
+  defaultIncidentType:
+    type: str
+  feed:
+    type: bool

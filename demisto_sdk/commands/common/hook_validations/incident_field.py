@@ -5,10 +5,10 @@ import re
 from distutils.version import LooseVersion
 from enum import Enum, IntEnum
 
+import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import print_error
 
 
 class TypeFields(Enum):
@@ -337,7 +337,7 @@ class IncidentFieldValidator(ContentEntityValidator):
                     is_valid = False
 
         if error_msg:
-            print_error(error_msg)
+            click.secho(error_msg, fg="bright_red")
         return is_valid
 
     def is_valid_required(self):

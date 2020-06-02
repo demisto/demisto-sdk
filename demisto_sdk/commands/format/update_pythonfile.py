@@ -46,11 +46,11 @@ class PythonFileFormat(BaseUpdate):
                    "Then run: black {}".format(py_file_path)
 
     def run_format(self) -> int:
-        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE_BOLD)
+        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
 
         is_black_passed = self.is_format_by_black(str(self.source_file))
         if is_black_passed:
-            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE_BOLD)
+            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         return ERROR_RETURN_CODE
 

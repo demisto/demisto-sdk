@@ -46,6 +46,7 @@ class LOG_COLORS:
     RED = colorama.Fore.RED
     GREEN = colorama.Fore.GREEN
     YELLOW = colorama.Fore.YELLOW
+    WHITE = colorama.Fore.WHITE
 
 
 LOG_VERBOSE = False

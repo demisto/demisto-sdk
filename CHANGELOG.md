@@ -1,4 +1,5 @@
 # Changelog
+* Add a code formatter for python files
 * Add support for new classifiers and mappers
 
 #### 1.0.10

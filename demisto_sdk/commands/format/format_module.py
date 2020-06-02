@@ -33,8 +33,11 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'layout': LayoutJSONFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
-    'pythonfile': PythonFileFormat
+    'pythonfile': PythonFileFormat,
 }
+
+VALIDATE_RES_SKIPPED_CODE = 2
+VALIDATE_RES_FAILED_CODE = 3
 
 
 def format_manager(input: str = None, output: str = None, from_version: str = None, no_validate: bool = None):
@@ -53,7 +56,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = No
     else:
         files = [file['name'] for file in
                  get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]
-    if output and not output.endswith(('.yml', 'json', 'py')):
+    if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"
                         "Only file path can be a output path.  Please specify a correct output.")
 
@@ -113,10 +116,10 @@ def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], L
     error_list = []
     skipped_list = []
     if format_res and validate_res:
-        if validate_res == 2:
+        if validate_res == VALIDATE_RES_SKIPPED_CODE:
             error_list.append(f'Format Status   on file: {input} - Failed')
             skipped_list.append(f'Validate Status on file: {input} - Skipped')
-        elif validate_res == 3:
+        elif validate_res == VALIDATE_RES_FAILED_CODE:
             error_list.append(f'Format Status   on file: {input} - Failed')
         else:
             error_list.append(f'Format Status   on file: {input} - Failed')
@@ -125,10 +128,10 @@ def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], L
         error_list.append(f'Format Status   on file: {input} - Failed')
         info_list.append(f'Validate Status on file: {input} - Success')
     elif not format_res and validate_res:
-        if validate_res == 2:
+        if validate_res == VALIDATE_RES_SKIPPED_CODE:
             info_list.append(f'Format Status   on file: {input} - Success')
             skipped_list.append(f'Validate Status on file: {input} - Skipped')
-        elif validate_res == 3:
+        elif validate_res == VALIDATE_RES_FAILED_CODE:
             info_list.append(f'Format Status   on file: {input} - Success')
         else:
             info_list.append(f'Format Status   on file: {input} - Success')

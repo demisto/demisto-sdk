@@ -281,7 +281,7 @@ def test_format_on_valid_py(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=True)
     assert '=======Starting updates for file:' in result.stdout
-    assert 'Running black on file' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert valid_py == integration.read_code()
     assert '=======Finished updates for files:' in result.stdout
@@ -308,7 +308,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
 
     assert '=======Starting updates for file:' in result.stdout
-    assert 'Running black on file' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.read_code()
     assert '=======Finished updates for files:' in result.stdout
@@ -335,7 +335,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
 
     assert '=======Starting updates for file:' in result.stdout
-    assert 'Running black on file' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.read_code()
     assert '=======Finished updates for files:' in result.stdout
@@ -363,33 +363,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
 
     assert '=======Starting updates for file:' in result.stdout
-    assert 'Running black on file' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.read_code()
     assert '=======Finished updates for files:' in result.stdout
-
-
-def test_format_on_unformattable_py(mocker, repo):
-    """
-    Given
-    - Unformattable python file - problomatic if-else
-
-    When
-    - Running format
-
-    Then
-    - Ensure format failed.
-    """
-    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration')
-    unformattable_py = "if test:\n\t pass \n\telse: pass"
-    integration.write_code(unformattable_py)
-    with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
-
-    assert '=======Starting updates for file:' in result.stdout
-    assert 'Running black on file' in result.stdout
-    assert 'Failed' in result.stdout
-    assert unformattable_py == integration.read_code()

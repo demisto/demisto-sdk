@@ -1,0 +1,21 @@
+commonfields:
+  id: sample_script
+  version: -1
+name: sample_script
+script: |
+  value = demisto.args()['value']
+type: python
+subtype: python3
+tags:
+- transformer
+comment: |-
+  Sample Script
+enabled: true
+args:
+- name: value
+  required: true
+  default: true
+  description: sample arg
+scripttarget: 0
+runonce: false
+dockerimage: demisto/python3:3.8.3.8715

@@ -42,8 +42,8 @@ class PackUniqueFilesValidator(BaseValidator):
         Returns True if added and false otherwise"""
         error_message, error_code = error
 
-        if '/' not in file_path:
-            file_path = f'{self.pack_path}/{file_path}'
+        if self.pack_path not in file_path:
+            file_path = os.path.join(self.pack_path, file_path)
 
         formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False)
         if formatted_error:

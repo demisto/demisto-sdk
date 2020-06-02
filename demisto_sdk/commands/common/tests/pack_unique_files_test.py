@@ -20,9 +20,9 @@ class TestPackUniqueFilesValidator:
         self.validator._errors = []
 
     def test_is_error_added_full_path(self):
-        self.validator._add_error(('boop', '101'), 'pack/file_name')
-        assert 'pack/file_name: [101] - boop\n' in self.validator.get_errors(True)
-        assert 'pack/file_name: [101] - boop\n' in self.validator.get_errors()
+        self.validator._add_error(('boop', '101'), f'{self.validator.pack_path}/file/name')
+        assert f'{self.validator.pack_path}/file/name: [101] - boop\n' in self.validator.get_errors(True)
+        assert f'{self.validator.pack_path}/file/name: [101] - boop\n' in self.validator.get_errors()
         self.validator._errors = []
 
     def test_is_file_exist(self):

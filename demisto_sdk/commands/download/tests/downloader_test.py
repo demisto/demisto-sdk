@@ -339,7 +339,7 @@ class TestPackHierarchy:
 
 
 class TestMergeExistingFile:
-    def test_merge_and_extract_existing_file_corrupted_dir(self, tmp_path, mocker):
+    def test_merge_and_extract_existing_file_corrupted_dir(self, tmp_path, mocker, capsys):
         """
         Given
             - The integration exist in output pack, the directory is corrupted
@@ -365,6 +365,8 @@ class TestMergeExistingFile:
             downloader.num_added_files = 0
             downloader.log_verbose = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
+            stdout, _ = capsys.readouterr()
+            assert 'Merged' in stdout
 
     def test_merge_and_extract_existing_file(self, tmp_path):
         env = Environment(tmp_path)

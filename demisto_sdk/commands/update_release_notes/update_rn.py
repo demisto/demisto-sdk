@@ -85,7 +85,7 @@ class UpdateRN:
         elif 'TypeName' in file_data:
             name = file_data.get('TypeName', None)
         elif 'brandName' in file_data:
-            name = file_data.get('TypeName', None)
+            name = file_data.get('brandName', None)
         else:
             name = os.path.basename(file_path)
         return name

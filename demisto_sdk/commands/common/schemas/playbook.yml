@@ -107,6 +107,26 @@ mapping:
             required: false
           quiet:
             type: bool
+          evidencedata:
+            required: false
+            type: map
+            mapping:
+              description:
+                type: map
+                required: false
+                mapping:
+                  simple:
+                    type: text
+              customfields:
+                type: map
+                required: false
+                allowempty: True
+              occurred:
+                required: false
+                type: text
+              tags:
+                required: false
+                type: text
           task:
             type: map
             required: true

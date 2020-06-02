@@ -13,6 +13,7 @@ from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
+import colorama
 import git
 import requests
 import urllib3
@@ -32,17 +33,19 @@ from ruamel.yaml import YAML
 # disable insecure warnings
 urllib3.disable_warnings()
 
+# inialize color palette
+colorama.init()
+
 ryaml = YAML()
 ryaml.preserve_quotes = True  # type: ignore
 ryaml.allow_duplicate_keys = True
 
 
 class LOG_COLORS:
-    NATIVE = '\033[m'
-    RED = '\033[01;31m'
-    GREEN = '\033[01;32m'
-    YELLOW = '\033[0;33m'
-    WHITE_BOLD = "\033[1m"
+    NATIVE = colorama.Style.RESET_ALL
+    RED = colorama.Fore.RED
+    GREEN = colorama.Fore.GREEN
+    YELLOW = colorama.Fore.YELLOW
 
 
 LOG_VERBOSE = False
@@ -80,7 +83,7 @@ def print_color(obj, color):
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
-    Gets the project directory and returns the path of all yml, json and py files in it
+    Gets the project directory and returns the path of all yml and json files in it
     Args:
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
@@ -655,8 +658,6 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
             return get_yaml(path), 'yml'
         elif path.endswith('.json'):
             return get_json(path), 'json'
-        elif path.endswith('.py'):
-            return {}, 'py'
     return {}, None
 
 
@@ -672,10 +673,6 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     """
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
-
-    if file_type == 'py':
-        return 'pythonfile'
-
     if file_type == 'yml':
         if 'category' in _dict:
             return 'integration'
@@ -693,8 +690,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             return 'incidenttype'
         elif 'regex' in _dict:
             return 'reputation'
-        elif 'mapping' in _dict or 'unclassifiedCases' in _dict:
+        elif 'brandName' in _dict and 'transformer' in _dict:
+            return 'classifier_5_9_9'
+        elif 'transformer' in _dict and 'keyTypeMap' in _dict:
             return 'classifier'
+        elif 'mapping' in _dict:
+            return 'mapper'
         elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'

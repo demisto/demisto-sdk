@@ -47,7 +47,7 @@ class TestYamlParse:
         Then
         - Validate that the CommonServerPython is in the file list to check
         """
-        pack = repo.create_pack('CommonServerPython')
+        pack = repo.create_pack('Base')
         script = pack.create_script('CommonServerPython')
         script.create_default_script()
         script_path = Path(script.path)
@@ -58,7 +58,7 @@ class TestYamlParse:
                                docker_engine=False)
         runner._gather_facts(modules={})
         common_server_python_path = runner._facts.get('lint_files')[0]
-        assert 'Packs/CommonServerPython/Scripts/CommonServerPython/CommonServerPython.py' in str(
+        assert 'Packs/Base/Scripts/CommonServerPython/CommonServerPython.py' in str(
             common_server_python_path)
 
 

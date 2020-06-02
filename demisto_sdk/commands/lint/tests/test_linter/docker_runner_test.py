@@ -7,15 +7,14 @@ from demisto_sdk.commands.lint.linter import Linter
 
 
 class TestCreateImage:
-    def test_build_image_no_errors(self, linter_obj: Linter, demisto_content, create_integration, mocker,):
+    def test_build_image_no_errors(self, linter_obj: Linter, demisto_content, create_integration, mocker):
         content_path = demisto_content
         create_integration(content_path=content_path)
         # Expected returns
         exp_test_image_id = 'test-image'
         exp_errors = ""
         # Jinja2 mocking
-        mocker.patch.multiple(linter, Environment=DEFAULT, FileSystemLoader=DEFAULT, exceptions=DEFAULT, hashlib=DEFAULT,
-                              copy_dir_to_container=DEFAULT)
+        mocker.patch.multiple(linter, Environment=DEFAULT, FileSystemLoader=DEFAULT, exceptions=DEFAULT, hashlib=DEFAULT)
         # Facts mocking
         mocker.patch.dict(linter_obj._facts, {
             "images": [],

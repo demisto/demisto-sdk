@@ -493,15 +493,15 @@ class ContentCreator:
             for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
                 os.mkdir(bundle_dir)
 
-            # for package_dir in DIR_TO_PREFIX:
-            #     # handles nested package directories
-            #     self.create_unifieds_and_copy(package_dir)
-            #
-            # for content_dir in self.content_directories:
-            #     print(f'Copying dir {content_dir} to bundles...')
-            #     self.copy_dir_files(content_dir, self.content_bundle)
-            #
-            # self.copy_test_files()
+            for package_dir in DIR_TO_PREFIX:
+                # handles nested package directories
+                self.create_unifieds_and_copy(package_dir)
+
+            for content_dir in self.content_directories:
+                print(f'Copying dir {content_dir} to bundles...')
+                self.copy_dir_files(content_dir, self.content_bundle)
+
+            self.copy_test_files()
 
             # handle copying packs content to bundles for zipping to content_new.zip and content_test.zip
             packs = get_child_directories(PACKS_DIR)

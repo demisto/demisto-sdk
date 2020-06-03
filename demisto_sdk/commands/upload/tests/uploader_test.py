@@ -7,8 +7,7 @@ from unittest.mock import patch
 import demisto_client
 import pytest
 from demisto_client.demisto_api.rest import ApiException
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATIONS_DIR,
-                                                   CLASSIFIERS_DIR,
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR)
@@ -515,10 +514,10 @@ def test_sort_directories_based_on_dependencies(demisto_client_configure):
     Then
         - Ensure a sorted listed of the directories is returned
     """
-    dir_list = [TEST_PLAYBOOKS_DIR, BETA_INTEGRATIONS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR]
+    dir_list = [TEST_PLAYBOOKS_DIR, INTEGRATIONS_DIR, SCRIPTS_DIR, CLASSIFIERS_DIR, LAYOUTS_DIR]
     uploader = Uploader(input="", insecure=False, verbose=False)
     sorted_dir_list = uploader._sort_directories_based_on_dependencies(dir_list)
-    assert sorted_dir_list == [INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    assert sorted_dir_list == [INTEGRATIONS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
                                CLASSIFIERS_DIR, LAYOUTS_DIR]
 
 

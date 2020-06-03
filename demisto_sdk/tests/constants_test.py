@@ -1,3 +1,4 @@
+import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
@@ -49,23 +50,23 @@ INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_fil
 INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid-one-line-list_2_CHANGELOG.md"
 INVALID_MULTI_LINE_1_CHANGELOG_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid-multi-line_1_CHANGELOG.md"
 INVALID_MULTI_LINE_2_CHANGELOG_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid-multi-line_2_CHANGELOG.md"
-LAYOUT_TARGET = "./Layouts/layout-mock.json"
-INDICATOR_TYPE_TARGET = "IndicatorTypes/reputations-valid.json"
-WIDGET_TARGET = "./Widgets/widget-mocks.json"
-DASHBOARD_TARGET = "./Dashboards/dashboard-mocks.json"
-PLAYBOOK_TARGET = "Playbooks/playbook-test.yml"
-INTEGRATION_TARGET = "./Integrations/integration-test.yml"
-INCIDENT_FIELD_TARGET = "IncidentFields/incidentfield-test.json"
-INCIDENT_TYPE_TARGET = "IncidentTypes/incidenttype-valid.json"
+PACK_TARGET = "Packs/TestPack"
+LAYOUT_TARGET = f"{PACK_TARGET}/Layouts/layout-mock.json"
+INDICATOR_TYPE_TARGET = f"{PACK_TARGET}/IndicatorTypes/reputations-valid.json"
+WIDGET_TARGET = f"{PACK_TARGET}/Widgets/widget-mocks.json"
+DASHBOARD_TARGET = f"{PACK_TARGET}/Dashboards/dashboard-mocks.json"
+PLAYBOOK_TARGET = f"{PACK_TARGET}/Playbooks/playbook-test.yml"
+INTEGRATION_TARGET = f"{PACK_TARGET}/Integrations/integration-test.yml"
+INCIDENT_FIELD_TARGET = f"{PACK_TARGET}/IncidentFields/incidentfield-test.json"
+INCIDENT_TYPE_TARGET = f"{PACK_TARGET}/IncidentTypes/incidenttype-valid.json"
 PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
 INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
                                             f'FeedAzure/TestPlaybooks/playbook-FeedAzure_test_copy_no_prefix.yml'
 INVALID_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
                                        f'FeedAzure/Playbooks/FeedAzure_test.yml'
-SCRIPT_TARGET = "./Scripts/script-test.yml"
-BETA_INTEGRATION_TARGET = "./Beta_Integrations/integration-test.yml"
-SCRIPT_RELEASE_NOTES_TARGET = "./Scripts/script-test_CHANGELOG.md"
-INTEGRATION_RELEASE_NOTES_TARGET = "./Integrations/integration-test_CHANGELOG.md"
+SCRIPT_TARGET = f"{PACK_TARGET}/Scripts/script-test.yml"
+SCRIPT_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Scripts/script-test_CHANGELOG.md"
+INTEGRATION_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"
@@ -129,3 +130,20 @@ VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"
 CONF_JSON_MOCK_PATH = 'demisto_sdk/tests/test_files/conf.json'
+
+DIR_LIST = [
+    f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',
+    f'{PACK_TARGET}/{constants.SCRIPTS_DIR}',
+    f'{PACK_TARGET}/{constants.PLAYBOOKS_DIR}',
+    f'{PACK_TARGET}/{constants.REPORTS_DIR}',
+    f'{PACK_TARGET}/{constants.DASHBOARDS_DIR}',
+    f'{PACK_TARGET}/{constants.WIDGETS_DIR}',
+    f'{PACK_TARGET}/{constants.INCIDENT_TYPES_DIR}',
+    f'{PACK_TARGET}/{constants.INCIDENT_FIELDS_DIR}',
+    f'{PACK_TARGET}/{constants.LAYOUTS_DIR}',
+    f'{PACK_TARGET}/{constants.CLASSIFIERS_DIR}',
+    f'{PACK_TARGET}/{constants.INDICATOR_TYPES_DIR}',
+    f'{PACK_TARGET}/{constants.CONNECTIONS_DIR}',
+    f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
+    constants.TESTS_DIR
+]

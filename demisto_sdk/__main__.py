@@ -777,7 +777,7 @@ def update_pack_releasenotes(**kwargs):
                             f"To update release notes in a specific pack, please use the -p parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if len(modified) < 1:
+    if (len(modified) < 1) and (len(added) < 1):
         print_warning('No changes were detected.')
         sys.exit(0)
     if is_all and not _pack:

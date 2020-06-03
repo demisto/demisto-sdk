@@ -9,11 +9,9 @@ from bs4 import BeautifulSoup
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (EXTERNAL_PR_REGEX,
-                                                   INTEGRATION_README_REGEX,
-                                                   PACKS_DIR,
-                                                   PACKS_WHITELIST_FILE_NAME,
-                                                   REQUIRED_YML_FILE_TYPES, re)
+from demisto_sdk.commands.common.constants import (
+    EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
+    PACKS_WHITELIST_FILE_NAME, REQUIRED_YML_FILE_TYPES, re)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
@@ -401,7 +399,7 @@ class SecretsValidator(object):
     def get_file_contents(self, file_path, file_extension):
         try:
             # if pdf or README.md file, parse text
-            integration_readme = re.match(pattern=INTEGRATION_README_REGEX,
+            integration_readme = re.match(pattern=PACKS_INTEGRATION_README_REGEX,
                                           string=file_path,
                                           flags=re.IGNORECASE)
             if file_extension == '.pdf':

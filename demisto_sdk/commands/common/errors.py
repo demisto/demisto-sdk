@@ -508,7 +508,7 @@ class Errors:
                f'Please add:\n{missing_test_playbook_configurations}\nto {CONF_PATH} ' \
                f'path under \'tests\' key.\n' \
                f'If you don\'t want to add a test playbook for this integration, please add: \n{no_tests_key}to the ' \
-               f'file {file_path} or run \'demisto-sdk format -p {file_path}\''
+               f'file {file_path} or run \'demisto-sdk format -i {file_path}\''
 
     @staticmethod
     @error_code_decorator

@@ -338,6 +338,7 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
 def get_layout_data(path):
     data = OrderedDict()
     json_data = get_json(path)
+
     layout = json_data.get('layout')
     name = layout.get('name', '-')
     id_ = json_data.get('id', layout.get('id', '-'))
@@ -369,6 +370,40 @@ def get_layout_data(path):
     data['indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_types'] = incident_indicator_fields_dependency['field']
+
+    return {id_: data}
+
+
+def get_incidnet_field_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+
+    associated_types = list(json_data.get('associatedTypes'))
+    system_associated_types = list(json_data.get('systemAssociatedTypes'))
+    all_associated_types = set(associated_types + system_associated_types)
+
+    scripts = list(json_data.get('script'))
+    field_calculations_scripts = list(json_data.get('fieldCalcScript'))
+    all_scripts = set(scripts + field_calculations_scripts)
+
+    if name:
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if all_associated_types:
+        data['incident_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
 
     return {id_: data}
 
@@ -561,7 +596,7 @@ def process_incident_fields(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, (INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX)):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_incidnet_field_data(file_path))
     return res
 
 

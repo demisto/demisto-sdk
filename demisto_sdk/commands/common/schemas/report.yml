@@ -75,6 +75,12 @@ mapping:
     type: str
   sensitive:
     type: bool
+  userAPIKeyID:
+    type: str
+  userAPIKey:
+    type: str
+  disableHeader:
+    type: bool
   dashboard:
     type: map
     mapping:
@@ -111,7 +117,6 @@ mapping:
         type: seq
         sequence:
           - include: layout_schema
-
   decoder:
     type: map
     mapping:

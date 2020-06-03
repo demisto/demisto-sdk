@@ -24,7 +24,6 @@ if not hasattr(inspect, '_orig_findsource'):
             return inspect._orig_findsource(*args, **kwargs)
         except IndexError:
             raise IOError("Invalid line")
-
     inspect._orig_findsource = inspect.findsource
     inspect.findsource = findsource
 
@@ -54,7 +53,7 @@ def test_upload_script_positive(demisto_client_configure, mocker):
         - Ensure success upload message is printed as expected
     """
     mocker.patch("builtins.print")
-    script_name = "DummyScript.yml"
+    script_name = "DummyScriptUnified.yml"
     script_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_name}"
     uploader = Uploader(input=script_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
@@ -348,15 +347,22 @@ def test_upload_pack(demisto_client_configure, mocker):
     Then
         - Ensure pack is uploaded successfully
         - Ensure status code is as expected
-        - Ensure amount of messages is as expected
+        - Check that all expected content entities that appear in the pack are reported as uploaded.
     """
     mocker.patch("builtins.print")
     pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
     uploader = Uploader(input=pack_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     status_code = uploader.upload()
+    expected_entities = ['DummyIntegration.yml', 'integration-UploadTest.yml', 'DummyScriptUnified.yml',
+                         'script-DummyScript.yml', 'DummyPlaybook.yml', 'incidenttype-Hello_World_Alert.json',
+                         'incidentfield-Hello_World_ID.json', 'incidentfield-Hello_World_Type.json',
+                         'incidentfield-Hello_World_Status.json', 'classifier-aws_sns_test_classifier.json',
+                         'widget-ActiveIncidentsByRole.json', 'layout-details-test_bla-V2.json',
+                         'upload_test_dashboard.json']
     assert status_code == 0
-    assert len(print.call_args_list) == 19
+    for entity in expected_entities:
+        assert entity in print.call_args_list[-1][0][0]
 
 
 def test_upload_invalid_path(demisto_client_configure):

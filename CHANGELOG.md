@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue where new and old classifiers where mixed on validate command.
 * Added *feedIncremental* field to the integration schema.
+* Fixed error in **upload** command where unified YMLs were not uploaded as expected if the given input was a pack.
 * Fixed an issue where **secrets** failed due to a space character in the file name.
 
 #### 1.1.1

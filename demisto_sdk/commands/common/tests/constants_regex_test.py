@@ -3,10 +3,11 @@ import os
 import pytest
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
-    BETA_SCRIPT_REGEX, INCIDENT_TYPE_REGEX, INDICATOR_FIELDS_REGEX,
+    BETA_SCRIPT_REGEX, CLASSIFIER_REGEX, CLASSIFIER_REGEX_5_9_9,
+    CLASSIFIERS_DIR, INCIDENT_TYPE_REGEX, INDICATOR_FIELDS_REGEX,
     INTEGRATION_JS_REGEX, INTEGRATION_PY_REGEX, INTEGRATION_REGEX,
     INTEGRATION_TEST_PY_REGEX, INTEGRATION_YML_REGEX, INTEGRATIONS_DIR,
-    PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX,
+    MAPPER_REGEX, PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX,
     PACKS_CLASSIFIERS_5_9_9_REGEX, PACKS_CLASSIFIERS_REGEX,
     PACKS_DASHBOARDS_REGEX, PACKS_INCIDENT_FIELDS_REGEX,
     PACKS_INCIDENT_TYPES_REGEX, PACKS_INTEGRATION_JS_REGEX,
@@ -26,6 +27,51 @@ def verify(acceptable, unacceptable, matched_regex):
 
     for test_path in unacceptable:
         assert not checked_type(test_path, compared_regexes=matched_regex)
+
+
+def get_test_new_classifiers_paths(folder):
+    acceptable_new_classifiers_paths = {
+        os.path.join(folder, 'classifier-A.json'),
+    }
+
+    unacceptable_new_classifiers_paths = {
+        os.path.join(folder, 'classifier-A_5_9_9.json'),
+        os.path.join(folder, 'classifier-mapper-test.json'),
+
+    }
+
+    return acceptable_new_classifiers_paths, unacceptable_new_classifiers_paths
+
+
+def get_test_old_classifiers_paths(folder):
+    acceptable_old_classifier_paths = {
+        os.path.join(folder, 'classifier-A_5_9_9.json'),
+
+    }
+
+    unacceptable_old_classifiers_paths = {
+        os.path.join(folder, 'classifier-A.json'),
+        os.path.join(folder, 'classifier-mapper-test.json'),
+        os.path.join(folder, 'classifier-mapper-test_5_9_9.json'),
+
+    }
+
+    return acceptable_old_classifier_paths, unacceptable_old_classifiers_paths
+
+
+def get_test_mapper_paths(folder):
+    acceptable_mapper_paths = {
+        os.path.join(folder, 'classifier-mapper-A.json'),
+
+    }
+
+    unacceptable_mapper_paths = {
+        os.path.join(folder, 'classifierA.json'),
+        os.path.join(folder, 'classifier-test_5_9_9.json'),
+
+    }
+
+    return acceptable_mapper_paths, unacceptable_mapper_paths
 
 
 def get_test_code_file_paths(folder):
@@ -81,6 +127,36 @@ def test_script_code_files():
         acceptable_script_code_files,
         unacceptable_script_code_files,
         (SCRIPT_PY_REGEX, SCRIPT_JS_REGEX)
+    )
+
+
+def test_new_classifier_files():
+    acceptable_new_classifier_paths, unacceptable_new_classifier_paths = get_test_new_classifiers_paths(CLASSIFIERS_DIR)
+
+    verify(
+        acceptable_new_classifier_paths,
+        unacceptable_new_classifier_paths,
+        (CLASSIFIER_REGEX, ),
+    )
+
+
+def test_old_classifier_files():
+    acceptable_old_classifier_paths, unacceptable_old_classifier_paths = get_test_old_classifiers_paths(CLASSIFIERS_DIR)
+
+    verify(
+        acceptable_old_classifier_paths,
+        unacceptable_old_classifier_paths,
+        (CLASSIFIER_REGEX_5_9_9, ),
+    )
+
+
+def test_mapper_files():
+    acceptable_mapper_paths, unacceptable_mapper_paths = get_test_mapper_paths(CLASSIFIERS_DIR)
+
+    verify(
+        acceptable_mapper_paths,
+        unacceptable_mapper_paths,
+        (MAPPER_REGEX, ),
     )
 
 

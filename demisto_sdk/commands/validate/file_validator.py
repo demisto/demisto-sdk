@@ -812,15 +812,15 @@ class FilesValidator:
             if not mapper_validator.is_valid_mapper(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
-            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=ignored_errors_list,
+        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9) or file_type == 'classifier_5_9_9':
+            classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
+                                                       ignored_errors=ignored_errors_list,
                                                        print_as_warnings=self.print_ignored_errors)
             if not classifier_validator.is_valid_classifier(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9) or file_type == 'classifier_5_9_9':
-            classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
-                                                       ignored_errors=ignored_errors_list,
+        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
+            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                        print_as_warnings=self.print_ignored_errors)
             if not classifier_validator.is_valid_classifier(validate_rn=False):
                 self._is_valid = False

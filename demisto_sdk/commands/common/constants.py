@@ -361,11 +361,11 @@ DASHBOARD_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SL
 
 CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CONNECTIONS_DIR)
 
-CLASSIFIER_REGEX = r'{}{}.*classifier-(?!mapper).*\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
+CLASSIFIER_REGEX = r'{}{}.*classifier-(?!mapper).*(?<!5_9_9)\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
 CLASSIFIER_CHANGELOG_REGEX = r'{}{}.*classifier-(?!mapper).*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH,
                                                                                    CLASSIFIERS_DIR)
 
-CLASSIFIER_REGEX_5_9_9 = r'{}{}.*classifier-.*_5_9_9\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
+CLASSIFIER_REGEX_5_9_9 = r'{}{}.*classifier-(?!mapper).*_5_9_9\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
 CLASSIFIER_CHANGELOG_REGEX_5_9_9 = r'{}{}.*_CHANGELOG_5_9_9.md$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
 
 MAPPER_REGEX = r'{}{}.*classifier-(?=mapper).*\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)

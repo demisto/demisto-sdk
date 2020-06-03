@@ -6,7 +6,7 @@ from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE, SKIP_VALIDATE_PY_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdate
 
-BLACK_INTERNAL_ERROR = 123
+AUTOPEP_LINE_LENGTH = '130'
 
 
 class PythonFileFormat(BaseUpdate):
@@ -31,15 +31,13 @@ class PythonFileFormat(BaseUpdate):
         """
         print("\nRunning autopep8 on file: {}\n".format(py_file_path))
         try:
-            if subprocess.call(["autopep8", "-i", "--max-line-length", "130", py_file_path]) \
-                    == BLACK_INTERNAL_ERROR:
-                return False
-            return True
+            subprocess.call(["autopep8", "-i", "--max-line-length", AUTOPEP_LINE_LENGTH, py_file_path])
         except FileNotFoundError:
             print_color("autopep8 skipped! It doesn't seem you have autopep8 installed.\n "
                         "Make sure to install it with: pip install autopep8.\n "
                         "Then run: autopep8 -i {}".format(py_file_path), LOG_COLORS.YELLOW)
             return False
+        return True
 
     def run_format(self) -> int:
         print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)

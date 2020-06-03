@@ -26,6 +26,9 @@ class TestRNUpdate(unittest.TestCase):
                           "\n### Layouts\n#### Hello World Layout\n- %%UPDATE_RN%%\n" \
                           "\n### IncidentTypes\n#### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
                           "\n### IndicatorTypes\n#### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
+                          "\n### Widgets\n#### Hello World Widget\n- %%UPDATE_RN%%\n" \
+                          "\n### Dashboards\n#### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
+                          "\n### Connections\n#### Hello World Connection\n- %%UPDATE_RN%%\n" \
                           "\n### Reports\n#### Hello World Report\n- %%UPDATE_RN%%\n"
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -40,6 +43,9 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Layout": "Layouts",
             "Hello World Incident Type": "IncidentTypes",
             "Hello World Indicator Type": "IndicatorTypes",
+            "Hello World Widget": "Widgets",
+            "Hello World Dashboard": "Dashboards",
+            "Hello World Connection": "Connections",
             "Hello World Report": "Reports",
         }
         release_notes = update_rn.build_rn_template(changed_items)

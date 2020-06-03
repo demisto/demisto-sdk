@@ -38,6 +38,7 @@ mapping:
   recipients:
     type: seq
     required: True
+    allowempty: true
     sequence:
       - type: str
   system:
@@ -46,6 +47,72 @@ mapping:
     type: bool
   runOnce:
     type: bool
+  times:
+    type: int
+  startDate:
+    type: str
+  recurrent:
+    type: bool
+  nextScheduledTime:
+    type: str
+  endingDate:
+    type: str
+  timezoneOffset:
+    type: int
+  latestScheduledReportTime:
+    type: str
+  latestReportTime:
+    type: str
+  cronView:
+    type: bool
+  scheduled:
+    type: bool
+  runningUser:
+    type: str
+  paperSize:
+    type: str
+  latestReportUsername:
+    type: str
+  sensitive:
+    type: bool
+  disableHeader:
+    type: bool
+  dashboard:
+    type: map
+    mapping:
+      id:
+        type: str
+      version:
+        type: int
+      modified:
+        type: str
+      fromDate:
+        type: str
+      toDate:
+        type: str
+      fromDateLicense:
+        type: str
+      name:
+        type: str
+      isPredefined:
+        type: bool
+      period:
+        type: map
+        mapping:
+          byTo:
+            type: str
+          byFrom:
+            type: str
+          toValue:
+            type: int
+          fromValue:
+            type: int
+          field:
+            type: str
+      layout:
+        type: seq
+        sequence:
+          - include: layout_schema
   decoder:
     type: map
     mapping:
@@ -66,7 +133,6 @@ mapping:
     sequence:
       - include: section_schema
 
-
 schema;section_schema:
   type: map
   mapping:
@@ -77,6 +143,15 @@ schema;section_schema:
       'image', 'globalSection', 'markdown', 'automation', 'json']
     data:
       type: any
+    automation:
+      type: map
+      mapping:
+        name:
+          type: str
+        args:
+          type: int
+    title:
+      type: str
     layout:
      type: any
     query:
@@ -95,3 +170,66 @@ schema;section_schema:
             - type: str
         filter:
           type: any
+
+schema;layout_schema:
+  type: map
+  mapping:
+    id:
+      type: str
+    forceRange:
+      type: bool
+    x:
+      type: int
+    y:
+      type: int
+    i:
+      type: str
+    w:
+      type: int
+    h:
+      type: int
+    widget:
+      type: map
+      mapping:
+        size:
+          type: int
+        dataType:
+          type: str
+        params:
+          type: any
+        query:
+          type: str
+        modified:
+          type: str
+        name:
+          type: str
+        isPredefined:
+          type: bool
+        version:
+          type: int
+        id:
+          type: str
+        widgetType:
+          type: str
+        dateRange:
+          type: map
+          mapping:
+            fromDate:
+              type: str
+            toDate:
+              type: str
+            fromDateLicense:
+              type: str
+            period:
+              type: map
+              mapping:
+                byTo:
+                  type: str
+                byFrom:
+                  type: str
+                toValue:
+                  type: int
+                fromValue:
+                  type: int
+                field:
+                  type: str

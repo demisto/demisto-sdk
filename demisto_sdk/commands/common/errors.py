@@ -5,6 +5,10 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
+FOUND_FILES_AND_ERRORS = []
+
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102']
+
 PRESET_ERROR_TO_IGNORE = {
 }
 
@@ -566,9 +570,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_release_notes_entry(file_type, pack_name):
-        return f"No release note entry was found for a {file_type.lower()} in the {pack_name} pack. " \
-               f"Please rerun the update-release-notes command without -u to generate an updated template."
+    def missing_release_notes_entry(file_type, pack_name, entity_name):
+        return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
+               f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
+               f"generate an updated template."
 
     @staticmethod
     @error_code_decorator
@@ -775,7 +780,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def structure_doesnt_match_scheme(pretty_formatted_string_of_regexes):
-        return f"The file does not match any scheme we have please, refer to the following list" \
+        return f"The file does not match any scheme we have, please refer to the following list" \
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod

@@ -33,7 +33,9 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
     YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
     YML_INTEGRATION_REGEXES)
-from demisto_sdk.commands.common.errors import (ERROR_CODE,
+from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
+                                                ERROR_CODE,
+                                                FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -137,9 +139,12 @@ class FilesValidator:
     def run(self):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
         if self.is_valid_structure():
-            print_color('The files are valid', LOG_COLORS.GREEN)
+            print_color('\nThe files are valid', LOG_COLORS.GREEN)
             return 0
         else:
+            all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            click.secho(f"=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
+                        fg="bright_red")
             print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
             return 1
 
@@ -305,12 +310,13 @@ class FilesValidator:
             modified_files (set): A set of the modified files in the current branch.
             tag (str): The reference point to the branch with which we are comparing the modified files.
         """
+        click.secho("\n================= Running validation on modified files =================", fg='bright_cyan')
         _modified_files = set()
         for mod_file in modified_files:
             if isinstance(mod_file, tuple):
                 continue
             if not any(non_permitted_type in mod_file.lower() for non_permitted_type in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
-                if 'ReleaseNotes' not in mod_file.lower():
+                if 'releasenotes' not in mod_file.lower():
                     _modified_files.add(mod_file)
         changed_packs = self.get_packs(_modified_files)
         for file_path in modified_files:
@@ -484,20 +490,22 @@ class FilesValidator:
                     if self.handle_error(error_message, error_code, file_path=pack_name):
                         self._is_valid = False
 
-    def validate_added_files(self, added_files, file_type: str = None, modified_files=None):  # noqa: C901
+    def validate_added_files(self, added_files, received_file_type: str = None, modified_files=None):  # noqa: C901
         """Validate the added files from your branch.
 
         In case we encounter an invalid file we set the self._is_valid param to False.
 
         Args:
             added_files (set): A set of the modified files in the current branch.
-            file_type (str): Used only with -p flag (the type of the file).
+            received_file_type (str): Used only with -p flag (the type of the file).
         """
+        click.secho("\n================= Running validation on newly added files =================", fg='bright_cyan')
         added_rn = set()
         self.verify_no_dup_rn(added_files)
 
         for file_path in added_files:
-            file_type = find_type(file_path) if not file_type else file_type
+
+            file_type = find_type(file_path) if not received_file_type else received_file_type
 
             pack_name = get_pack_name(file_path)
             ignored_errors_list = self.get_error_ignore_list(pack_name)
@@ -507,6 +515,12 @@ class FilesValidator:
             print('\nValidating {}'.format(file_path))
 
             if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
+                continue
+
+            elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
+                added_rn.add(pack_name)
+                self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name,
+                                            added_files=added_files, ignored_errors_list=ignored_errors_list)
                 continue
 
             elif 'README' in file_path:
@@ -625,12 +639,6 @@ class FilesValidator:
                 if not incident_type_validator.is_valid_incident_type(validate_rn=False):
                     self._is_valid = False
 
-            elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
-                added_rn.add(pack_name)
-                print_color(f"Release notes found for {pack_name}", LOG_COLORS.GREEN)
-                self.is_valid_release_notes(file_path, modified_files=modified_files, pack_name=pack_name,
-                                            added_files=added_files, ignored_errors_list=ignored_errors_list)
-
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
                 pass
 
@@ -639,19 +647,24 @@ class FilesValidator:
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     self._is_valid = False
 
-        missing_rn = self.changed_pack_data.difference(added_rn)
-        should_fail = True
-        if (len(missing_rn) > 0) and (self.skip_pack_rn_validation is False):
-            for pack in missing_rn:
-                ignored_errors_list = self.get_error_ignore_list(pack)
-                error_message, error_code = Errors.missing_release_notes_for_pack(pack)
-                if not BaseValidator(ignored_errors=ignored_errors_list,
-                                     print_as_warnings=self.print_ignored_errors).handle_error(
-                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
-                    should_fail = False
+        if self.skip_pack_rn_validation is False:
+            click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
+            missing_rn = self.changed_pack_data.difference(added_rn)
+            should_fail = True
+            if len(missing_rn) > 0:
+                for pack in missing_rn:
+                    ignored_errors_list = self.get_error_ignore_list(pack)
+                    error_message, error_code = Errors.missing_release_notes_for_pack(pack)
+                    if not BaseValidator(ignored_errors=ignored_errors_list,
+                                         print_as_warnings=self.print_ignored_errors).handle_error(
+                            error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                        should_fail = False
 
-            if should_fail:
-                self._is_valid = False
+                if should_fail:
+                    self._is_valid = False
+            else:
+                click.secho("No missing release notes found.\n", fg="bright_green")
+
         return self._is_valid
 
     def validate_no_old_format(self, old_format_files):
@@ -699,8 +712,9 @@ class FilesValidator:
         Args:
             packs: A set of pack paths i.e {Packs/<pack-name1>, Packs/<pack-name2>}
         """
+        click.secho("================= Validating pack unique files =================\n", fg="bright_cyan")
         for pack in packs:
-            print(f'Validating {pack} unique pack files')
+            print(f'Validating {pack} unique pack files\n')
             pack_error_ignore_list = self.get_error_ignore_list(pack)
             pack_unique_files_validator = PackUniqueFilesValidator(pack, ignored_errors=pack_error_ignore_list,
                                                                    print_as_warnings=self.print_ignored_errors)
@@ -798,12 +812,6 @@ class FilesValidator:
             if not mapper_validator.is_valid_mapper(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
-            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                       print_as_warnings=self.print_ignored_errors)
-            if not classifier_validator.is_valid_classifier(validate_rn=False):
-                self._is_valid = False
-
         elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9) or file_type == 'classifier_5_9_9':
             classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
                                                        ignored_errors=ignored_errors_list,
@@ -811,8 +819,14 @@ class FilesValidator:
             if not classifier_validator.is_valid_classifier(validate_rn=False):
                 self._is_valid = False
 
+        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
+            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=ignored_errors_list,
+                                                       print_as_warnings=self.print_ignored_errors)
+            if not classifier_validator.is_valid_classifier(validate_rn=False):
+                self._is_valid = False
+
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-            print(f'Could not find validations for file {file_path}')
+            click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -820,7 +834,7 @@ class FilesValidator:
                 self._is_valid = False
 
     def validate_all_files(self, skip_conf_json):
-        print('\nValidating all files')
+        click.secho('\n================= Validating all files =================', fg="bright_cyan")
 
         if not skip_conf_json:
             print('Validating conf.json')
@@ -873,7 +887,8 @@ class FilesValidator:
                                 if is_yml_file or is_md_file:
                                     all_files_to_validate.add(inner_file_path)
 
-        click.secho(f'\nValidating all {len(all_files_to_validate)} Pack and Beta Integration files\n',
+        click.secho(f'\n================= Validating all {len(all_files_to_validate)} '
+                    f'Pack and Beta Integration files =================\n',
                     fg="bright_cyan")
         for index, file in enumerate(sorted(all_files_to_validate)):
             click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
@@ -885,8 +900,9 @@ class FilesValidator:
         pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if
                       not should_file_skip_validation(file)}
         self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
+        click.secho("================= Validating other pack files =================", fg="bright_cyan")
         for file in pack_files:
-            click.echo(f'Validating {file}')
+            click.echo(f'\nValidating {file}')
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_all_files_schema(self):
@@ -966,7 +982,8 @@ class FilesValidator:
                 self.validate_committed_files()
             else:
                 self.validate_against_previous_version(no_error=True)
-                click.secho('\nValidates all of Content repo directories according to their schemas\n', fg='bright_cyan')
+                click.secho('\n================= Validates all of Content repo directories according '
+                            'to their schemas =================\n', fg='bright_cyan')
                 self.validate_all_files_schema()
 
         else:
@@ -974,7 +991,7 @@ class FilesValidator:
                 if os.path.isfile(self.file_path):
                     print('Not using git, validating file: {}'.format(self.file_path))
                     self.is_backward_check = False  # if not using git, no need for BC checks
-                    self.validate_added_files({self.file_path}, file_type=find_type(self.file_path))
+                    self.validate_added_files({self.file_path}, received_file_type=find_type(self.file_path))
                 elif os.path.isdir(self.file_path):
                     self.validate_pack()
             else:
@@ -1048,10 +1065,18 @@ class FilesValidator:
 
         return ignored_error_list
 
+    @staticmethod
+    def get_alowed_ignored_errors_from_list(error_list):
+        allowed_ignore_list = []
+        for error in error_list:
+            if error in ALLOWED_IGNORE_ERRORS:
+                allowed_ignore_list.append(error)
+
+        return allowed_ignore_list
+
     def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
-        # For now one can only ignore BA101 error.
-        if key == 'ignore' and 'BA101' in str(config[section][key]).split(','):
-            ignored_errors_list.extend(['BA101'])
+        if key == 'ignore':
+            ignored_errors_list.extend(self.get_alowed_ignored_errors_from_list(str(config[section][key]).split(',')))
 
         if key in PRESET_ERROR_TO_IGNORE:
             ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))

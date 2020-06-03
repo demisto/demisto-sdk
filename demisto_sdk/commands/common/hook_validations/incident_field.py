@@ -5,10 +5,10 @@ import re
 from distutils.version import LooseVersion
 from enum import Enum, IntEnum
 
+import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import print_error
 
 
 class TypeFields(Enum):
@@ -232,8 +232,10 @@ class IncidentFieldValidator(ContentEntityValidator):
             for word in name.split():
                 if word.lower() in bad_words:
                     error_message, error_code = Errors.invalid_incident_field_name(word)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
-                        return False
+                    formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                        should_print=False)
+                    click.secho(formatted_error, fg="yellow")
+
         return True
 
     def is_valid_content_flag(self, content_value=True):
@@ -337,7 +339,7 @@ class IncidentFieldValidator(ContentEntityValidator):
                     is_valid = False
 
         if error_msg:
-            print_error(error_msg)
+            click.secho(error_msg, fg="bright_red")
         return is_valid
 
     def is_valid_required(self):

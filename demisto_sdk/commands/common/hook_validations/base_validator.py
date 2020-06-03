@@ -2,6 +2,7 @@ import os
 
 import click
 from demisto_sdk.commands.common.errors import (ERROR_CODE,
+                                                FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE)
 from demisto_sdk.commands.common.tools import get_yaml
@@ -66,6 +67,7 @@ class BaseValidator:
             else:
                 click.secho(formatted_error, fg="bright_red")
 
+        self.add_to_found_errors_list(error_code, file_path)
         return formatted_error
 
     def check_deprecated(self, file_path):
@@ -103,3 +105,9 @@ class BaseValidator:
 
         else:
             self.ignored_errors[file_name] = additional_ignored_errors
+
+    @staticmethod
+    def add_to_found_errors_list(error_code, file_path):
+        formatted_file_and_error = f'{file_path} - [{error_code}]'
+        if formatted_file_and_error not in FOUND_FILES_AND_ERRORS:
+            FOUND_FILES_AND_ERRORS.append(formatted_file_and_error)

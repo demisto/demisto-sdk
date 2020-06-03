@@ -44,7 +44,7 @@ def test_check_deprecated_where_ignored_list_exists(repo):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    integration.write_yml({'deprecated': True})
+    integration.yml.write({'deprecated': True})
     files_path = integration.yml_path
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={'integration.yml': ['BA101']})
@@ -66,7 +66,7 @@ def test_check_deprecated_where_ignored_list_does_not_exist(repo):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    integration.write_yml({'deprecated': True})
+    integration.yml.write({'deprecated': True})
     files_path = integration.yml_path
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
@@ -88,7 +88,7 @@ def test_check_deprecated_non_deprecated_integration_no_ignored_errors(repo):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    integration.write_yml({'deprecated': False})
+    integration.yml.write({'deprecated': False})
     files_path = integration.yml_path
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
@@ -110,7 +110,7 @@ def test_check_deprecated_non_deprecated_integration_with_ignored_errors(repo):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    integration.write_yml({'deprecated': False})
+    integration.yml.write({'deprecated': False})
     files_path = integration.yml_path
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={'integration.yml': ["BA101"]})
@@ -131,7 +131,7 @@ def test_check_deprecated_playbook(repo):
     """
     pack = repo.create_pack('pack')
     playbook = pack.create_integration('playbook-somePlaybook')
-    playbook.write_yml({'hidden': True})
+    playbook.yml.write({'hidden': True})
     files_path = playbook.yml_path
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})

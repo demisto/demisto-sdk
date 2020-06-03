@@ -25,6 +25,7 @@ class TestRNUpdate(unittest.TestCase):
                           "\n### Classifiers\n#### Hello World Classifier\n- %%UPDATE_RN%%\n" \
                           "\n### Layouts\n#### Hello World Layout\n- %%UPDATE_RN%%\n" \
                           "\n### IncidentTypes\n#### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
+                          "\n### Reports\n#### Hello World Report\n- %%UPDATE_RN%%\n" \
                           "\n### IndicatorTypes\n#### Hello World Indicator Type\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
@@ -38,6 +39,7 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Layout": "Layouts",
             "Hello World Incident Type": "IncidentTypes",
             "Hello World Indicator Type": "IndicatorTypes",
+            "Hello World Reports": "Reports",
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes

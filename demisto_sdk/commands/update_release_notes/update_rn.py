@@ -123,6 +123,8 @@ class UpdateRN:
                 _file_type = 'Classifiers'
             elif 'Layouts' in file_path:
                 _file_type = 'Layout'
+            elif 'Reports' in file_path:
+                _file_type = 'Reports'
 
         return file_name, _file_type
 
@@ -197,6 +199,7 @@ class UpdateRN:
         layout_header = False
         inc_types_header = False
         ind_types_header = False
+        rep_types_header = False
         for k, v in changed_items.items():
             if k == 'N/A':
                 continue
@@ -239,6 +242,11 @@ class UpdateRN:
                 if not ind_types_header:
                     rn_string += '\n### IndicatorTypes\n'
                     ind_types_header = True
+                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Reports':
+                if not rep_types_header:
+                    rn_string += '\n### Reports\n'
+                    rep_types_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 

@@ -324,8 +324,18 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
     values = {key: [] for key in keys_to_search}
 
     def get_values(current_object):
+        if not current_object or not isinstance(current_object, (dict, list)):
+            return
+
+        if current_object and isinstance(current_object, list):
+            if isinstance(current_object[0], dict):
+                for item in current_object:
+                    get_values(item)
+            return
+
         for key, value in current_object.items():
-            if isinstance(value, dict):
+            print(key)
+            if isinstance(value, (dict, list)):
                 get_values(value)
             elif key in keys_to_search:
                 if isinstance(value, (str, int, float, bool)):
@@ -369,12 +379,13 @@ def get_layout_data(path):
     data['incident_types'] = list(incident_indicator_types_dependency)
     data['indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
-        data['incident_types'] = incident_indicator_fields_dependency['field']
+        data['incident_fields'] = incident_indicator_fields_dependency['fieldId']
+        data['indicator_fields'] = incident_indicator_fields_dependency['fieldId']
 
     return {id_: data}
 
 
-def get_incidnet_field_data(path):
+def get_incident_field_data(path):
     data = OrderedDict()
     json_data = get_json(path)
 
@@ -383,14 +394,24 @@ def get_incidnet_field_data(path):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    all_associated_types = set()
+    all_scripts = set()
 
-    associated_types = list(json_data.get('associatedTypes'))
-    system_associated_types = list(json_data.get('systemAssociatedTypes'))
-    all_associated_types = set(associated_types + system_associated_types)
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
 
-    scripts = list(json_data.get('script'))
-    field_calculations_scripts = list(json_data.get('fieldCalcScript'))
-    all_scripts = set(scripts + field_calculations_scripts)
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = set(scripts)
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union(set(field_calculations_scripts))
 
     if name:
         data['name'] = name
@@ -596,7 +617,7 @@ def process_incident_fields(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, (INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX)):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_incidnet_field_data(file_path))
+        res.append(get_incident_field_data(file_path))
     return res
 
 

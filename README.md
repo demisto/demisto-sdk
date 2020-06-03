@@ -60,7 +60,7 @@ Supported commands:
 4. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
 5. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/unify/README.md)
 6. [Split-yml](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split_yml/README.md)
-7. [Create](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/create/README.md)
+7. [Create](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/create_artifacts/README.md)
 8. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
 9. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
 10. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)

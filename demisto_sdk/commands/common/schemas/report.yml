@@ -75,10 +75,6 @@ mapping:
     type: str
   sensitive:
     type: bool
-  userAPIKeyID:
-    type: str
-  userAPIKey:
-    type: str
   disableHeader:
     type: bool
   dashboard:
@@ -137,7 +133,6 @@ mapping:
     sequence:
       - include: section_schema
 
-
 schema;section_schema:
   type: map
   mapping:
@@ -176,101 +171,67 @@ schema;section_schema:
         filter:
           type: any
 
-
 schema;layout_schema:
   type: map
-  allowempty: True
   mapping:
-    typeId:
+    id:
       type: str
-      required: True
-    TypeName:
-      type: str
-    version:
-      type: number
-    kind:
-      type: str
-      required: True
-    fromVersion:
-      type: str
-    toVersion:
-      type: str
-    system:
+    forceRange:
       type: bool
-    layout:
+    x:
+      type: int
+    y:
+      type: int
+    i:
+      type: str
+    w:
+      type: int
+    h:
+      type: int
+    widget:
       type: map
       mapping:
-        id:
+        size:
+          type: int
+        dataType:
           type: str
-          required: True
-        system:
-          type: bool
-        TypeName:
-          type: str
-        version:
-          type: number
-        kind:
-          type: str
-        typeId:
+        params:
+          type: map
+          mapping:
+            - includes: any
+        query:
           type: str
         modified:
           type: str
         name:
           type: str
-        tabs:
-          type: seq
-          sequence:
-            - include: tabs_schema
-        sections:
-          type: seq
-          sequence:
-          - include: layout_section_schema
-
-schema;tabs_schema:
-  type: any
-
-schema;layout_section_schema:
-  type: map
-  mapping:
-    id:
-      type: str
-    version:
-      type: number
-    modified:
-      type: str
-    name:
-      type: str
-    type:
-      type: str
-    isVisible:
-      type: bool
-    readOnly:
-      type: bool
-    description:
-      type: str
-    query:
-      type: any
-    queryType:
-      type: str
-    sortValues:
-      type: str
-    fields:
-      type: seq
-      sequence:
-      - include: field_schema
-
-schema;field_schema:
-  type: map
-  mapping:
-      id:
-        type: str
-      version:
-        type: number
-      modified:
-        type: str
-      fieldId:
-        type: str
-      isVisible:
-        type: bool
-      sortValues:
-        type: str
+        isPredefined:
+          type: bool
+        version:
+          type: int
+        id:
+          type: str
+        widgetType:
+          type: str
+        dateRange:
+          type: map
+          mapping:
+            fromDate:
+              type: str
+            toDate:
+              type: str
+            fromDateLicense:
+              type: str
+            period:
+              type: map
+              mapping:
+                byTo:
+                  type: str
+                byFrom:
+                  type: str
+                toValue:
+                  type: int
+                fromValue:
+                  type: int
+                field:
+                  type: str

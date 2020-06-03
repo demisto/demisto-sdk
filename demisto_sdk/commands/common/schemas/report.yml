@@ -196,9 +196,7 @@ schema;layout_schema:
         dataType:
           type: str
         params:
-          type: map
-          mapping:
-            - includes: any
+          type: any
         query:
           type: str
         modified:

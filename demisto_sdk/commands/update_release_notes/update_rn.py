@@ -206,9 +206,9 @@ class UpdateRN:
         inc_types_header = False
         ind_types_header = False
         rep_types_header = False
-        widgets_types_header = False
-        dashboards_types_header = False
-        connections_types_header = False
+        widgets_header = False
+        dashboards_header = False
+        connections_header = False
         for k, v in changed_items.items():
             if k == 'N/A':
                 continue
@@ -258,19 +258,19 @@ class UpdateRN:
                     rep_types_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Widgets':
-                if not rep_types_header:
+                if not widgets_header:
                     rn_string += '\n### Widgets\n'
-                    widgets_types_header = True
+                    widgets_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Dashboards':
-                if not rep_types_header:
+                if not dashboards_header:
                     rn_string += '\n### Dashboards\n'
-                    dashboards_types_header = True
+                    dashboards_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Connections':
-                if not rep_types_header:
+                if not connections_header:
                     rn_string += '\n### Connections\n'
-                    connections_types_header = True
+                    connections_header = True
                 rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 

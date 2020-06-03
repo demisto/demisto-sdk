@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_PY_REGEX,
     PACKS_INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_YML_REGEX,
     PACKS_LAYOUT_JSON_REGEX, PACKS_MAPPER_JSON_REGEX, PACKS_SCRIPT_PY_REGEX,
-    PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
+    PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX, PLAYBOOK_README_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.tools import checked_type
 
@@ -48,6 +48,11 @@ test_packs_regex_params = [
         ['Packs/OpenPhish/Integrations/integration-OpenPhish.yml'],
         ['Packs/OpenPhish/Integrations/OpenPhish/OpenPhish.yml'],
         [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
+    ),
+    (
+        ['Packs/OpenPhish/Playbooks/playbook-Foo_README.md'],
+        ['Packs/OpenPhish/Playbooks/playbook-Foo_README.yml'],
+        [PLAYBOOK_README_REGEX]
     )
 ]
 

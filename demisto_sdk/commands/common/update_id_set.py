@@ -286,6 +286,55 @@ def get_script_data(file_path, script_code=None):
     return {id_: script_data}
 
 
+def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> dict:
+    """Recursively iterates over a dictionary to extract values for a list of keys.
+
+    Args:
+        json_object (dict): The dict to iterate on.
+        keys_to_search (list): The list of keys to extract values for .
+
+    Returns:
+        dict. list of extracted values for each of the keys_to_search.
+
+    Notes:
+        only primitive values will be extracted (str/int/float/bool).
+
+    Example:
+        for the dict:
+            {
+                'id': 1,
+                'nested': {
+                    'x1': 1,
+                    'x2': 'x2',
+                    'x3': False
+                },
+                'x2': 4.0
+            }
+
+        and the list of keys
+            [x1, x2, x3, x4]
+
+        we will get the following dict:
+            {
+                'x1': [1],
+                'x2': ['x2', 4.0],
+                'x3': [False]
+            }
+    """
+    values = {key: [] for key in keys_to_search}
+
+    def get_values(current_object):
+        for key, value in current_object.items():
+            if isinstance(value, dict):
+                get_values(value)
+            elif key in keys_to_search:
+                if isinstance(value, (str, int, float, bool)):
+                    values[key].append(value)
+
+    get_values(json_object)
+    return values
+
+
 def get_layout_data(path):
     data = OrderedDict()
     json_data = get_json(path)
@@ -298,11 +347,14 @@ def get_layout_data(path):
     toversion = json_data.get('toVersion')
     kind = json_data.get('kind')
     pack = get_pack_name(path)
+    incident_indicator_types_dependency = {id_}
+    incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
 
     if type_:
         data['typeID'] = type_
     if type_name:
         data['typename'] = type_name
+        incident_indicator_types_dependency.add(type_name)
     data['name'] = name
     if toversion:
         data['toversion'] = toversion
@@ -313,6 +365,10 @@ def get_layout_data(path):
     if kind:
         data['kind'] = kind
     data['path'] = path
+    data['incident_types'] = list(incident_indicator_types_dependency)
+    data['indicator_types'] = list(incident_indicator_types_dependency)
+    if incident_indicator_fields_dependency['fieldId']:
+        data['incident_types'] = incident_indicator_fields_dependency['field']
 
     return {id_: data}
 

@@ -1,5 +1,4 @@
 import pytest
-
 from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX, PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_CLASSIFIER_JSON_REGEX, PACKS_DASHBOARD_JSON_REGEX,

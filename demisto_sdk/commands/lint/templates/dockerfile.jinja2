@@ -32,5 +32,7 @@ RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force |
 RUN mkdir -p /devwork/
 {# Define workdir #}
 WORKDIR /devwork
-COPY [--chown=:4000] . .
+COPY . .
+RUN chown -R :4000 /devwork
+RUN chmod -R 775 /devwork
 {% endif %}

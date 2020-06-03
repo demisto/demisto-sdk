@@ -30,48 +30,48 @@ def verify(acceptable, unacceptable, matched_regex):
 
 
 def get_test_new_classifiers_paths(folder):
-    acceptable_code_files = {
+    acceptable_new_classifiers_paths = {
         os.path.join(folder, 'classifier-A.json'),
     }
 
-    unacceptable_code_files = {
+    unacceptable_new_classifiers_paths = {
         os.path.join(folder, 'classifier-A_5_9_9.json'),
         os.path.join(folder, 'classifier-mapper-test.json'),
 
     }
 
-    return acceptable_code_files, unacceptable_code_files
+    return acceptable_new_classifiers_paths, unacceptable_new_classifiers_paths
 
 
 def get_test_old_classifiers_paths(folder):
-    acceptable_code_files = {
+    acceptable_old_classifier_paths = {
         os.path.join(folder, 'classifier-A_5_9_9.json'),
 
     }
 
-    unacceptable_code_files = {
+    unacceptable_old_classifiers_paths = {
         os.path.join(folder, 'classifier-A.json'),
         os.path.join(folder, 'classifier-mapper-test.json'),
         os.path.join(folder, 'classifier-mapper-test_5_9_9.json'),
 
     }
 
-    return acceptable_code_files, unacceptable_code_files
+    return acceptable_old_classifier_paths, unacceptable_old_classifiers_paths
 
 
 def get_test_mapper_paths(folder):
-    acceptable_code_files = {
+    acceptable_mapper_paths = {
         os.path.join(folder, 'classifier-mapper-A.json'),
 
     }
 
-    unacceptable_code_files = {
+    unacceptable_mapper_paths = {
         os.path.join(folder, 'classifierA.json'),
         os.path.join(folder, 'classifier-test_5_9_9.json'),
 
     }
 
-    return acceptable_code_files, unacceptable_code_files
+    return acceptable_mapper_paths, unacceptable_mapper_paths
 
 
 def get_test_code_file_paths(folder):
@@ -131,31 +131,31 @@ def test_script_code_files():
 
 
 def test_new_classifier_files():
-    acceptable_script_code_files, unacceptable_script_code_files = get_test_new_classifiers_paths(CLASSIFIERS_DIR)
+    acceptable_new_classifier_paths, unacceptable_new_classifier_paths = get_test_new_classifiers_paths(CLASSIFIERS_DIR)
 
     verify(
-        acceptable_script_code_files,
-        unacceptable_script_code_files,
+        acceptable_new_classifier_paths,
+        unacceptable_new_classifier_paths,
         (CLASSIFIER_REGEX, ),
     )
 
 
 def test_old_classifier_files():
-    acceptable_script_code_files, unacceptable_script_code_files = get_test_old_classifiers_paths(CLASSIFIERS_DIR)
+    acceptable_old_classifier_paths, unacceptable_old_classifier_paths = get_test_old_classifiers_paths(CLASSIFIERS_DIR)
 
     verify(
-        acceptable_script_code_files,
-        unacceptable_script_code_files,
+        acceptable_old_classifier_paths,
+        unacceptable_old_classifier_paths,
         (CLASSIFIER_REGEX_5_9_9, ),
     )
 
 
 def test_mapper_files():
-    acceptable_script_code_files, unacceptable_script_code_files = get_test_mapper_paths(CLASSIFIERS_DIR)
+    acceptable_mapper_paths, unacceptable_mapper_paths = get_test_mapper_paths(CLASSIFIERS_DIR)
 
     verify(
-        acceptable_script_code_files,
-        unacceptable_script_code_files,
+        acceptable_mapper_paths,
+        unacceptable_mapper_paths,
         (MAPPER_REGEX, ),
     )
 

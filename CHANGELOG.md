@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where new and old classifiers where mixed on validate command.
+* Added feedIncremental field to integration schema.
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

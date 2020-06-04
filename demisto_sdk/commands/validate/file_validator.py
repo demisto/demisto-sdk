@@ -652,6 +652,9 @@ class FilesValidator:
             should_fail = True
             if len(missing_rn) > 0:
                 for pack in missing_rn:
+                    # # ignore RN in NonSupported pack
+                    if 'NonSupported' in pack:
+                        continue
                     ignored_errors_list = self.get_error_ignore_list(pack)
                     error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                     if not BaseValidator(ignored_errors=ignored_errors_list,

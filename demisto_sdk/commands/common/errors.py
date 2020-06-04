@@ -702,7 +702,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def incident_type_invalid_playbook_id_field():
-        return 'The playbookId field is not valid. Please change it.'
+        return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
 
     @staticmethod
     @error_code_decorator

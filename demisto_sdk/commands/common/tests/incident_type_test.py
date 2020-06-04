@@ -88,6 +88,7 @@ def test_is_changed_from_version(current_from_version, old_from_version, answer)
 
 IS_VALID_PLAYBOOK_ID = [
     ('valid playbook', True),
+    ('', True),
     ('12b3a41b-04ce-4417-89b3-4efd95d28012', False),
     ('abbababb-aaaa-bbbb-cccc-abcdabcdabcd', False)
 ]

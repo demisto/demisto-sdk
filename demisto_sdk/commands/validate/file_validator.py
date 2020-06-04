@@ -923,7 +923,7 @@ class FilesValidator:
                 dir_path = os.path.join(pack_path, dir_name)
 
                 if dir_name not in CONTENT_ENTITIES_DIRS or \
-                        dir_name in [constants.REPORTS_DIR, constants.DASHBOARDS_DIR]:
+                        dir_name in [constants.DASHBOARDS_DIR]:
                     continue
 
                 for file_name in os.listdir(dir_path):

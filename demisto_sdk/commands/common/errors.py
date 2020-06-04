@@ -7,6 +7,8 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
 
 FOUND_FILES_AND_ERRORS = []
 
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102']
+
 PRESET_ERROR_TO_IGNORE = {
 }
 
@@ -506,7 +508,7 @@ class Errors:
                f'Please add:\n{missing_test_playbook_configurations}\nto {CONF_PATH} ' \
                f'path under \'tests\' key.\n' \
                f'If you don\'t want to add a test playbook for this integration, please add: \n{no_tests_key}to the ' \
-               f'file {file_path} or run \'demisto-sdk format -p {file_path}\''
+               f'file {file_path} or run \'demisto-sdk format -i {file_path}\''
 
     @staticmethod
     @error_code_decorator
@@ -778,7 +780,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def structure_doesnt_match_scheme(pretty_formatted_string_of_regexes):
-        return f"The file does not match any scheme we have please, refer to the following list" \
+        return f"The file does not match any scheme we have, please refer to the following list" \
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod

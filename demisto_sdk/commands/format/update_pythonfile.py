@@ -13,9 +13,11 @@ class PythonFileFormat(BaseUpdate):
     """PythonFileFormat class is designed to update python file according to Demisto's convention.
 
         Attributes:
-            input (str): the path to the file we are updating at the moment.
-            output (str): the desired file name to save the updated version of the python file to.
-
+            input (str): The path to the file we are updating at the moment.
+            output (str): The desired file name to save the updated version of the python file to.
+            path (str): Non relevant parameter - no schema for python files.
+            from_version (str): Non relevant parameter - no fromversion field in python files.
+            no_validate (bool): Whether the user specifies not to run validate after format.
     """
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
@@ -39,10 +41,22 @@ class PythonFileFormat(BaseUpdate):
             return False
         return True
 
+    def create_output_file(self):
+        """Create output file with the data of the source file."""
+        with open(str(self.source_file), 'r') as source_file:
+            file_data = source_file.readlines()
+        with open(self.output_file, 'w') as output_file:
+            output_file.writelines(file_data)
+
     def run_format(self) -> int:
         print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
+        py_file_path = self.source_file
 
-        is_autopep_passed = self.format_py_using_autopep(str(self.source_file))
+        if self.output_file:
+            self.create_output_file()
+            py_file_path = self.output_file
+
+        is_autopep_passed = self.format_py_using_autopep(py_file_path)
         if is_autopep_passed:
             print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE

@@ -741,7 +741,7 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-def is_private_repository():
+def is_external_repository():
     """
     Returns True if script executed from private repository
 
@@ -760,9 +760,9 @@ def get_content_path() -> str:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = 'content' in remote_url
-        is_private_repo = tools.is_private_repository()
+        is_external_repo = tools.is_external_repository()
 
-        if not is_fork_repo and not is_private_repo:
+        if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
@@ -838,9 +838,9 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
                         search_parent_directories=True)
     remote_url = git_repo.remote().urls.__next__()
     is_fork_repo = 'content' in remote_url
-    is_private_repo = tools.is_private_repository()
+    is_external_repo = tools.is_external_repository()
 
-    if not is_fork_repo and not is_private_repo:
+    if not is_fork_repo and not is_external_repo:
         return False, ''
     content_path_parts = Path(git_repo.working_dir).parts
     input_path_parts = Path(file_path).parts

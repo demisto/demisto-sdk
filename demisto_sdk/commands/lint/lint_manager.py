@@ -85,9 +85,9 @@ class LintManager:
                                 search_parent_directories=True)
             remote_url = git_repo.remote().urls.__next__()
             is_fork_repo = 'content' in remote_url
-            is_private_repo = tools.is_private_repository()
+            is_external_repo = tools.is_external_repository()
 
-            if not is_fork_repo and not is_private_repo:
+            if not is_fork_repo and not is_external_repo:
                 raise git.InvalidGitRepositoryError
 
             facts["content_repo"] = git_repo
@@ -111,7 +111,7 @@ class LintManager:
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
-            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_private_repo=is_private_repo)
+            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_external_repo=is_external_repo)
             logger.debug("Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error(

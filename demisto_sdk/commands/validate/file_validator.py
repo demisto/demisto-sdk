@@ -97,7 +97,7 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+                 validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
@@ -121,8 +121,8 @@ class FilesValidator:
         self.file_path = file_path
         self.changed_pack_data = set()
 
-        self.is_private_repo = is_private_repo
-        if is_private_repo:
+        self.is_external_repo = is_external_repo
+        if is_external_repo:
             print('Running in a private repository')
             self.skip_conf_json = True  # private repository don't have conf.json file
 

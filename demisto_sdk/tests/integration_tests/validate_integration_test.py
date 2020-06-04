@@ -142,8 +142,9 @@ class TestIntegration:
         - Ensure failure message on non-latest docker image.
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner(echo_stdin=True)
         result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_integration_path, "--no-conf-json"])
+        print(result.stdout)
         assert result.exit_code == 1
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {pack_integration_path}" in result.stdout
@@ -270,7 +271,7 @@ class TestClassifier:
         Then
         - Ensure validate passes.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
@@ -292,7 +293,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         NEW_CLASSIFIER['fromVersion'] = '5.0.0'
         classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
@@ -314,7 +315,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         NEW_CLASSIFIER['toVersion'] = '5.0.0'
         classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
@@ -336,7 +337,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         NEW_CLASSIFIER['toVersion'] = '6.0.2'
         NEW_CLASSIFIER['fromVersion'] = '6.0.5'
@@ -359,7 +360,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         del NEW_CLASSIFIER['id']
         classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
@@ -381,7 +382,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         del NEW_CLASSIFIER['fromVersion']
         classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
@@ -403,7 +404,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         NEW_CLASSIFIER['type'] = 'test'
         classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
@@ -425,7 +426,7 @@ class TestClassifier:
         Then
         - Ensure validate passes.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
@@ -447,7 +448,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         OLD_CLASSIFIER['fromVersion'] = '6.0.0'
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
@@ -469,7 +470,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         OLD_CLASSIFIER['toVersion'] = '6.0.0'
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
@@ -491,7 +492,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         del OLD_CLASSIFIER['id']
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
@@ -513,7 +514,7 @@ class TestClassifier:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         del OLD_CLASSIFIER['toVersion']
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
@@ -538,7 +539,7 @@ class TestMapper:
         Then
         - Ensure validate passes.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):
@@ -546,7 +547,7 @@ class TestMapper:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
         assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
-        print(result.stdout)
+
         assert 'The files are valid' in result.stdout
 
     def test_invalid_from_version_in_mapper(self, mocker, repo):
@@ -560,7 +561,7 @@ class TestMapper:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         MAPPER['fromVersion'] = '5.0.0'
         mapper = pack.create_mapper('mapper', MAPPER)
@@ -582,7 +583,7 @@ class TestMapper:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         MAPPER['toVersion'] = '5.0.0'
         mapper = pack.create_mapper('mapper', MAPPER)
@@ -604,7 +605,7 @@ class TestMapper:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         del MAPPER['id']
         mapper = pack.create_mapper('mapper', MAPPER)
@@ -626,7 +627,7 @@ class TestMapper:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         MAPPER['toVersion'] = '6.0.2'
         MAPPER['fromVersion'] = '6.0.5'
@@ -649,7 +650,7 @@ class TestMapper:
         Then
         - Ensure validate found errors.
         """
-        mocker.patch.object(tools, 'is_private_repository', return_value=True)
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         MAPPER['type'] = 'test'
         mapper = pack.create_mapper('mapper', MAPPER)

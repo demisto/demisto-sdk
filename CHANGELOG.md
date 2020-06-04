@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation for invalid id fields in indicators types files in **validate** command.
 * Fixed an issue where new and old classifiers where mixed on validate command.
 * Added *feedIncremental* field to the integration schema.
 * Fixed error in the **upload** command where unified YMLs were not uploaded as expected if the given input was a pack.

@@ -446,7 +446,8 @@ class ContentCreator:
 
     @staticmethod
     def copy_docs_files(content_bundle_path, packs_bundle_path):
-        for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
+        for doc_file in (
+                './Packs/Base/Docs/doc-CommonServer.json', './Packs/Base/Docs/doc-howto.json'):
             if os.path.exists(doc_file):
                 if content_bundle_path:
                     print(f'copying {doc_file} doc to content bundle')
@@ -519,6 +520,7 @@ class ContentCreator:
                 ContentCreator.copy_docs_files(content_bundle_path=self.content_bundle,
                                                packs_bundle_path=self.packs_bundle)
 
+            shutil.rmtree('./Packs/Base/Docs')
             print('Compressing bundles...')
             if not only_packs:
                 shutil.make_archive(self.content_zip, 'zip', self.content_bundle)

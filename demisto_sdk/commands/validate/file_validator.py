@@ -20,19 +20,18 @@ import click
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, BETA_INTEGRATION_REGEX,
-    BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES, CODE_FILES_REGEX,
-    CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES, IMAGE_REGEX,
-    INTEGRATION_REGEX, INTEGRATION_REGXES, JSON_ALL_CLASSIFIER_REGEXES,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
+    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
+    IMAGE_REGEX, INTEGRATION_REGXES, JSON_ALL_CLASSIFIER_REGEXES,
     JSON_ALL_CLASSIFIER_REGEXES_5_9_9, JSON_ALL_DASHBOARDS_REGEXES,
     JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_INDICATOR_TYPES_REGEXES,
     JSON_ALL_LAYOUT_REGEXES, JSON_ALL_MAPPER_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX,
-    PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
-    YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
-    YML_INTEGRATION_REGEXES)
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_RELEASE_NOTES_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, TEST_PLAYBOOK_REGEX,
+    YML_ALL_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -366,14 +365,14 @@ class FilesValidator:
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
+            elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
                                                              branch_name=self.branch_name)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
-            elif checked_type(file_path, [SCRIPT_REGEX]):
+            elif checked_type(file_path, [PACKS_SCRIPT_NON_SPLIT_YML_REGEX]):
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    branch_name=self.branch_name)
@@ -571,8 +570,7 @@ class FilesValidator:
                 if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
-            elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
+            elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
                                                              branch_name=self.branch_name)
@@ -767,7 +765,7 @@ class FilesValidator:
             if not script_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
+        elif file_type == 'betaintegration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
                                                          branch_name=self.branch_name)
@@ -824,6 +822,10 @@ class FilesValidator:
                                                        print_as_warnings=self.print_ignored_errors)
             if not classifier_validator.is_valid_classifier(validate_rn=False):
                 self._is_valid = False
+
+        # elif 'CHANGELOG' in file_path:
+        #     # don't check for CHANGELOG files
+        #     pass
 
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             click.secho(f'Could not find validations for file {file_path}', fg='yellow')
@@ -911,6 +913,11 @@ class FilesValidator:
         for pack_name in os.listdir(PACKS_DIR):
             pack_path = os.path.join(PACKS_DIR, pack_name)
             ignore_errors_list = self.get_error_ignore_list(pack_name)
+
+            if not os.path.isdir(pack_path):
+                # there are files that are not directories but returned from listdir like Packs/.DS_Store
+                # skip them
+                continue
 
             for dir_name in os.listdir(pack_path):
                 dir_path = os.path.join(pack_path, dir_name)
@@ -1029,12 +1036,12 @@ class FilesValidator:
     @staticmethod
     def _is_py_script_or_integration(file_path):
         file_yml = get_yaml(file_path)
-        if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE):
+        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False
             return True
 
-        if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
+        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('type', 'javascript') != 'python':
                 return False
 

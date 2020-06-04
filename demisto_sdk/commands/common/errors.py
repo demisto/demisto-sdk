@@ -7,9 +7,13 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
 
 FOUND_FILES_AND_ERRORS = []
 
+FOUND_FILES_AND_IGNORED_ERRORS = []
+
 ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100']
 
 PRESET_ERROR_TO_IGNORE = {
+    'community': ['BC', 'CJ', 'DS', "RM100"],
+    'non-certified-partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {

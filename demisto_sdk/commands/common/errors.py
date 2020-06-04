@@ -20,6 +20,7 @@ ERROR_CODE = {
     "wrong_version": "BA100",
     "id_should_equal_name": "BA101",
     "file_type_not_supported": "BA102",
+    "file_name_include_spaces_error": "BA103",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -183,6 +184,11 @@ class Errors:
         return "The file type is not supported in validate command\n " \
                "validate' command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+
+    @staticmethod
+    @error_code_decorator
+    def file_name_include_spaces_error(file_name):
+        return "Please remove spaces from the file's name: '{}'.".format(file_name)
 
     @staticmethod
     @error_code_decorator

@@ -171,7 +171,7 @@ class FilesValidator:
         modified_files_list = set()
         old_format_files = set()
         for f in all_files:
-            file_data = f.split()
+            file_data = list(filter(None, f.split('\t')))
             if not file_data:
                 continue
 
@@ -331,6 +331,7 @@ class FilesValidator:
             if file_path.endswith('_unified.yml'):
                 continue
             print('\nValidating {}'.format(file_path))
+            self.check_for_spaces_in_file_name(file_path)
             if not checked_type(file_path):
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
@@ -503,7 +504,6 @@ class FilesValidator:
         self.verify_no_dup_rn(added_files)
 
         for file_path in added_files:
-
             file_type = find_type(file_path) if not received_file_type else received_file_type
 
             pack_name = get_pack_name(file_path)
@@ -512,6 +512,7 @@ class FilesValidator:
             if file_path.endswith('_unified.yml'):
                 continue
             print('\nValidating {}'.format(file_path))
+            self.check_for_spaces_in_file_name(file_path)
 
             if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
@@ -728,6 +729,7 @@ class FilesValidator:
             file_path: A relative content path to a file to be validated
             file_type: The output of 'find_type' method
         """
+        self.check_for_spaces_in_file_name(file_path)
         pack_name = get_pack_name(file_path)
         ignored_errors_list = self.get_error_ignore_list(pack_name)
         if 'README' in file_path:
@@ -1114,3 +1116,10 @@ class FilesValidator:
                     pass
 
         return ignored_errors_list
+
+    def check_for_spaces_in_file_name(self, file_path):
+        file_name = os.path.basename(file_path)
+        if file_name.count(' ') > 0:
+            error_message, error_code = Errors.file_name_include_spaces_error(file_name)
+            if self.handle_error(error_message, error_code, file_path):
+                self._is_valid = False

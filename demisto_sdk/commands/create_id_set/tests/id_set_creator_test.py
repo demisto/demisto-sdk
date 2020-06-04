@@ -104,10 +104,8 @@ def test_get_layout_data():
     assert 'toversion' in result.keys()
     assert 'path' in result.keys()
     assert 'typeID' in result.keys()
-    assert 'incident_types' in result.keys()
-    assert 'indicator_types' in result.keys()
-    assert 'incident_fields' in result.keys()
-    assert 'indicator_fields' in result.keys()
+    assert 'incident_and_indicator_types' in result.keys()
+    assert 'incident_and_indicator_fields' in result.keys()
 
 
 def test_get_layout_data_no_incident_types_and_fields():
@@ -130,10 +128,8 @@ def test_get_layout_data_no_incident_types_and_fields():
     assert 'toversion' in result.keys()
     assert 'path' in result.keys()
     assert 'typeID' in result.keys()
-    assert 'incident_types' in result.keys()
-    assert 'indicator_types' in result.keys()
-    assert 'incident_fields' not in result.keys()
-    assert 'indicator_fields' not in result.keys()
+    assert 'incident_and_indicator_types' in result.keys()
+    assert 'incident_and_indicator_fields' not in result.keys()
 
 
 def test_get_incident_fields_data():

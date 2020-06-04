@@ -376,11 +376,9 @@ def get_layout_data(path):
     if kind:
         data['kind'] = kind
     data['path'] = path
-    data['incident_types'] = list(incident_indicator_types_dependency)
-    data['indicator_types'] = list(incident_indicator_types_dependency)
+    data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
-        data['incident_fields'] = incident_indicator_fields_dependency['fieldId']
-        data['indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+        data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
 
     return {id_: data}
 
@@ -799,7 +797,7 @@ def get_general_paths(path):
 def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None, print_logs: bool = True):  # noqa: C901
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
-                             'Dashboards', 'IncidentFields', 'IndicatorFields', 'IndicatorTypes',
+                             'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                              'Layouts', 'Reports', 'Widgets']
     start_time = time.time()
     scripts_list = []

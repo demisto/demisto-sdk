@@ -20,7 +20,7 @@ class BaseValidator:
     def __init__(self, ignored_errors=None, print_as_warnings=False):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
-        self.checked_files = []
+        self.checked_files = set()
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -82,7 +82,7 @@ class BaseValidator:
         if file_name not in self.checked_files:
             self.check_deprecated(file_path)
             self.check_support_status(file_path)
-            self.checked_files.append(file_name)
+            self.checked_files.add(file_name)
 
     def check_deprecated(self, file_path):
         file_name = os.path.basename(file_path)
@@ -102,18 +102,19 @@ class BaseValidator:
 
     def check_support_status(self, file_path):
         pack_name = get_pack_name(file_path)
-        metadata_path = os.path.join(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
-        metadata_file_content = self.get_meta_file_content(metadata_path)
-        metadata_json = json.loads(metadata_file_content)
-        support = metadata_json.get(PACK_METADATA_SUPPORT)
-        certification = metadata_json.get(PACK_METADATA_CERTIFICATION)
+        if pack_name:
+            metadata_path = os.path.join(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_file_content = self.get_meta_file_content(metadata_path)
+            metadata_json = json.loads(metadata_file_content)
+            support = metadata_json.get(PACK_METADATA_SUPPORT)
+            certification = metadata_json.get(PACK_METADATA_CERTIFICATION)
 
-        if support == 'partner':
-            if certification != 'certified':
-                self.add_flag_to_ignore_list(file_path, 'non-certified-partner')
+            if support == 'partner':
+                if certification != 'certified':
+                    self.add_flag_to_ignore_list(file_path, 'non-certified-partner')
 
-        elif support != 'xsoar':
-            self.add_flag_to_ignore_list(file_path, 'community')
+            elif support != 'xsoar':
+                self.add_flag_to_ignore_list(file_path, 'community')
 
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):

@@ -32,7 +32,7 @@ def test_handle_error():
     base_validator = BaseValidator(ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True)
 
     # passing the flag checks - checked separately
-    base_validator.checked_files.extend(['PATH', "file_name"])
+    base_validator.checked_files.union({'PATH', "file_name"})
 
     formatted_error = base_validator.handle_error("Error-message", "SC102", "PATH")
     assert formatted_error == 'PATH: [SC102] - Error-message\n'

@@ -3,6 +3,7 @@
 * Added *feedIncremental* field to the integration schema.
 * Fixed error in the **upload** command where unified YMLs were not uploaded as expected if the given input was a pack.
 * Fixed an issue where the **secrets** command failed due to a space character in the file name.
+* Ignored RN validation for *NonSupported* pack.
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

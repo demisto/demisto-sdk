@@ -84,10 +84,11 @@ class LintManager:
             git_repo = git.Repo(os.getcwd(),
                                 search_parent_directories=True)
             remote_url = git_repo.remote().urls.__next__()
-            if 'content' not in remote_url:
-                raise git.InvalidGitRepositoryError
-
+            is_fork_repo = 'content' in remote_url
             is_private_repo = tools.is_private_repository()
+
+            if not is_fork_repo and not is_private_repo:
+                raise git.InvalidGitRepositoryError
 
             facts["content_repo"] = git_repo
             logger.debug(f"Content path {git_repo.working_dir}")

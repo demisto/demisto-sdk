@@ -362,7 +362,7 @@ class FilesValidator:
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
 
-                if not integration_validator.is_valid_file():
+                if not integration_validator.is_valid_file(skip_test_conf=self.skip_conf_json):
                     self._is_valid = False
 
             elif file_type == 'betaintegration':
@@ -552,7 +552,7 @@ class FilesValidator:
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
                                                              branch_name=self.branch_name)
-                if not integration_validator.is_valid_file(validate_rn=False):
+                if not integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
@@ -752,7 +752,7 @@ class FilesValidator:
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
                                                          branch_name=self.branch_name)
-            if not integration_validator.is_valid_file(validate_rn=False):
+            if not integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json):
                 self._is_valid = False
 
         elif checked_type(file_path, YML_ALL_SCRIPTS_REGEXES) or file_type == 'script':

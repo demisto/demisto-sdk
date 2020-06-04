@@ -1,268 +1,23 @@
-import os
-
 import pytest
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_REGEX, BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATIONS_DIR,
-    BETA_SCRIPT_REGEX, CLASSIFIER_REGEX, CLASSIFIER_REGEX_5_9_9,
-    CLASSIFIERS_DIR, INCIDENT_TYPE_REGEX, INDICATOR_FIELDS_REGEX,
-    INTEGRATION_JS_REGEX, INTEGRATION_PY_REGEX, INTEGRATION_REGEX,
-    INTEGRATION_TEST_PY_REGEX, INTEGRATION_YML_REGEX, INTEGRATIONS_DIR,
-    MAPPER_REGEX, PACKAGE_YML_FILE_REGEX, PACKS_CHANGELOG_REGEX,
-    PACKS_CLASSIFIERS_5_9_9_REGEX, PACKS_CLASSIFIERS_REGEX,
-    PACKS_DASHBOARDS_REGEX, PACKS_INCIDENT_FIELDS_REGEX,
-    PACKS_INCIDENT_TYPES_REGEX, PACKS_INTEGRATION_JS_REGEX,
-    PACKS_INTEGRATION_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX,
-    PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUTS_REGEX, PACKS_MAPPERS_REGEX,
-    PACKS_PACKAGE_META_REGEX, PACKS_PLAYBOOK_YML_REGEX, PACKS_SCRIPT_JS_REGEX,
-    PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
-    PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX, SCRIPT_JS_REGEX,
-    SCRIPT_PY_REGEX, SCRIPT_REGEX, SCRIPT_TEST_PY_REGEX, SCRIPT_YML_REGEX,
-    SCRIPTS_DIR)
+    PACKAGE_YML_FILE_REGEX, PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
+    PACKS_CLASSIFIER_JSON_REGEX, PACKS_DASHBOARD_JSON_REGEX,
+    PACKS_INCIDENT_FIELD_JSON_REGEX, PACKS_INCIDENT_TYPE_JSON_REGEX,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_PY_REGEX,
+    PACKS_INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_YML_REGEX,
+    PACKS_LAYOUT_JSON_REGEX, PACKS_MAPPER_JSON_REGEX, PACKS_SCRIPT_PY_REGEX,
+    PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
+    PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
+    TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.tools import checked_type
 
-
-def verify(acceptable, unacceptable, matched_regex):
-    for test_path in acceptable:
-        assert checked_type(test_path, compared_regexes=matched_regex)
-
-    for test_path in unacceptable:
-        assert not checked_type(test_path, compared_regexes=matched_regex)
-
-
-def get_test_new_classifiers_paths(folder):
-    acceptable_new_classifiers_paths = {
-        os.path.join(folder, 'classifier-A.json'),
-    }
-
-    unacceptable_new_classifiers_paths = {
-        os.path.join(folder, 'classifier-A_5_9_9.json'),
-        os.path.join(folder, 'classifier-mapper-test.json'),
-
-    }
-
-    return acceptable_new_classifiers_paths, unacceptable_new_classifiers_paths
-
-
-def get_test_old_classifiers_paths(folder):
-    acceptable_old_classifier_paths = {
-        os.path.join(folder, 'classifier-A_5_9_9.json'),
-
-    }
-
-    unacceptable_old_classifiers_paths = {
-        os.path.join(folder, 'classifier-A.json'),
-        os.path.join(folder, 'classifier-mapper-test.json'),
-        os.path.join(folder, 'classifier-mapper-test_5_9_9.json'),
-
-    }
-
-    return acceptable_old_classifier_paths, unacceptable_old_classifiers_paths
-
-
-def get_test_mapper_paths(folder):
-    acceptable_mapper_paths = {
-        os.path.join(folder, 'classifier-mapper-A.json'),
-
-    }
-
-    unacceptable_mapper_paths = {
-        os.path.join(folder, 'classifierA.json'),
-        os.path.join(folder, 'classifier-test_5_9_9.json'),
-
-    }
-
-    return acceptable_mapper_paths, unacceptable_mapper_paths
-
-
-def get_test_code_file_paths(folder):
-    acceptable_code_files = {
-        # python
-        os.path.join(folder, 'A', 'A.py'),
-        os.path.join(folder, 'Gmail_v2', 'Gmail_v2.py'),
-        os.path.join(folder, 'Z_as_as-ds', 'Z_as_as-ds.py'),
-        os.path.join(folder, 'RSA-v11.1', 'RSA-v11.1.py'),
-
-        # javascript
-        os.path.join(folder, 'A', 'A.js'),
-        os.path.join(folder, 'Gmail_v2', 'Gmail_v2.js'),
-        os.path.join(folder, 'Z_as_as-ds', 'Z_as_as-ds.js'),
-        os.path.join(folder, 'RSA-v11.1', 'RSA-v11.1.js'),
-    }
-
-    unacceptable_code_files = {
-        # python
-        os.path.join(folder, 'A\\A', 'A\\A.py'),
-        os.path.join(folder, 'A/A', 'A/A.py'),
-        os.path.join(folder, 'hello', 'world.py'),
-        os.path.join(folder, 'hello', 'hello_test.py'),
-        os.path.join(folder, 'hello', 'test_data', 'hello.py'),
-        os.path.join(folder, 'RSA-v11.1', 'RSA-v11.1.pysomeextrachars'),
-
-        # javascript
-        os.path.join(folder, 'A\\A', 'A\\A.js'),
-        os.path.join(folder, 'A/A', 'A/A.js'),
-        os.path.join(folder, 'hello', 'world.js'),
-        os.path.join(folder, 'hello', 'hello_test.js'),
-        os.path.join(folder, 'hello', 'test_data', 'hello.js'),
-        os.path.join(folder, 'RSA-v11.1', 'RSA-v11.1.jssomeextrachars'),
-    }
-
-    return acceptable_code_files, unacceptable_code_files
-
-
-def test_integration_code_files():
-    acceptable_integration_code_files, unacceptable_integration_code_files = get_test_code_file_paths(INTEGRATIONS_DIR)
-
-    verify(
-        acceptable_integration_code_files,
-        unacceptable_integration_code_files,
-        (INTEGRATION_PY_REGEX, INTEGRATION_JS_REGEX)
-    )
-
-
-def test_script_code_files():
-    acceptable_script_code_files, unacceptable_script_code_files = get_test_code_file_paths(SCRIPTS_DIR)
-
-    verify(
-        acceptable_script_code_files,
-        unacceptable_script_code_files,
-        (SCRIPT_PY_REGEX, SCRIPT_JS_REGEX)
-    )
-
-
-def test_new_classifier_files():
-    acceptable_new_classifier_paths, unacceptable_new_classifier_paths = get_test_new_classifiers_paths(CLASSIFIERS_DIR)
-
-    verify(
-        acceptable_new_classifier_paths,
-        unacceptable_new_classifier_paths,
-        (CLASSIFIER_REGEX, ),
-    )
-
-
-def test_old_classifier_files():
-    acceptable_old_classifier_paths, unacceptable_old_classifier_paths = get_test_old_classifiers_paths(CLASSIFIERS_DIR)
-
-    verify(
-        acceptable_old_classifier_paths,
-        unacceptable_old_classifier_paths,
-        (CLASSIFIER_REGEX_5_9_9, ),
-    )
-
-
-def test_mapper_files():
-    acceptable_mapper_paths, unacceptable_mapper_paths = get_test_mapper_paths(CLASSIFIERS_DIR)
-
-    verify(
-        acceptable_mapper_paths,
-        unacceptable_mapper_paths,
-        (MAPPER_REGEX, ),
-    )
-
-
-def get_test_yml_file_paths(folder, prefix, legacy_only=False):
-    acceptable_yml_files_package = {
-        # package
-        os.path.join(folder, 'A', 'A.yml'),
-        os.path.join(folder, 'Gmail_v2', 'Gmail_v2.yml'),
-        os.path.join(folder, 'Z_as_as-ds', 'Z_as_as-ds.yml'),
-        os.path.join(folder, 'RSA-v11.1', 'RSA-v11.1.yml'),
-    }
-
-    acceptable_yml_files_legacy = {
-        # legacy
-        os.path.join(folder, '{}-A.yml'.format(prefix)),
-        os.path.join(folder, '{}-Gmail_v2.yml'.format(prefix)),
-        os.path.join(folder, '{}-Z_as_as-ds.yml'.format(prefix)),
-        os.path.join(folder, '{}-RSA-v11.1.yml'.format(prefix)),
-    }
-
-    unacceptable_yml_files_package = {
-        # package
-        os.path.join(folder, 'A\\A', 'A\\A.yml'),
-        os.path.join(folder, 'A/A', 'A/A.yml'),
-        os.path.join(folder, 'hello', 'world.yml'),
-        os.path.join(folder, 'hello', 'hello_test.yml'),
-        os.path.join(folder, 'hello', 'test_data', 'hello.yml'),
-        os.path.join(folder, 'RSA-v11.1', 'RSA-v11.1.ymlsomeextrachars'),
-    }
-
-    unacceptable_yml_files_legacy = {
-        # legacy
-        os.path.join(folder, 'A\\A', 'A\\A.yml'),
-        os.path.join(folder, 'A/A', 'A/A.yml'),
-        os.path.join(folder, '{}-hello'.format(prefix), 'hello.yml'),
-        os.path.join(folder, 'hello', '{}-hello.yml'.format(prefix)),
-        os.path.join(folder, '{}-RSA-v11.1.ymlsomeextrachars'.format(prefix)),
-    }
-
-    if legacy_only:
-        return acceptable_yml_files_legacy, unacceptable_yml_files_legacy
-
-    return (acceptable_yml_files_package.union(acceptable_yml_files_legacy),
-            unacceptable_yml_files_package.union(unacceptable_yml_files_legacy))
-
-
-@pytest.mark.skip(reason="to be fixed later")
-def test_integration_yml_files():
-    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(INTEGRATIONS_DIR, 'integration')
-
-    verify(
-        acceptable_integration_yml,
-        unacceptable_integration_yml,
-        (INTEGRATION_YML_REGEX, INTEGRATION_REGEX),
-    )
-
-
-@pytest.mark.skip(reason="to be fixed later")
-def test_script_yml_files():
-    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(SCRIPTS_DIR, 'script')
-
-    verify(
-        acceptable_integration_yml,
-        unacceptable_integration_yml,
-        (SCRIPT_YML_REGEX, SCRIPT_REGEX),
-    )
-
-
-def test_beta_script_yml_files():
-    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(
-        BETA_INTEGRATIONS_DIR,
-        'script',
-        legacy_only=True
-    )
-
-    verify(
-        acceptable_integration_yml,
-        unacceptable_integration_yml,
-        (BETA_SCRIPT_REGEX,),
-    )
-
-
-def test_beta_integration_yml_files():
-    acceptable_integration_yml, unacceptable_integration_yml = get_test_yml_file_paths(
-        BETA_INTEGRATIONS_DIR,
-        'integration',
-    )
-
-    verify(
-        acceptable_integration_yml,
-        unacceptable_integration_yml,
-        (BETA_INTEGRATION_YML_REGEX, BETA_INTEGRATION_REGEX),
-    )
-
-
 test_packs_regex_params = [
-    (['Packs/XDR/Integrations/XDR/XDR.yml', 'Packs/XDR/Scripts/Random/Random.yml', 'Integrations/XDR/XDR.yml'],
-     ['Packs/Integrations/XDR/XDR_test.py', 'Packs/Scripts/Random/Random.py', 'Scripts/Random/Random.py',
-      'Scripts/script-CBAlerts.md'],
+    (['Packs/XDR/Integrations/XDR/XDR.yml', 'Packs/XDR/Scripts/Random/Random.yml'],
+     ['Packs/Integrations/XDR/XDR_test.py', 'Packs/Scripts/Random/Random.py'],
      [PACKAGE_YML_FILE_REGEX]),
     (['Packs/XDR/Integrations/XDR/XDR.py'],
      ['Packs/Integrations/XDR/XDR_test.py', 'Packs/Sade/Integrations/XDR/test_yarden.py'],
      [PACKS_INTEGRATION_PY_REGEX]),
-    (['Packs/XDR/Integrations/XDR/XDR.js'],
-     ['Packs/Integrations/XDR/XDR_test.js', 'Packs/Sade/Integrations/XDR/test_yarden.js'],
-     [PACKS_INTEGRATION_JS_REGEX]),
     (['Packs/XDR/Integrations/XDR/XDR.yml'], ['Packs/Integrations/XDR/XDR_test.py'], [PACKS_INTEGRATION_YML_REGEX]),
     (['Packs/Sade/Integrations/XDR/XDR_test.py'], ['Packs/Sade/Integrations/yarden.py'],
      [PACKS_INTEGRATION_TEST_PY_REGEX]),
@@ -270,31 +25,43 @@ test_packs_regex_params = [
     (['Packs/XDR/Scripts/Random/Random.yml'], ['Packs/Scripts/Random/Random.py'], [PACKS_SCRIPT_YML_REGEX]),
     (['Packs/XDR/Scripts/Random/Random.py'], ['Packs/Scripts/Random/Random_test.py'], [PACKS_SCRIPT_PY_REGEX]),
     (['Packs/XDR/Scripts/Random/Random_test.py'], ['Packs/Sade/Scripts/test_yarden.pt'], [PACKS_SCRIPT_TEST_PY_REGEX]),
-    (['Packs/XDR/Scripts/Random/Random.js'], ['Packs/Sade/Scripts/lo_yarden.py'], [PACKS_SCRIPT_JS_REGEX]),
-    (['Packs/XDR/Playbooks/XDR.yml'], ['Packs/Playbooks/XDR/XDR_test.py'], [PACKS_PLAYBOOK_YML_REGEX]),
-    (['Packs/XDR/TestPlaybooks/playbook.yml'], ['Packs/TestPlaybooks/nonpb.xml'], [PACKS_TEST_PLAYBOOKS_REGEX]),
+    (['Packs/XDR/Playbooks/XDR.yml'], ['Packs/Playbooks/XDR/XDR_test.py'], [PLAYBOOK_YML_REGEX]),
+    (['Packs/XDR/TestPlaybooks/playbook.yml'], ['Packs/TestPlaybooks/nonpb.xml'], [TEST_PLAYBOOK_YML_REGEX]),
     (['Packs/Sade/Classifiers/classifier-yarden.json'], ['Packs/Sade/Classifiers/classifier-yarden-json.txt'],
-     [PACKS_CLASSIFIERS_REGEX]),
+     [PACKS_CLASSIFIER_JSON_REGEX]),
     (['Packs/Sade/Classifiers/classifier-test_5_9_9.json'], ['Packs/Sade/Classifiers/classifier-test_5_9_9-json.txt'],
-     [PACKS_CLASSIFIERS_5_9_9_REGEX]),
+     [PACKS_CLASSIFIER_JSON_5_9_9_REGEX]),
     (['Packs/Sade/Classifiers/classifier-mapper-test.json'], ['Packs/Sade/Classifiers/classifier-mapper-test.txt'],
-     [PACKS_MAPPERS_REGEX]),
-    (['Packs/Sade/Dashboards/yarden.json'], ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_DASHBOARDS_REGEX]),
+     [PACKS_MAPPER_JSON_REGEX]),
+    (['Packs/Sade/Dashboards/yarden.json'], ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_DASHBOARD_JSON_REGEX]),
     (['Packs/Sade/IncidentTypes/yarden.json'], ['Packs/Sade/IncidentTypes/yarden-json.txt'],
-     [PACKS_INCIDENT_TYPES_REGEX]),
-    (['Packs/Sade/Widgets/yarden.json'], ['Packs/Sade/Widgets/yarden-json.txt'], [PACKS_WIDGETS_REGEX]),
-    (['Packs/Sade/Layouts/yarden.json'], ['Packs/Sade/Layouts/yarden_json.yml'], [PACKS_LAYOUTS_REGEX]),
-    (['Packs/Sade/package-meta.json'], ['Packs/Sade/Dashboards/yarden-json.txt'], [PACKS_PACKAGE_META_REGEX]),
-    (['Packs/XDR/CHANGELOG.md'], ['Packs/Integrations/XDR/CHANGELOG.md'], [PACKS_CHANGELOG_REGEX]),
+     [PACKS_INCIDENT_TYPE_JSON_REGEX]),
+    (['Packs/Sade/Widgets/yarden.json'], ['Packs/Sade/Widgets/yarden-json.txt'], [PACKS_WIDGET_JSON_REGEX]),
+    (['Packs/Sade/Layouts/yarden.json'], ['Packs/Sade/Layouts/yarden_json.yml'], [PACKS_LAYOUT_JSON_REGEX]),
     (['Packs/Sade/IncidentFields/yarden.json'], ['Packs/Sade/IncidentFields/yarden-json.txt'],
-     [PACKS_INCIDENT_FIELDS_REGEX]),
-    (['Scripts/Sade/Sade_test.py'], ['Scripts/Sade/Sade.py'], [SCRIPT_TEST_PY_REGEX]),
-    (['Integrations/Sade/Sade_test.py'], ['Integrations/Sade/test_Sade.py'], [INTEGRATION_TEST_PY_REGEX]),
-    (['IndicatorFields/incidentfield-sade.json'], ['IndicatorFields/incidentfield.json'], [INDICATOR_FIELDS_REGEX]),
-    (['IncidentTypes/incidenttype-Cortex_XDR.json'], ['IncidentTypes/incident-Cortex_XDR.json'], [INCIDENT_TYPE_REGEX]),
+     [PACKS_INCIDENT_FIELD_JSON_REGEX]),
+    (
+        ['Packs/XDR/Playbooks/playbook-Test.yml', 'Packs/XDR/Playbooks/Test.yml'],
+        ['Packs/XDR/Playbooks/playbook-Test_CHANGELOG.md'],
+        [PLAYBOOK_YML_REGEX]
+    ),
+    (
+        ['Packs/OpenPhish/Integrations/integration-OpenPhish.yml'],
+        ['Packs/OpenPhish/Integrations/OpenPhish/OpenPhish.yml'],
+        [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
+    ),
+    (
+        ['Packs/OpenPhish/Playbooks/playbook-Foo_README.md'],
+        ['Packs/OpenPhish/Playbooks/playbook-Foo_README.yml'],
+        [PLAYBOOK_README_REGEX]
+    )
 ]
 
 
 @pytest.mark.parametrize('acceptable,non_acceptable,regex', test_packs_regex_params)
 def test_packs_regex(acceptable, non_acceptable, regex):
-    verify(acceptable, non_acceptable, regex)
+    for test_path in acceptable:
+        assert checked_type(test_path, compared_regexes=regex)
+
+    for test_path in non_acceptable:
+        assert not checked_type(test_path, compared_regexes=regex)

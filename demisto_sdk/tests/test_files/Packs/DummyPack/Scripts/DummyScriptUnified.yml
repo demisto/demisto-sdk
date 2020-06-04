@@ -1,7 +1,7 @@
 commonfields:
-  id: DummyScript
+  id: DummyScriptUnified
   version: -1
-name: DummyScript
+name: DummyScriptUnified
 script: ''
 type: python
 tags:

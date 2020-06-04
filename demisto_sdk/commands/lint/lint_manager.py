@@ -174,20 +174,18 @@ class LintManager:
 
     @staticmethod
     def _get_all_packages(content_dir: str) -> List[str]:
-        """Gets all integration, script and beta_integrations in packages and packs in content repo.
+        """Gets all integration, script in packages and packs in content repo.
 
         Returns:
             list: A list of integration, script and beta_integration names.
         """
         # ￿Get packages from main content path
         content_main_pkgs: set = set(Path(content_dir).glob(['Integrations/*/',
-                                                             'Scripts/*/',
-                                                             'Beta_Integrations/*/']))
+                                                             'Scripts/*/', ]))
         # Get packages from packs path
         packs_dir: Path = Path(content_dir) / 'Packs'
         content_packs_pkgs: set = set(packs_dir.glob(['*/Integrations/*/',
-                                                      '*/Scripts/*/',
-                                                      '*/Beta_Integrations/*/']))
+                                                      '*/Scripts/*/']))
         all_pkgs = content_packs_pkgs.union(content_main_pkgs)
 
         return list(all_pkgs)

@@ -73,49 +73,49 @@ def test_init():
 
 
 NOT_FILLED_OUT_RN = '''
-#### IncidentTypes
-- __Cortex XDR Incident__
-%%UPDATE_RN%%
+### IncidentTypes
+#### Cortex XDR Incident
+- %%UPDATE_RN%%
 
-#### IncidentFields
-- __XDR Alerts__
-%%UPDATE_RN%%
+### IncidentFields
+#### XDR Alerts
+- %%UPDATE_RN%%
 
-#### Integrations
-- __Cortex XDR - IR__
-%%UPDATE_RN%%
+### Integrations
+#### Cortex XDR - IR
+- %%UPDATE_RN%%
 
-#### Scripts
-- __EntryWidgetNumberHostsXDR__
-%%UPDATE_RN%%
+### Scripts
+#### EntryWidgetNumberHostsXDR
+- %%UPDATE_RN%%
 '''
 FILLED_OUT_RN = '''
-#### IncidentTypes
-- __Cortex XDR Incident__
-Test
+### IncidentTypes
+#### Cortex XDR Incident
+- Test
 
-#### IncidentFields
-- __XDR Alerts__
-Test
+### IncidentFields
+#### XDR Alerts
+- Test
 
-#### Integrations
-- __Cortex XDR - IR__
-Test
+### Integrations
+#### Cortex XDR - IR
+- Test
 
-#### Scripts
-- __EntryWidgetNumberHostsXDR__
-Test
+### Scripts
+#### EntryWidgetNumberHostsXDR
+- Test
 
 ### Playbooks
-- __Cortex XDR Incident Handling__
-test
+#### Cortex XDR Incident Handling
+- test
 '''
 
 
 TEST_RELEASE_NOTES_TEST_BANK_1 = [
     ('', False),  # Completely Empty
-    ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
-     'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript \n- Grammar correction for '
      'code description. ', False),
     (NOT_FILLED_OUT_RN, True),
     (FILLED_OUT_RN, True)
@@ -197,8 +197,8 @@ def test_are_release_notes_complete_invalid_file_type(release_notes, complete_ex
 
 TEST_RELEASE_NOTES_TEST_BANK_ADDED = [
     ('', False),  # Completely Empty
-    ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
-     'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
      'code description. ', False),
     (NOT_FILLED_OUT_RN, False),
     (FILLED_OUT_RN, True)
@@ -233,8 +233,8 @@ def test_are_release_notes_complete_added(release_notes, complete_expected_resul
 
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
-    ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
-     'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
      'code description. ', True),
     (NOT_FILLED_OUT_RN, False),
     (FILLED_OUT_RN, True)

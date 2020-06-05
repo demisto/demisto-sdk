@@ -11,7 +11,7 @@ from typing import Dict, List
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATIONS_DIR, CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
+    CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
     ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
     FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
@@ -54,7 +54,6 @@ class Downloader:
         files_not_downloaded (list): A list of all files didn't succeeded to be downloaded
         custom_content (list): A list of all custom content objects
         pack_content (dict): The pack content that maps the pack
-        SPECIAL_ENTITIES (dict): Used to treat Beta Integrations as regular entities
     """
 
     def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False,
@@ -74,7 +73,6 @@ class Downloader:
         self.files_not_downloaded: List[list] = list()
         self.custom_content: List[dict] = list()
         self.pack_content: Dict[str, list] = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
-        self.SPECIAL_ENTITIES = {BETA_INTEGRATIONS_DIR: INTEGRATIONS_DIR}
         self.num_merged_files = 0
         self.num_added_files = 0
 
@@ -229,7 +227,7 @@ class Downloader:
         """
         for content_entity_path in get_child_directories(self.output_pack_path):
             raw_content_entity: str = os.path.basename(os.path.normpath(content_entity_path))
-            content_entity: str = self.SPECIAL_ENTITIES.get(raw_content_entity, raw_content_entity)
+            content_entity: str = raw_content_entity
             if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                 # If entity is of type integration/script it will have dirs, otherwise files
                 entity_instances_paths: list = get_child_directories(content_entity_path)
@@ -285,7 +283,7 @@ class Downloader:
         main_file_path: str = str()
 
         # Entities which contain yml files
-        if content_entity in (INTEGRATIONS_DIR, BETA_INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR):
+        if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR):
             if os.path.isdir(entity_instance_path):
                 _, main_file_path = get_yml_paths_in_dir(entity_instance_path)
             elif os.path.isfile(entity_instance_path):

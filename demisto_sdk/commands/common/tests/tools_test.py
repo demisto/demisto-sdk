@@ -6,11 +6,8 @@ import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
-                                                   PACKS_PLAYBOOK_YML_REGEX,
-                                                   PACKS_TEST_PLAYBOOKS_REGEX,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR)
                                                    PLAYBOOK_YML_REGEX,
-                                                   PLAYBOOKS_DIR,
+                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,

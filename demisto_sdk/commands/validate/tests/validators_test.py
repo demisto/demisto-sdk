@@ -6,7 +6,7 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-from demisto_sdk.commands.common.constants import CONF_PATH, DIR_LIST
+from demisto_sdk.commands.common.constants import CONF_PATH
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.tests.constants_test import (
-    BETA_INTEGRATION_TARGET, CONF_JSON_MOCK_PATH, DASHBOARD_TARGET,
+    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST,
     GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
     INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
@@ -69,7 +69,7 @@ class TestValidators:
         for dir_to_create in DIR_LIST:
             if not os.path.exists(dir_to_create):
                 cls.CREATED_DIRS.append(dir_to_create)
-                os.mkdir(dir_to_create)
+                os.makedirs(dir_to_create)
         copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
 
     @classmethod
@@ -326,7 +326,6 @@ class TestValidators:
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET),
         (VALID_REPUTATION_PATH, INDICATOR_TYPE_TARGET),
         (VALID_INCIDENT_TYPE_PATH, INCIDENT_TYPE_TARGET),
-        (VALID_INTEGRATION_TEST_PATH, BETA_INTEGRATION_TARGET),
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_RELEASE_NOTES_TARGET)
     ]
 
@@ -508,19 +507,23 @@ class TestValidators:
         assert file_validator._is_valid
 
     def test_get_error_ignore_list(self, mocker):
-        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path',
-                            return_value='demisto_sdk/tests/test_files/fake_pack/.pack-ignore')
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
+
+        mocker.patch.object(FilesValidator, 'get_pack_ignore_file_path', return_value=test_file)
+
         file_validator = FilesValidator()
         ignore_errors_list = file_validator.get_error_ignore_list("fake")
-        assert ignore_errors_list['pack'] == ['IN100', 'IN101']
-        assert ignore_errors_list['file_name'] == ['DO101', 'BA100']
+        assert ignore_errors_list['file_name'] == ['BA101', 'IF107']
+        assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self, mocker):
         file_validator = FilesValidator()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BC101", "BC102", "BC103", "BC104"]
+        assert ignored_list == ["BA101", "BA102", "BA103", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo):
         """

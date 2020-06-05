@@ -6,7 +6,7 @@ import os
 import re
 import shlex
 import sys
-from distutils.version import LooseVersion
+from distutils.version import LooseVersion, StrictVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
@@ -280,7 +280,7 @@ def get_file(method, file_path, type_of_file):
             except Exception as e:
                 print_error(
                     "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return []
+                return {}
     if type(data_dictionary) is dict:
         return data_dictionary
     return {}
@@ -496,7 +496,7 @@ def server_version_compare(v1, v2):
         negative if v2 later version than v1.
     """
 
-    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    _v1, _v2 = StrictVersion(v1), StrictVersion(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:
@@ -1087,3 +1087,17 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
+
+
+def get_code_lang(file_data: dict, file_entity: str) -> str:
+    """
+    Returns the code language by the file entity
+    :param file_data: The file data
+    :param file_entity: The file entity
+    :return: The code language
+    """
+    if file_entity == INTEGRATIONS_DIR:
+        return file_data.get('script', {}).get('type', '')
+    elif file_entity == SCRIPTS_DIR:
+        return file_data.get('type', {})
+    return ''

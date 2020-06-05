@@ -200,7 +200,8 @@ class TestServerVersionCompare:
     INPUTS = [
         (V0, V5, RIGHT_IS_LATER),
         (V5, V0, LEFT_IS_LATER),
-        (V5, V5, EQUAL)
+        (V5, V5, EQUAL),
+        ("4.5.0", "4.5", EQUAL)
     ]
 
     @pytest.mark.parametrize("left, right, answer", INPUTS)

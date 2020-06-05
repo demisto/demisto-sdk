@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 from pathlib import Path
 
@@ -16,7 +17,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
-                                               get_files_in_dir,
+                                               get_file, get_files_in_dir,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
                                                get_matching_regex,
@@ -47,6 +48,10 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('file_path, func', FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    def test_get_file_exception(self):
+        path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
+        assert get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml')) == {}
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):

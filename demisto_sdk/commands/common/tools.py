@@ -651,12 +651,13 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
         dict representation of the file, and the file_type, either .yml ot .json
     """
     if path:
-        if path.endswith('.yml'):
-            if use_ryaml:
-                return get_ryaml(path), 'yml'
-            return get_yaml(path), 'yml'
-        elif path.endswith('.json'):
-            return get_json(path), 'json'
+        if os.path.isfile(path):
+            if path.endswith('.yml'):
+                if use_ryaml:
+                    return get_ryaml(path), 'yml'
+                return get_yaml(path), 'yml'
+            elif path.endswith('.json'):
+                return get_json(path), 'json'
     return {}, None
 
 

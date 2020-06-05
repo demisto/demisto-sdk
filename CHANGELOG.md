@@ -6,7 +6,6 @@
 * Ignored RN validation for *NonSupported* pack.
 * You can now ignore IF107, SC100, RP102 error codes in the **validate** command.
 * Fixed a bug where the **download** command was crashing when received as input a JS integration/script
-* Add support for new classifiers and mappers
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

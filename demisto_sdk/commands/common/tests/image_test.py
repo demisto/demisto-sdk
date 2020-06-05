@@ -51,7 +51,8 @@ def test_is_valid_image_positive(monkeypatch):
     monkeypatch.setattr('demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGXES', [integration_path])
     # Adding monkey patching this will make image validator behave like this is an integration outside of
     # pack context and ignore the image that's in the same folder as the file
-    monkeypatch.setattr('demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGEX', integration_path)
+    monkeypatch.setattr('demisto_sdk.commands.common.hook_validations.image.PACKS_INTEGRATION_NON_SPLIT_YML_REGEX',
+                        integration_path)
     validator = IntegrationValidator(structure)
     assert validator.is_valid_image() is True
 

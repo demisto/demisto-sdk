@@ -20,20 +20,20 @@ import click
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, BETA_INTEGRATION_REGEX,
-    BETA_INTEGRATION_YML_REGEX, CHECKED_TYPES_REGEXES, CODE_FILES_REGEX,
-    CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES, IMAGE_REGEX,
-    INTEGRATION_REGEX, INTEGRATION_REGXES, JSON_ALL_CLASSIFIER_REGEXES,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
+    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
+    IMAGE_REGEX, INTEGRATION_REGXES, JSON_ALL_CLASSIFIER_REGEXES,
     JSON_ALL_CLASSIFIER_REGEXES_5_9_9, JSON_ALL_DASHBOARDS_REGEXES,
     JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_INDICATOR_TYPES_REGEXES,
     JSON_ALL_LAYOUT_REGEXES, JSON_ALL_MAPPER_REGEXES,
     JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
     OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_RELEASE_NOTES_REGEX, PLAYBOOK_REGEX,
-    PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, SCRIPT_REGEX, TEST_PLAYBOOK_REGEX,
-    YML_ALL_SCRIPTS_REGEXES, YML_BETA_INTEGRATIONS_REGEXES,
-    YML_INTEGRATION_REGEXES)
-from demisto_sdk.commands.common.errors import (ERROR_CODE,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_RELEASE_NOTES_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, TEST_PLAYBOOK_REGEX,
+    YML_ALL_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES)
+from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
+                                                ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
@@ -138,7 +138,7 @@ class FilesValidator:
     def run(self):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
         if self.is_valid_structure():
-            print_color('The files are valid', LOG_COLORS.GREEN)
+            print_color('\nThe files are valid', LOG_COLORS.GREEN)
             return 0
         else:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
@@ -171,7 +171,7 @@ class FilesValidator:
         modified_files_list = set()
         old_format_files = set()
         for f in all_files:
-            file_data = f.split()
+            file_data = list(filter(None, f.split('\t')))
             if not file_data:
                 continue
 
@@ -331,6 +331,7 @@ class FilesValidator:
             if file_path.endswith('_unified.yml'):
                 continue
             print('\nValidating {}'.format(file_path))
+            self.check_for_spaces_in_file_name(file_path)
             if not checked_type(file_path):
                 print_warning('- Skipping validation of non-content entity file.')
                 continue
@@ -365,14 +366,14 @@ class FilesValidator:
                 if not integration_validator.is_valid_file():
                     self._is_valid = False
 
-            elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
+            elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
                                                              branch_name=self.branch_name)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
-            elif checked_type(file_path, [SCRIPT_REGEX]):
+            elif checked_type(file_path, [PACKS_SCRIPT_NON_SPLIT_YML_REGEX]):
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    branch_name=self.branch_name)
@@ -503,7 +504,6 @@ class FilesValidator:
         self.verify_no_dup_rn(added_files)
 
         for file_path in added_files:
-
             file_type = find_type(file_path) if not received_file_type else received_file_type
 
             pack_name = get_pack_name(file_path)
@@ -512,6 +512,7 @@ class FilesValidator:
             if file_path.endswith('_unified.yml'):
                 continue
             print('\nValidating {}'.format(file_path))
+            self.check_for_spaces_in_file_name(file_path)
 
             if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
                 continue
@@ -570,8 +571,7 @@ class FilesValidator:
                 if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
-            elif re.match(BETA_INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(BETA_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or file_type == 'betaintegration':
+            elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
                                                              branch_name=self.branch_name)
@@ -652,6 +652,9 @@ class FilesValidator:
             should_fail = True
             if len(missing_rn) > 0:
                 for pack in missing_rn:
+                    # # ignore RN in NonSupported pack
+                    if 'NonSupported' in pack:
+                        continue
                     ignored_errors_list = self.get_error_ignore_list(pack)
                     error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                     if not BaseValidator(ignored_errors=ignored_errors_list,
@@ -729,6 +732,7 @@ class FilesValidator:
             file_path: A relative content path to a file to be validated
             file_type: The output of 'find_type' method
         """
+        self.check_for_spaces_in_file_name(file_path)
         pack_name = get_pack_name(file_path)
         ignored_errors_list = self.get_error_ignore_list(pack_name)
         if 'README' in file_path:
@@ -766,7 +770,7 @@ class FilesValidator:
             if not script_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, YML_BETA_INTEGRATIONS_REGEXES) or file_type == 'betaintegration':
+        elif file_type == 'betaintegration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
                                                          branch_name=self.branch_name)
@@ -811,12 +815,6 @@ class FilesValidator:
             if not mapper_validator.is_valid_mapper(validate_rn=False):
                 self._is_valid = False
 
-        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
-            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=ignored_errors_list,
-                                                       print_as_warnings=self.print_ignored_errors)
-            if not classifier_validator.is_valid_classifier(validate_rn=False):
-                self._is_valid = False
-
         elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES_5_9_9) or file_type == 'classifier_5_9_9':
             classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
                                                        ignored_errors=ignored_errors_list,
@@ -824,8 +822,18 @@ class FilesValidator:
             if not classifier_validator.is_valid_classifier(validate_rn=False):
                 self._is_valid = False
 
+        elif checked_type(file_path, JSON_ALL_CLASSIFIER_REGEXES) or file_type == 'classifier':
+            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=ignored_errors_list,
+                                                       print_as_warnings=self.print_ignored_errors)
+            if not classifier_validator.is_valid_classifier(validate_rn=False):
+                self._is_valid = False
+
+        # elif 'CHANGELOG' in file_path:
+        #     # don't check for CHANGELOG files
+        #     pass
+
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-            print(f'Could not find validations for file {file_path}')
+            click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -899,8 +907,9 @@ class FilesValidator:
         pack_files = {file for file in glob(fr'{self.file_path}/**', recursive=True) if
                       not should_file_skip_validation(file)}
         self.validate_pack_unique_files(glob(fr'{os.path.abspath(self.file_path)}'))
+        click.secho("================= Validating other pack files =================", fg="bright_cyan")
         for file in pack_files:
-            click.echo(f'Validating {file}')
+            click.echo(f'\nValidating {file}')
             self.run_all_validations_on_file(file, file_type=find_type(file))
 
     def validate_all_files_schema(self):
@@ -910,11 +919,16 @@ class FilesValidator:
             pack_path = os.path.join(PACKS_DIR, pack_name)
             ignore_errors_list = self.get_error_ignore_list(pack_name)
 
+            if not os.path.isdir(pack_path):
+                # there are files that are not directories but returned from listdir like Packs/.DS_Store
+                # skip them
+                continue
+
             for dir_name in os.listdir(pack_path):
                 dir_path = os.path.join(pack_path, dir_name)
 
                 if dir_name not in CONTENT_ENTITIES_DIRS or \
-                        dir_name in [constants.REPORTS_DIR, constants.DASHBOARDS_DIR]:
+                        dir_name in [constants.DASHBOARDS_DIR]:
                     continue
 
                 for file_name in os.listdir(dir_path):
@@ -1027,12 +1041,12 @@ class FilesValidator:
     @staticmethod
     def _is_py_script_or_integration(file_path):
         file_yml = get_yaml(file_path)
-        if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE):
+        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False
             return True
 
-        if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
+        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('type', 'javascript') != 'python':
                 return False
 
@@ -1063,10 +1077,18 @@ class FilesValidator:
 
         return ignored_error_list
 
+    @staticmethod
+    def get_alowed_ignored_errors_from_list(error_list):
+        allowed_ignore_list = []
+        for error in error_list:
+            if error in ALLOWED_IGNORE_ERRORS:
+                allowed_ignore_list.append(error)
+
+        return allowed_ignore_list
+
     def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
-        # For now one can only ignore BA101 error.
-        if key == 'ignore' and 'BA101' in str(config[section][key]).split(','):
-            ignored_errors_list.extend(['BA101'])
+        if key == 'ignore':
+            ignored_errors_list.extend(self.get_alowed_ignored_errors_from_list(str(config[section][key]).split(',')))
 
         if key in PRESET_ERROR_TO_IGNORE:
             ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))
@@ -1097,3 +1119,10 @@ class FilesValidator:
                     pass
 
         return ignored_errors_list
+
+    def check_for_spaces_in_file_name(self, file_path):
+        file_name = os.path.basename(file_path)
+        if file_name.count(' ') > 0:
+            error_message, error_code = Errors.file_name_include_spaces_error(file_name)
+            if self.handle_error(error_message, error_code, file_path):
+                self._is_valid = False

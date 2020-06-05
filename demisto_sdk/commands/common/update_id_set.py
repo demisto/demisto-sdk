@@ -11,26 +11,22 @@ from multiprocessing import Pool, cpu_count
 
 import click
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_REGEX, BETA_PLAYBOOK_REGEX, CLASSIFIER_REGEX,
-    CLASSIFIERS_DIR, DASHBOARD_REGEX, DASHBOARDS_DIR, INCIDENT_FIELD_REGEX,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPE_REGEX, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_FIELDS_REGEX, INDICATOR_TYPES_DIR,
-    INDICATOR_TYPES_REGEX, INDICATOR_TYPES_REPUTATIONS_REGEX,
-    INTEGRATION_REGEX, INTEGRATION_YML_REGEX, LAYOUT_REGEX, LAYOUTS_DIR,
-    PACKS_CLASSIFIERS_REGEX, PACKS_DASHBOARDS_REGEX,
-    PACKS_INCIDENT_FIELDS_REGEX, PACKS_INCIDENT_TYPES_REGEX,
-    PACKS_INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_TYPES_REGEX,
-    PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INTEGRATION_REGEX,
-    PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUTS_REGEX, PACKS_PLAYBOOK_YML_REGEX,
-    PACKS_REPORTS_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
-    PACKS_SCRIPT_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, PACKS_WIDGETS_REGEX,
-    PLAYBOOK_REGEX, REPORT_REGEX, REPORTS_DIR, SCRIPT_REGEX, SCRIPTS_DIR,
-    SCRIPTS_REGEX_LIST, TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR,
-    TEST_SCRIPT_REGEX, WIDGETS_DIR, WIDGETS_REGEX)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, collect_ids,
-                                               get_from_version, get_json,
-                                               get_pack_name,
-                                               get_script_or_integration_id,
+    CLASSIFIERS_DIR, DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INDICATOR_TYPES_REPUTATIONS_REGEX, LAYOUTS_DIR,
+    PACKS_CLASSIFIER_JSON_REGEX, PACKS_DASHBOARD_JSON_REGEX,
+    PACKS_INCIDENT_FIELD_JSON_REGEX, PACKS_INCIDENT_TYPE_JSON_REGEX,
+    PACKS_INDICATOR_FIELD_JSON_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX,
+    PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_YML_REGEX,
+    PACKS_LAYOUT_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
+    PACKS_WIDGET_JSON_REGEX, PLAYBOOK_REGEX, PLAYBOOK_YML_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SCRIPTS_REGEX_LIST, TEST_PLAYBOOK_REGEX,
+    TEST_PLAYBOOK_YML_REGEX, TEST_PLAYBOOKS_DIR, TEST_SCRIPT_REGEX,
+    WIDGETS_DIR)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_from_version,
+                                               get_json, get_pack_name,
                                                get_to_version, get_yaml,
                                                print_color, print_error,
                                                print_warning, run_command)
@@ -38,22 +34,15 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CHECKED_TYPES_REGEXES = (
     # Integrations
-    INTEGRATION_REGEX,
-    INTEGRATION_YML_REGEX,
     PACKS_INTEGRATION_YML_REGEX,
-    PACKS_INTEGRATION_REGEX,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     # Scripts
-    SCRIPT_REGEX,
     PACKS_SCRIPT_YML_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
     # Playbooks
-    PLAYBOOK_REGEX,
-    TEST_PLAYBOOK_REGEX,
-    PACKS_PLAYBOOK_YML_REGEX,
-    PACKS_TEST_PLAYBOOKS_REGEX,
+    PLAYBOOK_YML_REGEX,
     # Classifiers
-    PACKS_CLASSIFIERS_REGEX,
-    CLASSIFIER_REGEX
+    PACKS_CLASSIFIER_JSON_REGEX
 )
 
 
@@ -412,7 +401,7 @@ def process_integration(file_path: str, print_logs: bool) -> list:
     """
     res = []
     if os.path.isfile(file_path):
-        if checked_type(file_path, (INTEGRATION_REGEX, BETA_INTEGRATION_REGEX, PACKS_INTEGRATION_REGEX)):
+        if checked_type(file_path, [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]):
             if print_logs:
                 print("adding {} to id_set".format(file_path))
             res.append(get_integration_data(file_path))
@@ -432,7 +421,7 @@ def process_integration(file_path: str, print_logs: bool) -> list:
 def process_script(file_path: str, print_logs: bool) -> list:
     res = []
     if os.path.isfile(file_path):
-        if checked_type(file_path, (SCRIPT_REGEX, PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX)):
+        if checked_type(file_path, (PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX)):
             if print_logs:
                 print("adding {} to id_set".format(file_path))
             res.append(get_script_data(file_path))
@@ -449,7 +438,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
 
 def process_playbook(file_path: str, print_logs: bool) -> list:
     res = []
-    if checked_type(file_path, (PACKS_PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX, BETA_PLAYBOOK_REGEX)):
+    if checked_type(file_path, (PLAYBOOK_YML_REGEX, PLAYBOOK_REGEX)):
         if print_logs:
             print('adding {} to id_set'.format(file_path))
         res.append(get_playbook_data(file_path))
@@ -466,7 +455,7 @@ def process_classifier(file_path: str, print_logs: bool) -> list:
         a list of classifier data.
     """
     res = []
-    if checked_type(file_path, (CLASSIFIER_REGEX, PACKS_CLASSIFIERS_REGEX)):
+    if checked_type(file_path, [PACKS_CLASSIFIER_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -484,7 +473,7 @@ def process_dashboards(file_path: str, print_logs: bool) -> list:
         a list of dashboard data.
     """
     res = []
-    if checked_type(file_path, (DASHBOARD_REGEX, PACKS_DASHBOARDS_REGEX)):
+    if checked_type(file_path, [PACKS_DASHBOARD_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -502,7 +491,7 @@ def process_incident_fields(file_path: str, print_logs: bool) -> list:
         a list of incident field data.
     """
     res = []
-    if checked_type(file_path, (INCIDENT_FIELD_REGEX, PACKS_INCIDENT_FIELDS_REGEX)):
+    if checked_type(file_path, [PACKS_INCIDENT_FIELD_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -520,7 +509,7 @@ def process_incident_types(file_path: str, print_logs: bool) -> list:
         a list of incident field data.
     """
     res = []
-    if checked_type(file_path, (INCIDENT_TYPE_REGEX, PACKS_INCIDENT_TYPES_REGEX)):
+    if checked_type(file_path, [PACKS_INCIDENT_TYPE_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -538,7 +527,7 @@ def process_indicator_fields(file_path: str, print_logs: bool) -> list:
         a list of indicator field data.
     """
     res = []
-    if checked_type(file_path, [INDICATOR_FIELDS_REGEX, PACKS_INDICATOR_FIELDS_REGEX]):
+    if checked_type(file_path, [PACKS_INDICATOR_FIELD_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -556,7 +545,7 @@ def process_indicator_types(file_path: str, print_logs: bool) -> list:
         a list of indicator type data.
     """
     res = []
-    if (checked_type(file_path, [INDICATOR_TYPES_REGEX, PACKS_INDICATOR_TYPES_REGEX]) and
+    if (checked_type(file_path, [PACKS_INDICATOR_TYPE_JSON_REGEX]) and
             # ignore reputations.json
             not checked_type(file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX])):
         if print_logs:
@@ -576,7 +565,7 @@ def process_layouts(file_path: str, print_logs: bool) -> list:
         a list of layout data.
     """
     res = []
-    if checked_type(file_path, (LAYOUT_REGEX, PACKS_LAYOUTS_REGEX)):
+    if checked_type(file_path, [PACKS_LAYOUT_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_layout_data(file_path))
@@ -594,7 +583,7 @@ def process_reports(file_path: str, print_logs: bool) -> list:
         a list of report data.
     """
     res = []
-    if checked_type(file_path, [REPORT_REGEX, PACKS_REPORTS_REGEX]):
+    if checked_type(file_path, [PACKS_REPORT_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -612,7 +601,7 @@ def process_widgets(file_path: str, print_logs: bool) -> list:
         a list of widgets data.
     """
     res = []
-    if checked_type(file_path, [WIDGETS_REGEX, PACKS_WIDGETS_REGEX]):
+    if checked_type(file_path, [PACKS_WIDGET_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
@@ -634,7 +623,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
         print("adding {} to id_set".format(file_path))
     script = None
     playbook = None
-    if checked_type(file_path, (TEST_SCRIPT_REGEX, PACKS_TEST_PLAYBOOKS_REGEX, TEST_PLAYBOOK_REGEX)):
+    if checked_type(file_path, (TEST_SCRIPT_REGEX, TEST_PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_REGEX)):
         yml_data = get_yaml(file_path)
         if 'commonfields' in yml_data:
             # script files contain this key
@@ -647,8 +636,6 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
 
 def get_integrations_paths():
     path_list = [
-        ['Integrations', '*'],
-        ['Beta_Integrations', '*'],
         ['Packs', '*', 'Integrations', '*']
     ]
     integration_files = list()
@@ -660,9 +647,7 @@ def get_integrations_paths():
 
 def get_playbooks_paths():
     path_list = [
-        ['Playbooks', '*.yml'],
-        ['Packs', '*', 'Playbooks', '*.yml'],
-        ['Beta_Integrations', '*.yml']
+        ['Packs', '*', 'Playbooks', '*.yml']
     ]
 
     playbook_files = list()
@@ -913,116 +898,3 @@ def has_duplicate(id_set, id_to_check, object_type=None, print_logs=True):
 def sort(data):
     data.sort(key=lambda r: list(r.keys())[0].lower())  # Sort data by key value
     return data
-
-
-def update_id_set():
-    branches = run_command("git branch")
-    branch_name_reg = re.search(r"\* (.*)", branches)
-    branch_name = branch_name_reg.group(1)
-
-    print("Getting added files")
-    files_string = run_command("git diff --name-status HEAD")
-    second_files_string = run_command("git diff --name-status origin/master...{}".format(branch_name))
-    added_files, modified_files, added_scripts, modified_scripts = \
-        get_changed_files(files_string + '\n' + second_files_string)
-
-    if added_files or modified_files or added_scripts or modified_scripts:
-        print("Updating id_set.json")
-
-        with open('./Tests/id_set.json', 'r') as id_set_file:
-            try:
-                ids_dict = json.load(id_set_file, object_pairs_hook=OrderedDict)
-            except ValueError as ex:
-                if "Expecting property name" in str(ex):
-                    # if we got this error it means we have corrupted id_set.json
-                    # usually it will happen if we merged from master and we had a conflict in id_set.json
-                    # so we checkout the id_set.json to be exact as in master and then run update_id_set
-                    run_command("git checkout origin/master Tests/id_set.json")
-                    with open('./Tests/id_set.json', 'r') as id_set_file_from_master:
-                        ids_dict = json.load(id_set_file_from_master, object_pairs_hook=OrderedDict)
-                else:
-                    raise
-
-        test_playbook_set = ids_dict['TestPlaybooks']
-        integration_set = ids_dict['integrations']
-        playbook_set = ids_dict['playbooks']
-        script_set = ids_dict['scripts']
-
-    if added_files:
-        for file_path in added_files:
-            if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
-                add_new_object_to_id_set(get_script_or_integration_id(file_path), get_integration_data(file_path),
-                                         integration_set)
-                print("Adding {} to id_set".format(get_script_or_integration_id(file_path)))
-            if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
-                add_new_object_to_id_set(get_script_or_integration_id(file_path), get_script_data(file_path),
-                                         script_set)
-                print("Adding {} to id_set".format(get_script_or_integration_id(file_path)))
-            if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                add_new_object_to_id_set(collect_ids(file_path), get_playbook_data(file_path),
-                                         playbook_set)
-                print("Adding {} to id_set".format(collect_ids(file_path)))
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                add_new_object_to_id_set(collect_ids(file_path), get_playbook_data(file_path),
-                                         test_playbook_set)
-                print("Adding {} to id_set".format(collect_ids(file_path)))
-            if re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE):
-                add_new_object_to_id_set(get_script_or_integration_id(file_path), get_script_data(file_path),
-                                         script_set)
-                print("Adding {} to id_set".format(collect_ids(file_path)))
-
-    if modified_files:
-        for file_path in modified_files:
-            if re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
-                id_ = get_script_or_integration_id(file_path)
-                integration_data = get_integration_data(file_path)
-                update_object_in_id_set(id_, integration_data, file_path, integration_set)
-                print("updated {} in id_set".format(id_))
-            if re.match(SCRIPT_REGEX, file_path, re.IGNORECASE) or re.match(TEST_SCRIPT_REGEX,
-                                                                            file_path, re.IGNORECASE):
-                id_ = get_script_or_integration_id(file_path)
-                script_data = get_script_data(file_path)
-                update_object_in_id_set(id_, script_data, file_path, script_set)
-                print("updated {} in id_set".format(id_))
-            if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                id_ = collect_ids(file_path)
-                playbook_data = get_playbook_data(file_path)
-                update_object_in_id_set(id_, playbook_data, file_path, playbook_set)
-                print("updated {} in id_set".format(id_))
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                id_ = collect_ids(file_path)
-                playbook_data = get_playbook_data(file_path)
-                update_object_in_id_set(id_, playbook_data, file_path, test_playbook_set)
-                print("updated {} in id_set".format(id_))
-
-    if added_scripts:
-        for added_script_package in added_scripts:
-            unifier = Unifier(added_script_package)
-            yml_path, code = unifier.get_script_or_integration_package_data()
-            add_new_object_to_id_set(get_script_or_integration_id(yml_path),
-                                     get_script_data(yml_path, script_code=code), script_set)
-            print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))
-
-    if modified_scripts:
-        for modified_script_package in added_scripts:
-            unifier = Unifier(modified_script_package)
-            yml_path, code = unifier.get_script_or_integration_package_data()
-            update_object_in_id_set(get_script_or_integration_id(yml_path),
-                                    get_script_data(yml_path, script_code=code), yml_path, script_set)
-            print("Adding {} to id_set".format(get_script_or_integration_id(yml_path)))
-
-    if added_files or modified_files:
-        new_ids_dict = OrderedDict()
-        # we sort each time the whole set in case someone manually changed something
-        # it shouldn't take too much time
-        new_ids_dict['scripts'] = sort(script_set)
-        new_ids_dict['playbooks'] = sort(playbook_set)
-        new_ids_dict['integrations'] = sort(integration_set)
-        new_ids_dict['TestPlaybooks'] = sort(test_playbook_set)
-
-        with open('./Tests/id_set.json', 'w') as id_set_file:
-            json.dump(new_ids_dict, id_set_file, indent=4)
-
-    print("Finished updating id_set.json")

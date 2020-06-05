@@ -7,9 +7,9 @@ import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
-                                                   PACKS_PLAYBOOK_YML_REGEX,
-                                                   PACKS_TEST_PLAYBOOKS_REGEX,
-                                                   PLAYBOOKS_DIR)
+                                                   PLAYBOOK_YML_REGEX,
+                                                   PLAYBOOKS_DIR,
+                                                   TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
@@ -181,9 +181,9 @@ class TestGetRemoteFile:
 
 class TestGetMatchingRegex:
     INPUTS = [
-        ('Packs/XDR/Playbooks/XDR.yml', [PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX],
-         PACKS_PLAYBOOK_YML_REGEX),
-        ('Packs/XDR/NoMatch/XDR.yml', [PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX], False)
+        ('Packs/XDR/Playbooks/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX],
+         PLAYBOOK_YML_REGEX),
+        ('Packs/XDR/NoMatch/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX], False)
     ]
 
     @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)

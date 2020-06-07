@@ -80,6 +80,7 @@ class LintManager:
         # Check env requirements satisfied - bootstrap in use
         validate_env()
         # Get content repo object
+        is_external_repo = False
         try:
             git_repo = git.Repo(os.getcwd(),
                                 search_parent_directories=True)

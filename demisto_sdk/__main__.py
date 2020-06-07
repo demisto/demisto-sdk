@@ -422,7 +422,7 @@ def format_yml(input=None, output=None, from_version=None, no_validate=None):
               short_help="Upload integration to Demisto instance. DEMISTO_BASE_URL environment variable should contain"
                          " the Demisto server base URL. DEMISTO_API_KEY environment variable should contain a valid "
                          "Demisto API Key."
-                         " * Notes: Upload classifiers works on Cortex XSOAR from version 6.0.0 and up.*")
+                         " * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.*")
 @click.help_option(
     '-h', '--help'
 )

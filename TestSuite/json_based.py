@@ -1,8 +1,14 @@
 import json
+from pathlib import Path
 
-from TestSuite.file import File
 
+class JSONBased:
+    def __init__(self, dir_path: Path, name: str, prefix: str):
+        self._dir_path = dir_path
+        self.name = f'{prefix.rstrip("-")}-{name}.json'
+        self._file_path = dir_path / self.name
+        self.path = str(self._file_path)
+        self.write_json({})
 
-class JSONBased(File):
     def write_json(self, obj: dict):
-        self._tmp_path.write_text(json.dumps(obj))
+        self._file_path.write_text(json.dumps(obj))

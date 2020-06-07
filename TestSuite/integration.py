@@ -60,6 +60,9 @@ class Integration:
     def write_code(self, code: str):
         self._py_file.write_text(code)
 
+    def read_code(self):
+        return self._py_file.read_text()
+
     def write_yml(self, yml: dict):
         self._yml_file.write_text(yaml.dump(yml))
 

@@ -45,6 +45,7 @@ class LOG_COLORS:
     RED = colorama.Fore.RED
     GREEN = colorama.Fore.GREEN
     YELLOW = colorama.Fore.YELLOW
+    WHITE = colorama.Fore.WHITE
 
 
 LOG_VERBOSE = False
@@ -82,7 +83,7 @@ def print_color(obj, color):
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
-    Gets the project directory and returns the path of all yml and json files in it
+    Gets the project directory and returns the path of all yml, json and py files in it
     Args:
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
@@ -651,13 +652,14 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
         dict representation of the file, and the file_type, either .yml ot .json
     """
     if path:
-        if os.path.isfile(path):
-            if path.endswith('.yml'):
-                if use_ryaml:
-                    return get_ryaml(path), 'yml'
-                return get_yaml(path), 'yml'
-            elif path.endswith('.json'):
-                return get_json(path), 'json'
+        if path.endswith('.yml'):
+            if use_ryaml:
+                return get_ryaml(path), 'yml'
+            return get_yaml(path), 'yml'
+        elif path.endswith('.json'):
+            return get_json(path), 'json'
+        elif path.endswith('.py'):
+            return {}, 'py'
     return {}, None
 
 
@@ -673,6 +675,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     """
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
+
+    if file_type == 'py':
+        return 'pythonfile'
+
     if file_type == 'yml':
         if 'beta' in _dict:
             return 'betaintegration'

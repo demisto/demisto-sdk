@@ -1,4 +1,5 @@
 # Changelog
+* Added a code formatter for python files.
 * Fixed an issue where new and old classifiers where mixed on validate command.
 * Added *feedIncremental* field to the integration schema.
 * Fixed error in the **upload** command where unified YMLs were not uploaded as expected if the given input was a pack.

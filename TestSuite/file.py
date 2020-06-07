@@ -13,10 +13,10 @@ class File:
         self._tmp_path.write_text(txt)
 
     def write_bytes(self, txt: bytes):
-        return self._tmp_path.write_bytes(txt)
+        self._tmp_path.write_bytes(txt)
 
-    def read(self):
+    def read(self) -> str:
         return self._tmp_path.read_text()
 
-    def read_bytes(self):
+    def read_bytes(self) -> bytes:
         return self._tmp_path.read_bytes()

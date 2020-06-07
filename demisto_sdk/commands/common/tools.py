@@ -6,7 +6,7 @@ import os
 import re
 import shlex
 import sys
-from distutils.version import LooseVersion
+from distutils.version import LooseVersion, StrictVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
@@ -45,6 +45,7 @@ class LOG_COLORS:
     RED = colorama.Fore.RED
     GREEN = colorama.Fore.GREEN
     YELLOW = colorama.Fore.YELLOW
+    WHITE = colorama.Fore.WHITE
 
 
 LOG_VERBOSE = False
@@ -82,7 +83,7 @@ def print_color(obj, color):
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
-    Gets the project directory and returns the path of all yml and json files in it
+    Gets the project directory and returns the path of all yml, json and py files in it
     Args:
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
@@ -280,7 +281,7 @@ def get_file(method, file_path, type_of_file):
             except Exception as e:
                 print_error(
                     "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return []
+                return {}
     if type(data_dictionary) is dict:
         return data_dictionary
     return {}
@@ -496,7 +497,7 @@ def server_version_compare(v1, v2):
         negative if v2 later version than v1.
     """
 
-    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    _v1, _v2 = StrictVersion(v1), StrictVersion(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:
@@ -657,6 +658,8 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
             return get_yaml(path), 'yml'
         elif path.endswith('.json'):
             return get_json(path), 'json'
+        elif path.endswith('.py'):
+            return {}, 'py'
     return {}, None
 
 
@@ -672,6 +675,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     """
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
+
+    if file_type == 'py':
+        return 'pythonfile'
+
     if file_type == 'yml':
         if 'beta' in _dict:
             return 'betaintegration'
@@ -1086,3 +1093,17 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
+
+
+def get_code_lang(file_data: dict, file_entity: str) -> str:
+    """
+    Returns the code language by the file entity
+    :param file_data: The file data
+    :param file_entity: The file entity
+    :return: The code language
+    """
+    if file_entity == INTEGRATIONS_DIR:
+        return file_data.get('script', {}).get('type', '')
+    elif file_entity == SCRIPTS_DIR:
+        return file_data.get('type', {})
+    return ''

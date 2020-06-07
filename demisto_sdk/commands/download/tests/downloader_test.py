@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+    CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR,
@@ -125,10 +125,11 @@ class Environment:
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration',
                                                   'path': self.CUSTOM_CONTENT_INTEGRATION_PATH,
-                                                  'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml'}
+                                                  'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml',
+                                                  'code_lang': 'python'}
         self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
                                              'path': self.CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
-                                             'type': 'script', 'file_ending': 'yml'}
+                                             'type': 'script', 'file_ending': 'yml', 'code_lang': 'python'}
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'DummyPlaybook',
                                                'name': 'DummyPlaybook',
                                                'path': self.CUSTOM_CONTENT_PLAYBOOK_PATH, 'entity': 'Playbooks',
@@ -147,6 +148,20 @@ class Environment:
 
 
 class TestHelperMethods:
+    @pytest.mark.parametrize('code_lang, file_type, file_name, err_msg, output', [
+        ('javascript', 'integration', 'file name',
+         'Downloading an integration written in JavaScript is not supported.', False),
+        ('javascript', 'script', 'file name', 'Downloading a script written in JavaScript is not supported.', False),
+        ('python', 'integration', 'file name', '', True),
+    ])
+    def test_verify_code_lang(self, code_lang, file_type, file_name, err_msg, output):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            downloader.files_not_downloaded = []
+            assert downloader.verify_code_lang(code_lang, file_type, file_name) is output
+            if not output:
+                assert [file_name, err_msg] in downloader.files_not_downloaded
+
     @pytest.mark.parametrize('data, file_type, entity', [
         ({'name': 'test-pb'}, 'playbook', TEST_PLAYBOOKS_DIR),
         ({}, 'integration', INTEGRATIONS_DIR)
@@ -339,6 +354,54 @@ class TestPackHierarchy:
 
 
 class TestMergeExistingFile:
+    def test_merge_and_extract_existing_file_corrupted_dir(self, tmp_path, mocker, capsys):
+        """
+        Given
+            - The integration exist in output pack, the directory is corrupted
+            (i.e. a file is missing, for example: the image file)
+
+        When
+            - An integration about to be downloaded
+
+        Then
+            - Ensure integration is downloaded successfully
+        """
+        env = Environment(tmp_path)
+        mocker.patch.object(Downloader, 'get_corresponding_pack_file_object', return_value={})
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            ryaml = YAML()
+            ryaml.preserve_quotes = True
+            downloader.output_pack_path = env.PACK_INSTANCE_PATH
+            downloader.log_verbose = False
+            downloader.pack_content = env.PACK_CONTENT
+            downloader.run_format = False
+            downloader.num_merged_files = 0
+            downloader.num_added_files = 0
+            downloader.log_verbose = False
+            downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
+            stdout, _ = capsys.readouterr()
+            assert 'Merged' in stdout
+
+    def test_merge_and_extract_existing_file_js(self, tmp_path):
+        with patch.object(Downloader, "__init__", lambda a, b, c: None):
+            downloader = Downloader('', '')
+            ryaml = YAML()
+            ryaml.preserve_quotes = True
+            downloader.log_verbose = False
+            downloader.num_merged_files = 0
+            downloader.num_added_files = 0
+            downloader.log_verbose = False
+            downloader.files_not_downloaded = []
+            downloader.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
+            js_custom_content_object = {
+                'id': 'SumoLogic', 'name': 'SumoLogic',
+                'path': 'demisto_sdk/commands/download/tests/tests_data/integration-DummyJSIntegration.yml',
+                'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml', 'exist_in_pack': True,
+                'code_lang': 'javascript'
+            }
+            downloader.merge_and_extract_existing_file(js_custom_content_object)
+
     def test_merge_and_extract_existing_file(self, tmp_path):
         env = Environment(tmp_path)
 

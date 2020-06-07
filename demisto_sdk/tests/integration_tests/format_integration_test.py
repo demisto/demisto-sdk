@@ -275,15 +275,15 @@ def test_format_on_valid_py(mocker, repo):
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration')
     valid_py = 'test\n'
-    integration.write_code(valid_py)
+    integration.code.write(valid_py)
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=True)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=True)
     assert '=======Starting updates for file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
-    assert valid_py == integration.read_code()
+    assert valid_py == integration.code.read()
     assert '=======Finished updates for files:' in result.stdout
 
 
@@ -302,15 +302,15 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration')
     invalid_py = 'test\n\n\n\n'
-    integration.write_code(invalid_py)
+    integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
     assert '=======Starting updates for file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
-    assert invalid_py != integration.read_code()
+    assert invalid_py != integration.code.read()
     assert '=======Finished updates for files:' in result.stdout
 
 
@@ -329,15 +329,15 @@ def test_format_on_invalid_py_dict(mocker, repo):
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration')
     invalid_py = "{'test':'testing','test1':'testing1'}"
-    integration.write_code(invalid_py)
+    integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
     assert '=======Starting updates for file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
-    assert invalid_py != integration.read_code()
+    assert invalid_py != integration.code.read()
     assert '=======Finished updates for files:' in result.stdout
 
 
@@ -357,13 +357,13 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
     integration = pack.create_integration('integration')
     invalid_py = "{'test':'testing','test1':'testing1','test2':'testing2','test3':'testing3'," \
                  "'test4':'testing4','test5':'testing5','test6':'testing6'}"
-    integration.write_code(invalid_py)
+    integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.py_path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
     assert '=======Starting updates for file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
-    assert invalid_py != integration.read_code()
+    assert invalid_py != integration.code.read()
     assert '=======Finished updates for files:' in result.stdout

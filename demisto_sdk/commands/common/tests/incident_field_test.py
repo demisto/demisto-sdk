@@ -45,16 +45,18 @@ class TestIncidentFieldsValidator:
     }
 
     INPUTS_NAMES = [
-        (NAME_SANITY_FILE, True),
-        (BAD_NAME_1, False),
-        (BAD_NAME_2, False),
-        (BAD_NAME_3, False),
-        (GOOD_NAME_4, True),
-        (BAD_NAME_5, False)
+        (NAME_SANITY_FILE, False),
+        (BAD_NAME_1, True),
+        (BAD_NAME_2, True),
+        (BAD_NAME_3, True),
+        (GOOD_NAME_4, False),
+        (BAD_NAME_5, True)
     ]
 
     @pytest.mark.parametrize('current_file, answer', INPUTS_NAMES)
     def test_is_valid_name_sanity(self, current_file, answer):
+        import sys
+        import os
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file
@@ -63,7 +65,18 @@ class TestIncidentFieldsValidator:
             structure.is_valid = True
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
-            assert validator.is_valid_name() is answer
+
+            with open("file", 'w') as temp_out:
+                old_stdout = sys.stdout
+                sys.stdout = temp_out
+                validator.is_valid_name()
+                sys.stdout = old_stdout
+
+            with open('file', 'r') as temp_out:
+                output = temp_out.read()
+                assert ('IF100' in str(output)) is answer
+            # remove the temp file
+            os.system('rm -rf file')
 
     CONTENT_1 = {
         'content': True

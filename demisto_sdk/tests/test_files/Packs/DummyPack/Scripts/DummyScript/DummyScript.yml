@@ -1,7 +1,7 @@
 commonfields:
-  id: 3acaac09-476c-4be3-84a1-b79eb521e1c3
+  id: DummyScript
   version: 2
-name: dummy
+name: DummyScript
 script: ''
 type: python
 tags: []

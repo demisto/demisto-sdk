@@ -63,9 +63,8 @@ class TestSecrets:
             shutil.rmtree(TestSecrets.TEMP_DIR, ignore_errors=False, onerror=None)
 
     def test_get_diff_text_files(self):
-        changed_files = '''
-        A       Integrations/Recorded_Future/Recorded_Future.yml
-        D       Integrations/integration-Recorded_Future.yml'''
+        changed_files = '''A\tIntegrations/Recorded_Future/Recorded_Future.yml\n
+        D\tIntegrations/integration-Recorded_Future.yml'''
         get_diff = self.validator.get_diff_text_files(changed_files)
         assert 'Integrations/Recorded_Future/Recorded_Future.yml' in get_diff
 

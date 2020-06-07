@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import List, Optional
 
+from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
-from TestSuite.text_based import TextBased
 
 
 class Pack:
@@ -74,11 +74,11 @@ class Pack:
 
         self.secrets = Secrets(self._pack_path)
 
-        self.pack_ignore = TextBased(self._pack_path, '.pack-ignore')
+        self.pack_ignore = File(self._pack_path / '.pack-ignore', self.repo_path)
 
-        self.readme = TextBased(self._pack_path, 'README.md')
+        self.readme = File(self._pack_path / 'README.md', self.repo_path)
 
-        self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata.json', '')
+        self.pack_metadata = JSONBased(self._pack_path / 'pack_metadata.json', self.repo_path)
 
     def create_integration(
             self,

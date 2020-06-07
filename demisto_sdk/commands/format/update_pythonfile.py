@@ -1,4 +1,5 @@
 import subprocess
+from shutil import copy
 from typing import Tuple
 
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
@@ -43,16 +44,12 @@ class PythonFileFormat(BaseUpdate):
 
     def create_output_file(self):
         """Create output file with the data of the source file."""
-        with open(str(self.source_file), 'r') as source_file:
-            file_data = source_file.readlines()
-        with open(self.output_file, 'w') as output_file:
-            output_file.writelines(file_data)
+        copy(str(self.source_file), str(self.output_file))
 
     def run_format(self) -> int:
         print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
         py_file_path = self.source_file
-
-        if self.output_file:
+        if self.output_file != self.source_file:
             self.create_output_file()
             py_file_path = self.output_file
 

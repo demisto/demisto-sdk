@@ -1,6 +1,5 @@
 from pathlib import Path
 
-# Do not let GFRUEND change this
 import yaml
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path

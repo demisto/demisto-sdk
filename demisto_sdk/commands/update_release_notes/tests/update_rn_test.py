@@ -18,18 +18,18 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n### Integrations\n#### Hello World Integration\n- %%UPDATE_RN%%\n" \
-                          "\n### Playbooks\n#### Hello World Playbook\n- %%UPDATE_RN%%\n" \
-                          "\n### Scripts\n#### Hello World Script\n- %%UPDATE_RN%%\n" \
-                          "\n### IncidentFields\n#### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
-                          "\n### Classifiers\n#### Hello World Classifier\n- %%UPDATE_RN%%\n" \
-                          "\n### Layouts\n#### Hello World Layout\n- %%UPDATE_RN%%\n" \
-                          "\n### IncidentTypes\n#### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
-                          "\n### IndicatorTypes\n#### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
-                          "\n### Widgets\n#### Hello World Widget\n- %%UPDATE_RN%%\n" \
-                          "\n### Dashboards\n#### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
-                          "\n### Connections\n#### Hello World Connection\n- %%UPDATE_RN%%\n" \
-                          "\n### Reports\n#### Hello World Report\n- %%UPDATE_RN%%\n"
+        expected_result = "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
+                          "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
+                          "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
+                          "\n#### IncidentFields\n##### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
+                          "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
+                          "\n#### Layouts\n##### Hello World Layout\n- %%UPDATE_RN%%\n" \
+                          "\n#### IncidentTypes\n##### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
+                          "\n#### IndicatorTypes\n##### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
+                          "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n" \
+                          "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
+                          "\n#### Connections\n##### Hello World Connection\n- %%UPDATE_RN%%\n" \
+                          "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n"
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
@@ -236,12 +236,12 @@ class TestRNUpdate(unittest.TestCase):
 class TestRNUpdateUnit:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     CURRENT_RN = """
-### IncidentTypes
-#### Cortex XDR Incident
+#### IncidentTypes
+##### Cortex XDR Incident
 - %%UPDATE_RN%%
 
-### IncidentFields
-#### XDR Alerts
+#### IncidentFields
+##### XDR Alerts
 - %%UPDATE_RN%%
 """
     CHANGED_FILES = {
@@ -253,22 +253,22 @@ class TestRNUpdateUnit:
         "Sample": "Integration",
     }
     EXPECTED_RN_RES = """
-### IncidentTypes
-#### Cortex XDR Incident
+#### IncidentTypes
+##### Cortex XDR Incident
 - %%UPDATE_RN%%
 
-### IncidentFields
-#### Sample IncidentField
+#### IncidentFields
+##### Sample IncidentField
 - %%UPDATE_RN%%
 
-#### XDR Alerts
+##### XDR Alerts
 - %%UPDATE_RN%%
 
-### Integration
-#### Sample
+#### Integration
+##### Sample
 - %%UPDATE_RN%%
 
-#### Cortex XDR - IR
+##### Cortex XDR - IR
 - %%UPDATE_RN%%
 """
 

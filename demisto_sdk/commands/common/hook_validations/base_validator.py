@@ -113,7 +113,7 @@ class BaseValidator:
                 if certification != 'certified':
                     self.add_flag_to_ignore_list(file_path, 'non-certified-partner')
 
-            elif support != 'xsoar':
+            elif support == 'community':
                 self.add_flag_to_ignore_list(file_path, 'community')
 
     @staticmethod

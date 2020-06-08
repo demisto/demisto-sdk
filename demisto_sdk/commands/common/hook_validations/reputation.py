@@ -5,8 +5,8 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
-# Valid indicator type can include letters, numbers and underscores.
-VALID_INDICATOR_TYPE = '^[A-Za-z0-9_]*$'
+# Valid indicator type can include letters, numbers whitespaces, ampersands and underscores.
+VALID_INDICATOR_TYPE = '^[A-Za-z0-9_& ]*$'
 
 
 class ReputationValidator(ContentEntityValidator):

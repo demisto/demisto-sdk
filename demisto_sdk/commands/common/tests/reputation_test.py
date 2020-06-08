@@ -54,9 +54,10 @@ def test_is_id_equals_details(id_, details, is_valid):
 data_is_valid_id = [
     ("CIDR", True),
     ("host_test", True),
+    ("ipv4&ipv6", True),
+    ("ipv4 ipv6", True),
     ("ipv4-ipv6", False),
-    ("ipv4&ipv6", False),
-    ("ipv4 ipv6", False),
+    ("ipv4*ipv6", False),
 ]
 
 

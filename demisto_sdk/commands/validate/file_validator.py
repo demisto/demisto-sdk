@@ -100,7 +100,7 @@ class FilesValidator:
                  validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  configuration=Configuration()):
         self.validate_all = validate_all
-        self.branch_name = self.get_current_working_branch()
+        self.branch_name = ''
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
         if self.use_git:

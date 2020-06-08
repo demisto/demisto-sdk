@@ -100,12 +100,16 @@ class FilesValidator:
                  validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  configuration=Configuration()):
         self.validate_all = validate_all
+        self.skip_docker_checks = False
+        if self.validate_all:
+            self.skip_docker_checks = True
+
         self.branch_name = ''
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
         if self.use_git:
             print('Using git')
-            self.branch_name = self.get_current_working_branch()
+            self.branch_name = ''
             print(f'Running validation on branch {self.branch_name}')
             if self.branch_name in ['master', 'test-sdk-master']:
                 self.skip_pack_rn_validation = True
@@ -359,7 +363,7 @@ class FilesValidator:
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -369,14 +373,14 @@ class FilesValidator:
             elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
             elif checked_type(file_path, [PACKS_SCRIPT_NON_SPLIT_YML_REGEX]):
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
-                                                   branch_name=self.branch_name)
+                                                   skip_docker_check=self.skip_docker_checks)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
                 if not script_validator.is_valid_file():
@@ -394,7 +398,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
-                                                   branch_name=self.branch_name)
+                                                   skip_docker_check=self.skip_docker_checks)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -552,7 +556,7 @@ class FilesValidator:
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if not integration_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
 
@@ -566,7 +570,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
-                                                   branch_name=self.branch_name)
+                                                   skip_docker_check=self.skip_docker_checks)
 
                 if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
@@ -574,7 +578,7 @@ class FilesValidator:
             elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
 
@@ -756,7 +760,7 @@ class FilesValidator:
         elif checked_type(file_path, INTEGRATION_REGXES) or file_type == 'integration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
-                                                         branch_name=self.branch_name)
+                                                         skip_docker_check=self.skip_docker_checks)
             if not integration_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
 
@@ -765,7 +769,7 @@ class FilesValidator:
             structure_validator.file_path = file_path
             script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                print_as_warnings=self.print_ignored_errors,
-                                               branch_name=self.branch_name)
+                                               skip_docker_check=self.skip_docker_checks)
 
             if not script_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
@@ -773,7 +777,7 @@ class FilesValidator:
         elif file_type == 'betaintegration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
-                                                         branch_name=self.branch_name)
+                                                         skip_docker_check=self.skip_docker_checks)
             if not integration_validator.is_valid_beta_integration():
                 self._is_valid = False
 

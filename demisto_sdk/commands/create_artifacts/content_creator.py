@@ -278,11 +278,12 @@ class ContentCreator:
 
             shutil.copyfile(path, os.path.join(bundle, new_path))
 
-    def copy_dir_files(self, *args):
+    def copy_dir_files(self, *args, copy_md=False):
         """
         Copy the yml, md, json and zip files from inside a directory to a bundle.
 
         :param args: (source directory, destination bundle)
+        :param copy_md: flag for copy md. False in content-new.zip
         :return: None
         """
         # handle *.json files
@@ -290,7 +291,8 @@ class ContentCreator:
         # handle *.yml files
         self.copy_dir_yml(*args)
         # handle *.md files
-        self.copy_dir_md(*args)
+        if copy_md:
+            self.copy_dir_md(*args)
         # handle *.zip files
         self.add_tools_to_bundle(*args)
 
@@ -344,7 +346,7 @@ class ContentCreator:
                     continue
                 else:
                     # handle one-level deep content
-                    self.copy_dir_files(sub_dir_path, self.content_bundle)
+                    self.copy_dir_files(sub_dir_path, self.content_bundle, copy_md=True)
                     if dir_name in DIR_TO_PREFIX:
                         # then it's a directory with nested packages that need to be handled
                         # handle nested packages

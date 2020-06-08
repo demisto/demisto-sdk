@@ -150,9 +150,6 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
 
-        with open(os.path.join(self.full_output_path, 'CHANGELOG.md'), 'a') as fp:
-            fp.write("## [Unreleased]")
-
         fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 

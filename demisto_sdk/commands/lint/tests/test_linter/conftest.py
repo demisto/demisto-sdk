@@ -29,7 +29,7 @@ def demisto_content() -> Callable:
     content_path = Path(__file__).parent / 'content'
 
     # Create file structure
-    dirs = ['Integrations', 'Scripts', 'Beta_Integrations']
+    dirs = ['Integrations', 'Scripts']
     for dir_n in dirs:
         (content_path / dir_n).mkdir(parents=True)
         (content_path / 'Packs' / 'Sample' / dir_n).mkdir(parents=True)

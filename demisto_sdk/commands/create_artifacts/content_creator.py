@@ -155,7 +155,7 @@ class ContentCreator:
         """
         dest_dir_path = os.path.dirname(out_path)
         dest_file_name = os.path.basename(out_path)
-        if not dest_file_name.startswith('playbook-'):
+        if not dest_file_name.startswith('playbook-') and tools.find_type(path) == 'playbook':
             new_name = '{}{}'.format('playbook-', dest_file_name)
             out_path = os.path.join(dest_dir_path, new_name)
         shutil.copyfile(path, out_path)

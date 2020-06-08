@@ -58,7 +58,7 @@ class LayoutJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
+            print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
             self.set_layout_key()
             # version is both in layout key and in base dict
             self.set_version_to_default()
@@ -67,7 +67,7 @@ class LayoutJSONFormat(BaseUpdateJSON):
             self.set_fromVersion(from_version=self.from_version)
             super().save_json_to_destination_file()
 
-            print_color(F'=======Finished updates for files: {self.output_file}=======', LOG_COLORS.YELLOW)
+            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE

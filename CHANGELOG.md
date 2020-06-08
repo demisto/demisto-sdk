@@ -1,10 +1,12 @@
 # Changelog
+* Added a code formatter for python files.
 * Fixed an issue where new and old classifiers where mixed on validate command.
 * Added *feedIncremental* field to the integration schema.
 * Fixed error in the **upload** command where unified YMLs were not uploaded as expected if the given input was a pack.
 * Fixed an issue where the **secrets** command failed due to a space character in the file name.
 * Ignored RN validation for *NonSupported* pack.
 * You can now ignore IF107, SC100, RP102 error codes in the **validate** command.
+* Fixed a bug where the **download** command was crashing when received as input a JS integration/script
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

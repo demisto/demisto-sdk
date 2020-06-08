@@ -80,14 +80,16 @@ class LintManager:
         # Check env requirements satisfied - bootstrap in use
         validate_env()
         # Get content repo object
+        is_external_repo = False
         try:
             git_repo = git.Repo(os.getcwd(),
                                 search_parent_directories=True)
             remote_url = git_repo.remote().urls.__next__()
-            if 'content' not in remote_url:
-                raise git.InvalidGitRepositoryError
+            is_fork_repo = 'content' in remote_url
+            is_external_repo = tools.is_external_repository()
 
-            is_private_repo = tools.is_private_repository()
+            if not is_fork_repo and not is_external_repo:
+                raise git.InvalidGitRepositoryError
 
             facts["content_repo"] = git_repo
             logger.debug(f"Content path {git_repo.working_dir}")
@@ -110,7 +112,7 @@ class LintManager:
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
-            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_private_repo=is_private_repo)
+            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_external_repo=is_external_repo)
             logger.debug("Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error(

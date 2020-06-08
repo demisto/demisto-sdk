@@ -10,9 +10,7 @@ import zipfile
 from typing import List
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.constants import (BASE_PACK,
-                                                   BETA_INTEGRATIONS_DIR,
-                                                   CLASSIFIERS_DIR,
+from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DIR_TO_PREFIX,
@@ -59,7 +57,6 @@ class ContentCreator:
 
         # directories in which content resides
         self.content_directories = [
-            BETA_INTEGRATIONS_DIR,
             CLASSIFIERS_DIR,
             CONNECTIONS_DIR,
             DASHBOARDS_DIR,
@@ -104,13 +101,12 @@ class ContentCreator:
     def create_unifieds_and_copy(self, package_dir, dest_dir='', skip_dest_dir=''):
         """
         For directories that have packages, aka subdirectories for each integration/script
-        e.g. "Integrations", "Beta_Integrations", "Scripts". Creates a unified yml and writes
+        e.g. "Integrations", "Scripts". Creates a unified yml and writes
         it to the dest_dir
 
         Arguments:
             package_dir: (str)
-                Path to directory in which there are package subdirectories. e.g. "Integrations",
-                "Beta_Integrations", "Scripts"
+                Path to directory in which there are package subdirectories. e.g. "Integrations", "Scripts"
             dest_dir: (str)
                 Path to destination directory to which the unified yml for a package should be written
             skip_dest_dir: (str)
@@ -159,7 +155,7 @@ class ContentCreator:
         """
         dest_dir_path = os.path.dirname(out_path)
         dest_file_name = os.path.basename(out_path)
-        if not dest_file_name.startswith('playbook-'):
+        if not dest_file_name.startswith('playbook-') and tools.find_type(path) == 'playbook':
             new_name = '{}{}'.format('playbook-', dest_file_name)
             out_path = os.path.join(dest_dir_path, new_name)
         shutil.copyfile(path, out_path)

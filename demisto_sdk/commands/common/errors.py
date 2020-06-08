@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
 
 FOUND_FILES_AND_ERRORS = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100']
 
 PRESET_ERROR_TO_IGNORE = {
 }
@@ -20,6 +20,7 @@ ERROR_CODE = {
     "wrong_version": "BA100",
     "id_should_equal_name": "BA101",
     "file_type_not_supported": "BA102",
+    "file_name_include_spaces_error": "BA103",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -107,6 +108,7 @@ ERROR_CODE = {
     "from_version_modified_after_rename": "IF110",
     "incident_field_type_change": "IF111",
     "incident_type_integer_field": "IT100",
+    "incident_type_invalid_playbook_id_field": "IT101",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -183,6 +185,11 @@ class Errors:
         return "The file type is not supported in validate command\n " \
                "validate' command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+
+    @staticmethod
+    @error_code_decorator
+    def file_name_include_spaces_error(file_name):
+        return "Please remove spaces from the file's name: '{}'.".format(file_name)
 
     @staticmethod
     @error_code_decorator
@@ -508,7 +515,7 @@ class Errors:
                f'Please add:\n{missing_test_playbook_configurations}\nto {CONF_PATH} ' \
                f'path under \'tests\' key.\n' \
                f'If you don\'t want to add a test playbook for this integration, please add: \n{no_tests_key}to the ' \
-               f'file {file_path} or run \'demisto-sdk format -p {file_path}\''
+               f'file {file_path} or run \'demisto-sdk format -i {file_path}\''
 
     @staticmethod
     @error_code_decorator
@@ -691,6 +698,11 @@ class Errors:
     @error_code_decorator
     def incident_type_integer_field(field):
         return f'The field {field} needs to be a positive integer. Please add it.\n'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_playbook_id_field():
+        return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
 
     @staticmethod
     @error_code_decorator

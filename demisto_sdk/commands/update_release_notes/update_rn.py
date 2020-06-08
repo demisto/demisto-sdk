@@ -15,7 +15,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_latest_release_notes_text,
                                                pack_name_to_path, print_color,
-                                               print_error, print_warning, run_command)
+                                               print_error, print_warning,
+                                               run_command)
 
 
 class UpdateRN:

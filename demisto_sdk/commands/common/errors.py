@@ -425,7 +425,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
-        return f'The docker image tag is not the latest, please update it.\n' \
+        return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
                f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
                f'You can check for the most updated version of {docker_image_name} ' \

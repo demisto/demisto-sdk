@@ -60,6 +60,7 @@ ERROR_CODE = {
     "docker_tag_not_fetched": "DO103",
     "no_docker_tag": "DO104",
     "docker_not_formatted_correctly": "DO105",
+    "docker_not_on_the_latest_tag": "DO106",
     "id_set_conflicts": "ID100",
     "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
@@ -420,6 +421,15 @@ class Errors:
     @error_code_decorator
     def docker_not_formatted_correctly(docker_image):
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
+
+    @staticmethod
+    @error_code_decorator
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
+        return f'The docker image tag is not the latest, please update it.\n' \
+               f'The docker image tag in the yml file is: {docker_image_tag}\n' \
+               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
+               f'You can check for the most updated version of {docker_image_name} ' \
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
 
     @staticmethod
     @error_code_decorator

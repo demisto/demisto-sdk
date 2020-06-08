@@ -56,6 +56,7 @@ class ScriptValidator(ContentEntityValidator):
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
         """Check whether the script is valid or not"""
+        print(self.is_docker_image_valid())
         is_script_valid = all([
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),

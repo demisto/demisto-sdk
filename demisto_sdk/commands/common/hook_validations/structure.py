@@ -114,8 +114,9 @@ class StructureValidator(BaseValidator):
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')
             log.setLevel(logging.WARNING)
+            scheme_file_name = 'integration' if self.scheme_name == 'betaintegration' else self.scheme_name
             path = os.path.normpath(
-                os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
+                os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))
             core = Core(source_file=self.file_path,
                         schema_files=[path])
             core.validate(raise_exception=True)

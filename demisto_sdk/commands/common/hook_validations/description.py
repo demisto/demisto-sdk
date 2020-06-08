@@ -67,7 +67,7 @@ class DescriptionValidator(BaseValidator):
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+                md_file_path = glob.glob(os.path.join(self.file_path.split('.')[0], '_description.md'))[0]
             except IndexError:
                 print_warning("No detailed description file was found in the package {}."
                               " Consider adding one.".format(package_path))

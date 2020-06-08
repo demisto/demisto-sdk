@@ -142,7 +142,7 @@ class TestIntegration:
         - Ensure failure message on non-latest docker image.
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        runner = CliRunner(echo_stdin=True)
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_integration_path, "--no-conf-json"])
 
         # assert result.exit_code == 1  # will be fixed later

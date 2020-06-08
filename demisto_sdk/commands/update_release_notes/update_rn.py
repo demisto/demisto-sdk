@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_latest_release_notes_text,
                                                pack_name_to_path, print_color,
-                                               print_error, print_warning)
+                                               print_error, print_warning, run_command)
 
 
 class UpdateRN:
@@ -37,6 +37,8 @@ class UpdateRN:
                           f" is not versioned.")
         else:
             try:
+                if self.is_bump_required():
+                    self.update_type = "revision"
                 new_version, new_metadata = self.bump_version_number(self.pre_release)
             except ValueError as e:
                 print_error(e)
@@ -61,6 +63,12 @@ class UpdateRN:
             print_error(f'"{self.metadata_path}" file does not exist, create one in the root of the pack')
             return False
 
+        return True
+
+    def is_bump_required(self):
+        diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
+        if "currentVersion" in diff:
+            return False
         return True
 
     def find_added_pack_files(self):

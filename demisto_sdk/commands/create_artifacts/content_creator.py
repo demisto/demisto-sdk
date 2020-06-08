@@ -278,7 +278,7 @@ class ContentCreator:
 
             shutil.copyfile(path, os.path.join(bundle, new_path))
 
-    def copy_dir_files(self, *args, copy_md=False):
+    def copy_dir_files(self, *args, copy_md=True):
         """
         Copy the yml, md, json and zip files from inside a directory to a bundle.
 

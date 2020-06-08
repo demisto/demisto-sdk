@@ -469,7 +469,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-                pass
+                click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
             else:
                 error_message, error_code = Errors.file_type_not_supported()
@@ -639,7 +639,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-                pass
+                click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
             else:
                 error_message, error_code = Errors.file_type_not_supported()
@@ -828,10 +828,6 @@ class FilesValidator:
             if not classifier_validator.is_valid_classifier(validate_rn=False):
                 self._is_valid = False
 
-        # elif 'CHANGELOG' in file_path:
-        #     # don't check for CHANGELOG files
-        #     pass
-
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
@@ -868,7 +864,9 @@ class FilesValidator:
 
                     if os.path.isfile(file_path):
                         is_yml_file = file_path.endswith('.yml') and \
-                            dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+                            dir_name in (constants.INTEGRATIONS_DIR,
+                                         constants.SCRIPTS_DIR,
+                                         constants.PLAYBOOKS_DIR) and (not file_path.endswith('_unified.yml'))
 
                         is_json_file = file_path.endswith('.json') and \
                             dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
@@ -887,7 +885,8 @@ class FilesValidator:
                                 is_yml_file = inner_file_path.endswith('.yml') and \
                                     (f'/{constants.INTEGRATIONS_DIR}/' in inner_file_path or
                                      f'/{constants.SCRIPTS_DIR}/' in inner_file_path or
-                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path)
+                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path) and \
+                                    not inner_file_path.endswith('_unified.yml')
 
                                 is_md_file = inner_file_path.endswith('README.md')
 
@@ -936,7 +935,9 @@ class FilesValidator:
 
                     if os.path.isfile(file_path):
                         is_yml_file = file_path.endswith('.yml') and \
-                            dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+                            dir_name in (constants.INTEGRATIONS_DIR,
+                                         constants.SCRIPTS_DIR,
+                                         constants.PLAYBOOKS_DIR) and not file_path.endswith('_unified.yml')
 
                         is_json_file = file_path.endswith('.json') and \
                             dir_name not in (
@@ -959,7 +960,8 @@ class FilesValidator:
                                 is_yml_file = inner_file_path.endswith('.yml') and \
                                     (f'/{constants.INTEGRATIONS_DIR}/' in inner_file_path or
                                      f'/{constants.SCRIPTS_DIR}/' in inner_file_path or
-                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path)
+                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path) and \
+                                    not inner_file_path.endswith('_unified.yml')
 
                                 if is_yml_file:
                                     print("Validating {}".format(inner_file_path))
@@ -977,6 +979,7 @@ class FilesValidator:
             (bool). Whether the structure is valid or not.
         """
         if self.validate_all:
+            self.validate_all_files_schema()
             self.validate_all_files(self.skip_conf_json)
             return self._is_valid
 

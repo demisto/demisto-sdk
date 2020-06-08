@@ -18,8 +18,8 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
-                                               get_child_files, get_depth,
-                                               get_dict_from_file,
+                                               get_child_files, get_code_lang,
+                                               get_depth, get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_files_in_dir, get_json,
@@ -347,7 +347,7 @@ class Downloader:
         exist_in_pack: bool = False
 
         for entity_instance_object in self.pack_content[entity]:
-            if entity_instance_object.get(name):
+            if name in entity_instance_object:
                 exist_in_pack = True
 
         return exist_in_pack
@@ -363,7 +363,7 @@ class Downloader:
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
 
-        return {
+        custom_content_object: dict = {
             'id': file_id,
             'name': file_name,
             'path': file_path,
@@ -371,6 +371,12 @@ class Downloader:
             'type': file_type,
             'file_ending': file_ending,
         }
+
+        file_code_language = get_code_lang(file_data, file_entity)
+        if file_code_language:
+            custom_content_object['code_lang'] = file_code_language
+
+        return custom_content_object
 
     @staticmethod
     def file_type_to_entity(file_data: dict, file_type: str) -> str:
@@ -419,6 +425,24 @@ class Downloader:
             dir_name = dir_name.replace(separator, '')
         return dir_name
 
+    def verify_code_lang(self, code_lang: str, file_type: str, file_name: str) -> bool:
+        """
+        Verifies the code language of the integration/script is not JavaScript
+        :param code_lang: The code language
+        :param file_type: The file type
+        :param file_name: The file name
+        :return: A boolean indicates whether the code language is JavaScript or not
+        """
+        if not code_lang or code_lang == 'javascript':
+            if file_type == 'integration':
+                reason = 'Downloading an integration written in JavaScript is not supported.'
+                self.files_not_downloaded.append([file_name, reason])
+            elif file_type == 'script':
+                reason = 'Downloading a script written in JavaScript is not supported.'
+                self.files_not_downloaded.append([file_name, reason])
+            return False
+        return True
+
     def merge_into_pack(self) -> None:
         """
         Merges the custom content into the output pack.
@@ -457,6 +481,11 @@ class Downloader:
         file_name: str = custom_content_object['name']
         file_type: str = custom_content_object['type']
         file_entity: str = custom_content_object['entity']
+
+        file_code_language: str = custom_content_object.get('code_lang', '')
+        if not self.verify_code_lang(file_code_language, file_type, file_name):
+            return
+
         base_name: str = self.create_dir_name(file_name)
         temp_dir = mkdtemp()
 
@@ -476,7 +505,11 @@ class Downloader:
             searched_basename: str = self.get_searched_basename(file_name, ex_file_ending, ex_file_detail)
             corresponding_pack_file_object: dict = self.get_corresponding_pack_file_object(searched_basename,
                                                                                            corresponding_pack_object)
-            corresponding_pack_file_path: str = corresponding_pack_file_object['path']
+            if not corresponding_pack_file_object:
+                corresponding_pack_file_path: str = os.path.join(self.output_pack_path, file_entity,
+                                                                 self.create_dir_name(file_name), searched_basename)
+            else:
+                corresponding_pack_file_path = corresponding_pack_file_object['path']
             # We use "smart" merge only for yml files (py, png  & md files to be moved regularly)
             if ex_file_ending == 'yml':
                 # adding the deleted fields (by Demisto) of the old yml/json file to the custom content file.
@@ -486,7 +519,7 @@ class Downloader:
             except shutil.Error as e:
                 print_color(e, LOG_COLORS.RED)
                 raise
-            self.format_file(corresponding_pack_file_path, corresponding_pack_file_object['file_ending'])
+            self.format_file(corresponding_pack_file_path, ex_file_ending)
 
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -536,6 +569,10 @@ class Downloader:
         file_path: str = custom_content_object['path']
         file_type: str = custom_content_object['type']
         file_name: str = custom_content_object['name']
+
+        file_code_language: str = custom_content_object.get('code_lang', '')
+        if not self.verify_code_lang(file_code_language, file_type, file_name):
+            return
 
         dir_output_path: str = os.path.join(self.output_pack_path, file_entity)
         # dir name should be the same as file name without separators mentioned in constants.py
@@ -638,13 +675,15 @@ class Downloader:
             ryaml.preserve_quotes = True  # type: ignore
             with open(file_path_to_write, 'r') as yf:
                 file_yaml_object = ryaml.load(yf)
-            merge(file_yaml_object, preserved_data)
+            if pack_obj_data:
+                merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
                 ryaml.dump(file_yaml_object, yf)
 
         elif file_ending == 'json':
             file_data: dict = get_json(file_path_to_write)
-            merge(file_data, preserved_data)
+            if pack_obj_data:
+                merge(file_data, preserved_data)
             json_depth: int = get_depth(file_data)
             with open(file_path_to_write, 'w') as jf:
                 json.dump(obj=file_data, fp=jf, indent=json_depth)

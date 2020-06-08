@@ -5,6 +5,7 @@ SCHEMAS_PATH = "schemas"
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
 SKIP_RETURN_CODE = 2
+SKIP_VALIDATE_PY_RETURN_CODE = 3
 
 ARGUMENTS_DEFAULT_VALUES = {
     'content': (True, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat']),

@@ -1,6 +1,7 @@
 from typing import Any
 
-from demisto_sdk.commands.common.constants import (CONF_PATH,
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
+                                                   CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
@@ -607,23 +608,23 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return "No detailed description file was found in the package. Please add one, " \
-               "and make sure it includes the beta disclaimer note." \
-               "It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
+        return f"No detailed description file was found in the package. Please add one, " \
+               f"and make sure it includes the beta disclaimer note." \
+               f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_description():
-        return "The detailed description in beta integration package " \
-               "dose not contain the beta disclaimer note. It should contain the string in constant" \
-               "\"BETA_INTEGRATION_DISCLAIMER\"."
+        return f"The detailed description in beta integration package " \
+               f"dose not contain the beta disclaimer note. Add the following to the description:\n" \
+               f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_yml():
-        return "The detailed description field in beta integration " \
-               "dose not contain the beta disclaimer note. It should contain the string in constant" \
-               " \"BETA_INTEGRATION_DISCLAIMER\"."
+        return f"The detailed description field in beta integration " \
+               f"dose not contain the beta disclaimer note. Add the following to the detailed description:\n" \
+               f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator

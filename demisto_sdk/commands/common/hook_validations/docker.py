@@ -34,6 +34,7 @@ class DockerImageValidator(BaseValidator):
         self.file_path = yml_file_path
         self.yml_file = get_yaml(yml_file_path)
         self.py_version = self.get_python_version()
+        self.code_type = self.get_code_type()
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get('fromversion', '0')
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
@@ -41,10 +42,16 @@ class DockerImageValidator(BaseValidator):
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image)
 
     def is_docker_image_valid(self):
+        # javascript code should not check docker
+        if self.code_type == 'javascript':
+            return True
+
         if not self.docker_image_latest_tag:
             self.is_valid = False
+
         elif not self.is_docker_image_latest_tag():
             self.is_valid = False
+
         return self.is_valid
 
     def is_docker_image_latest_tag(self):
@@ -86,6 +93,13 @@ class DockerImageValidator(BaseValidator):
                 self.is_latest_tag = False
 
         return self.is_latest_tag
+
+    def get_code_type(self):
+        if self.is_integration:
+            code_type = self.yml_file.get('script').get('type', 'python')
+        else:
+            code_type = self.yml_file.get('type', 'python')
+        return code_type
 
     def get_python_version(self):
         if self.is_integration:

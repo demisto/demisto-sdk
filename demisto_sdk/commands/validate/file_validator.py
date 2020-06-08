@@ -979,8 +979,8 @@ class FilesValidator:
             (bool). Whether the structure is valid or not.
         """
         if self.validate_all:
-            self.validate_all_files(self.skip_conf_json)
             self.validate_all_files_schema()
+            self.validate_all_files(self.skip_conf_json)
             return self._is_valid
 
         if not self.skip_conf_json:

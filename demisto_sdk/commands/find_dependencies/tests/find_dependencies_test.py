@@ -85,6 +85,9 @@ class TestIdSetFilters:
                     "implementing_scripts": [
                         "ExpanseParseRawIncident"
                     ],
+                    "tests": [
+                        "No tests (auto formatted)"
+                    ],
                     "pack": "Expanse"
                 }
             }

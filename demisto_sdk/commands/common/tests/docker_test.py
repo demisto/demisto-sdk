@@ -171,6 +171,7 @@ def test_is_docker_image_latest_tag_with_default_image():
         docker_image_validator.yml_file = {}
         docker_image_validator.file_path = "PATH"
         docker_image_validator.ignored_errors = {}
+        docker_image_validator.code_type = 'python'
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
 
@@ -203,6 +204,7 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
         docker_image_validator.docker_image_latest_tag = 'latest'
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.file_path = "PATH"
+        docker_image_validator.code_type = 'python'
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
@@ -232,6 +234,7 @@ def test_is_docker_image_latest_tag_with_latest_tag():
         docker_image_validator.file_path = "path"
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.code_type = 'python'
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
@@ -262,6 +265,7 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
         docker_image_validator.file_path = "path"
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.code_type = 'python'
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
@@ -291,6 +295,7 @@ def test_is_docker_image_latest_tag_without_tag():
         docker_image_validator.file_path = "path"
         docker_image_validator.docker_image_latest_tag = ''
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.code_type = 'python'
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'

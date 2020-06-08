@@ -97,7 +97,7 @@ class FilesValidator:
 
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+                 validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  configuration=Configuration()):
         self.validate_all = validate_all
         self.branch_name = ''
@@ -121,8 +121,8 @@ class FilesValidator:
         self.file_path = file_path
         self.changed_pack_data = set()
 
-        self.is_private_repo = is_private_repo
-        if is_private_repo:
+        self.is_external_repo = is_external_repo
+        if is_external_repo:
             print('Running in a private repository')
             self.skip_conf_json = True  # private repository don't have conf.json file
 
@@ -363,7 +363,7 @@ class FilesValidator:
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
 
-                if not integration_validator.is_valid_file():
+                if not integration_validator.is_valid_file(skip_test_conf=self.skip_conf_json):
                     self._is_valid = False
 
             elif file_type == 'betaintegration':
@@ -553,7 +553,7 @@ class FilesValidator:
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
                                                              branch_name=self.branch_name)
-                if not integration_validator.is_valid_file(validate_rn=False):
+                if not integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json):
                     self._is_valid = False
 
             elif checked_type(file_path, PACKAGE_SCRIPTS_REGEXES) or file_type == 'script':
@@ -757,7 +757,7 @@ class FilesValidator:
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
                                                          branch_name=self.branch_name)
-            if not integration_validator.is_valid_file(validate_rn=False):
+            if not integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json):
                 self._is_valid = False
 
         elif checked_type(file_path, YML_ALL_SCRIPTS_REGEXES) or file_type == 'script':

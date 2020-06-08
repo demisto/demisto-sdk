@@ -100,12 +100,11 @@ class FilesValidator:
                  validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  configuration=Configuration()):
         self.validate_all = validate_all
-        self.branch_name = ''
+        self.branch_name = self.get_current_working_branch()
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
         if self.use_git:
             print('Using git')
-            self.branch_name = self.get_current_working_branch()
             print(f'Running validation on branch {self.branch_name}')
             if self.branch_name in ['master', 'test-sdk-master']:
                 self.skip_pack_rn_validation = True
@@ -469,7 +468,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-                pass
+                click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
             else:
                 error_message, error_code = Errors.file_type_not_supported()
@@ -639,7 +638,7 @@ class FilesValidator:
                     self._is_valid = False
 
             elif checked_type(file_path, CHECKED_TYPES_REGEXES):
-                pass
+                click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
             else:
                 error_message, error_code = Errors.file_type_not_supported()
@@ -828,10 +827,6 @@ class FilesValidator:
             if not classifier_validator.is_valid_classifier(validate_rn=False):
                 self._is_valid = False
 
-        # elif 'CHANGELOG' in file_path:
-        #     # don't check for CHANGELOG files
-        #     pass
-
         elif checked_type(file_path, CHECKED_TYPES_REGEXES):
             click.secho(f'Could not find validations for file {file_path}', fg='yellow')
 
@@ -868,7 +863,9 @@ class FilesValidator:
 
                     if os.path.isfile(file_path):
                         is_yml_file = file_path.endswith('.yml') and \
-                            dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+                            dir_name in (constants.INTEGRATIONS_DIR,
+                                         constants.SCRIPTS_DIR,
+                                         constants.PLAYBOOKS_DIR) and (not file_path.endswith('_unified.yml'))
 
                         is_json_file = file_path.endswith('.json') and \
                             dir_name not in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
@@ -887,7 +884,8 @@ class FilesValidator:
                                 is_yml_file = inner_file_path.endswith('.yml') and \
                                     (f'/{constants.INTEGRATIONS_DIR}/' in inner_file_path or
                                      f'/{constants.SCRIPTS_DIR}/' in inner_file_path or
-                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path)
+                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path) and \
+                                    not inner_file_path.endswith('_unified.yml')
 
                                 is_md_file = inner_file_path.endswith('README.md')
 
@@ -936,7 +934,9 @@ class FilesValidator:
 
                     if os.path.isfile(file_path):
                         is_yml_file = file_path.endswith('.yml') and \
-                            dir_name in (constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
+                            dir_name in (constants.INTEGRATIONS_DIR,
+                                         constants.SCRIPTS_DIR,
+                                         constants.PLAYBOOKS_DIR) and not file_path.endswith('_unified.yml')
 
                         is_json_file = file_path.endswith('.json') and \
                             dir_name not in (
@@ -959,7 +959,8 @@ class FilesValidator:
                                 is_yml_file = inner_file_path.endswith('.yml') and \
                                     (f'/{constants.INTEGRATIONS_DIR}/' in inner_file_path or
                                      f'/{constants.SCRIPTS_DIR}/' in inner_file_path or
-                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path)
+                                     f'/{constants.PLAYBOOKS_DIR}/' in inner_file_path) and \
+                                    not inner_file_path.endswith('_unified.yml')
 
                                 if is_yml_file:
                                     print("Validating {}".format(inner_file_path))
@@ -978,6 +979,7 @@ class FilesValidator:
         """
         if self.validate_all:
             self.validate_all_files(self.skip_conf_json)
+            self.validate_all_files_schema()
             return self._is_valid
 
         if not self.skip_conf_json:

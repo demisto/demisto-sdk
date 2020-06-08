@@ -702,6 +702,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             return 'classifier_5_9_9'
         elif 'transformer' in _dict and 'keyTypeMap' in _dict:
             return 'classifier'
+        elif 'canvasContextConnections' in _dict:
+            return 'canvas-context-connections'
         elif 'mapping' in _dict:
             return 'mapper'
         elif 'layout' in _dict or 'kind' in _dict:

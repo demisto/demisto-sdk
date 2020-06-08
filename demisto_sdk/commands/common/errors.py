@@ -109,6 +109,7 @@ ERROR_CODE = {
     "from_version_modified_after_rename": "IF110",
     "incident_field_type_change": "IF111",
     "incident_type_integer_field": "IT100",
+    "incident_type_invalid_playbook_id_field": "IT101",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -707,6 +708,11 @@ class Errors:
     @error_code_decorator
     def incident_type_integer_field(field):
         return f'The field {field} needs to be a positive integer. Please add it.\n'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_playbook_id_field():
+        return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
 
     @staticmethod
     @error_code_decorator

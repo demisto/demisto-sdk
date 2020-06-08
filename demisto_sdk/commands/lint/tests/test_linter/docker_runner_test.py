@@ -40,8 +40,6 @@ class TestCreateImage:
 
         assert act_test_image_id == exp_test_image_id
         assert act_errors == exp_errors
-        # Due to some mocker issues
-        assert linter_obj._docker_client.images.build().__getitem__.call_count == 2
 
 
 class TestPylint:

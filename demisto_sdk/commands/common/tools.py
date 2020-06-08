@@ -680,37 +680,50 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
         return 'pythonfile'
 
     if file_type == 'yml':
-        if 'beta' in _dict:
-            return 'betaintegration'
         if 'category' in _dict:
+            if 'beta' in _dict:
+                return 'betaintegration'
+
             return 'integration'
+
         elif 'script' in _dict:
             return 'script'
+
         elif 'tasks' in _dict:
             return 'playbook'
 
     elif file_type == 'json':
         if 'widgetType' in _dict:
             return 'widget'
+
         elif 'reportType' in _dict:
             return 'report'
+
         elif 'preProcessingScript' in _dict:
             return 'incidenttype'
+
         elif 'regex' in _dict:
             return 'reputation'
+
         elif 'brandName' in _dict and 'transformer' in _dict:
             return 'classifier_5_9_9'
+
         elif 'transformer' in _dict and 'keyTypeMap' in _dict:
             return 'classifier'
+
         elif 'canvasContextConnections' in _dict:
             return 'canvas-context-connections'
+
         elif 'mapping' in _dict:
             return 'mapper'
+
         elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'
+
             else:
                 return 'dashboard'
+
         # When using it for all files validation- sometimes 'id' can be integer
         elif 'id' in _dict:
             if isinstance(_dict.get('id'), str):

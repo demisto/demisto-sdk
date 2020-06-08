@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
 
 FOUND_FILES_AND_ERRORS = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100', 'IF106']
 
 PRESET_ERROR_TO_IGNORE = {
 }

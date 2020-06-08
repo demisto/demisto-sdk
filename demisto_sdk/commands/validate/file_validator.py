@@ -107,7 +107,7 @@ class FilesValidator:
         self.skip_pack_rn_validation = skip_pack_rn_validation
         if self.use_git:
             print('Using git')
-            self.branch_name = ''
+            self.branch_name = self.get_current_working_branch()
             print(f'Running validation on branch {self.branch_name}')
             if self.branch_name in ['master', 'test-sdk-master']:
                 self.skip_pack_rn_validation = True

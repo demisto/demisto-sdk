@@ -100,9 +100,7 @@ class FilesValidator:
                  validate_all=False, is_private_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  configuration=Configuration()):
         self.validate_all = validate_all
-        self.skip_docker_checks = False
-        if self.validate_all:
-            self.skip_docker_checks = True
+        self.skip_docker_checks = True if self.validate_all else False
 
         self.branch_name = ''
         self.use_git = use_git

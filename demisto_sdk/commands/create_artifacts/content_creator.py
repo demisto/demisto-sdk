@@ -346,7 +346,7 @@ class ContentCreator:
                     continue
                 else:
                     # handle one-level deep content
-                    self.copy_dir_files(sub_dir_path, self.content_bundle, copy_md=False)
+                    self.copy_dir_files(sub_dir_path, self.content_bundle)
                     if dir_name in DIR_TO_PREFIX:
                         # then it's a directory with nested packages that need to be handled
                         # handle nested packages
@@ -497,7 +497,7 @@ class ContentCreator:
 
             for content_dir in self.content_directories:
                 print(f'Copying dir {content_dir} to bundles...')
-                self.copy_dir_files(content_dir, self.content_bundle)
+                self.copy_dir_files(content_dir, self.content_bundle, copy_md=False)
 
             self.copy_test_files()
 

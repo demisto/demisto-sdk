@@ -345,7 +345,7 @@ class ContentCreator:
                 if dir_name == 'TestPlaybooks':
                     self.copy_test_files(sub_dir_path)
                 elif dir_name == RELEASE_NOTES_DIR:
-                    continue
+                    self.copy_test_files(sub_dir_path)
                 else:
                     # handle one-level deep content
                     self.copy_dir_files(sub_dir_path, self.content_bundle)

@@ -6,7 +6,7 @@ import os
 import re
 import shlex
 import sys
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output

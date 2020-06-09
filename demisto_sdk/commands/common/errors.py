@@ -97,6 +97,7 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
     "description_in_package_and_yml": "DS103",
+    "no_description_file_warning": "DS104",
     "invalid_incident_field_name": "IF100",
     "invalid_incident_field_content_key_value": "IF101",
     "invalid_incident_field_system_key_value": "IF102",
@@ -642,6 +643,11 @@ class Errors:
     def description_in_package_and_yml():
         return "A description was found both in the " \
                "package and in the yml, please update the package."
+
+    @staticmethod
+    @error_code_decorator
+    def no_description_file_warning():
+        return f"No detailed description file was found. Consider adding one."
 
     @staticmethod
     @error_code_decorator

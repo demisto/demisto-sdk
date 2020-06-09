@@ -1,12 +1,13 @@
 import glob
 
+import click
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_INTEGRATION_YML_REGEX)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import get_yaml, os, print_warning, re
+from demisto_sdk.commands.common.tools import get_yaml, os, re
 
 
 class DescriptionValidator(BaseValidator):
@@ -68,10 +69,12 @@ class DescriptionValidator(BaseValidator):
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+                path_without_extension = os.path.splitext(self.file_path)[0]
+                md_file_path = glob.glob(os.path.join(path_without_extension, '_description.md'))[0]
             except IndexError:
-                print_warning("No detailed description file was found in the package {}."
-                              " Consider adding one.".format(package_path))
+                error_message, error_code = Errors.no_description_file_warning()
+                click.secho(f"{self.file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n", fg="yellow")
+
             if md_file_path:
                 is_description_in_package = True
 

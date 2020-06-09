@@ -179,7 +179,6 @@ script:
     execution: false
     name: azure-get-indicators
     outputs:
-  dockerimage: demisto/python:2.7.17.6981
   feed: true
   isfetch: false
   longRunning: false

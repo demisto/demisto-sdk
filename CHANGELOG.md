@@ -7,7 +7,12 @@
 * Fixed an issue where the **secrets** command failed due to a space character in the file name.
 * Ignored RN validation for *NonSupported* pack.
 * You can now ignore IF107, SC100, RP102 error codes in the **validate** command.
-* Fixed a bug where the **download** command was crashing when received as input a JS integration/script
+* Fixed an issue where the **download** command was crashing when received as input a JS integration or script.
+* Fixed an issue where **validate** command checked docker image for JS integrations and scripts.
+* **validate** command now checks scheme for reports and connections.
+* Fixed an issue where **validate** command checked docker when running on all files.
+* Fixed an issue where **validate** command did not fail when docker image was not on the latest numeric tag.
+* Fixed an issue where beta integrations were not validated correctly in **validate** command.
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

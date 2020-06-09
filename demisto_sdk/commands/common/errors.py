@@ -647,7 +647,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def no_description_file_warning():
-        return f"No detailed description file was found. Consider adding one."
+        return "No detailed description file was found. Consider adding one."
 
     @staticmethod
     @error_code_decorator

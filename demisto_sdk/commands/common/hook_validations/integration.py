@@ -58,11 +58,12 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False) -> bool:
         """Check whether the Integration is valid or not
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
+                skip_test_conf (bool): If true then will skip test playbook configuration validation
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -84,8 +85,11 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.are_tests_configured()
         ]
+
+        if not skip_test_conf:
+            answers.append(self.are_tests_configured())
+
         return all(answers)
 
     def are_tests_configured(self) -> bool:

@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
+import demisto_sdk.commands.common.tools as tools
 import git
 import requests
 import urllib3
@@ -762,13 +763,14 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-def is_private_repository():
+def is_external_repository():
     """
     Returns True if script executed from private repository
 
     """
     git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    return 'content-external-template' in git_repo.remote().urls.__next__()
+    private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+    return os.path.exists(private_settings_path)
 
 
 def get_content_path() -> str:
@@ -779,8 +781,10 @@ def get_content_path() -> str:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         remote_url = git_repo.remote().urls.__next__()
+        is_fork_repo = 'content' in remote_url
+        is_external_repo = tools.is_external_repository()
 
-        if 'content' not in remote_url:
+        if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
@@ -855,7 +859,10 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
     git_repo = git.Repo(os.getcwd(),
                         search_parent_directories=True)
     remote_url = git_repo.remote().urls.__next__()
-    if 'content' not in remote_url:
+    is_fork_repo = 'content' in remote_url
+    is_external_repo = tools.is_external_repository()
+
+    if not is_fork_repo and not is_external_repo:
         return False, ''
     content_path_parts = Path(git_repo.working_dir).parts
     input_path_parts = Path(file_path).parts

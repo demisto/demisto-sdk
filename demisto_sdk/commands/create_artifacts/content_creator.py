@@ -344,7 +344,7 @@ class ContentCreator:
                 if dir_name == 'TestPlaybooks':
                     self.copy_test_files(sub_dir_path)
                 elif dir_name == RELEASE_NOTES_DIR:
-                    continue
+                    self.copy_test_files(sub_dir_path)
                 else:
                     # handle one-level deep content
                     self.copy_dir_files(sub_dir_path, self.content_bundle)
@@ -499,7 +499,6 @@ class ContentCreator:
             for content_dir in self.content_directories:
                 print(f'Copying dir {content_dir} to bundles...')
                 self.copy_dir_files(content_dir, self.content_bundle, copy_md=False)
-                self.copy_dir_files(content_dir, self.packs_bundle)
 
             self.copy_test_files()
 

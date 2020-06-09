@@ -378,7 +378,7 @@ class TestValidators:
         (VALID_INCIDENT_FIELD_PATH, 'incidentfield'),
         (VALID_REPUTATION_PATH, 'reputation'),
         (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
-        (VALID_BETA_INTEGRATION, 'integration'),
+        (VALID_BETA_INTEGRATION, 'betaintegration'),
         (VALID_INDICATOR_FIELD_PATH, 'indicatorfield'),
         (VALID_LAYOUT_PATH, 'layout'),
         (VALID_MD, '')

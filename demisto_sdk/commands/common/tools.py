@@ -483,6 +483,24 @@ def checked_type(file_path, compared_regexes=None, return_regex=False):
     return False
 
 
+def format_version(version):
+    """format server version to form X.X.X
+    Args:
+        version (string): string representing Demisto version
+
+    Returns:
+        string.
+        The formatted server version.
+    """
+    formatted_version = version
+    if len(version) == 1:
+        formatted_version = f'{version}.0.0'
+    elif len(version) == 3:
+        formatted_version = f'{version}.0'
+
+    return formatted_version
+
+
 def server_version_compare(v1, v2):
     """compare Demisto versions
 
@@ -498,7 +516,10 @@ def server_version_compare(v1, v2):
         negative if v2 later version than v1.
     """
 
-    _v1, _v2 = StrictVersion(v1), StrictVersion(v2)
+    v1 = format_version(v1)
+    v2 = format_version(v2)
+
+    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:

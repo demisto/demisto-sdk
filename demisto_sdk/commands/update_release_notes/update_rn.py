@@ -335,7 +335,7 @@ class UpdateRN:
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = f'\n#### {v}\n##### {k}\n- %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n#### {v}\n##### {k}\n  - %%UPDATE_RN%%\n'
                     new_rn += new_rn_part
         return new_rn
 

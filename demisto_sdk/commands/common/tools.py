@@ -485,6 +485,7 @@ def checked_type(file_path, compared_regexes=None, return_regex=False):
 
 def format_version(version):
     """format server version to form X.X.X
+
     Args:
         version (string): string representing Demisto version
 

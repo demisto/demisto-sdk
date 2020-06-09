@@ -17,7 +17,7 @@ class ContentEntityValidator(BaseValidator):
     DEFAULT_VERSION = -1
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, branch_name=''):
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         # type: (StructureValidator) -> None
         self.structure_validator = structure_validator
@@ -25,7 +25,7 @@ class ContentEntityValidator(BaseValidator):
         self.old_file = structure_validator.old_file
         self.file_path = structure_validator.file_path
         self.is_valid = structure_validator.is_valid
-        self.branch_name = branch_name
+        self.skip_docker_check = skip_docker_check
 
     def is_valid_file(self, validate_rn=True):
         tests = [

@@ -1,7 +1,8 @@
 import glob
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   PACKS_INTEGRATION_YML_REGEX)
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_INTEGRATION_YML_REGEX)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -32,7 +33,7 @@ class DescriptionValidator(BaseValidator):
         data_dictionary = get_yaml(self.file_path)
         description_in_yml = data_dictionary.get('detaileddescription', '') if data_dictionary else ''
 
-        if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
+        if not re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE):
             try:
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
@@ -67,7 +68,8 @@ class DescriptionValidator(BaseValidator):
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+                path_without_extension = os.path.splitext(self.file_path)[0]
+                md_file_path = glob.glob(os.path.join(path_without_extension, '_description.md'))[0]
             except IndexError:
                 print_warning("No detailed description file was found in the package {}."
                               " Consider adding one.".format(package_path))

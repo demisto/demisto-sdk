@@ -1,13 +1,14 @@
 from typing import Any
 
-from demisto_sdk.commands.common.constants import (CONF_PATH,
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
+                                                   CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
 FOUND_FILES_AND_ERRORS = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100', 'IF106']
 
 PRESET_ERROR_TO_IGNORE = {
 }
@@ -60,6 +61,7 @@ ERROR_CODE = {
     "docker_tag_not_fetched": "DO103",
     "no_docker_tag": "DO104",
     "docker_not_formatted_correctly": "DO105",
+    "docker_not_on_the_latest_tag": "DO106",
     "id_set_conflicts": "ID100",
     "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
@@ -108,6 +110,7 @@ ERROR_CODE = {
     "from_version_modified_after_rename": "IF110",
     "incident_field_type_change": "IF111",
     "incident_type_integer_field": "IT100",
+    "incident_type_invalid_playbook_id_field": "IT101",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -423,6 +426,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
+        return f'The docker image tag is not the latest numeric tag, please update it.\n' \
+               f'The docker image tag in the yml file is: {docker_image_tag}\n' \
+               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
+               f'You can check for the most updated version of {docker_image_name} ' \
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
+
+    @staticmethod
+    @error_code_decorator
     def id_set_conflicts():
         return "You probably merged from master and your id_set.json has " \
                "conflicts. Run `demisto-sdk create-id-set`, it should reindex your id_set.json"
@@ -607,23 +619,23 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return "No detailed description file was found in the package. Please add one, " \
-               "and make sure it includes the beta disclaimer note." \
-               "It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
+        return f"No detailed description file was found in the package. Please add one, " \
+               f"and make sure it includes the beta disclaimer note." \
+               f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_description():
-        return "The detailed description in beta integration package " \
-               "dose not contain the beta disclaimer note. It should contain the string in constant" \
-               "\"BETA_INTEGRATION_DISCLAIMER\"."
+        return f"The detailed description in beta integration package " \
+               f"dose not contain the beta disclaimer note. Add the following to the description:\n" \
+               f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_yml():
-        return "The detailed description field in beta integration " \
-               "dose not contain the beta disclaimer note. It should contain the string in constant" \
-               " \"BETA_INTEGRATION_DISCLAIMER\"."
+        return f"The detailed description field in beta integration " \
+               f"dose not contain the beta disclaimer note. Add the following to the detailed description:\n" \
+               f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
@@ -697,6 +709,11 @@ class Errors:
     @error_code_decorator
     def incident_type_integer_field(field):
         return f'The field {field} needs to be a positive integer. Please add it.\n'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_playbook_id_field():
+        return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
 
     @staticmethod
     @error_code_decorator

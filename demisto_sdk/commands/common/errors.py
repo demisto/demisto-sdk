@@ -12,7 +12,7 @@ FOUND_FILES_AND_IGNORED_ERRORS = []
 ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', "RM100"],
+    'community': ['BC', 'CJ', 'DS', "RM"],
     'non-certified-partner': ['CJ']
 }
 

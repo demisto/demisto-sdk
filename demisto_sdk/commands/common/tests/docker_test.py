@@ -270,6 +270,7 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.code_type = 'python'
+        docker_image_validator.checked_files = set()
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'

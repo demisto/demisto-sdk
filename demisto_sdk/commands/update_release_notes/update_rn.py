@@ -163,7 +163,7 @@ class UpdateRN:
 
         return file_name, _file_type
 
-    def bump_version_number(self, specific_version: str, pre_release: bool = False):
+    def bump_version_number(self, specific_version: str = None, pre_release: bool = False):
         new_version = None  # This will never happen since we pre-validate the argument
         try:
             data_dictionary = get_json(self.metadata_path)

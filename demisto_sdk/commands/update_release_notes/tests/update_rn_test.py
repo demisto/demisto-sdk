@@ -351,7 +351,7 @@ class TestRNUpdateUnit:
             Then:
                 - return tuple where first value is the pack name, and second is the item type
         """
-        expected_result = ('VulnDB', 'IncidentFields')
+        expected_result = ('VulnDB', 'Incident Fields')
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'IncidentFields/VulnDB/VulnDB.json')
@@ -369,7 +369,7 @@ class TestRNUpdateUnit:
             Then:
                 - return tuple where first value is the pack name, and second is the item type
         """
-        expected_result = ('VulnDB', 'IncidentTypes')
+        expected_result = ('VulnDB', 'Incident Types')
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'IncidentTypes/VulnDB/VulnDB.json')

@@ -56,7 +56,7 @@ jobs:
                 git checkout ${CONTENT_BRANCH_NAME}
               fi
 
-              demisto-sdk validate -a
+              ./Tests/scripts/validate.sh
         - run:
             name: Test create ID set
             when: always

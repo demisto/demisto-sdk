@@ -70,9 +70,9 @@ class UpdateRN:
                                 f" format of the release notes, please refer to "
                                 f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
                 else:
-                    print_color(f"No changes to pack files were detected from the previous time "
-                                f"this command was run. The release notes have not been "
-                                f"changed.", LOG_COLORS.GREEN)
+                    print_color("No changes to pack files were detected from the previous time "
+                                "this command was run. The release notes have not been "
+                                "changed.", LOG_COLORS.GREEN)
             else:
                 print_warning("No changes which would belong in release notes were detected.")
 

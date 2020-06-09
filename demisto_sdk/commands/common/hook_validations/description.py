@@ -70,7 +70,7 @@ class DescriptionValidator(BaseValidator):
             package_path = os.path.dirname(self.file_path)
             try:
                 path_without_extension = os.path.splitext(self.file_path)[0]
-                md_file_path = glob.glob(os.path.join(path_without_extension + '_description.md'))[0]
+                md_file_path = glob.glob(path_without_extension + '_description.md')[0]
             except IndexError:
                 error_message, error_code = Errors.no_description_file_warning()
                 click.secho(f"{self.file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n", fg="yellow")

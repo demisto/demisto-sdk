@@ -70,6 +70,7 @@ class ContentCreator:
             REPORTS_DIR,
             SCRIPTS_DIR,
             WIDGETS_DIR,
+            RELEASE_NOTES_DIR
         ]
 
         self.packages_to_skip = []
@@ -498,6 +499,7 @@ class ContentCreator:
             for content_dir in self.content_directories:
                 print(f'Copying dir {content_dir} to bundles...')
                 self.copy_dir_files(content_dir, self.content_bundle, copy_md=False)
+                self.copy_dir_files(content_dir, self.packs_bundle)
 
             self.copy_test_files()
 

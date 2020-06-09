@@ -497,7 +497,7 @@ class ContentCreator:
 
             for content_dir in self.content_directories:
                 print(f'Copying dir {content_dir} to bundles...')
-                self.copy_dir_files(content_dir, self.content_bundle, copy_md=False)
+                self.copy_dir_files(content_dir, self.content_bundle)
 
             self.copy_test_files()
 

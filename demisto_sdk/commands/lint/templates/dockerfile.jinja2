@@ -20,8 +20,8 @@ ENTRYPOINT ["/bin/sh", "-c"]
 {# Build for python based image #}
 {% elif pack_type == "powershell" %}
 {#  Install powershell requirements for analyze and tests  #}
-RUN pwsh -Command Set-PSRepository -name PSGallery -installationpolicy trusted
-RUN pwsh -Command Install-Module -Name Pester -Scope AllUsers -Force | pwsh -Command Out-Null
-RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force | pwsh -Command Out-Null
+RUN pwsh -Command Set-PSRepository -name PSGallery -installationpolicy trusted -ErrorAction Stop
+RUN pwsh -Command Install-Module -Name Pester -Scope AllUsers -Force -ErrorAction Stop
+RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force -ErrorAction Stop
 {# Container entry point (Every command will start with /bin/sh) #}
 {% endif %}

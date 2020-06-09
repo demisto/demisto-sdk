@@ -208,6 +208,6 @@ def build_pwsh_test_command() -> str:
     """
     command = "Invoke-Pester"
     # Return exit code when finished
-    command += " -EnableExit"
+    command += ' -Configuration \'@{Run=@{Exit=$true}; Output=@{Verbosity="Detailed"}}\''
 
     return f"pwsh -Command {command}"

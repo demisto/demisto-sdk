@@ -41,11 +41,14 @@ class UpdateRN:
         else:
             try:
                 if self.is_bump_required():
-                    self.update_type = "revision"
-                new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
-                if self.is_bump_required():
+                    if self.update_type is None:
+                        self.update_type = "revision"
+                    new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
                     print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
                                 LOG_COLORS.NATIVE)
+                else:
+                    new_metadata = self.get_pack_metadata()
+                    new_version = new_metadata.get('currentVersion', '99.99.99')
             except ValueError as e:
                 print_error(e)
                 sys.exit(1)
@@ -163,21 +166,24 @@ class UpdateRN:
 
         return file_name, _file_type
 
-    def bump_version_number(self, specific_version: str = None, pre_release: bool = False):
-        new_version = None  # This will never happen since we pre-validate the argument
+    def get_pack_metadata(self):
         try:
             data_dictionary = get_json(self.metadata_path)
         except FileNotFoundError:
             print_error(f"Pack {self.pack} was not found. Please verify the pack name is correct.")
             sys.exit(1)
+        return data_dictionary
+
+    def bump_version_number(self, specific_version: str = None, pre_release: bool = False):
+        if self.update_type is None:
+            raise ValueError("Received no update type when one was expected.")
+        new_version = None  # This will never happen since we pre-validate the argument
+        data_dictionary = self.get_pack_metadata()
         if specific_version:
             print_color(f"Bumping {self.pack} to the version {specific_version}. If you need to update"
                         f" the release notes a second time, please remove the -v flag.", LOG_COLORS.NATIVE)
             data_dictionary['currentVersion'] = specific_version
             return specific_version, data_dictionary
-        if self.update_type is None:
-            new_version = data_dictionary.get('currentVersion', '99.99.99')
-            return new_version, data_dictionary
         elif self.update_type == 'major':
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')

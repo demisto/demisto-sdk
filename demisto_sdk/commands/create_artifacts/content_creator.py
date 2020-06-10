@@ -44,7 +44,7 @@ class ContentCreator:
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
         self.content_version = content_version
         self.preserve_bundles = preserve_bundles
-        self.only_packs = tools.is_private_repository() or packs
+        self.only_packs = tools.is_external_repository() or packs
         self.no_update_commonserverpython = no_update_commonserver
 
         # temp folder names
@@ -156,7 +156,7 @@ class ContentCreator:
         """
         dest_dir_path = os.path.dirname(out_path)
         dest_file_name = os.path.basename(out_path)
-        if not dest_file_name.startswith('playbook-'):
+        if not dest_file_name.startswith('playbook-') and tools.find_type(path) == 'playbook':
             new_name = '{}{}'.format('playbook-', dest_file_name)
             out_path = os.path.join(dest_dir_path, new_name)
         shutil.copyfile(path, out_path)

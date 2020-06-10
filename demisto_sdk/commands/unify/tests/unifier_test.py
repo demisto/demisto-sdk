@@ -510,6 +510,38 @@ PACK_METADATA_PARTNER = json.dumps({
     "useCases": [],
     "keywords": []
 })
+PACK_METADATA_PARTNER_NO_EMAIL = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "partner",
+    "currentVersion": "1.0.1",
+    "author": "bar",
+    "url": PARTNER_URL,
+    "email": '',
+    "created": "2020-03-12T08:00:00Z",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
+PACK_METADATA_PARTNER_NO_URL = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "partner",
+    "currentVersion": "1.0.1",
+    "author": "bar",
+    "url": '',
+    "email": PARTNER_EMAIL,
+    "created": "2020-03-12T08:00:00Z",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
 PACK_METADATA_XSOAR = json.dumps({
     "name": "test",
     "description": "test",
@@ -534,19 +566,28 @@ PARTNER_UNIFY = {
     'detaileddescription': 'test details',
     'display': 'test'
 }
-NORMAL_UNIFY = PARTNER_UNIFY.copy()
+PARTNER_UNIFY_NO_EMAIL = PARTNER_UNIFY.copy()
+PARTNER_UNIFY_NO_URL = PARTNER_UNIFY.copy()
+XSOAR_UNIFY = PARTNER_UNIFY.copy()
+
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
 PARTNER_DISPLAY_NAME = 'test (Partner contribution)'
 PARTNER_DETAILEDDESCRIPTION = '### This is a Partner Contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
-                              f'\n**Email** - {PARTNER_EMAIL}\n**URL** - {PARTNER_URL}\n***\ntest details'
+                              f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
+PARTNER_DETAILEDDESCRIPTION_NO_EMAIL = '### This is a Partner Contributed integration' \
+    f'\nFor all questions and enhancement requests please contact the partner directly:' \
+                                       f'\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
+PARTNER_DETAILEDDESCRIPTION_NO_URL = '### This is a Partner Contributed integration' \
+    f'\nFor all questions and enhancement requests please contact the partner directly:' \
+                                     f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n***\ntest details'
 
 
 def test_unify_partner_contributed_pack(mocker, repo):
     """
     Given
-        - Partner contributed pack
+        - Partner contributed pack with email and url in the support details.
     When
         - Running unify on it.
     Then
@@ -571,21 +612,77 @@ def test_unify_partner_contributed_pack(mocker, repo):
     assert PARTNER_UNIFY["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION
 
 
-def test_unify_not_partner_contributed_pack(mocker, repo):
+def test_unify_partner_contributed_pack_no_email(mocker, repo):
     """
     Given
-        - Normal pack - not a partner contribution
+        - Partner contributed pack with url and without email in the support details.
     When
         - Running unify on it.
     Then
-        - Ensure unify create unified file with no partner support notes.
+        - Ensure unify create unified file with partner support notes.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_EMAIL)
+    mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
+    mocker.patch.object(Unifier, 'get_data', return_value=(PACK_METADATA_PARTNER_NO_EMAIL, pack.pack_metadata.path))
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
+    # Verifying unified process
+    assert 'Merging package:' in result.stdout
+    assert 'Created unified yml:' in result.stdout
+    # Verifying the unified file data
+    assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
+    assert PARTNER_UNIFY_NO_EMAIL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_EMAIL
+
+
+def test_unify_partner_contributed_pack_no_url(mocker, repo):
+    """
+    Given
+        - Partner contributed pack with email and without url in the support details
+    When
+        - Running unify on it.
+    Then
+        - Ensure unify create unified file with partner support notes.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
+    mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
+    mocker.patch.object(Unifier, 'get_data', return_value=(PACK_METADATA_PARTNER_NO_URL, pack.pack_metadata.path))
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
+    # Verifying unified process
+    assert 'Merging package:' in result.stdout
+    assert 'Created unified yml:' in result.stdout
+    # Verifying the unified file data
+    assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
+    assert PARTNER_UNIFY_NO_URL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_URL
+
+
+def test_unify_not_partner_contributed_pack(mocker, repo):
+    """
+    Given
+        - XSOAR supported - not a partner contribution
+    When
+        - Running unify on it.
+    Then
+        - Ensure unify create unified file without partner support notes.
     """
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_XSOAR)
-    mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(NORMAL_UNIFY, ''))
-    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(NORMAL_UNIFY, ''))
-    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(NORMAL_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(XSOAR_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(XSOAR_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(XSOAR_UNIFY, ''))
     mocker.patch.object(Unifier, 'get_data', return_value=(PACK_METADATA_XSOAR, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
@@ -595,5 +692,5 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     assert 'Merging package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
-    assert 'Partner' not in NORMAL_UNIFY["display"]
-    assert 'Partner' not in NORMAL_UNIFY["detaileddescription"]
+    assert 'Partner' not in XSOAR_UNIFY["display"]
+    assert 'Partner' not in XSOAR_UNIFY["detaileddescription"]

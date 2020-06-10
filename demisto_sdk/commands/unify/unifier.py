@@ -384,9 +384,9 @@ class Unifier:
         existing_detailed_description = unified_yml['detaileddescription']
         partner_description = PARTNER_CONTRIB_DETAILED_DESC
         if partner_email:
-            partner_description += f'\n**Email** - {partner_email}'
+            partner_description += f'\n**Email** - [mailto](mailto:{partner_email})'
         if partner_url:
-            partner_description += f'\n**URL** - {partner_url}'
+            partner_description += f'\n**URL** - [{partner_url}]({partner_url})'
         unified_yml['detaileddescription'] = partner_description + '\n***\n' + existing_detailed_description
 
         return unified_yml

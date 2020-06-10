@@ -197,7 +197,7 @@ class Linter:
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
                 # Checking whatever *test* exists in package
-                self._facts["tests"] = list(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']))
+                self._facts["tests"] = set(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']))
                 if self._facts["tests"]:
                     logger.info(f"{log_prompt} - Tests found")
                 else:
@@ -212,7 +212,7 @@ class Linter:
                     except (FileNotFoundError, IOError):
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
             # Get lint files
-            lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
+            lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp", r'!test_*.py', r'!*_test.py'],
                                                      flags=NEGATE))
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
@@ -230,6 +230,8 @@ class Linter:
         if self._facts["lint_files"]:
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
+            for lint_file_test in self._facts["tests"]:
+                logger.info(f"{log_prompt} - Lint file {lint_file_test} - Only flake8")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
@@ -250,7 +252,7 @@ class Linter:
                 output: str = ""
                 if lint_check == "flake8" and not no_flake8:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
-                                                         lint_files=self._facts["lint_files"])
+                                                         lint_files=self._facts["lint_files"] + list(self._facts["tests"]))
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
                 elif lint_check == "mypy" and not no_mypy and self._facts["docker_engine"]:

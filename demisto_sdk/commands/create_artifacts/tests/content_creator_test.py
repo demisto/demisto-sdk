@@ -21,6 +21,7 @@ class TestContentCreator:
         self._test_dir = mkdtemp()
         self.content_repo = os.path.join(tests_dir, 'test_files', 'content_repo_example')
         self._files_to_artifacts_dir = os.path.join(tests_dir, 'test_files', 'FilesToArtifacts')
+        self.valid_content_repo = os.path.join(tests_dir, 'test_files', 'valid_content_repo')
 
     def teardown(self):
         # delete all files in the content_bundle
@@ -185,3 +186,28 @@ class TestContentCreator:
         file_path = os.path.join(self._files_to_artifacts_dir, filename)
         content_creator.copy_file_to_artifacts(file_path)
         assert filecmp.cmp(file_path, os.path.join(self.content_repo, filename))
+
+    def test_content_legacy_with_no_md(self):
+        """
+        Given
+        - valid content dir
+        When
+        - copying the content folder to a content bundle(flatten files)
+        Then
+        Ensure no md files were copied to content bundle
+        Ensure md files were copied to packs bundle.
+        """
+        temp_bundles = mkdtemp(dir=self.valid_content_repo)
+        bundle_packs = os.path.join(temp_bundles, 'bundle_packs')
+        bundle_content = os.path.join(temp_bundles, 'bundle_content')
+        content_creator = ContentCreator(artifacts_path=temp_bundles, content_version='2.5.0',
+                                         preserve_bundles=True, no_update_commonserver=True)
+        os.chdir(self.valid_content_repo)
+        content_creator.create_content()
+
+        assert filecmp.cmp(f'{self.valid_content_repo}/Packs/FeedAzureValid/ReleaseNotes/1_1_1.md',
+                           f'{bundle_packs}/FeedAzureValid/ReleaseNotes/1_1_1.md')
+        assert f'{self.valid_content_repo}/Packs/FeedAzureValid/CHANGELOG.md' not in bundle_content
+        assert f'{self.valid_content_repo}/Packs/FeedAzureValid/README.md' not in bundle_content
+
+        shutil.rmtree(temp_bundles)

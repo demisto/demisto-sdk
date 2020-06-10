@@ -14,8 +14,8 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION,
     EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, GIT_ROOT,
-    INTEGRATION_PATH, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION1,
-    SOURCE_FORMAT_INTEGRATION2, SOURCE_FORMAT_INTEGRATION_COPY,
+    INTEGRATION_PATH, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION_COPY,
+    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY)
 from ruamel.yaml import YAML
@@ -293,23 +293,23 @@ def test_add_playbooks_description():
 
 
 FORMAT_FILES_FETCH = [
-    (SOURCE_FORMAT_INTEGRATION1, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
-    (SOURCE_FORMAT_INTEGRATION2, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
+    (SOURCE_FORMAT_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
+    (SOURCE_FORMAT_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
 
 @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FETCH)
 def test_set_fetch_params_in_config(source, target, path, answer):
     """
     Given
-    - Integration yml with isfetch field labeled as `yes`.
+    - Integration yml with isfetch field labeled as true and correct fetch params.
+    - Integration yml with isfetch field labeled as true and without the fetch params.
     - destination_path to write the formatted integration to.
-
     When
     - Running the format command.
 
     Then
     - Ensure the file was created.
-    - Ensure that the .
+    - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
     """
     os.mkdir(path)
     shutil.copyfile(source, target)

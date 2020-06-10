@@ -1,15 +1,14 @@
 {# Declare image to build from #}
 FROM {{ image }}
-{# Check if Dockerfile target is to copy package#}
-{% if not copy_pack %}
 {# Creating test main directory #}
 RUN mkdir -p /devwork/
-{# Define workdir #}
+{# Define workir #}
 WORKDIR /devwork
 {# Build for python based image #}
+{% if not copy_pack %}
 {% if pack_type == 'python' %}
-{# Change group owner and permissions - Due to container security issues #}
-RUN chown -R :4000 /devwork
+{# Change group owner and permissions - Due to contaier security issues #}
+RUN chown -R :4000 /devwork/
 RUN chmod -R 775 /devwork
 {# Install requirments and missing deps #}
 RUN printf "{{ pypi_packs | join('\\n') }}" > /devwork/test-requirements.txt

@@ -84,3 +84,19 @@ def test_is_changed_from_version(current_from_version, old_from_version, answer)
     structure.current_file = current_from_version
     validator = IncidentTypeValidator(structure)
     assert validator.is_changed_from_version() is answer
+
+
+IS_VALID_PLAYBOOK_ID = [
+    ('valid playbook', True),
+    ('', True),
+    ('12b3a41b-04ce-4417-89b3-4efd95d28012', False),
+    ('abbababb-aaaa-bbbb-cccc-abcdabcdabcd', False)
+]
+
+
+@pytest.mark.parametrize("playbook_id, is_valid", IS_VALID_PLAYBOOK_ID)
+def test_is_valid_playbook_id(playbook_id, is_valid):
+    structure = StructureValidator("")
+    structure.current_file = {"playbookId": playbook_id}
+    validator = IncidentTypeValidator(structure)
+    assert validator.is_valid_playbook_id() == is_valid

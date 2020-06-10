@@ -22,9 +22,10 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 PACK_METADATA_PATH = 'pack_metadata.json'
-PARTNER_CONTRIB_DISPLAY_NAME = ' (Partner contribution)'
-PARTNER_CONTRIB_DETAILED_DESC = '### This is a Partner Contributed integration' \
-                                '\nFor all questions and enhancement requests please contact the partner directly:'
+CONTRIBUTOR_DISPLAY_NAME = ' ({} contribution)'
+CONTRIBUTOR_DETAILED_DESC = '### This is a {} contributed integration' \
+                            '\nFor all questions and enhancement requests please contact the partner directly:'
+CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 
 
 class Unifier:
@@ -162,11 +163,12 @@ class Unifier:
         if not self.is_script_package:
             yml_unified, image_path = self.insert_image_to_yml(self.yml_data, yml_unified)
             yml_unified, desc_path = self.insert_description_to_yml(self.yml_data, yml_unified)
-            is_parnter_contrib, metadata_data = self.is_partner_contributed()
-            if is_parnter_contrib:
-                partner_email = metadata_data.get('email', '')
-                partner_url = metadata_data.get('url', '')
-                yml_unified = self.add_partner_support(yml_unified, partner_email, partner_url)
+            is_contributed_pack, contributor_type, metadata_data = self.is_contributor_pack()
+            if is_contributed_pack:
+                contributor_email = metadata_data.get('email', '')
+                contributor_url = metadata_data.get('url', '')
+                yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
+                                                            contributor_url)
 
         output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
@@ -353,40 +355,42 @@ class Unifier:
     def get_pack_path(self):
         return self.package_path.split('Integrations')[0]
 
-    def is_partner_contributed(self):
-        """Checks if the integration is a partner contribution.
+    def is_contributor_pack(self):
+        """Checks if the pack is a contribution.
 
         Returns:
-            (bool, dict). True if the integration is a partner contribution and the file data, False and None otherwise.
+            (bool, str, dict). True if it is a contributed pack, contributor type and the file data,
+             False, None and None otherwise.
         """
         pack_path = self.get_pack_path()
-
         pack_metadata_data, pack_metadata_path = self.get_data(pack_path, PACK_METADATA_PATH)
+
         if pack_metadata_data:
             json_pack_metadata = json.loads(pack_metadata_data)
             support_field = json_pack_metadata.get('support')
-            if support_field == 'partner':
-                return True, json_pack_metadata
-        return False, None
+            if support_field in CONTRIBUTORS_LIST:
+                return True, support_field, json_pack_metadata
+        return False, None, None
 
-    def add_partner_support(self, unified_yml, partner_email, partner_url):
-        """Add partner support to the unified file - text in the display name and detailed description.
+    def add_contributors_support(self, unified_yml, contributor_type, contributor_email, contributor_url):
+        """Add contributor support to the unified file - text in the display name and detailed description.
 
         Args:
             unified_yml: The unified yaml file.
-            partner_email (str): The partner email.
-            partner_url (str): The partner url.
+            contributor_type (str): The contributor type - partner / developer / community
+            contributor_email (str): The contributor email.
+            contributor_url (str): The contributor url.
 
         Returns:
             The unified yaml file.
         """
-        unified_yml['display'] += PARTNER_CONTRIB_DISPLAY_NAME
-        existing_detailed_description = unified_yml['detaileddescription']
-        partner_description = PARTNER_CONTRIB_DETAILED_DESC
-        if partner_email:
-            partner_description += f'\n**Email** - [mailto](mailto:{partner_email})'
-        if partner_url:
-            partner_description += f'\n**URL** - [{partner_url}]({partner_url})'
-        unified_yml['detaileddescription'] = partner_description + '\n***\n' + existing_detailed_description
+        unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+        existing_detailed_description = unified_yml.get('detaileddescription', '')
+        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type)
+        if contributor_email:
+            contributor_description += f'\n**Email** - [mailto](mailto:{contributor_email})'
+        if contributor_url:
+            contributor_description += f'\n**URL** - [{contributor_url}]({contributor_url})'
+        unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
 
         return unified_yml

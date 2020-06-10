@@ -789,8 +789,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_missing_url_and_email(pack_meta_file):
-        return f'{pack_meta_file} - Partner contributed packs must include email or url.'
+    def pack_metadata_missing_url_and_email():
+        return 'Contributed packs must include email or url.'
 
     @staticmethod
     @error_code_decorator

@@ -573,13 +573,13 @@ XSOAR_UNIFY = PARTNER_UNIFY.copy()
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
 PARTNER_DISPLAY_NAME = 'test (Partner contribution)'
-PARTNER_DETAILEDDESCRIPTION = '### This is a Partner Contributed integration' \
+PARTNER_DETAILEDDESCRIPTION = '### This is a partner contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                               f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
-PARTNER_DETAILEDDESCRIPTION_NO_EMAIL = '### This is a Partner Contributed integration' \
+PARTNER_DETAILEDDESCRIPTION_NO_EMAIL = '### This is a partner contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                                        f'\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
-PARTNER_DETAILEDDESCRIPTION_NO_URL = '### This is a Partner Contributed integration' \
+PARTNER_DETAILEDDESCRIPTION_NO_URL = '### This is a partner contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                                      f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n***\ntest details'
 
@@ -693,4 +693,4 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert 'Partner' not in XSOAR_UNIFY["display"]
-    assert 'Partner' not in XSOAR_UNIFY["detaileddescription"]
+    assert 'partner' not in XSOAR_UNIFY["detaileddescription"]

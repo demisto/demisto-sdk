@@ -89,5 +89,4 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
         assert "Validating pack unique files" in result.stdout
-        assert 'Partner contributed packs must include email or url.' in result.stdout
-
+        assert 'Contributed packs must include email or url' in result.stdout

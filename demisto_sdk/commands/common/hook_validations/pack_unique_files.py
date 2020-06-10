@@ -18,6 +18,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import pack_name_to_path
 
+CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
+
 
 class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
@@ -140,7 +142,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_pack_meta_file(self):
         """Validate everything related to pack_metadata.json file"""
         if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid(),
-                                                                   self.partner_contribute_missing_email_and_url()]):
+                                                                   self._is_valid_contributor_pack_support_details()]):
             return True
 
         return False
@@ -191,14 +193,13 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def partner_contribute_missing_email_and_url(self):
-        """Checks if email or url exist in partner contributed pack details."""
+    def _is_valid_contributor_pack_support_details(self):
+        """Checks if email or url exist in contributed pack details."""
         try:
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            if pack_meta_file_content[PACK_METADATA_SUPPORT] == 'partner':
+            if pack_meta_file_content[PACK_METADATA_SUPPORT] in CONTRIBUTORS_LIST:
                 if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
-                    if self._add_error(Errors.pack_metadata_missing_url_and_email(self.pack_meta_file),
-                                       self.pack_meta_file):
+                    if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
                         return False
 
         except (ValueError, TypeError):

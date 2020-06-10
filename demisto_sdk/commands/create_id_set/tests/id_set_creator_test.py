@@ -144,7 +144,7 @@ def test_get_incident_fields_data():
         - parsing all the data from file successfully
     """
     test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidentfield-to-test.json'
-    result = get_incident_field_data(test_dir)
+    result = get_incident_field_data(test_dir, [])
     result = result.get('incidentfield-test')
     assert 'name' in result.keys()
     assert 'fromversion' in result.keys()
@@ -167,7 +167,7 @@ def test_get_incident_fields_data_no_types_scripts():
     """
     test_dir = \
         f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidentfield-to-test-no-types_scripts.json'
-    result = get_incident_field_data(test_dir)
+    result = get_incident_field_data(test_dir, [])
     result = result.get('incidentfield-test')
     assert 'name' in result.keys()
     assert 'fromversion' in result.keys()

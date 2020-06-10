@@ -372,7 +372,7 @@ def get_layout_data(path):
     return {id_: data}
 
 
-def get_incident_field_data(path):
+def get_incident_field_data(path, incidents_types_list):
     data = OrderedDict()
     json_data = get_json(path)
 
@@ -391,6 +391,9 @@ def get_incident_field_data(path):
     system_associated_types = json_data.get('systemAssociatedTypes')
     if system_associated_types:
         all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = incidents_types_list
 
     scripts = json_data.get('script')
     if scripts:
@@ -590,12 +593,13 @@ def process_dashboards(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_incident_fields(file_path: str, print_logs: bool) -> list:
+def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list) -> list:
     """
     Process a incident_fields JSON file
     Args:
         file_path: The file path from incident field folder
         print_logs: Whether to print logs to stdout.
+        incidents_types_list: List of all the incident types in the system.
 
     Returns:
         a list of incident field data.
@@ -604,7 +608,7 @@ def process_incident_fields(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_INCIDENT_FIELD_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_incident_field_data(file_path))
+        res.append(get_incident_field_data(file_path, incidents_types_list))
     return res
 
 
@@ -851,19 +855,21 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
-        if 'IncidentFields' in objects_to_create:
-            print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_incident_fields, print_logs=print_logs),
-                                get_general_paths(INCIDENT_FIELDS_DIR)):
-                incident_fields_list.extend(arr)
-
-        progress_bar.update(1)
-
         if 'IncidentTypes' in objects_to_create:
             print_color("\nStarting iteration over Incident Types", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_incident_types, print_logs=print_logs),
                                 get_general_paths(INCIDENT_TYPES_DIR)):
                 incident_type_list.extend(arr)
+
+        progress_bar.update(1)
+
+        # Has to be called after 'IncidentTypes' is called
+        if 'IncidentFields' in objects_to_create:
+            print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(
+                    partial(process_incident_fields, print_logs=print_logs, incident_type_list=incident_type_list),
+                    get_general_paths(INCIDENT_FIELDS_DIR)):
+                incident_fields_list.extend(arr)
 
         progress_bar.update(1)
 
@@ -933,7 +939,6 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
         print_error('The following duplicates were found: {}'.format(duplicates))
 
     return new_ids_dict
-
 
 def find_duplicates(id_set, print_logs):
     lists_to_return = []

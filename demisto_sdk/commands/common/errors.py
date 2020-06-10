@@ -61,6 +61,7 @@ ERROR_CODE = {
     "docker_tag_not_fetched": "DO103",
     "no_docker_tag": "DO104",
     "docker_not_formatted_correctly": "DO105",
+    "docker_not_on_the_latest_tag": "DO106",
     "id_set_conflicts": "ID100",
     "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
@@ -96,6 +97,7 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
     "description_in_package_and_yml": "DS103",
+    "no_description_file_warning": "DS104",
     "invalid_incident_field_name": "IF100",
     "invalid_incident_field_content_key_value": "IF101",
     "invalid_incident_field_system_key_value": "IF102",
@@ -425,6 +427,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
+        return f'The docker image tag is not the latest numeric tag, please update it.\n' \
+               f'The docker image tag in the yml file is: {docker_image_tag}\n' \
+               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
+               f'You can check for the most updated version of {docker_image_name} ' \
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
+
+    @staticmethod
+    @error_code_decorator
     def id_set_conflicts():
         return "You probably merged from master and your id_set.json has " \
                "conflicts. Run `demisto-sdk create-id-set`, it should reindex your id_set.json"
@@ -632,6 +643,11 @@ class Errors:
     def description_in_package_and_yml():
         return "A description was found both in the " \
                "package and in the yml, please update the package."
+
+    @staticmethod
+    @error_code_decorator
+    def no_description_file_warning():
+        return "No detailed description file was found. Consider adding one."
 
     @staticmethod
     @error_code_decorator

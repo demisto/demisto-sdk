@@ -101,6 +101,8 @@ class FilesValidator:
                  configuration=Configuration(), silence_init_prints=True):
         self.silence_init_prints = silence_init_prints
         self.validate_all = validate_all
+        self.skip_docker_checks = True if self.validate_all else False
+
         self.branch_name = ''
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
@@ -364,7 +366,7 @@ class FilesValidator:
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if self.is_backward_check and not integration_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -374,14 +376,14 @@ class FilesValidator:
             elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if not integration_validator.is_valid_beta_integration():
                     self._is_valid = False
 
             elif checked_type(file_path, [PACKS_SCRIPT_NON_SPLIT_YML_REGEX]):
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
-                                                   branch_name=self.branch_name)
+                                                   skip_docker_check=self.skip_docker_checks)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
                 if not script_validator.is_valid_file():
@@ -399,7 +401,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
-                                                   branch_name=self.branch_name)
+                                                   skip_docker_check=self.skip_docker_checks)
                 if self.is_backward_check and not script_validator.is_backward_compatible():
                     self._is_valid = False
 
@@ -557,7 +559,7 @@ class FilesValidator:
             elif checked_type(file_path, YML_INTEGRATION_REGEXES) or file_type == 'integration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if not integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json):
                     self._is_valid = False
 
@@ -571,7 +573,7 @@ class FilesValidator:
                 structure_validator.file_path = yml_path
                 script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                    print_as_warnings=self.print_ignored_errors,
-                                                   branch_name=self.branch_name)
+                                                   skip_docker_check=self.skip_docker_checks)
 
                 if not script_validator.is_valid_file(validate_rn=False):
                     self._is_valid = False
@@ -579,7 +581,7 @@ class FilesValidator:
             elif file_type == 'betaintegration':
                 integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                              print_as_warnings=self.print_ignored_errors,
-                                                             branch_name=self.branch_name)
+                                                             skip_docker_check=self.skip_docker_checks)
                 if not integration_validator.is_valid_beta_integration(validate_rn=False):
                     self._is_valid = False
 
@@ -719,7 +721,7 @@ class FilesValidator:
         Args:
             packs: A set of pack paths i.e {Packs/<pack-name1>, Packs/<pack-name2>}
         """
-        click.secho("================= Validating pack unique files =================\n", fg="bright_cyan")
+        click.secho("\n================= Validating pack unique files =================\n", fg="bright_cyan")
         for pack in packs:
             print(f'Validating {pack} unique pack files\n')
             pack_error_ignore_list = self.get_error_ignore_list(pack)
@@ -727,7 +729,7 @@ class FilesValidator:
                                                                    print_as_warnings=self.print_ignored_errors)
             pack_errors = pack_unique_files_validator.validate_pack_unique_files()
             if pack_errors:
-                print_error(pack_errors)
+                click.secho(pack_errors, fg="bright_red")
                 self._is_valid = False
 
     def run_all_validations_on_file(self, file_path: str, file_type: str = None) -> None:
@@ -761,7 +763,7 @@ class FilesValidator:
         elif checked_type(file_path, INTEGRATION_REGXES) or file_type == 'integration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
-                                                         branch_name=self.branch_name)
+                                                         skip_docker_check=self.skip_docker_checks)
             if not integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json):
                 self._is_valid = False
 
@@ -770,7 +772,7 @@ class FilesValidator:
             structure_validator.file_path = file_path
             script_validator = ScriptValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                print_as_warnings=self.print_ignored_errors,
-                                               branch_name=self.branch_name)
+                                               skip_docker_check=self.skip_docker_checks)
 
             if not script_validator.is_valid_file(validate_rn=False):
                 self._is_valid = False
@@ -778,7 +780,7 @@ class FilesValidator:
         elif file_type == 'betaintegration':
             integration_validator = IntegrationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                          print_as_warnings=self.print_ignored_errors,
-                                                         branch_name=self.branch_name)
+                                                         skip_docker_check=self.skip_docker_checks)
             if not integration_validator.is_valid_beta_integration():
                 self._is_valid = False
 
@@ -845,7 +847,7 @@ class FilesValidator:
         click.secho('\n================= Validating all files =================', fg="bright_cyan")
 
         if not skip_conf_json:
-            print('Validating conf.json')
+            print('\nValidating conf.json')
             conf_json_validator = ConfJsonValidator()
             if not conf_json_validator.is_valid_conf_json():
                 self._is_valid = False
@@ -918,6 +920,8 @@ class FilesValidator:
 
     def validate_all_files_schema(self):
         """Validate all files in the repo are in the right format."""
+        click.secho('\n================= Validates all of Content repo directories according '
+                    'to their schemas =================\n', fg='bright_cyan')
         # go over packs
         for pack_name in os.listdir(PACKS_DIR):
             pack_path = os.path.join(PACKS_DIR, pack_name)
@@ -949,7 +953,7 @@ class FilesValidator:
                             constants.INTEGRATIONS_DIR, constants.SCRIPTS_DIR, constants.PLAYBOOKS_DIR)
 
                         if is_yml_file or is_json_file:
-                            print("Validating {}".format(file_path))
+                            print("Validating scheme for {}".format(file_path))
                             self.is_backward_check = False  # if not using git, no need for BC checks
                             structure_validator = StructureValidator(file_path, ignored_errors=ignore_errors_list,
                                                                      print_as_warnings=self.print_ignored_errors)
@@ -969,7 +973,7 @@ class FilesValidator:
                                     not inner_file_path.endswith('_unified.yml')
 
                                 if is_yml_file:
-                                    print("Validating {}".format(inner_file_path))
+                                    print("Validating scheme for {}".format(inner_file_path))
                                     self.is_backward_check = False  # if not using git, no need for BC checks
                                     structure_validator = StructureValidator(inner_file_path,
                                                                              ignored_errors=ignore_errors_list,
@@ -1002,8 +1006,6 @@ class FilesValidator:
                 self.validate_committed_files()
             else:
                 self.validate_against_previous_version(no_error=True)
-                click.secho('\n================= Validates all of Content repo directories according '
-                            'to their schemas =================\n', fg='bright_cyan')
                 self.validate_all_files_schema()
 
         else:

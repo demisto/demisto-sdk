@@ -1,4 +1,5 @@
 import unittest
+
 from demisto_sdk.commands.common.errors import Errors
 
 

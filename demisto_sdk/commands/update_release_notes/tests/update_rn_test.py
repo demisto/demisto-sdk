@@ -372,7 +372,6 @@ class TestRNUpdateUnit:
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
-        print(new_rn)
         assert new_rn == self.EXPECTED_RN_RES
 
     def test_commit_to_bump(self):

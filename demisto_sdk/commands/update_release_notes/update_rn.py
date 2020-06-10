@@ -175,7 +175,7 @@ class UpdateRN:
         return data_dictionary
 
     def bump_version_number(self, specific_version: str = None, pre_release: bool = False):
-        if self.update_type is None:
+        if self.update_type is None and specific_version is None:
             raise ValueError("Received no update type when one was expected.")
         new_version = None  # This will never happen since we pre-validate the argument
         data_dictionary = self.get_pack_metadata()

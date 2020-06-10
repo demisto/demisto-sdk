@@ -48,7 +48,7 @@ jobs:
               git config diff.renameLimit 5000
 
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true && -z "${CONTENT_BRANCH_NAME}" ]]; then
-                demisto-sdk validate -i Packs/Gmail
+                demisto-sdk validate -i Packs/CortexXDR
                 exit 0
               fi
 

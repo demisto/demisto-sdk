@@ -1,8 +1,8 @@
 import os
 import shutil
 import unittest
-import pytest
 
+import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 

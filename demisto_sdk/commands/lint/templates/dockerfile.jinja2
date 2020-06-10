@@ -29,7 +29,6 @@ RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force |
 {% endif %}
 {% else %}
 {# Creating test main directory #}
-RUN mkdir -p /devwork/
 COPY . .
 RUN chown -R :4000 /devwork
 RUN chmod -R 775 /devwork

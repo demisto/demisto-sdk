@@ -23,7 +23,7 @@ Supported content entities:
 
 * **-u, --update_type**
 
-    Optional. If no update_type is defined, the `currentVersion` will not be bumped.
+    Optional. If no update_type is defined, the `currentVersion` will be bumped as a revision.
 
     The type of update being done. Available options are:
     - major
@@ -37,6 +37,10 @@ Supported content entities:
 * **--pre_release**
 
     Indicates that this update is for a pre-release version. The `currentVersion` will change to reflect the pre-release version number.
+    
+* **-v, --version <DESIRED_VERSION>**
+    
+    Bump to a specific version. Cannot be used with `-u, --update_type` flags.
 
 ### Examples
 ```

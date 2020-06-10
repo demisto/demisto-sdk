@@ -15,6 +15,8 @@ Supported content entities:
 - Incident Fields
 - Layouts
 - Classifiers
+- Connections
+- Indicator Types
 
 ### Arguments
 * **-p, --pack <PACK_NAME>**

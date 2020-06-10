@@ -3,6 +3,7 @@ from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.create_artifacts.content_creator import *
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestContentCreator:
@@ -36,7 +37,7 @@ class TestContentCreator:
                 except Exception as err:
                     print('Failed to delete {}. Reason: {}'.format(file_path, err))
 
-    def test_copy_dir_files(self):
+    def test_copy_dir_files(self, mocker):
         """
         Given
         - valid content dir, including Scripts, Integrations and TestPlaybooks sub-dirs
@@ -50,6 +51,8 @@ class TestContentCreator:
                                          content_bundle_path=self._bundle_dir,
                                          test_bundle_path=self._test_dir,
                                          preserve_bundles=False)
+        # not checking fromversion
+        mocker.patch.object(ContentCreator, 'add_from_version_to_yml', return_value='')
 
         # test Scripts repo copy
         content_creator.copy_dir_files(self.scripts_full_path, content_creator.content_bundle)
@@ -66,7 +69,7 @@ class TestContentCreator:
         assert filecmp.cmp(f'{self.TestPlaybooks_full_path}/script-Sleep-for-testplaybook.yml',
                            f'{self._test_dir}/script-Sleep-for-testplaybook.yml')
 
-    def test_indicator_types_and_fields(self):
+    def test_indicator_types_and_fields(self, mocker):
         """
         Given
         - Content dir with indicator types and fields
@@ -79,6 +82,9 @@ class TestContentCreator:
                                          content_bundle_path=self._bundle_dir,
                                          test_bundle_path=self._test_dir,
                                          preserve_bundles=False)
+
+        # not checking fromversion
+        mocker.patch.object(ContentCreator, 'add_from_version_to_json', return_value='')
 
         content_creator.copy_dir_files(self.indicator_fields_full_path, content_creator.content_bundle)
         assert filecmp.cmp(f'{self.indicator_fields_full_path}/field.json',
@@ -142,7 +148,7 @@ class TestContentCreator:
         assert yml_data50['script']['dockerimage'] == 'demisto/bs4:1.0.0.6538'
         assert yml_data45['script']['dockerimage'] == 'demisto/bs4'
 
-    def test_copy_packs_content_to_packs_bundle(self):
+    def test_copy_packs_content_to_packs_bundle(self, mocker):
         """
         Given
         - valid content dir, including Packs sub-dir
@@ -157,6 +163,9 @@ class TestContentCreator:
                                          content_bundle_path=self._bundle_dir,
                                          test_bundle_path=self._test_dir,
                                          preserve_bundles=False)
+        # not checking fromversion
+        mocker.patch.object(ContentCreator, 'add_from_version_to_yml', return_value='')
+
         content_creator.copy_packs_content_to_old_bundles([f'{self.Packs_full_path}/FeedAzure'])
 
         # test Packs repo, TestPlaybooks repo copy without playbook- prefix
@@ -185,3 +194,135 @@ class TestContentCreator:
         file_path = os.path.join(self._files_to_artifacts_dir, filename)
         content_creator.copy_file_to_artifacts(file_path)
         assert filecmp.cmp(file_path, os.path.join(self.content_repo, filename))
+
+    def test_add_from_version_to_yml__no_fromversion_in_yml(self, repo):
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == content_creator.fromversion
+
+    def test_add_from_version_to_yml__lower_fromversion_in_yml(self, repo):
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "1.0.0"})
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == content_creator.fromversion
+
+    def test_add_from_version_to_yml__higher_fromversion_in_yml(self, repo):
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = content_creator.fromversion.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        integration.write_yml({"fromversion": higher_version})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == higher_version
+
+    def test_add_from_version_to_yml__lower_toversion_in_yml(self, repo):
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration.write_yml({"toversion": "1.0.0"})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') is None
+
+    def test_add_from_version_to_yml__higher_toversion_in_yml__no_fromversion(self, repo):
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = content_creator.fromversion.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        integration.write_yml({"toversion": higher_version})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == content_creator.fromversion
+
+    def test_add_from_version_to_yml__higher_toversion_in_yml__with_fromversion(self, repo):
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = content_creator.fromversion.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        integration.write_yml({"toversion": higher_version, "fromversion": "1.0.0"})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == content_creator.fromversion
+
+    def test_add_from_version_to_json__no_fromversion_in_json(self, repo):
+        pack = repo.create_pack('pack')
+        json_path = pack.create_json_based("some_json", prefix='', content={}).path
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == content_creator.fromversion
+
+    def test_add_from_version_to_json__with__lower_fromversion_in_json(self, repo):
+        pack = repo.create_pack('pack')
+        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": "1.0.0"}).path
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == content_creator.fromversion
+
+    def test_add_from_version_to_json__with__higher_fromversion_in_json(self, repo):
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = content_creator.fromversion.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": higher_version}).path
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == higher_version
+
+    def test_add_from_version_to_json__with__lower_toversion_in_json(self, repo):
+        pack = repo.create_pack('pack')
+        json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": "1.0.0"}).path
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') is None
+
+    def test_add_from_version_to_json__with__higher_toversion_in_json(self, repo):
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = content_creator.fromversion.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": higher_version}).path
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == content_creator.fromversion
+
+    def test_add_from_version_to_json__with__higher_toversion_in_json_and_lower_fromversion(self, repo):
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = content_creator.fromversion.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": higher_version,
+                                                                            "fromVersion": "1.0.0"}).path
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == content_creator.fromversion

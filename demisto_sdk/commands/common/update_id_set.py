@@ -783,7 +783,8 @@ def get_general_paths(path):
     return files
 
 
-def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None, print_logs: bool = True):  # noqa: C901
+def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,
+                     print_logs: bool = True):  # noqa: C901
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                              'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -939,6 +940,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
         print_error('The following duplicates were found: {}'.format(duplicates))
 
     return new_ids_dict
+
 
 def find_duplicates(id_set, print_logs):
     lists_to_return = []

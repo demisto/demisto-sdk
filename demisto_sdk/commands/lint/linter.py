@@ -4,7 +4,6 @@ import io
 import json
 import logging
 import os
-from copy import deepcopy
 from typing import List, Optional, Tuple
 
 # 3-rd party packages
@@ -198,9 +197,8 @@ class Linter:
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
                 # Checking whatever *test* exists in package
-                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
-                                                   None) else False
-                if self._facts["test"]:
+                self._facts["tests"] = list(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']))
+                if self._facts["tests"]:
                     logger.info(f"{log_prompt} - Tests found")
                 else:
                     logger.info(f"{log_prompt} - Tests not found")
@@ -235,18 +233,7 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
-        self._split_lint_files()
         return False
-
-    def _split_lint_files(self):
-        """ Remove unit test files from _facts['lint_files'] and put into their own list _facts['lint_unittest_files']
-        This is because not all lints should be done on unittest files.
-        """
-        lint_files_list = deepcopy(self._facts["lint_files"])
-        for lint_file in lint_files_list:
-            if lint_file.name.startswith('test_') or lint_file.name.endswith('_test.py'):
-                self._facts['lint_unittest_files'].append(lint_file)
-                self._facts["lint_files"].remove(lint_file)
 
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
         """ Run lint check on host
@@ -272,16 +259,6 @@ class Linter:
                 elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
-                if exit_code:
-                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                    self._pkg_lint_status[f"{lint_check}_errors"] = output
-        if self._facts['lint_unittest_files']:
-            for lint_check in ["flake8"]:
-                exit_code: int = SUCCESS
-                output: str = ""
-                if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
-                                                         lint_files=self._facts["lint_unittest_files"])
                 if exit_code:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output

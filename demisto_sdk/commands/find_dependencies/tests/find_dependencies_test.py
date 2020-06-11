@@ -439,6 +439,35 @@ class TestDependsOnIncidentField:
         assert found_result == expected_result
 
 
+class TestDependsOnIndicatorType:
+    @pytest.mark.parametrize("dependency_integrations, dependency_scripts ,expected_result",
+                             [("Fake", "Fake", set()),
+                              ("Fake", "Fake", set()),
+                              ("Fake", "Fake", set())
+                              ])
+    def test_collect_layouts_dependencies(self, dependency_integrations, dependency_scripts, expected_result, id_set):
+        test_input = [
+            {
+                "Dummy Indicator Type": {
+                    "name": "Dummy Indicator Type",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "integrations": [
+                        dependency_integrations
+                    ],
+                    "scripts": [
+                        dependency_scripts
+                    ]
+                }
+            }
+        ]
+        found_result = PackDependencies._collect_indicators_types_dependencies(
+            pack_indicators_types=test_input, id_set=id_set)
+
+        # TODO: update the test once the implementation of all dependencies is working
+        assert found_result == expected_result
+
+
 class TestDependencyGraph:
     def test_build_dependency_graph(self, id_set):
         pack_name = "ImpossibleTraveler"

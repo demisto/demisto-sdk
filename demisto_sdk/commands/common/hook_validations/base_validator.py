@@ -98,14 +98,13 @@ class BaseValidator:
         with io.open(meta_file_path, mode="r", encoding="utf-8") as file:
             metadata_file_content = file.read()
 
-        return metadata_file_content
+        return json.loads(metadata_file_content)
 
     def check_support_status(self, file_path):
         pack_name = get_pack_name(file_path)
         if pack_name:
             metadata_path = os.path.join(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
-            metadata_file_content = self.get_meta_file_content(metadata_path)
-            metadata_json = json.loads(metadata_file_content)
+            metadata_json = self.get_meta_file_content(metadata_path)
             support = metadata_json.get(PACK_METADATA_SUPPORT)
             certification = metadata_json.get(PACK_METADATA_CERTIFICATION)
 

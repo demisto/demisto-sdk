@@ -1,8 +1,5 @@
-import json
-
 from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
-                                                   PACK_METADATA_SUPPORT,
-                                                   PACKS_PACK_META_FILE_NAME)
+                                                   PACK_METADATA_SUPPORT)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
@@ -170,12 +167,12 @@ def test_check_support_status_xsoar_file(repo, mocker):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    meta_json = json.dumps({
+    meta_json = {
         PACK_METADATA_SUPPORT: "xsoar",
         PACK_METADATA_CERTIFICATION: "certified"
-    })
+    }
     mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
-    pack.create_json_based(name=PACKS_PACK_META_FILE_NAME, content=meta_json, prefix='')
+    pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_support_status(integration.yml_path)
@@ -196,12 +193,12 @@ def test_check_support_status_non_certified_partner_file(repo, mocker):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    meta_json = json.dumps({
+    meta_json = {
         PACK_METADATA_SUPPORT: "partner",
         PACK_METADATA_CERTIFICATION: "not certified"
-    })
+    }
     mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
-    pack.create_json_based(name=PACKS_PACK_META_FILE_NAME, content=meta_json, prefix='')
+    pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_support_status(integration.yml_path)
@@ -222,12 +219,12 @@ def test_check_support_status_certified_partner_file(repo, mocker):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    meta_json = json.dumps({
+    meta_json = {
         PACK_METADATA_SUPPORT: "partner",
         PACK_METADATA_CERTIFICATION: "certified"
-    })
+    }
     mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
-    pack.create_json_based(name=PACKS_PACK_META_FILE_NAME, content=meta_json, prefix='')
+    pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_support_status(integration.yml_path)
@@ -248,12 +245,12 @@ def test_check_support_status_community_file(repo, mocker):
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
-    meta_json = json.dumps({
+    meta_json = {
         PACK_METADATA_SUPPORT: "community",
         PACK_METADATA_CERTIFICATION: "not certified"
-    })
+    }
     mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
-    pack.create_json_based(name=PACKS_PACK_META_FILE_NAME, content=meta_json, prefix='')
+    pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_support_status(integration.yml_path)

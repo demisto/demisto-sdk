@@ -56,6 +56,10 @@ jobs:
                 git checkout ${CONTENT_BRANCH_NAME}
               fi
 
+              if [[ $FAKE_MASTER = true ]]; then
+                export CIRCLE_BRANCH="master"
+              fi
+
               ./Tests/scripts/validate.sh
         - run:
             name: Test create ID set

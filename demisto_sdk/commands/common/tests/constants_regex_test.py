@@ -1,14 +1,14 @@
 import pytest
 from demisto_sdk.commands.common.constants import (
-    PACKAGE_YML_FILE_REGEX, PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
-    PACKS_CLASSIFIER_JSON_REGEX, PACKS_DASHBOARD_JSON_REGEX,
-    PACKS_INCIDENT_FIELD_JSON_REGEX, PACKS_INCIDENT_TYPE_JSON_REGEX,
-    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_PY_REGEX,
-    PACKS_INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_YML_REGEX,
-    PACKS_LAYOUT_JSON_REGEX, PACKS_MAPPER_JSON_REGEX, PACKS_SCRIPT_PY_REGEX,
-    PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
-    PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
-    TEST_PLAYBOOK_YML_REGEX)
+    CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
+    PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
+    PACKS_DASHBOARD_JSON_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX,
+    PACKS_INCIDENT_TYPE_JSON_REGEX, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_INTEGRATION_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX,
+    PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUT_JSON_REGEX,
+    PACKS_MAPPER_JSON_REGEX, PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_TEST_PY_REGEX,
+    PACKS_SCRIPT_YML_REGEX, PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX,
+    PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.tools import checked_type
 
 test_packs_regex_params = [
@@ -54,6 +54,23 @@ test_packs_regex_params = [
         ['Packs/OpenPhish/Playbooks/playbook-Foo_README.md'],
         ['Packs/OpenPhish/Playbooks/playbook-Foo_README.yml'],
         [PLAYBOOK_README_REGEX]
+    ),
+    (
+        ['Packs/SomeScript/Scripts/ScriptName/ScriptName.ps1',
+         'Packs/SomeIntegration/Integrations/IntegrationName/IntegrationName.ps1',
+         'Packs/SomeScript/Scripts/ScriptName/ScriptName.py',
+         'Packs/SomeIntegration/Integrations/IntegrationName/IntegrationName.py'],
+        ['Packs/SomeScript/Scripts/ScriptName/ScriptName.Tests.ps1',
+         'Packs/SomeIntegration/Integrations/IntegrationName/IntegrationName.Tests.ps1',
+         'Packs/SomeScript/Scripts/ScriptName/ScriptName.yml',
+         'Packs/SomeScript/Scripts/ScriptName/NotTheSameScriptName.ps1',
+         'Packs/SomeIntegration/Integrations/IntegrationName/NotTheSameIntegrationName.ps1',
+         'Packs/SomeScript/Scripts/ScriptName/ScriptName_test.py',
+         'Packs/SomeIntegration/Integrations/IntegrationName/IntegrationName_test.py',
+         'Packs/SomeScript/Scripts/ScriptName/NotTheSameScriptName.py',
+         'Packs/SomeIntegration/Integrations/IntegrationName/NotTheSameIntegrationName.py'
+         ],
+        CODE_FILES_REGEX
     )
 ]
 

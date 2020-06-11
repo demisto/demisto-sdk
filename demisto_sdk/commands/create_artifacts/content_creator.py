@@ -29,12 +29,12 @@ from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    TEST_PLAYBOOKS_DIR, TOOL,
                                                    TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
                                                get_child_files,
                                                get_common_server_path,
                                                get_yaml, get_yml_paths_in_dir,
-                                               print_color, print_error,
+                                               print_error, print_success,
                                                print_warning)
 from demisto_sdk.commands.unify.unifier import Unifier
 from ruamel.yaml import YAML
@@ -80,7 +80,6 @@ class ContentCreator:
 
         self.packages_to_skip = []
         self.packs_to_skip = ['ApiModules']  # See the pack README
-        self.fromversion = LATEST_SUPPORTED_VERSION
 
         # zip files names (the extension will be added later - shutil demands file name without extension)
         self.content_zip = os.path.join(self.artifacts_path, 'content_new')
@@ -105,19 +104,14 @@ class ContentCreator:
 
         return 0
 
-    def add_from_version_to_yml(self, file_path, yml_content=None, save_yml=True):
+    @staticmethod
+    def add_from_version_to_yml(file_path=None, yml_content=None, save_yml=True):
         if not yml_content:
             yml_content = get_yaml(file_path)
 
-        if 'fromversion' not in yml_content or \
-                parse_version(self.fromversion) > parse_version(yml_content.get('fromversion', '0')):
-
-            if 'toversion' in yml_content:
-                if parse_version(yml_content.get('toversion')) > parse_version(self.fromversion):
-                    yml_content['fromversion'] = self.fromversion
-
-            else:
-                yml_content['fromversion'] = self.fromversion
+        if parse_version(yml_content.get('toversion', '99.99.99')) > parse_version(
+                LATEST_SUPPORTED_VERSION) > parse_version(yml_content.get('fromversion', '0.0.0')):
+            yml_content['fromversion'] = LATEST_SUPPORTED_VERSION
 
             if save_yml:
                 with open(file_path, 'w') as f:
@@ -125,20 +119,13 @@ class ContentCreator:
 
         return yml_content
 
-    def add_from_version_to_json(self, file_path):
-        json_content = None
-        with open(file_path, 'r') as f:
-            json_content = json.loads(f.read())
+    @staticmethod
+    def add_from_version_to_json(file_path):
+        json_content = tools.get_json(file_path)
 
-        if json_content is not None and \
-                ('fromVersion' not in json_content or
-                 parse_version(self.fromversion) > parse_version(json_content.get('fromVersion', '0'))):
-            if 'toVersion' in json_content:
-                if parse_version(json_content.get('toVersion')) > parse_version(self.fromversion):
-                    json_content['fromVersion'] = self.fromversion
-
-            else:
-                json_content['fromVersion'] = self.fromversion
+        if parse_version(json_content.get('toVersion', '99.99.99')) > parse_version(
+                LATEST_SUPPORTED_VERSION) > parse_version(json_content.get('fromVersion', '0.0.0')):
+            json_content['fromVersion'] = LATEST_SUPPORTED_VERSION
 
             with open(file_path, 'w') as f:
                 json.dump(json_content, f, indent=4)
@@ -180,8 +167,11 @@ class ContentCreator:
                 # for example HelloWorld integration
                 unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
-            unified_yml_path = unification_tool.merge_script_package_to_yml()[0]
-            self.add_from_version_to_yml(unified_yml_path)
+
+            unified_yml_paths = unification_tool.merge_script_package_to_yml()
+
+            for unified_yml_path in unified_yml_paths:
+                self.add_from_version_to_yml(unified_yml_path)
 
     @staticmethod
     def add_tools_to_bundle(tools_dir_path, bundle):
@@ -239,7 +229,7 @@ class ContentCreator:
         scan_files, _ = get_yml_paths_in_dir(dir_path, error_msg='')
         content_files = 0
         dir_name = os.path.basename(dir_path)
-        if len(scan_files) > 0:
+        if scan_files:
             print(f"\nStarting process for {dir_path}")
         for path in scan_files:
             new_file_path = os.path.join(bundle, os.path.basename(path))
@@ -251,7 +241,7 @@ class ContentCreator:
             with io.open(path, mode='r', encoding='utf-8') as file_:
                 yml_info = ryaml.load(file_)
             ver = yml_info.get('fromversion', '0')
-            updated_yml_info = self.add_from_version_to_yml(file_path=None, yml_content=yml_info, save_yml=False)
+            updated_yml_info = self.add_from_version_to_yml(yml_content=yml_info, save_yml=False)
             if updated_yml_info:
                 yml_info = updated_yml_info
 
@@ -467,8 +457,11 @@ class ContentCreator:
                                     print_warning('{} Only unified yml found in the package directory'.format(msg))
                                 continue
                             unifier = Unifier(package_dir, dir_name, dest_dir)
-                            new_file_path = unifier.merge_script_package_to_yml()[0]
-                            self.add_from_version_to_yml(new_file_path)
+
+                            new_file_paths = unifier.merge_script_package_to_yml()
+
+                            for new_file_path in new_file_paths:
+                                self.add_from_version_to_yml(new_file_path)
 
                     non_split_yml_files = [f for f in os.listdir(content_dir)
                                            if os.path.isfile(os.path.join(content_dir, f)) and
@@ -615,8 +608,7 @@ class ContentCreator:
             self.copy_file_to_artifacts('release-notes.md')
             self.copy_file_to_artifacts('beta-release-notes.md')
             self.copy_file_to_artifacts('packs-release-notes.md')
-            print_color(f'\nfinished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"',
-                        LOG_COLORS.GREEN)
+            print_success(f'\nfinished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
         finally:
             if not self.preserve_bundles:
                 if os.path.exists(self.content_bundle):

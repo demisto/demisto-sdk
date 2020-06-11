@@ -196,15 +196,31 @@ class TestContentCreator:
         assert filecmp.cmp(file_path, os.path.join(self.content_repo, filename))
 
     def test_add_from_version_to_yml__no_fromversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with no fromversion in it
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
         pack = repo.create_pack('pack')
         integration = pack.create_integration('integration')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
 
         with ChangeCWD(repo.path):
             unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
-            assert unified_yml.get('fromversion') == content_creator.fromversion
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
 
     def test_add_from_version_to_yml__lower_fromversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with a fromversion which is lower than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
         pack = repo.create_pack('pack')
         integration = pack.create_integration('integration')
         integration.write_yml({"fromversion": "1.0.0"})
@@ -212,13 +228,21 @@ class TestContentCreator:
 
         with ChangeCWD(repo.path):
             unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
-            assert unified_yml.get('fromversion') == content_creator.fromversion
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
 
     def test_add_from_version_to_yml__higher_fromversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with a fromversion which is higher than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml's fromversion is unchanged
+        """
         pack = repo.create_pack('pack')
         integration = pack.create_integration('integration')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        higher_version = content_creator.fromversion.split('.')
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
         integration.write_yml({"fromversion": higher_version})
@@ -228,6 +252,14 @@ class TestContentCreator:
             assert unified_yml.get('fromversion') == higher_version
 
     def test_add_from_version_to_yml__lower_toversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with a toversion which is lower than LATEST_SUPPORTED_VERSION and no fromversion
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml does not have fromversion key
+        """
         pack = repo.create_pack('pack')
         integration = pack.create_integration('integration')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
@@ -238,53 +270,93 @@ class TestContentCreator:
             assert unified_yml.get('fromversion') is None
 
     def test_add_from_version_to_yml__higher_toversion_in_yml__no_fromversion(self, repo):
+        """
+        Given
+        - An integration yml path with a toversion which is higher than LATEST_SUPPORTED_VERSION and no fromversion
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
         pack = repo.create_pack('pack')
         integration = pack.create_integration('integration')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        higher_version = content_creator.fromversion.split('.')
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
         integration.write_yml({"toversion": higher_version})
 
         with ChangeCWD(repo.path):
             unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
-            assert unified_yml.get('fromversion') == content_creator.fromversion
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
 
     def test_add_from_version_to_yml__higher_toversion_in_yml__with_fromversion(self, repo):
+        """
+        Given
+        - An integration yml path with a toversion which is higher than LATEST_SUPPORTED_VERSION and lower fromversion
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
         pack = repo.create_pack('pack')
         integration = pack.create_integration('integration')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        higher_version = content_creator.fromversion.split('.')
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
         integration.write_yml({"toversion": higher_version, "fromversion": "1.0.0"})
 
         with ChangeCWD(repo.path):
             unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
-            assert unified_yml.get('fromversion') == content_creator.fromversion
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
 
     def test_add_from_version_to_json__no_fromversion_in_json(self, repo):
+        """
+        Given
+        - An json path with no fromVersion
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
+        """
         pack = repo.create_pack('pack')
         json_path = pack.create_json_based("some_json", prefix='', content={}).path
         content_creator = ContentCreator(artifacts_path=self.content_repo)
 
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
-            assert json_content.get('fromVersion') == content_creator.fromversion
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
 
     def test_add_from_version_to_json__with__lower_fromversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a fromVersion which is lower than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
+        """
         pack = repo.create_pack('pack')
         json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": "1.0.0"}).path
         content_creator = ContentCreator(artifacts_path=self.content_repo)
 
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
-            assert json_content.get('fromVersion') == content_creator.fromversion
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
 
     def test_add_from_version_to_json__with__higher_fromversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a fromVersion which is higher than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json's fromVersion is unchanged
+        """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        higher_version = content_creator.fromversion.split('.')
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
         json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": higher_version}).path
@@ -294,6 +366,14 @@ class TestContentCreator:
             assert json_content.get('fromVersion') == higher_version
 
     def test_add_from_version_to_json__with__lower_toversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a toVersion which is lower than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has no fromVersion
+        """
         pack = repo.create_pack('pack')
         json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": "1.0.0"}).path
         content_creator = ContentCreator(artifacts_path=self.content_repo)
@@ -303,21 +383,37 @@ class TestContentCreator:
             assert json_content.get('fromVersion') is None
 
     def test_add_from_version_to_json__with__higher_toversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a toVersion which is higher than LATEST_SUPPORTED_VERSION and no fromVersion
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
+        """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        higher_version = content_creator.fromversion.split('.')
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
         json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": higher_version}).path
 
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
-            assert json_content.get('fromVersion') == content_creator.fromversion
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
 
     def test_add_from_version_to_json__with__higher_toversion_in_json_and_lower_fromversion(self, repo):
+        """
+        Given
+        - An json path with a toVersion which is higher than LATEST_SUPPORTED_VERSION and lower fromVersion
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json's fromVersion is unchanged
+        """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        higher_version = content_creator.fromversion.split('.')
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
         json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": higher_version,
@@ -325,4 +421,4 @@ class TestContentCreator:
 
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
-            assert json_content.get('fromVersion') == content_creator.fromversion
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION

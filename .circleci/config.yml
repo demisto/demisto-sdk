@@ -57,8 +57,7 @@ jobs:
               fi
 
               if [[ $FAKE_MASTER = true ]]; then
-                demisto-sdk validate -a
-                exit 0
+                CIRCLE_BRANCH=“master”
               fi
 
               ./Tests/scripts/validate.sh

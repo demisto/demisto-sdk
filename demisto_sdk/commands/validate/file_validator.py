@@ -98,7 +98,8 @@ class FilesValidator:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 configuration=Configuration()):
+                 configuration=Configuration(), silence_init_prints=True):
+        self.silence_init_prints = silence_init_prints
         self.validate_all = validate_all
         self.skip_docker_checks = True if self.validate_all else False
 
@@ -106,9 +107,11 @@ class FilesValidator:
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
         if self.use_git:
-            print('Using git')
+            if not self.silence_init_prints:
+                print('Using git')
             self.branch_name = self.get_current_working_branch()
-            print(f'Running validation on branch {self.branch_name}')
+            if not self.silence_init_prints:
+                print(f'Running validation on branch {self.branch_name}')
             if self.branch_name in ['master', 'test-sdk-master']:
                 self.skip_pack_rn_validation = True
 
@@ -125,7 +128,8 @@ class FilesValidator:
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
-            print('Running in a private repository')
+            if not self.silence_init_prints:
+                print('Running in a private repository')
             self.skip_conf_json = True  # private repository don't have conf.json file
 
         if not self.skip_conf_json:
@@ -328,7 +332,8 @@ class FilesValidator:
                 continue
             if not any(non_permitted_type in mod_file.lower() for non_permitted_type in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
                 if 'releasenotes' not in mod_file.lower():
-                    _modified_files.add(mod_file)
+                    if 'readme' not in mod_file.lower():
+                        _modified_files.add(mod_file)
         changed_packs = self.get_packs(_modified_files)
         for file_path in modified_files:
             old_file_path = None

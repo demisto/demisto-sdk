@@ -56,6 +56,11 @@ jobs:
                 git checkout ${CONTENT_BRANCH_NAME}
               fi
 
+              if [[ $FAKE_MASTER = true ]]; then
+                demisto-sdk validate -a
+                exit 0
+              fi
+
               ./Tests/scripts/validate.sh
         - run:
             name: Test create ID set

@@ -57,7 +57,7 @@ jobs:
               fi
 
               if [[ $FAKE_MASTER = true ]]; then
-                CIRCLE_BRANCH=“master”
+                export CIRCLE_BRANCH="master" >> $BASH_ENV
               fi
 
               ./Tests/scripts/validate.sh

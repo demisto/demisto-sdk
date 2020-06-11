@@ -1,5 +1,6 @@
 # Changelog
-* Unify command now adds contributor details to the display name and description.
+* *Unify* command now adds contributor details to the display name and description.
+
 #### 1.1.2
 * Added a validation for invalid playbookID fields in incidents types files in **validate** command.
 * Added a code formatter for python files.

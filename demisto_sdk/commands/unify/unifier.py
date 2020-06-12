@@ -27,7 +27,8 @@ class Unifier:
                  image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
         directory_name = ""
-        if input == ".":
+        # Changing relative path to current abspath fixed problem with default output file name.
+        if input == "." and output == '':
             input = os.path.abspath(input)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:

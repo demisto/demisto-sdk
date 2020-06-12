@@ -425,7 +425,6 @@ final test: hi
         unifier = Unifier(input_path_integration)
         yml_files = unifier.merge_script_package_to_yml()
         export_yml_path = yml_files[0]
-        mocker.patch("")
         expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml'
 
         assert export_yml_path == expected_yml_path

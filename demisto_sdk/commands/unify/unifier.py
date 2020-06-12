@@ -27,6 +27,8 @@ class Unifier:
                  image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
         directory_name = ""
+        if input == ".":
+            input = os.path.abspath(input)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:
                 directory_name = optional_dir_name

@@ -405,6 +405,32 @@ final test: hi
         assert export_yml_path == expected_yml_path
         os.remove(expected_yml_path)
 
+    def test_unify_default_output_integration_for_relative_current_dir_input(self, mocker):
+        """
+        Given
+        - Input path of '.'.
+        - UploadTest integration.
+        - No output path.
+
+        When
+        - Running Unify on it.
+
+        Then
+        - Ensure Unify command works with default output given relative path to current directory.
+        """
+        from demisto_sdk.commands.unify.unifier import Unifier
+        abs_path_mock = mocker.patch('demisto_sdk.commands.unify.unifier.os.path.abspath')
+        abs_path_mock.return_value = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
+        input_path_integration = '.'
+        unifier = Unifier(input_path_integration)
+        yml_files = unifier.merge_script_package_to_yml()
+        export_yml_path = yml_files[0]
+        mocker.patch("")
+        expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml'
+
+        assert export_yml_path == expected_yml_path
+        os.remove(expected_yml_path)
+
 
 class TestMergeScriptPackageToYMLScript:
     def setup(self):

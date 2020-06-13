@@ -749,6 +749,9 @@ def id_set_command(**kwargs):
     type=RNInputValidation()
 )
 @click.option(
+    '-v', '--version', help="Bump to a specific version."
+)
+@click.option(
     '--all', help="Update all changed packs", is_flag=True
 )
 @click.option(
@@ -759,7 +762,9 @@ def update_pack_releasenotes(**kwargs):
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
-    modified, added, old, _packs = FilesValidator(use_git=True).get_modified_and_added_files()
+    specific_version = kwargs.get('version')
+    print("Starting to update release notes.")
+    modified, added, old, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -787,7 +792,8 @@ def update_pack_releasenotes(**kwargs):
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
             update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
-                                      pre_release=pre_release, added_files=added)
+                                      pre_release=pre_release, added_files=added,
+                                      specific_version=specific_version)
             update_pack_rn.execute_update()
     elif is_all and _pack:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -800,7 +806,8 @@ def update_pack_releasenotes(**kwargs):
                             f"-p {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
-                                          pre_release=pre_release, added_files=added)
+                                          pre_release=pre_release, added_files=added,
+                                          specific_version=specific_version)
                 update_pack_rn.execute_update()
 
 

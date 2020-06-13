@@ -59,7 +59,7 @@ class Linter:
             "images": [],
             "python_version": 0,
             "env_vars": {},
-            "test": False,
+            "tests": [],
             "lint_files": [],
             "lint_unittest_files": [],
             "additional_requirements": [],

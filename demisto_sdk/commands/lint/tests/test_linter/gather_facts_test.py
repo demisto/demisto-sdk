@@ -122,7 +122,7 @@ class TestTestsCollection:
                                req_3=[],
                                docker_engine=True)
         runner._gather_facts(modules={})
-        assert runner._facts["test"]
+        assert runner._facts["tests"]
 
     def test_tests_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter
@@ -137,7 +137,7 @@ class TestTestsCollection:
                                req_3=[],
                                docker_engine=True)
         runner._gather_facts(modules={})
-        assert not runner._facts["test"]
+        assert not runner._facts["tests"]
 
 
 class TestLintFilesCollection:
@@ -155,7 +155,7 @@ class TestLintFilesCollection:
                                docker_engine=True)
         runner._gather_facts(modules={})
         assert runner._facts["lint_files"][0] == integration_path / f'{integration_path.name}.py'
-        assert runner._facts['lint_unittest_files'][0] == integration_path / f'{integration_path.name}_test.py'
+        assert list(runner._facts['tests'])[0] == integration_path / f'{integration_path.name}_test.py'
 
     def test_lint_files_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         from demisto_sdk.commands.lint import linter

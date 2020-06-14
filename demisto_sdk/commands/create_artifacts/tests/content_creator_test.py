@@ -3,6 +3,7 @@ from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.create_artifacts.content_creator import *
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestContentCreator:
@@ -202,12 +203,12 @@ class TestContentCreator:
         bundle_content = os.path.join(temp_bundles, 'bundle_content')
         content_creator = ContentCreator(artifacts_path=temp_bundles, content_version='2.5.0',
                                          preserve_bundles=True, no_update_commonserver=True)
-        os.chdir(self.valid_content_repo)
-        content_creator.create_content()
+        with ChangeCWD(self.valid_content_repo):
+            content_creator.create_content()
 
-        assert filecmp.cmp(f'{self.valid_content_repo}/Packs/FeedAzureValid/ReleaseNotes/1_1_1.md',
-                           f'{bundle_packs}/FeedAzureValid/ReleaseNotes/1_1_1.md')
-        assert f'{self.valid_content_repo}/Packs/FeedAzureValid/CHANGELOG.md' not in bundle_content
-        assert f'{self.valid_content_repo}/Packs/FeedAzureValid/README.md' not in bundle_content
+            assert filecmp.cmp(f'{self.valid_content_repo}/Packs/FeedAzureValid/ReleaseNotes/1_1_1.md',
+                               f'{bundle_packs}/FeedAzureValid/ReleaseNotes/1_1_1.md')
+            assert f'{self.valid_content_repo}/Packs/FeedAzureValid/CHANGELOG.md' not in bundle_content
+            assert f'{self.valid_content_repo}/Packs/FeedAzureValid/README.md' not in bundle_content
 
-        shutil.rmtree(temp_bundles)
+            shutil.rmtree(temp_bundles)

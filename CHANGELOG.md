@@ -1,5 +1,5 @@
 # Changelog
-* Unify command now adds contributor details to the display name and description.
+* *Unify* command now adds contributor details to the display name and description.
 * Added default behavior for **update-release-notes** command.
 * Fixed an error where README files were failing release notes validation.
 * Updated format of generated release notes to be more user friendly.

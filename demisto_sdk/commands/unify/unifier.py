@@ -163,8 +163,9 @@ class Unifier:
         if not self.is_script_package:
             yml_unified, image_path = self.insert_image_to_yml(self.yml_data, yml_unified)
             yml_unified, desc_path = self.insert_description_to_yml(self.yml_data, yml_unified)
-            is_contributed_pack, contributor_type, metadata_data = self.is_contributor_pack()
-            if is_contributed_pack:
+            contributor_type, metadata_data = self.get_contributor_data()
+
+            if self.is_contributor_pack(contributor_type):
                 contributor_email = metadata_data.get('email', '')
                 contributor_url = metadata_data.get('url', '')
                 yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
@@ -355,12 +356,22 @@ class Unifier:
     def get_pack_path(self):
         return self.package_path.split('Integrations')[0]
 
-    def is_contributor_pack(self):
+    def is_contributor_pack(self, contributor_type):
         """Checks if the pack is a contribution.
+        Args:
+            contributor_type (str): The contributor type.
+        Returns:
+            (bool). True if it is a contributed pack, False otherwise.
+        """
+        if contributor_type in CONTRIBUTORS_LIST:
+            return True
+        return False
+
+    def get_contributor_data(self):
+        """Gets contributor data.
 
         Returns:
-            (bool, str, dict). True if it is a contributed pack, contributor type and the file data,
-             False, None and None otherwise.
+            (str, dict). Contributor type and file data.
         """
         pack_path = self.get_pack_path()
         pack_metadata_data, pack_metadata_path = self.get_data(pack_path, PACK_METADATA_PATH)
@@ -368,9 +379,8 @@ class Unifier:
         if pack_metadata_data:
             json_pack_metadata = json.loads(pack_metadata_data)
             support_field = json_pack_metadata.get('support')
-            if support_field in CONTRIBUTORS_LIST:
-                return True, support_field, json_pack_metadata
-        return False, None, None
+            return support_field, json_pack_metadata
+        return None, None
 
     def add_contributors_support(self, unified_yml, contributor_type, contributor_email, contributor_url):
         """Add contributor support to the unified file - text in the display name and detailed description.

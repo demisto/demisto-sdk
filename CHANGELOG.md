@@ -5,7 +5,7 @@
 * Improved error messages for the **update-release-notes** command.
 * Added support for `Connections`, `Dashboards`, `Widgets`, and `Indicator Types` to **update-release-notes** command.
 * **Validate** now supports scripts under the *TestPlaybooks* directory.
-* Fixed an issue where **validate* did not support support powershell files.
+* Fixed an issue where **validate** did not support support powershell files.
 
 #### 1.1.2
 * Added a validation for invalid playbookID fields in incidents types files in **validate** command.

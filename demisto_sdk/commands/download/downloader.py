@@ -188,7 +188,8 @@ class Downloader:
         """
         if self.list_files:
             self.all_custom_content_objects = self.get_custom_content_objects()
-            list_files = [[cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects]
+            list_files = [[cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects
+                          if cco.get('name')]
             print_color('\nThe following files are available to be downloaded from Demisto instance:\n',
                         LOG_COLORS.NATIVE)
             print(tabulate(list_files, headers=['FILE NAME', 'FILE TYPE']))
@@ -321,7 +322,7 @@ class Downloader:
         for input_file_name in self.input_files:
             input_file_exist_in_cc: bool = False
             for custom_content_object in custom_content_objects:
-                name = custom_content_object['name']
+                name = custom_content_object.get('name', 'N/A')
                 if name == input_file_name:
                     custom_content_object['exist_in_pack'] = self.exist_in_pack_content(custom_content_object)
                     self.custom_content.append(custom_content_object)

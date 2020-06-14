@@ -61,7 +61,6 @@ class Linter:
             "env_vars": {},
             "tests": [],
             "lint_files": [],
-            "lint_unittest_files": [],
             "additional_requirements": [],
             "docker_engine": docker_engine
         }

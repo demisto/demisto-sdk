@@ -208,7 +208,7 @@ class TestContentCreator:
 
             assert filecmp.cmp(f'{self.valid_content_repo}/Packs/FeedAzureValid/ReleaseNotes/1_1_1.md',
                                f'{bundle_packs}/FeedAzureValid/ReleaseNotes/1_1_1.md')
-            assert f'{self.valid_content_repo}/Packs/FeedAzureValid/CHANGELOG.md' not in bundle_content
-            assert f'{self.valid_content_repo}/Packs/FeedAzureValid/README.md' not in bundle_content
+            assert not os.path.isfile(f'{bundle_content}/CHANGELOG.md')
+            assert not os.path.isfile(f'{bundle_content}/README.md')
 
             shutil.rmtree(temp_bundles)

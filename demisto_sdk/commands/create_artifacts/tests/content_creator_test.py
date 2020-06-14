@@ -195,8 +195,8 @@ class TestContentCreator:
         When
         - copying the content folder to a content bundle(flatten files)
         Then
-        Ensure no md files were copied to content bundle
-        Ensure md files were copied to packs bundle.
+        - Ensure no md files were copied to content bundle
+        - Ensure md files were copied to packs bundle.
         """
         temp_bundles = mkdtemp(dir=self.valid_content_repo)
         bundle_packs = os.path.join(temp_bundles, 'bundle_packs')

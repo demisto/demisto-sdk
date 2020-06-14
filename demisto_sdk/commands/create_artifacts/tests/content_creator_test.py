@@ -1,6 +1,7 @@
 import filecmp
 from tempfile import mkdtemp
 
+import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.create_artifacts.content_creator import *
 from TestSuite.test_tools import ChangeCWD
@@ -210,5 +211,6 @@ class TestContentCreator:
                                f'{bundle_packs}/FeedAzureValid/ReleaseNotes/1_1_1.md')
             assert not os.path.isfile(f'{bundle_content}/CHANGELOG.md')
             assert not os.path.isfile(f'{bundle_content}/README.md')
+            assert not os.path.isfile(f'{bundle_content}/incidentfield-city_README.md')
 
             shutil.rmtree(temp_bundles)

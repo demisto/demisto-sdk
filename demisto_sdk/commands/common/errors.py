@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 
 FOUND_FILES_AND_ERRORS = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100', 'IF106']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106']
 
 PRESET_ERROR_TO_IGNORE = {
 }
@@ -129,6 +129,8 @@ ERROR_CODE = {
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
+    "reputation_invalid_indicator_type_id": "RP103",
+    "reputation_empty_required_fields": "RP104",
     "structure_doesnt_match_scheme": "ST100",
     "file_id_contains_slashes": "ST101",
     "file_id_changed": "ST102",
@@ -567,12 +569,16 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_not_finished():
-        return "Please finish filling out the release notes"
+        return "Please finish filling out the release notes. For common troubleshooting steps, please " \
+               "review the documentation found here: " \
+               "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
 
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return "Your release notes file is empty, please complete it."
+        return "Your release notes file is empty, please complete it. If you are trying to exclude " \
+               "an item from the release notes, please refer to the documentation found here: " \
+               "https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
 
     @staticmethod
     @error_code_decorator
@@ -583,16 +589,19 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes_for_pack(pack):
-        return f"Release notes were not found for. Please run `demisto-sdk " \
+        return f"Release notes were not found. Please run `demisto-sdk " \
                f"update-release-notes -p {pack} -u (major|minor|revision)` to " \
-               f"generate release notes according to the new standard."
+               f"generate release notes according to the new standard. You can refer to the documentation " \
+               f"found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
     @staticmethod
     @error_code_decorator
     def missing_release_notes_entry(file_type, pack_name, entity_name):
         return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
                f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
-               f"generate an updated template."
+               f"generate an updated template. If you are trying to exclude an item from the release " \
+               f"notes, please refer to the documentation found here - " \
+               f"https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
 
     @staticmethod
     @error_code_decorator
@@ -609,7 +618,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def playbook_unhandled_condition(task_id, task_condition_labels):
-        return f'Playbook conditional task with id:{task_id} has unhandled ' \
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 
     @staticmethod
@@ -628,14 +637,14 @@ class Errors:
     @error_code_decorator
     def no_beta_disclaimer_in_description():
         return f"The detailed description in beta integration package " \
-               f"dose not contain the beta disclaimer note. Add the following to the description:\n" \
+               f"does not contain the beta disclaimer note. Add the following to the description:\n" \
                f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_yml():
         return f"The detailed description field in beta integration " \
-               f"dose not contain the beta disclaimer note. Add the following to the detailed description:\n" \
+               f"does not contain the beta disclaimer note. Add the following to the detailed description:\n" \
                f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
@@ -667,7 +676,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_type(file_type, TypeFields):
-        return f"Type: `{file_type}` is not one of available type.\n" \
+        return f"Type: `{file_type}` is not one of available types.\n" \
                f"available types: {[value.value for value in TypeFields]}"
 
     @staticmethod
@@ -805,6 +814,16 @@ class Errors:
     @error_code_decorator
     def reputation_id_and_details_not_equal():
         return 'id and details fields are not equal.'
+
+    @staticmethod
+    @error_code_decorator
+    def reputation_invalid_indicator_type_id():
+        return 'Indicator type "id" field can not include spaces or special characters.'
+
+    @staticmethod
+    @error_code_decorator
+    def reputation_empty_required_fields():
+        return 'id and details fields can not be empty.'
 
     @staticmethod
     @error_code_decorator
@@ -949,15 +968,15 @@ class Errors:
 
     @staticmethod
     def id_might_changed():
-        return "ID might have changed, please make sure to check you have the correct one."
+        return "ID may have changed, please make sure to check you have the correct one."
 
     @staticmethod
     def id_changed():
-        return "You've changed the ID of the file, please undo."
+        return "You've changed the ID of the file, please undo this change."
 
     @staticmethod
     def might_need_release_notes():
-        return "You might need RN in file, please make sure to check that."
+        return "You may need RN in this file, please verify if they are required."
 
     @staticmethod
     def unknown_file():

@@ -1,4 +1,10 @@
 # Changelog
+* Added a validation for invalid id fields in indicators types files in **validate** command.
+* Added default behavior for **update-release-notes** command.
+* Fixed an error where README files were failing release notes validation.
+* Updated format of generated release notes to be more user friendly.
+* Improved error messages for the **update-release-notes** command.
+* Added support for `Connections`, `Dashboards`, `Widgets`, and `Indicator Types` to **update-release-notes** command.
 
 #### 1.1.2
 * Added a validation for invalid playbookID fields in incidents types files in **validate** command.

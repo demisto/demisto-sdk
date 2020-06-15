@@ -5,6 +5,7 @@
 * Fixed an issue where the **secrets** command failed due to a space character in the file name.
 * Ignored RN validation for *NonSupported* pack.
 * You can now ignore IF107, SC100, RP102 error codes in the **validate** command.
+* Fixed issue with default outfile file name for **unify** command when using an input of ".".
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

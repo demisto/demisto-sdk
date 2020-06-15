@@ -171,11 +171,11 @@ def test_check_support_status_xsoar_file(repo, mocker):
         PACK_METADATA_SUPPORT: "xsoar",
         PACK_METADATA_CERTIFICATION: "certified"
     }
-    mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.check_support_status(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
 
         assert 'integration.yml' not in base_validator.ignored_errors
 
@@ -197,11 +197,11 @@ def test_check_support_status_non_certified_partner_file(repo, mocker):
         PACK_METADATA_SUPPORT: "partner",
         PACK_METADATA_CERTIFICATION: "not certified"
     }
-    mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.check_support_status(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
 
         assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['non-certified-partner']
 
@@ -223,11 +223,11 @@ def test_check_support_status_certified_partner_file(repo, mocker):
         PACK_METADATA_SUPPORT: "partner",
         PACK_METADATA_CERTIFICATION: "certified"
     }
-    mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.check_support_status(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
 
         assert 'integration.yml' not in base_validator.ignored_errors
 
@@ -249,10 +249,10 @@ def test_check_support_status_community_file(repo, mocker):
         PACK_METADATA_SUPPORT: "community",
         PACK_METADATA_CERTIFICATION: "not certified"
     }
-    mocker.patch.object(BaseValidator, 'get_meta_file_content', return_value=meta_json)
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.check_support_status(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
 
         assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['community']

@@ -81,7 +81,7 @@ class BaseValidator:
     def check_file_flags(self, file_name, file_path):
         if file_name not in self.checked_files:
             self.check_deprecated(file_path)
-            self.check_support_status(file_path)
+            self.update_checked_flags_by_support_level(file_path)
             self.checked_files.add(file_name)
 
     def check_deprecated(self, file_path):
@@ -94,17 +94,17 @@ class BaseValidator:
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod
-    def get_meta_file_content(meta_file_path):
+    def get_metadata_file_content(meta_file_path):
         with io.open(meta_file_path, mode="r", encoding="utf-8") as file:
             metadata_file_content = file.read()
 
         return json.loads(metadata_file_content)
 
-    def check_support_status(self, file_path):
+    def update_checked_flags_by_support_level(self, file_path):
         pack_name = get_pack_name(file_path)
         if pack_name:
             metadata_path = os.path.join(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
-            metadata_json = self.get_meta_file_content(metadata_path)
+            metadata_json = self.get_metadata_file_content(metadata_path)
             support = metadata_json.get(PACK_METADATA_SUPPORT)
             certification = metadata_json.get(PACK_METADATA_CERTIFICATION)
 

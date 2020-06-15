@@ -99,5 +99,5 @@ def test_build_pwsh_analyze():
 def test_build_pwsh_test():
     """Build Pytest command with json"""
     from demisto_sdk.commands.lint.commands_builder import build_pwsh_test_command
-    command = "pwsh -Command Invoke-Pester -EnableExit"
+    command = 'pwsh -Command Invoke-Pester -Configuration \'@{Run=@{Exit=$true}; Output=@{Verbosity="Detailed"}}\''
     assert command == build_pwsh_test_command()

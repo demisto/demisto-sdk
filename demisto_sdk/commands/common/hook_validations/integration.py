@@ -25,7 +25,7 @@ class IntegrationValidator(ContentEntityValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {'longRunning'}
+    ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental'}
 
     def is_valid_version(self):
         # type: () -> bool

@@ -80,14 +80,13 @@ def find_pack_display_name(pack_folder_name):
     return pack_display_name
 
 
-def update_pack_metadata_with_dependencies(pack_folder_name, first_level_dependencies, all_level_dependencies):
+def update_pack_metadata_with_dependencies(pack_folder_name, first_level_dependencies):
     """
     Updates pack metadata with found parsed dependencies results.
 
     Args:
         pack_folder_name (str): pack folder name.
         first_level_dependencies (dict): first level dependencies data.
-        all_level_dependencies (list): all level dependencies of pack.
 
     """
     found_path_results = find_pack_path(pack_folder_name)
@@ -102,7 +101,7 @@ def update_pack_metadata_with_dependencies(pack_folder_name, first_level_depende
         pack_metadata = json.load(pack_metadata_file)
         pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
         pack_metadata['dependencies'] = first_level_dependencies
-        pack_metadata['displayedImages'] = all_level_dependencies
+        pack_metadata['displayedImages'] = list(first_level_dependencies.keys())
 
         pack_metadata_file.seek(0)
         json.dump(pack_metadata, pack_metadata_file, indent=4)
@@ -369,7 +368,7 @@ class PackDependencies:
 
         Args:
             pack_name (str): pack id, currently pack folder name is in use.
-            id_set_path (dict): id set json.
+            id_set_path (str): id set json.
 
         """
         if not id_set_path:
@@ -379,8 +378,8 @@ class PackDependencies:
                 id_set = json.load(id_set_file)
 
         dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set)
-        first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(dependency_graph, pack_name)
-        update_pack_metadata_with_dependencies(pack_name, first_level_dependencies, all_level_dependencies)
+        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
+        update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         # print the found pack dependency results
         click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
         dependency_result = json.dumps(first_level_dependencies, indent=4)

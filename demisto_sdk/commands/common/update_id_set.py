@@ -323,7 +323,6 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
             return
 
         for key, value in current_object.items():
-            print(key)
             if isinstance(value, (dict, list)):
                 get_values(value)
             elif key in keys_to_search:
@@ -393,7 +392,7 @@ def get_incident_field_data(path, incidents_types_list):
         all_associated_types = all_associated_types.union(set(system_associated_types))
 
     if 'all' in all_associated_types:
-        all_associated_types = [incident_type.keys()[0] for incident_type in incidents_types_list]
+        all_associated_types = [list(incident_type.keys())[0] for incident_type in incidents_types_list]
 
     scripts = json_data.get('script')
     if scripts:
@@ -868,7 +867,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
         if 'IncidentFields' in objects_to_create:
             print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
             for arr in pool.map(
-                    partial(process_incident_fields, print_logs=print_logs, incident_type_list=incident_type_list),
+                    partial(process_incident_fields, print_logs=print_logs, incidents_types_list=incident_type_list),
                     get_general_paths(INCIDENT_FIELDS_DIR)):
                 incident_fields_list.extend(arr)
 

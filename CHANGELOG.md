@@ -1,6 +1,7 @@
 # Changelog
 
 #### 1.1.3
+* Added a validation for invalid id fields in indicators types files in **validate** command.
 * Added default behavior for **update-release-notes** command.
 * Fixed an error where README files were failing release notes validation.
 * Updated format of generated release notes to be more user friendly.

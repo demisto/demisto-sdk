@@ -35,6 +35,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -141,15 +142,23 @@ class FilesValidator:
         self.handle_error = BaseValidator().handle_error
         self.print_ignored_errors = print_ignored_errors
 
+    def print_ignored_errors_report(self):
+        if self.print_ignored_errors:
+            all_ignored_errors = '\n'.join(FOUND_FILES_AND_IGNORED_ERRORS)
+            click.secho(f"\n=========== Found ignored errors in the following files ===========\n\n{all_ignored_errors}",
+                        fg="yellow")
+
     def run(self):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
         if self.is_valid_structure():
+            self.print_ignored_errors_report()
             print_color('\nThe files are valid', LOG_COLORS.GREEN)
             return 0
         else:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
-            click.secho(f"=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
+            click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
+            self.print_ignored_errors_report()
             print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
             return 1
 

@@ -32,12 +32,12 @@ class BaseValidator:
 
         return False
 
-    def handle_error(self, error_massage, error_code, file_path, should_print=True, suggested_fix=None):
+    def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None):
         """Handle an error that occurred during validation
 
         Args:
             suggested_fix(str): A suggested fix
-            error_massage(str): The error message
+            error_message(str): The error message
             file_path(str): The file from which the error occurred
             error_code(str): The error code
             should_print(bool): whether the command should be printed
@@ -45,7 +45,7 @@ class BaseValidator:
         Returns:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
-        formatted_error = f"{file_path}: [{error_code}] - {error_massage}".rstrip("\n") + "\n"
+        formatted_error = f"{file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
 
         if file_path:
             file_name = os.path.basename(file_path)

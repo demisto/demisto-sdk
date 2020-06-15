@@ -171,8 +171,8 @@ class ScriptValidator(ContentEntityValidator):
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        # dockers should not be checked on master branch
-        if self.branch_name == 'master':
+        # dockers should not be checked when running on all files
+        if self.skip_docker_check:
             return True
 
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False,

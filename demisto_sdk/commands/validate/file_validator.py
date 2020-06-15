@@ -188,27 +188,37 @@ class FilesValidator:
                 file_status = 'r'
                 file_path = file_data[2]
 
+            # if the file is a code file - change path to the associated yml path.
             if checked_type(file_path, CODE_FILES_REGEX) and file_status.lower() != 'd' \
-                    and not file_path.endswith('_test.py'):
+                    and not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
-            elif file_path.endswith('.js') or file_path.endswith('.py'):
+
+            # ignore changes in JS files and unit test files.
+            elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
                 continue
+
             if file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
                 deleted_files.add(file_path)
+
             elif not os.path.isfile(file_path):
                 continue
+
             elif file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     FilesValidator._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
+
             elif file_status.lower() == 'm' and checked_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
+
             elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.'):
                 added_files_list.add(file_path)
+
             elif file_status.lower().startswith('r') and checked_type(file_path):
                 # if a code file changed, take the associated yml file.
                 if checked_type(file_data[2], CODE_FILES_REGEX):
                     modified_files_list.add(file_path)
+
                 else:
                     modified_files_list.add((file_data[1], file_data[2]))
 

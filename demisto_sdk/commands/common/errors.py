@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 
 FOUND_FILES_AND_ERRORS = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'SC100', 'IF106']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106']
 
 PRESET_ERROR_TO_IGNORE = {
 }
@@ -129,6 +129,8 @@ ERROR_CODE = {
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
+    "reputation_invalid_indicator_type_id": "RP103",
+    "reputation_empty_required_fields": "RP104",
     "structure_doesnt_match_scheme": "ST100",
     "file_id_contains_slashes": "ST101",
     "file_id_changed": "ST102",
@@ -812,6 +814,16 @@ class Errors:
     @error_code_decorator
     def reputation_id_and_details_not_equal():
         return 'id and details fields are not equal.'
+
+    @staticmethod
+    @error_code_decorator
+    def reputation_invalid_indicator_type_id():
+        return 'Indicator type "id" field can not include spaces or special characters.'
+
+    @staticmethod
+    @error_code_decorator
+    def reputation_empty_required_fields():
+        return 'id and details fields can not be empty.'
 
     @staticmethod
     @error_code_decorator

@@ -1,4 +1,5 @@
 # Changelog
+* *Unify* command now adds contributor details to the display name and description.
 
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.

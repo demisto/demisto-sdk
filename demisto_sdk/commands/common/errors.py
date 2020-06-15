@@ -129,6 +129,7 @@ ERROR_CODE = {
     "dependencies_field_should_be_dict": "PA110",
     "empty_field_in_pack_metadata": "PA111",
     "pack_metadata_isnt_json": "PA112",
+    "pack_metadata_missing_url_and_email": "PA113",
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
@@ -798,6 +799,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_isnt_json(pack_meta_file):
         return f'Could not parse {pack_meta_file} file contents to json format'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_missing_url_and_email():
+        return 'Contributed packs must include email or url.'
 
     @staticmethod
     @error_code_decorator

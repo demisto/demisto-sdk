@@ -6,6 +6,8 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from TestSuite.test_tools import ChangeCWD
@@ -58,12 +60,14 @@ class TestPackUniqueFilesValidator:
         assert not self.validator._parse_file_into_list('boop')
         self.validator._errors = []
 
-    def test_validate_pack_unique_files(self):
+    def test_validate_pack_unique_files(self, mocker):
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         assert not self.validator.validate_pack_unique_files()
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.validate_pack_unique_files()
 
-    def test_validate_pack_metadata(self):
+    def test_validate_pack_metadata(self, mocker):
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         assert not self.validator.validate_pack_unique_files()
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.validate_pack_unique_files()

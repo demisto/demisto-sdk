@@ -78,7 +78,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def set_fetch_params_in_config(self):
         """
-        Check if the data is of fetch integration and if so , check that isfetch and incidenttype exist with the
+        Check if the data is of fetch integration and if so, check that isfetch and incidenttype exist with the
         correct fields.
         """
         if self.data.get('script', {}).get('isfetch') is True:

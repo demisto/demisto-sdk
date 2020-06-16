@@ -1,5 +1,5 @@
 # Changelog
-* Removed *feedIncremental* field to the integration schema.
+* Removed the *feedIncremental* field from the integration schema.
 
 #### 1.1.2
 * Added a validation for invalid playbookID fields in incidents types files in **validate** command.

@@ -26,7 +26,6 @@
 * Fixed an issue where **validate** command checked docker when running on all files.
 * Fixed an issue where **validate** command did not fail when docker image was not on the latest numeric tag.
 * Fixed an issue where beta integrations were not validated correctly in **validate** command.
-* Fixed an issue where the default outfile file name for the **unify** command would be anomalous when using an input file path of ".".
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

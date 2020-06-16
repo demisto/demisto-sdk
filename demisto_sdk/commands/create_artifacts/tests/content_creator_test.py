@@ -514,3 +514,22 @@ class TestContentCreator:
         json_path = pack.create_json_based("some_json", prefix='', content={}).path
         with ChangeCWD(repo.path):
             assert content_creator.check_from_version(json_path)
+
+    def test_add_suffix_to_file_path(self):
+        """
+        Given
+        - A file path
+        - content creator - with suffix and without
+        When
+        - running add_suffix_to_file_path method
+        Then
+        - if the suffix exists - add it to the file name
+        - if no suffix exists - leave the file name unchanged
+        """
+        content_creator = ContentCreator(artifacts_path='.', suffix='_suffix')
+        file_path = "some/path/to/file.yml"
+        file_path_with_suffix = "some/path/to/file_suffix.yml"
+        assert file_path_with_suffix == content_creator.add_suffix_to_file_path(file_path)
+
+        content_creator = ContentCreator(artifacts_path='.')
+        assert file_path == content_creator.add_suffix_to_file_path(file_path)

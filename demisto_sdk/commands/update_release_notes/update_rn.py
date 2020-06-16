@@ -256,62 +256,62 @@ class UpdateRN:
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Playbook':
                 if not playbook_header:
                     rn_string += '\n#### Playbooks\n'
                     playbook_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Script':
                 if not script_header:
                     rn_string += '\n#### Scripts\n'
                     script_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Incident Fields':
                 if not inc_flds_header:
                     rn_string += '\n#### Incident Fields\n'
                     inc_flds_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Classifiers':
                 if not classifier_header:
                     rn_string += '\n#### Classifiers\n'
                     classifier_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Layouts':
                 if not layout_header:
                     rn_string += '\n#### Layouts\n'
                     layout_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Incident Types':
                 if not inc_types_header:
                     rn_string += '\n#### Incident Types\n'
                     inc_types_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Indicator Types':
                 if not ind_types_header:
                     rn_string += '\n#### Indicator Types\n'
                     ind_types_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Reports':
                 if not rep_types_header:
                     rn_string += '\n#### Reports\n'
                     rep_types_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Widgets':
                 if not widgets_header:
                     rn_string += '\n#### Widgets\n'
                     widgets_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Dashboards':
                 if not dashboards_header:
                     rn_string += '\n#### Dashboards\n'
                     dashboards_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Connections':
                 if not connections_header:
                     rn_string += '\n#### Connections\n'
                     connections_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 
     def update_existing_rn(self, current_rn, changed_files):
@@ -326,7 +326,7 @@ class UpdateRN:
                 else:
                     self.existing_rn_changed = True
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n##### {k}\n  - %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
@@ -335,13 +335,13 @@ class UpdateRN:
                 self.existing_rn_changed = True
                 if v in new_rn:
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n##### {k}\n  - %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = f'\n#### {v}\n##### {k}\n  - %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n#### {v}\n##### {k}\n- %%UPDATE_RN%%\n'
                     new_rn += new_rn_part
         return new_rn
 

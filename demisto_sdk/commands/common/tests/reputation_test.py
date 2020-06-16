@@ -49,3 +49,36 @@ def test_is_id_equals_details(id_, details, is_valid):
     validator = ReputationValidator(structure)
     assert validator.is_id_equals_details() == is_valid, f'is_id_equals_details({id_}, {details})' \
         f' returns {not is_valid}.'
+
+
+data_is_valid_id = [
+    ("CIDR", True),
+    ("host_test", True),
+    ("ipv4&ipv6", True),
+    ("ipv4 ipv6", True),
+    ("ipv4-ipv6", False),
+    ("ipv4*ipv6", False),
+]
+
+
+@pytest.mark.parametrize('id_, is_valid', data_is_valid_id)
+def test_is_valid_id_field(id_, is_valid):
+    structure = StructureValidator("")
+    structure.current_file = {"id": id_}
+    validator = ReputationValidator(structure)
+    assert validator.is_valid_indicator_type_id() == is_valid
+
+
+data_is_empty_id_and_details = [
+    ("CIDR", "CIDR", True),
+    ("CIDR", "", False),
+    ("", "CIDR", False),
+]
+
+
+@pytest.mark.parametrize('id_, details, is_valid', data_is_empty_id_and_details)
+def test_is_id_and_details_empty(id_, details, is_valid):
+    structure = StructureValidator("")
+    structure.current_file = {"id": id_, "details": details}
+    validator = ReputationValidator(structure)
+    assert validator.is_required_fields_empty() == is_valid

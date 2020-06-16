@@ -35,6 +35,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -98,7 +99,8 @@ class FilesValidator:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 configuration=Configuration()):
+                 configuration=Configuration(), silence_init_prints=True):
+        self.silence_init_prints = silence_init_prints
         self.validate_all = validate_all
         self.skip_docker_checks = True if self.validate_all else False
 
@@ -106,9 +108,11 @@ class FilesValidator:
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
         if self.use_git:
-            print('Using git')
+            if not self.silence_init_prints:
+                print('Using git')
             self.branch_name = self.get_current_working_branch()
-            print(f'Running validation on branch {self.branch_name}')
+            if not self.silence_init_prints:
+                print(f'Running validation on branch {self.branch_name}')
             if self.branch_name in ['master', 'test-sdk-master']:
                 self.skip_pack_rn_validation = True
 
@@ -125,7 +129,8 @@ class FilesValidator:
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
-            print('Running in a private repository')
+            if not self.silence_init_prints:
+                print('Running in a private repository')
             self.skip_conf_json = True  # private repository don't have conf.json file
 
         if not self.skip_conf_json:
@@ -137,15 +142,23 @@ class FilesValidator:
         self.handle_error = BaseValidator().handle_error
         self.print_ignored_errors = print_ignored_errors
 
+    def print_ignored_errors_report(self):
+        if self.print_ignored_errors:
+            all_ignored_errors = '\n'.join(FOUND_FILES_AND_IGNORED_ERRORS)
+            click.secho(f"\n=========== Found ignored errors in the following files ===========\n\n{all_ignored_errors}",
+                        fg="yellow")
+
     def run(self):
         print_color('Starting validating files structure', LOG_COLORS.GREEN)
         if self.is_valid_structure():
+            self.print_ignored_errors_report()
             print_color('\nThe files are valid', LOG_COLORS.GREEN)
             return 0
         else:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
-            click.secho(f"=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
+            click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
+            self.print_ignored_errors_report()
             print_color('The files were found as invalid, the exact error message can be located above', LOG_COLORS.RED)
             return 1
 
@@ -184,27 +197,37 @@ class FilesValidator:
                 file_status = 'r'
                 file_path = file_data[2]
 
+            # if the file is a code file - change path to the associated yml path.
             if checked_type(file_path, CODE_FILES_REGEX) and file_status.lower() != 'd' \
-                    and not file_path.endswith('_test.py'):
+                    and not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
-            elif file_path.endswith('.js') or file_path.endswith('.py'):
+
+            # ignore changes in JS files and unit test files.
+            elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
                 continue
+
             if file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
                 deleted_files.add(file_path)
+
             elif not os.path.isfile(file_path):
                 continue
+
             elif file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     FilesValidator._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
+
             elif file_status.lower() == 'm' and checked_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
+
             elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.'):
                 added_files_list.add(file_path)
+
             elif file_status.lower().startswith('r') and checked_type(file_path):
                 # if a code file changed, take the associated yml file.
                 if checked_type(file_data[2], CODE_FILES_REGEX):
                     modified_files_list.add(file_path)
+
                 else:
                     modified_files_list.add((file_data[1], file_data[2]))
 
@@ -318,7 +341,8 @@ class FilesValidator:
                 continue
             if not any(non_permitted_type in mod_file.lower() for non_permitted_type in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
                 if 'releasenotes' not in mod_file.lower():
-                    _modified_files.add(mod_file)
+                    if 'readme' not in mod_file.lower():
+                        _modified_files.add(mod_file)
         changed_packs = self.get_packs(_modified_files)
         for file_path in modified_files:
             old_file_path = None

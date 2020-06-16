@@ -5,6 +5,8 @@ from typing import List, Tuple
 
 import pytest
 import yaml
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
@@ -158,7 +160,8 @@ class TestStructureValidator:
     ]  # type: List[Tuple[str, str, bool]]
 
     @pytest.mark.parametrize('source, target, answer', INPUTS_IS_VALID_FILE)
-    def test_is_file_valid(self, source, target, answer):
+    def test_is_file_valid(self, source, target, answer, mocker):
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         try:
             copyfile(source, target)
             structure = StructureValidator(target)

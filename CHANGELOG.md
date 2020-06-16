@@ -1,6 +1,6 @@
 # Changelog
 * *Unify* command now adds contributor details to the display name and description.
-* Added an additional formatter for fetch integrations.
+* *Format* command now adds *isFetch* and *incidenttype* fields to integration yml.
 
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.

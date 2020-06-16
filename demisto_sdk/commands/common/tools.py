@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
+import demisto_sdk.commands.common.tools as tools
 import git
 import requests
 import urllib3
@@ -45,6 +46,7 @@ class LOG_COLORS:
     RED = colorama.Fore.RED
     GREEN = colorama.Fore.GREEN
     YELLOW = colorama.Fore.YELLOW
+    WHITE = colorama.Fore.WHITE
 
 
 LOG_VERBOSE = False
@@ -82,7 +84,7 @@ def print_color(obj, color):
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
     """
-    Gets the project directory and returns the path of all yml and json files in it
+    Gets the project directory and returns the path of all yml, json and py files in it
     Args:
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
@@ -280,7 +282,7 @@ def get_file(method, file_path, type_of_file):
             except Exception as e:
                 print_error(
                     "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return []
+                return {}
     if type(data_dictionary) is dict:
         return data_dictionary
     return {}
@@ -481,6 +483,25 @@ def checked_type(file_path, compared_regexes=None, return_regex=False):
     return False
 
 
+def format_version(version):
+    """format server version to form X.X.X
+
+    Args:
+        version (string): string representing Demisto version
+
+    Returns:
+        string.
+        The formatted server version.
+    """
+    formatted_version = version
+    if len(version.split('.')) == 1:
+        formatted_version = f'{version}.0.0'
+    elif len(version.split('.')) == 2:
+        formatted_version = f'{version}.0'
+
+    return formatted_version
+
+
 def server_version_compare(v1, v2):
     """compare Demisto versions
 
@@ -495,6 +516,9 @@ def server_version_compare(v1, v2):
         positive if v1 later version than v2.
         negative if v2 later version than v1.
     """
+
+    v1 = format_version(v1)
+    v2 = format_version(v2)
 
     _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
     if _v1 == _v2:
@@ -657,6 +681,8 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
             return get_yaml(path), 'yml'
         elif path.endswith('.json'):
             return get_json(path), 'json'
+        elif path.endswith('.py'):
+            return {}, 'py'
     return {}, None
 
 
@@ -672,36 +698,55 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     """
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
+
+    if file_type == 'py':
+        return 'pythonfile'
+
     if file_type == 'yml':
-        if 'beta' in _dict:
-            return 'betaintegration'
         if 'category' in _dict:
+            if 'beta' in _dict:
+                return 'betaintegration'
+
             return 'integration'
+
         elif 'script' in _dict:
             return 'script'
+
         elif 'tasks' in _dict:
             return 'playbook'
 
     elif file_type == 'json':
         if 'widgetType' in _dict:
             return 'widget'
+
         elif 'reportType' in _dict:
             return 'report'
+
         elif 'preProcessingScript' in _dict:
             return 'incidenttype'
+
         elif 'regex' in _dict:
             return 'reputation'
+
         elif 'brandName' in _dict and 'transformer' in _dict:
             return 'classifier_5_9_9'
+
         elif 'transformer' in _dict and 'keyTypeMap' in _dict:
             return 'classifier'
+
+        elif 'canvasContextConnections' in _dict:
+            return 'canvas-context-connections'
+
         elif 'mapping' in _dict:
             return 'mapper'
+
         elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return 'layout'
+
             else:
                 return 'dashboard'
+
         # When using it for all files validation- sometimes 'id' can be integer
         elif 'id' in _dict:
             if isinstance(_dict.get('id'), str):
@@ -740,13 +785,14 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-def is_private_repository():
+def is_external_repository():
     """
     Returns True if script executed from private repository
 
     """
     git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    return 'content-external-template' in git_repo.remote().urls.__next__()
+    private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+    return os.path.exists(private_settings_path)
 
 
 def get_content_path() -> str:
@@ -757,8 +803,10 @@ def get_content_path() -> str:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         remote_url = git_repo.remote().urls.__next__()
+        is_fork_repo = 'content' in remote_url
+        is_external_repo = tools.is_external_repository()
 
-        if 'content' not in remote_url:
+        if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
@@ -833,7 +881,10 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
     git_repo = git.Repo(os.getcwd(),
                         search_parent_directories=True)
     remote_url = git_repo.remote().urls.__next__()
-    if 'content' not in remote_url:
+    is_fork_repo = 'content' in remote_url
+    is_external_repo = tools.is_external_repository()
+
+    if not is_fork_repo and not is_external_repo:
         return False, ''
     content_path_parts = Path(git_repo.working_dir).parts
     input_path_parts = Path(file_path).parts
@@ -1086,3 +1137,17 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
+
+
+def get_code_lang(file_data: dict, file_entity: str) -> str:
+    """
+    Returns the code language by the file entity
+    :param file_data: The file data
+    :param file_entity: The file entity
+    :return: The code language
+    """
+    if file_entity == INTEGRATIONS_DIR:
+        return file_data.get('script', {}).get('type', '')
+    elif file_entity == SCRIPTS_DIR:
+        return file_data.get('type', {})
+    return ''

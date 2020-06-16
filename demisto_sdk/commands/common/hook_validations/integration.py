@@ -25,7 +25,7 @@ class IntegrationValidator(ContentEntityValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {'longRunning'}
+    ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental'}
 
     def is_valid_version(self):
         # type: () -> bool
@@ -58,11 +58,12 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False) -> bool:
         """Check whether the Integration is valid or not
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
+                skip_test_conf (bool): If true then will skip test playbook configuration validation
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -84,8 +85,11 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.are_tests_configured()
         ]
+
+        if not skip_test_conf:
+            answers.append(self.are_tests_configured())
+
         return all(answers)
 
     def are_tests_configured(self) -> bool:
@@ -614,8 +618,8 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        # dockers should not be checked on master branch
-        if self.branch_name == 'master':
+        # dockers should not be checked when running on all files
+        if self.skip_docker_check:
             return True
 
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,

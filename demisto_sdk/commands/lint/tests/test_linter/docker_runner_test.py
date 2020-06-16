@@ -7,13 +7,14 @@ from demisto_sdk.commands.lint.linter import Linter
 
 
 class TestCreateImage:
-    def test_build_image_no_errors(self, linter_obj: Linter, mocker):
+    def test_build_image_no_errors(self, linter_obj: Linter, demisto_content, create_integration, mocker):
+        content_path = demisto_content
+        create_integration(content_path=content_path)
         # Expected returns
         exp_test_image_id = 'test-image'
         exp_errors = ""
         # Jinja2 mocking
-        mocker.patch.multiple(linter, Environment=DEFAULT, FileSystemLoader=DEFAULT, exceptions=DEFAULT, hashlib=DEFAULT,
-                              copy_dir_to_container=DEFAULT)
+        mocker.patch.multiple(linter, Environment=DEFAULT, FileSystemLoader=DEFAULT, exceptions=DEFAULT, hashlib=DEFAULT)
         # Facts mocking
         mocker.patch.dict(linter_obj._facts, {
             "images": [],
@@ -32,13 +33,13 @@ class TestCreateImage:
         mocker.patch.object(linter_obj, '_docker_client')
         docker_build_response = mocker.MagicMock()
         docker_build_response.short_id = exp_test_image_id
-        linter_obj._docker_client.containers.create().commit().short_id = exp_test_image_id
+
+        linter_obj._docker_client.images.build().__getitem__().short_id = exp_test_image_id
 
         act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, 3.7])
 
         assert act_test_image_id == exp_test_image_id
         assert act_errors == exp_errors
-        assert linter_obj._docker_client.images.build.call_count == 0
 
 
 class TestPylint:

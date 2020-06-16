@@ -45,13 +45,15 @@ LATEST_SUPPORTED_VERSION = '4.5.0'
 class ContentCreator:
 
     def __init__(self, artifacts_path: str, content_version='', content_bundle_path='',
-                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False,
-                 no_update_commonserver=False):
+                 test_bundle_path='', packs_bundle_path='', suffix='', no_fromversion=False, preserve_bundles=False,
+                 packs=False, no_update_commonserver=False):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
         self.content_version = content_version
         self.preserve_bundles = preserve_bundles
         self.only_packs = tools.is_external_repository() or packs
         self.no_update_commonserverpython = no_update_commonserver
+        self.file_name_suffix = suffix
+        self.no_fromversion = no_fromversion
 
         # temp folder names
         self.content_bundle = content_bundle_path if content_bundle_path else os.path.join(self.artifacts_path,
@@ -104,8 +106,10 @@ class ContentCreator:
 
         return 0
 
-    @staticmethod
-    def add_from_version_to_yml(file_path=None, yml_content=None, save_yml=True):
+    def add_from_version_to_yml(self, file_path=None, yml_content=None, save_yml=True):
+        if self.no_fromversion:
+            return {}
+
         if not yml_content:
             yml_content = get_yaml(file_path)
 
@@ -119,8 +123,10 @@ class ContentCreator:
 
         return yml_content
 
-    @staticmethod
-    def add_from_version_to_json(file_path):
+    def add_from_version_to_json(self, file_path):
+        if self.no_fromversion:
+            return {}
+
         json_content = tools.get_json(file_path)
 
         if parse_version(json_content.get('toVersion', '99.99.99')) > parse_version(
@@ -131,6 +137,9 @@ class ContentCreator:
                 json.dump(json_content, f, indent=4)
 
         return json_content
+
+    def add_suffix_to_file_path(self, file_path):
+        return os.path.splitext(file_path)[0] + self.file_name_suffix + os.path.splitext(file_path)[1]
 
     def create_unifieds_and_copy(self, package_dir, dest_dir='', skip_dest_dir=''):
         """
@@ -168,7 +177,7 @@ class ContentCreator:
                 unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
 
-            unified_yml_paths = unification_tool.merge_script_package_to_yml()
+            unified_yml_paths = unification_tool.merge_script_package_to_yml(file_name_suffix=self.file_name_suffix)
 
             for unified_yml_path in unified_yml_paths:
                 self.add_from_version_to_yml(unified_yml_path)
@@ -194,7 +203,7 @@ class ContentCreator:
         dest_file_name = os.path.basename(out_path)
         if not dest_file_name.startswith('playbook-') and tools.find_type(path) == 'playbook':
             new_name = '{}{}'.format('playbook-', dest_file_name)
-            out_path = os.path.join(dest_dir_path, new_name)
+            out_path = self.add_suffix_to_file_path(os.path.join(dest_dir_path, new_name))
         shutil.copyfile(path, out_path)
         self.add_from_version_to_yml(out_path)
 
@@ -232,7 +241,7 @@ class ContentCreator:
         if scan_files:
             print(f"\nStarting process for {dir_path}")
         for path in scan_files:
-            new_file_path = os.path.join(bundle, os.path.basename(path))
+            new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, os.path.basename(path)))
             if len(os.path.basename(path)) >= self.file_name_max_size:
                 self.long_file_names.append(path)
 
@@ -306,7 +315,7 @@ class ContentCreator:
                 if len(dpath) >= self.file_name_max_size:
                     self.long_file_names.append(os.path.basename(dpath))
 
-                new_file_path = os.path.join(bundle, dpath)
+                new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, dpath))
                 shutil.copyfile(path, new_file_path)
                 self.add_from_version_to_json(new_file_path)
                 count_files += 1
@@ -329,7 +338,7 @@ class ContentCreator:
             print(f"\nStarting process for {dir_path}")
             for path in scan_files:
                 print(f" - processing: {path}")
-                new_path = os.path.basename(path)
+                new_path = self.add_suffix_to_file_path(os.path.basename(path))
                 if dir_name == RELEASE_NOTES_DIR:
                     if os.path.isfile(os.path.join(bundle, new_path)):
                         raise NameError(
@@ -372,8 +381,8 @@ class ContentCreator:
             if os.path.isdir(path):
                 non_circle_tests = glob.glob(os.path.join(path, '*'))
                 for new_path in non_circle_tests:
-                    print(f'copying path {new_path}')
-                    new_file_path = os.path.join(self.test_bundle, os.path.basename(new_path))
+                    print(f'Copying path {new_path}')
+                    new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle, os.path.basename(new_path)))
                     shutil.copyfile(new_path, new_file_path)
                     self.add_from_version_to_yml(new_file_path)
 
@@ -388,12 +397,12 @@ class ContentCreator:
                 elif file_type == 'playbook':
                     if not path_basename.startswith('playbook-'):
                         path_basename = f'playbook-{os.path.basename(path)}'
-                print(f'Copying path {path} as {path_basename}')
-                new_file_path = os.path.join(self.test_bundle, path_basename)
+                print(f'\nCopying path {path} as {path_basename}')
+                new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle, path_basename))
                 shutil.copyfile(path, new_file_path)
                 self.add_from_version_to_yml(new_file_path)
 
-    def copy_packs_content_to_old_bundles(self, packs):
+    def copy_packs_to_content_bundles(self, packs):
         """
         Copy relevant content (yml and json files) from packs to the appropriate bundle. Test playbooks to the
         bundle that gets zipped to 'content_test.zip' and the rest of the content to the bundle that gets zipped to
@@ -458,7 +467,7 @@ class ContentCreator:
                                 continue
                             unifier = Unifier(package_dir, dir_name, dest_dir)
 
-                            new_file_paths = unifier.merge_script_package_to_yml()
+                            new_file_paths = unifier.merge_script_package_to_yml(file_name_suffix=self.file_name_suffix)
 
                             for new_file_path in new_file_paths:
                                 self.add_from_version_to_yml(new_file_path)
@@ -470,7 +479,7 @@ class ContentCreator:
 
                     if non_split_yml_files:  # old format non split yml files
                         for yml_file in non_split_yml_files:
-                            new_file_path = os.path.join(dest_dir, yml_file)
+                            new_file_path = self.add_suffix_to_file_path(os.path.join(dest_dir, yml_file))
                             shutil.copyfile(os.path.join(content_dir, yml_file), new_file_path)
                             self.add_from_version_to_yml(new_file_path)
 
@@ -526,12 +535,12 @@ class ContentCreator:
         for doc_file in ('./Documentation/doc-CommonServer.json', './Documentation/doc-howto.json'):
             if os.path.exists(doc_file):
                 if content_bundle_path:
-                    print(f'copying {doc_file} doc to content bundle')
+                    print(f'copying {doc_file} doc to content bundle\n')
                     shutil.copyfile(doc_file,
                                     os.path.join(content_bundle_path, os.path.basename(doc_file)))
 
                 # copy doc to packs bundle
-                print(f'copying {doc_file} doc to content pack bundle')
+                print(f'copying {doc_file} doc to content pack bundle\n')
                 base_pack_doc_path = os.path.join(packs_bundle_path, BASE_PACK, "Documentation")
 
                 if not os.path.exists(base_pack_doc_path):
@@ -544,7 +553,7 @@ class ContentCreator:
     def copy_file_to_artifacts(self, file_path):
         if os.path.exists(file_path):
             filename = os.path.basename(file_path)
-            print('copying {} to artifacts directory "{}"'.format(file_path, self.artifacts_path))
+            print('copying {} to artifacts directory "{}"\n'.format(file_path, self.artifacts_path))
             shutil.copyfile(file_path, os.path.join(self.artifacts_path, filename))
         else:
             print_warning('{} was not found in the content directory and therefore not '
@@ -566,26 +575,18 @@ class ContentCreator:
             for bundle_dir in [self.content_bundle, self.test_bundle, self.packs_bundle]:
                 os.mkdir(bundle_dir)
 
-            for package_dir in DIR_TO_PREFIX:
-                # handles nested package directories
-                self.create_unifieds_and_copy(package_dir)
-
-            for content_dir in self.content_directories:
-                print(f'Copying dir {content_dir} to bundles...')
-                self.copy_dir_files(content_dir, self.content_bundle)
-
             self.copy_test_files()
 
             # handle copying packs content to bundles for zipping to content_new.zip and content_test.zip
             packs = get_child_directories(PACKS_DIR)
             if not only_packs:
-                self.copy_packs_content_to_old_bundles(packs)
+                self.copy_packs_to_content_bundles(packs)
 
             # handle copying packs content to packs_bundle for zipping to `content_packs.zip`
             self.copy_packs_content_to_packs_bundle(packs)
 
             if not only_packs:
-                print('Copying content descriptor to content and test bundles')
+                print('Copying content descriptor to content and test bundles\n')
                 for bundle_dir in [self.content_bundle, self.test_bundle]:
                     shutil.copyfile('content-descriptor.json', os.path.join(bundle_dir, 'content-descriptor.json'))
 
@@ -606,8 +607,6 @@ class ContentCreator:
             shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
 
             self.copy_file_to_artifacts('release-notes.md')
-            self.copy_file_to_artifacts('beta-release-notes.md')
-            self.copy_file_to_artifacts('packs-release-notes.md')
             print_success(f'\nfinished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
         finally:
             if not self.preserve_bundles:

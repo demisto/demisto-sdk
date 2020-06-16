@@ -166,7 +166,7 @@ class TestContentCreator:
         # not checking fromversion
         mocker.patch.object(ContentCreator, 'add_from_version_to_yml', return_value='')
 
-        content_creator.copy_packs_content_to_old_bundles([f'{self.Packs_full_path}/FeedAzure'])
+        content_creator.copy_packs_to_content_bundles([f'{self.Packs_full_path}/FeedAzure'])
 
         # test Packs repo, TestPlaybooks repo copy without playbook- prefix
         assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/FeedAzure_test.yml',

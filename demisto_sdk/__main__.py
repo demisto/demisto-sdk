@@ -300,6 +300,11 @@ def validate(config, **kwargs):
     '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
 )
 @click.option(
+    '-s', '--suffix', help='The added suffix to all files in the created artifacts')
+@click.option(
+    '--no-fromversion', is_flag=True, help='Whether to update fromversion on yml and json files or not.'
+)
+@click.option(
     '--packs', is_flag=True,
     help='If passed, will create only content_packs.zip'
 )

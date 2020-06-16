@@ -410,7 +410,6 @@ final test: hi
         Given
         - Input path of '.'.
         - UploadTest integration.
-        - No output path.
 
         When
         - Running Unify on it.

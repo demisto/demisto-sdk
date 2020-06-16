@@ -422,3 +422,95 @@ class TestContentCreator:
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
             assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
+
+    def test_check_from_version__yml_low_fromvesrion(self, repo):
+        """
+        Given
+        - An yml path with a fromversion lower than 6.0.0
+        When
+        - running check_from_version method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "1.0.0"})
+        with ChangeCWD(repo.path):
+            assert content_creator.check_from_version(integration.yml_path)
+
+    def test_check_from_version__yml_no_fromvesrion(self, repo):
+        """
+        Given
+        - An yml path with no fromversion
+        When
+        - running check_from_version method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        with ChangeCWD(repo.path):
+            assert content_creator.check_from_version(integration.yml_path)
+
+    def test_check_from_version__yml_high_fromvesrion(self, repo):
+        """
+        Given
+        - An yml path with a fromversion higher than 6.0.0
+        When
+        - running check_from_version method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "6.0.0"})
+        with ChangeCWD(repo.path):
+            assert not content_creator.check_from_version(integration.yml_path)
+
+    def test_check_from_version__json_high_fromvesrion(self, repo):
+        """
+        Given
+        - An json path with a fromVersion higher than 6.0.0
+        When
+        - running check_from_version method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": "6.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert not content_creator.check_from_version(json_path)
+
+    def test_check_from_version__json_low_fromvesrion(self, repo):
+        """
+        Given
+        - An json path with a fromVersion lower than 6.0.0
+        When
+        - running check_from_version method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": "1.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert content_creator.check_from_version(json_path)
+
+    def test_check_from_version__json_no_fromvesrion(self, repo):
+        """
+        Given
+        - An json path with no fromVersion
+        When
+        - running check_from_version method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_json_based("some_json", prefix='', content={}).path
+        with ChangeCWD(repo.path):
+            assert content_creator.check_from_version(json_path)

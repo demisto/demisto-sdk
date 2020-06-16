@@ -7,6 +7,8 @@ import os
 import re
 from typing import Tuple
 
+from pkg_resources import parse_version
+
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
@@ -137,9 +139,12 @@ class Unifier:
 
         return output_map
 
-    def merge_script_package_to_yml(self, file_name_suffix=None):
+    def merge_script_package_to_yml(self, file_name_suffix=None, filter_6_0=False):
         """Merge the various components to create an output yml file
         """
+        if filter_6_0 and parse_version(self.yml_data.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+            return []
+
         print("Merging package: {}".format(self.package_path))
         package_dir_name = os.path.basename(self.package_path)
         output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)

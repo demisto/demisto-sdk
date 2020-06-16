@@ -1,11 +1,11 @@
 # Changelog
+* Fixed issue with default outfile file name for **unify** command when using an input of ".".
 * Fixed an issue where new and old classifiers where mixed on validate command.
 * Added *feedIncremental* field to the integration schema.
 * Fixed error in the **upload** command where unified YMLs were not uploaded as expected if the given input was a pack.
 * Fixed an issue where the **secrets** command failed due to a space character in the file name.
 * Ignored RN validation for *NonSupported* pack.
 * You can now ignore IF107, SC100, RP102 error codes in the **validate** command.
-* Fixed issue with default outfile file name for **unify** command when using an input of ".".
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

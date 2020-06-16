@@ -28,7 +28,7 @@ class Unifier:
 
         directory_name = ''
         # Changing relative path to current abspath fixed problem with default output file name.
-        if input == '.' and output == '':
+        if input == '.':
             input = os.path.abspath(input)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:

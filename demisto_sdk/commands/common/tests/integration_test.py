@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.tests.constants_test import INTEGRATION_FEED_TAG_VALID, INTEGRATION_FEED_TAG_INVALID
 from mock import patch
 
 
@@ -587,3 +588,27 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_pwsh() == res
+
+
+    INTEGRATION_FEED_TAG_VALID = {"script": {"isfetch": True}, "configuration": [{"name": "feedTags", "type": 0,"display": "Tags", "required": False,"hidden":'false'}]}
+    INTEGRATION_FEED_TAG_INVALID = {"script": {"isfetch": True}, "configuration": [{"name": "Tags", "type": 0,"display": "Tags","required": False, "hidden": 'false'}]}
+    PARAMS_TAG = [
+        (INTEGRATION_FEED_TAG_VALID, True),
+        (INTEGRATION_FEED_TAG_INVALID, False)
+    ]
+
+    @pytest.mark.parametrize("input_conf, answer", PARAMS_TAG)
+    def test_valid_feed_tag(self, input_conf, answer):
+        """
+        Given
+        - Integration struct with isfetch field labeled as true and Tag param.
+        - Integration struct with isfetch field labeled as true and without Tag param.
+        When
+        - Running the Integration validator.
+
+        Then
+        - Ensure that the Tag param exist with the correct fields.
+        """
+        structure = mock_structure(current_file=input_conf)
+        validator = IntegrationValidator(structure)
+        assert validator.is_valid_feed_tag() == answer

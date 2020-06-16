@@ -876,6 +876,14 @@ FETCH_REQUIRED_PARAMS = [
     }
 ]
 
+FEED_TAG_PARAM = {
+  'display': 'Tags',
+  'hidden': 'false',
+  'name': 'feedTags',
+  'required': False,
+  'type': 0
+}
+
 DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
 # Ignore list for all 'run_all_validations_on_file' method
 ALL_FILES_VALIDATION_IGNORE_WHITELIST = [

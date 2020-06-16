@@ -1,5 +1,6 @@
 # Changelog
 * *Unify* command now adds contributor details to the display name and description.
+* Removed the *feedIncremental* field from the integration schema.
 
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.

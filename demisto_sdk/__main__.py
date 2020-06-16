@@ -42,6 +42,7 @@ from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.file_validator import FilesValidator
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class DemistoSDK:
@@ -234,10 +235,10 @@ def unify(**kwargs):
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False,
     help='Validate changes using git - this will check current branch\'s changes against origin/master. '
-    'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
-    'that have been committed. '
-    'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
-    'both committed and not committed. ')
+         'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
+         'that have been committed. '
+         'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
+         'both committed and not committed. ')
 @click.option(
     '-p', '--path', help='Path of file to validate specifically, outside of a git directory.', hidden=True
 )
@@ -265,17 +266,16 @@ def validate(config, **kwargs):
     else:
         is_external_repo = tools.is_external_repository()
 
-        validator = FilesValidator(configuration=config.configuration,
-                                   is_backward_check=not kwargs['no_backward_comp'],
-                                   only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                                   skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
-                                   file_path=file_path,
-                                   validate_all=kwargs.get('validate_all'),
-                                   validate_id_set=kwargs['id_set'],
-                                   skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
-                                   print_ignored_errors=kwargs['print_ignored_errors'],
-                                   is_external_repo=is_external_repo, )
-        return validator.run()
+        validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
+                                    only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                    skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
+                                    file_path=file_path,
+                                    validate_all=kwargs.get('validate_all'),
+                                    validate_id_set=kwargs['id_set'],
+                                    skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
+                                    print_ignored_errors=kwargs['print_ignored_errors'],
+                                    is_external_repo=is_external_repo, )
+        return validator.run_validation()
 
 
 # ====================== create-content-artifacts ====================== #
@@ -367,7 +367,8 @@ def secrets(config, **kwargs):
 @click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
-@click.option("--failure-report", help="Path to store failed packs report", type=click.Path(exists=True, resolve_path=True))
+@click.option("--failure-report", help="Path to store failed packs report",
+              type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
@@ -440,6 +441,7 @@ def format_yml(input=None, output=None, from_version=None, no_validate=None):
 def upload(**kwargs):
     uploader = Uploader(**kwargs)
     return uploader.upload()
+
 
 # ====================== download ====================== #
 
@@ -691,8 +693,8 @@ def generate_doc(**kwargs):
         return 1
 
     if command:
-        if output_path and (not os.path.isfile(os.path.join(output_path, "README.md")))\
-                or (not output_path)\
+        if output_path and (not os.path.isfile(os.path.join(output_path, "README.md"))) \
+                or (not output_path) \
                 and (not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "README.md"))):
             print_error("The `command` argument must be presented with existing `README.md` docs.")
             return 1

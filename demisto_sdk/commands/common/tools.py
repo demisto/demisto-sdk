@@ -27,7 +27,8 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR)
+    TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER,
+    WIDGETS_DIR)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -696,6 +697,22 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     Returns:
         string representing the content file type
     """
+    if path.endswith('.md'):
+        if 'README' in path:
+            return 'readme'
+
+        elif 'ReleaseNotes' in path:
+            return 'releasenotes'
+
+        elif 'description' in path:
+            return 'description'
+
+        else:
+            return 'changelog'
+
+    if path.endswith('.png'):
+        return 'image'
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
 
@@ -713,6 +730,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             return 'script'
 
         elif 'tasks' in _dict:
+            if re.search(TEST_PLAYBOOK_REGEX, path, re.IGNORECASE):
+                return 'testplaybook'
+
             return 'playbook'
 
     elif file_type == 'json':
@@ -758,7 +778,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
-    return ''
+    return None
 
 
 def get_common_server_path(env_dir):

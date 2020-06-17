@@ -193,6 +193,65 @@ def get_integration_data(file_path):
     return {id_: integration_data}
 
 
+def get_dependent_incident_fields(data_dictionary):
+    built_in_incident_fields = [
+        "name",
+        "details",
+        "severity",
+        "owner",
+        "dbotCreatedBy",
+        "type",
+        "dbotSource",
+        "category",
+        "dbotStatus",
+        "playbookId",
+        "dbotCreated",
+        "dbotClosed",
+        "occurred",
+        "dbotDueDate",
+        "dbotModified",
+        "dbotTotalTime",
+        "reason",
+        "closeReason",
+        "closeNotes",
+        "closingUserId",
+        "reminder",
+        "phase",
+        "roles",
+        "labels",
+        "attachment",
+        "runStatus",
+        "sourceBrand",
+        "sourceInstance",
+        "CustomFields",
+        "droppedCount",
+        "linkedCount",
+        "feedBased",
+        "id"
+    ]
+
+    dependent_incident_fields = []
+
+    # incident fields by field mapping
+    for task in data_dictionary.get('tasks').values():
+        related_incident_fields = task.get('fieldMapping')
+        if related_incident_fields:
+            for incident_field in related_incident_fields:
+                dependent_incident_fields.append(incident_field.get('incidentfield'))
+
+        if 'setIncident' in task.get('task', {}).get('script', ''):
+            for field_name, field_value in task.get('scriptarguments', {}).items():
+                if field_value and field_name not in built_in_incident_fields:
+                    if field_name is not "customFields":
+                        dependent_incident_fields.append(field_name)
+                    else:
+                        custom_fields_list = json.loads(field_value.values()[0])
+                        for custom_field in custom_fields_list:
+                            dependent_incident_fields.append(list(custom_field.keys())[0])
+
+    return dependent_incident_fields
+
+
 def get_playbook_data(file_path: str) -> dict:
     playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
@@ -210,6 +269,7 @@ def get_playbook_data(file_path: str) -> dict:
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
                        command_to_integration_skippable)
     pack = get_pack_name(file_path)
+    dependent_incident_fields = get_dependent_incident_fields(data_dictionary)
 
     playbook_data['name'] = name
     playbook_data['file_path'] = file_path
@@ -809,12 +869,12 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=12, label="Progress of id set creation") as progress_bar:
-        if 'Integrations' in objects_to_create:
-            print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
-                integration_list.extend(arr)
-
-        progress_bar.update(1)
+        # if 'Integrations' in objects_to_create:
+        #     print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
+        #     for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
+        #         integration_list.extend(arr)
+        #
+        # progress_bar.update(1)
 
         if 'Playbooks' in objects_to_create:
             print_color("\nStarting iteration over Playbooks", LOG_COLORS.GREEN)

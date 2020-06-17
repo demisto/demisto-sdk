@@ -418,6 +418,34 @@ def get_incident_field_data(path, incidents_types_list):
     return {id_: data}
 
 
+def get_incident_type_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    playbook_id = json_data.get('playbookId')
+    pre_processing_script = json_data.get('preProcessingScript')
+    pack = get_pack_name(path)
+
+    if name:
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if playbook_id and playbook_id != '':
+        data['playbooks'] = playbook_id
+    if pre_processing_script and pre_processing_script != '':
+        data['scripts'] = pre_processing_script
+
+    return {id_: data}
+
+
 def get_general_data(path):
     data = OrderedDict()
     json_data = get_json(path)
@@ -625,7 +653,7 @@ def process_incident_types(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_INCIDENT_TYPE_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_incident_type_data(file_path))
     return res
 
 

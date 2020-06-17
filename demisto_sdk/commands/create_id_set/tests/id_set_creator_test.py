@@ -5,8 +5,8 @@ from tempfile import mkdtemp
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    get_incident_field_data, get_layout_data, get_values_for_keys_recursively,
-    has_duplicate)
+    get_incident_field_data, get_incident_type_data, get_layout_data,
+    get_values_for_keys_recursively, has_duplicate)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -173,6 +173,48 @@ def test_get_incident_fields_data_no_types_scripts():
     assert 'fromversion' in result.keys()
     assert 'toversion' in result.keys()
     assert 'incident_types' not in result.keys()
+    assert 'scripts' not in result.keys()
+
+
+def test_get_incident_types_data():
+    """
+    Given
+        - An incident type file called incidenttype-to-test.json
+
+    When
+        - parsing incident type files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidenttype-to-test.json'
+    result = get_incident_type_data(test_dir)
+    result = result.get('dummy incident type')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'playbooks' in result.keys()
+    assert 'scripts' in result.keys()
+
+
+def test_get_incident_types_data_no_playbooks_scripts():
+    """
+    Given
+        - An incident type file called incidenttype-to-test-no-playbook-script.json with no script or playbook
+        related to it
+
+    When
+        - parsing incident type files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = \
+        f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidenttype-to-test-no-playbook-script.json'
+    result = get_incident_type_data(test_dir)
+    result = result.get('dummy incident type')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'playbooks' not in result.keys()
     assert 'scripts' not in result.keys()
 
 

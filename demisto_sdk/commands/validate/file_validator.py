@@ -540,7 +540,7 @@ class FilesValidator:
             print('\nValidating {}'.format(file_path))
             self.check_for_spaces_in_file_name(file_path)
 
-            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:

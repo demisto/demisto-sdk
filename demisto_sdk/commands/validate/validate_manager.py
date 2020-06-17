@@ -539,6 +539,8 @@ class ValidateManager:
                     error_message, error_code = Errors.multiple_release_notes_files()
                     if self.handle_error(error_message, error_code, file_path=pack_name):
                         return False
+
+        click.secho("No duplicated release notes found.\n", fg="bright_green")
         return True
 
     def verify_no_missing_rn(self, changed_packs):

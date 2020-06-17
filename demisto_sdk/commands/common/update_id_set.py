@@ -432,6 +432,9 @@ def get_indicator_type_data(path):
 
     for field in ['reputationScriptName', 'enhancementScriptNames']:
         associated_scripts = json_data.get(field)
+        if associated_scripts == '':
+            continue
+
         associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
         if associated_scripts:
             all_scripts = all_scripts.union(set(associated_scripts))

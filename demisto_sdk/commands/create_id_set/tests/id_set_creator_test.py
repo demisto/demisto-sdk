@@ -195,7 +195,9 @@ def test_get_indicator_type_data():
     assert 'fromversion' in result.keys()
     assert 'integrations' in result.keys()
     assert 'scripts' in result.keys()
-    assert result.get('scripts') == list({"dummy-script", "dummy-script-2", "dummy-script-3"})
+    assert "dummy-script" in result.get('scripts')
+    assert "dummy-script-2" in result.get('scripts')
+    assert "dummy-script-3" in result.get('scripts')
 
 
 def test_get_indicator_type_data_no_integration_no_scripts():

@@ -166,11 +166,19 @@ def get_integration_data(file_path):
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
+    default_classifier = data_dictionary.get('defaultClassifier')
+    default_incident_type = data_dictionary.get('defaultIncidentType')
+    is_feed = data_dictionary.get('feed')
+    mappers = set()
 
     deprecated_commands = []
     for command in commands:
         if command.get('deprecated', False):
             deprecated_commands.append(command.get('name'))
+
+    for mapper in ['defaultMapperIn', 'defaultMapperOut']:
+        if data_dictionary.get(mapper):
+            mappers.add(data_dictionary.get(mapper))
 
     integration_data['name'] = name
     integration_data['file_path'] = file_path
@@ -190,6 +198,16 @@ def get_integration_data(file_path):
         integration_data['pack'] = pack
     if integration_api_modules:
         integration_data['api_modules'] = integration_api_modules
+    if default_classifier and default_classifier != '':
+        integration_data['classifiers'] = default_classifier
+    if mappers:
+        integration_data['mappers'] = list(mappers)
+    if default_incident_type and default_incident_type != '':
+        integration_data['incident_types'] = default_incident_type
+    if is_feed:
+        integration_data['indicator_fields'] = "CommonTypes"
+        integration_data['indicator_types'] = "CommonTypes"
+
     return {id_: integration_data}
 
 

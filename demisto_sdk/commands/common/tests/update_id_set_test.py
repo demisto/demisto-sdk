@@ -182,7 +182,15 @@ INTEGRATION_DATA = {
                      'xdr-get-create-distribution-status',
                      'xdr-get-audit-management-logs',
                      'xdr-get-audit-agent-reports'],
-        "api_modules": "HTTPFeedApiModule"
+        "api_modules": "HTTPFeedApiModule",
+        "classifiers": "dummy-classifier",
+        "incident_types": "dummy-incident-type",
+        "indicator_fields": "CommonTypes",
+        "indicator_types": "CommonTypes",
+        "mappers": [
+            "dummy-mapper-in",
+            "dummy-mapper-out"
+        ]
     }
 }
 
@@ -205,7 +213,15 @@ UNIFIED_INTEGRATION_DATA = {
                      'xdr-get-create-distribution-status',
                      'xdr-get-audit-management-logs',
                      'xdr-get-audit-agent-reports'],
-        "api_modules": "HTTPFeedApiModule"
+        "api_modules": "HTTPFeedApiModule",
+        "classifiers": "dummy-classifier",
+        "incident_types": "dummy-incident-type",
+        "indicator_fields": "CommonTypes",
+        "indicator_types": "CommonTypes",
+        "mappers": [
+            "dummy-mapper-in",
+            "dummy-mapper-out"
+        ]
     }
 }
 

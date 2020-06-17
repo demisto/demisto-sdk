@@ -5,8 +5,7 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH,
-                                                   FEED_TAG_PARAM)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -673,22 +672,6 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         fetch_params_exist = False
 
-        return fetch_params_exist
-
-    def is_valid_feed_tag(self) -> bool:
-        """
-        validate that Tags exist in feed integrations.
-        Returns:
-            bool. True if the integration is defined as well False otherwise.
-        """
-        fetch_params_exist = True
-        if self.current_file.get('script', {}).get('isfetch') is True:
-            params = [_key for _key in self.current_file.get('configuration', [])]
-            if FEED_TAG_PARAM not in params:
-                error_message, error_code = Errors.parameter_missing_from_yml(FEED_TAG_PARAM.get('name'),
-                                                                              yaml.dump(FEED_TAG_PARAM))
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    fetch_params_exist = False
         return fetch_params_exist
 
     def all_feed_params_exist(self) -> bool:

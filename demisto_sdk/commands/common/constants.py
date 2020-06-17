@@ -858,6 +858,13 @@ FEED_REQUIRED_PARAMS = [
         'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
                           ' This means that if an indicator from this feed is on the exclusion list,'
                           ' the indicator might still be added to the system.'
+    },
+    {
+        'display': 'Tags',
+        'hidden': 'false',
+        'name': 'feedTags',
+        'required': False,
+        'type': 0
     }
 ]
 
@@ -875,14 +882,6 @@ FETCH_REQUIRED_PARAMS = [
         'type': 8
     }
 ]
-
-FEED_TAG_PARAM = {
-  'display': 'Tags',
-  'hidden': 'false',
-  'name': 'feedTags',
-  'required': False,
-  'type': 0
-}
 
 DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
 # Ignore list for all 'run_all_validations_on_file' method

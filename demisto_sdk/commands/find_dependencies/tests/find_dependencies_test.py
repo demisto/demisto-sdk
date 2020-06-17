@@ -387,6 +387,16 @@ class TestDependsOnLayout:
                               ("Fake", "Fake", set())
                               ])
     def test_collect_layouts_dependencies(self, dependency_types, dependency_fields, expected_result, id_set):
+        """
+        Given
+            - A layout entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+        """
         test_input = [
             {
                 "Dummy Layout": {
@@ -417,6 +427,16 @@ class TestDependsOnIncidentField:
                               ("Fake", "Fake", set())
                               ])
     def test_collect_layouts_dependencies(self, dependency_types, dependency_scripts, expected_result, id_set):
+        """
+        Given
+            - An incident field entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the incident field depends on.
+        """
         test_input = [
             {
                 "Dummy Incident Field": {
@@ -446,6 +466,16 @@ class TestDependsOnIndicatorType:
                               ("Fake", "Fake", set())
                               ])
     def test_collect_layouts_dependencies(self, dependency_integrations, dependency_scripts, expected_result, id_set):
+        """
+        Given
+            - An indicator type entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the indicator type depends on.
+        """
         test_input = [
             {
                 "Dummy Indicator Type": {

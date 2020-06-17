@@ -84,7 +84,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_hidden_params(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
-            self.is_valid_feed_tag(),
             self.is_valid_description(beta_integration=False),
         ]
 

@@ -23,12 +23,12 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
     CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER,
     DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR,
+    JSON_ALL_INDICATOR_TYPES_REGEXES, LAYOUTS_DIR,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
+    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOK_REGEX, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER,
-    WIDGETS_DIR)
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -701,7 +701,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
         if 'README' in path:
             return 'readme'
 
-        elif 'ReleaseNotes' in path:
+        elif RELEASE_NOTES_DIR in path:
             return 'releasenotes'
 
         elif 'description' in path:
@@ -730,7 +730,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             return 'script'
 
         elif 'tasks' in _dict:
-            if re.search(TEST_PLAYBOOK_REGEX, path, re.IGNORECASE):
+            if TEST_PLAYBOOKS_DIR in path:
                 return 'testplaybook'
 
             return 'playbook'
@@ -739,13 +739,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
         if 'widgetType' in _dict:
             return 'widget'
 
-        elif 'reportType' in _dict:
+        elif 'orientation' in _dict:
             return 'report'
 
         elif 'preProcessingScript' in _dict:
             return 'incidenttype'
 
-        elif 'regex' in _dict:
+        elif 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
             return 'reputation'
 
         elif 'brandName' in _dict and 'transformer' in _dict:

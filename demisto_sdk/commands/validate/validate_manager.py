@@ -4,8 +4,7 @@ from enum import Enum
 
 import click
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (CHECKED_TYPES_REGEXES,
-                                                   CONTENT_ENTITIES_DIRS,
+from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS,
                                                    PACKS_DIR,
                                                    PACKS_PACK_IGNORE_FILE_NAME)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
@@ -23,6 +22,7 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
+from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import \
@@ -41,7 +41,8 @@ from demisto_sdk.commands.common.hook_validations.reputation import \
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import checked_type, find_type
+from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.tools import find_type, get_pack_name
 
 
 class FileType(Enum):
@@ -66,8 +67,7 @@ class FileType(Enum):
     releasenotes = 19
 
 
-SKIPPED_FILE_TYPES = ('releasenotes', 'changelog', 'description', 'image',
-                      'javascriptfile', 'powershellfile', 'pythonfile')
+SKIPPED_FILE_TYPES = ('releasenotes', 'changelog', 'description', 'testplaybook')
 
 
 class ValidateManager:
@@ -75,7 +75,7 @@ class ValidateManager:
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  silence_init_prints=True):
-        self.handle_error = BaseValidator.handle_error
+        self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.print_ignored_errors = print_ignored_errors
         self.skip_docker_checks = False
         self.skip_conf_json = skip_conf_json
@@ -83,6 +83,7 @@ class ValidateManager:
         self.validate_id_set = validate_id_set
         self.is_circle = only_committed_files
         self.validate_all = validate_all
+        self.file_path = file_path
 
         if validate_all:
             self.skip_docker_checks = True
@@ -109,6 +110,39 @@ class ValidateManager:
         """
         if self.validate_all:
             return self.print_conclusion(self.run_validation_on_all_packs())
+        if self.file_path:
+            return self.print_conclusion(self.run_validation_on_specific_files())
+
+    def run_validation_on_specific_files(self):
+        valid_files = set()
+
+        for path in self.file_path.split(','):
+            error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
+
+            if os.path.isfile(path):
+                click.secho('\n================= Validating file =================', fg="bright_cyan")
+                valid_files.add(self.run_validations_on_file(path, error_ignore_list))
+
+            else:
+                path = path.rstrip('/')
+                dir_name = os.path.basename(path)
+                if dir_name in CONTENT_ENTITIES_DIRS:
+                    click.secho(f'\n================= Validating content directory {path} =================',
+                                fg="bright_cyan")
+                    valid_files.add(self.run_validation_on_content_entities(path, error_ignore_list))
+                else:
+                    rest_of_path = path.replace(f'/{dir_name}', '')
+                    if os.path.basename(rest_of_path) == PACKS_DIR:
+                        click.secho(f'\n================= Validating pack {path} =================',
+                                    fg="bright_cyan")
+                        valid_files.add(self.run_validations_on_pack(path))
+
+                    else:
+                        click.secho(f'\n================= Validating package {path} =================',
+                                    fg="bright_cyan")
+                        valid_files.add(self.run_validation_on_package(path, error_ignore_list))
+
+        return all(valid_files)
 
     def validate_against_previous_version(self):
         """Runs validation on only changed packs/files (g)
@@ -126,23 +160,28 @@ class ValidateManager:
         """
         pass
 
-    def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False, check_schema=True):
+    def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False):
         """Choose a validator to run for a single file. (i)
 
         Args:
             pack_error_ignore_list: A dictionary of all pack ignored errors
             file_path: the file on which to run.
             is_modified: whether the file is modified or added.
-            check_schema: whether to check the file schema.
 
         Returns:
             bool. true if file is valid, false otherwise.
         """
         file_type = find_type(file_path)
-        if (not file_type and checked_type(file_path, CHECKED_TYPES_REGEXES)) or file_type in SKIPPED_FILE_TYPES:
+
+        if file_type in SKIPPED_FILE_TYPES:
             return True
 
-        click.echo(f"\nValidating {file_path}")
+        elif file_type is None:
+            error_message, error_code = Errors.file_type_not_supported()
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=f'\n{file_path}'):
+                return False
+
+        click.echo(f"\nValidating {file_path} as a {file_type} file")
 
         if not self.check_for_spaces_in_file_name(file_path):
             return False
@@ -163,19 +202,20 @@ class ValidateManager:
                                                  ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors)
 
+        click.secho(f'Validating scheme for {file_path}')
         if not structure_validator.is_valid_file():
             return False
 
-        if check_schema and file_type != 'testplaybook':
-            click.echo(f"Validating schema for {file_path}")
-            if not structure_validator.is_valid_scheme():
-                return False
-
         if self.validate_id_set:
+            click.echo(f"Validating id set registration for {file_path}")
             if not self.id_set_validator.is_file_valid_in_set(file_path):
                 return False
 
-        elif file_type in ('playbook', 'testplaybook'):
+        # No validators for reports not connections
+        if file_type in {'report', 'canvas-context-connections'}:
+            return True
+
+        elif file_type == 'playbook':
             playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors)
             return playbook_validator.is_valid_playbook(validate_rn=False)
@@ -191,8 +231,6 @@ class ValidateManager:
                 return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
 
         elif file_type == 'script':
-            # Set file path to the yml file
-            structure_validator.file_path = file_path
             script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors,
                                                skip_docker_check=self.skip_docker_checks)
@@ -207,6 +245,10 @@ class ValidateManager:
                                                          print_as_warnings=self.print_ignored_errors,
                                                          skip_docker_check=self.skip_docker_checks)
             return integration_validator.is_valid_beta_integration()
+
+        elif file_type == 'image':
+            image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list)
+            return image_validator.is_valid()
 
         # incident fields and indicator fields are using the same scheme.
         elif file_type in ('incidentfield', 'indicatorfield'):
@@ -258,12 +300,27 @@ class ValidateManager:
                                                        print_as_warnings=self.print_ignored_errors)
             return classifier_validator.is_valid_classifier(validate_rn=False)
 
+        elif file_type == 'widget':
+            widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                               print_as_warnings=self.print_ignored_errors)
+            return widget_validator.is_valid_file(validate_rn=False)
+
         else:
             error_message, error_code = Errors.file_type_not_supported()
-            if self.handle_error(error_message, error_code, file_path=file_path):
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
                 return False
 
         return True
+
+    def run_validation_on_package(self, package_path, pack_error_ignore_list):
+        valid_package = set()
+
+        for file_name in os.listdir(package_path):
+            file_path = os.path.join(package_path, file_name)
+            if file_path.endswith('.yml') or file_path.endswith('.md'):
+                valid_package.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
+
+        return all(valid_package)
 
     def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)
@@ -276,15 +333,10 @@ class ValidateManager:
             file_path = os.path.join(content_entity_dir_path, file_name)
             if os.path.isfile(file_path):
                 if file_path.endswith('.json') or file_path.endswith('.yml') or file_path.endswith('.md'):
-                    valid_directory.add(self.run_validations_on_file(file_path, pack_error_ignore_list,
-                                                                     check_schema=True))
+                    valid_directory.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
 
             else:
-                inner_dir_path = file_path
-                for inner_file_name in os.listdir(inner_dir_path):
-                    inner_file_path = os.path.join(inner_dir_path, inner_file_name)
-                    if file_path.endswith('.json') or file_path.endswith('.yml') or file_path.endswith('.md'):
-                        valid_directory.add(self.run_validations_on_file(inner_file_path, pack_error_ignore_list))
+                valid_directory.add(self.run_validation_on_package(file_path, pack_error_ignore_list))
 
         return all(valid_directory)
 
@@ -301,7 +353,8 @@ class ValidateManager:
         """
         print(f'\nValidating {pack_path} unique pack files')
 
-        pack_unique_files_validator = PackUniqueFilesValidator(os.path.basename(pack_path), ignored_errors=pack_error_ignore_list,
+        pack_unique_files_validator = PackUniqueFilesValidator(os.path.basename(pack_path),
+                                                               ignored_errors=pack_error_ignore_list,
                                                                print_as_warnings=self.print_ignored_errors)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
@@ -326,7 +379,7 @@ class ValidateManager:
 
         for content_dir in os.listdir(pack_path):
             content_entity_path = os.path.join(pack_path, content_dir)
-            if content_dir in CONTENT_ENTITIES_DIRS and os.path.isdir(content_entity_path):
+            if content_dir in CONTENT_ENTITIES_DIRS:
                 valid_pack.add(self.run_validation_on_content_entities(content_entity_path, pack_error_ignore_list))
 
         return all(valid_pack)

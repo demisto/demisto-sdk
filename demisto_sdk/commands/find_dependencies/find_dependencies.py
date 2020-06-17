@@ -292,6 +292,82 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_layouts_dependencies(pack_layouts, id_set):
+        """
+        Collects layouts pack dependencies.
+
+        Args:
+            pack_layouts (list): collection of pack playbooks data.
+            id_set (dict): id set json.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+
+        for layout in pack_layouts:
+            layout_data = next(iter(layout.values()))
+
+            related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
+            packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
+                related_incident_and_indicator_types, id_set['IncidentTypes'] + id_set['IndicatorTypes'])
+
+            if packs_found_from_incident_indicator_types:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_indicator_types)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
+            packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names(
+                related_incident_and_indicator_fields, id_set['IncidentFields'] + id_set['IndicatorFields'])
+
+            if packs_found_from_incident_indicator_fields:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_indicator_fields)
+                dependencies_packs.update(pack_dependencies_data)
+
+        return dependencies_packs
+
+    @staticmethod
+    def _collect_incidents_fields_dependencies(pack_incidents_fields, id_set):
+        """
+        Collects in incidents fields dependencies.
+
+        Args:
+            pack_incidents_fields (list): collection of pack incidents fields data.
+            id_set (dict): id set json.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+
+        for incident_field in pack_incidents_fields:
+            incident_field_data = next(iter(incident_field.values()))
+
+            related_incident_types = incident_field_data.get('incident_types', [])
+            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                related_incident_types, id_set['IncidentTypes'])
+
+            if packs_found_from_incident_types:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_types)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_scripts = incident_field_data.get('scripts', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+                related_scripts, id_set['scripts'])
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_scripts)
+                dependencies_packs.update(pack_dependencies_data)
+
+        return dependencies_packs
+
+    @staticmethod
     def _collect_pack_items(pack_id, id_set):
         """
         Collects script and playbook content items inside specific pack.
@@ -303,10 +379,14 @@ class PackDependencies:
         Returns:
             list, list: pack scripts and playbooks data.
         """
-        pack_scripts = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
-        pack_playbooks = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
+        pack_items = dict()
 
-        return pack_scripts, pack_playbooks
+        pack_items['scripts'] = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
+        pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
+        pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
+        pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
+
+        return pack_items
 
     @staticmethod
     def _find_pack_dependencies(pack_id, id_set):
@@ -320,10 +400,14 @@ class PackDependencies:
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
         """
-        pack_scripts, pack_playbooks = PackDependencies._collect_pack_items(pack_id, id_set)
-        scripts_dependencies = PackDependencies._collect_scripts_dependencies(pack_scripts, id_set)
-        playbooks_dependencies = PackDependencies._collect_playbooks_dependencies(pack_playbooks, id_set)
-        pack_dependencies = scripts_dependencies | playbooks_dependencies
+        pack_items = PackDependencies._collect_pack_items(pack_id, id_set)
+        scripts_dependencies = PackDependencies._collect_scripts_dependencies(pack_items['scripts'], id_set)
+        playbooks_dependencies = PackDependencies._collect_playbooks_dependencies(pack_items['playbooks'], id_set)
+        layouts_dependencies = PackDependencies._collect_layouts_dependencies(pack_items['layouts'], id_set)
+        incidents_fields_dependencies = PackDependencies. \
+            _collect_incidents_fields_dependencies(pack_items['incidents_fields'], id_set)
+        pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
+            incidents_fields_dependencies
         # todo check if need to collect dependencies from other content items
 
         return pack_dependencies

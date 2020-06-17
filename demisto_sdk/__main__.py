@@ -255,6 +255,9 @@ def unify(**kwargs):
 @click.option(
     '--print-ignored-errors', is_flag=True,
     help='Print ignored errors as warnings.')
+@click.option(
+    '--print-ignored-files', is_flag=True,
+    help='Print which files were ignored by the command.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -274,7 +277,8 @@ def validate(config, **kwargs):
                                     validate_id_set=kwargs['id_set'],
                                     skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
                                     print_ignored_errors=kwargs['print_ignored_errors'],
-                                    is_external_repo=is_external_repo, )
+                                    is_external_repo=is_external_repo,
+                                    print_ignored_files=kwargs['print_ignored_files'])
         return validator.run_validation()
 
 

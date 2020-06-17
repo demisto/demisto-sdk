@@ -102,6 +102,7 @@ class ValidateManager:
         self.prev_ver = prev_ver if prev_ver else 'origin/master'
         self.print_ignored_files = print_ignored_files
         self.added_rn = set()
+        self.ignored_files = set()
 
         if is_external_repo:
             click.echo('Running in a private repository')
@@ -116,14 +117,16 @@ class ValidateManager:
 
     def print_final_report(self, valid):
         if valid:
+            self.print_ignored_files_report()
             self.print_ignored_errors_report()
             click.secho('\nThe files are valid', fg='green')
             return 0
         else:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            self.print_ignored_files_report()
+            self.print_ignored_errors_report()
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
-            self.print_ignored_errors_report()
             click.secho('The files were found as invalid, the exact error message can be located above',
                         fg='red')
             return 1
@@ -285,30 +288,33 @@ class ValidateManager:
         if not self.check_for_spaces_in_file_name(file_path):
             return False
 
-        if file_type == 'releasenotes' and not self.skip_pack_rn_validation:
-            pack_name = get_pack_name(file_path)
-            self.added_rn.add(pack_name)
-            if not added_files:
-                added_files = {file_path}
-
-            release_notes_validator = ReleaseNotesValidator(file_path, pack_name=pack_name,
-                                                            modified_files=modified_files, added_files=added_files,
-                                                            ignored_errors=pack_error_ignore_list,
-                                                            print_as_warnings=self.print_ignored_errors)
-            return release_notes_validator.is_file_valid()
-
-        if file_type == 'readme':
-            readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
-                                               print_as_warnings=self.print_ignored_errors)
-            return readme_validator.is_valid_file()
-
         if self.validate_id_set:
             click.echo(f"Validating id set registration for {file_path}")
             if not self.id_set_validator.is_file_valid_in_set(file_path):
                 return False
 
+        if file_type == 'releasenotes':
+            if not self.skip_pack_rn_validation:
+                pack_name = get_pack_name(file_path)
+                if pack_name != 'NonSupported':
+                    self.added_rn.add(pack_name)
+                    if not added_files:
+                        added_files = {file_path}
+
+                    release_notes_validator = ReleaseNotesValidator(file_path, pack_name=pack_name,
+                                                                    modified_files=modified_files,
+                                                                    added_files=added_files,
+                                                                    ignored_errors=pack_error_ignore_list,
+                                                                    print_as_warnings=self.print_ignored_errors)
+                    return release_notes_validator.is_file_valid()
+
+        elif file_type == 'readme':
+            readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                               print_as_warnings=self.print_ignored_errors)
+            return readme_validator.is_valid_file()
+
         # No validators for reports not connections
-        if file_type in {'report', 'canvas-context-connections'}:
+        elif file_type in {'report', 'canvas-context-connections'}:
             return True
 
         elif file_type == 'playbook':
@@ -699,6 +705,7 @@ class ValidateManager:
                             .format(file_path, file_status), fg="bright_red")
 
             elif print_ignored_files and not checked_type(file_path, IGNORED_TYPES_REGEXES):
+                self.ignored_files.add(file_path)
                 click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
 
         modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
@@ -825,4 +832,10 @@ class ValidateManager:
         if self.print_ignored_errors:
             all_ignored_errors = '\n'.join(FOUND_FILES_AND_IGNORED_ERRORS)
             click.secho(f"\n=========== Found ignored errors in the following files ===========\n\n{all_ignored_errors}",
+                        fg="yellow")
+
+    def print_ignored_files_report(self):
+        if self.print_ignored_files:
+            all_ignored_files = '\n'.join(list(self.ignored_files))
+            click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")

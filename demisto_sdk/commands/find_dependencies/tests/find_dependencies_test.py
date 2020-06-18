@@ -473,6 +473,43 @@ class TestDependsOnClassifiers:
         assert found_result == expected_result
 
 
+class TestDependsOnMappers:
+    @pytest.mark.parametrize("dependency_types, dependency_fields, expected_result",
+                             [("Fake", "Fake", set()),
+                              ("Fake", "Fake", set()),
+                              ("Fake", "Fake", set())
+                              ])
+    def test_collect_classifier_dependencies(self, dependency_types, dependency_fields, expected_result, id_set):
+        """
+        Given
+            - A mapper entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on.
+        """
+        test_input = [
+            {
+                "Dummy Mapper": {
+                    "name": "Dummy Mapper",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        dependency_types
+                    ],
+                    "incident_fields": [
+                        dependency_fields
+                    ],
+                }
+            }
+        ]
+        found_result = PackDependencies._collect_mappers_dependencies(
+            pack_mappers=test_input, id_set=id_set)
+
+        # TODO: update the test once the implementation of all dependencies is working
+        assert found_result == expected_result
+
+
 class TestDependencyGraph:
     def test_build_dependency_graph(self, id_set):
         pack_name = "ImpossibleTraveler"

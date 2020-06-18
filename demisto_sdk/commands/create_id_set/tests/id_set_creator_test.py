@@ -6,7 +6,7 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     get_classifier_data, get_incident_field_data, get_layout_data,
-    get_values_for_keys_recursively, has_duplicate)
+    get_mapper_data, get_values_for_keys_recursively, has_duplicate)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -201,7 +201,7 @@ def test_get_classifiers_data():
 def test_get_classifiers_data_no_types_scripts():
     """
     Given
-        - An incident field file called classifier-to-test-no-incidenttypes.json with incident type
+        - An classifier file called classifier-to-test-no-incidenttypes.json with incident type
         related to it
 
     When
@@ -217,6 +217,56 @@ def test_get_classifiers_data_no_types_scripts():
     assert 'name' in result.keys()
     assert 'fromversion' in result.keys()
     assert 'incident_types' not in result.keys()
+    assert 'incident_fields' not in result.keys()
+
+
+def test_get_mappers_data():
+    """
+    Given
+        - A mapper file called classifier-mapper-to-test.json
+
+    When
+        - parsing mapper files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/classifier-mapper-to-test.json'
+    result = get_mapper_data(test_dir)
+    result = result.get('dummy mapper')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'incident_types' in result.keys()
+    assert 'incident_fields' in result.keys()
+    assert 'dummy incident type' in result['incident_types']
+    assert 'dummy incident type 1' in result['incident_types']
+    assert 'dummy incident type 2' in result['incident_types']
+    assert 'dummy incident field' in result['incident_fields']
+    assert 'dummy incident field 1' in result['incident_fields']
+    assert 'dummy incident field 2' in result['incident_fields']
+    assert 'dummy incident field 3' in result['incident_fields']
+
+
+def test_get_mappers_data_no_types_fields():
+    """
+    Given
+        - An mapper file called classifier-mapper-to-test-no-types-fields.json with incident type
+        related to it
+
+    When
+        - parsing mapper files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = \
+        f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/classifier-mapper-to-test-no-types-fields.json'
+    result = get_mapper_data(test_dir)
+    result = result.get('dummy mapper')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'incident_types' not in result.keys()
+    assert 'incident_fields' not in result.keys()
 
 
 def test_get_values_for_keys_recursively():

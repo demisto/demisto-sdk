@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INDICATOR_FIELD_JSON_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_YML_REGEX,
-    PACKS_LAYOUT_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
+    PACKS_LAYOUT_JSON_REGEX, PACKS_MAPPER_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_REGEX, PLAYBOOK_YML_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SCRIPTS_REGEX_LIST, TEST_PLAYBOOK_REGEX,
@@ -42,7 +42,9 @@ CHECKED_TYPES_REGEXES = (
     # Playbooks
     PLAYBOOK_YML_REGEX,
     # Classifiers
-    PACKS_CLASSIFIER_JSON_REGEX
+    PACKS_CLASSIFIER_JSON_REGEX,
+    # Mappers
+    PACKS_MAPPER_JSON_REGEX
 )
 
 
@@ -450,6 +452,42 @@ def get_classifier_data(path):
     return {id_: data}
 
 
+def get_mapper_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    incidents_types = set()
+    incidents_fields = set()
+
+    default_incident_type = json_data.get('defaultIncidentType')
+    if default_incident_type and default_incident_type != '':
+        incidents_types.add(default_incident_type)
+    mapping = json_data.get('mapping', {})
+    for key, value in mapping.items():
+        incidents_types.add(key)
+        incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
+
+    if name:
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if incidents_types:
+        data['incident_types'] = list(incidents_types)
+    if incidents_fields:
+        data['incident_fields'] = list(incidents_fields)
+
+    return {id_: data}
+
+
 def get_general_data(path):
     data = OrderedDict()
     json_data = get_json(path)
@@ -753,6 +791,23 @@ def process_widgets(file_path: str, print_logs: bool) -> list:
     return res
 
 
+def process_mapper(file_path: str, print_logs: bool) -> list:
+    """
+    Process a classifier JSON file
+    Args:
+        file_path: The file path from Classifiers folder
+        print_logs: Whether to print logs to stdout
+    Returns:
+        a list of classifier data.
+    """
+    res = []
+    if checked_type(file_path, [PACKS_MAPPER_JSON_REGEX]):
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
+        res.append(get_general_data(file_path))
+    return res
+
+
 def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     """
     Process a yml file in the testplyabook dir. Maybe either a script or playbook
@@ -819,7 +874,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                              'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                             'Layouts', 'Reports', 'Widgets']
+                             'Layouts', 'Reports', 'Widgets', 'Mappers']
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -835,12 +890,13 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     layouts_list = []
     reports_list = []
     widgets_list = []
+    mappers_list = []
 
     pool = Pool(processes=cpu_count() * 2)
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=12, label="Progress of id set creation") as progress_bar:
+    with click.progressbar(length=13, label="Progress of id set creation") as progress_bar:
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
@@ -942,6 +998,13 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
+        if 'Mappers' in objects_to_create:
+            print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_widgets, print_logs=print_logs), get_general_paths(WIDGETS_DIR)):
+                mappers_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -954,11 +1017,11 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     new_ids_dict['IncidentFields'] = sort(incident_fields_list)
     new_ids_dict['IncidentTypes'] = sort(incident_type_list)
     new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
-
     new_ids_dict['IndicatorTypes'] = sort(indicator_types_list)
     new_ids_dict['Layouts'] = sort(layouts_list)
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
+    new_ids_dict['Mappers'] = sort(mappers_list)
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

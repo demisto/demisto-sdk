@@ -128,12 +128,6 @@ class FilesValidator:
         self.validate_id_set = validate_id_set
         self.file_path = file_path
         self.changed_pack_data = set()
-        if not self.is_circle:
-            self._remote_configured = has_remote_configured()
-            self._is_origin_demisto = is_origin_content_repo()
-        else:
-            self._remote_configure = False
-            self._is_origin_demisto = False
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -279,7 +273,9 @@ class FilesValidator:
             print_ignored_files=self.print_ignored_files)
 
         if not self.is_circle:
-            if self._remote_configured and not self._is_origin_demisto:
+            remote_configured = has_remote_configured()
+            is_origin_demisto = is_origin_content_repo()
+            if remote_configured and not is_origin_demisto:
                 files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
                 nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = \
                     self.get_modified_files(files_string, print_ignored_files=self.print_ignored_files)
@@ -290,7 +286,9 @@ class FilesValidator:
                     self.get_modified_files(all_changed_files_string,
                                             print_ignored_files=self.print_ignored_files)
             else:
-                if (not self._is_origin_demisto and not self._remote_configured) and self.silence_init_prints:
+                remote_configured = False
+                is_origin_demisto = False
+                if (not is_origin_demisto and not remote_configured) and self.silence_init_prints:
                     print_warning(
                         "Warning: The changes may fail validation once submitted via a "
                         "PR. To validate your changes, please make sure you have a git remote setup"

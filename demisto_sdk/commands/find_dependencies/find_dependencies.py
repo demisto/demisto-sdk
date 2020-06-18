@@ -447,7 +447,7 @@ class PackDependencies:
         pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
         pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
         pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
-        pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set['Integrations'])
+        pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set['integrations'])
 
         return pack_items
 

@@ -384,7 +384,7 @@ class PackDependencies:
 
             related_classifiers = integration_data.get('classifiers', [])
             packs_found_from_classifiers = PackDependencies._search_packs_by_items_names(
-                related_classifiers, id_set['classifiers'])
+                related_classifiers, id_set['Classifiers'])
 
             if packs_found_from_classifiers:
                 pack_dependencies_data = PackDependencies. \
@@ -393,7 +393,7 @@ class PackDependencies:
 
             related_mappers = integration_data.get('mappers', [])
             packs_found_from_mappers = PackDependencies._search_packs_by_items_names(
-                related_mappers, id_set['mappers'])
+                related_mappers, id_set['Mappers'])
 
             if packs_found_from_mappers:
                 pack_dependencies_data = PackDependencies. \
@@ -402,7 +402,7 @@ class PackDependencies:
 
             related_incident_types = integration_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_incident_types, id_set['incident_types'])
+                related_incident_types, id_set['IncidentTypes'])
 
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \

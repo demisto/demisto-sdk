@@ -453,6 +453,7 @@ class PackDependencies:
         pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
         pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
         pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
+        pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
 
         return pack_items
 
@@ -474,8 +475,12 @@ class PackDependencies:
         layouts_dependencies = PackDependencies._collect_layouts_dependencies(pack_items['layouts'], id_set)
         incidents_fields_dependencies = PackDependencies. \
             _collect_incidents_fields_dependencies(pack_items['incidents_fields'], id_set)
+        classifiers_dependencies = PackDependencies. \
+            _collect_classifiers_dependencies(pack_items['classifiers'], id_set)
+        mappers_dependencies = PackDependencies. \
+            _collect_mappers_dependencies(pack_items['mappers'], id_set)
         pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
-            incidents_fields_dependencies
+            incidents_fields_dependencies | classifiers_dependencies | mappers_dependencies
         # todo check if need to collect dependencies from other content items
 
         return pack_dependencies

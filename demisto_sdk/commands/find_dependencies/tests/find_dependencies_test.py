@@ -439,6 +439,40 @@ class TestDependsOnIncidentField:
         assert found_result == expected_result
 
 
+class TestDependsOnClassifiers:
+    @pytest.mark.parametrize("dependency_types ,expected_result",
+                             [("Fake", set()),
+                              ("Fake", set()),
+                              ("Fake", set())
+                              ])
+    def test_collect_classifier_dependencies(self, dependency_types, expected_result, id_set):
+        """
+        Given
+            - A classifier entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on.
+        """
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        dependency_types
+                    ],
+                }
+            }
+        ]
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input, id_set=id_set)
+
+        # TODO: update the test once the implementation of all dependencies is working
+        assert found_result == expected_result
+
+
 class TestDependencyGraph:
     def test_build_dependency_graph(self, id_set):
         pack_name = "ImpossibleTraveler"

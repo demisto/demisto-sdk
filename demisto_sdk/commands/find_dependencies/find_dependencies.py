@@ -368,6 +368,35 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_classifiers_dependencies(pack_classifiers, id_set):
+        """
+        Collects in classifiers dependencies.
+
+        Args:
+            pack_classifiers (list): collection of pack classifiers data.
+            id_set (dict): id set json.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+
+        for classifier in pack_classifiers:
+            classifier_data = next(iter(classifier.values()))
+
+            related_incident_types = classifier_data.get('incident_types', [])
+            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                related_incident_types, id_set['IncidentTypes'])
+
+            if packs_found_from_incident_types:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_types)
+                dependencies_packs.update(pack_dependencies_data)
+
+        return dependencies_packs
+
+    @staticmethod
     def _collect_pack_items(pack_id, id_set):
         """
         Collects script and playbook content items inside specific pack.
@@ -385,6 +414,7 @@ class PackDependencies:
         pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
         pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
         pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
+        pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
 
         return pack_items
 

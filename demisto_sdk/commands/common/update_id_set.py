@@ -418,6 +418,38 @@ def get_incident_field_data(path, incidents_types_list):
     return {id_: data}
 
 
+def get_classifier_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    incidents_types = set()
+
+    default_incident_type = json_data.get('defaultIncidentType')
+    if default_incident_type and default_incident_type != '':
+        incidents_types.add(default_incident_type)
+    key_type_map = json_data.get('keyTypeMap', {})
+    for key, value in key_type_map.items():
+        incidents_types.add(value)
+
+    if name:
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if incidents_types:
+        data['incident_types'] = list(incidents_types)
+
+    return {id_: data}
+
+
 def get_general_data(path):
     data = OrderedDict()
     json_data = get_json(path)

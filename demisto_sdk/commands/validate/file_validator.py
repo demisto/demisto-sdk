@@ -128,8 +128,12 @@ class FilesValidator:
         self.validate_id_set = validate_id_set
         self.file_path = file_path
         self.changed_pack_data = set()
-        self._remote_configured = has_remote_configured()
-        self._is_origin_demisto = is_origin_content_repo()
+        if not self.is_circle:
+            self._remote_configured = has_remote_configured()
+            self._is_origin_demisto = is_origin_content_repo()
+        else:
+            self._remote_configure = False
+            self._is_origin_demisto = False
 
         self.is_external_repo = is_external_repo
         if is_external_repo:

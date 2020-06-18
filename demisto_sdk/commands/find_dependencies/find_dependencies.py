@@ -409,22 +409,11 @@ class PackDependencies:
                     _label_as_mandatory(packs_found_from_incident_types)
                 dependencies_packs.update(pack_dependencies_data)
 
-            related_indicator_fields = integration_data.get('indicator_fields', [])
-            packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names(
-                related_indicator_fields, id_set['indicator_fields'])
+            related_indicator_fields = integration_data.get('indicator_fields')
 
-            if packs_found_from_indicator_fields:
+            if related_indicator_fields:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_indicator_fields)
-                dependencies_packs.update(pack_dependencies_data)
-
-            related_indicator_types = integration_data.get('indicator_types', [])
-            packs_found_from_indicator_types = PackDependencies._search_packs_by_items_names(
-                related_indicator_types, id_set['indicator_types'])
-
-            if packs_found_from_mappers:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_indicator_types)
+                    _label_as_mandatory({related_indicator_fields})
                 dependencies_packs.update(pack_dependencies_data)
 
         return dependencies_packs

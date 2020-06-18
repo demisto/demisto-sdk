@@ -72,7 +72,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,
                                                get_remote_file, get_yaml,
+                                               has_remote_configured,
                                                is_file_path_in_pack,
+                                               is_origin_content_repo,
                                                print_color, print_error,
                                                print_warning, run_command,
                                                should_file_skip_validation)
@@ -126,6 +128,8 @@ class FilesValidator:
         self.validate_id_set = validate_id_set
         self.file_path = file_path
         self.changed_pack_data = set()
+        self._remote_configured = has_remote_configured()
+        self._is_origin_demisto = is_origin_content_repo()
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -271,14 +275,36 @@ class FilesValidator:
             print_ignored_files=self.print_ignored_files)
 
         if not self.is_circle:
-            files_string = run_command('git diff --name-status --no-merges HEAD')
-            nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.get_modified_files(
-                files_string, print_ignored_files=self.print_ignored_files)
+            if self._remote_configured and not self._is_origin_demisto:
+                files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = \
+                    self.get_modified_files(files_string, print_ignored_files=self.print_ignored_files)
 
-            all_changed_files_string = run_command('git diff --name-status {}'.format(tag))
-            modified_files_from_tag, added_files_from_tag, _, _ = \
-                self.get_modified_files(all_changed_files_string,
-                                        print_ignored_files=self.print_ignored_files)
+                all_changed_files_string = run_command(
+                    'git diff --name-status upstream/master...HEAD')
+                modified_files_from_tag, added_files_from_tag, _, _ = \
+                    self.get_modified_files(all_changed_files_string,
+                                            print_ignored_files=self.print_ignored_files)
+            else:
+                if (not self._is_origin_demisto and not self._remote_configured) and self.silence_init_prints:
+                    print_warning(
+                        "Warning: The changes may fail validation once submitted via a "
+                        "PR. To validate your changes, please make sure you have a git remote setup"
+                        " and pointing to github.com/demisto/content.\nYou can do this by running "
+                        "the following commands:\n\ngit remote add upstream https://github.com/"
+                        "demisto/content.git\ngit fetch upstream\n\nMore info about configuring "
+                        "a remote for a fork is available here: https://help.github.com/en/"
+                        "github/collaborating-with-issues-and-pull-requests/configuring-a-"
+                        "remote-for-a-fork"
+                    )
+                files_string = run_command('git diff --name-status --no-merges HEAD')
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.get_modified_files(
+                    files_string, print_ignored_files=self.print_ignored_files)
+
+                all_changed_files_string = run_command('git diff --name-status {}'.format(tag))
+                modified_files_from_tag, added_files_from_tag, _, _ = \
+                    self.get_modified_files(all_changed_files_string,
+                                            print_ignored_files=self.print_ignored_files)
 
             if self.file_path:
                 if F'M\t{self.file_path}' in files_string:

@@ -155,6 +155,24 @@ class PackDependencies:
         return None
 
     @staticmethod
+    def _search_incident_fields_packs(incident_fields_to_search, incident_fields_section):
+
+        packs = list()
+        if not isinstance(incident_fields_to_search, list):
+            incident_fields_to_search = [incident_fields_to_search]
+
+        for incident_field_name in incident_fields_to_search:
+            for incident_field in incident_fields_section:
+                incident_field_nachine_name = list(incident_field.keys())[0]
+                incident_field_details = list(incident_field.values())[0]
+                print_error(incident_field_details.get('name'))
+                if (incident_field_name in incident_field_nachine_name or incident_field_name in incident_field_details.get('name')) \
+                        and incident_field_details.get('pack'):
+                    packs.append(incident_field_details.get('pack'))
+
+        return packs
+
+    @staticmethod
     def _search_packs_by_integration_command(command, id_set):
         """
         Filters packs by implementing integration commands.
@@ -265,6 +283,7 @@ class PackDependencies:
             implementing_script_names = playbook_data.get('implementing_scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(implementing_script_names,
                                                                                      id_set['scripts'])
+            # ---- scripts packs ----
             if packs_found_from_scripts:  # found packs of implementing scripts
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
                 dependencies_packs.update(pack_dependencies_data)
@@ -276,19 +295,27 @@ class PackDependencies:
                                                                                              id_set['integrations']) \
                     if integration_name else PackDependencies._search_packs_by_integration_command(command, id_set)
 
+                # ---- integrations packs ----
                 if packs_found_from_integration:
                     pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
                         packs_found_from_integration)
                     dependencies_packs.update(pack_dependencies_data)
 
+            # ---- other playbooks packs ----
             implementing_playbook_names = playbook_data.get('implementing_playbooks', [])
             packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(implementing_playbook_names,
                                                                                        id_set['playbooks'])
-
             if packs_found_from_playbooks:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
                 dependencies_packs.update(pack_dependencies_data)
 
+            # ---- incident fields packs ----
+            incident_fields = playbook_data.get('incident_fields', [])
+            packs_found_from_incident_fields = PackDependencies._search_incident_fields_packs(incident_fields,
+                                                                                              id_set['IncidentFields'])
+            if packs_found_from_incident_fields:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
+                dependencies_packs.update(pack_dependencies_data)
         return dependencies_packs
 
     @staticmethod

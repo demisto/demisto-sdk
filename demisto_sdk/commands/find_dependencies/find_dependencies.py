@@ -165,7 +165,6 @@ class PackDependencies:
             for incident_field in incident_fields_section:
                 incident_field_nachine_name = list(incident_field.keys())[0]
                 incident_field_details = list(incident_field.values())[0]
-                print_error(incident_field_details.get('name'))
                 if (incident_field_name in incident_field_nachine_name or incident_field_name in incident_field_details.get('name')) \
                         and incident_field_details.get('pack'):
                     packs.append(incident_field_details.get('pack'))
@@ -315,6 +314,15 @@ class PackDependencies:
                                                                                               id_set['IncidentFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
+                dependencies_packs.update(pack_dependencies_data)
+
+            # ---- indicator fields packs ----
+            indicator_fields = playbook_data.get('indicator_fields', [])
+            packs_found_from_indicator_fields = PackDependencies._search_incident_fields_packs(indicator_fields,
+                                                                                               id_set[
+                                                                                                   'IndicatorFields'])
+            if packs_found_from_incident_fields:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
                 dependencies_packs.update(pack_dependencies_data)
         return dependencies_packs
 

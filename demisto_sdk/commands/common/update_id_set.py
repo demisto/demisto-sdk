@@ -230,7 +230,7 @@ def get_integration_data(file_path):
     return {id_: integration_data}
 
 
-def get_incident_field_by_script_argument(task):
+def get_fields_by_script_argument(task):
     """Iterates over the task script arguments and search for non empty fields
 
     Args:
@@ -292,15 +292,15 @@ def get_incident_fields_by_playbook_input(input):
         accessor_value = str(input_value.get('accessor'))
         combined_value = root_value + accessor_value  # concatenate the strings
 
-        field_name = re.match(r'incident\.([^\.]+)', combined_value).groups()[0]
-        if field_name and field_name not in BUILT_IN_FIELDS:
+        field_name = re.match(r'incident\.([^\.]+)', combined_value)
+        if field_name and field_name.groups()[0] not in BUILT_IN_FIELDS:
             dependent_incident_fields.add(field_name)
 
     return dependent_incident_fields
 
 
-def get_dependent_incident_fields(data_dictionary):
-    """Finds the incident fields dependent on this playbook
+def get_dependent_incident_and_indicator_fields(data_dictionary):
+    """Finds the incident fields and indicator fields dependent on this playbook
 
     Args:
         data_dictionary (dict): The playbook data dict
@@ -309,6 +309,7 @@ def get_dependent_incident_fields(data_dictionary):
         set. set of incident fields related to this playbook
     """
     dependent_incident_fields = set()
+    dependent_incident_indicators = set()
     for task in data_dictionary.get('tasks').values():
         # incident fields dependent by field mapping
         related_incident_fields = task.get('fieldMapping')
@@ -319,7 +320,10 @@ def get_dependent_incident_fields(data_dictionary):
 
         # incident fields dependent by scripts arguments
         if 'setIncident' in task.get('task', {}).get('script', ''):
-            dependent_incident_fields.update(get_incident_field_by_script_argument(task))
+            dependent_incident_fields.update(get_fields_by_script_argument(task))
+            # incident fields dependent by scripts arguments
+        if 'setIndicator' in task.get('task', {}).get('script', ''):
+            dependent_incident_indicators.update(get_fields_by_script_argument(task))
 
     # incident fields by playbook inputs
     for input in data_dictionary.get('inputs', []):
@@ -327,7 +331,7 @@ def get_dependent_incident_fields(data_dictionary):
         if input_value_dict and isinstance(input_value_dict, dict):  # deprecated playbooks bug
             dependent_incident_fields.update(get_incident_fields_by_playbook_input(input_value_dict))
 
-    return dependent_incident_fields
+    return dependent_incident_fields, dependent_incident_indicators
 
 
 def get_playbook_data(file_path: str) -> dict:
@@ -347,7 +351,7 @@ def get_playbook_data(file_path: str) -> dict:
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
                        command_to_integration_skippable)
     pack = get_pack_name(file_path)
-    dependent_incident_fields = get_dependent_incident_fields(data_dictionary)
+    dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
     playbook_data['name'] = name
     playbook_data['file_path'] = file_path
@@ -372,6 +376,8 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['skippable_tasks'] = skippable_tasks
     if dependent_incident_fields:
         playbook_data['incident_fields'] = list(dependent_incident_fields)
+    if dependent_indicator_fields:
+        playbook_data['indicator_fields'] = list(dependent_indicator_fields)
     return {id_: playbook_data}
 
 

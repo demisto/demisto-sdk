@@ -130,7 +130,7 @@ class PackDependencies:
     @staticmethod
     def _search_packs_by_items_names(items_names, items_list):
         """
-        Searches for implemented scrip/integration/playbook.
+        Searches for implemented script/integration/playbook.
 
         Args:
             items_names (str or list): items names to search.
@@ -155,14 +155,24 @@ class PackDependencies:
         return None
 
     @staticmethod
-    def _search_incident_fields_packs(incident_fields_to_search, incident_fields_section):
+    def _search_packs_by_fields_names(fields_to_search, fields_id_set_section):
+        """
+        Searches for implemented packs of the given incident/indicator fields.
 
+        Args:
+            items_names (str or list): items names to search.
+            items_list (list): specific section of id set.
+
+        Returns:
+            set or None: found pack ids or None in case nothing was found.
+
+        """
         packs = list()
-        if not isinstance(incident_fields_to_search, list):
-            incident_fields_to_search = [incident_fields_to_search]
+        if not isinstance(fields_to_search, list):
+            fields_to_search = [fields_to_search]
 
-        for incident_field_name in incident_fields_to_search:
-            for incident_field in incident_fields_section:
+        for incident_field_name in fields_to_search:
+            for incident_field in fields_id_set_section:
                 incident_field_nachine_name = list(incident_field.keys())[0]
                 incident_field_details = list(incident_field.values())[0]
                 if (incident_field_name in incident_field_nachine_name or incident_field_name in incident_field_details.get('name')) \

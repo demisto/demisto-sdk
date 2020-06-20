@@ -272,6 +272,14 @@ def get_fields_by_script_argument(task):
 
 
 def get_incident_fields_by_playbook_input(input):
+    """Searches for incident fields in a playbook input.
+
+    Args:
+        input (dict): An input of the playbook
+
+    Returns:
+        set. set of incident fields related to this task
+    """
     dependent_incident_fields = set()
 
     input_type = list(input.keys())[0]  # type can be `simple` or `complex`

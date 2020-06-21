@@ -362,7 +362,6 @@ class TestDependsOnPlaybook:
                     "implementing_playbooks": [
                     ],
                     "command_to_integration": {
-                        integration_command: ""
                     },
                     "tests": [
                         "dummy_playbook"
@@ -378,6 +377,37 @@ class TestDependsOnPlaybook:
 
         for found_result in found_result_set:
             assert not found_result[1]  # validate that mandatory is set to False
+
+    def test_collect_playbooks_dependencies_on_incident_fields(self, id_set):
+        expected_result = {("DigitalGuardian", True), ("EmployeeOffboarding", True)}
+        test_input = [
+            {
+                "Dummy Playbook": {
+                    "name": "Dummy Playbook",
+                    "file_path": "dummy_path",
+                    "fromversion": "dummy_version",
+                    "implementing_scripts": [
+                    ],
+                    "implementing_playbooks": [
+                    ],
+                    "command_to_integration": {
+                    },
+                    "tests": [
+                        "dummy_playbook"
+                    ],
+                    "pack": "dummy_pack",
+                    "incident_fields": [
+                        "digitalguardianusername",
+                        "Google Display Name"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set)
+
+        assert found_result == expected_result
 
 
 class TestDependsOnLayout:

@@ -13,7 +13,7 @@ import click
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INDICATOR_TYPES_REPUTATIONS_REGEX, LAYOUTS_DIR,
+    INDICATOR_TYPES_REPUTATIONS_REGEX, LAYOUTS_DIR, MAPPERS_DIR,
     PACKS_CLASSIFIER_JSON_REGEX, PACKS_DASHBOARD_JSON_REGEX,
     PACKS_INCIDENT_FIELD_JSON_REGEX, PACKS_INCIDENT_TYPE_JSON_REGEX,
     PACKS_INDICATOR_FIELD_JSON_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX,
@@ -1000,7 +1000,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         if 'Mappers' in objects_to_create:
             print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_mappers, print_logs=print_logs), get_general_paths(WIDGETS_DIR)):
+            for arr in pool.map(partial(process_mappers, print_logs=print_logs), get_general_paths(MAPPERS_DIR)):
                 mappers_list.extend(arr)
 
         progress_bar.update(1)

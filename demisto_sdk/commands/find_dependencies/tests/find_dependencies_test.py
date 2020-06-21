@@ -362,6 +362,7 @@ class TestDependsOnPlaybook:
                     "implementing_playbooks": [
                     ],
                     "command_to_integration": {
+                        integration_command: ""
                     },
                     "tests": [
                         "dummy_playbook"

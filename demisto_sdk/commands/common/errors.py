@@ -621,7 +621,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def added_release_notes_for_new_pack(pack_name):
-        return f"Remove the ReleaseNotes for the newly created pack \"{pack_name}\""
+        return f"ReleaseNotes were added for the newly created pack \"{pack_name}\" - remove them"
 
     @staticmethod
     @error_code_decorator

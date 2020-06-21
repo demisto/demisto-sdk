@@ -791,7 +791,7 @@ def process_widgets(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_mapper(file_path: str, print_logs: bool) -> list:
+def process_mappers(file_path: str, print_logs: bool) -> list:
     """
     Process a classifier JSON file
     Args:
@@ -804,7 +804,7 @@ def process_mapper(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_MAPPER_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_mapper_data(file_path))
     return res
 
 
@@ -896,7 +896,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=13, label="Progress of id set creation") as progress_bar:
+    with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
@@ -1000,7 +1000,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         if 'Mappers' in objects_to_create:
             print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_widgets, print_logs=print_logs), get_general_paths(WIDGETS_DIR)):
+            for arr in pool.map(partial(process_mappers, print_logs=print_logs), get_general_paths(WIDGETS_DIR)):
                 mappers_list.extend(arr)
 
         progress_bar.update(1)

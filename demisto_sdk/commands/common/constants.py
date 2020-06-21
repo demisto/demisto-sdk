@@ -1,4 +1,5 @@
 import re
+from enum import Enum
 from typing import List
 
 # dirs
@@ -27,6 +28,7 @@ DOC_FILES_DIR = 'doc_files'
 SCRIPT = 'script'
 INTEGRATION = 'integration'
 PLAYBOOK = 'playbook'
+TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
@@ -39,6 +41,35 @@ INDICATOR_TYPE = 'reputation'
 WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
+
+
+class FileType(Enum):
+    INTEGRATION = 'integration'
+    SCRIPT = 'script'
+    PLAYBOOK = 'playbook'
+    TEST_PLAYBOOK = 'testplaybook'
+    BETA_INTEGRATION = 'betaintegration'
+    INCIDENT_FIELD = 'incidentfield'
+    INDICATOR_FIELD = 'indicatorfield'
+    REPUTATION = 'reputation'
+    LAYOUT = 'layout'
+    DASHBOARD = 'dashboard'
+    INCIDENT_TYPE = 'incidenttype'
+    MAPPER = 'mapper'
+    OLD_CLASSIFIER = 'classifier_5_9_9'
+    CLASSIFIER = 'classifier'
+    WIDGET = 'widget'
+    REPORT = 'report'
+    CONNECTION = 'canvas-context-connections'
+    README = 'readme'
+    RELEASE_NOTES = 'releasenotes'
+    DESCRIPTION = 'description'
+    CHANGELOG = 'changelog'
+    IMAGE = 'image'
+    PYTHON_FILE = 'pythonfile'
+    JAVSCRIPT_FILE = 'javascriptfile'
+    POWERSHELL_FILE = 'powershellfile'
+
 
 ENTITY_TYPE_TO_DIR = {
     INTEGRATION: INTEGRATIONS_DIR,

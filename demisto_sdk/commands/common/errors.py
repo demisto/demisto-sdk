@@ -26,6 +26,7 @@ ERROR_CODE = {
     "id_should_equal_name": "BA101",
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
+    "missing_validation_mode": "BA104",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -93,6 +94,7 @@ ERROR_CODE = {
     "multiple_release_notes_files": "RN105",
     "missing_release_notes_for_pack": "RN106",
     "missing_release_notes_entry": "RN107",
+    "added_release_notes_for_new_pack": "RN108",
     "playbook_cant_have_rolename": "PB100",
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
@@ -200,6 +202,14 @@ class Errors:
     @error_code_decorator
     def file_name_include_spaces_error(file_name):
         return "Please remove spaces from the file's name: '{}'.".format(file_name)
+
+    @staticmethod
+    @error_code_decorator
+    def missing_validation_mode():
+        return "Missing validate configuration - please use one of the following:\n" \
+               "* -a  - to validate all files in the repository\n" \
+               "* -i [file_path] - to validate specified files\n" \
+               "* -g - to validate all files changed in comparison to master branch"
 
     @staticmethod
     @error_code_decorator
@@ -607,6 +617,11 @@ class Errors:
                f"generate an updated template. If you are trying to exclude an item from the release " \
                f"notes, please refer to the documentation found here - " \
                f"https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
+
+    @staticmethod
+    @error_code_decorator
+    def added_release_notes_for_new_pack(pack_name):
+        return f"Remove the ReleaseNotes for the newly created pack \"{pack_name}\""
 
     @staticmethod
     @error_code_decorator

@@ -39,10 +39,11 @@ class BaseValidator:
 
         return False
 
-    def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None):
+    def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False):
         """Handle an error that occurred during validation
 
         Args:
+            warning (bool): Print the error as a warning
             suggested_fix(str): A suggested fix
             error_message(str): The error message
             file_path(str): The file from which the error occurred
@@ -60,9 +61,8 @@ class BaseValidator:
         else:
             file_name = 'No-Name'
 
-        if self.should_ignore_error(error_code, self.ignored_errors.get('pack')) or \
-                self.should_ignore_error(error_code, self.ignored_errors.get(file_name)):
-            if self.print_as_warnings:
+        if self.should_ignore_error(error_code, self.ignored_errors.get(file_name)) or warning:
+            if self.print_as_warnings or warning:
                 click.secho(formatted_error, fg="yellow")
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None

@@ -43,8 +43,7 @@ class ReleaseNotesValidator(BaseValidator):
                                               added_files=set())
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)
                     if file_name and file_type:
-                        if (file_type not in self.latest_release_notes) and (
-                                file_name not in self.latest_release_notes):
+                        if (file_type not in self.latest_release_notes) or (file_name not in self.latest_release_notes):
                             entity_name = update_rn_util.get_display_name(file)
                             error_message, error_code = Errors.missing_release_notes_entry(file_type, self.pack_name,
                                                                                            entity_name)

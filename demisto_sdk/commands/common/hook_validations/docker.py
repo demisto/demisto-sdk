@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from pkg_resources import parse_version
 
-import click
 import requests
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -84,7 +83,7 @@ class DockerImageValidator(BaseValidator):
 
             else:
                 # if this error is ignored - do print it as a warning
-                click.secho(f"{self.file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n", fg="yellow")
+                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":

@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
     KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_RELEASE_NOTES_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX)
+    PACKS_PACK_META_FILE_NAME, PACKS_RELEASE_NOTES_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -55,54 +56,35 @@ from demisto_sdk.commands.common.tools import (checked_type,
                                                run_command)
 
 
-class FileType(Enum):
-    integration = 1
-    script = 2
-    playbook = 3
-    testplaybook = 4
-    betaintegration = 5
-    incidentfield = 6
-    indicatorfield = 7
-    reputation = 8
-    layout = 9
-    dashboard = 10
-    incidenttype = 11
-    mapper = 12
-    classifier_5_9_9 = 13
-    classifier = 14
-    widget = 15
-    report = 16
-    connection = 17
-    readme = 18
-    releasenotes = 19
-
-
-SKIPPED_FILE_TYPES = ('changelog', 'description', 'testplaybook')
-
-
 class ValidateManager:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  silence_init_prints=True):
-        self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
-        self.print_ignored_errors = print_ignored_errors
+
+        # General configuration
         self.skip_docker_checks = False
         self.skip_conf_json = skip_conf_json
         self.is_backward_check = is_backward_check
-        self.validate_id_set = validate_id_set
+        self.validate_in_id_set = validate_id_set
         self.is_circle = only_committed_files
         self.validate_all = validate_all
-        self.file_path = file_path
-        self.branch_name = ''
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
-        self.changes_in_schema = False
-        self.check_only_schema = False
         self.prev_ver = prev_ver if prev_ver else 'origin/master'
         self.print_ignored_files = print_ignored_files
+        self.print_ignored_errors = print_ignored_errors
+
+        # Class constants
+        self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
+        self.file_path = file_path
+        self.branch_name = ''
+        self.changes_in_schema = False
+        self.check_only_schema = False
         self.added_rn = set()
         self.ignored_files = set()
+        self.new_packs = set()
+        self.skipped_file_types = (FileType.CHANGELOG, FileType.DESCRIPTION, FileType.TEST_PLAYBOOK)
 
         if is_external_repo:
             click.echo('Running in a private repository')
@@ -112,7 +94,7 @@ class ValidateManager:
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
 
-        if self.validate_id_set:
+        if self.validate_in_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())
 
     def print_final_report(self, valid):
@@ -135,11 +117,17 @@ class ValidateManager:
         """Initiates validation in accordance with mode (i,g,a)
         """
         if self.validate_all:
-            return self.print_final_report(self.run_validation_on_all_packs())
-        if self.file_path:
-            return self.print_final_report(self.run_validation_on_specific_files())
-        if self.use_git:
-            return self.print_final_report(self.run_validation_using_git())
+            is_valid = self.run_validation_on_all_packs()
+        elif self.use_git:
+            is_valid = self.run_validation_using_git()
+        elif self.file_path:
+            is_valid = self.run_validation_on_specific_files()
+        else:
+            error_message, error_code = Errors.missing_validation_mode()
+            self.handle_error(error_message, error_code, file_path="General-Error")
+            return 1
+
+        return self.print_final_report(is_valid)
 
     def run_validation_on_specific_files(self):
         """Run validations only on specific files
@@ -175,24 +163,23 @@ class ValidateManager:
         return all(valid_files)
 
     def run_validation_on_all_packs(self):
-        """Runs validations on all files in all packs in repo (a)
+        """Runs validations on all files in all packs in repo (-a option)
 
         Returns:
             bool. true if all files are valid, false otherwise.
         """
         click.secho('\n================= Validating all files =================', fg="bright_cyan")
-        valid_repo = set()
+        all_packs_valid = set()
 
         if not self.skip_conf_json:
-            print('\nValidating conf.json')
             conf_json_validator = ConfJsonValidator()
-            valid_repo.add(conf_json_validator.is_valid_conf_json())
+            all_packs_valid.add(conf_json_validator.is_valid_conf_json())
 
         for pack_name in os.listdir(PACKS_DIR):
             pack_path = os.path.join(PACKS_DIR, pack_name)
-            valid_repo.add(self.run_validations_on_pack(pack_path))
+            all_packs_valid.add(self.run_validations_on_pack(pack_path))
 
-        return all(valid_repo)
+        return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)
@@ -259,10 +246,10 @@ class ValidateManager:
         Returns:
             bool. true if file is valid, false otherwise.
         """
-
         file_type = find_type(file_path)
 
-        if file_type in SKIPPED_FILE_TYPES:
+        if file_type in self.skipped_file_types:
+            self.ignored_files.add(file_path)
             return True
 
         elif file_type is None:
@@ -271,7 +258,7 @@ class ValidateManager:
                 return False
 
         if not self.check_only_schema:
-            click.echo(f"\nValidating {file_path} as {file_type}")
+            click.echo(f"\nValidating {file_path} as {file_type.value}")
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,
@@ -282,130 +269,64 @@ class ValidateManager:
         if not structure_validator.is_valid_file():
             return False
 
-        if self.check_only_schema:
+        elif self.check_only_schema:
             return True
 
-        if not self.check_for_spaces_in_file_name(file_path):
-            return False
-
-        if self.validate_id_set:
+        if self.validate_in_id_set:
             click.echo(f"Validating id set registration for {file_path}")
             if not self.id_set_validator.is_file_valid_in_set(file_path):
                 return False
 
-        if file_type == 'releasenotes':
-            if not self.skip_pack_rn_validation:
-                pack_name = get_pack_name(file_path)
-                if pack_name != 'NonSupported':
-                    self.added_rn.add(pack_name)
-                    if not added_files:
-                        added_files = {file_path}
-
-                    release_notes_validator = ReleaseNotesValidator(file_path, pack_name=pack_name,
-                                                                    modified_files=modified_files,
-                                                                    added_files=added_files,
-                                                                    ignored_errors=pack_error_ignore_list,
-                                                                    print_as_warnings=self.print_ignored_errors)
-                    return release_notes_validator.is_file_valid()
-
-        elif file_type == 'readme':
-            readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
-                                               print_as_warnings=self.print_ignored_errors)
-            return readme_validator.is_valid_file()
-
-        # No validators for reports not connections
-        elif file_type in {'report', 'canvas-context-connections'}:
+        # No validators for reports nor connections
+        if file_type in {FileType.REPORT, FileType.CONNECTION}:
             return True
 
-        elif file_type == 'playbook':
-            playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                   print_as_warnings=self.print_ignored_errors)
-            return playbook_validator.is_valid_playbook(validate_rn=False)
+        elif file_type == FileType.RELEASE_NOTES:
+            if not self.skip_pack_rn_validation and not is_modified:
+                return self.validate_release_notes(file_path, added_files, modified_files, pack_error_ignore_list)
 
-        elif file_type == 'integration':
-            integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                         print_as_warnings=self.print_ignored_errors,
-                                                         skip_docker_check=self.skip_docker_checks)
-            if is_modified and self.is_backward_check:
-                return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
-                            integration_validator.is_backward_compatible()])
-            else:
-                return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
+        elif file_type == FileType.README:
+            return self.validate_readme(file_path, pack_error_ignore_list)
 
-        elif file_type == 'script':
-            script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                               print_as_warnings=self.print_ignored_errors,
-                                               skip_docker_check=self.skip_docker_checks)
-            if is_modified and self.is_backward_check:
-                return all([script_validator.is_valid_file(validate_rn=False),
-                            script_validator.is_backward_compatible()])
-            else:
-                return script_validator.is_valid_file(validate_rn=False)
+        elif file_type == FileType.PLAYBOOK:
+            return self.validate_playbook(structure_validator, pack_error_ignore_list)
 
-        elif file_type == 'betaintegration':
-            integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                         print_as_warnings=self.print_ignored_errors,
-                                                         skip_docker_check=self.skip_docker_checks)
-            return integration_validator.is_valid_beta_integration()
+        elif file_type == FileType.INTEGRATION:
+            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type == 'image':
-            image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list)
-            return image_validator.is_valid()
+        elif file_type == FileType.SCRIPT:
+            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
+
+        elif file_type == FileType.BETA_INTEGRATION:
+            return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.IMAGE:
+            return self.validate_image(file_path, pack_error_ignore_list)
 
         # incident fields and indicator fields are using the same scheme.
-        elif file_type in ('incidentfield', 'indicatorfield'):
-            incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                              print_as_warnings=self.print_ignored_errors)
-            if is_modified and self.is_backward_check:
-                return all([incident_field_validator.is_valid_file(validate_rn=False),
-                            incident_field_validator.is_backward_compatible()])
-            else:
-                return incident_field_validator.is_valid_file(validate_rn=False)
+        elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
+            return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type == 'reputation':
-            reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                       print_as_warnings=self.print_ignored_errors)
-            return reputation_validator.is_valid_file(validate_rn=False)
+        elif file_type == FileType.REPUTATION:
+            return self.validate_reputation(structure_validator, pack_error_ignore_list)
 
-        elif file_type == 'layout':
-            layout_validator = LayoutValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                               print_as_warnings=self.print_ignored_errors)
-            return layout_validator.is_valid_layout(validate_rn=False)
+        elif file_type == FileType.LAYOUT:
+            return self.validate_layout(structure_validator, pack_error_ignore_list)
 
-        elif file_type == 'dashboard':
-            dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                     print_as_warnings=self.print_ignored_errors)
-            return dashboard_validator.is_valid_dashboard(validate_rn=False)
+        elif file_type == FileType.DASHBOARD:
+            return self.validate_dashboard(structure_validator, pack_error_ignore_list)
 
-        elif file_type == 'incidenttype':
-            incident_type_validator = IncidentTypeValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                            print_as_warnings=self.print_ignored_errors)
-            if is_modified and self.is_backward_check:
-                return all([incident_type_validator.is_valid_incident_type(validate_rn=False),
-                            incident_type_validator.is_backward_compatible()])
-            else:
-                return incident_type_validator.is_valid_incident_type(validate_rn=False)
+        elif file_type == FileType.INCIDENT_TYPE:
+            return self.validate_incident_type(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type == 'mapper':
-            mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                               print_as_warnings=self.print_ignored_errors)
-            return mapper_validator.is_valid_mapper(validate_rn=False)
+        elif file_type == FileType.MAPPER:
+            return self.validate_mapper(structure_validator, pack_error_ignore_list)
 
-        elif file_type == 'classifier_5_9_9':
-            classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
-                                                       ignored_errors=pack_error_ignore_list,
-                                                       print_as_warnings=self.print_ignored_errors)
-            return classifier_validator.is_valid_classifier(validate_rn=False)
+        elif file_type in (FileType.OLD_CLASSIFIER, FileType.CLASSIFIER):
+            return self.validate_classifier(structure_validator, pack_error_ignore_list, file_type)
 
-        elif file_type == 'classifier':
-            classifier_validator = ClassifierValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                       print_as_warnings=self.print_ignored_errors)
-            return classifier_validator.is_valid_classifier(validate_rn=False)
-
-        elif file_type == 'widget':
-            widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                               print_as_warnings=self.print_ignored_errors)
-            return widget_validator.is_valid_file(validate_rn=False)
+        elif file_type == FileType.WIDGET:
+            return self.validate_widget(structure_validator, pack_error_ignore_list)
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -420,12 +341,15 @@ class ValidateManager:
         self.branch_name = self.get_current_working_branch()
         if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
                                              not self.branch_name.startswith('20.')):
-            compare_type = '.'
+
+            # on a non-master branch - we use '...' comparison range to check changes from origin/master.
+            compare_type = '...'
             self.prev_ver = 'origin/master'
 
         else:
             self.skip_pack_rn_validation = True
-            compare_type = ''
+            # on master branch - we use '..' comparison range to check changes from the last release branch.
+            compare_type = '..'
             self.prev_ver = self.get_content_release_identifier()
 
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
@@ -437,38 +361,12 @@ class ValidateManager:
 
         valid_files = set()
 
-        click.secho(f'\n================= Running validation on modified files =================',
-                    fg="bright_cyan")
-        for file_path in modified_files:
-            # handle renamed files
-            if isinstance(file_path, tuple):
-                old_file_path = file_path[0]
-                file_path = file_path[1]
+        valid_files.add(self.validate_modified_files(modified_files))
+        valid_files.add(self.validate_added_files(added_files, modified_files))
 
-            else:
-                old_file_path = None
-
-            pack_name = get_pack_name(file_path)
-            valid_files.add(self.run_validations_on_file(file_path, self.get_error_ignore_list(pack_name),
-                                                         is_modified=True, old_file_path=old_file_path))
-
-        click.secho(f'\n================= Running validation on newly added files =================',
-                    fg="bright_cyan")
-
-        for file_path in added_files:
-            pack_name = get_pack_name(file_path)
-            valid_files.add(self.run_validations_on_file(file_path, self.get_error_ignore_list(pack_name),
-                                                         is_modified=False, modified_files=modified_files,
-                                                         added_files=added_files))
         if not self.skip_pack_rn_validation:
-            click.secho(f'\n================= Verifying no duplicated release notes =================',
-                        fg="bright_cyan")
-
-            valid_files.add(self.verify_no_dup_rn(added_files))
-
-            click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
-
-            valid_files.add(self.verify_no_missing_rn(self.get_changed_packs(modified_files)))
+            valid_files.add(self.validate_no_dup_rn(added_files))
+            valid_files.add(self.validate_no_missing_rn(self.get_changed_packs(modified_files)))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
@@ -485,6 +383,129 @@ class ValidateManager:
         return all(valid_files)
 
     """ ######################################## Unique Validations ####################################### """
+
+    def validate_readme(self, file_path, pack_error_ignore_list):
+        readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                           print_as_warnings=self.print_ignored_errors)
+        return readme_validator.is_valid_file()
+
+    def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list):
+        pack_name = get_pack_name(file_path)
+        if pack_name in self.new_packs:
+            error_message, error_code = Errors.added_release_notes_for_new_pack(pack_name)
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
+                return False
+
+        if pack_name != 'NonSupported':
+            self.added_rn.add(pack_name)
+            if not added_files:
+                added_files = {file_path}
+
+            release_notes_validator = ReleaseNotesValidator(file_path, pack_name=pack_name,
+                                                            modified_files=modified_files,
+                                                            added_files=added_files,
+                                                            ignored_errors=pack_error_ignore_list,
+                                                            print_as_warnings=self.print_ignored_errors)
+            return release_notes_validator.is_file_valid()
+
+        return True
+
+    def validate_playbook(self, structure_validator, pack_error_ignore_list):
+        playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                               print_as_warnings=self.print_ignored_errors)
+        return playbook_validator.is_valid_playbook(validate_rn=False)
+
+    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified):
+        integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     skip_docker_check=self.skip_docker_checks)
+        if is_modified and self.is_backward_check:
+            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
+                        integration_validator.is_backward_compatible()])
+        else:
+            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
+
+    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified):
+        script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                           print_as_warnings=self.print_ignored_errors,
+                                           skip_docker_check=self.skip_docker_checks)
+        if is_modified and self.is_backward_check:
+            return all([script_validator.is_valid_file(validate_rn=False),
+                        script_validator.is_backward_compatible()])
+        else:
+            return script_validator.is_valid_file(validate_rn=False)
+
+    def validate_beta_integration(self, structure_validator, pack_error_ignore_list):
+        integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     skip_docker_check=self.skip_docker_checks)
+        return integration_validator.is_valid_beta_integration()
+
+    def validate_image(self, file_path, pack_error_ignore_list):
+        image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                         print_as_warnings=self.print_ignored_errors)
+        return image_validator.is_valid()
+
+    def validate_incident_field(self, structure_validator, pack_error_ignore_list, is_modified):
+        incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                          print_as_warnings=self.print_ignored_errors)
+        if is_modified and self.is_backward_check:
+            return all([incident_field_validator.is_valid_file(validate_rn=False),
+                        incident_field_validator.is_backward_compatible()])
+        else:
+            return incident_field_validator.is_valid_file(validate_rn=False)
+
+    def validate_reputation(self, structure_validator, pack_error_ignore_list):
+        reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                   print_as_warnings=self.print_ignored_errors)
+        return reputation_validator.is_valid_file(validate_rn=False)
+
+    def validate_layout(self, structure_validator, pack_error_ignore_list):
+        layout_validator = LayoutValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                           print_as_warnings=self.print_ignored_errors)
+        return layout_validator.is_valid_layout(validate_rn=False)
+
+    def validate_dashboard(self, structure_validator, pack_error_ignore_list):
+        dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                 print_as_warnings=self.print_ignored_errors)
+        return dashboard_validator.is_valid_dashboard(validate_rn=False)
+
+    def validate_incident_type(self, structure_validator, pack_error_ignore_list, is_modified):
+        incident_type_validator = IncidentTypeValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                        print_as_warnings=self.print_ignored_errors)
+        if is_modified and self.is_backward_check:
+            return all([incident_type_validator.is_valid_incident_type(validate_rn=False),
+                        incident_type_validator.is_backward_compatible()])
+        else:
+            return incident_type_validator.is_valid_incident_type(validate_rn=False)
+
+    def validate_mapper(self, structure_validator, pack_error_ignore_list):
+        mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                           print_as_warnings=self.print_ignored_errors)
+        return mapper_validator.is_valid_mapper(validate_rn=False)
+
+    def validate_old_classifier(self, structure_validator, pack_error_ignore_list):
+        classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
+                                                   ignored_errors=pack_error_ignore_list,
+                                                   print_as_warnings=self.print_ignored_errors)
+        return classifier_validator.is_valid_classifier(validate_rn=False)
+
+    def validate_classifier(self, structure_validator, pack_error_ignore_list, file_type):
+        if file_type == FileType.CLASSIFIER:
+            new_classifier_version = True
+
+        else:
+            new_classifier_version = False
+
+        classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=new_classifier_version,
+                                                   ignored_errors=pack_error_ignore_list,
+                                                   print_as_warnings=self.print_ignored_errors)
+        return classifier_validator.is_valid_classifier(validate_rn=False)
+
+    def validate_widget(self, structure_validator, pack_error_ignore_list):
+        widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                           print_as_warnings=self.print_ignored_errors)
+        return widget_validator.is_valid_file(validate_rn=False)
 
     def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict) -> bool:
         """
@@ -509,6 +530,36 @@ class ValidateManager:
 
         return True
 
+    def validate_modified_files(self, modified_files):
+        click.secho(f'\n================= Running validation on modified files =================',
+                    fg="bright_cyan")
+        valid_files = set()
+        for file_path in modified_files:
+            # handle renamed files
+            if isinstance(file_path, tuple):
+                old_file_path = file_path[0]
+                file_path = file_path[1]
+
+            else:
+                old_file_path = None
+
+            pack_name = get_pack_name(file_path)
+            valid_files.add(self.run_validations_on_file(file_path, self.get_error_ignore_list(pack_name),
+                                                         is_modified=True, old_file_path=old_file_path))
+        return all(valid_files)
+
+    def validate_added_files(self, added_files, modified_files):
+        click.secho(f'\n================= Running validation on newly added files =================',
+                    fg="bright_cyan")
+
+        valid_files = set()
+        for file_path in added_files:
+            pack_name = get_pack_name(file_path)
+            valid_files.add(self.run_validations_on_file(file_path, self.get_error_ignore_list(pack_name),
+                                                         is_modified=False, modified_files=modified_files,
+                                                         added_files=added_files))
+        return all(valid_files)
+
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).
 
@@ -526,7 +577,7 @@ class ValidateManager:
                 return False
         return True
 
-    def verify_no_dup_rn(self, added_files):
+    def validate_no_dup_rn(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
 
         Args:
@@ -535,6 +586,8 @@ class ValidateManager:
         Returns:
             bool. True if no duplications found, false otherwise
         """
+        click.secho(f'\n================= Verifying no duplicated release notes =================',
+                    fg="bright_cyan")
         added_rn = set()
         for file in added_files:
             if re.search(PACKS_RELEASE_NOTES_REGEX, file):
@@ -546,10 +599,10 @@ class ValidateManager:
                     if self.handle_error(error_message, error_code, file_path=pack_name):
                         return False
 
-        click.secho("No duplicated release notes found.\n", fg="bright_green")
+        click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
-    def verify_no_missing_rn(self, changed_packs):
+    def validate_no_missing_rn(self, changed_packs):
         """Validate that there are no missing RN for changed files
 
         Args:
@@ -558,30 +611,31 @@ class ValidateManager:
         Returns:
             bool. True if no missing RN found, False otherwise
         """
-        if self.skip_pack_rn_validation is False:
-            missing_rn = changed_packs.difference(self.added_rn)
+        click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
-            if len(missing_rn) > 0:
-                is_valid = set()
-                for pack in missing_rn:
-                    # # ignore RN in NonSupported pack
-                    if 'NonSupported' in pack:
-                        continue
-                    ignored_errors_list = self.get_error_ignore_list(pack)
-                    error_message, error_code = Errors.missing_release_notes_for_pack(pack)
-                    if not BaseValidator(ignored_errors=ignored_errors_list,
-                                         print_as_warnings=self.print_ignored_errors).handle_error(
-                            error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
-                        is_valid.add(True)
+        missing_rn = changed_packs.difference(self.added_rn)
 
-                    else:
-                        is_valid.add(False)
+        if len(missing_rn) > 0:
+            is_valid = set()
+            for pack in missing_rn:
+                # # ignore RN in NonSupported pack
+                if 'NonSupported' in pack:
+                    continue
+                ignored_errors_list = self.get_error_ignore_list(pack)
+                error_message, error_code = Errors.missing_release_notes_for_pack(pack)
+                if not BaseValidator(ignored_errors=ignored_errors_list,
+                                     print_as_warnings=self.print_ignored_errors).handle_error(
+                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                    is_valid.add(True)
 
-                return all(is_valid)
+                else:
+                    is_valid.add(False)
 
-            else:
-                click.secho("No missing release notes found.\n", fg="bright_green")
-                return True
+            return all(is_valid)
+
+        else:
+            click.secho("No missing release notes found.\n", fg="bright_green")
+            return True
 
     """ ######################################## Git Tools and filtering ####################################### """
 
@@ -598,7 +652,7 @@ class ValidateManager:
         click.echo("Collecting all committed files")
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
-            f'git diff --name-status {prev_ver}..{compare_type}refs/heads/{self.branch_name}')
+            f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')
 
         modified_files, added_files, _, old_format_files = self.filter_changed_files(all_committed_files_string,
                                                                                      prev_ver)
@@ -705,8 +759,13 @@ class ValidateManager:
                             .format(file_path, file_status), fg="bright_red")
 
             elif print_ignored_files and not checked_type(file_path, IGNORED_TYPES_REGEXES):
-                self.ignored_files.add(file_path)
-                click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+
+                if file_path.endswith(PACKS_PACK_META_FILE_NAME) and file_status.lower() == 'a':
+                    self.new_packs.add(get_pack_name(file_path))
+
+                if file_path not in self.ignored_files:
+                    self.ignored_files.add(file_path)
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
 
         modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
             modified_files_list,
@@ -775,15 +834,6 @@ class ValidateManager:
                     pass
 
         return ignored_errors_list
-
-    def check_for_spaces_in_file_name(self, file_path):
-        file_name = os.path.basename(file_path)
-        if file_name.count(' ') > 0:
-            error_message, error_code = Errors.file_name_include_spaces_error(file_name)
-            if self.handle_error(error_message, error_code, file_path):
-                return False
-
-        return True
 
     @staticmethod
     def get_current_working_branch():

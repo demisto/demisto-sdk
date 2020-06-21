@@ -231,8 +231,8 @@ class Unifier:
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
-        script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
+        script_path = list(filter(lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
+                                  sorted(glob.glob(os.path.join(self.package_path, '*' + script_type)))))[0]
 
         return script_path
 

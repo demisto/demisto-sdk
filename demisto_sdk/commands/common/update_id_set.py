@@ -959,12 +959,12 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=12, label="Progress of id set creation") as progress_bar:
-        # if 'Integrations' in objects_to_create:
-        #     print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
-        #     for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
-        #         integration_list.extend(arr)
-        #
-        # progress_bar.update(1)
+        if 'Integrations' in objects_to_create:
+            print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
+                integration_list.extend(arr)
+
+        progress_bar.update(1)
 
         if 'Playbooks' in objects_to_create:
             print_color("\nStarting iteration over Playbooks", LOG_COLORS.GREEN)

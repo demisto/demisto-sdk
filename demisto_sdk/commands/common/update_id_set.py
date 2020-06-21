@@ -75,7 +75,6 @@ BUILT_IN_FIELDS = [
     "sourceBrand",
     "sourceInstance",
     "CustomFields",
-    "customFields",
     "droppedCount",
     "linkedCount",
     "feedBased",
@@ -264,10 +263,12 @@ def get_fields_by_script_argument(task):
             if field_name != "customFields":
                 dependent_incident_fields.add(field_name)
             else:
-                custom_fields_list = json.loads(field_value.values()[0])
+                # the value is a list of dicts in str format
+                custom_fields_list = json.loads(list(field_value.values())[0])
                 for custom_field in custom_fields_list:
-                    if custom_field not in BUILT_IN_FIELDS:
-                        dependent_incident_fields.add(list(custom_field.keys())[0])
+                    field_name = list(custom_field.keys())[0]
+                    if field_name not in BUILT_IN_FIELDS:
+                        dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 
@@ -292,10 +293,6 @@ def get_incident_fields_by_playbook_input(input):
             dependent_incident_fields.add(field_name)
 
     elif input_type == 'complex':
-        # complex input is in the form:
-        #   complex:
-        #       root: X
-        #       accessor: Y
         root_value = str(input_value.get('root', ''))
         accessor_value = str(input_value.get('accessor'))
         combined_value = root_value + accessor_value  # concatenate the strings
@@ -317,8 +314,8 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
         set. set of incident fields related to this playbook
     """
     dependent_incident_fields = set()
-    dependent_incident_indicators = set()
-    for task in data_dictionary.get('tasks').values():
+    dependent_indicator_fields = set()
+    for task in data_dictionary.get('tasks', {}).values():
         # incident fields dependent by field mapping
         related_incident_fields = task.get('fieldMapping')
         if related_incident_fields:
@@ -331,7 +328,7 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
             dependent_incident_fields.update(get_fields_by_script_argument(task))
             # incident fields dependent by scripts arguments
         if 'setIndicator' in task.get('task', {}).get('script', ''):
-            dependent_incident_indicators.update(get_fields_by_script_argument(task))
+            dependent_indicator_fields.update(get_fields_by_script_argument(task))
 
     # incident fields by playbook inputs
     for input in data_dictionary.get('inputs', []):
@@ -339,7 +336,7 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
         if input_value_dict and isinstance(input_value_dict, dict):  # deprecated playbooks bug
             dependent_incident_fields.update(get_incident_fields_by_playbook_input(input_value_dict))
 
-    return dependent_incident_fields, dependent_incident_indicators
+    return dependent_incident_fields, dependent_indicator_fields
 
 
 def get_playbook_data(file_path: str) -> dict:
@@ -962,12 +959,12 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=12, label="Progress of id set creation") as progress_bar:
-        if 'Integrations' in objects_to_create:
-            print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
-                integration_list.extend(arr)
-
-        progress_bar.update(1)
+        # if 'Integrations' in objects_to_create:
+        #     print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
+        #     for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
+        #         integration_list.extend(arr)
+        #
+        # progress_bar.update(1)
 
         if 'Playbooks' in objects_to_create:
             print_color("\nStarting iteration over Playbooks", LOG_COLORS.GREEN)

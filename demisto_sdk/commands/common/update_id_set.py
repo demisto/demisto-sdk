@@ -568,6 +568,43 @@ def get_incident_field_data(path, incidents_types_list):
     return {id_: data}
 
 
+def get_indicator_type_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('details', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    associated_integration = json_data.get('reputationCommand')
+    pack = get_pack_name(path)
+    all_scripts = set()
+
+    for field in ['reputationScriptName', 'enhancementScriptNames']:
+        associated_scripts = json_data.get(field)
+        if associated_scripts == '':
+            continue
+
+        associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
+        if associated_scripts:
+            all_scripts = all_scripts.union(set(associated_scripts))
+
+    if name:
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if associated_integration:
+        data['integrations'] = associated_integration
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
+
+    return {id_: data}
+
+
 def get_general_data(path):
     data = OrderedDict()
     json_data = get_json(path)
@@ -813,7 +850,7 @@ def process_indicator_types(file_path: str, print_logs: bool) -> list:
             not checked_type(file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX])):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_indicator_type_data(file_path))
     return res
 
 

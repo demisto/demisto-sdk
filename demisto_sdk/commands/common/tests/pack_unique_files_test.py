@@ -87,10 +87,10 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(PACK_METADATA_PARTNER_NO_EMAIL_NO_URL))
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_EMAIL_NO_URL)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
-        assert "Validating pack unique files" in result.stdout
         assert 'Contributed packs must include email or url' in result.stdout

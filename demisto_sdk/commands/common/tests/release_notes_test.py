@@ -74,11 +74,11 @@ def test_init():
 
 
 NOT_FILLED_OUT_RN = '''
-### IncidentTypes
+### Incident Types
 #### Cortex XDR Incident
 - %%UPDATE_RN%%
 
-### IncidentFields
+### Incident Fields
 #### XDR Alerts
 - %%UPDATE_RN%%
 
@@ -91,11 +91,11 @@ NOT_FILLED_OUT_RN = '''
 - %%UPDATE_RN%%
 '''
 FILLED_OUT_RN = '''
-### IncidentTypes
+### Incident Types
 #### Cortex XDR Incident
 - Test
 
-### IncidentFields
+### Incident Fields
 #### XDR Alerts
 - Test
 

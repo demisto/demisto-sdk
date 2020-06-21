@@ -36,7 +36,7 @@ class ReleaseNotesValidator(BaseValidator):
         modified_added_files = itertools.chain.from_iterable((self.added_files or [], self.modified_files or []))
         if modified_added_files:
             for file in modified_added_files:
-                if not (permitted_type in file for permitted_type in VALIDATED_PACK_ITEM_TYPES):
+                if not any(permitted_type in file for permitted_type in VALIDATED_PACK_ITEM_TYPES):
                     continue
                 elif self.pack_name in file:
                     update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None,

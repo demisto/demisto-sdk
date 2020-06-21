@@ -129,11 +129,13 @@ class ContentEntityValidator(BaseValidator):
         if no_tests_explicitly:
             return True
         conf_json_tests = self._load_conf_file()['tests']
-
-        content_item_id = _get_file_id(self.structure_validator.scheme_name, self.current_file)
         file_type = self.structure_validator.scheme_name
-        # Test playbook case
+        if not isinstance(file_type, str):
+            file_type = file_type.value
 
+        content_item_id = _get_file_id(file_type, self.current_file)
+
+        # Test playbook case
         if 'TestPlaybooks' in self.file_path and file_type == 'playbook':
             is_configured_test = any(test_config for test_config in conf_json_tests if
                                      is_test_config_match(test_config, test_playbook_id=content_item_id))

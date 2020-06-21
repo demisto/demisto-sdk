@@ -50,7 +50,11 @@ class StructureValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_valid = True
         self.file_path = file_path.replace('\\', '/')
+
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
+        if isinstance(self.scheme_name, str):
+            self.scheme_name = FileType(self.scheme_name)
+
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
         self.fromversion = fromversion
@@ -255,6 +259,8 @@ class StructureValidator(BaseValidator):
         """
         # If scheme_name exists, already found that the file is in the right path
         if self.scheme_name:
+            if isinstance(self.scheme_name, str):
+                return self.scheme_name
             return self.scheme_name.value
 
         for file_type, regexes in FILE_TYPES_PATHS_TO_VALIDATE.items():
@@ -351,7 +357,7 @@ class StructureValidator(BaseValidator):
                     return Errors.pykwalify_field_undefined(str(key_from_error))
 
                 else:
-                    return Errors.pkwalify_missing_in_root(str(key_from_error))
+                    return Errors.pykwalify_missing_in_root(str(key_from_error))
 
     def check_for_spaces_in_file_name(self):
         file_name = os.path.basename(self.file_path)

@@ -54,6 +54,9 @@ class PlaybookValidator(ContentEntityValidator):
         And prints an error message accordingly
         """
         file_type = self.structure_validator.scheme_name
+        if not isinstance(file_type, str):
+            file_type = file_type.value
+
         tests = self.current_file.get('tests', [])
         return self.yml_has_test_key(tests, file_type)
 

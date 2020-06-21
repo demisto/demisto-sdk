@@ -10,6 +10,7 @@ import click
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name, print_error,
@@ -136,10 +137,10 @@ def main(config, version):
 @pass_config
 def extract(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
-    if file_type not in ["integration", "script"]:
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
-    extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
+    extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
     return extractor.extract_to_package_format()
 
 
@@ -177,10 +178,10 @@ def extract(config, **kwargs):
 @pass_config
 def extract_code(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
-    if file_type not in ["integration", "script"]:
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
-    extractor = Extractor(configuration=config.configuration, file_type=file_type, **kwargs)
+    extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
 
 
@@ -593,10 +594,10 @@ def json_to_outputs_command(**kwargs):
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
     file_type = find_type(kwargs.get('input'))
-    if file_type not in ["integration", "script"]:
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
-    generator = PlaybookTestsGenerator(file_type=file_type, **kwargs)
+    generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
     generator.run()
 
 
@@ -704,26 +705,26 @@ def generate_doc(**kwargs):
             return 1
 
     file_type = find_type(kwargs.get('input', ''))
-    if file_type not in ["integration", "script", "playbook"]:
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
-    print(f'Start generating {file_type} documentation...')
-    if file_type == 'integration':
+    print(f'Start generating {file_type.value} documentation...')
+    if file_type == FileType.INTEGRATION:
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
         return generate_integration_doc(input=input_path, output=output_path, use_cases=use_cases,
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command)
-    elif file_type == 'script':
+    elif file_type == FileType.SCRIPT:
         return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
-    elif file_type == 'playbook':
+    elif file_type == FileType.PLAYBOOK:
         return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose)
     else:
-        print_error(f'File type {file_type} is not supported.')
+        print_error(f'File type {file_type.value} is not supported.')
         return 1
 
 

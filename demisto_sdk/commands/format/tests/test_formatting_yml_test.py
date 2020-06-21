@@ -4,7 +4,8 @@ import sys
 
 import pytest
 import yaml
-from demisto_sdk.commands.common.constants import FETCH_REQUIRED_PARAMS
+from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -13,11 +14,11 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION,
-    EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, GIT_ROOT,
-    INTEGRATION_PATH, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION_COPY,
-    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
-    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
-    SOURCE_FORMAT_SCRIPT_COPY)
+    EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, FEED_INTEGRATION_INVALID,
+    FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
+    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
+    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY)
 from ruamel.yaml import YAML
 
 ryaml = YAML()
@@ -319,6 +320,43 @@ def test_set_fetch_params_in_config(source, target, path, answer):
         yaml_content = yaml.load(content)
         for param in FETCH_REQUIRED_PARAMS:
             assert param in yaml_content['configuration']
+    os.remove(target)
+    os.rmdir(path)
+    assert res is answer
+
+
+FORMAT_FILES_FEED = [
+    (FEED_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
+    (FEED_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
+
+
+@pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FEED)
+def test_set_feed_params_in_config(source, target, path, answer):
+    """
+    Given
+    - Integration yml with feed field labeled as true and all necessary params exist.
+    - Integration yml with feed field labeled as true and without the necessary feed params.
+    - destination_path to write the formatted integration to.
+    When
+    - Running the format command.
+
+    Then
+    - Ensure the file was created.
+    - Ensure that the feedBypassExclusionList, Fetch indicators , feedReputation, feedReliability ,
+     feedExpirationPolicy, feedExpirationInterval ,feedFetchInterval params were added to the yml of the integration.
+    """
+    os.mkdir(path)
+    shutil.copyfile(source, target)
+    res = format_manager(input=target)
+    with open(target, 'r') as f:
+        content = f.read()
+        yaml_content = yaml.load(content)
+        params = yaml_content['configuration']
+        for counter, param in enumerate(params):
+            if 'defaultvalue' in param:
+                params[counter].pop('defaultvalue')
+        for param in FEED_REQUIRED_PARAMS:
+            assert param in params
     os.remove(target)
     os.rmdir(path)
     assert res is answer

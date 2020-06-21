@@ -263,12 +263,14 @@ def get_fields_by_script_argument(task):
             if field_name != "customFields":
                 dependent_incident_fields.add(field_name)
             else:
-                # the value is a list of dicts in str format
-                custom_fields_list = json.loads(list(field_value.values())[0])
-                for custom_field in custom_fields_list:
-                    field_name = list(custom_field.keys())[0]
-                    if field_name not in BUILT_IN_FIELDS:
-                        dependent_incident_fields.add(field_name)
+                # the value should be a list of dicts in str format
+                custom_field_value = list(field_value.values())[0]
+                if isinstance(custom_field_value, str):
+                    custom_fields_list = json.loads(custom_field_value)
+                    for custom_field in custom_fields_list:
+                        field_name = list(custom_field.keys())[0]
+                        if field_name not in BUILT_IN_FIELDS:
+                            dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 
@@ -288,18 +290,20 @@ def get_incident_fields_by_playbook_input(input):
 
     # check if it is in the form 'simple: ${incident.field_name}'
     if input_type == 'simple' and str(input_value).startswith('${incident.'):
-        field_name = input_value.split('.')[1][-1]
+        field_name = input_value.split('.')[1][:-1]
         if field_name not in BUILT_IN_FIELDS:
             dependent_incident_fields.add(field_name)
 
     elif input_type == 'complex':
         root_value = str(input_value.get('root', ''))
         accessor_value = str(input_value.get('accessor'))
-        combined_value = root_value + accessor_value  # concatenate the strings
+        combined_value = root_value + '.' + accessor_value  # concatenate the strings
 
         field_name = re.match(r'incident\.([^\.]+)', combined_value)
-        if field_name and field_name.groups()[0] not in BUILT_IN_FIELDS:
-            dependent_incident_fields.add(field_name)
+        if field_name:
+            field_name = field_name.groups()[0]
+            if field_name not in BUILT_IN_FIELDS:
+                dependent_incident_fields.add(field_name)
 
     return dependent_incident_fields
 

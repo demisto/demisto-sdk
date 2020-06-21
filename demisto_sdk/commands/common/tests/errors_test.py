@@ -40,3 +40,35 @@ class TestErrors(unittest.TestCase):
         expected_result = "ID may have changed, please make sure to check you have the correct one."
         result = Errors.id_might_changed()
         assert result == expected_result
+
+    def test_id_should_equal(self):
+        expected_result = ("The File's name, which is: 'FileName', should be equal to its ID, which "
+                           "is: 'FileID'. please update the file.", "BA101")
+        name = "FileName"
+        file_id = "FileID"
+        result = Errors.id_should_equal_name(name, file_id)
+        assert result == expected_result
+
+    def test_file_type_not_supported(self):
+        error_statement = "The file type is not supported in validate command\n " \
+            "validate' command supports: Integrations, Scripts, Playbooks, " \
+            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+        expected_result = (error_statement, "BA102")
+        result = Errors.file_type_not_supported()
+        assert result == expected_result
+
+    def test_invalid_context_output(self):
+        expected_result = ("Invalid context output for command TestCommand. Output is BadOutput",
+                           "IN115")
+        command_name = "TestCommand"
+        output_name = "BadOutput"
+        result = Errors.invalid_context_output(command_name, output_name)
+        assert result == expected_result
+
+    def test_wrong_display_name(self):
+        expected_result = ('The display name of the ParamName parameter should be \'ParamDisplay\'',
+                           "IN100")
+        param_name = "ParamName"
+        param_display = "ParamDisplay"
+        result = Errors.wrong_display_name(param_name, param_display)
+        assert result == expected_result

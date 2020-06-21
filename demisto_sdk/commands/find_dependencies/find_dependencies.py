@@ -320,7 +320,7 @@ class PackDependencies:
 
             # ---- incident fields packs ----
             incident_fields = playbook_data.get('incident_fields', [])
-            packs_found_from_incident_fields = PackDependencies._search_incident_fields_packs(incident_fields,
+            packs_found_from_incident_fields = PackDependencies._search_packs_by_fields_names(incident_fields,
                                                                                               id_set['IncidentFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
@@ -328,7 +328,7 @@ class PackDependencies:
 
             # ---- indicator fields packs ----
             indicator_fields = playbook_data.get('indicator_fields', [])
-            packs_found_from_indicator_fields = PackDependencies._search_incident_fields_packs(indicator_fields,
+            packs_found_from_indicator_fields = PackDependencies._search_packs_by_fields_names(indicator_fields,
                                                                                                id_set[
                                                                                                    'IndicatorFields'])
             if packs_found_from_incident_fields:

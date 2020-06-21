@@ -387,6 +387,16 @@ class TestDependsOnLayout:
                               ("Fake", "Fake", set())
                               ])
     def test_collect_layouts_dependencies(self, dependency_types, dependency_fields, expected_result, id_set):
+        """
+        Given
+            - A layout entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+        """
         test_input = [
             {
                 "Dummy Layout": {
@@ -417,6 +427,16 @@ class TestDependsOnIncidentField:
                               ("Fake", "Fake", set())
                               ])
     def test_collect_incident_field_dependencies(self, dependency_types, dependency_scripts, expected_result, id_set):
+        """
+        Given
+            - An incident field entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the incident field depends on.
+        """
         test_input = [
             {
                 "Dummy Incident Field": {
@@ -434,6 +454,45 @@ class TestDependsOnIncidentField:
         ]
         found_result = PackDependencies._collect_incidents_fields_dependencies(
             pack_incidents_fields=test_input, id_set=id_set)
+
+        # TODO: update the test once the implementation of all dependencies is working
+        assert found_result == expected_result
+
+
+class TestDependsOnIndicatorType:
+    @pytest.mark.parametrize("dependency_integrations, dependency_scripts ,expected_result",
+                             [("Fake", "Fake", set()),
+                              ("Fake", "Fake", set()),
+                              ("Fake", "Fake", set())
+                              ])
+    def test_collect_layouts_dependencies(self, dependency_integrations, dependency_scripts, expected_result, id_set):
+        """
+        Given
+            - An indicator type entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the indicator type depends on.
+        """
+        test_input = [
+            {
+                "Dummy Indicator Type": {
+                    "name": "Dummy Indicator Type",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "integrations": [
+                        dependency_integrations
+                    ],
+                    "scripts": [
+                        dependency_scripts
+                    ]
+                }
+            }
+        ]
+        found_result = PackDependencies._collect_indicators_types_dependencies(
+            pack_indicators_types=test_input, id_set=id_set)
 
         # TODO: update the test once the implementation of all dependencies is working
         assert found_result == expected_result

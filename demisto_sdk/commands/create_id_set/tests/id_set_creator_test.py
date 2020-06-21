@@ -5,8 +5,8 @@ from tempfile import mkdtemp
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    get_incident_field_data, get_incident_type_data, get_layout_data,
-    get_values_for_keys_recursively, has_duplicate)
+    get_incident_field_data, get_incident_type_data, get_indicator_type_data,
+    get_layout_data, get_values_for_keys_recursively, has_duplicate)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -173,6 +173,53 @@ def test_get_incident_fields_data_no_types_scripts():
     assert 'fromversion' in result.keys()
     assert 'toversion' in result.keys()
     assert 'incident_types' not in result.keys()
+    assert 'scripts' not in result.keys()
+
+
+def test_get_indicator_type_data():
+    """
+    Given
+        - An indicator type file called reputation-indicatortype.json.
+
+    When
+        - parsing indicator type files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = \
+        f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/reputation-indicatortype.json'
+    result = get_indicator_type_data(test_dir)
+    result = result.get('indicator-type-dummy')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'integrations' in result.keys()
+    assert 'scripts' in result.keys()
+    assert "dummy-script" in result.get('scripts')
+    assert "dummy-script-2" in result.get('scripts')
+    assert "dummy-script-3" in result.get('scripts')
+
+
+def test_get_indicator_type_data_no_integration_no_scripts():
+    """
+    Given
+        - An indicator type file called reputation-indicatortype_no_script_no_integration.json without any
+            integrations or scripts that it depends on.
+
+    When
+        - parsing indicator type files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = \
+        f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/' \
+        f'reputation-indicatortype_no_script_no_integration.json'
+    result = get_indicator_type_data(test_dir)
+    result = result.get('indicator-type-dummy')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'integrations' not in result.keys()
     assert 'scripts' not in result.keys()
 
 

@@ -214,8 +214,8 @@ def test_get_indicator_type_data_no_integration_no_scripts():
     Then
         - parsing all the data from file successfully
     """
-    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/'
-    f'reputation-indicatortype_no_script_no_integration.json'
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/' \
+               f'reputation-indicatortype_no_script_no_integration.json'
 
     result = get_indicator_type_data(test_dir)
     result = result.get('indicator-type-dummy')

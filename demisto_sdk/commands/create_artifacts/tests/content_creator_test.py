@@ -3,6 +3,7 @@ from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.create_artifacts.content_creator import *
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestContentCreator:
@@ -185,3 +186,46 @@ class TestContentCreator:
         file_path = os.path.join(self._files_to_artifacts_dir, filename)
         content_creator.copy_file_to_artifacts(file_path)
         assert filecmp.cmp(file_path, os.path.join(self.content_repo, filename))
+
+    def test_content_legacy_with_no_md(self, repo):
+        """
+        Given
+        - valid content dir
+        When
+        - copying the content folder to a content bundle(flatten files)
+        Then
+        - Ensure no md files were copied to content bundle
+        - Ensure md files were copied to packs bundle.
+        """
+        pack = repo.create_pack('Test')
+        integration = pack.create_integration('Test')
+        integration_old = pack.create_integration('OldIntegration')
+        integration_old.write_yml({'script': '', 'type': 'python', 'deprecated': True})
+        integration_old.write_changelog('this is a test')
+        integration.create_default_integration()
+        pack.create_release_notes('1_0_1')
+        pack.create_incident_field('incidentfield-city', release_notes=True)
+        temp = pack.repo_path
+        bundle_packs = os.path.join(temp, 'bundle_packs')
+        bundle_content = os.path.join(temp, 'bundle_content')
+        repo.content_descriptor.write_json({
+            "installDate": "0001-01-01T00:00:00Z",
+            "assetId": "REPLACE_THIS_WITH_CI_BUILD_NUM",
+            "releaseNotes": "## Demisto Content Release Notes for version 2.5.0",
+            "modified": "REPLACE_THIS_WITH_RELEASE_DATE",
+            "ignoreGit": False,
+            "releaseDate": "REPLACE_THIS_WITH_RELEASE_DATE",
+            "version": -1,
+            "release": "2.5.0",
+            "id": ""
+        })
+        repo.id_set.write_json({})
+        content_creator = ContentCreator(artifacts_path=temp, content_version='2.5.0',
+                                         preserve_bundles=True, no_update_commonserver=True)
+        with ChangeCWD(pack.repo_path):
+            content_creator.create_content()
+
+            assert filecmp.cmp(f'{temp}/Packs/Test/ReleaseNotes/1_0_1.md',
+                               f'{bundle_packs}/Test/ReleaseNotes/1_0_1.md')
+            assert not os.path.isfile(f'{bundle_content}/incidentfield-city_README.md')
+            assert not os.path.isfile(f'{bundle_content}/integration-OldIntegration_CHANGELOG.md')

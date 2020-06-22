@@ -4,6 +4,7 @@
 * Removed the *feedIncremental* field from the integration schema.
 * *Format* command now adds *feedBypassExclusionList*, *Fetch indicators*, *feedReputation*, *feedReliability*,
      *feedExpirationPolicy*, *feedExpirationInterval* and *feedFetchInterval* fields to integration yml.
+* Fixed an issue in the playbooks schema.
 
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.

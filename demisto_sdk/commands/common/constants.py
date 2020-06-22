@@ -692,6 +692,8 @@ PYTHON_SUBTYPES = {'python3', 'python2'}
 CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
 CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
 SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
+CONTENT_GITHUB_UPSTREAM = r'upstream\s*https://github\.com/demisto/content\.git'
+CONTENT_GITHUB_ORIGIN = r'origin\s*https://github\.com/demisto/content\.git'
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'

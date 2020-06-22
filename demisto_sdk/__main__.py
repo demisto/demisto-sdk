@@ -304,7 +304,7 @@ def validate(config, **kwargs):
     help='If passed, will create only content_packs.zip'
 )
 @click.option(
-    '-p', '--packs_to_include',
+    '-pi', '--packs_to_include',
     help='A comma separated list of specific packs to include. If passed, no other packs will be  added.'
 )
 def create(**kwargs):

@@ -1,3 +1,4 @@
+from deprecated import deprecated
 from pathlib import Path
 from typing import Optional
 
@@ -43,7 +44,7 @@ class Integration:
         if code is not None:
             self.code.write(code)
         if yml is not None:
-            self.yml.write(yml)
+            self.yml.write_dict(yml)
         if readme is not None:
             self.readme.write(readme)
         if description is not None:
@@ -72,3 +73,53 @@ class Integration:
         changelog.close()
         description.close()
         code.close()
+
+    # Deprecated methods
+
+    @deprecated(reason="use integration.code.write instead")
+    def write_code(self, code: str):
+        self.code.write(code)
+
+    @deprecated(reason="use integration.code.read instead")
+    def read_code(self):
+        return self.code.read()
+
+    @deprecated(reason="use integration.yml.write_dict instead")
+    def write_yml(self, yml: dict):
+        self.yml.write_dict(yml)
+
+    @deprecated(reason="use integration.image.write_bytes instead")
+    def write_image(self, image: bytes):
+        self.image.write_bytes(image)
+
+    @deprecated(reason="use integration.description.write instead")
+    def write_description(self, description: str):
+        self.description.write(description)
+
+    @deprecated(reason="use integration.readme.write instead")
+    def write_readme(self, readme: str):
+        self.readme.write(readme)
+
+    @deprecated(reason="use integration.readme.write instead")
+    def write_changelog(self, changelog: str):
+        self.readme.write(changelog)
+
+    @deprecated(reason="use integration.yml.update instead")
+    def update_yml(self, update_obj: dict):
+        yml_contents = yaml.load(self.yml.read())
+        yml_contents.update(update_obj)
+        self.yml.write(yml_contents)
+
+    @deprecated(reason="use integration.yml.update_description instead")
+    def update_description(self, description: str):
+        self.yml.update_description(description)
+
+    @property
+    @deprecated(reason="use integration.code.rel_path instead")
+    def py_path(self):
+        return self.code.rel_path
+
+    @property
+    @deprecated(reason="use integration.yml.rel_path instead")
+    def yml_path(self):
+        return self.yml.rel_path

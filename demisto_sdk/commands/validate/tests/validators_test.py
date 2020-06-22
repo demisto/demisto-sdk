@@ -354,7 +354,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
     def test_is_valid_rn(self, mocker, file_path, file_type):
-        mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', sreturn_value=None)
+        mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value=None)
         mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)
@@ -367,7 +367,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'are_tests_configured', return_value=True)
         mocker.patch.object(PlaybookValidator, 'are_tests_configured', return_value=True)
         file_validator = FilesValidator(skip_conf_json=True)
-        file_validator.validate_added_files(file_path, file_type)
+        file_validator.validate_added_files(set(file_path), file_type)
         assert file_validator._is_valid
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [

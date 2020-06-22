@@ -553,6 +553,23 @@ def get_pack_name(file_path):
     return match.group(1) if match else None
 
 
+def get_pack_names_from_files(file_paths, skip_file_types=None):
+    if skip_file_types is None:
+        skip_file_types = set()
+
+    packs = set()
+    for path in file_paths:
+        # in modified files renamed files are in tuples - the second element is the new file name
+        if isinstance(path, tuple):
+            path = path[1]
+        if find_type(path) not in skip_file_types:
+            pack = get_pack_name(path)
+            if pack and is_file_path_in_pack(path):
+                packs.add(pack)
+
+    return packs
+
+
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
 

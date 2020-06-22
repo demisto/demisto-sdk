@@ -114,7 +114,7 @@ class BaseValidator:
             certification = metadata_json.get(PACK_METADATA_CERTIFICATION)
 
             if support == 'partner':
-                if certification != 'certified':
+                if certification is not None and certification != 'certified':
                     self.add_flag_to_ignore_list(file_path, 'non-certified-partner')
 
             elif support == 'community':

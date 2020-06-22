@@ -95,6 +95,7 @@ ERROR_CODE = {
     "missing_release_notes_for_pack": "RN106",
     "missing_release_notes_entry": "RN107",
     "added_release_notes_for_new_pack": "RN108",
+    "modified_existing_release_notes": "RN109",
     "playbook_cant_have_rolename": "PB100",
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
@@ -622,6 +623,14 @@ class Errors:
     @error_code_decorator
     def added_release_notes_for_new_pack(pack_name):
         return f"ReleaseNotes were added for the newly created pack \"{pack_name}\" - remove them"
+
+    @staticmethod
+    @error_code_decorator
+    def modified_existing_release_notes(pack_name):
+        return f"Modified existing release notes for \"{pack_name}\" - revert the change and add new release notes " \
+               f"if needed by running:\n`demisto-sdk update-release-notes -p {pack_name} -u (major|minor|revision)`\n" \
+               f"You can refer to the documentation found here: " \
+               f"https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
     @staticmethod
     @error_code_decorator

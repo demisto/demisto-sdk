@@ -51,8 +51,8 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.tools import (checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,
+                                               get_pack_names_from_files,
                                                get_remote_file, get_yaml,
-                                               is_file_path_in_pack,
                                                run_command)
 
 
@@ -82,7 +82,6 @@ class ValidateManager:
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
-        self.added_rn = set()
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG, FileType.DESCRIPTION, FileType.TEST_PLAYBOOK)
@@ -294,8 +293,9 @@ class ValidateManager:
             return True
 
         elif file_type == FileType.RELEASE_NOTES:
-            if not self.skip_pack_rn_validation and not is_modified:
-                return self.validate_release_notes(file_path, added_files, modified_files, pack_error_ignore_list)
+            if not self.skip_pack_rn_validation:
+                return self.validate_release_notes(file_path, added_files, modified_files, pack_error_ignore_list,
+                                                   is_modified)
 
         elif file_type == FileType.README:
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -360,14 +360,19 @@ class ValidateManager:
         modified_files, added_files, old_format_files = self.get_modified_and_added_files(self.compare_type,
                                                                                           self.prev_ver)
 
+        modified_packs = get_pack_names_from_files(modified_files)
+
+        added_packs = get_pack_names_from_files(added_files)
+
         valid_files = set()
 
         valid_files.add(self.validate_modified_files(modified_files))
         valid_files.add(self.validate_added_files(added_files, modified_files))
+        valid_files.add(self.validate_changed_packs_unique_files(added_packs.union(modified_packs)))
 
         if not self.skip_pack_rn_validation:
-            valid_files.add(self.validate_no_dup_rn(added_files))
-            valid_files.add(self.validate_no_missing_rn(self.get_changed_packs(modified_files)))
+            valid_files.add(self.validate_no_duplicated_release_notes(added_files))
+            valid_files.add(self.validate_no_missing_release_notes(modified_files, added_files))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
@@ -390,15 +395,22 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return readme_validator.is_valid_file()
 
-    def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list):
+    def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)
+
+        # modified existing RN
+        if is_modified:
+            error_message, error_code = Errors.modified_existing_release_notes(pack_name)
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
+                return False
+
+        # added new RN to a new pack
         if pack_name in self.new_packs:
             error_message, error_code = Errors.added_release_notes_for_new_pack(pack_name)
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
                 return False
 
         if pack_name != 'NonSupported':
-            self.added_rn.add(pack_name)
             if not added_files:
                 added_files = {file_path}
 
@@ -562,6 +574,16 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
+    def validate_changed_packs_unique_files(self, changed_packs):
+        click.secho(f'\n================= Running validation on changed pack unique files =================',
+                    fg="bright_cyan")
+        valid_pack_files = set()
+        for pack in changed_packs:
+            pack_path = os.path.join(PACKS_DIR, pack)
+            valid_pack_files.add(self.validate_pack_unique_files(pack_path, self.get_error_ignore_list(pack)))
+
+        return all(valid_pack_files)
+
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format(unified yml file for the code and configuration).
 
@@ -579,7 +601,7 @@ class ValidateManager:
                 return False
         return True
 
-    def validate_no_dup_rn(self, added_files):
+    def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
 
         Args:
@@ -604,22 +626,30 @@ class ValidateManager:
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
-    def validate_no_missing_rn(self, changed_packs):
+    def validate_no_missing_release_notes(self, modified_files, added_files):
         """Validate that there are no missing RN for changed files
 
         Args:
-            changed_packs set: a set of modified files without any readme/release-notes files.
+            modified_files (set): a set of modified files.
+            added_files (set): a set of files that were added.
 
         Returns:
             bool. True if no missing RN found, False otherwise
         """
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
-        missing_rn = changed_packs.difference(self.added_rn)
+        # existing packs that have files changed (which are not RN nor README files) - should have new RN
+        packs_that_should_have_new_rn = get_pack_names_from_files(modified_files,
+                                                                  skip_file_types={FileType.RELEASE_NOTES,
+                                                                                   FileType.README})
 
-        if len(missing_rn) > 0:
+        packs_that_have_new_rn = self.get_packs_with_added_release_notes(added_files)
+
+        packs_that_have_missing_rn = packs_that_should_have_new_rn.difference(packs_that_have_new_rn)
+
+        if len(packs_that_have_missing_rn) > 0:
             is_valid = set()
-            for pack in missing_rn:
+            for pack in packs_that_have_missing_rn:
                 # # ignore RN in NonSupported pack
                 if 'NonSupported' in pack:
                     continue
@@ -733,6 +763,7 @@ class ValidateManager:
 
             # ignore changes in JS files and unit test files.
             elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
+                self.ignored_files.add(file_path)
                 continue
 
             # identify deleted files
@@ -883,17 +914,13 @@ class ValidateManager:
         return False
 
     @staticmethod
-    def get_changed_packs(modified_files):
-        packs = set()
-        for changed_file in modified_files:
-            if isinstance(changed_file, tuple):
-                changed_file = changed_file[1]
-            if 'ReleaseNotes' not in changed_file and "README" not in changed_file:
-                pack = get_pack_name(changed_file)
-                if pack and is_file_path_in_pack(changed_file):
-                    packs.add(pack)
+    def get_packs_with_added_release_notes(added_files):
+        added_rn = set()
+        for file in added_files:
+            if find_type(file) == FileType.RELEASE_NOTES:
+                added_rn.add(get_pack_name(file))
 
-        return packs
+        return added_rn
 
     def print_ignored_errors_report(self, print_ignored_errors):
         if print_ignored_errors:

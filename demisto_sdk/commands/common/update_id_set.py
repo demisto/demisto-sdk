@@ -275,9 +275,68 @@ def get_script_data(file_path, script_code=None):
     return {id_: script_data}
 
 
+def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> dict:
+    """Recursively iterates over a dictionary to extract values for a list of keys.
+
+    Args:
+        json_object (dict): The dict to iterate on.
+        keys_to_search (list): The list of keys to extract values for .
+
+    Returns:
+        dict. list of extracted values for each of the keys_to_search.
+
+    Notes:
+        only primitive values will be extracted (str/int/float/bool).
+
+    Example:
+        for the dict:
+            {
+                'id': 1,
+                'nested': {
+                    'x1': 1,
+                    'x2': 'x2',
+                    'x3': False
+                },
+                'x2': 4.0
+            }
+
+        and the list of keys
+            [x1, x2, x3, x4]
+
+        we will get the following dict:
+            {
+                'x1': [1],
+                'x2': ['x2', 4.0],
+                'x3': [False]
+            }
+    """
+    values = {key: [] for key in keys_to_search}
+
+    def get_values(current_object):
+        if not current_object or not isinstance(current_object, (dict, list)):
+            return
+
+        if current_object and isinstance(current_object, list):
+            if isinstance(current_object[0], dict):
+                for item in current_object:
+                    get_values(item)
+            return
+
+        for key, value in current_object.items():
+            if isinstance(value, (dict, list)):
+                get_values(value)
+            elif key in keys_to_search:
+                if isinstance(value, (str, int, float, bool)):
+                    values[key].append(value)
+
+    get_values(json_object)
+    return values
+
+
 def get_layout_data(path):
     data = OrderedDict()
     json_data = get_json(path)
+
     layout = json_data.get('layout')
     name = layout.get('name', '-')
     id_ = json_data.get('id', layout.get('id', '-'))
@@ -287,11 +346,14 @@ def get_layout_data(path):
     toversion = json_data.get('toVersion')
     kind = json_data.get('kind')
     pack = get_pack_name(path)
+    incident_indicator_types_dependency = {id_}
+    incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
 
     if type_:
         data['typeID'] = type_
     if type_name:
         data['typename'] = type_name
+        incident_indicator_types_dependency.add(type_name)
     data['name'] = name
     if toversion:
         data['toversion'] = toversion
@@ -302,6 +364,93 @@ def get_layout_data(path):
     if kind:
         data['kind'] = kind
     data['path'] = path
+    data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
+    if incident_indicator_fields_dependency['fieldId']:
+        data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+
+    return {id_: data}
+
+
+def get_incident_field_data(path, incidents_types_list):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    all_associated_types = set()
+    all_scripts = set()
+
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
+
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = [list(incident_type.keys())[0] for incident_type in incidents_types_list]
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = set(scripts)
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union(set(field_calculations_scripts))
+
+    if name:
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if all_associated_types:
+        data['incident_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
+
+    return {id_: data}
+
+
+def get_indicator_type_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('details', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    associated_integration = json_data.get('reputationCommand')
+    pack = get_pack_name(path)
+    all_scripts = set()
+
+    for field in ['reputationScriptName', 'enhancementScriptNames']:
+        associated_scripts = json_data.get(field)
+        if associated_scripts == '':
+            continue
+
+        associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
+        if associated_scripts:
+            all_scripts = all_scripts.union(set(associated_scripts))
+
+    if name:
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if associated_integration:
+        data['integrations'] = associated_integration
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
 
     return {id_: data}
 
@@ -480,12 +629,13 @@ def process_dashboards(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_incident_fields(file_path: str, print_logs: bool) -> list:
+def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list) -> list:
     """
     Process a incident_fields JSON file
     Args:
         file_path: The file path from incident field folder
         print_logs: Whether to print logs to stdout.
+        incidents_types_list: List of all the incident types in the system.
 
     Returns:
         a list of incident field data.
@@ -494,7 +644,7 @@ def process_incident_fields(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_INCIDENT_FIELD_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_incident_field_data(file_path, incidents_types_list))
     return res
 
 
@@ -550,7 +700,7 @@ def process_indicator_types(file_path: str, print_logs: bool) -> list:
             not checked_type(file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX])):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_indicator_type_data(file_path))
     return res
 
 
@@ -669,10 +819,11 @@ def get_general_paths(path):
     return files
 
 
-def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None, print_logs: bool = True):  # noqa: C901
+def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,  # noqa: C901
+                     print_logs: bool = True):
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
-                             'Dashboards', 'IncidentFields', 'IndicatorFields', 'IndicatorTypes',
+                             'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                              'Layouts', 'Reports', 'Widgets']
     start_time = time.time()
     scripts_list = []
@@ -741,19 +892,21 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
-        if 'IncidentFields' in objects_to_create:
-            print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_incident_fields, print_logs=print_logs),
-                                get_general_paths(INCIDENT_FIELDS_DIR)):
-                incident_fields_list.extend(arr)
-
-        progress_bar.update(1)
-
         if 'IncidentTypes' in objects_to_create:
             print_color("\nStarting iteration over Incident Types", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_incident_types, print_logs=print_logs),
                                 get_general_paths(INCIDENT_TYPES_DIR)):
                 incident_type_list.extend(arr)
+
+        progress_bar.update(1)
+
+        # Has to be called after 'IncidentTypes' is called
+        if 'IncidentFields' in objects_to_create:
+            print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(
+                    partial(process_incident_fields, print_logs=print_logs, incidents_types_list=incident_type_list),
+                    get_general_paths(INCIDENT_FIELDS_DIR)):
+                incident_fields_list.extend(arr)
 
         progress_bar.update(1)
 

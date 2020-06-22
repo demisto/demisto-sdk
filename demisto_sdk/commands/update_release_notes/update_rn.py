@@ -68,7 +68,7 @@ class UpdateRN:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "
                                 f"created release notes found at {rn_path} and document any changes you "
-                                f"made by replacing '%%_UPDATE_RN%%'.\n - Commit "
+                                f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
                                 f"the new release notes to your branch.\nFor information regarding proper"
                                 f" format of the release notes, please refer to "
                                 f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)

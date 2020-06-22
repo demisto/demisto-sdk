@@ -8,14 +8,17 @@ import re
 
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_DEPENDENCIES,
-    PACK_METADATA_DESC, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
-    PACK_METADATA_NAME, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES,
+    PACK_METADATA_DESC, PACK_METADATA_EMAIL, PACK_METADATA_FIELDS,
+    PACK_METADATA_KEYWORDS, PACK_METADATA_NAME, PACK_METADATA_SUPPORT,
+    PACK_METADATA_TAGS, PACK_METADATA_URL, PACK_METADATA_USE_CASES,
     PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import pack_name_to_path
+
+CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -138,7 +141,8 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack metadata validation
     def validate_pack_meta_file(self):
         """Validate everything related to pack_metadata.json file"""
-        if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid()]):
+        if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid(),
+                                                                   self._is_valid_contributor_pack_support_details()]):
             return True
 
         return False
@@ -183,6 +187,21 @@ class PackUniqueFilesValidator(BaseValidator):
                         if self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field),
                                            self.pack_meta_file):
                             return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
+                return False
+
+        return True
+
+    def _is_valid_contributor_pack_support_details(self):
+        """Checks if email or url exist in contributed pack details."""
+        try:
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            if pack_meta_file_content[PACK_METADATA_SUPPORT] in CONTRIBUTORS_LIST:
+                if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
+                    if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
+                        return False
+
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False

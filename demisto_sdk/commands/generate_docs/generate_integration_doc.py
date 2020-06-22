@@ -274,7 +274,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
                                                                                            cmd['name']))
             section.append(
                 '| {} | {} | {} | '.format(output['contextPath'], output.get('type', 'unknown'),
-                                           string_escape_md(output.get('description'))))
+                                           string_escape_md(output.get('description', ''))))
         section.append('')
 
     # Raw output:

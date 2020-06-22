@@ -140,7 +140,7 @@ class Pack:
         script.create_default_script()
         return script
 
-    def create_json_based(
+    def _create_json_based(
             self,
             name,
             prefix: str,
@@ -156,7 +156,7 @@ class Pack:
         obj.write_json(content)
         return obj
 
-    def create_text_based(
+    def _create_text_based(
             self,
             name,
             content: str = '',
@@ -175,7 +175,7 @@ class Pack:
             content: dict = None
     ):
         prefix = 'classifier'
-        classifier = self.create_json_based(name, prefix, content, dir_path=self._classifiers_path)
+        classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
         return classifier
 
@@ -185,7 +185,7 @@ class Pack:
             content: dict = None
     ):
         prefix = 'classifier-mapper'
-        mapper = self.create_json_based(name, prefix, content)
+        mapper = self._create_json_based(name, prefix, content)
         self.mapper.append(mapper)
         return mapper
 
@@ -195,7 +195,7 @@ class Pack:
             content: dict = None
     ):
         prefix = 'dashboard'
-        dashboard = self.create_json_based(name, prefix, content)
+        dashboard = self._create_json_based(name, prefix, content)
         self.dashboards.append(dashboard)
         return dashboard
 
@@ -203,13 +203,13 @@ class Pack:
             self,
             name,
             content: dict = None,
-            release_notes: str = False
+            release_notes: bool = False
     ):
         prefix = 'incident-field'
-        incident_field = self.create_json_based(name, prefix, content)
+        incident_field = self._create_json_based(name, prefix, content)
         if release_notes:
-            release_notes = self.create_text_based(f'{incident_field}_CHANGELOG.md',
-                                                   dir_path=self._incidents_field_path)
+            release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
+                                                    dir_path=self._incidents_field_path)
             self.incident_field.append(release_notes)
         self.incident_field.append(incident_field)
         return incident_field
@@ -219,7 +219,7 @@ class Pack:
             name,
             content: dict = None):
         prefix = 'incident-type'
-        incident_type = self.create_json_based(name, prefix, content)
+        incident_type = self._create_json_based(name, prefix, content)
         self.incident_types.append(incident_type)
         return incident_type
 
@@ -229,10 +229,10 @@ class Pack:
             content: dict = None
     ):
         prefix = 'incident-field'
-        indicator_field = self.create_json_based(name, prefix, content)
+        indicator_field = self._create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
 
     def create_release_notes(self, version: str, content: str = ''):
-        rn = self.create_text_based(f'{version}.md', content, dir_path=self._release_notes)
+        rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)
         self.release_notes.append(rn)
         return rn

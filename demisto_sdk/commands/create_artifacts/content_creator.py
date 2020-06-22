@@ -40,7 +40,7 @@ class ContentCreator:
 
     def __init__(self, artifacts_path: str, content_version='', content_bundle_path='',
                  test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False,
-                 no_update_commonserver=False, packs_to_include=[]):
+                 no_update_commonserver=False, packs_to_include=''):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
         self.content_version = content_version
         self.preserve_bundles = preserve_bundles

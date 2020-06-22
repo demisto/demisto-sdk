@@ -286,8 +286,6 @@ class FilesValidator:
                     self.get_modified_files(all_changed_files_string,
                                             print_ignored_files=self.print_ignored_files)
             else:
-                remote_configured = False
-                is_origin_demisto = False
                 if (not is_origin_demisto and not remote_configured) and self.silence_init_prints:
                     print_warning(
                         "Warning: The changes may fail validation once submitted via a "

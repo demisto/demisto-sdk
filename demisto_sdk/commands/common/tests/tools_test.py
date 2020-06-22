@@ -357,6 +357,16 @@ remote_testbank = [
 
 @pytest.mark.parametrize('git_value, response', remote_testbank)
 def test_has_remote(mocker, git_value, response):
+    """
+    While: Testing if the remote upstream contains demisto/content
+    Given:
+      1. Origin string not containing demisto/content
+      2. Upstream string containing demisto/content
+    Expects:
+      1. Test condition fails
+      2. Test condition passes
+    :param git_value: Git string from `git remotes -v`
+    """
     mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
     test_remote = has_remote_configured()
     assert response == test_remote
@@ -370,6 +380,16 @@ origin_testbank = [
 
 @pytest.mark.parametrize('git_value, response', origin_testbank)
 def test_origin_content(mocker, git_value, response):
+    """
+    While: Testing if the remote origin contains demisto/content
+    Given:
+      1. Origin string not containing demisto/content
+      2. Origin string containing demisto/content
+    Expects:
+      1. Test condition fails
+      2. Test condition passes
+    :param git_value: Git string from `git remotes -v`
+    """
     mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
     test_remote = is_origin_content_repo()
     assert response == test_remote

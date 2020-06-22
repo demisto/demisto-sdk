@@ -5,8 +5,10 @@ from tempfile import mkdtemp
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    get_incident_field_data, get_incident_type_data, get_indicator_type_data,
-    get_layout_data, get_values_for_keys_recursively, has_duplicate)
+    get_fields_by_script_argument, get_incident_field_data,
+    get_incident_fields_by_playbook_input, get_incident_type_data,
+    get_indicator_type_data, get_layout_data, get_playbook_data,
+    get_values_for_keys_recursively, has_duplicate)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -306,3 +308,172 @@ def test_get_values_for_keys_recursively():
     }
 
     assert expected == get_values_for_keys_recursively(test_dict, test_keys)
+
+
+def test_get_playbook_data():
+    """
+    Given
+        - A playbook file called playbook-with-incident-fields.yml
+
+    When
+        - parsing playbook files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/playbook-with-incident-fields.yml'
+    result = get_playbook_data(test_dir)
+    result = result.get('Arcsight - Get events related to the Case')
+    assert 'name' in result.keys()
+    assert 'file_path' in result.keys()
+    assert 'implementing_scripts' in result.keys()
+    assert 'implementing_scripts' in result.keys()
+    assert 'command_to_integration' in result.keys()
+    assert 'tests' in result.keys()
+    assert 'incident_fields' in result.keys()
+    assert 'indicator_fields' in result.keys()
+
+
+def test_get_playbook_data_no_fields():
+    """
+    Given
+        - A playbook file called playbook-no-incident-fields.yml without any
+            incident or indicator fields that it depends on.
+
+    When
+        - parsing playbook files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/playbook-no-incident-fields.yml'
+    result = get_playbook_data(test_dir)
+    result = result.get('Arcsight - Get events related to the Case')
+    assert 'name' in result.keys()
+    assert 'file_path' in result.keys()
+    assert 'implementing_scripts' in result.keys()
+    assert 'implementing_scripts' in result.keys()
+    assert 'command_to_integration' in result.keys()
+    assert 'tests' in result.keys()
+    assert 'incident_fields' not in result.keys()
+    assert 'indicator_fields' not in result.keys()
+
+
+INPUT_WITH_INCIDENT_FIELD_SIMPLE = {
+    "key": "AlertID",
+    "value": {
+        "simple": "${incident.field_name}"
+    },
+    "required": False
+}
+
+INPUT_WITH_INCIDENT_FIELD_COMPLEX1 = {
+    "key": "AlertID",
+    "value": {
+        "complex": {
+            "root": "incident",
+            "accessor": "field_name"
+        }
+    },
+    "required": False
+}
+
+INPUT_WITH_INCIDENT_FIELD_COMPLEX2 = {
+    "key": "AlertID",
+    "value": {
+        "complex": {
+            "root": "incident.field_name",
+            "accessor": "username"
+        }
+    },
+    "required": False
+}
+
+INPUT_SIMPLE_WITHOUT_INCIDENT_FIELD = {
+    "key": "AlertID",
+    "value": {
+        "simple": "${not_incident.field_name}"
+    },
+    "required": False
+}
+
+
+INPUT_COMPLEX_WITHOUT_INCIDENT_FIELD = {
+    "key": "AlertID",
+    "value": {
+        "complex": {
+            "root": "something",
+            "accessor": "username"
+        }
+    },
+    "required": False
+}
+
+INPUTS = [
+    (INPUT_WITH_INCIDENT_FIELD_SIMPLE, True),
+    (INPUT_WITH_INCIDENT_FIELD_COMPLEX1, True),
+    (INPUT_WITH_INCIDENT_FIELD_COMPLEX2, True),
+    (INPUT_SIMPLE_WITHOUT_INCIDENT_FIELD, False),
+    (INPUT_COMPLEX_WITHOUT_INCIDENT_FIELD, False)
+]
+
+
+@pytest.mark.parametrize('playbook_input, are_there_incident_fields', INPUTS)
+def test_get_incident_fields_by_playbook_input(playbook_input, are_there_incident_fields):
+    """
+    Given
+        - A list of playbook inputs
+
+    When
+        - Searching for dependent incident fields
+
+    Then
+        -  Finding all dependent incident fields in the input
+    """
+
+    result = get_incident_fields_by_playbook_input(input=playbook_input.get('value'))
+    if are_there_incident_fields:
+        assert "field_name" in result
+    else:
+        assert result == set()
+
+
+EXAMPLE_TASK_WITH_SIMPLE_SCRIPT_ARGUMENTS = {
+    "id": "ID",
+    "scriptarguments": {
+        "field_name": {
+            "simple": "${inputs.IndicatorTagName}"
+        }
+    }
+}
+
+EXAMPLE_TASK_WITH_CUSTOM_FIELDS_SCRIPT_ARGUMENTS = {
+    "id": "ID",
+    "scriptarguments": {
+        "customFields": {
+            "simple": '[{"field_name":"${inputs.IndicatorTagName}"}]'
+        }
+    }
+}
+
+TASK_INPUTS = [
+    # EXAMPLE_TASK_WITH_SIMPLE_SCRIPT_ARGUMENTS,
+    EXAMPLE_TASK_WITH_CUSTOM_FIELDS_SCRIPT_ARGUMENTS
+]
+
+
+@pytest.mark.parametrize('task', TASK_INPUTS)
+def test_get_fields_by_script_argument(task):
+    """
+    Given
+        - A list of playbook tasks
+
+    When
+        - Searching for dependent incident fields in the task script arguments
+
+    Then
+        - Finding all dependent incident fields in the task
+    """
+
+    result = get_fields_by_script_argument(task)
+    assert "field_name" in result

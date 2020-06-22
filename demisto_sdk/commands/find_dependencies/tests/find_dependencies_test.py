@@ -379,6 +379,37 @@ class TestDependsOnPlaybook:
         for found_result in found_result_set:
             assert not found_result[1]  # validate that mandatory is set to False
 
+    def test_collect_playbooks_dependencies_on_incident_fields(self, id_set):
+        expected_result = {("DigitalGuardian", True), ("EmployeeOffboarding", True)}
+        test_input = [
+            {
+                "Dummy Playbook": {
+                    "name": "Dummy Playbook",
+                    "file_path": "dummy_path",
+                    "fromversion": "dummy_version",
+                    "implementing_scripts": [
+                    ],
+                    "implementing_playbooks": [
+                    ],
+                    "command_to_integration": {
+                    },
+                    "tests": [
+                        "dummy_playbook"
+                    ],
+                    "pack": "dummy_pack",
+                    "incident_fields": [
+                        "digitalguardianusername",
+                        "Google Display Name"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set)
+
+        assert found_result == expected_result
+
 
 class TestDependsOnLayout:
     @pytest.mark.parametrize("dependency_types, dependency_fields ,expected_result",
@@ -493,6 +524,46 @@ class TestDependsOnIndicatorType:
         ]
         found_result = PackDependencies._collect_indicators_types_dependencies(
             pack_indicators_types=test_input, id_set=id_set)
+
+        # TODO: update the test once the implementation of all dependencies is working
+        assert found_result == expected_result
+
+
+class TestDependsOnIntegrations:
+    @pytest.mark.parametrize(
+        "dependency_classifiers, dependency_mappers, dependency_incident_types, dependency_indicator_fields, "
+        "dependency_indicator_types, expected_result",
+        [("Fake", [], "Fake", "Fake", "Fake", set()),
+         ("Fake", [], "Fake", "Fake", "Fake", set()),
+         ("Fake", [], "Fake", "Fake", "Fake", set())
+         ])
+    def test_collect_layouts_dependencies(self, dependency_classifiers, dependency_mappers, dependency_incident_types,
+                                          dependency_indicator_fields, dependency_indicator_types, expected_result,
+                                          id_set):
+        """
+        Given
+            - An integration entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the integration depends on.
+        """
+        test_input = [
+            {
+                "Dummy Integration": {
+                    "name": "Dummy Incident Field",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "classifiers": dependency_classifiers,
+                    "mappers": dependency_mappers,
+                    "incident_types": dependency_incident_types,
+                    "indicator_fields": dependency_indicator_fields,
+                    "indicator_types": dependency_indicator_types
+                }
+            }
+        ]
+        found_result = PackDependencies._collect_incidents_fields_dependencies(
+            pack_incidents_fields=test_input, id_set=id_set)
 
         # TODO: update the test once the implementation of all dependencies is working
         assert found_result == expected_result

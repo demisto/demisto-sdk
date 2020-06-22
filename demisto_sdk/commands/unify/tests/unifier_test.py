@@ -104,6 +104,16 @@ def test_get_code_file():
                                            f"CalculateGeoDistance.py"
 
 
+def test_get_code_file_case_insensative(tmp_path):
+    # Create an integration dir with some files
+    integration_dir = tmp_path / "TestDummyInt"
+    os.makedirs(integration_dir)
+    open(integration_dir / "Dummy.ps1", 'a')
+    open(integration_dir / "ADummy.tests.ps1", 'a')  # a test file which is named such a way that it comes up first
+    unifier = Unifier(str(integration_dir))
+    assert unifier.get_code_file(".ps1") == str(integration_dir / "Dummy.ps1")
+
+
 def test_get_script_or_integration_package_data():
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):

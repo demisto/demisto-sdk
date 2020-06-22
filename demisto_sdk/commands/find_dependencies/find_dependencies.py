@@ -191,7 +191,7 @@ class PackDependencies:
             command (str): integration command.
             id_set (dict): id set json.
 
-        Returns:auto
+        Returns:
             set: pack id without ignored packs.
         """
         integrations = list(

@@ -202,11 +202,19 @@ def get_integration_data(file_path):
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
+    default_classifier = data_dictionary.get('defaultClassifier')
+    default_incident_type = data_dictionary.get('defaultIncidentType')
+    is_feed = data_dictionary.get('feed')
+    mappers = set()
 
     deprecated_commands = []
     for command in commands:
         if command.get('deprecated', False):
             deprecated_commands.append(command.get('name'))
+
+    for mapper in ['defaultMapperIn', 'defaultMapperOut']:
+        if data_dictionary.get(mapper):
+            mappers.add(data_dictionary.get(mapper))
 
     integration_data['name'] = name
     integration_data['file_path'] = file_path
@@ -226,6 +234,16 @@ def get_integration_data(file_path):
         integration_data['pack'] = pack
     if integration_api_modules:
         integration_data['api_modules'] = integration_api_modules
+    if default_classifier and default_classifier != '':
+        integration_data['classifiers'] = default_classifier
+    if mappers:
+        integration_data['mappers'] = list(mappers)
+    if default_incident_type and default_incident_type != '':
+        integration_data['incident_types'] = default_incident_type
+    if is_feed:
+        integration_data['indicator_fields'] = "CommonTypes"
+        integration_data['indicator_types'] = "CommonTypes"
+
     return {id_: integration_data}
 
 
@@ -978,7 +996,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     if objects_to_create is None:
         objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                              'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                             'Layouts', 'Reports', 'Widgets']
+                             'Layouts', 'Reports', 'Widgets', 'Mappers']
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -994,12 +1012,13 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     layouts_list = []
     reports_list = []
     widgets_list = []
+    mappers_list = []
 
     pool = Pool(processes=cpu_count() * 2)
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=12, label="Progress of id set creation") as progress_bar:
+    with click.progressbar(length=13, label="Progress of id set creation") as progress_bar:
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
@@ -1101,6 +1120,13 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
+        if 'Mappers' in objects_to_create:
+            print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_widgets, print_logs=print_logs), get_general_paths(WIDGETS_DIR)):
+                mappers_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1118,6 +1144,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     new_ids_dict['Layouts'] = sort(layouts_list)
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
+    new_ids_dict['Mappers'] = sort(widgets_list)
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

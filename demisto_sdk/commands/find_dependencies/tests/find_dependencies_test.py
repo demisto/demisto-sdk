@@ -498,6 +498,46 @@ class TestDependsOnIndicatorType:
         assert found_result == expected_result
 
 
+class TestDependsOnIntegrations:
+    @pytest.mark.parametrize(
+        "dependency_classifiers, dependency_mappers, dependency_incident_types, dependency_indicator_fields, "
+        "dependency_indicator_types, expected_result",
+        [("Fake", [], "Fake", "Fake", "Fake", set()),
+         ("Fake", [], "Fake", "Fake", "Fake", set()),
+         ("Fake", [], "Fake", "Fake", "Fake", set())
+         ])
+    def test_collect_layouts_dependencies(self, dependency_classifiers, dependency_mappers, dependency_incident_types,
+                                          dependency_indicator_fields, dependency_indicator_types, expected_result,
+                                          id_set):
+        """
+        Given
+            - An integration entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the integration depends on.
+        """
+        test_input = [
+            {
+                "Dummy Integration": {
+                    "name": "Dummy Incident Field",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "classifiers": dependency_classifiers,
+                    "mappers": dependency_mappers,
+                    "incident_types": dependency_incident_types,
+                    "indicator_fields": dependency_indicator_fields,
+                    "indicator_types": dependency_indicator_types
+                }
+            }
+        ]
+        found_result = PackDependencies._collect_incidents_fields_dependencies(
+            pack_incidents_fields=test_input, id_set=id_set)
+
+        # TODO: update the test once the implementation of all dependencies is working
+        assert found_result == expected_result
+
+
 class TestDependencyGraph:
     def test_build_dependency_graph(self, id_set):
         pack_name = "ImpossibleTraveler"

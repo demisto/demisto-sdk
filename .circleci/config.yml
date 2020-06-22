@@ -21,6 +21,10 @@ jobs:
         - run:
             name: Tox build
             command: |
+              if [[ $CIRCLE_BRANCH != master ]]; then
+                echo "Skipping until fixed"
+                exit 1
+              fi
               pip install tox
               tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
               tox -e py38 -v

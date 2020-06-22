@@ -292,8 +292,10 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        NEW_CLASSIFIER['fromVersion'] = '5.0.0'
-        classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
+        new_classifier_copy = NEW_CLASSIFIER.copy()
+        new_classifier_copy['fromVersion'] = '5.0.0'
+
+        classifier = pack.create_classifier('new_classifier', new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -314,8 +316,9 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        NEW_CLASSIFIER['toVersion'] = '5.0.0'
-        classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
+        new_classifier_copy = NEW_CLASSIFIER.copy()
+        new_classifier_copy['toVersion'] = '5.0.0'
+        classifier = pack.create_classifier('new_classifier', new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -336,9 +339,10 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        NEW_CLASSIFIER['toVersion'] = '6.0.2'
-        NEW_CLASSIFIER['fromVersion'] = '6.0.5'
-        classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
+        new_classifier_copy = NEW_CLASSIFIER.copy()
+        new_classifier_copy['toVersion'] = '6.0.2'
+        new_classifier_copy['fromVersion'] = '6.0.5'
+        classifier = pack.create_classifier('new_classifier', new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -359,8 +363,9 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        del NEW_CLASSIFIER['id']
-        classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
+        new_classifier_copy = NEW_CLASSIFIER.copy()
+        del new_classifier_copy['id']
+        classifier = pack.create_classifier('new_classifier', new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -381,11 +386,13 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        del NEW_CLASSIFIER['fromVersion']
-        classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
+        new_classifier_copy = NEW_CLASSIFIER.copy()
+        del new_classifier_copy['fromVersion']
+        classifier = pack.create_classifier('new_classifier', new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
+        print(result.stdout)
         assert f"Validating {classifier.path}" in result.stdout
         assert 'Must have fromVersion field in new classifiers' in result.stdout
 
@@ -402,8 +409,9 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        NEW_CLASSIFIER['type'] = 'test'
-        classifier = pack.create_classifier('new_classifier', NEW_CLASSIFIER)
+        new_classifier_copy = NEW_CLASSIFIER.copy()
+        new_classifier_copy['type'] = 'test'
+        classifier = pack.create_classifier('new_classifier', new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -445,8 +453,9 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        OLD_CLASSIFIER['fromVersion'] = '6.0.0'
-        classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
+        old_classifier_copy = OLD_CLASSIFIER.copy()
+        old_classifier_copy['fromVersion'] = '6.0.0'
+        classifier = pack.create_classifier('old_classifier', old_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -466,8 +475,9 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        OLD_CLASSIFIER['toVersion'] = '6.0.0'
-        classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
+        old_classifier_copy = OLD_CLASSIFIER.copy()
+        old_classifier_copy['toVersion'] = '6.0.0'
+        classifier = pack.create_classifier('old_classifier', old_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -488,8 +498,9 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        del OLD_CLASSIFIER['id']
-        classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
+        old_classifier_copy = OLD_CLASSIFIER.copy()
+        del old_classifier_copy['id']
+        classifier = pack.create_classifier('old_classifier', old_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -510,8 +521,9 @@ class TestClassifier:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        del OLD_CLASSIFIER['toVersion']
-        classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
+        old_classifier_copy = OLD_CLASSIFIER.copy()
+        del old_classifier_copy['toVersion']
+        classifier = pack.create_classifier('old_classifier', old_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
@@ -556,8 +568,9 @@ class TestMapper:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        MAPPER['fromVersion'] = '5.0.0'
-        mapper = pack.create_mapper('mapper', MAPPER)
+        mapper_copy = MAPPER.copy()
+        mapper_copy['fromVersion'] = '5.0.0'
+        mapper = pack.create_mapper('mapper', mapper_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
@@ -578,8 +591,9 @@ class TestMapper:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        MAPPER['toVersion'] = '5.0.0'
-        mapper = pack.create_mapper('mapper', MAPPER)
+        mapper_copy = MAPPER.copy()
+        mapper_copy['toVersion'] = '5.0.0'
+        mapper = pack.create_mapper('mapper', mapper_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
@@ -600,8 +614,9 @@ class TestMapper:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        del MAPPER['id']
-        mapper = pack.create_mapper('mapper', MAPPER)
+        mapper_copy = MAPPER.copy()
+        del mapper_copy['id']
+        mapper = pack.create_mapper('mapper', mapper_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
@@ -622,9 +637,10 @@ class TestMapper:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        MAPPER['toVersion'] = '6.0.2'
-        MAPPER['fromVersion'] = '6.0.5'
-        mapper = pack.create_mapper('mapper', MAPPER)
+        mapper_copy = MAPPER.copy()
+        mapper_copy['toVersion'] = '6.0.2'
+        mapper_copy['fromVersion'] = '6.0.5'
+        mapper = pack.create_mapper('mapper', mapper_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
@@ -645,8 +661,9 @@ class TestMapper:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        MAPPER['type'] = 'test'
-        mapper = pack.create_mapper('mapper', MAPPER)
+        mapper_copy = MAPPER.copy()
+        mapper_copy['type'] = 'test'
+        mapper = pack.create_mapper('mapper', mapper_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)

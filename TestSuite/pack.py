@@ -39,6 +39,7 @@ class Pack:
         self.incident_field: List[JSONBased] = list()
         self.indicator_field: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+        self.release_notes: List[TextBased] = list()
 
         # Create base pack
         self._pack_path = packs_dir / name
@@ -71,6 +72,9 @@ class Pack:
 
         self._indicator_fields = self._pack_path / 'IndicatorFields'
         self._indicator_fields.mkdir()
+
+        self._release_notes = self._pack_path / 'ReleaseNotes'
+        self._release_notes.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -152,6 +156,19 @@ class Pack:
         obj.write_json(content)
         return obj
 
+    def create_text_based(
+            self,
+            name,
+            content: str = '',
+            dir_path: Path = None
+    ):
+        if dir_path:
+            obj = TextBased(dir_path, name)
+        else:
+            obj = TextBased(self._pack_path, name)
+        obj.write_text(content)
+        return obj
+
     def create_classifier(
             self,
             name,
@@ -186,9 +203,14 @@ class Pack:
             self,
             name,
             content: dict = None,
+            release_notes: str = False
     ):
         prefix = 'incident-field'
         incident_field = self.create_json_based(name, prefix, content)
+        if release_notes:
+            release_notes = self.create_text_based(f'{incident_field}_CHANGELOG.md',
+                                                   dir_path=self._incidents_field_path)
+            self.incident_field.append(release_notes)
         self.incident_field.append(incident_field)
         return incident_field
 
@@ -209,3 +231,8 @@ class Pack:
         prefix = 'incident-field'
         indicator_field = self.create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
+
+    def create_release_notes(self, version: str, content: str = ''):
+        rn = self.create_text_based(f'{version}.md', content, dir_path=self._release_notes)
+        self.release_notes.append(rn)
+        return rn

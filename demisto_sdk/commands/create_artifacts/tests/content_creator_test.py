@@ -22,7 +22,6 @@ class TestContentCreator:
         self._test_dir = mkdtemp()
         self.content_repo = os.path.join(tests_dir, 'test_files', 'content_repo_example')
         self._files_to_artifacts_dir = os.path.join(tests_dir, 'test_files', 'FilesToArtifacts')
-        self.valid_content_repo = os.path.join(tests_dir, 'test_files', 'valid_content_repo')
 
     def teardown(self):
         # delete all files in the content_bundle
@@ -188,7 +187,7 @@ class TestContentCreator:
         content_creator.copy_file_to_artifacts(file_path)
         assert filecmp.cmp(file_path, os.path.join(self.content_repo, filename))
 
-    def test_content_legacy_with_no_md(self):
+    def test_content_legacy_with_no_md(self, repo):
         """
         Given
         - valid content dir
@@ -198,18 +197,35 @@ class TestContentCreator:
         - Ensure no md files were copied to content bundle
         - Ensure md files were copied to packs bundle.
         """
-        temp_bundles = mkdtemp(dir=self.valid_content_repo)
-        bundle_packs = os.path.join(temp_bundles, 'bundle_packs')
-        bundle_content = os.path.join(temp_bundles, 'bundle_content')
-        content_creator = ContentCreator(artifacts_path=temp_bundles, content_version='2.5.0',
+        pack = repo.create_pack('Test')
+        integration = pack.create_integration('Test')
+        integration_old = pack.create_integration('OldIntegration')
+        integration_old.write_yml({'script': '', 'type': 'python', 'deprecated': True})
+        integration_old.write_changelog('this is a test')
+        integration.create_default_integration()
+        pack.create_release_notes('1_0_1')
+        pack.create_incident_field('incidentfield-city', release_notes=True)
+        temp = pack.repo_path
+        bundle_packs = os.path.join(temp, 'bundle_packs')
+        bundle_content = os.path.join(temp, 'bundle_content')
+        repo.content_descriptor.write_json({
+            "installDate": "0001-01-01T00:00:00Z",
+            "assetId": "REPLACE_THIS_WITH_CI_BUILD_NUM",
+            "releaseNotes": "## Demisto Content Release Notes for version 2.5.0",
+            "modified": "REPLACE_THIS_WITH_RELEASE_DATE",
+            "ignoreGit": False,
+            "releaseDate": "REPLACE_THIS_WITH_RELEASE_DATE",
+            "version": -1,
+            "release": "2.5.0",
+            "id": ""
+        })
+        repo.id_set.write_json({})
+        content_creator = ContentCreator(artifacts_path=temp, content_version='2.5.0',
                                          preserve_bundles=True, no_update_commonserver=True)
-        with ChangeCWD(self.valid_content_repo):
+        with ChangeCWD(pack.repo_path):
             content_creator.create_content()
 
-            assert filecmp.cmp(f'{self.valid_content_repo}/Packs/FeedAzureValid/ReleaseNotes/1_1_1.md',
-                               f'{bundle_packs}/FeedAzureValid/ReleaseNotes/1_1_1.md')
-            assert not os.path.isfile(f'{bundle_content}/integration-ArcherRSA_CHANGELOG.md')
-            assert not os.path.isfile(f'{bundle_content}/integration-ArcherRSA_README.md')
+            assert filecmp.cmp(f'{temp}/Packs/Test/ReleaseNotes/1_0_1.md',
+                               f'{bundle_packs}/Test/ReleaseNotes/1_0_1.md')
             assert not os.path.isfile(f'{bundle_content}/incidentfield-city_README.md')
-
-            shutil.rmtree(temp_bundles)
+            assert not os.path.isfile(f'{bundle_content}/integration-OldIntegration_CHANGELOG.md')

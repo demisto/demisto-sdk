@@ -303,6 +303,10 @@ def validate(config, **kwargs):
     '--packs', is_flag=True,
     help='If passed, will create only content_packs.zip'
 )
+@click.option(
+    '-pi', '--packs_to_include',
+    help='A comma separated list of specific packs to include. If passed, no other packs will be  added.'
+)
 def create(**kwargs):
     content_creator = ContentCreator(**kwargs)
     return content_creator.run()

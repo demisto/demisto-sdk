@@ -40,7 +40,7 @@ class ContentCreator:
 
     def __init__(self, artifacts_path: str, content_version='', content_bundle_path='',
                  test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False,
-                 no_update_commonserver=False):
+                 no_update_commonserver=False, packs_to_include=[]):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
         self.content_version = content_version
         self.preserve_bundles = preserve_bundles
@@ -83,6 +83,7 @@ class ContentCreator:
         # server can't handle long file names
         self.file_name_max_size = 85
         self.long_file_names = []  # type:List
+        self.packs_to_include = packs_to_include.split(',')
 
     def run(self):
         """Runs the content creator and returns the appropriate status code for the operation.
@@ -97,6 +98,14 @@ class ContentCreator:
             return 1
 
         return 0
+
+    def should_skip_pack(self, pack_name):
+        if pack_name in self.packs_to_skip:
+            return True
+        elif self.packs_to_include and pack_name not in self.packs_to_include:
+            return True
+        return False
+
 
     def create_unifieds_and_copy(self, package_dir, dest_dir='', skip_dest_dir=''):
         """
@@ -331,7 +340,7 @@ class ContentCreator:
         'content_new.zip'. Adds file prefixes where necessary according to how server expects to ingest the files.
         """
         for pack in packs:
-            if os.path.basename(pack) in self.packs_to_skip:
+            if self.should_skip_pack(os.path.basename(pack)):
                 continue
             # each pack directory has it's own content subdirs, 'Integrations',
             # 'Scripts', 'TestPlaybooks', 'Layouts' etc.
@@ -359,7 +368,7 @@ class ContentCreator:
         """
         for pack in packs:
             pack_name = os.path.basename(pack)
-            if pack_name in self.packs_to_skip:
+            if self.should_skip_pack(pack_name):
                 continue
             pack_dst = os.path.join(self.packs_bundle, pack_name)
             os.mkdir(pack_dst)

@@ -4,6 +4,8 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from TestSuite.test_tools import ChangeCWD
@@ -103,7 +105,6 @@ def assert_positive(file_path, result):
     :param result: result object as returned from runner.invoke
     """
     assert result.exit_code == 0
-    assert "Starting validating files structure" in result.stdout
     assert f"Validating {file_path}" in result.stdout
     assert "The files are valid" in result.stdout
     assert result.stderr == ""
@@ -124,7 +125,7 @@ class TestIncidentField:
         """
         pack_incident_field_path = join(AZURE_FEED_PACK_PATH, "IncidentFields/incidentfield-city.json")
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_incident_field_path, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_incident_field_path, "--no-conf-json"])
         assert_positive(pack_incident_field_path, result)
 
 
@@ -145,8 +146,7 @@ class TestIntegration:
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_integration_path, "--no-conf-json"])
 
-        # assert result.exit_code == 1  # will be fixed later
-        assert "Starting validating files structure" in result.stdout
+        assert result.exit_code == 1
         assert f"Validating {pack_integration_path}" in result.stdout
         assert "The docker image tag is not the latest numeric tag, please update it" in result.stdout
         assert "You can check for the most updated version of demisto/python3 here:" in result.stdout
@@ -166,9 +166,8 @@ class TestIntegration:
         """
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", integration_path, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json"])
         assert result.exit_code == 1
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {integration_path}" in result.stdout
         assert "can't be hidden. Please remove this field" in result.stdout
         assert result.stderr == ""
@@ -186,8 +185,7 @@ class TestIntegration:
         """
         integration_path = join(TEST_FILES_PATH, 'integration-valid-no-unallowed-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", integration_path, "--no-conf-json"])
-        assert "Starting validating files structure" in result.stdout
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json"])
         assert f"Validating {integration_path}" in result.stdout
         assert "can't be hidden. Please remove this field" not in result.stdout
         assert result.stderr == ""
@@ -206,13 +204,13 @@ class TestPack:
         - See that the validation succeed.
         """
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json"])
-        assert "Starting validating files structure" in result.output
-        assert f"{VALID_PACK_PATH} unique pack files" in result.output
-        assert f"Validating {VALID_PACK_PATH}" in result.output
-        assert f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml" in result.output
-        assert f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json" in result.output
+        assert f"{VALID_PACK_PATH} unique pack files" in result.stdout
+        assert f"Validating pack {VALID_PACK_PATH}" in result.stdout
+        assert f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml" in result.stdout
+        assert f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json" in result.stdout
         assert "The files are valid" in result.stdout
         assert result.stderr == ""
 
@@ -229,9 +227,9 @@ class TestPack:
         - Ensure error message regarding unhandled conditional task in playbook.
         """
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json"])
-        assert "Starting validating files structure" in result.output
 
         assert f'{AZURE_FEED_PACK_PATH}' in result.output
         assert f'{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
@@ -278,7 +276,6 @@ class TestClassifier:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
         assert result.exit_code == 0
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'The files are valid' in result.stdout
 
@@ -300,9 +297,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'fromVersion field in new classifiers needs to be higher or equal to 6.0.0' in result.stdout
+        assert result.exit_code == 1
 
     def test_invalid_to_version_in_new_classifiers(self, mocker, repo):
         """
@@ -322,9 +319,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'toVersion field in new classifiers needs to be higher than 6.0.0' in result.stdout
+        assert result.exit_code == 1
 
     def test_classifier_from_version_higher_to_version(self, mocker, repo):
         """
@@ -345,9 +342,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'fromVersion field can not be higher than toVersion field' in result.stdout
+        assert result.exit_code == 1
 
     def test_missing_mandatory_field_in_new_classifier(self, mocker, repo):
         """
@@ -367,9 +364,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'Missing id in root' in result.stdout
+        assert result.exit_code == 1
 
     def test_missing_fromversion_field_in_new_classifier(self, mocker, repo):
         """
@@ -389,7 +386,6 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'Must have fromVersion field in new classifiers' in result.stdout
 
@@ -411,9 +407,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'Classifiers type must be classification' in result.stdout
+        assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
         """
@@ -433,7 +429,6 @@ class TestClassifier:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
         assert result.exit_code == 0
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'The files are valid' in result.stdout
 
@@ -455,7 +450,6 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'fromVersion field in old classifiers needs to be lower than 6.0.0' in result.stdout
 
@@ -477,9 +471,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'toVersion field in old classifiers needs to be lower than 6.0.0' in result.stdout
+        assert result.exit_code == 1
 
     def test_missing_mandatory_field_in_old_classifier(self, mocker, repo):
         """
@@ -499,9 +493,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'Missing id in root' in result.stdout
+        assert result.exit_code == 1
 
     def test_missing_toversion_field_in_old_classifier(self, mocker, repo):
         """
@@ -521,9 +515,9 @@ class TestClassifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {classifier.path}" in result.stdout
         assert 'Must have toVersion field in old classifiers' in result.stdout
+        assert result.exit_code == 1
 
 
 class TestMapper:
@@ -545,10 +539,9 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
-
         assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
 
     def test_invalid_from_version_in_mapper(self, mocker, repo):
         """
@@ -568,9 +561,9 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
         assert 'fromVersion field in mapper needs to be higher or equal to 6.0.0' in result.stdout
+        assert result.exit_code == 1
 
     def test_invalid_to_version_in_mapper(self, mocker, repo):
         """
@@ -590,9 +583,9 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
         assert 'toVersion field in mapper needs to be higher than 6.0.0' in result.stdout
+        assert result.exit_code == 1
 
     def test_missing_mandatory_field_in_mapper(self, mocker, repo):
         """
@@ -612,9 +605,9 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
         assert 'Missing id in root' in result.stdout
+        assert result.exit_code == 1
 
     def test_mapper_from_version_higher_to_version(self, mocker, repo):
         """
@@ -635,9 +628,9 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
         assert 'fromVersion field can not be higher than toVersion field' in result.stdout
+        assert result.exit_code == 1
 
     def test_invalid_mapper_type(self, mocker, repo):
         """
@@ -657,6 +650,6 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert "Starting validating files structure" in result.stdout
         assert f"Validating {mapper.path}" in result.stdout
         assert 'Mappers type must be mapping-incoming or mapping-outgoing' in result.stdout
+        assert result.exit_code == 1

@@ -521,7 +521,8 @@ class ValidateManager:
         """
         print(f'\nValidating {pack_path} unique pack files')
 
-        pack_unique_files_validator = PackUniqueFilesValidator(os.path.basename(pack_path),
+        pack_unique_files_validator = PackUniqueFilesValidator(pack=os.path.basename(pack_path),
+                                                               pack_path=pack_path,
                                                                ignored_errors=pack_error_ignore_list,
                                                                print_as_warnings=self.print_ignored_errors)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()

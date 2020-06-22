@@ -1,4 +1,22 @@
 # Changelog
+* *Unify* command now adds contributor details to the display name and description.
+* *Format* command now adds *isFetch* and *incidenttype* fields to integration yml.
+* Removed the *feedIncremental* field from the integration schema.
+* *Format* command now adds *feedBypassExclusionList*, *Fetch indicators*, *feedReputation*, *feedReliability*,
+     *feedExpirationPolicy*, *feedExpirationInterval* and *feedFetchInterval* fields to integration yml.
+
+#### 1.1.3
+* Added a validation for invalid id fields in indicators types files in **validate** command.
+* Added default behavior for **update-release-notes** command.
+* Fixed an error where README files were failing release notes validation.
+* Updated format of generated release notes to be more user friendly.
+* Improved error messages for the **update-release-notes** command.
+* Added support for `Connections`, `Dashboards`, `Widgets`, and `Indicator Types` to **update-release-notes** command.
+* **Validate** now supports scripts under the *TestPlaybooks* directory.
+* Fixed an issue where **validate** did not support powershell files.
+
+#### 1.1.2
+* Added a validation for invalid playbookID fields in incidents types files in **validate** command.
 * Added a code formatter for python files.
 * Fixed an issue where new and old classifiers where mixed on validate command.
 * Added *feedIncremental* field to the integration schema.
@@ -6,7 +24,12 @@
 * Fixed an issue where the **secrets** command failed due to a space character in the file name.
 * Ignored RN validation for *NonSupported* pack.
 * You can now ignore IF107, SC100, RP102 error codes in the **validate** command.
-* Fixed a bug where the **download** command was crashing when received as input a JS integration/script
+* Fixed an issue where the **download** command was crashing when received as input a JS integration or script.
+* Fixed an issue where **validate** command checked docker image for JS integrations and scripts.
+* **validate** command now checks scheme for reports and connections.
+* Fixed an issue where **validate** command checked docker when running on all files.
+* Fixed an issue where **validate** command did not fail when docker image was not on the latest numeric tag.
+* Fixed an issue where beta integrations were not validated correctly in **validate** command.
 
 #### 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.

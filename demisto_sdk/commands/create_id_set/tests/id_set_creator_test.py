@@ -4,8 +4,9 @@ from tempfile import mkdtemp
 
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.update_id_set import (get_layout_data,
-                                                       has_duplicate)
+from demisto_sdk.commands.common.update_id_set import (
+    get_incident_field_data, get_indicator_type_data, get_layout_data,
+    get_values_for_keys_recursively, has_duplicate)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -86,7 +87,7 @@ def test_has_duplicate(list_input, list_output):
 def test_get_layout_data():
     """
     Given
-        - An layout file called layout-to-test.json
+        - A layout file called layout-to-test.json
 
     When
         - parsing layout files
@@ -103,3 +104,163 @@ def test_get_layout_data():
     assert 'toversion' in result.keys()
     assert 'path' in result.keys()
     assert 'typeID' in result.keys()
+    assert 'incident_and_indicator_types' in result.keys()
+    assert 'incident_and_indicator_fields' in result.keys()
+
+
+def test_get_layout_data_no_incident_types_and_fields():
+    """
+    Given
+        - A layout file called layout-to-test.json that doesnt have related incident fields and indicator fields
+
+    When
+        - parsing layout files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/layout-to-test-no-types-fields.json'
+    result = get_layout_data(test_dir)
+    result = result.get('urlRep')
+    assert 'kind' in result.keys()
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'toversion' in result.keys()
+    assert 'path' in result.keys()
+    assert 'typeID' in result.keys()
+    assert 'incident_and_indicator_types' in result.keys()
+    assert 'incident_and_indicator_fields' not in result.keys()
+
+
+def test_get_incident_fields_data():
+    """
+    Given
+        - An incident field file called incidentfield-to-test.json
+
+    When
+        - parsing incident field files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidentfield-to-test.json'
+    result = get_incident_field_data(test_dir, [])
+    result = result.get('incidentfield-test')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'toversion' in result.keys()
+    assert 'incident_types' in result.keys()
+    assert 'scripts' in result.keys()
+
+
+def test_get_incident_fields_data_no_types_scripts():
+    """
+    Given
+        - An incident field file called incidentfield-to-test-no-types_scripts.json with no script or incident type
+        related to it
+
+    When
+        - parsing incident field files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = \
+        f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidentfield-to-test-no-types_scripts.json'
+    result = get_incident_field_data(test_dir, [])
+    result = result.get('incidentfield-test')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'toversion' in result.keys()
+    assert 'incident_types' not in result.keys()
+    assert 'scripts' not in result.keys()
+
+
+def test_get_indicator_type_data():
+    """
+    Given
+        - An indicator type file called reputation-indicatortype.json.
+
+    When
+        - parsing indicator type files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = \
+        f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/reputation-indicatortype.json'
+    result = get_indicator_type_data(test_dir)
+    result = result.get('indicator-type-dummy')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'integrations' in result.keys()
+    assert 'scripts' in result.keys()
+    assert "dummy-script" in result.get('scripts')
+    assert "dummy-script-2" in result.get('scripts')
+    assert "dummy-script-3" in result.get('scripts')
+
+
+def test_get_indicator_type_data_no_integration_no_scripts():
+    """
+    Given
+        - An indicator type file called reputation-indicatortype_no_script_no_integration.json without any
+            integrations or scripts that it depends on.
+
+    When
+        - parsing indicator type files
+
+    Then
+        - parsing all the data from file successfully
+    """
+    test_dir = \
+        f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/' \
+        f'reputation-indicatortype_no_script_no_integration.json'
+    result = get_indicator_type_data(test_dir)
+    result = result.get('indicator-type-dummy')
+    assert 'name' in result.keys()
+    assert 'fromversion' in result.keys()
+    assert 'integrations' not in result.keys()
+    assert 'scripts' not in result.keys()
+
+
+def test_get_values_for_keys_recursively():
+    """
+    Given
+        - A list of keys to extract their values from a dict
+
+    When
+        - Extracting data from nested elements in the json
+
+    Then
+        - Extracting the values from all the levels of nesting in the json
+    """
+
+    test_dict = {
+        'id': 1,
+        'nested': {
+            'x1': 1,
+            'x2': 'x2',
+            'x3': False,
+            'x4': [
+                {
+                    'x1': 2,
+                    'x2': 55
+                },
+                {
+                    'x3': 1,
+                    'x2': True
+                }
+            ]
+        },
+        'x2': 4.0
+    }
+
+    test_keys = ['x1', 'x2', 'x3']
+
+    expected = {
+        'x1': [1, 2],
+        'x2': ['x2', 55, True, 4.0],
+        'x3': [False, 1]
+    }
+
+    assert expected == get_values_for_keys_recursively(test_dict, test_keys)

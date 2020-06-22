@@ -8,6 +8,8 @@ from typing import Any, Type
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -187,6 +189,7 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
+            mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
             mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = OldReleaseNotesValidator(target_dummy)
             assert validator.validate_file_release_notes_exists() is answer
@@ -237,6 +240,7 @@ class TestValidators:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
+            mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
             mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
             validator = OldReleaseNotesValidator(target_dummy)
             assert validator.is_valid_release_notes_structure() is answer
@@ -374,7 +378,7 @@ class TestValidators:
         (VALID_INCIDENT_FIELD_PATH, 'incidentfield'),
         (VALID_REPUTATION_PATH, 'reputation'),
         (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
-        (VALID_BETA_INTEGRATION, 'integration'),
+        (VALID_BETA_INTEGRATION, 'betaintegration'),
         (VALID_INDICATOR_FIELD_PATH, 'indicatorfield'),
         (VALID_LAYOUT_PATH, 'layout'),
         (VALID_MD, '')

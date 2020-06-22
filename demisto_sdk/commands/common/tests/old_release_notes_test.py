@@ -10,6 +10,7 @@ def get_validator(file_path='', diff=''):
     release_notes_validator.release_notes = file_path
     release_notes_validator.master_diff = diff
     release_notes_validator.ignored_errors = {}
+    release_notes_validator.checked_files = set()
     return release_notes_validator
 
 

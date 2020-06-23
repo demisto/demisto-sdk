@@ -582,7 +582,7 @@ XSOAR_UNIFY = PARTNER_UNIFY.copy()
 
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
-PARTNER_DISPLAY_NAME = 'test (Partner contribution)'
+PARTNER_DISPLAY_NAME = 'test (Partner Contribution)'
 PARTNER_DETAILEDDESCRIPTION = '### This is a partner contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                               f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
@@ -619,7 +619,9 @@ def test_unify_partner_contributed_pack(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION
+    assert '#### Integration Author:' in PARTNER_UNIFY["detaileddescription"]
+    assert 'Email' in PARTNER_UNIFY["detaileddescription"]
+    assert 'URL' in PARTNER_UNIFY["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_email(mocker, repo):
@@ -647,7 +649,9 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY_NO_EMAIL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_EMAIL
+    assert '#### Integration Author:' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+    assert 'Email' not in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+    assert 'URL' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_url(mocker, repo):
@@ -675,7 +679,9 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY_NO_URL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_URL
+    assert '#### Integration Author:' in PARTNER_UNIFY_NO_URL["detaileddescription"]
+    assert 'Email' in PARTNER_UNIFY_NO_URL["detaileddescription"]
+    assert 'URL' not in PARTNER_UNIFY_NO_URL["detaileddescription"]
 
 
 def test_unify_not_partner_contributed_pack(mocker, repo):

@@ -22,8 +22,8 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 PACK_METADATA_PATH = 'pack_metadata.json'
-CONTRIBUTOR_DISPLAY_NAME = ' ({} contribution)'
-CONTRIBUTOR_DETAILED_DESC = '### {} contributed integration\n' \
+CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
+CONTRIBUTOR_DETAILED_DESC = '### {} Contributed integration\n' \
                             '#### Integration Author: {}\n' \
                             'Support and maintenance for this integration is provided by the author. ' \
                             'Please use the following details to contact:'

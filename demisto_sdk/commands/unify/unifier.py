@@ -168,6 +168,7 @@ class Unifier:
             if self.is_contributor_pack(contributor_type):
                 contributor_email = metadata_data.get('email', '')
                 contributor_url = metadata_data.get('url', '')
+                contributor_type = 'community' if contributor_type == 'developer' else contributor_type
                 yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
                                                             contributor_url)
 

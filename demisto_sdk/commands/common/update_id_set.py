@@ -47,6 +47,14 @@ CHECKED_TYPES_REGEXES = (
     PACKS_MAPPER_JSON_REGEX
 )
 
+CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
+                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                    'Layouts', 'Reports', 'Widgets', 'Mappers']
+
+ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
+                   'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+
 BUILT_IN_FIELDS = [
     "name",
     "details",
@@ -1109,9 +1117,8 @@ def get_general_paths(path):
 def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,  # noqa: C901
                      print_logs: bool = True):
     if objects_to_create is None:
-        objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
-                             'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                             'Layouts', 'Reports', 'Widgets', 'Mappers']
+        objects_to_create = CONTENT_ENTITIES
+
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -1276,9 +1283,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 def find_duplicates(id_set, print_logs):
     lists_to_return = []
 
-    objects_to_check = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers', 'Dashboards',
-                        'Layouts', 'Reports', 'Widgets']
-    for object_type in objects_to_check:
+    for object_type in ID_SET_ENTITIES:
         if print_logs:
             print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)
@@ -1291,7 +1296,7 @@ def find_duplicates(id_set, print_logs):
         lists_to_return.append(dup_list)
 
     if print_logs:
-        print_color("Checking diff for Incident and Idicator Fields", LOG_COLORS.GREEN)
+        print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
 
     fields = id_set['IncidentFields'] + id_set['IndicatorFields']
     field_ids = {list(field.keys())[0] for field in fields}

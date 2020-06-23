@@ -176,8 +176,7 @@ class PackDependencies:
                 incident_field_nachine_name = list(incident_field.keys())[0]
                 incident_field_details = list(incident_field.values())[0]
                 if (incident_field_name in incident_field_nachine_name or incident_field_name in
-                    incident_field_details.get('name')) \
-                        and incident_field_details.get('pack'):
+                        incident_field_details.get('name') and incident_field_details.get('pack')):
                     packs.append(incident_field_details.get('pack'))
 
         return packs

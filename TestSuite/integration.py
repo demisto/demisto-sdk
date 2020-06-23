@@ -113,3 +113,6 @@ class Integration:
     @property
     def yml_path(self):
         return os.path.relpath(self.yml_abs_path, self._repo.path)
+
+    def image_path(self):
+        return os.path.relpath(str(self._image_file), self._repo.path)

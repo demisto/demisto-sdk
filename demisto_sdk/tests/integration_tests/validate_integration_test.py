@@ -3,11 +3,16 @@ from os.path import join
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
+    CONNECTION, DASHBOARD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT, MAPPER,
+    NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -24,79 +29,6 @@ CONF_JSON_MOCK = {
     ]
 }
 
-OLD_CLASSIFIER = {
-    "brandName": "test",
-    "custom": True,
-    "defaultIncidentType": "",
-    "id": "test classifier",
-    "keyTypeMap": {
-        "test": "test1"
-    },
-    "mapping": {
-        "Logz.io Alert": {
-            "dontMapEventToLabels": False,
-            "internalMapping": {
-                "test Alert ID": {
-                    "complex": None,
-                    "simple": "alertId"
-                },
-                "details": {
-                    "complex": None,
-                    "simple": "description"
-                }
-            }
-        }
-    },
-    "transformer": {
-        "complex": None,
-        "simple": "test"
-    },
-    "unclassifiedCases": {},
-    "version": -1,
-    "fromVersion": "5.0.0",
-    "toVersion": "5.9.9"
-}
-
-NEW_CLASSIFIER = {
-    "defaultIncidentType": "test",
-    "id": "testing",
-    "type": "classification",
-    "name": "test Classifier",
-    "description": "Classifies test.",
-    "keyTypeMap": {
-        "test": "test1"
-    },
-    "transformer": {
-        "complex": None,
-        "simple": "test"
-    },
-    "version": -1,
-    "fromVersion": "6.0.0",
-    "toVersion": "6.0.5"
-}
-
-MAPPER = {
-    "defaultIncidentType": "test",
-    "id": "testing",
-    "type": "mapping-incoming",
-    "name": "test Mapper",
-    "description": "Mapper test",
-    "mapping": {
-        "test": {
-            "dontMapEventToLabels": False,
-            "internalMapping": {
-                "test Alert ID": {
-                    "complex": None,
-                    "simple": "alertId"
-                }
-            }
-        }
-    },
-    "version": -1,
-    "fromVersion": "6.0.0",
-    "toVersion": "6.0.5"
-}
-
 
 def assert_positive(file_path, result):
     """
@@ -110,7 +42,7 @@ def assert_positive(file_path, result):
     assert result.stderr == ""
 
 
-class TestIncidentField:
+class TestIncidentFieldValidation:
     def test_positive(self):
         """
         Given
@@ -129,7 +61,7 @@ class TestIncidentField:
         assert_positive(pack_incident_field_path, result)
 
 
-class TestIntegration:
+class TestIntegrationValidation:
     def test_negative__non_latest_docker_image(self):
         """
         Given
@@ -191,7 +123,7 @@ class TestIntegration:
         assert result.stderr == ""
 
 
-class TestPack:
+class TestPackValidation:
     def test_integration_validate_pack_positive(self, mocker):
         """
         Given
@@ -256,7 +188,7 @@ class TestPack:
         assert result.stderr == ""
 
 
-class TestClassifier:
+class TestClassifierValidation:
 
     def test_valid_new_classifier(self, mocker, repo):
         """
@@ -532,7 +464,7 @@ class TestClassifier:
         assert result.exit_code == 1
 
 
-class TestMapper:
+class TestMapperValidation:
 
     def test_valid_mapper(self, mocker, repo):
         """
@@ -644,7 +576,7 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert f"Validating {mapper.path}" in result.stdout
+        assert f"Validating {mapper.path} as mapper" in result.stdout
         assert 'fromVersion field can not be higher than toVersion field' in result.stdout
         assert result.exit_code == 1
 
@@ -667,6 +599,262 @@ class TestMapper:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert f"Validating {mapper.path}" in result.stdout
+        assert f"Validating {mapper.path} as mapper" in result.stdout
         assert 'Mappers type must be mapping-incoming or mapping-outgoing' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestDashboardValidation:
+    def test_valid_dashboard(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        dashboard = pack.create_dashboard('dashboard', DASHBOARD)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', dashboard.path], catch_exceptions=False)
+        assert f'Validating {dashboard.path} as dashboard' in result.stdout
+        print(result.stdout)
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_dashboard(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        dashboard_copy = DASHBOARD.copy()
+        dashboard_copy['version'] = 1
+        dashboard = pack.create_dashboard('dashboard', dashboard_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', dashboard.path], catch_exceptions=False)
+        assert f'Validating {dashboard.path} as dashboard' in result.stdout
+        assert "The version for our files should always be -1, please update the file." in result.stdout
+        assert result.exit_code == 1
+
+
+class TestConnectionValidation:
+    def test_valid_connection(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        connection = pack.create_json_based(name='connection', prefix='', content=CONNECTION)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', connection.path], catch_exceptions=False)
+        assert f'Validating {connection.path} as canvas-context-connections' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_connection(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        connection_copy = CONNECTION.copy()
+        del connection_copy['canvasContextConnections'][0]['contextKey1']
+        connection = pack.create_json_based(name='connection', prefix='', content=connection_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', connection.path], catch_exceptions=False)
+        assert f'Validating {connection.path} as canvas-context-connections' in result.stdout
+        assert 'Missing contextKey1' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestIndicatorFieldValidation:
+    def test_valid_indicator_field(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_indicator_field("indicator-field", INDICATOR_FIELD)
+        indicator_field_path = pack.indicator_field[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', indicator_field_path], catch_exceptions=False)
+        assert f'Validating {indicator_field_path} as indicatorfield' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_indicator_field(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        indicator_field_copy = INDICATOR_FIELD.copy()
+        indicator_field_copy['content'] = False
+        pack.create_indicator_field("indicator-field", indicator_field_copy)
+        indicator_field_path = pack.indicator_field[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', indicator_field_path], catch_exceptions=False)
+        assert f'Validating {indicator_field_path} as indicatorfield' in result.stdout
+        assert 'The content key must be set to True.' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestIncidentTypeValidation:
+    def test_valid_incident_type(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type = pack.create_incident_type('incident_type', INCIDENT_TYPE)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_incident_type(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_copy = INCIDENT_TYPE.copy()
+        incident_type_copy['days'] = -1
+        incident_type = pack.create_incident_type('incident_type', incident_type_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'The field days needs to be a positive integer' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestLayoutValidation:
+    def test_valid_layout(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout = pack.create_json_based(name='layout', prefix='', content=LAYOUT)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layout' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_layout(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout_copy = LAYOUT.copy()
+        layout_copy['layout']['version'] = 2
+        layout = pack.create_json_based(name='layout', prefix='', content=LAYOUT)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layout' in result.stdout
+        assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestPlaybookValidation:
+    def test_valid_playbook(self):
+        pass
+
+    def test_invalid_playbook(self):
+        pass
+
+
+class TestReportValidation:
+    def test_valid_report(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        report = pack.create_json_based(name='report', prefix='', content=REPORT)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', report.path], catch_exceptions=False)
+        assert f'Validating {report.path} as report' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_report(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        report_copy = REPORT.copy()
+        report_copy['orientation'] = 'bla'
+        report = pack.create_json_based(name='report', prefix='', content=report_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', report.path], catch_exceptions=False)
+        assert f'Validating {report.path} as report' in result.stdout
+        assert 'Enum \'bla\' does not exist. Path: \'/orientation\'' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestReputationValidation:
+    def test_valid_reputation(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation = pack.create_json_based(name='reputation', prefix='', content=REPUTATION)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_reputation(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation_copy = REPUTATION.copy()
+        reputation_copy['expiration'] = -1
+        reputation = pack.create_json_based(name='reputation', prefix='', content=reputation_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'Expiration field should have a numeric value.' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestScriptValidation:
+    def test_valid_script(self):
+        pass
+
+    def test_invalid_script(self):
+        pass
+
+
+class TestWidgetValidation:
+    def test_valid_widget(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        widget = pack.create_json_based(name='widget', prefix='', content=WIDGET)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', widget.path], catch_exceptions=False)
+        assert f'Validating {widget.path} as widget' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_widget(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        widget_copy = WIDGET.copy()
+        widget_copy['version'] = 1
+        widget = pack.create_json_based(name='widget', prefix='', content=widget_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', widget.path], catch_exceptions=False)
+        assert f'Validating {widget.path} as widget' in result.stdout
+        assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestImageValidation:
+    def test_valid_image(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        integration = pack.create_integration()
+        image_path = integration.image_path()
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', image_path], catch_exceptions=False)
+        assert f'Validating {image_path} as image' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_image(self, mocker, repo):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        integration = pack.create_integration()
+        image_path = integration.image_path()
+        mocker.patch.object(ImageValidator, 'load_image', return_value=DEFAULT_IMAGE_BASE64)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', image_path], catch_exceptions=False)
+        print(result.stdout)
+        assert f'Validating {image_path} as image' in result.stdout
+        assert 'This is the default image, please change to the integration image.' in result.stdout
         assert result.exit_code == 1

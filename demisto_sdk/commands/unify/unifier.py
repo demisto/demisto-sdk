@@ -398,7 +398,7 @@ class Unifier:
         existing_detailed_description = unified_yml.get('detaileddescription', '')
         contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize())
         if contributor_email:
-            contributor_description += f'\n**Email** - [mailto](mailto:{contributor_email})'
+            contributor_description += f'\n**Email** - [{contributor_email}](mailto:{contributor_email})'
         if contributor_url:
             contributor_description += f'\n**URL** - [{contributor_url}]({contributor_url})'
         unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description

@@ -64,6 +64,7 @@ jobs:
                 export CIRCLE_BRANCH="master"
               fi
 
+              python3 ./Tests/scripts/update_conf_json.py
               ./Tests/scripts/validate.sh
         - run:
             name: Test create ID set

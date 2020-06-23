@@ -233,7 +233,8 @@ class PlaybookValidator(ContentEntityValidator):
                 tasks_bucket.add(task_id)
             next_tasks = task.get('nexttasks', {})
             for next_task_ids in next_tasks.values():
-                next_tasks_bucket.update(next_task_ids)
+                if next_task_ids:
+                    next_tasks_bucket.update(next_task_ids)
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
             error_message, error_code = Errors.playbook_unconnected_tasks(orphan_tasks)

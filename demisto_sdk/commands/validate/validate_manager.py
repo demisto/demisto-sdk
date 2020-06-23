@@ -60,7 +60,7 @@ class ValidateManager:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=True):
+                 silence_init_prints=True, test_mode=False):
 
         # General configuration
         self.skip_docker_checks = False
@@ -96,6 +96,9 @@ class ValidateManager:
 
         if self.validate_in_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())
+
+        if test_mode:
+            self.skip_docker_checks = True
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)

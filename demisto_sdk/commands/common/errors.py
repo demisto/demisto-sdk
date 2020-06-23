@@ -842,7 +842,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def reputation_expiration_should_be_numeric():
-        return 'Expiration field should have a numeric value.'
+        return 'Expiration field should have a positive numeric value.'
 
     @staticmethod
     @error_code_decorator

@@ -519,7 +519,8 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return widget_validator.is_valid_file(validate_rn=False)
 
-    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict, should_version_raise) -> bool:
+    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict,
+                                   should_version_raise=False) -> bool:
         """
         Runs validations on the following pack files:
         * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
@@ -527,6 +528,7 @@ class ValidateManager:
         * README.md file: Validates that the file exists
         * pack_metadata.json: Validates that the file exists and that it has a valid structure
         Args:
+            should_version_raise: Whether we should check if the version of the metadata was raised
             pack_error_ignore_list: A dictionary of all pack ignored errors
             pack_path: A path to a pack
         """
@@ -584,9 +586,7 @@ class ValidateManager:
                                                                                     FileType.README})
         packs_that_should_have_version_raised = get_pack_names_from_files(changed_meta_files).union(modified_packs)
 
-        changed_packs = modified_packs.union(added_packs)
-
-        changed_packs = changed_packs.union(packs_that_should_have_version_raised)
+        changed_packs = modified_packs.union(added_packs).union(packs_that_should_have_version_raised)
 
         for pack in changed_packs:
             raise_version = False

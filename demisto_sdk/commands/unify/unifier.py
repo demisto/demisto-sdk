@@ -23,7 +23,7 @@ from ruamel.yaml.scalarstring import FoldedScalarString
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} contribution)'
-CONTRIBUTOR_DETAILED_DESC = '### This is a {} contributed integration' \
+CONTRIBUTOR_DETAILED_DESC = '### {} contributed integration' \
                             '\nFor all questions and enhancement requests please contact the partner directly:'
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 
@@ -168,7 +168,6 @@ class Unifier:
             if self.is_contributor_pack(contributor_type):
                 contributor_email = metadata_data.get('email', '')
                 contributor_url = metadata_data.get('url', '')
-                contributor_type = 'community' if contributor_type == 'developer' else contributor_type
                 yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
                                                             contributor_url)
 
@@ -397,7 +396,7 @@ class Unifier:
         """
         unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')
-        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type)
+        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize())
         if contributor_email:
             contributor_description += f'\n**Email** - [mailto](mailto:{contributor_email})'
         if contributor_url:

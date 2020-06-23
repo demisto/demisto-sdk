@@ -360,18 +360,14 @@ class ValidateManager:
 
         click.echo(f"Validating against {self.prev_ver}")
 
-        modified_files, added_files, old_format_files = self.get_modified_and_added_files(self.compare_type,
-                                                                                          self.prev_ver)
-
-        modified_packs = get_pack_names_from_files(modified_files)
-
-        added_packs = get_pack_names_from_files(added_files)
+        modified_files, added_files, old_format_files, changed_meta_files = \
+            self.get_modified_and_added_files(self.compare_type, self.prev_ver)
 
         valid_files = set()
 
         valid_files.add(self.validate_modified_files(modified_files))
         valid_files.add(self.validate_added_files(added_files, modified_files))
-        valid_files.add(self.validate_changed_packs_unique_files(added_packs.union(modified_packs)))
+        valid_files.add(self.validate_changed_packs_unique_files(modified_files, added_files, changed_meta_files))
 
         if not self.skip_pack_rn_validation:
             valid_files.add(self.validate_no_duplicated_release_notes(added_files))
@@ -523,7 +519,7 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return widget_validator.is_valid_file(validate_rn=False)
 
-    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict) -> bool:
+    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict, should_version_raise) -> bool:
         """
         Runs validations on the following pack files:
         * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
@@ -539,7 +535,8 @@ class ValidateManager:
         pack_unique_files_validator = PackUniqueFilesValidator(pack=os.path.basename(pack_path),
                                                                pack_path=pack_path,
                                                                ignored_errors=pack_error_ignore_list,
-                                                               print_as_warnings=self.print_ignored_errors)
+                                                               print_as_warnings=self.print_ignored_errors,
+                                                               should_version_raise=should_version_raise)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
@@ -577,13 +574,27 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
-    def validate_changed_packs_unique_files(self, changed_packs):
+    def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files=None):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
         valid_pack_files = set()
+
+        added_packs = get_pack_names_from_files(added_files)
+        modified_packs = get_pack_names_from_files(modified_files, skip_file_types={FileType.RELEASE_NOTES,
+                                                                                    FileType.README})
+        packs_that_should_have_version_raised = get_pack_names_from_files(changed_meta_files).union(modified_packs)
+
+        changed_packs = modified_packs.union(added_packs)
+
+        changed_packs = changed_packs.union(packs_that_should_have_version_raised)
+
         for pack in changed_packs:
+            raise_version = False
             pack_path = os.path.join(PACKS_DIR, pack)
-            valid_pack_files.add(self.validate_pack_unique_files(pack_path, self.get_error_ignore_list(pack)))
+            if pack in packs_that_should_have_version_raised:
+                raise_version = True
+            valid_pack_files.add(self.validate_pack_unique_files(pack_path, self.get_error_ignore_list(pack),
+                                                                 should_version_raise=raise_version))
 
         return all(valid_pack_files)
 
@@ -704,19 +715,19 @@ class ValidateManager:
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')
 
-        modified_files, added_files, _, old_format_files = self.filter_changed_files(all_committed_files_string,
-                                                                                     prev_ver)
+        modified_files, added_files, _, old_format_files, changed_meta_files = \
+            self.filter_changed_files(all_committed_files_string, prev_ver)
         if not self.is_circle:
             click.echo("Collecting all local changed files")
             # all local non-committed changes and changes against prev_ver
             all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
-            modified_files_from_tag, added_files_from_tag, _, _ = \
+            modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
                 self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
             # only changes against prev_ver (without local changes)
             outer_changes_files_string = run_command('git diff --name-status --no-merges HEAD')
-            nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.filter_changed_files(
-                outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+            nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
+                self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 
             old_format_files = old_format_files.union(nc_old_format_files)
             modified_files = modified_files.union(
@@ -725,10 +736,14 @@ class ValidateManager:
             added_files = added_files.union(
                 added_files_from_tag.intersection(nc_added_files))
 
+            changed_meta_files = changed_meta_files.union(
+                changed_meta_files_from_tag.intersection(nc_changed_meta_files))
+
             modified_files = modified_files - set(nc_deleted_files)
             added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
+            changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        return modified_files, added_files, old_format_files
+        return modified_files, added_files, old_format_files, changed_meta_files
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
         """Get lists of the modified files in your branch according to the files string.
@@ -746,6 +761,7 @@ class ValidateManager:
         added_files_list = set()
         modified_files_list = set()
         old_format_files = set()
+        changed_meta_files = set()
         for f in all_files:
             file_data = list(filter(None, f.split('\t')))
             if not file_data:
@@ -811,8 +827,11 @@ class ValidateManager:
 
             elif print_ignored_files and not checked_type(file_path, IGNORED_TYPES_REGEXES):
 
-                if file_path.endswith(PACKS_PACK_META_FILE_NAME) and file_status.lower() == 'a':
-                    self.new_packs.add(get_pack_name(file_path))
+                if file_path.endswith(PACKS_PACK_META_FILE_NAME):
+                    if file_status.lower() == 'a':
+                        self.new_packs.add(get_pack_name(file_path))
+                    elif file_status.lower() == 'm':
+                        changed_meta_files.add(file_path)
 
                 if file_path not in self.ignored_files:
                     self.ignored_files.add(file_path)
@@ -824,7 +843,7 @@ class ValidateManager:
             deleted_files,
             tag)
 
-        return modified_files_list, added_files_list, deleted_files, old_format_files
+        return modified_files_list, added_files_list, deleted_files, old_format_files, changed_meta_files
 
     """ ######################################## Validate Tools ############################################### """
 

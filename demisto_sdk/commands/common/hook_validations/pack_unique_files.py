@@ -25,7 +25,7 @@ class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
-    def __init__(self, pack, pack_path=None, ignored_errors=None, print_as_warnings=False):
+    def __init__(self, pack, pack_path=None, ignored_errors=None, print_as_warnings=False, should_version_raise=False):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -38,6 +38,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.readme_file = PACKS_README_FILE_NAME
         self._errors = []
+        self.should_version_raise = should_version_raise
 
     # error handling
     def _add_error(self, error, file_path):

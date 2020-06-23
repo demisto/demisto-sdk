@@ -25,7 +25,7 @@ PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
 CONTRIBUTOR_DETAILED_DESC = '### {} Contributed Integration\n' \
                             '#### Integration Author: {}\n' \
-                            'Support and maintenance for this integration is provided by the author. ' \
+                            'Support and maintenance for this integration are provided by the author. ' \
                             'Please use the following contact details:'
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']

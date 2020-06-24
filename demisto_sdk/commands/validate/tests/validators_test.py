@@ -529,7 +529,7 @@ class TestValidators:
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BC101", "BC102", "BC103", "BC104"]
 
-    def test_added_files_type_using_function(self, repo):
+    def test_added_files_type_using_function(self, repo, mocker):
         """
             Given:
                 - A file path to a new script, that is not located in a "regular" scripts path

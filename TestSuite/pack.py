@@ -94,7 +94,7 @@ class Pack:
             description: Optional[str] = None,
             changelog: Optional[str] = None,
             image: Optional[bytes] = None
-    ):
+    ) -> Integration:
         if name is None:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
@@ -119,7 +119,7 @@ class Pack:
             readme: str = '',
             description: str = '',
             changelog: str = '',
-            image: bytes = b''):
+            image: bytes = b'') -> Script:
         if name is None:
             name = f'script{len(self.integrations)}'
         if yml is None:
@@ -136,7 +136,7 @@ class Pack:
         self.scripts.append(script)
         return script
 
-    def create_test_script(self):
+    def create_test_script(self) -> Script:
         script = self.create_script('sample_script')
         script.create_default_script()
         return script
@@ -147,7 +147,7 @@ class Pack:
             prefix: str,
             content: dict = None,
             dir_path: Path = None
-    ):
+    ) -> JSONBased:
         if content is None:
             content = {}
         if dir_path:
@@ -162,7 +162,7 @@ class Pack:
             name,
             content: str = '',
             dir_path: Path = None
-    ):
+    ) -> TextBased:
         if dir_path:
             obj = TextBased(dir_path, name)
         else:
@@ -174,7 +174,7 @@ class Pack:
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'classifier'
         classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
@@ -184,7 +184,7 @@ class Pack:
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'classifier-mapper'
         mapper = self._create_json_based(name, prefix, content)
         self.mapper.append(mapper)
@@ -194,7 +194,7 @@ class Pack:
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'dashboard'
         dashboard = self._create_json_based(name, prefix, content)
         self.dashboards.append(dashboard)
@@ -205,7 +205,7 @@ class Pack:
             name,
             content: dict = None,
             release_notes: bool = False
-    ):
+    ) -> JSONBased:
         prefix = 'incidentfield'
         incident_field = self._create_json_based(name, prefix, content)
         if release_notes:
@@ -218,7 +218,7 @@ class Pack:
     def create_incident_type(
             self,
             name,
-            content: dict = None):
+            content: dict = None) -> JSONBased:
         prefix = 'incidenttype'
         incident_type = self._create_json_based(name, prefix, content)
         self.incident_types.append(incident_type)
@@ -228,28 +228,31 @@ class Pack:
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'incidentfield'
         indicator_field = self._create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
+        return indicator_field
 
     def create_indicator_type(
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'reputation'
         indicator_type = self._create_json_based(name, prefix, content)
         self.indicator_type.append(indicator_type)
+        return indicator_type
 
     def create_layout(
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'layout'
         layout = self._create_json_based(name, prefix, content)
         self.layouts.append(layout)
+        return layout
 
     def create_release_notes(self, version: str, content: str = ''):
         rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)

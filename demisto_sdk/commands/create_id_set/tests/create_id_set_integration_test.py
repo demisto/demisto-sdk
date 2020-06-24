@@ -11,9 +11,13 @@ def setup_one_pack(repo, name):
     integration = pack.create_integration(f'{name}_integration')
     integration.create_default_integration()
 
-    pack.create_layout(f'{name}_layout')
+    classifier = pack.create_classifier(f'{name}_classifier')
+    classifier.write_json({'id': f'{name} - classifier'})
+
+    layout = pack.create_layout(f'{name}_layout')
+    layout.write_json({'id': f'{name} - layout'})
+
     pack.create_mapper(f'{name}_mapper')
-    pack.create_classifier(f'{name}_classifier')
     pack.create_incident_type(f'{name}_incident-type')
     pack.create_incident_field(f'{name}_incident-field')
     pack.create_indicator_type(f'{name}_indicator-type')
@@ -25,11 +29,11 @@ def setup_whole_repo(repo, number_of_packs):
         setup_one_pack(repo, f'pack_{i}')
 
 
-def test_create_id_set_flow(mocker, repo):
+def test_create_id_set_flow(repo):
     setup_whole_repo(repo, 10)
 
     with ChangeCWD(repo.path):
         id_set_creator = IDSetCreator(repo.id_set.path)
         id_set_creator.create_id_set()
 
-    print(repo.id_set.read_json())
+    print(repo.id_set.read_json_as_text())

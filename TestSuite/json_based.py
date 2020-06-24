@@ -16,5 +16,13 @@ class JSONBased:
     def write_json(self, obj: dict):
         self._file_path.write_text(json.dumps(obj))
 
-    def read_json(self):
+    def read_json_as_text(self) -> str:
         return self._file_path.read_text()
+
+    def read_json_as_dict(self) -> dict:
+        return json.loads(self._file_path.read_text())
+
+    def append_to_json(self, obj: dict):
+        file_content = self.read_json_as_dict()
+        file_content.update(obj)
+        self.write_json(file_content)

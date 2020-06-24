@@ -160,7 +160,7 @@ class UpdateRN:
             elif 'Classifiers' in file_path:
                 _file_type = 'Classifiers'
             elif 'Layouts' in file_path:
-                _file_type = 'Layout'
+                _file_type = 'Layouts'
             elif 'Reports' in file_path:
                 _file_type = 'Reports'
             elif 'Widgets' in file_path:
@@ -255,7 +255,7 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in changed_items.items():
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1]):
             if k == 'N/A':
                 continue
             elif v == 'Integration':

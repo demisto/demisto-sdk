@@ -5,6 +5,7 @@ import io
 import json
 import os
 import re
+from distutils.version import LooseVersion
 
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_DEPENDENCIES,
@@ -16,7 +17,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import pack_name_to_path
+from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
+                                               pack_name_to_path)
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 
@@ -144,8 +146,21 @@ class PackUniqueFilesValidator(BaseValidator):
         """Validate everything related to pack_metadata.json file"""
         if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid(),
                                                                    self._is_valid_contributor_pack_support_details()]):
-            return True
+            if self.should_version_raise:
+                return self.validate_version_bump()
 
+            else:
+                return True
+
+        return False
+
+    def validate_version_bump(self):
+        old_meta_file_content = get_remote_file(self.pack_meta_file)
+        current_meta_file_content = get_json(self.pack_meta_file)
+        old_version = old_meta_file_content.get('currentVersion', '0.0.0')
+        current_version = current_meta_file_content.get('currentVersion', '0.0.0')
+        if LooseVersion(old_version) < LooseVersion(current_version):
+            return True
         return False
 
     def _is_pack_meta_file_structure_valid(self):

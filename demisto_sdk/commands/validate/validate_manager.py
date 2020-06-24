@@ -721,6 +721,19 @@ class ValidateManager:
             self.filter_changed_files(all_committed_files_string, prev_ver)
         if not self.is_circle:
             click.echo("Collecting all local changed files")
+            # if self._remote_configured and not self._is_origin_demisto:
+            #     # all local non-committed changes and changes against prev_ver
+            #     all_changed_files_string = run_command(
+            #         'git diff --name-status upstream/master...HEAD')
+            #     modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
+            #         self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
+            #
+            #     # only changes against prev_ver (without local changes)
+            #     outer_changes_files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
+            #     nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
+            #         self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+            #
+            # else:
             # all local non-committed changes and changes against prev_ver
             all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
             modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \

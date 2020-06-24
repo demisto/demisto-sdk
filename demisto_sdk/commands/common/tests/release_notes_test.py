@@ -83,7 +83,7 @@ NOT_FILLED_OUT_RN = '''
 - %%UPDATE_RN%%
 
 ### Integrations
-#### Palo Alto Networks Cortex XDR - Investigation and Response
+#### Cortex XDR - IR
 - %%UPDATE_RN%%
 
 ### Scripts
@@ -100,7 +100,7 @@ FILLED_OUT_RN = '''
 - Test
 
 ### Integrations
-#### Palo Alto Networks Cortex XDR - Investigation and Response
+#### Cortex XDR - IR
 - Test
 
 ### Scripts

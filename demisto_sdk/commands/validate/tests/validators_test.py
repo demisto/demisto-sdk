@@ -538,8 +538,9 @@ class TestValidators:
             Then:
                 - verify that the validation detects the correct file type and passes successfully
         """
-        saved_stdout = sys.stdout
 
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        saved_stdout = sys.stdout
         pack = repo.create_pack('pack')
         pack.create_test_script()
         with ChangeCWD(pack.repo_path):

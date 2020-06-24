@@ -660,10 +660,10 @@ class PackDependencies:
             _collect_classifiers_dependencies(pack_items['classifiers'], id_set)
         mappers_dependencies = PackDependencies. \
             _collect_mappers_dependencies(pack_items['mappers'], id_set)
+
         pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
             incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
             | incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
-        # todo check if need to collect dependencies from other content items
 
         return pack_dependencies
 

@@ -8,7 +8,11 @@ from demisto_sdk.commands.common.constants import PACKS_DIR
 class JSONBased:
     def __init__(self, dir_path: Path, name: str, prefix: str):
         self._dir_path = dir_path
-        self.name = f'{prefix.rstrip("-")}-{name}.json'
+        if prefix:
+            self.name = f'{prefix.rstrip("-")}-{name}.json'
+        else:
+            self.name = f'{name}.json'
+
         if isinstance(self._dir_path, str):
             self._file_path = os.path.join(self._dir_path, self.name)
         else:

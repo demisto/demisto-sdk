@@ -171,11 +171,11 @@ class PackDependencies:
         if not isinstance(items_names, list):
             items_names = [items_names]
 
-        for incident_field_name in items_names:
-            for incident_field in items_list:
-                machine_name = list(incident_field.keys())[0]
-                item_details = list(incident_field.values())[0]
-                if (incident_field_name in machine_name or incident_field_name in
+        for item_name in items_names:
+            for item_from_id_set in items_list:
+                machine_name = list(item_from_id_set.keys())[0]
+                item_details = list(item_from_id_set.values())[0]
+                if (item_name in machine_name or item_name in
                         item_details.get('name') and item_details.get('pack')):
                     packs.add(item_details.get('pack'))
 

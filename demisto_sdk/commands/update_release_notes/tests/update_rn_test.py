@@ -28,6 +28,7 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Indicator Types\n##### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
             "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
             "\n#### Layouts\n##### Hello World Layout\n- %%UPDATE_RN%%\n" \
+            "##### Second Hello World Layout\n- %%UPDATE_RN%%\n" \
             "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
             "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
             "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
@@ -45,6 +46,7 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Layout": "Layouts",
             "Hello World Incident Type": "Incident Types",
             "Hello World Indicator Type": "Indicator Types",
+            "Second Hello World Layout": "Layouts",
             "Hello World Widget": "Widgets",
             "Hello World Dashboard": "Dashboards",
             "Hello World Connection": "Connections",

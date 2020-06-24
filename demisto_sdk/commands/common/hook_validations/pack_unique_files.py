@@ -64,7 +64,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if raw:
             errors = self._errors
         elif self._errors:
-            errors = '@@@Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
+            errors = ' - Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
 
         return errors
 
@@ -155,12 +155,14 @@ class PackUniqueFilesValidator(BaseValidator):
         return False
 
     def validate_version_bump(self):
-        old_meta_file_content = get_remote_file(self.pack_meta_file)
-        current_meta_file_content = get_json(self.pack_meta_file)
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        old_meta_file_content = get_remote_file(metadata_file_path)
+        current_meta_file_content = get_json(metadata_file_path)
         old_version = old_meta_file_content.get('currentVersion', '0.0.0')
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         if LooseVersion(old_version) < LooseVersion(current_version):
             return True
+        self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack), metadata_file_path)
         return False
 
     def _is_pack_meta_file_structure_valid(self):

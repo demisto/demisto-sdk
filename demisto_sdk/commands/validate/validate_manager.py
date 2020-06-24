@@ -9,8 +9,8 @@ from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
     KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_RELEASE_NOTES_REGEX,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX, FileType)
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX,
+    FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -53,6 +53,8 @@ from demisto_sdk.commands.common.tools import (checked_type,
                                                find_type, get_pack_name,
                                                get_pack_names_from_files,
                                                get_remote_file, get_yaml,
+                                               has_remote_configured,
+                                               is_origin_content_repo,
                                                run_command)
 
 
@@ -64,6 +66,7 @@ class ValidateManager:
 
         # General configuration
         self.skip_docker_checks = False
+        self.silence_init_prints = silence_init_prints
         self.skip_conf_json = skip_conf_json
         self.is_backward_check = is_backward_check
         self.validate_in_id_set = validate_id_set
@@ -87,7 +90,8 @@ class ValidateManager:
         self.skipped_file_types = (FileType.CHANGELOG, FileType.DESCRIPTION, FileType.TEST_PLAYBOOK)
 
         if is_external_repo:
-            click.echo('Running in a private repository')
+            if not silence_init_prints:
+                click.echo('Running in a private repository')
             self.skip_conf_json = True
 
         if validate_all:
@@ -357,8 +361,8 @@ class ValidateManager:
 
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
-
-        click.echo(f"Validating against {self.prev_ver}")
+        if not self.silence_init_prints:
+            click.echo(f"Validating against {self.prev_ver}")
 
         modified_files, added_files, old_format_files, changed_meta_files = \
             self.get_modified_and_added_files(self.compare_type, self.prev_ver)
@@ -712,37 +716,49 @@ class ValidateManager:
         Returns:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
-        click.echo("Collecting all committed files")
+        if not self.silence_init_prints:
+            click.echo("Collecting all committed files")
+
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')
 
         modified_files, added_files, _, old_format_files, changed_meta_files = \
             self.filter_changed_files(all_committed_files_string, prev_ver)
-        if not self.is_circle:
-            click.echo("Collecting all local changed files")
-            # if self._remote_configured and not self._is_origin_demisto:
-            #     # all local non-committed changes and changes against prev_ver
-            #     all_changed_files_string = run_command(
-            #         'git diff --name-status upstream/master...HEAD')
-            #     modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-            #         self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
-            #
-            #     # only changes against prev_ver (without local changes)
-            #     outer_changes_files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
-            #     nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-            #         self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
-            #
-            # else:
-            # all local non-committed changes and changes against prev_ver
-            all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
-            modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-                self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
-            # only changes against prev_ver (without local changes)
-            outer_changes_files_string = run_command('git diff --name-status --no-merges HEAD')
-            nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-                self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+        if not self.is_circle:
+            if not self.silence_init_prints:
+                click.echo("Collecting all local changed files")
+
+            remote_configured = has_remote_configured()
+            is_origin_demisto = is_origin_content_repo()
+            if remote_configured and not is_origin_demisto:
+
+                # all local non-committed changes and changes against prev_ver
+                all_changed_files_string = run_command(
+                    'git diff --name-status upstream/master...HEAD')
+                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
+                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
+
+                # only changes against prev_ver (without local changes)
+                outer_changes_files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
+                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+
+            else:
+                if (not is_origin_demisto and not remote_configured) and self.silence_init_prints:
+                    error_message, error_code = Errors.changes_may_fail_validation()
+                    self.handle_error(error_message, error_code, file_path="General-Error", warning=True)
+
+                # all local non-committed changes and changes against prev_ver
+                all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
+                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
+                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
+
+                # only changes against prev_ver (without local changes)
+                outer_changes_files_string = run_command('git diff --name-status --no-merges HEAD')
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
+                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 
             old_format_files = old_format_files.union(nc_old_format_files)
             modified_files = modified_files.union(

@@ -27,6 +27,7 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
     "missing_validation_mode": "BA104",
+    "changes_may_fail_validation": "BA105",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -133,6 +134,7 @@ ERROR_CODE = {
     "empty_field_in_pack_metadata": "PA111",
     "pack_metadata_isnt_json": "PA112",
     "pack_metadata_missing_url_and_email": "PA113",
+    "pack_metadata_version_should_be_raised": "PA114",
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
@@ -211,6 +213,17 @@ class Errors:
                "* -a  - to validate all files in the repository\n" \
                "* -i [file_path] - to validate specified files\n" \
                "* -g - to validate all files changed in comparison to master branch"
+
+    @staticmethod
+    @error_code_decorator
+    def changes_may_fail_validation():
+        return "Warning: The changes may fail validation once submitted via a " \
+               "PR. To validate your changes, please make sure you have a git remote setup" \
+               " and pointing to github.com/demisto/content.\nYou can do this by running " \
+               "the following commands:\n\ngit remote add upstream https://github.com/" \
+               "demisto/content.git\ngit fetch upstream\n\nMore info about configuring " \
+               "a remote for a fork is available here: https://help.github.com/en/" \
+               "github/collaborating-with-issues-and-pull-requests/configuring-a-remote-for-a-fork"
 
     @staticmethod
     @error_code_decorator
@@ -828,6 +841,14 @@ class Errors:
     @error_code_decorator
     def pack_metadata_missing_url_and_email():
         return 'Contributed packs must include email or url.'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_version_should_be_raised(pack):
+        return f"The pack version needs to be raised - update the \"currentVersion\" field in the " \
+               f"pack_metadata.json or in case release notes are required run:\n" \
+               f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"generate them according to the new standard."
 
     @staticmethod
     @error_code_decorator

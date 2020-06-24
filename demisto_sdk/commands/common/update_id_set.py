@@ -960,7 +960,7 @@ def process_indicator_fields(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_INDICATOR_FIELD_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_incident_field_data(file_path))
+        res.append(get_general_data(file_path))
     return res
 
 

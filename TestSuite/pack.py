@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
+from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
 from TestSuite.text_based import TextBased
@@ -40,6 +41,10 @@ class Pack:
         self.indicator_field: List[JSONBased] = list()
         self.indicator_type: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+        self.reports: List[JSONBased] = list()
+        self.widgets: List[JSONBased] = list()
+        self.playbooks: List[Playbook] = list()
+        self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
 
         # Create base pack
@@ -56,6 +61,9 @@ class Pack:
 
         self._playbooks_path = self._pack_path / 'Playbooks'
         self._playbooks_path.mkdir()
+
+        self._test_playbooks_path = self._pack_path / 'TestPlaybooks'
+        self._test_playbooks_path.mkdir()
 
         self._classifiers_path = self._pack_path / 'Classifiers'
         self._classifiers_path.mkdir()
@@ -79,6 +87,12 @@ class Pack:
 
         self._layout_path = self._pack_path / 'Layouts'
         self._layout_path.mkdir()
+
+        self._report_path = self._pack_path / 'Reports'
+        self._report_path.mkdir()
+
+        self._widget_path = self._pack_path / 'Widgets'
+        self._widget_path.mkdir()
 
         self._release_notes = self._pack_path / 'ReleaseNotes'
         self._release_notes.mkdir()
@@ -259,6 +273,66 @@ class Pack:
         layout = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layouts.append(layout)
         return layout
+
+    def create_report(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'report'
+        report = self._create_json_based(name, prefix, content, dir_path=self._report_path)
+        self.reports.append(report)
+        return report
+
+    def create_widget(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'widget'
+        widget = self._create_json_based(name, prefix, content, dir_path=self._widget_path)
+        self.widgets.append(widget)
+        return widget
+
+    def create_playbook(
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            readme: Optional[str] = None,
+            changelog: Optional[str] = None,
+    ) -> Playbook:
+        if name is None:
+            name = f'playbook-{len(self.playbooks)}.yml'
+        if yml is None:
+            yml = {}
+        playbook = Playbook(self._playbooks_path, name, self._repo)
+        playbook.build(
+            yml,
+            readme,
+            changelog,
+        )
+        self.playbooks.append(playbook)
+        return playbook
+
+    def create_test_playbook(
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            readme: Optional[str] = None,
+            changelog: Optional[str] = None,
+    ) -> Playbook:
+        if name is None:
+            name = f'playbook-{len(self.test_playbooks)}'
+        if yml is None:
+            yml = {}
+        playbook = Playbook(self._test_playbooks_path, name, self._repo, is_test_playbook=True)
+        playbook.build(
+            yml,
+            readme,
+            changelog,
+        )
+        self.test_playbooks.append(playbook)
+        return playbook
 
     def create_release_notes(self, version: str, content: str = ''):
         rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)

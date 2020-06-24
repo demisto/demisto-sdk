@@ -51,6 +51,55 @@ class Repo:
         self.id_set = JSONBased(self._test_dir, 'id_set', '')
         self.id_set.write_json({})
 
+    def setup_one_pack(self, name):
+        pack = self.create_pack(name)
+
+        script = pack.create_script(f'{name}_script')
+        script.create_default_script()
+
+        integration = pack.create_integration(f'{name}_integration')
+        integration.create_default_integration()
+
+        classifier = pack.create_classifier(f'{name}_classifier')
+        classifier.write_json({'id': f'{name} - classifier'})
+
+        layout = pack.create_layout(f'{name}_layout')
+        layout.write_json({'id': f'{name} - layout'})
+
+        mapper = pack.create_mapper(f'{name}_mapper')
+        mapper.write_json({'id': f'{name} - mapper'})
+
+        incident_type = pack.create_incident_type(f'{name}_incident-type')
+        incident_type.write_json({'id': f'{name} - incident_type'})
+
+        incident_field = pack.create_incident_field(f'{name}_incident-field')
+        incident_field.write_json({'id': f'{name} - incident_field'})
+
+        indicator_type = pack.create_indicator_type(f'{name}_indicator-type')
+        indicator_type.write_json({'id': f'{name} - indicator_type'})
+
+        indicator_field = pack.create_indicator_field(f'{name}_indicator-field')
+        indicator_field.write_json({'id': f'{name} - indicator_field'})
+
+        dashboard = pack.create_dashboard(f'{name}_dashboard')
+        dashboard.write_json({'id': f'{name} - dashboard'})
+
+        report = pack.create_report(f'{name}_report')
+        report.write_json({'id': f'{name} - report'})
+
+        widget = pack.create_widget(f'{name}_widget')
+        widget.write_json({'id': f'{name} - widget'})
+
+        playbook = pack.create_playbook(f'{name}_playbook')
+        playbook.create_default_playbook()
+
+        test_playbook = pack.create_test_playbook(f'{name}_test_playbook')
+        test_playbook.create_default_playbook()
+
+    def setup_content_repo(self, number_of_packs):
+        for i in range(number_of_packs):
+            self.setup_one_pack(f'pack_{i}')
+
     def create_pack(self, name: Optional[str] = None):
         if name is None:
             name = f'pack_{len(self.packs)}'

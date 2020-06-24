@@ -288,45 +288,45 @@ REPORT = {
     "locked": False,
     "sections": [
         {
-          "layout": {
-              "tableColumns": [
-                "name",
-                "occurred",
-                "type",
-                "owner",
-                "severity",
-                "status",
-                "dueDate"
-              ],
-              "readableHeaders": {
-                  "name": "Name",
-                  "occurred": "Occurred",
-                  "type": "Type",
-                  "owner": "Owner",
-                  "severity": "Severity",
-                  "status": "Status",
-                  "dueDate": "Due Date"
-              },
-              "classes": "striped stackable small very compact",
-            "i": "1",
-            "rowPos": 6,
-            "columnPos": 0,
-            "w": 12,
-            "h": 2
-          },
+            "layout": {
+                "tableColumns": [
+                    "name",
+                    "occurred",
+                    "type",
+                    "owner",
+                    "severity",
+                    "status",
+                    "dueDate"
+                ],
+                "readableHeaders": {
+                    "name": "Name",
+                    "occurred": "Occurred",
+                    "type": "Type",
+                    "owner": "Owner",
+                    "severity": "Severity",
+                    "status": "Status",
+                    "dueDate": "Due Date"
+                },
+                "classes": "striped stackable small very compact",
+                "i": "1",
+                "rowPos": 6,
+                "columnPos": 0,
+                "w": 12,
+                "h": 2
+            },
             "query": {
-              "type": "incident",
-              "filter": {
-                  "query": "-status:Closed and (severity:High or severity:Critical)",
-                  "period": {
-                      "byFrom": "days",
-                      "fromValue": None,
-                      "by": "day"
-                  },
-                  "fromDate": None,
-                  "toDate": None
-              }
-          },
+                "type": "incident",
+                "filter": {
+                    "query": "-status:Closed and (severity:High or severity:Critical)",
+                    "period": {
+                        "byFrom": "days",
+                        "fromValue": None,
+                        "by": "day"
+                    },
+                    "fromDate": None,
+                    "toDate": None
+                }
+            },
             "type": "table",
             "title": "Critical and High Incidents"
         },
@@ -464,4 +464,44 @@ WIDGET = {
         ]
     },
     "description": ""
+}
+
+INCIDENT_FIELD = {
+    "associatedToAll": False,
+    "associatedTypes": [
+        "Me"
+    ],
+    "breachScript": "",
+    "caseInsensitive": True,
+    "cliName": "incidentfield",
+    "closeForm": False,
+    "columns": None,
+    "content": True,
+    "defaultRows": None,
+    "description": "",
+    "editForm": True,
+    "fieldCalcScript": "",
+    "group": 0,
+    "hidden": False,
+    "id": "incident-field",
+    "isReadOnly": False,
+    "locked": False,
+    "name": "incident-field",
+    "neverSetAsRequired": False,
+    "ownerOnly": False,
+    "placeholder": "",
+    "required": False,
+    "script": "",
+    "selectValues": None,
+    "sla": 0,
+    "system": False,
+    "systemAssociatedTypes": None,
+    "threshold": 72,
+    "type": "shortText",
+    "unmapped": False,
+    "unsearchable": False,
+    "useAsKpi": False,
+    "validationRegex": "",
+    "version": -1,
+    "fromVersion": "5.0.0"
 }

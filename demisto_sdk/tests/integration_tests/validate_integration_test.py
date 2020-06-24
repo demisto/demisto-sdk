@@ -10,10 +10,13 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import get_json, get_yaml
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
+    PackUniqueFilesValidator
+from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT, MAPPER,
-    NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
+    CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
+    LAYOUT, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -37,7 +40,7 @@ CONF_JSON_MOCK = {
 
 
 class TestIncidentFieldValidation:
-    def test_valid_incident_field(self):
+    def test_valid_incident_field(self, mocker, repo):
         """
         Given
         - Valid `city` incident field.
@@ -49,12 +52,16 @@ class TestIncidentFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
-        pack_incident_field_path = join(AZURE_FEED_PACK_PATH, "IncidentFields/incidentfield-city.json")
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_incident_field_path, "--no-conf-json"])
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_incident_field("incident-field", INCIDENT_FIELD)
+        incident_field_path = pack.incident_field[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path], catch_exceptions=False)
+        assert f'Validating {incident_field_path} as incidentfield' in result.stdout
+        assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
-        assert f"Validating {pack_incident_field_path} as incidentfield" in result.stdout
-        assert "The files are valid" in result.stdout
 
     def test_invalid_incident_field(self, mocker, repo):
         """
@@ -68,15 +75,16 @@ class TestIncidentFieldValidation:
         - Ensure validation fails on IF102 - wrong system field value.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
-        pack_incident_field_path = join(AZURE_FEED_PACK_PATH, "IncidentFields/incidentfield-city.json")
-        invalid_incident_field_json = get_json(pack_incident_field_path)
-        invalid_incident_field_json['system'] = True
         pack = repo.create_pack('PackName')
-        incident_field = pack.create_incident_field(name='incident-field', content=invalid_incident_field_json)
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", incident_field.path, "--no-conf-json"])
+        incident_field_copy = INCIDENT_FIELD.copy()
+        incident_field_copy['system'] = True
+        pack.create_incident_field("incident-field", incident_field_copy)
+        incident_field_path = pack.incident_field[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path], catch_exceptions=False)
         assert result.exit_code == 1
-        assert f"Validating {incident_field.path} as incidentfield" in result.stdout
+        assert f"Validating {incident_field_path} as incidentfield" in result.stdout
         assert 'IF102' in result.stdout
         assert "The system key must be set to False" in result.stdout
 
@@ -1186,4 +1194,199 @@ class TestImageValidation:
         assert f'Validating {image_path} as image' in result.stdout
         assert 'IM106' in result.stdout
         assert 'This is the default image, please change to the integration image.' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestAllFilesValidator:
+    def test_all_files_valid(self, mocker, repo):
+        """
+        Given
+        - A valid repo.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes on all files.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        pack1 = repo.create_pack('PackName1')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        integration = pack1.create_integration(yml=valid_integration_yml)
+        incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
+
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        pack2 = repo.create_pack('PackName2')
+        script = pack2.create_script(yml=valid_script_yml)
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--test-mode', '--no-conf-json'],
+                                   catch_exceptions=False)
+
+        assert 'Validating all files' in result.stdout
+        assert 'Validating Packs/PackName1 unique pack files' in result.stdout
+        assert 'Validating Packs/PackName2 unique pack files' in result.stdout
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
+        assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_not_all_files_valid(self, mocker, repo):
+        """
+        Given
+        - An invalid repo.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack1 = repo.create_pack('PackName1')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        integration = pack1.create_integration(yml=valid_integration_yml)
+        incident_field_copy = INCIDENT_FIELD.copy()
+        incident_field_copy['content'] = False
+        incident_field = pack1.create_incident_field('incident-field', content=incident_field_copy)
+        dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
+
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml['name'] = invalid_script_yml['name'] + "_v2"
+        pack2 = repo.create_pack('PackName2')
+        script = pack2.create_script(yml=invalid_script_yml)
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--test-mode', '--no-conf-json'],
+                                   catch_exceptions=False)
+
+        assert 'Validating all files' in result.stdout
+        assert 'Validating Packs/PackName1 unique pack files' in result.stdout
+        assert 'Validating Packs/PackName2 unique pack files' in result.stdout
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
+        assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'IF101' in result.stdout
+        assert 'The content key must be set to True.' in result.stdout
+        assert 'SC100' in result.stdout
+        assert 'The name of this v2 script is incorrect' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestValidationUsingGit:
+    def test_passing_validation_using_git(self, mocker, repo):
+        """
+        Given
+        - A valid repo.
+
+        When
+        - Running validate using git on it.
+
+        Then
+        - Ensure validate passes on all files.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        pack1 = repo.create_pack('PackName1')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        integration = pack1.create_integration(yml=valid_integration_yml)
+        incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
+
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        pack2 = repo.create_pack('PackName2')
+        script = pack2.create_script(yml=valid_script_yml)
+
+        modified_files = {integration.yml_path, incident_field.get_path_from_pack()}
+        added_files = {dashboard.get_path_from_pack(), script.yml_path}
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
+                                                                                           set(), set()))
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--test-mode', '--no-conf-json',
+                                          '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+        assert 'Running validation on branch' in result.stdout
+        assert 'Running validation on modified files' in result.stdout
+        assert 'Running validation on newly added files' in result.stdout
+        assert 'Running validation on changed pack unique files' in result.stdout
+        assert 'Validating Packs/PackName1 unique pack files' in result.stdout
+        assert 'Validating Packs/PackName2 unique pack files' in result.stdout
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
+        assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_failing_validation_using_git(self, mocker, repo):
+        """
+        Given
+        - An invalid repo.
+
+        When
+        - Running validate using git on it.
+
+        Then
+        - Ensure validate fails.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack1 = repo.create_pack('PackName1')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        integration = pack1.create_integration(yml=valid_integration_yml)
+        incident_field_copy = INCIDENT_FIELD.copy()
+        incident_field_copy['content'] = False
+        incident_field = pack1.create_incident_field('incident-field', content=incident_field_copy)
+        dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
+
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml['name'] = invalid_script_yml['name'] + "_v2"
+        pack2 = repo.create_pack('PackName2')
+        script = pack2.create_script(yml=invalid_script_yml)
+
+        modified_files = {integration.yml_path, incident_field.get_path_from_pack()}
+        added_files = {dashboard.get_path_from_pack(), script.yml_path}
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
+                                                                                           set(), set()))
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--test-mode', '--no-conf-json',
+                                          '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+
+        assert 'Running validation on branch' in result.stdout
+        assert 'Running validation on modified files' in result.stdout
+        assert 'Running validation on newly added files' in result.stdout
+        assert 'Running validation on changed pack unique files' in result.stdout
+        assert 'Validating Packs/PackName1 unique pack files' in result.stdout
+        assert 'Validating Packs/PackName2 unique pack files' in result.stdout
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
+        assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'IF101' in result.stdout
+        assert 'The content key must be set to True.' in result.stdout
+        assert 'SC100' in result.stdout
+        assert 'The name of this v2 script is incorrect' in result.stdout
         assert result.exit_code == 1

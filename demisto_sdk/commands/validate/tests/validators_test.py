@@ -32,6 +32,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST,
     GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
@@ -57,6 +58,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
     VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH, WIDGET_TARGET)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
+    INCIDENT_FIELD
 from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
@@ -400,10 +403,15 @@ class TestValidators:
         file_validator.run_all_validations_on_file(file_path, file_type)
         assert file_validator._is_valid
 
-    def test_files_validator_validate_pack_unique_files(self,):
+    def test_files_validator_validate_pack_unique_files__file_validator(self,):
         files_validator = FilesValidator(skip_conf_json=True)
         files_validator.validate_pack_unique_files({VALID_PACK})
         assert files_validator._is_valid
+
+    def test_files_validator_validate_pack_unique_files__validate_manager(self, ):
+        validate_manager = ValidateManager(skip_conf_json=True)
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
+        assert result
 
     FILE_PATH = [
         ([VALID_SCRIPT_PATH], 'script')
@@ -456,7 +464,23 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
-    def test_verify_no_dup_rn(self, added_files: set, expected: bool):
+    def test_verify_no_dup_rn__validate_manager(self, added_files: set, expected: bool):
+        """
+            Given:
+                - A list of added files
+            When:
+                - verifying there are no other new release notes.
+            Then:
+                - return a validation response
+            Case 1: Release notes in different packs.
+            Case 2: Release notes where one is in the same pack
+        """
+        validate_manager = ValidateManager(skip_conf_json=True)
+        result = validate_manager.validate_no_duplicated_release_notes(added_files)
+        assert result is expected
+
+    @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
+    def test_verify_no_dup_rn__file_validator(self, added_files: set, expected: bool):
         """
             Given:
                 - A list of added files
@@ -509,7 +533,15 @@ class TestValidators:
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
 
-    def test_get_error_ignore_list(self, mocker):
+    def test_get_error_ignore_list__file_validator(self, mocker):
+        """
+            Given:
+                - A file path to pack ignore
+            When:
+                - running get_error_ignore_list from file validator
+            Then:
+                - verify that the created ignored_errors list is correct
+        """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
@@ -521,21 +553,56 @@ class TestValidators:
         assert ignore_errors_list['file_name'] == ['BA101', 'IF107']
         assert 'SC100' not in ignore_errors_list['file_name']
 
-    def test_create_ignored_errors_list(self, mocker):
+    def test_create_ignored_errors_list__file_validator(self):
+        """
+            Given:
+                - A list of errors that should be checked
+            When:
+                - Running create_ignored_errors_list from file validator
+            Then:
+                - verify that the ignored error list that comes out is correct
+        """
         file_validator = FilesValidator()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
 
+    def test_get_error_ignore_list__validate_manager(self, mocker):
+        """
+            Given:
+                - A file path to pack ignore
+            When:
+                - running get_error_ignore_list from validate manager
+            Then:
+                - verify that the created ignored_errors list is correct
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
+
+        mocker.patch.object(ValidateManager, 'get_pack_ignore_file_path', return_value=test_file)
+
+        validate_manager = ValidateManager()
+        ignore_errors_list = validate_manager.get_error_ignore_list("fake")
+        assert ignore_errors_list['file_name'] == ['BA101', 'IF107']
+        assert 'SC100' not in ignore_errors_list['file_name']
+
+    def test_create_ignored_errors_list__validate_manager(self):
+        validate_manager = ValidateManager()
+        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
+        ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
+
     def test_added_files_type_using_function(self, repo):
         """
             Given:
-                - A file path to a new script, that is not located in a "regular" scripts path
+                - A list of errors that should be checked
             When:
-                - verifying added files are valid
+                - Running create_ignored_errors_list from validate manager
             Then:
-                - verify that the validation detects the correct file type and passes successfully
+                - verify that the ignored error list that comes out is correct
         """
         saved_stdout = sys.stdout
 
@@ -556,37 +623,95 @@ class TestValidators:
             finally:
                 sys.stdout = saved_stdout
 
+    def test_is_py_or_yml__validate_manager(self):
+        """
+            Given:
+                - A file path which contains a python script
+            When:
+                - verifying the yml is valid using validate manager
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'CortexXDR',
+                                 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
+        validate_manager = ValidateManager()
+        res = validate_manager._is_py_script_or_integration(test_file)
+        assert res is False
 
-def test_is_py_or_yml():
-    """
-        Given:
-            - A file path which contains a python script
-        When:
-            - verifying the yml is valid
-        Then:
-            - return a False validation response
-    """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'CortexXDR',
-                             'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
-    file_validator = FilesValidator()
-    res = file_validator._is_py_script_or_integration(test_file)
-    assert res is False
+    def test_is_py_or_yml_invalid__validate_manager(self):
+        """
+            Given:
+                - A file path which contains a python script in a legacy yml schema
+            When:
+                - verifying the yml is valid using validate manager
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path,
+                                 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
+        validate_manager = ValidateManager()
+        res = validate_manager._is_py_script_or_integration(test_file)
+        assert res is False
 
+    def test_is_py_or_yml__file_validator(self):
+        """
+            Given:
+                - A file path which contains a python script
+            When:
+                - verifying the yml is valid using file validator
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'CortexXDR',
+                                 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
+        file_validator = FilesValidator()
+        res = file_validator._is_py_script_or_integration(test_file)
+        assert res is False
 
-def test_is_py_or_yml_invalid():
-    """
-        Given:
-            - A file path which contains a python script in a legacy yml schema
-        When:
-            - verifying the yml is valid
-        Then:
-            - return a False validation response
-    """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
-    file_validator = FilesValidator()
-    res = file_validator._is_py_script_or_integration(test_file)
-    assert res is False
+    def test_is_py_or_yml_invalid__file_validator(self):
+        """
+            Given:
+                - A file path which contains a python script in a legacy yml schema
+            When:
+                - verifying the yml is valid using file validator
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path,
+                                 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
+        file_validator = FilesValidator()
+        res = file_validator._is_py_script_or_integration(test_file)
+        assert res is False
+
+    def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
+        pack1 = repo.create_pack('PackName1')
+        incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        pack2 = repo.create_pack('PackName2')
+        incident_field2 = pack2.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        validate_manager = ValidateManager()
+        modified_files = {incident_field1.get_path_from_pack(),
+                          incident_field2.get_path_from_pack()}
+        added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md',
+                       'Packs/PackName2/ReleaseNotes/1_1_1.md'}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is True
+
+    def test_validate_no_missing_release_notes__missing_rn(self, repo):
+        pack1 = repo.create_pack('PackName1')
+        incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        pack2 = repo.create_pack('PackName2')
+        incident_field2 = pack2.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        validate_manager = ValidateManager()
+        modified_files = {incident_field1.get_path_from_pack(),
+                          incident_field2.get_path_from_pack()}
+        added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is False

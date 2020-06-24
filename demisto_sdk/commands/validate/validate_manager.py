@@ -576,14 +576,16 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
-    def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files=None):
+    def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
         valid_pack_files = set()
 
         added_packs = get_pack_names_from_files(added_files)
+        # we exclude the check for changes in release notes and readme files
         modified_packs = get_pack_names_from_files(modified_files, skip_file_types={FileType.RELEASE_NOTES,
                                                                                     FileType.README})
+        # modified packs and packs where the meta file changed should have their version raised
         packs_that_should_have_version_raised = get_pack_names_from_files(changed_meta_files).union(modified_packs)
 
         changed_packs = modified_packs.union(added_packs).union(packs_that_should_have_version_raised)
@@ -628,7 +630,7 @@ class ValidateManager:
                     fg="bright_cyan")
         added_rn = set()
         for file in added_files:
-            if re.search(PACKS_RELEASE_NOTES_REGEX, file):
+            if find_type(file) == FileType.RELEASE_NOTES:
                 pack_name = get_pack_name(file)
                 if pack_name not in added_rn:
                     added_rn.add(pack_name)
@@ -825,14 +827,13 @@ class ValidateManager:
                 click.secho('{} file status is an unknown one, please check. File status was: {}'
                             .format(file_path, file_status), fg="bright_red")
 
+            elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
+                if file_status.lower() == 'a':
+                    self.new_packs.add(get_pack_name(file_path))
+                elif file_status.lower() == 'm':
+                    changed_meta_files.add(file_path)
+
             elif print_ignored_files and not checked_type(file_path, IGNORED_TYPES_REGEXES):
-
-                if file_path.endswith(PACKS_PACK_META_FILE_NAME):
-                    if file_status.lower() == 'a':
-                        self.new_packs.add(get_pack_name(file_path))
-                    elif file_status.lower() == 'm':
-                        changed_meta_files.add(file_path)
-
                 if file_path not in self.ignored_files:
                     self.ignored_files.add(file_path)
                     click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
@@ -939,7 +940,7 @@ class ValidateManager:
     def get_packs_with_added_release_notes(added_files):
         added_rn = set()
         for file in added_files:
-            if find_type(file) == FileType.RELEASE_NOTES:
+            if find_type(path=file) == FileType.RELEASE_NOTES:
                 added_rn.add(get_pack_name(file))
 
         return added_rn

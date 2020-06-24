@@ -88,9 +88,13 @@ class UpdateRN:
         return True
 
     def is_bump_required(self):
-        diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
-        if "currentVersion" in diff:
-            return False
+        try:
+            diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
+            if "currentVersion" in diff:
+                return False
+        except RuntimeError:
+            print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "
+                          f"Please verify the pack exists and the pack name is correct.")
         return True
 
     def find_added_pack_files(self):
@@ -156,7 +160,7 @@ class UpdateRN:
             elif 'Classifiers' in file_path:
                 _file_type = 'Classifiers'
             elif 'Layouts' in file_path:
-                _file_type = 'Layout'
+                _file_type = 'Layouts'
             elif 'Reports' in file_path:
                 _file_type = 'Reports'
             elif 'Widgets' in file_path:
@@ -251,7 +255,7 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in changed_items.items():
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1]):
             if k == 'N/A':
                 continue
             elif v == 'Integration':

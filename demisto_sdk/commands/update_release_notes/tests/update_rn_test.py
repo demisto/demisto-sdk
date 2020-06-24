@@ -297,7 +297,7 @@ class TestRNUpdateUnit:
 - %%UPDATE_RN%%
 """
 
-    diff_package = [('Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layout')),
+    diff_package = [('Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layouts')),
                     ('Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
                     ('IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
                     ('IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),

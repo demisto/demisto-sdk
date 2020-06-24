@@ -537,6 +537,7 @@ def get_layout_data(path):
         data['typename'] = type_name
         incident_indicator_types_dependency.add(type_name)
     data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -545,7 +546,6 @@ def get_layout_data(path):
         data['pack'] = pack
     if kind:
         data['kind'] = kind
-    data['path'] = path
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
@@ -586,6 +586,7 @@ def get_incident_field_data(path, incidents_types_list):
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -623,6 +624,7 @@ def get_indicator_type_data(path):
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -651,6 +653,7 @@ def get_incident_type_data(path):
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -685,6 +688,7 @@ def get_classifier_data(path):
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -721,6 +725,7 @@ def get_mapper_data(path):
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -747,6 +752,7 @@ def get_general_data(path):
     pack = get_pack_name(path)
     if brandname:  # for classifiers
         data['name'] = brandname
+    data['file_path'] = path
     if name:  # for the rest
         data['name'] = name
     if toversion:

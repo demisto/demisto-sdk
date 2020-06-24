@@ -38,6 +38,7 @@ class Pack:
         self.incident_types: List[JSONBased] = list()
         self.incident_field: List[JSONBased] = list()
         self.indicator_field: List[JSONBased] = list()
+        self.indicator_type: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
         self.release_notes: List[TextBased] = list()
 
@@ -205,7 +206,7 @@ class Pack:
             content: dict = None,
             release_notes: bool = False
     ):
-        prefix = 'incident-field'
+        prefix = 'incidentfield'
         incident_field = self._create_json_based(name, prefix, content)
         if release_notes:
             release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
@@ -218,7 +219,7 @@ class Pack:
             self,
             name,
             content: dict = None):
-        prefix = 'incident-type'
+        prefix = 'incidenttype'
         incident_type = self._create_json_based(name, prefix, content)
         self.incident_types.append(incident_type)
         return incident_type
@@ -228,9 +229,27 @@ class Pack:
             name,
             content: dict = None
     ):
-        prefix = 'incident-field'
+        prefix = 'incidentfield'
         indicator_field = self._create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
+
+    def create_indicator_type(
+            self,
+            name,
+            content: dict = None
+    ):
+        prefix = 'reputation'
+        indicator_type = self._create_json_based(name, prefix, content)
+        self.indicator_type.append(indicator_type)
+
+    def create_layout(
+            self,
+            name,
+            content: dict = None
+    ):
+        prefix = 'layout'
+        layout = self._create_json_based(name, prefix, content)
+        self.layouts.append(layout)
 
     def create_release_notes(self, version: str, content: str = ''):
         rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)

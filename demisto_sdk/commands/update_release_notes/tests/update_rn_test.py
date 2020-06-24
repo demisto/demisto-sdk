@@ -19,18 +19,19 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
-                          "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
-                          "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
-                          "\n#### Incident Fields\n##### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
-                          "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
-                          "\n#### Layouts\n##### Hello World Layout\n- %%UPDATE_RN%%\n" \
-                          "\n#### Incident Types\n##### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
-                          "\n#### Indicator Types\n##### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
-                          "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n" \
-                          "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
-                          "\n#### Connections\n##### Hello World Connection\n- %%UPDATE_RN%%\n" \
-                          "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n"
+        expected_result = \
+            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
+            "\n#### Connections\n##### Hello World Connection\n- %%UPDATE_RN%%\n" \
+            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Fields\n##### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Types\n##### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Types\n##### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
+            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
+            "\n#### Layouts\n##### Hello World Layout\n- %%UPDATE_RN%%\n" \
+            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
+            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
+            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
+            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())

@@ -17,11 +17,20 @@ def setup_one_pack(repo, name):
     layout = pack.create_layout(f'{name}_layout')
     layout.write_json({'id': f'{name} - layout'})
 
-    pack.create_mapper(f'{name}_mapper')
-    pack.create_incident_type(f'{name}_incident-type')
-    pack.create_incident_field(f'{name}_incident-field')
-    pack.create_indicator_type(f'{name}_indicator-type')
-    pack.create_indicator_field(f'{name}_indicator-field')
+    mapper = pack.create_mapper(f'{name}_mapper')
+    mapper.write_json({'id': f'{name} - mapper'})
+
+    incident_type = pack.create_incident_type(f'{name}_incident-type')
+    incident_type.write_json({'id': f'{name} - incident_type'})
+
+    incident_field = pack.create_incident_field(f'{name}_incident-field')
+    incident_field.write_json({'id': f'{name} - incident_field'})
+
+    indicator_type = pack.create_indicator_type(f'{name}_indicator-type')
+    indicator_type.write_json({'id': f'{name} - indicator_type'})
+
+    indicator_field = pack.create_indicator_field(f'{name}_indicator-field')
+    indicator_field.write_json({'id': f'{name} - indicator_field'})
 
 
 def setup_whole_repo(repo, number_of_packs):

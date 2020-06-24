@@ -748,7 +748,8 @@ class ValidateManager:
             else:
                 if (not is_origin_demisto and not remote_configured) and self.silence_init_prints:
                     error_message, error_code = Errors.changes_may_fail_validation()
-                    self.handle_error(error_message, error_code, file_path="General-Error", warning=True)
+                    self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
+                                      drop_line=True)
 
                 # all local non-committed changes and changes against prev_ver
                 all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))

@@ -74,6 +74,12 @@ class Pack:
         self._indicator_fields = self._pack_path / 'IndicatorFields'
         self._indicator_fields.mkdir()
 
+        self._indicator_types = self._pack_path / 'IndicatorTypes'
+        self._indicator_types.mkdir()
+
+        self._layout_path = self._pack_path / 'Layouts'
+        self._layout_path.mkdir()
+
         self._release_notes = self._pack_path / 'ReleaseNotes'
         self._release_notes.mkdir()
 
@@ -186,7 +192,7 @@ class Pack:
             content: dict = None
     ) -> JSONBased:
         prefix = 'classifier-mapper'
-        mapper = self._create_json_based(name, prefix, content)
+        mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
         self.mapper.append(mapper)
         return mapper
 
@@ -196,7 +202,7 @@ class Pack:
             content: dict = None
     ) -> JSONBased:
         prefix = 'dashboard'
-        dashboard = self._create_json_based(name, prefix, content)
+        dashboard = self._create_json_based(name, prefix, content, dir_path=self._dashboards_path)
         self.dashboards.append(dashboard)
         return dashboard
 
@@ -207,7 +213,7 @@ class Pack:
             release_notes: bool = False
     ) -> JSONBased:
         prefix = 'incidentfield'
-        incident_field = self._create_json_based(name, prefix, content)
+        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incidents_field_path)
         if release_notes:
             release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
                                                     dir_path=self._incidents_field_path)
@@ -220,7 +226,7 @@ class Pack:
             name,
             content: dict = None) -> JSONBased:
         prefix = 'incidenttype'
-        incident_type = self._create_json_based(name, prefix, content)
+        incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
         self.incident_types.append(incident_type)
         return incident_type
 
@@ -230,7 +236,7 @@ class Pack:
             content: dict = None
     ) -> JSONBased:
         prefix = 'incidentfield'
-        indicator_field = self._create_json_based(name, prefix, content)
+        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields)
         self.indicator_field.append(indicator_field)
         return indicator_field
 
@@ -240,7 +246,7 @@ class Pack:
             content: dict = None
     ) -> JSONBased:
         prefix = 'reputation'
-        indicator_type = self._create_json_based(name, prefix, content)
+        indicator_type = self._create_json_based(name, prefix, content, dir_path=self._indicator_types)
         self.indicator_type.append(indicator_type)
         return indicator_type
 
@@ -250,7 +256,7 @@ class Pack:
             content: dict = None
     ) -> JSONBased:
         prefix = 'layout'
-        layout = self._create_json_based(name, prefix, content)
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layouts.append(layout)
         return layout
 

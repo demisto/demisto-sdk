@@ -255,7 +255,7 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in changed_items.items():
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1], reverse=True):
             if k == 'N/A':
                 continue
             elif v == 'Integration':
@@ -283,7 +283,7 @@ class UpdateRN:
                     rn_string += '\n#### Classifiers\n'
                     classifier_header = True
                 rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
-            elif v == 'Layouts':
+            elif v == 'Layout':
                 if not layout_header:
                     rn_string += '\n#### Layouts\n'
                     layout_header = True

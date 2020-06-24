@@ -641,6 +641,7 @@ class TestMappers:
         assert 'dummy incident field 1' in result['incident_fields']
         assert 'dummy incident field 2' in result['incident_fields']
         assert 'dummy incident field 3' in result['incident_fields']
+        assert 'occurred' not in result['incident_fields']
 
     @staticmethod
     def test_get_mappers_data_no_types_fields():

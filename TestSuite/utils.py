@@ -31,6 +31,25 @@ class IsEqualFunctions:
         if not isinstance(list1, list) or not isinstance(list2, list):
             return False
 
-        if sorted(list1) != sorted(list2):
+        if not len(list1) == len(list2):
             return False
+
+        for item in list1:
+            if item not in list2:
+                return False
+
+        return True
+
+    @staticmethod
+    def is_sets_equal(set1: set, set2: set):
+        if not isinstance(set1, set) or not isinstance(set2, set):
+            return False
+
+        if not len(set1) == len(set2):
+            return False
+
+        for item in set1:
+            if item not in set2:
+                return False
+
         return True

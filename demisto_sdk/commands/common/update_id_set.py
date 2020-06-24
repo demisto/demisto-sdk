@@ -717,6 +717,8 @@ def get_mapper_data(path):
         incidents_types.add(key)
         incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
 
+    incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
+
     if name:
         data['name'] = name
     if toversion:

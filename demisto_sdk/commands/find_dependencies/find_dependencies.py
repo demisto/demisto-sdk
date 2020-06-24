@@ -155,9 +155,9 @@ class PackDependencies:
         return None
 
     @staticmethod
-    def _search_packs_by_fields_names(fields_to_search, fields_id_set_section):
+    def _search_packs_by_items_names_or_ids(items_names, items_list):
         """
-        Searches for implemented packs of the given incident/indicator fields.
+        Searches for implemented packs of the given items.
 
         Args:
             items_names (str or list): items names to search.
@@ -167,18 +167,17 @@ class PackDependencies:
             set or None: found pack ids or None in case nothing was found.
 
         """
-        packs = list()
-        if not isinstance(fields_to_search, list):
-            fields_to_search = [fields_to_search]
+        packs = set()
+        if not isinstance(items_names, list):
+            items_names = [items_names]
 
-        for incident_field_name in fields_to_search:
-            for incident_field in fields_id_set_section:
-                incident_field_nachine_name = list(incident_field.keys())[0]
-                incident_field_details = list(incident_field.values())[0]
-                if (incident_field_name in incident_field_nachine_name or incident_field_name in
-                    incident_field_details.get('name')) \
-                        and incident_field_details.get('pack'):
-                    packs.append(incident_field_details.get('pack'))
+        for incident_field_name in items_names:
+            for incident_field in items_list:
+                machine_name = list(incident_field.keys())[0]
+                item_details = list(incident_field.values())[0]
+                if (incident_field_name in machine_name or incident_field_name in
+                        item_details.get('name') and item_details.get('pack')):
+                    packs.add(item_details.get('pack'))
 
         return packs
 
@@ -321,17 +320,17 @@ class PackDependencies:
 
             # ---- incident fields packs ----
             incident_fields = playbook_data.get('incident_fields', [])
-            packs_found_from_incident_fields = PackDependencies._search_packs_by_fields_names(incident_fields,
-                                                                                              id_set['IncidentFields'])
+            packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(incident_fields,
+                                                                                                    id_set['IncidentFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
                 dependencies_packs.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
             indicator_fields = playbook_data.get('indicator_fields', [])
-            packs_found_from_indicator_fields = PackDependencies._search_packs_by_fields_names(indicator_fields,
-                                                                                               id_set[
-                                                                                                   'IndicatorFields'])
+            packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(indicator_fields,
+                                                                                                     id_set[
+                                                                                                         'IndicatorFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
                 dependencies_packs.update(pack_dependencies_data)
@@ -365,7 +364,7 @@ class PackDependencies:
                 dependencies_packs.update(pack_dependencies_data)
 
             related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
-            packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names(
+            packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 related_incident_and_indicator_fields, id_set['IncidentFields'] + id_set['IndicatorFields'])
 
             if packs_found_from_incident_indicator_fields:
@@ -433,7 +432,7 @@ class PackDependencies:
 
             related_integrations = incident_field_data.get('integrations', [])
             packs_found_from_integrations = PackDependencies._search_packs_by_items_names(
-                related_integrations, id_set['IncidentTypes'])
+                related_integrations, id_set['integrations'])
 
             if packs_found_from_integrations:
                 pack_dependencies_data = PackDependencies. \
@@ -467,7 +466,7 @@ class PackDependencies:
             integration_data = next(iter(integration.values()))
 
             related_classifiers = integration_data.get('classifiers', [])
-            packs_found_from_classifiers = PackDependencies._search_packs_by_items_names(
+            packs_found_from_classifiers = PackDependencies._search_packs_by_items_names_or_ids(
                 related_classifiers, id_set['Classifiers'])
 
             if packs_found_from_classifiers:
@@ -476,7 +475,7 @@ class PackDependencies:
                 dependencies_packs.update(pack_dependencies_data)
 
             related_mappers = integration_data.get('mappers', [])
-            packs_found_from_mappers = PackDependencies._search_packs_by_items_names(
+            packs_found_from_mappers = PackDependencies._search_packs_by_items_names_or_ids(
                 related_mappers, id_set['Mappers'])
 
             if packs_found_from_mappers:
@@ -596,8 +595,8 @@ class PackDependencies:
                     _label_as_mandatory(packs_found_from_incident_types)
                 dependencies_packs.update(pack_dependencies_data)
 
-            related_incident_fields = mapper_data.get('incident_and_indicator_fields', [])
-            packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names(
+            related_incident_fields = mapper_data.get('incident_fields', [])
+            packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 related_incident_fields, id_set['IncidentFields'])
 
             if packs_found_from_incident_fields:

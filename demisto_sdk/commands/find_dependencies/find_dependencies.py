@@ -211,7 +211,7 @@ class PackDependencies:
         mandatory is set to False.
 
         Args:
-            pack_ids (list): pack ids list.
+            pack_ids (set): pack ids list.
 
         Returns:
             list: collection of packs and mandatory flag set to True if more than 2 packs found.
@@ -320,17 +320,16 @@ class PackDependencies:
 
             # ---- incident fields packs ----
             incident_fields = playbook_data.get('incident_fields', [])
-            packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(incident_fields,
-                                                                                                    id_set['IncidentFields'])
+            packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
+                incident_fields, id_set['IncidentFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
                 dependencies_packs.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
             indicator_fields = playbook_data.get('indicator_fields', [])
-            packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(indicator_fields,
-                                                                                                     id_set[
-                                                                                                         'IndicatorFields'])
+            packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
+                indicator_fields, id_set['IndicatorFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
                 dependencies_packs.update(pack_dependencies_data)
@@ -657,9 +656,6 @@ class PackDependencies:
             _collect_integrations_dependencies(pack_items['integrations'], id_set)
         incidents_types_dependencies = PackDependencies. \
             _collect_incidents_types_dependencies(pack_items['incidents_types'], id_set)
-
-        incidents_fields_dependencies = PackDependencies. \
-            _collect_incidents_fields_dependencies(pack_items['incidents_fields'], id_set)
         classifiers_dependencies = PackDependencies. \
             _collect_classifiers_dependencies(pack_items['classifiers'], id_set)
         mappers_dependencies = PackDependencies. \

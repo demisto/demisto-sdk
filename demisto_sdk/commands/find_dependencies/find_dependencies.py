@@ -130,7 +130,7 @@ class PackDependencies:
     @staticmethod
     def _search_packs_by_items_names(items_names, items_list):
         """
-        Searches for implemented scrip/integration/playbook.
+        Searches for implemented script/integration/playbook.
 
         Args:
             items_names (str or list): items names to search.
@@ -153,6 +153,33 @@ class PackDependencies:
             return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
         return None
+
+    @staticmethod
+    def _search_packs_by_fields_names(fields_to_search, fields_id_set_section):
+        """
+        Searches for implemented packs of the given incident/indicator fields.
+
+        Args:
+            items_names (str or list): items names to search.
+            items_list (list): specific section of id set.
+
+        Returns:
+            set or None: found pack ids or None in case nothing was found.
+
+        """
+        packs = list()
+        if not isinstance(fields_to_search, list):
+            fields_to_search = [fields_to_search]
+
+        for incident_field_name in fields_to_search:
+            for incident_field in fields_id_set_section:
+                incident_field_nachine_name = list(incident_field.keys())[0]
+                incident_field_details = list(incident_field.values())[0]
+                if (incident_field_name in incident_field_nachine_name or incident_field_name in
+                        incident_field_details.get('name') and incident_field_details.get('pack')):
+                    packs.append(incident_field_details.get('pack'))
+
+        return packs
 
     @staticmethod
     def _search_packs_by_integration_command(command, id_set):
@@ -265,6 +292,7 @@ class PackDependencies:
             implementing_script_names = playbook_data.get('implementing_scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(implementing_script_names,
                                                                                      id_set['scripts'])
+            # ---- scripts packs ----
             if packs_found_from_scripts:  # found packs of implementing scripts
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
                 dependencies_packs.update(pack_dependencies_data)
@@ -276,19 +304,36 @@ class PackDependencies:
                                                                                              id_set['integrations']) \
                     if integration_name else PackDependencies._search_packs_by_integration_command(command, id_set)
 
+                # ---- integrations packs ----
                 if packs_found_from_integration:
                     pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
                         packs_found_from_integration)
                     dependencies_packs.update(pack_dependencies_data)
 
+            # ---- other playbooks packs ----
             implementing_playbook_names = playbook_data.get('implementing_playbooks', [])
             packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(implementing_playbook_names,
                                                                                        id_set['playbooks'])
-
             if packs_found_from_playbooks:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
                 dependencies_packs.update(pack_dependencies_data)
 
+            # ---- incident fields packs ----
+            incident_fields = playbook_data.get('incident_fields', [])
+            packs_found_from_incident_fields = PackDependencies._search_packs_by_fields_names(incident_fields,
+                                                                                              id_set['IncidentFields'])
+            if packs_found_from_incident_fields:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
+                dependencies_packs.update(pack_dependencies_data)
+
+            # ---- indicator fields packs ----
+            indicator_fields = playbook_data.get('indicator_fields', [])
+            packs_found_from_indicator_fields = PackDependencies._search_packs_by_fields_names(indicator_fields,
+                                                                                               id_set[
+                                                                                                   'IndicatorFields'])
+            if packs_found_from_incident_fields:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
+                dependencies_packs.update(pack_dependencies_data)
         return dependencies_packs
 
     @staticmethod
@@ -406,6 +451,162 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_integrations_dependencies(pack_integrations, id_set):
+        """
+        Collects integrations dependencies.
+        Args:
+            pack_integrations (list): collection of pack integrations data.
+            id_set (dict): id set json.
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+        """
+        dependencies_packs = set()
+
+        for integration in pack_integrations:
+            integration_data = next(iter(integration.values()))
+
+            related_classifiers = integration_data.get('classifiers', [])
+            packs_found_from_classifiers = PackDependencies._search_packs_by_items_names(
+                related_classifiers, id_set['Classifiers'])
+
+            if packs_found_from_classifiers:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_classifiers)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_mappers = integration_data.get('mappers', [])
+            packs_found_from_mappers = PackDependencies._search_packs_by_items_names(
+                related_mappers, id_set['Mappers'])
+
+            if packs_found_from_mappers:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_mappers)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_incident_types = integration_data.get('incident_types', [])
+            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                related_incident_types, id_set['IncidentTypes'])
+
+            if packs_found_from_incident_types:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_types)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_indicator_fields = integration_data.get('indicator_fields')
+
+            if related_indicator_fields:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory({related_indicator_fields})
+                dependencies_packs.update(pack_dependencies_data)
+
+        return dependencies_packs
+
+    @staticmethod
+    def _collect_incidents_types_dependencies(pack_incidents_types, id_set):
+        """
+        Collects in incidents types dependencies.
+
+        Args:
+            pack_incidents_types (list): collection of pack incidents types data.
+            id_set (dict): id set json.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+
+        for incident_type in pack_incidents_types:
+            incident_field_data = next(iter(incident_type.values()))
+
+            related_playbooks = incident_field_data.get('playbooks', [])
+            packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(
+                related_playbooks, id_set['playbooks'])
+
+            if packs_found_from_playbooks:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_playbooks)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_scripts = incident_field_data.get('scripts', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+                related_scripts, id_set['scripts'])
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_scripts)
+                dependencies_packs.update(pack_dependencies_data)
+
+        return dependencies_packs
+
+    @staticmethod
+    def _collect_classifiers_dependencies(pack_classifiers, id_set):
+        """
+        Collects in classifiers dependencies.
+
+        Args:
+            pack_classifiers (list): collection of pack classifiers data.
+            id_set (dict): id set json.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+
+        for classifier in pack_classifiers:
+            classifier_data = next(iter(classifier.values()))
+
+            related_incident_types = classifier_data.get('incident_types', [])
+            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                related_incident_types, id_set['IncidentTypes'])
+
+            if packs_found_from_incident_types:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_types)
+                dependencies_packs.update(pack_dependencies_data)
+
+        return dependencies_packs
+
+    @staticmethod
+    def _collect_mappers_dependencies(pack_mappers, id_set):
+        """
+        Collects in mappers dependencies.
+
+        Args:
+            pack_mappers (list): collection of pack mappers data.
+            id_set (dict): id set json.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+
+        for mapper in pack_mappers:
+            mapper_data = next(iter(mapper.values()))
+
+            related_incident_types = mapper_data.get('incident_types', [])
+            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                related_incident_types, id_set['IncidentTypes'])
+
+            if packs_found_from_incident_types:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_types)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_incident_fields = mapper_data.get('incident_and_indicator_fields', [])
+            packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names(
+                related_incident_fields, id_set['IncidentFields'])
+
+            if packs_found_from_incident_fields:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_fields)
+                dependencies_packs.update(pack_dependencies_data)
+
+        return dependencies_packs
+
+    @staticmethod
     def _collect_pack_items(pack_id, id_set):
         """
         Collects script and playbook content items inside specific pack.
@@ -424,6 +625,10 @@ class PackDependencies:
         pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
         pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
         pack_items['indicators_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorTypes'])
+        pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set['integrations'])
+        pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentTypes'])
+        pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
+        pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
 
         return pack_items
 
@@ -448,9 +653,20 @@ class PackDependencies:
             pack_items['incidents_fields'], id_set)
         indicators_types_dependencies = PackDependencies._collect_indicators_types_dependencies(
             pack_items['indicators_types'], id_set)
+        integrations_dependencies = PackDependencies. \
+            _collect_integrations_dependencies(pack_items['integrations'], id_set)
+        incidents_types_dependencies = PackDependencies. \
+            _collect_incidents_types_dependencies(pack_items['incidents_types'], id_set)
 
+        incidents_fields_dependencies = PackDependencies. \
+            _collect_incidents_fields_dependencies(pack_items['incidents_fields'], id_set)
+        classifiers_dependencies = PackDependencies. \
+            _collect_classifiers_dependencies(pack_items['classifiers'], id_set)
+        mappers_dependencies = PackDependencies. \
+            _collect_mappers_dependencies(pack_items['mappers'], id_set)
         pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
-            incidents_fields_dependencies | indicators_types_dependencies
+            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
+            | incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
         # todo check if need to collect dependencies from other content items
 
         return pack_dependencies

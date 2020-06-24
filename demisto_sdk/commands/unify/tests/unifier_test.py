@@ -104,6 +104,16 @@ def test_get_code_file():
                                            f"CalculateGeoDistance.py"
 
 
+def test_get_code_file_case_insensative(tmp_path):
+    # Create an integration dir with some files
+    integration_dir = tmp_path / "TestDummyInt"
+    os.makedirs(integration_dir)
+    open(integration_dir / "Dummy.ps1", 'a')
+    open(integration_dir / "ADummy.tests.ps1", 'a')  # a test file which is named such a way that it comes up first
+    unifier = Unifier(str(integration_dir))
+    assert unifier.get_code_file(".ps1") == str(integration_dir / "Dummy.ps1")
+
+
 def test_get_script_or_integration_package_data():
     unifier = Unifier(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):
@@ -572,7 +582,7 @@ XSOAR_UNIFY = PARTNER_UNIFY.copy()
 
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
-PARTNER_DISPLAY_NAME = 'test (Partner contribution)'
+PARTNER_DISPLAY_NAME = 'test (Partner Contribution)'
 PARTNER_DETAILEDDESCRIPTION = '### This is a partner contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                               f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
@@ -609,7 +619,9 @@ def test_unify_partner_contributed_pack(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION
+    assert '#### Integration Author:' in PARTNER_UNIFY["detaileddescription"]
+    assert 'Email' in PARTNER_UNIFY["detaileddescription"]
+    assert 'URL' in PARTNER_UNIFY["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_email(mocker, repo):
@@ -637,7 +649,9 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY_NO_EMAIL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_EMAIL
+    assert '#### Integration Author:' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+    assert 'Email' not in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+    assert 'URL' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_url(mocker, repo):
@@ -665,7 +679,9 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY_NO_URL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_URL
+    assert '#### Integration Author:' in PARTNER_UNIFY_NO_URL["detaileddescription"]
+    assert 'Email' in PARTNER_UNIFY_NO_URL["detaileddescription"]
+    assert 'URL' not in PARTNER_UNIFY_NO_URL["detaileddescription"]
 
 
 def test_unify_not_partner_contributed_pack(mocker, repo):

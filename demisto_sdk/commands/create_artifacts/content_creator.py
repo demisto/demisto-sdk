@@ -71,6 +71,7 @@ class ContentCreator:
             REPORTS_DIR,
             SCRIPTS_DIR,
             WIDGETS_DIR,
+            RELEASE_NOTES_DIR
         ]
 
         self.packages_to_skip = []
@@ -281,21 +282,24 @@ class ContentCreator:
 
             shutil.copyfile(path, os.path.join(bundle, new_path))
 
-    def copy_dir_files(self, *args):
+    def copy_dir_files(self, *args, is_legacy_bundle=True):
         """
         Copy the yml, md, json and zip files from inside a directory to a bundle.
 
         :param args: (source directory, destination bundle)
+        :param is_legacy_bundle: flag to copy md files to bundle.
+            Should be False for content-new.zip and test-content.zip
         :return: None
         """
         # handle *.json files
         self.copy_dir_json(*args)
         # handle *.yml files
         self.copy_dir_yml(*args)
-        # handle *.md files
-        self.copy_dir_md(*args)
         # handle *.zip files
         self.add_tools_to_bundle(*args)
+        if not is_legacy_bundle:
+            # handle *.md files
+            self.copy_dir_md(*args)
 
     def copy_test_files(self, test_playbooks_dir=TEST_PLAYBOOKS_DIR):
         """
@@ -310,8 +314,9 @@ class ContentCreator:
             if os.path.isdir(path):
                 non_circle_tests = glob.glob(os.path.join(path, '*'))
                 for new_path in non_circle_tests:
-                    print(f'copying path {new_path}')
-                    shutil.copyfile(new_path, os.path.join(self.test_bundle, os.path.basename(new_path)))
+                    if os.path.isfile(new_path):
+                        print(f'copying path {new_path}')
+                        shutil.copyfile(new_path, os.path.join(self.test_bundle, os.path.basename(new_path)))
 
             else:
                 # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
@@ -401,7 +406,7 @@ class ContentCreator:
                         for yml_file in non_split_yml_files:
                             shutil.copyfile(os.path.join(content_dir, yml_file), os.path.join(dest_dir, yml_file))
                 else:
-                    self.copy_dir_files(content_dir, dest_dir)
+                    self.copy_dir_files(content_dir, dest_dir, is_legacy_bundle=False)
 
     def update_content_version(self, content_ver: str = '', path: str = ''):
         regex = r'CONTENT_RELEASE_VERSION = .*'

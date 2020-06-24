@@ -745,7 +745,7 @@ class TestConnectionValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        connection = pack.create_json_based(name='connection', prefix='', content=CONNECTION)
+        connection = pack._create_json_based(name='connection', prefix='', content=CONNECTION)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', connection.path], catch_exceptions=False)
@@ -768,7 +768,7 @@ class TestConnectionValidation:
         pack = repo.create_pack('PackName')
         connection_copy = CONNECTION.copy()
         del connection_copy['canvasContextConnections'][0]['contextKey1']
-        connection = pack.create_json_based(name='connection', prefix='', content=connection_copy)
+        connection = pack._create_json_based(name='connection', prefix='', content=connection_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', connection.path], catch_exceptions=False)
@@ -887,7 +887,7 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        layout = pack.create_json_based(name='layout', prefix='', content=LAYOUT)
+        layout = pack._create_json_based(name='layout', prefix='', content=LAYOUT)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
@@ -910,7 +910,7 @@ class TestLayoutValidation:
         pack = repo.create_pack('PackName')
         layout_copy = LAYOUT.copy()
         layout_copy['layout']['version'] = 2
-        layout = pack.create_json_based(name='layout', prefix='', content=LAYOUT)
+        layout = pack._create_json_based(name='layout', prefix='', content=LAYOUT)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
@@ -973,7 +973,7 @@ class TestReportValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        report = pack.create_json_based(name='report', prefix='', content=REPORT)
+        report = pack._create_json_based(name='report', prefix='', content=REPORT)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', report.path], catch_exceptions=False)
@@ -996,7 +996,7 @@ class TestReportValidation:
         pack = repo.create_pack('PackName')
         report_copy = REPORT.copy()
         report_copy['orientation'] = 'bla'
-        report = pack.create_json_based(name='report', prefix='', content=report_copy)
+        report = pack._create_json_based(name='report', prefix='', content=report_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', report.path], catch_exceptions=False)
@@ -1019,7 +1019,7 @@ class TestReputationValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        reputation = pack.create_json_based(name='reputation', prefix='', content=REPUTATION)
+        reputation = pack._create_json_based(name='reputation', prefix='', content=REPUTATION)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path], catch_exceptions=False)
@@ -1042,7 +1042,7 @@ class TestReputationValidation:
         pack = repo.create_pack('PackName')
         reputation_copy = REPUTATION.copy()
         reputation_copy['expiration'] = -1
-        reputation = pack.create_json_based(name='reputation', prefix='', content=reputation_copy)
+        reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path], catch_exceptions=False)
@@ -1115,7 +1115,7 @@ class TestWidgetValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        widget = pack.create_json_based(name='widget', prefix='', content=WIDGET)
+        widget = pack._create_json_based(name='widget', prefix='', content=WIDGET)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', widget.path], catch_exceptions=False)
@@ -1138,7 +1138,7 @@ class TestWidgetValidation:
         pack = repo.create_pack('PackName')
         widget_copy = WIDGET.copy()
         widget_copy['version'] = 1
-        widget = pack.create_json_based(name='widget', prefix='', content=widget_copy)
+        widget = pack._create_json_based(name='widget', prefix='', content=widget_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', widget.path], catch_exceptions=False)
@@ -1163,7 +1163,7 @@ class TestImageValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         integration = pack.create_integration()
-        image_path = integration.image_path()
+        image_path = integration.image.path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', image_path], catch_exceptions=False)
@@ -1186,7 +1186,7 @@ class TestImageValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
         integration = pack.create_integration()
-        image_path = integration.image_path()
+        image_path = integration.image.path
         mocker.patch.object(ImageValidator, 'load_image', return_value=DEFAULT_IMAGE_BASE64)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)

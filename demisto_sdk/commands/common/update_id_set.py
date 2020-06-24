@@ -519,7 +519,7 @@ def get_layout_data(path):
     data = OrderedDict()
     json_data = get_json(path)
 
-    layout = json_data.get('layout')
+    layout = json_data.get('layout', {})
     name = layout.get('name', '-')
     id_ = json_data.get('id', layout.get('id', '-'))
     type_ = json_data.get('typeId')

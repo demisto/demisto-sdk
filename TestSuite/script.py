@@ -19,7 +19,7 @@ class Script(Integration):
         description = open(suite_join_path(default_script_dir, 'sample_script_description.md'))
         self.build(
             code=str(code.read()),
-            yml=yaml.load(yml),
+            yml=yaml.load(yml, Loader=yaml.FullLoader),
             image=image.read(),
             changelog=str(changelog.read()),
             description=str(description.read())

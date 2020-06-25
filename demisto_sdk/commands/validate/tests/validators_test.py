@@ -595,7 +595,7 @@ class TestValidators:
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BC101", "BC102", "BC103", "BC104"]
 
-    def test_added_files_type_using_function(self, repo):
+    def test_added_files_type_using_function(self, repo, mocker):
         """
             Given:
                 - A list of errors that should be checked
@@ -604,8 +604,9 @@ class TestValidators:
             Then:
                 - verify that the ignored error list that comes out is correct
         """
-        saved_stdout = sys.stdout
 
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        saved_stdout = sys.stdout
         pack = repo.create_pack('pack')
         pack.create_test_script()
         with ChangeCWD(pack.repo_path):

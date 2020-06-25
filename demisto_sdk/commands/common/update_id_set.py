@@ -616,7 +616,7 @@ def get_indicator_type_data(path, all_integrations):
 
     for field in ['reputationScriptName', 'enhancementScriptNames']:
         associated_scripts = json_data.get(field)
-        if not associated_scripts or associated_scripts == '' or associated_scripts == 'null':
+        if not associated_scripts or associated_scripts == 'null':
             continue
 
         associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
@@ -1291,7 +1291,9 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
     duplicates = find_duplicates(new_ids_dict, print_logs)
     if any(duplicates) and print_logs:
-        print_error('The following duplicates were found: {}'.format(duplicates))
+        print_error(
+            f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n'
+        )
 
     return new_ids_dict
 

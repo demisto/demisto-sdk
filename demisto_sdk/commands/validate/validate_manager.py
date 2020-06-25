@@ -61,7 +61,7 @@ class ValidateManager:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=True, test_mode=False):
+                 silence_init_prints=False, test_mode=False):
 
         # General configuration
         self.skip_docker_checks = False
@@ -585,7 +585,6 @@ class ValidateManager:
         valid_pack_files = set()
 
         added_packs = get_pack_names_from_files(added_files)
-        # we exclude the check for changes in release notes and readme files
         modified_packs = get_pack_names_from_files(modified_files)
 
         # modified packs (where the change is not test-playbook, test-script, readme or release notes)
@@ -734,12 +733,11 @@ class ValidateManager:
             self.filter_changed_files(all_committed_files_string, prev_ver)
 
         if not self.is_circle:
-            if not self.silence_init_prints:
-                click.echo("Collecting all local changed files")
-
             remote_configured = has_remote_configured()
             is_origin_demisto = is_origin_content_repo()
             if remote_configured and not is_origin_demisto:
+                if not self.silence_init_prints:
+                    click.echo("Collecting all local changed files from fork against the content master")
 
                 # all local non-committed changes and changes against prev_ver
                 all_changed_files_string = run_command(
@@ -753,10 +751,13 @@ class ValidateManager:
                     self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 
             else:
-                if (not is_origin_demisto and not remote_configured) and self.silence_init_prints:
+                if (not is_origin_demisto and not remote_configured) and not self.silence_init_prints:
                     error_message, error_code = Errors.changes_may_fail_validation()
                     self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
                                       drop_line=True)
+
+                if not self.silence_init_prints:
+                    click.echo("Collecting all local changed files against the content master")
 
                 # all local non-committed changes and changes against prev_ver
                 all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))

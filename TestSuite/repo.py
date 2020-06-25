@@ -56,45 +56,65 @@ class Repo:
 
         script = pack.create_script(f'{name}_script')
         script.create_default_script()
+        script.yml.update({'commonfields': {'id': f'{name}_script'}})
+        script.yml.update({'name': f'{name}_script'})
+        script.yml.update({'display': f'{name}_script'})
 
         integration = pack.create_integration(f'{name}_integration')
         integration.create_default_integration()
+        integration.yml.update({'commonfields': {'id': f'{name}_integration'}})
+        integration.yml.update({'name': f'{name}_integration'})
+        integration.yml.update({'display': f'{name}_integration'})
 
         classifier = pack.create_classifier(f'{name}_classifier')
         classifier.write_json({'id': f'{name} - classifier'})
+        classifier.update({'name': f'{name} - classifier'})
 
         layout = pack.create_layout(f'{name}_layout')
         layout.write_json({'id': f'{name} - layout'})
+        layout.update({'name': f'{name} - layout'})
 
         mapper = pack.create_mapper(f'{name}_mapper')
         mapper.write_json({'id': f'{name} - mapper'})
+        mapper.update({'name': f'{name} - mapper'})
 
         incident_type = pack.create_incident_type(f'{name}_incident-type')
         incident_type.write_json({'id': f'{name} - incident_type'})
+        incident_type.update({'name': f'{name} - incident_type'})
 
         incident_field = pack.create_incident_field(f'{name}_incident-field')
         incident_field.write_json({'id': f'{name} - incident_field'})
+        incident_field.update({'name': f'{name} - incident_field'})
 
         indicator_type = pack.create_indicator_type(f'{name}_indicator-type')
         indicator_type.write_json({'id': f'{name} - indicator_type'})
+        indicator_type.update({'name': f'{name} - indicator_type'})
 
         indicator_field = pack.create_indicator_field(f'{name}_indicator-field')
         indicator_field.write_json({'id': f'{name} - indicator_field'})
+        indicator_field.update({'name': f'{name} - indicator_field'})
 
         dashboard = pack.create_dashboard(f'{name}_dashboard')
         dashboard.write_json({'id': f'{name} - dashboard'})
+        dashboard.update({'name': f'{name} - dashboard'})
 
         report = pack.create_report(f'{name}_report')
         report.write_json({'id': f'{name} - report'})
+        report.update({'name': f'{name} - report'})
 
         widget = pack.create_widget(f'{name}_widget')
         widget.write_json({'id': f'{name} - widget'})
+        widget.update({'name': f'{name} - widget'})
 
         playbook = pack.create_playbook(f'{name}_playbook')
         playbook.create_default_playbook()
+        playbook.yml.update({'id': f'{name}_playbook'})
+        playbook.yml.update({'name': f'{name}_playbook'})
 
         test_playbook = pack.create_test_playbook(f'{name}_test_playbook')
         test_playbook.create_default_playbook()
+        test_playbook.yml.update({'id': f'{name}_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_test_playbook'})
 
     def setup_content_repo(self, number_of_packs):
         for i in range(number_of_packs):

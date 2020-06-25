@@ -34,12 +34,12 @@ class Pack:
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         self.classifiers: List[JSONBased] = list()
-        self.mapper: List[JSONBased] = list()
+        self.mappers: List[JSONBased] = list()
         self.dashboards: List[JSONBased] = list()
         self.incident_types: List[JSONBased] = list()
-        self.incident_field: List[JSONBased] = list()
-        self.indicator_field: List[JSONBased] = list()
-        self.indicator_type: List[JSONBased] = list()
+        self.incident_fields: List[JSONBased] = list()
+        self.indicator_fields: List[JSONBased] = list()
+        self.indicator_types: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
         self.reports: List[JSONBased] = list()
         self.widgets: List[JSONBased] = list()
@@ -103,7 +103,7 @@ class Pack:
 
         self.readme = TextBased(self._pack_path, 'README.md')
 
-        self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata.json', '')
+        self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
 
     def create_integration(
             self,
@@ -207,7 +207,7 @@ class Pack:
     ) -> JSONBased:
         prefix = 'classifier-mapper'
         mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
-        self.mapper.append(mapper)
+        self.mappers.append(mapper)
         return mapper
 
     def create_dashboard(
@@ -231,8 +231,8 @@ class Pack:
         if release_notes:
             release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
                                                     dir_path=self._incidents_field_path)
-            self.incident_field.append(release_notes)
-        self.incident_field.append(incident_field)
+            self.incident_fields.append(release_notes)
+        self.incident_fields.append(incident_field)
         return incident_field
 
     def create_incident_type(
@@ -251,7 +251,7 @@ class Pack:
     ) -> JSONBased:
         prefix = 'incidentfield'
         indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields)
-        self.indicator_field.append(indicator_field)
+        self.indicator_fields.append(indicator_field)
         return indicator_field
 
     def create_indicator_type(
@@ -261,7 +261,7 @@ class Pack:
     ) -> JSONBased:
         prefix = 'reputation'
         indicator_type = self._create_json_based(name, prefix, content, dir_path=self._indicator_types)
-        self.indicator_type.append(indicator_type)
+        self.indicator_types.append(indicator_type)
         return indicator_type
 
     def create_layout(

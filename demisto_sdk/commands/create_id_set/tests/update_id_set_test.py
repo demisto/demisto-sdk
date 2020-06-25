@@ -492,7 +492,7 @@ class TestIndicatorType:
         """
         test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/reputation-indicatortype.json'
 
-        result = get_indicator_type_data(test_dir)
+        result = get_indicator_type_data(test_dir, [{'integration': {'commands': ['ip']}}])
         result = result.get('indicator-type-dummy')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -519,7 +519,7 @@ class TestIndicatorType:
         test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/' \
                    f'reputation-indicatortype_no_script_no_integration.json'
 
-        result = get_indicator_type_data(test_dir)
+        result = get_indicator_type_data(test_dir, [])
         result = result.get('indicator-type-dummy')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()

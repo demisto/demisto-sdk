@@ -22,7 +22,7 @@ class JSONBased:
     def read_json_as_dict(self) -> dict:
         return json.loads(self._file_path.read_text())
 
-    def append_to_json(self, obj: dict):
+    def update(self, obj: dict):
         file_content = self.read_json_as_dict()
         file_content.update(obj)
         self.write_json(file_content)

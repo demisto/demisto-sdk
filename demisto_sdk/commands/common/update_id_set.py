@@ -615,7 +615,7 @@ def get_indicator_type_data(path):
 
     for field in ['reputationScriptName', 'enhancementScriptNames']:
         associated_scripts = json_data.get(field)
-        if not associated_scripts or associated_scripts == '' or associated_scripts == 'null':
+        if not associated_scripts or associated_scripts == 'null':
             continue
 
         associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts

@@ -1283,7 +1283,9 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
     duplicates = find_duplicates(new_ids_dict, print_logs)
     if any(duplicates) and print_logs:
-        print_error('The following duplicates were found: {}'.format(duplicates))
+        print_error(
+            f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n'
+        )
 
     return new_ids_dict
 

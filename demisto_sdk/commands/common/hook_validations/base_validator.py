@@ -55,7 +55,7 @@ class BaseValidator:
         formatted_error = f"{file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
 
         if file_path:
-            file_name = os.path.basename(file_path)
+            file_name = str(os.path.basename(file_path))
             self.check_file_flags(file_name, file_path)
         else:
             file_name = 'No-Name'
@@ -86,7 +86,7 @@ class BaseValidator:
 
     def check_deprecated(self, file_path):
         file_name = os.path.basename(file_path)
-        if file_path.endswith('.yml'):
+        if str(file_path).endswith('.yml'):
             yml_dict = get_yaml(file_path)
             if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
                     (file_name.startswith('playbook') and 'hidden' in yml_dict and
@@ -134,7 +134,7 @@ class BaseValidator:
         elif flag in PRESET_ERROR_TO_CHECK:
             additional_ignored_errors = self.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK[flag])
 
-        file_name = os.path.basename(file_path)
+        file_name = str(os.path.basename(file_path))
         if file_name in self.ignored_errors:
             self.ignored_errors[file_name].extend(additional_ignored_errors)
 

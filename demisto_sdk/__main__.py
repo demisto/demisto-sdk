@@ -262,6 +262,9 @@ def unify(**kwargs):
 @click.option(
     '--test-mode', is_flag=True,
     help='Whether to run validate in test mode.')
+@click.option(
+    '--silence-init-prints', is_flag=True,
+    help='Whether to skip the initialization prints.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -283,7 +286,8 @@ def validate(config, **kwargs):
                                     print_ignored_errors=kwargs['print_ignored_errors'],
                                     is_external_repo=is_external_repo,
                                     print_ignored_files=kwargs['print_ignored_files'],
-                                    test_mode=kwargs['test_mode'])
+                                    test_mode=kwargs['test_mode'],
+                                    silence_init_prints=kwargs['silence_init_prints'])
         return validator.run_validation()
 
 

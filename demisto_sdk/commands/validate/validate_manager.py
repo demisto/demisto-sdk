@@ -1,7 +1,6 @@
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
-from enum import Enum
 
 import click
 from demisto_sdk.commands.common.configuration import Configuration

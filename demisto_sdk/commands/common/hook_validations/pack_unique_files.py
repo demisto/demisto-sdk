@@ -162,8 +162,11 @@ class PackUniqueFilesValidator(BaseValidator):
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         if LooseVersion(old_version) < LooseVersion(current_version):
             return True
-        self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack), metadata_file_path)
-        return False
+
+        elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack), metadata_file_path):
+            return False
+
+        return True
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""

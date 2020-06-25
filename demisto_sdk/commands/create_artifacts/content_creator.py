@@ -323,10 +323,10 @@ class ContentCreator:
                 # but when copied to the test_bundle, playbook-* prefix should be added to them
                 file_type = find_type(path)
                 path_basename = os.path.basename(path)
-                if file_type == FileType.SCRIPT:
+                if file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
                     if not path_basename.startswith('script-'):
                         path_basename = f'script-{os.path.basename(path)}'
-                elif file_type == FileType.PLAYBOOK or file_type == FileType.TEST_PLAYBOOK:
+                elif file_type in (FileType.PLAYBOOK, FileType.TEST_PLAYBOOK):
                     if not path_basename.startswith('playbook-'):
                         path_basename = f'playbook-{os.path.basename(path)}'
                 print(f'Copying path {path} as {path_basename}')

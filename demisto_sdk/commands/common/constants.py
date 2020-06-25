@@ -70,6 +70,7 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
+    TEST_SCRIPT = 'script'
 
 
 ENTITY_TYPE_TO_DIR = {

@@ -52,7 +52,7 @@ class Uploader:
             file_type = find_type(self.path)
             if file_type == FileType.INTEGRATION:
                 self.integration_uploader(self.path)
-            elif file_type == FileType.SCRIPT:
+            elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
                 self.script_uploader(self.path)
             elif file_type == FileType.PLAYBOOK:
                 self.playbook_uploader(self.path)
@@ -146,7 +146,7 @@ class Uploader:
             list_unified_scripts = get_child_files(path)
             for unified_script in list_unified_scripts:
                 file_type = find_type(unified_script)
-                if file_type == FileType.SCRIPT:
+                if file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
                     self.script_uploader(unified_script)
             # Upload spliced scripts
             list_script = get_child_directories(path)

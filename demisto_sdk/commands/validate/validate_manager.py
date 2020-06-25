@@ -312,7 +312,7 @@ class ValidateManager:
         elif file_type == FileType.INTEGRATION:
             return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type == FileType.SCRIPT:
+        elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.BETA_INTEGRATION:
@@ -586,10 +586,16 @@ class ValidateManager:
 
         added_packs = get_pack_names_from_files(added_files)
         # we exclude the check for changes in release notes and readme files
-        modified_packs = get_pack_names_from_files(modified_files, skip_file_types={FileType.RELEASE_NOTES,
-                                                                                    FileType.README})
-        # modified packs and packs where the meta file changed should have their version raised
-        packs_that_should_have_version_raised = get_pack_names_from_files(changed_meta_files).union(modified_packs)
+        modified_packs = get_pack_names_from_files(modified_files)
+
+        # modified packs (where the change is not test-playbook, test-script, readme or release notes)
+        # and packs where the meta file changed should have their version raised
+        modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
+        })
+
+        packs_that_should_have_version_raised = get_pack_names_from_files(changed_meta_files).union(
+            modified_packs_that_should_have_version_raised)
 
         changed_packs = modified_packs.union(added_packs).union(packs_that_should_have_version_raised)
 
@@ -657,10 +663,12 @@ class ValidateManager:
         """
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
-        # existing packs that have files changed (which are not RN nor README files) - should have new RN
+        # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
         packs_that_should_have_new_rn = get_pack_names_from_files(modified_files,
                                                                   skip_file_types={FileType.RELEASE_NOTES,
-                                                                                   FileType.README})
+                                                                                   FileType.README,
+                                                                                   FileType.TEST_PLAYBOOK,
+                                                                                   FileType.TEST_SCRIPT})
 
         packs_that_have_new_rn = self.get_packs_with_added_release_notes(added_files)
 

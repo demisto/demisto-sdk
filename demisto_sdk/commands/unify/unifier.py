@@ -279,7 +279,7 @@ class Unifier:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')
 
-        if find_type(yml_path) == FileType.SCRIPT:
+        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')

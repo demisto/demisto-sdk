@@ -590,7 +590,9 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
         # in modified files renamed files are in tuples - the second element is the new file name
         if isinstance(path, tuple):
             path = path[1]
-        if find_type(path) not in skip_file_types:
+
+        file_type = find_type(path)
+        if file_type not in skip_file_types:
             pack = get_pack_name(path)
             if pack and is_file_path_in_pack(path):
                 packs.add(pack)
@@ -772,7 +774,11 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
             return FileType.INTEGRATION
 
         elif 'script' in _dict:
-            return FileType.SCRIPT
+            if TEST_PLAYBOOKS_DIR in path:
+                return FileType.TEST_SCRIPT
+
+            else:
+                return FileType.SCRIPT
 
         elif 'tasks' in _dict:
             if TEST_PLAYBOOKS_DIR in path:

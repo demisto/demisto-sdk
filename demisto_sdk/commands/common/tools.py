@@ -21,9 +21,10 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
-    CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER,
-    DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN,
+    CONTENT_GITHUB_UPSTREAM, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
@@ -243,6 +244,33 @@ def get_child_files(directory):
         path in os.listdir(directory) if os.path.isfile(os.path.join(directory, path))
     ]
     return child_files
+
+
+def has_remote_configured():
+    """
+    Checks to see if a remote named "upstream" is configured. This is important for forked
+    repositories as it will allow validation against the demisto/content master branch as
+    opposed to the master branch of the fork.
+    :return: bool : True if remote is configured, False if not.
+    """
+    remotes = run_command('git remote -v')
+    if re.search(CONTENT_GITHUB_UPSTREAM, remotes):
+        return True
+    else:
+        return False
+
+
+def is_origin_content_repo():
+    """
+    Checks to see if a remote named "origin" is configured. This check helps to determine if
+    validation needs to be ran against the origin master branch or the upstream master branch
+    :return: bool : True if remote is configured, False if not.
+    """
+    remotes = run_command('git remote -v')
+    if re.search(CONTENT_GITHUB_ORIGIN, remotes):
+        return True
+    else:
+        return False
 
 
 def get_last_remote_release_version():

@@ -22,7 +22,6 @@ mapping:
     enum: ['javascript', 'python', 'powershell']
   tags:
     type: seq
-    required: True
     sequence:
       - type: str
   comment:

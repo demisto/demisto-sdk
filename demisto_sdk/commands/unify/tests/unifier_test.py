@@ -406,6 +406,30 @@ final test: hi
         assert export_yml_path == expected_yml_path
         os.remove(expected_yml_path)
 
+    def test_unify_default_output_integration_for_relative_current_dir_input(self, mocker):
+        """
+        Given
+        - Input path of '.'.
+        - UploadTest integration.
+
+        When
+        - Running Unify on it.
+
+        Then
+        - Ensure Unify command works with default output given relative path to current directory.
+        """
+        from demisto_sdk.commands.unify.unifier import Unifier
+        abs_path_mock = mocker.patch('demisto_sdk.commands.unify.unifier.os.path.abspath')
+        abs_path_mock.return_value = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
+        input_path_integration = '.'
+        unifier = Unifier(input_path_integration)
+        yml_files = unifier.merge_script_package_to_yml()
+        export_yml_path = yml_files[0]
+        expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml'
+
+        assert export_yml_path == expected_yml_path
+        os.remove(expected_yml_path)
+
 
 class TestMergeScriptPackageToYMLScript:
     def setup(self):
@@ -582,7 +606,7 @@ XSOAR_UNIFY = PARTNER_UNIFY.copy()
 
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
-PARTNER_DISPLAY_NAME = 'test (Partner contribution)'
+PARTNER_DISPLAY_NAME = 'test (Partner Contribution)'
 PARTNER_DETAILEDDESCRIPTION = '### This is a partner contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                               f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
@@ -619,7 +643,9 @@ def test_unify_partner_contributed_pack(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION
+    assert '#### Integration Author:' in PARTNER_UNIFY["detaileddescription"]
+    assert 'Email' in PARTNER_UNIFY["detaileddescription"]
+    assert 'URL' in PARTNER_UNIFY["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_email(mocker, repo):
@@ -647,7 +673,9 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY_NO_EMAIL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_EMAIL
+    assert '#### Integration Author:' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+    assert 'Email' not in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+    assert 'URL' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_url(mocker, repo):
@@ -675,7 +703,9 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
-    assert PARTNER_UNIFY_NO_URL["detaileddescription"] == PARTNER_DETAILEDDESCRIPTION_NO_URL
+    assert '#### Integration Author:' in PARTNER_UNIFY_NO_URL["detaileddescription"]
+    assert 'Email' in PARTNER_UNIFY_NO_URL["detaileddescription"]
+    assert 'URL' not in PARTNER_UNIFY_NO_URL["detaileddescription"]
 
 
 def test_unify_not_partner_contributed_pack(mocker, repo):

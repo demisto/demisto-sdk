@@ -13,13 +13,13 @@ import click
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INDICATOR_TYPES_REPUTATIONS_REGEX, LAYOUTS_DIR,
+    INDICATOR_TYPES_REPUTATIONS_REGEX, LAYOUTS_DIR, MAPPERS_DIR,
     PACKS_CLASSIFIER_JSON_REGEX, PACKS_DASHBOARD_JSON_REGEX,
     PACKS_INCIDENT_FIELD_JSON_REGEX, PACKS_INCIDENT_TYPE_JSON_REGEX,
     PACKS_INDICATOR_FIELD_JSON_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_YML_REGEX,
-    PACKS_LAYOUT_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
+    PACKS_LAYOUT_JSON_REGEX, PACKS_MAPPER_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_REGEX, PLAYBOOK_YML_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SCRIPTS_REGEX_LIST, TEST_PLAYBOOK_REGEX,
@@ -42,8 +42,54 @@ CHECKED_TYPES_REGEXES = (
     # Playbooks
     PLAYBOOK_YML_REGEX,
     # Classifiers
-    PACKS_CLASSIFIER_JSON_REGEX
+    PACKS_CLASSIFIER_JSON_REGEX,
+    # Mappers
+    PACKS_MAPPER_JSON_REGEX
 )
+
+CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
+                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                    'Layouts', 'Reports', 'Widgets', 'Mappers']
+
+ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
+                   'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+
+BUILT_IN_FIELDS = [
+    "name",
+    "details",
+    "severity",
+    "owner",
+    "dbotCreatedBy",
+    "type",
+    "dbotSource",
+    "category",
+    "dbotStatus",
+    "playbookId",
+    "dbotCreated",
+    "dbotClosed",
+    "occurred",
+    "dbotDueDate",
+    "dbotModified",
+    "dbotTotalTime",
+    "reason",
+    "closeReason",
+    "closeNotes",
+    "closingUserId",
+    "reminder",
+    "phase",
+    "roles",
+    "labels",
+    "attachment",
+    "runStatus",
+    "sourceBrand",
+    "sourceInstance",
+    "CustomFields",
+    "droppedCount",
+    "linkedCount",
+    "feedBased",
+    "id"
+]
 
 
 def checked_type(file_path, regex_list=CHECKED_TYPES_REGEXES):
@@ -166,11 +212,19 @@ def get_integration_data(file_path):
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
+    default_classifier = data_dictionary.get('defaultClassifier')
+    default_incident_type = data_dictionary.get('defaultIncidentType')
+    is_feed = data_dictionary.get('feed')
+    mappers = set()
 
     deprecated_commands = []
     for command in commands:
         if command.get('deprecated', False):
             deprecated_commands.append(command.get('name'))
+
+    for mapper in ['defaultMapperIn', 'defaultMapperOut']:
+        if data_dictionary.get(mapper):
+            mappers.add(data_dictionary.get(mapper))
 
     integration_data['name'] = name
     integration_data['file_path'] = file_path
@@ -190,7 +244,131 @@ def get_integration_data(file_path):
         integration_data['pack'] = pack
     if integration_api_modules:
         integration_data['api_modules'] = integration_api_modules
+    if default_classifier and default_classifier != '':
+        integration_data['classifiers'] = default_classifier
+    if mappers:
+        integration_data['mappers'] = list(mappers)
+    if default_incident_type and default_incident_type != '':
+        integration_data['incident_types'] = default_incident_type
+    if is_feed:
+        integration_data['indicator_fields'] = "CommonTypes"
+        integration_data['indicator_types'] = "CommonTypes"
+
     return {id_: integration_data}
+
+
+def get_fields_by_script_argument(task):
+    """Iterates over the task script arguments and search for non empty fields
+
+    Args:
+        task (dict): A task of the playbook with `script: Builtin|||setIncident`
+
+    Returns:
+        set. set of incident fields related to this task
+
+    Example:
+        for the task:
+            {
+                task:
+                  id: e80e3f5a-a74f-44a8-8e83-8eee96def1d0
+                  name: Save authenticity check result to incident field
+                  script: Builtin|||setIncident
+
+                scriptarguments:
+                  emailaddress:
+                    complex:
+                      root: ActiveDirectory
+                      accessor: Users.mail
+                  duration: {}
+            }
+
+        we will return the 'emailaddress` incident field
+    """
+
+    dependent_incident_fields = set()
+    for field_name, field_value in task.get('scriptarguments', {}).items():
+        if field_value and field_name not in BUILT_IN_FIELDS:
+            if field_name != "customFields":
+                dependent_incident_fields.add(field_name)
+            else:
+                # the value should be a list of dicts in str format
+                custom_field_value = list(field_value.values())[0]
+                if isinstance(custom_field_value, str):
+                    custom_fields_list = json.loads(custom_field_value)
+                    for custom_field in custom_fields_list:
+                        field_name = list(custom_field.keys())[0]
+                        if field_name not in BUILT_IN_FIELDS:
+                            dependent_incident_fields.add(field_name)
+    return dependent_incident_fields
+
+
+def get_incident_fields_by_playbook_input(input):
+    """Searches for incident fields in a playbook input.
+
+    Args:
+        input (dict): An input of the playbook
+
+    Returns:
+        set. set of incident fields related to this task
+    """
+    dependent_incident_fields = set()
+
+    input_type = list(input.keys())[0]  # type can be `simple` or `complex`
+    input_value = list(input.values())[0]
+
+    # check if it is in the form 'simple: ${incident.field_name}'
+    if input_type == 'simple' and str(input_value).startswith('${incident.'):
+        field_name = input_value.split('.')[1][:-1]
+        if field_name not in BUILT_IN_FIELDS:
+            dependent_incident_fields.add(field_name)
+
+    elif input_type == 'complex':
+        root_value = str(input_value.get('root', ''))
+        accessor_value = str(input_value.get('accessor'))
+        combined_value = root_value + '.' + accessor_value  # concatenate the strings
+
+        field_name = re.match(r'incident\.([^\.]+)', combined_value)
+        if field_name:
+            field_name = field_name.groups()[0]
+            if field_name not in BUILT_IN_FIELDS:
+                dependent_incident_fields.add(field_name)
+
+    return dependent_incident_fields
+
+
+def get_dependent_incident_and_indicator_fields(data_dictionary):
+    """Finds the incident fields and indicator fields dependent on this playbook
+
+    Args:
+        data_dictionary (dict): The playbook data dict
+
+    Returns:
+        set. set of incident fields related to this playbook
+    """
+    dependent_incident_fields = set()
+    dependent_indicator_fields = set()
+    for task in data_dictionary.get('tasks', {}).values():
+        # incident fields dependent by field mapping
+        related_incident_fields = task.get('fieldMapping')
+        if related_incident_fields:
+            for incident_field in related_incident_fields:
+                if incident_field not in BUILT_IN_FIELDS:
+                    dependent_incident_fields.add(incident_field.get('incidentfield'))
+
+        # incident fields dependent by scripts arguments
+        if 'setIncident' in task.get('task', {}).get('script', ''):
+            dependent_incident_fields.update(get_fields_by_script_argument(task))
+            # incident fields dependent by scripts arguments
+        if 'setIndicator' in task.get('task', {}).get('script', ''):
+            dependent_indicator_fields.update(get_fields_by_script_argument(task))
+
+    # incident fields by playbook inputs
+    for input in data_dictionary.get('inputs', []):
+        input_value_dict = input.get('value', {})
+        if input_value_dict and isinstance(input_value_dict, dict):  # deprecated playbooks bug
+            dependent_incident_fields.update(get_incident_fields_by_playbook_input(input_value_dict))
+
+    return dependent_incident_fields, dependent_indicator_fields
 
 
 def get_playbook_data(file_path: str) -> dict:
@@ -210,6 +388,7 @@ def get_playbook_data(file_path: str) -> dict:
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
                        command_to_integration_skippable)
     pack = get_pack_name(file_path)
+    dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
     playbook_data['name'] = name
     playbook_data['file_path'] = file_path
@@ -232,7 +411,10 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['pack'] = pack
     if skippable_tasks:
         playbook_data['skippable_tasks'] = skippable_tasks
-
+    if dependent_incident_fields:
+        playbook_data['incident_fields'] = list(dependent_incident_fields)
+    if dependent_indicator_fields:
+        playbook_data['indicator_fields'] = list(dependent_indicator_fields)
     return {id_: playbook_data}
 
 
@@ -337,7 +519,7 @@ def get_layout_data(path):
     data = OrderedDict()
     json_data = get_json(path)
 
-    layout = json_data.get('layout')
+    layout = json_data.get('layout', {})
     name = layout.get('name', '-')
     id_ = json_data.get('id', layout.get('id', '-'))
     type_ = json_data.get('typeId')
@@ -355,6 +537,7 @@ def get_layout_data(path):
         data['typename'] = type_name
         incident_indicator_types_dependency.add(type_name)
     data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -363,7 +546,6 @@ def get_layout_data(path):
         data['pack'] = pack
     if kind:
         data['kind'] = kind
-    data['path'] = path
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
@@ -396,14 +578,15 @@ def get_incident_field_data(path, incidents_types_list):
 
     scripts = json_data.get('script')
     if scripts:
-        all_scripts = set(scripts)
+        all_scripts = {scripts}
 
     field_calculations_scripts = json_data.get('fieldCalcScript')
     if field_calculations_scripts:
-        all_scripts = all_scripts.union(set(field_calculations_scripts))
+        all_scripts = all_scripts.union({field_calculations_scripts})
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -418,7 +601,7 @@ def get_incident_field_data(path, incidents_types_list):
     return {id_: data}
 
 
-def get_indicator_type_data(path):
+def get_indicator_type_data(path, all_integrations):
     data = OrderedDict()
     json_data = get_json(path)
 
@@ -426,31 +609,140 @@ def get_indicator_type_data(path):
     name = json_data.get('details', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
-    associated_integration = json_data.get('reputationCommand')
+    reputation_command = json_data.get('reputationCommand')
     pack = get_pack_name(path)
     all_scripts = set()
+    associated_integrations = set()
 
     for field in ['reputationScriptName', 'enhancementScriptNames']:
         associated_scripts = json_data.get(field)
-        if associated_scripts == '':
+        if not associated_scripts or associated_scripts == 'null':
             continue
 
         associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
         if associated_scripts:
             all_scripts = all_scripts.union(set(associated_scripts))
 
+    for integration in all_integrations:
+        integration_name = next(iter(integration))
+        integration_commands = integration.get(integration_name).get('commands')
+        if integration_commands and reputation_command in integration_commands:
+            associated_integrations.add(integration_name)
+
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
         data['fromversion'] = fromversion
     if pack:
         data['pack'] = pack
-    if associated_integration:
-        data['integrations'] = associated_integration
+    if associated_integrations:
+        data['integrations'] = list(associated_integrations)
     if all_scripts:
         data['scripts'] = list(all_scripts)
+
+    return {id_: data}
+
+
+def get_incident_type_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    playbook_id = json_data.get('playbookId')
+    pre_processing_script = json_data.get('preProcessingScript')
+    pack = get_pack_name(path)
+
+    if name:
+        data['name'] = name
+    data['file_path'] = path
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if playbook_id and playbook_id != '':
+        data['playbooks'] = playbook_id
+    if pre_processing_script and pre_processing_script != '':
+        data['scripts'] = pre_processing_script
+
+    return {id_: data}
+
+
+def get_classifier_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    incidents_types = set()
+
+    default_incident_type = json_data.get('defaultIncidentType')
+    if default_incident_type and default_incident_type != '':
+        incidents_types.add(default_incident_type)
+    key_type_map = json_data.get('keyTypeMap', {})
+    for key, value in key_type_map.items():
+        incidents_types.add(value)
+
+    if name:
+        data['name'] = name
+    data['file_path'] = path
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if incidents_types:
+        data['incident_types'] = list(incidents_types)
+
+    return {id_: data}
+
+
+def get_mapper_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    incidents_types = set()
+    incidents_fields = set()
+
+    default_incident_type = json_data.get('defaultIncidentType')
+    if default_incident_type and default_incident_type != '':
+        incidents_types.add(default_incident_type)
+    mapping = json_data.get('mapping', {})
+    for key, value in mapping.items():
+        incidents_types.add(key)
+        incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
+
+    incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
+
+    if name:
+        data['name'] = name
+    data['file_path'] = path
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if incidents_types:
+        data['incident_types'] = list(incidents_types)
+    if incidents_fields:
+        data['incident_fields'] = list(incidents_fields)
 
     return {id_: data}
 
@@ -467,6 +759,7 @@ def get_general_data(path):
     pack = get_pack_name(path)
     if brandname:  # for classifiers
         data['name'] = brandname
+    data['file_path'] = path
     if name:  # for the rest
         data['name'] = name
     if toversion:
@@ -607,7 +900,7 @@ def process_classifier(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_CLASSIFIER_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_classifier_data(file_path))
     return res
 
 
@@ -662,7 +955,7 @@ def process_incident_types(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_INCIDENT_TYPE_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_incident_type_data(file_path))
     return res
 
 
@@ -684,12 +977,13 @@ def process_indicator_fields(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_indicator_types(file_path: str, print_logs: bool) -> list:
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list) -> list:
     """
     Process a indicator types JSON file
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
+        all_integrations: The integrations section in the id set
 
     Returns:
         a list of indicator type data.
@@ -700,7 +994,7 @@ def process_indicator_types(file_path: str, print_logs: bool) -> list:
             not checked_type(file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX])):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_indicator_type_data(file_path))
+        res.append(get_indicator_type_data(file_path, all_integrations))
     return res
 
 
@@ -755,6 +1049,23 @@ def process_widgets(file_path: str, print_logs: bool) -> list:
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_general_data(file_path))
+    return res
+
+
+def process_mappers(file_path: str, print_logs: bool) -> list:
+    """
+    Process a classifier JSON file
+    Args:
+        file_path: The file path from Classifiers folder
+        print_logs: Whether to print logs to stdout
+    Returns:
+        a list of classifier data.
+    """
+    res = []
+    if checked_type(file_path, [PACKS_MAPPER_JSON_REGEX]):
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
+        res.append(get_mapper_data(file_path))
     return res
 
 
@@ -822,9 +1133,8 @@ def get_general_paths(path):
 def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,  # noqa: C901
                      print_logs: bool = True):
     if objects_to_create is None:
-        objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
-                             'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                             'Layouts', 'Reports', 'Widgets']
+        objects_to_create = CONTENT_ENTITIES
+
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -840,12 +1150,13 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     layouts_list = []
     reports_list = []
     widgets_list = []
+    mappers_list = []
 
     pool = Pool(processes=cpu_count() * 2)
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=12, label="Progress of id set creation") as progress_bar:
+    with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration, print_logs=print_logs), get_integrations_paths()):
@@ -918,10 +1229,12 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
+        # Has to be called after 'Integrations' is called
         if 'IndicatorTypes' in objects_to_create:
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_indicator_types, print_logs=print_logs),
-                                get_general_paths(INDICATOR_TYPES_DIR)):
+            for arr in pool.map(
+                    partial(process_indicator_types, print_logs=print_logs, all_integrations=integration_list),
+                    get_general_paths(INDICATOR_TYPES_DIR)):
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -947,6 +1260,13 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
+        if 'Mappers' in objects_to_create:
+            print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_mappers, print_logs=print_logs), get_general_paths(MAPPERS_DIR)):
+                mappers_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -959,11 +1279,11 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     new_ids_dict['IncidentFields'] = sort(incident_fields_list)
     new_ids_dict['IncidentTypes'] = sort(incident_type_list)
     new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
-
     new_ids_dict['IndicatorTypes'] = sort(indicator_types_list)
     new_ids_dict['Layouts'] = sort(layouts_list)
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
+    new_ids_dict['Mappers'] = sort(mappers_list)
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:
@@ -973,7 +1293,9 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
     duplicates = find_duplicates(new_ids_dict, print_logs)
     if any(duplicates) and print_logs:
-        print_error('The following duplicates were found: {}'.format(duplicates))
+        print_error(
+            f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n'
+        )
 
     return new_ids_dict
 
@@ -981,9 +1303,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 def find_duplicates(id_set, print_logs):
     lists_to_return = []
 
-    objects_to_check = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers', 'Dashboards',
-                        'Layouts', 'Reports', 'Widgets']
-    for object_type in objects_to_check:
+    for object_type in ID_SET_ENTITIES:
         if print_logs:
             print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)
@@ -996,7 +1316,7 @@ def find_duplicates(id_set, print_logs):
         lists_to_return.append(dup_list)
 
     if print_logs:
-        print_color("Checking diff for Incident and Idicator Fields", LOG_COLORS.GREEN)
+        print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
 
     fields = id_set['IncidentFields'] + id_set['IndicatorFields']
     field_ids = {list(field.keys())[0] for field in fields}

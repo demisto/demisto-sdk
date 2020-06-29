@@ -1070,7 +1070,7 @@ class TestScriptValidation:
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--test-mode'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1094,7 +1094,7 @@ class TestScriptValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--test-mode'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
@@ -1225,7 +1225,7 @@ class TestAllFilesValidator:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--test-mode', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
                                    catch_exceptions=False)
 
         assert 'Validating all files' in result.stdout
@@ -1269,7 +1269,7 @@ class TestAllFilesValidator:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--test-mode', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
                                    catch_exceptions=False)
 
         assert 'Validating all files' in result.stdout
@@ -1319,7 +1319,7 @@ class TestValidationUsingGit:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--test-mode', '--no-conf-json',
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
                                           '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert 'Running validation on branch' in result.stdout
@@ -1371,7 +1371,7 @@ class TestValidationUsingGit:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--test-mode', '--no-conf-json',
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
                                           '--skip-pack-release-notes'],
                                    catch_exceptions=False)
 

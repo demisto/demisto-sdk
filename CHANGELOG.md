@@ -7,6 +7,7 @@
      *feedExpirationPolicy*, *feedExpirationInterval* and *feedFetchInterval* fields to integration yml.
 * Fixed an issue in the playbooks schema.
 * Fixed an issue where generated release notes were out of order.
+* Improved pack dependencies detection.
 
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.

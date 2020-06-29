@@ -47,6 +47,14 @@ CHECKED_TYPES_REGEXES = (
     PACKS_MAPPER_JSON_REGEX
 )
 
+CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
+                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                    'Layouts', 'Reports', 'Widgets', 'Mappers']
+
+ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
+                   'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+
 BUILT_IN_FIELDS = [
     "name",
     "details",
@@ -511,7 +519,7 @@ def get_layout_data(path):
     data = OrderedDict()
     json_data = get_json(path)
 
-    layout = json_data.get('layout')
+    layout = json_data.get('layout', {})
     name = layout.get('name', '-')
     id_ = json_data.get('id', layout.get('id', '-'))
     type_ = json_data.get('typeId')
@@ -529,6 +537,7 @@ def get_layout_data(path):
         data['typename'] = type_name
         incident_indicator_types_dependency.add(type_name)
     data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -537,7 +546,6 @@ def get_layout_data(path):
         data['pack'] = pack
     if kind:
         data['kind'] = kind
-    data['path'] = path
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
@@ -570,14 +578,15 @@ def get_incident_field_data(path, incidents_types_list):
 
     scripts = json_data.get('script')
     if scripts:
-        all_scripts = set(scripts)
+        all_scripts = {scripts}
 
     field_calculations_scripts = json_data.get('fieldCalcScript')
     if field_calculations_scripts:
-        all_scripts = all_scripts.union(set(field_calculations_scripts))
+        all_scripts = all_scripts.union({field_calculations_scripts})
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -592,7 +601,7 @@ def get_incident_field_data(path, incidents_types_list):
     return {id_: data}
 
 
-def get_indicator_type_data(path):
+def get_indicator_type_data(path, all_integrations):
     data = OrderedDict()
     json_data = get_json(path)
 
@@ -600,29 +609,37 @@ def get_indicator_type_data(path):
     name = json_data.get('details', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
-    associated_integration = json_data.get('reputationCommand')
+    reputation_command = json_data.get('reputationCommand')
     pack = get_pack_name(path)
     all_scripts = set()
+    associated_integrations = set()
 
     for field in ['reputationScriptName', 'enhancementScriptNames']:
         associated_scripts = json_data.get(field)
-        if associated_scripts == '':
+        if not associated_scripts or associated_scripts == 'null':
             continue
 
         associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
         if associated_scripts:
             all_scripts = all_scripts.union(set(associated_scripts))
 
+    for integration in all_integrations:
+        integration_name = next(iter(integration))
+        integration_commands = integration.get(integration_name).get('commands')
+        if reputation_command in integration_commands:
+            associated_integrations.add(integration_name)
+
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
         data['fromversion'] = fromversion
     if pack:
         data['pack'] = pack
-    if associated_integration:
-        data['integrations'] = associated_integration
+    if associated_integrations:
+        data['integrations'] = list(associated_integrations)
     if all_scripts:
         data['scripts'] = list(all_scripts)
 
@@ -643,6 +660,7 @@ def get_incident_type_data(path):
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -677,6 +695,7 @@ def get_classifier_data(path):
 
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -709,8 +728,11 @@ def get_mapper_data(path):
         incidents_types.add(key)
         incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
 
+    incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
+
     if name:
         data['name'] = name
+    data['file_path'] = path
     if toversion:
         data['toversion'] = toversion
     if fromversion:
@@ -737,6 +759,7 @@ def get_general_data(path):
     pack = get_pack_name(path)
     if brandname:  # for classifiers
         data['name'] = brandname
+    data['file_path'] = path
     if name:  # for the rest
         data['name'] = name
     if toversion:
@@ -877,7 +900,7 @@ def process_classifier(file_path: str, print_logs: bool) -> list:
     if checked_type(file_path, [PACKS_CLASSIFIER_JSON_REGEX]):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_general_data(file_path))
+        res.append(get_classifier_data(file_path))
     return res
 
 
@@ -954,12 +977,13 @@ def process_indicator_fields(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_indicator_types(file_path: str, print_logs: bool) -> list:
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list) -> list:
     """
     Process a indicator types JSON file
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
+        all_integrations: The integrations section in the id set
 
     Returns:
         a list of indicator type data.
@@ -970,7 +994,7 @@ def process_indicator_types(file_path: str, print_logs: bool) -> list:
             not checked_type(file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX])):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_indicator_type_data(file_path))
+        res.append(get_indicator_type_data(file_path, all_integrations))
     return res
 
 
@@ -1109,9 +1133,8 @@ def get_general_paths(path):
 def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,  # noqa: C901
                      print_logs: bool = True):
     if objects_to_create is None:
-        objects_to_create = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
-                             'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                             'Layouts', 'Reports', 'Widgets', 'Mappers']
+        objects_to_create = CONTENT_ENTITIES
+
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -1206,10 +1229,12 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
+        # Has to be called after 'Integrations' is called
         if 'IndicatorTypes' in objects_to_create:
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_indicator_types, print_logs=print_logs),
-                                get_general_paths(INDICATOR_TYPES_DIR)):
+            for arr in pool.map(
+                    partial(process_indicator_types, print_logs=print_logs, all_integrations=integration_list),
+                    get_general_paths(INDICATOR_TYPES_DIR)):
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1278,9 +1303,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 def find_duplicates(id_set, print_logs):
     lists_to_return = []
 
-    objects_to_check = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers', 'Dashboards',
-                        'Layouts', 'Reports', 'Widgets']
-    for object_type in objects_to_check:
+    for object_type in ID_SET_ENTITIES:
         if print_logs:
             print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)

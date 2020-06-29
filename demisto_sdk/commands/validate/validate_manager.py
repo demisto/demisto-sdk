@@ -367,29 +367,30 @@ class ValidateManager:
         modified_files, added_files, old_format_files, changed_meta_files = \
             self.get_modified_and_added_files(self.compare_type, self.prev_ver)
 
-        valid_files = set()
+        validation_results = set()
 
-        valid_files.add(self.validate_modified_files(modified_files))
-        valid_files.add(self.validate_added_files(added_files, modified_files))
-        valid_files.add(self.validate_changed_packs_unique_files(modified_files, added_files, changed_meta_files))
+        validation_results.add(self.validate_modified_files(modified_files))
+        validation_results.add(self.validate_added_files(added_files, modified_files))
+        validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
+                                                                        changed_meta_files))
 
         if not self.skip_pack_rn_validation:
-            valid_files.add(self.validate_no_duplicated_release_notes(added_files))
-            valid_files.add(self.validate_no_missing_release_notes(modified_files, added_files))
+            validation_results.add(self.validate_no_duplicated_release_notes(added_files))
+            validation_results.add(self.validate_no_missing_release_notes(modified_files, added_files))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
                         fg="bright_cyan")
-            valid_files.add(self.validate_no_old_format(old_format_files))
+            validation_results.add(self.validate_no_old_format(old_format_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
             click.secho(f'\n================= Detected changes in schema - Running validation on all files '
                         f'=================',
                         fg="bright_cyan")
-            valid_files.add(self.run_validation_on_all_packs())
+            validation_results.add(self.run_validation_on_all_packs())
 
-        return all(valid_files)
+        return all(validation_results)
 
     """ ######################################## Unique Validations ####################################### """
 
@@ -587,17 +588,12 @@ class ValidateManager:
 
         added_packs = get_pack_names_from_files(added_files)
         modified_packs = get_pack_names_from_files(modified_files)
+        changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
-        # modified packs (where the change is not test-playbook, test-script, readme or release notes)
-        # and packs where the meta file changed should have their version raised
-        modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
-            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
-        })
+        packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
+                                                                                               changed_meta_packs)
 
-        packs_that_should_have_version_raised = get_pack_names_from_files(changed_meta_files).union(
-            modified_packs_that_should_have_version_raised)
-
-        changed_packs = modified_packs.union(added_packs).union(packs_that_should_have_version_raised)
+        changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
         for pack in changed_packs:
             raise_version = False
@@ -996,3 +992,13 @@ class ValidateManager:
             all_ignored_files = '\n'.join(list(self.ignored_files))
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
+
+    @staticmethod
+    def get_packs_that_should_have_version_raised(modified_files, changed_meta_packs):
+        # modified packs (where the change is not test-playbook, test-script, readme or release notes)
+        # and packs where the meta file changed should have their version raised
+        modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
+        })
+
+        return changed_meta_packs.union(modified_packs_that_should_have_version_raised)

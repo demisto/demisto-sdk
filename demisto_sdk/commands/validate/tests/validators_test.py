@@ -6,7 +6,7 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-from demisto_sdk.commands.common.constants import CONF_PATH
+from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -40,10 +40,11 @@ from demisto_sdk.tests.constants_test import (
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
     INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
-    INVALID_INTEGRATION_NO_TESTS, INVALID_LAYOUT_PATH,
-    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
-    INVALID_NO_HIDDEN_PARAMS, INVALID_ONE_LINE_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
+    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_NO_HIDDEN_PARAMS,
+    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
+    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
@@ -496,10 +497,10 @@ class TestValidators:
         assert file_validator._is_valid is expected
 
     ARE_TEST_CONFIGURED_TEST_INPUT = [
-        # (VALID_INTEGRATION_TEST_PATH, 'integration', True),
+        (VALID_INTEGRATION_TEST_PATH, 'integration', True),
         (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
-        # (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
-        # (TEST_PLAYBOOK, 'playbook', False)
+        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
+        (TEST_PLAYBOOK, 'playbook', False)
     ]
 
     @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
@@ -629,7 +630,7 @@ class TestValidators:
             Given:
                 - A file path which contains a python script
             When:
-                - verifying the yml is valid using validate manager
+                - validating the associated yml file
             Then:
                 - return a False validation response
         """

@@ -403,7 +403,6 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        print(result.stdout)
         assert f"Validating {classifier.path} as classifier" in result.stdout
         assert 'Must have fromVersion field in new classifiers' in result.stdout
 
@@ -702,7 +701,6 @@ class TestDashboardValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', dashboard.path], catch_exceptions=False)
         assert f'Validating {dashboard.path} as dashboard' in result.stdout
-        print(result.stdout)
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 

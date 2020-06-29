@@ -61,11 +61,11 @@ class ValidateManager:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=False, test_mode=False):
+                 silence_init_prints=False, no_docker_checks=False):
 
         # General configuration
         self.skip_docker_checks = False
-        self.silence_init_prints = silence_init_prints
+        self.no_configuration_prints = silence_init_prints
         self.skip_conf_json = skip_conf_json
         self.is_backward_check = is_backward_check
         self.validate_in_id_set = validate_id_set
@@ -89,18 +89,19 @@ class ValidateManager:
         self.skipped_file_types = (FileType.CHANGELOG, FileType.DESCRIPTION, FileType.TEST_PLAYBOOK)
 
         if is_external_repo:
-            if not silence_init_prints:
+            if not self.no_configuration_prints:
                 click.echo('Running in a private repository')
             self.skip_conf_json = True
 
         if validate_all:
+            # No need to check docker images on build branch hence we do not check on -a mode
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
 
         if self.validate_in_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())
 
-        if test_mode:
+        if no_docker_checks:
             self.skip_docker_checks = True
 
     def print_final_report(self, valid):
@@ -156,8 +157,7 @@ class ValidateManager:
                                 fg="bright_cyan")
                     files_validation_result.add(self.run_validation_on_content_entities(path, error_ignore_list))
                 else:
-                    rest_of_path = path.replace(f'/{dir_name}', '')
-                    if os.path.basename(rest_of_path) == PACKS_DIR:
+                    if os.path.basename(os.path.dirname(path)) == PACKS_DIR:
                         click.secho(f'\n================= Validating pack {path} =================',
                                     fg="bright_cyan")
                         files_validation_result.add(self.run_validations_on_pack(path))
@@ -361,7 +361,7 @@ class ValidateManager:
 
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
-        if not self.silence_init_prints:
+        if not self.no_configuration_prints:
             click.echo(f"Validating against {self.prev_ver}")
 
         modified_files, added_files, old_format_files, changed_meta_files = \
@@ -723,7 +723,7 @@ class ValidateManager:
         Returns:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
-        if not self.silence_init_prints:
+        if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
 
         # all committed changes of the current branch vs the prev_ver
@@ -737,7 +737,7 @@ class ValidateManager:
             remote_configured = has_remote_configured()
             is_origin_demisto = is_origin_content_repo()
             if remote_configured and not is_origin_demisto:
-                if not self.silence_init_prints:
+                if not self.no_configuration_prints:
                     click.echo("Collecting all local changed files from fork against the content master")
 
                 # all local non-committed changes and changes against prev_ver
@@ -752,12 +752,12 @@ class ValidateManager:
                     self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 
             else:
-                if (not is_origin_demisto and not remote_configured) and not self.silence_init_prints:
+                if (not is_origin_demisto and not remote_configured) and not self.no_configuration_prints:
                     error_message, error_code = Errors.changes_may_fail_validation()
                     self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
                                       drop_line=True)
 
-                if not self.silence_init_prints:
+                if not self.no_configuration_prints:
                     click.echo("Collecting all local changed files against the content master")
 
                 # all local non-committed changes and changes against prev_ver

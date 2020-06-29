@@ -212,7 +212,8 @@ def unify(**kwargs):
 
 # ====================== validate ====================== #
 @main.command(name="validate",
-              short_help='Validate your content files.')
+              short_help='Validate your content files. If no additional flags are given, will validated only '
+                         'committed files')
 @click.help_option(
     '-h', '--help'
 )
@@ -260,8 +261,8 @@ def unify(**kwargs):
     '--print-ignored-files', is_flag=True,
     help='Print which files were ignored by the command.')
 @click.option(
-    '--test-mode', is_flag=True,
-    help='Whether to run validate in test mode.')
+    '--no-docker-checks', is_flag=True,
+    help='Whether to run docker image validation.')
 @click.option(
     '--silence-init-prints', is_flag=True,
     help='Whether to skip the initialization prints.')
@@ -286,7 +287,7 @@ def validate(config, **kwargs):
                                     print_ignored_errors=kwargs['print_ignored_errors'],
                                     is_external_repo=is_external_repo,
                                     print_ignored_files=kwargs['print_ignored_files'],
-                                    test_mode=kwargs['test_mode'],
+                                    no_docker_checks=kwargs['no_docker_checks'],
                                     silence_init_prints=kwargs['silence_init_prints'])
         return validator.run_validation()
 

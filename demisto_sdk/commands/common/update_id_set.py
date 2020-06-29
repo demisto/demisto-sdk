@@ -578,11 +578,11 @@ def get_incident_field_data(path, incidents_types_list):
 
     scripts = json_data.get('script')
     if scripts:
-        all_scripts = set(scripts)
+        all_scripts = {scripts}
 
     field_calculations_scripts = json_data.get('fieldCalcScript')
     if field_calculations_scripts:
-        all_scripts = all_scripts.union(set(field_calculations_scripts))
+        all_scripts = all_scripts.union({field_calculations_scripts})
 
     if name:
         data['name'] = name
@@ -601,7 +601,7 @@ def get_incident_field_data(path, incidents_types_list):
     return {id_: data}
 
 
-def get_indicator_type_data(path):
+def get_indicator_type_data(path, all_integrations):
     data = OrderedDict()
     json_data = get_json(path)
 
@@ -609,9 +609,10 @@ def get_indicator_type_data(path):
     name = json_data.get('details', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
-    associated_integration = json_data.get('reputationCommand')
+    reputation_command = json_data.get('reputationCommand')
     pack = get_pack_name(path)
     all_scripts = set()
+    associated_integrations = set()
 
     for field in ['reputationScriptName', 'enhancementScriptNames']:
         associated_scripts = json_data.get(field)
@@ -622,6 +623,12 @@ def get_indicator_type_data(path):
         if associated_scripts:
             all_scripts = all_scripts.union(set(associated_scripts))
 
+    for integration in all_integrations:
+        integration_name = next(iter(integration))
+        integration_commands = integration.get(integration_name).get('commands')
+        if reputation_command in integration_commands:
+            associated_integrations.add(integration_name)
+
     if name:
         data['name'] = name
     data['file_path'] = path
@@ -631,8 +638,8 @@ def get_indicator_type_data(path):
         data['fromversion'] = fromversion
     if pack:
         data['pack'] = pack
-    if associated_integration:
-        data['integrations'] = associated_integration
+    if associated_integrations:
+        data['integrations'] = list(associated_integrations)
     if all_scripts:
         data['scripts'] = list(all_scripts)
 
@@ -970,12 +977,13 @@ def process_indicator_fields(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_indicator_types(file_path: str, print_logs: bool) -> list:
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list) -> list:
     """
     Process a indicator types JSON file
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
+        all_integrations: The integrations section in the id set
 
     Returns:
         a list of indicator type data.
@@ -986,7 +994,7 @@ def process_indicator_types(file_path: str, print_logs: bool) -> list:
             not checked_type(file_path, [INDICATOR_TYPES_REPUTATIONS_REGEX, PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX])):
         if print_logs:
             print("adding {} to id_set".format(file_path))
-        res.append(get_indicator_type_data(file_path))
+        res.append(get_indicator_type_data(file_path, all_integrations))
     return res
 
 
@@ -1221,10 +1229,12 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
 
         progress_bar.update(1)
 
+        # Has to be called after 'Integrations' is called
         if 'IndicatorTypes' in objects_to_create:
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_indicator_types, print_logs=print_logs),
-                                get_general_paths(INDICATOR_TYPES_DIR)):
+            for arr in pool.map(
+                    partial(process_indicator_types, print_logs=print_logs, all_integrations=integration_list),
+                    get_general_paths(INDICATOR_TYPES_DIR)):
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)

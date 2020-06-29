@@ -11,7 +11,7 @@
     "details": "dummy",
     "prevDetails": "dummy",
     "reputationScriptName": "dummy-script",
-    "reputationCommand": "dummy-integration",
+    "reputationCommand": "ip",
     "enhancementScriptNames": ["dummy-script-2", "dummy-script-3"],
     "system": false,
     "locked": false,

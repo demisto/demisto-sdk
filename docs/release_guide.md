@@ -8,7 +8,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
      `./Utils/trigger_nightly_sdk_build.sh <branch_name> <circle_token>`.  
   b. Trigger a build that imitates the content master build from the SDK repository by running:   
      `./demisto_sdk/utils/trigger_against_content_master.sh <release_branch_name> <circle_token>`.  
-  Make sure both builds are green before relasing.
+  Make sure both builds are green before releasing.
 5) Update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
 6) If there was any change in the content creation steps (**create content artifacts** or **unify** commands) - we need to check that the new content is valid.
 To do so, you can do the followings:  

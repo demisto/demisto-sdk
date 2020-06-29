@@ -1,4 +1,6 @@
 # Changelog
+
+#### 1.1.4
 * Fixed issue with default outfile file name for **unify** command when using an input of ".".
 * *Unify* command now adds contributor details to the display name and description.
 * *Format* command now adds *isFetch* and *incidenttype* fields to integration yml.

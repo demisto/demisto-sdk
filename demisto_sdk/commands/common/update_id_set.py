@@ -627,7 +627,7 @@ def get_indicator_type_data(path, all_integrations):
         integration_name = next(iter(integration))
         integration_commands = integration.get(integration_name).get('commands')
         if integration_commands and reputation_command in integration_commands:
-                associated_integrations.add(integration_name)
+            associated_integrations.add(integration_name)
 
     if name:
         data['name'] = name

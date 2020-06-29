@@ -2,10 +2,10 @@
 
 #### 1.1.4
 * Fixed an issue with the default output file name of the **unify** command when using "." as an output path.
-* *Unify* command now adds contributor details to the display name and description.
-* *Format* command now adds *isFetch* and *incidenttype* fields to integration yml.
+* **Unify** command now adds contributor details to the display name and description.
+* **Format** command now adds *isFetch* and *incidenttype* fields to integration yml.
 * Removed the *feedIncremental* field from the integration schema.
-* *Format* command now adds *feedBypassExclusionList*, *Fetch indicators*, *feedReputation*, *feedReliability*,
+* **Format** command now adds *feedBypassExclusionList*, *Fetch indicators*, *feedReputation*, *feedReliability*,
      *feedExpirationPolicy*, *feedExpirationInterval* and *feedFetchInterval* fields to integration yml.
 * Fixed an issue in the playbooks schema.
 * Fixed an issue where generated release notes were out of order.

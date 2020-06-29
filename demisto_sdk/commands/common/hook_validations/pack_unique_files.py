@@ -13,8 +13,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CREATED,
     PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
     PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
-    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_UPDATED,
-    PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
@@ -226,17 +226,6 @@ class PackUniqueFilesValidator(BaseValidator):
                                                                       created_field, suggested_value),
                         self.pack_meta_file):
                     return False
-
-            # check updated field in iso format if exists
-            updated_field = metadata.get(PACK_METADATA_UPDATED, None)
-            if updated_field:
-                if not self.check_timestamp_format(updated_field):
-                    suggested_value = parser.parse(created_field).isoformat() + "Z"
-                    if self._add_error(
-                            Errors.pack_timestamp_field_not_in_iso_format(PACK_METADATA_UPDATED,
-                                                                          updated_field, suggested_value),
-                            self.pack_meta_file):
-                        return False
 
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,

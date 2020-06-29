@@ -129,9 +129,10 @@ class ValidateManager:
         elif self.file_path:
             is_valid = self.run_validation_on_specific_files()
         else:
-            error_message, error_code = Errors.missing_validation_mode()
-            self.handle_error(error_message, error_code, file_path="General-Error")
-            return 1
+            # default validate to -g --post-commit
+            self.use_git = True
+            self.is_circle = True
+            is_valid = self.run_validation_using_git()
 
         return self.print_final_report(is_valid)
 

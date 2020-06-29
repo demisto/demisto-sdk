@@ -26,8 +26,7 @@ ERROR_CODE = {
     "id_should_equal_name": "BA101",
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
-    "missing_validation_mode": "BA104",
-    "changes_may_fail_validation": "BA105",
+    "changes_may_fail_validation": "BA104",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -206,14 +205,6 @@ class Errors:
     @error_code_decorator
     def file_name_include_spaces_error(file_name):
         return "Please remove spaces from the file's name: '{}'.".format(file_name)
-
-    @staticmethod
-    @error_code_decorator
-    def missing_validation_mode():
-        return "Missing validate configuration - please use one of the following:\n" \
-               "* -a  - to validate all files in the repository\n" \
-               "* -i [file_path] - to validate specified files\n" \
-               "* -g - to validate all files changed in comparison to master branch"
 
     @staticmethod
     @error_code_decorator

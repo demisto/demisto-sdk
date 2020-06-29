@@ -135,6 +135,7 @@ ERROR_CODE = {
     "pack_metadata_isnt_json": "PA112",
     "pack_metadata_missing_url_and_email": "PA113",
     "pack_metadata_version_should_be_raised": "PA114",
+    "pack_timestamp_field_not_in_iso_format": 'PA115',
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
@@ -849,6 +850,12 @@ class Errors:
                f"pack_metadata.json or in case release notes are required run:\n" \
                f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_timestamp_field_not_in_iso_format(field_name, value, changed_value):
+        return f"The field \"{field_name}\" should be in the following format: YYYY-MM-DDThh:mm:ssZ, found {value}.\n" \
+               f"Suggested change: {changed_value}"
 
     @staticmethod
     @error_code_decorator

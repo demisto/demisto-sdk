@@ -94,3 +94,26 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
         assert 'Contributed packs must include email or url' in result.stdout
+
+    def test_check_timestamp_format(self):
+        """
+        Given
+        - timestamps in various formats.
+
+        When
+        - Running check_timestamp_format on them.
+
+        Then
+        - Ensure True for iso format and False for any other format.
+        """
+        fake_validator = PackUniqueFilesValidator('fake')
+        good_format_timestamp = '2020-04-14T00:00:00Z'
+        missing_z = '2020-04-14T00:00:00'
+        missing_t = '2020-04-14 00:00:00Z'
+        only_date = '2020-04-14'
+        with_hyphen = '2020-04-14T00-00-00Z'
+        assert fake_validator.check_timestamp_format(good_format_timestamp)
+        assert not fake_validator.check_timestamp_format(missing_t)
+        assert not fake_validator.check_timestamp_format(missing_z)
+        assert not fake_validator.check_timestamp_format(only_date)
+        assert not fake_validator.check_timestamp_format(with_hyphen)

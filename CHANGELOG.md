@@ -8,7 +8,6 @@
 * Fixed an issue in the playbooks schema.
 * Fixed an issue where generated release notes were out of order.
 
-
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.
 * Added default behavior for **update-release-notes** command.

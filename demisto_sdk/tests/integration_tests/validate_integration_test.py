@@ -108,7 +108,7 @@ class TestIntegrationValidation:
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--test-mode'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
@@ -134,7 +134,7 @@ class TestIntegrationValidation:
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--test-mode'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
         assert 'IN119' in result.stdout

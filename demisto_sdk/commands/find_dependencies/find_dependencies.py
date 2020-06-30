@@ -172,11 +172,13 @@ class PackDependencies:
             items_names = [items_names]
 
         for item_name in items_names:
+            item_possible_machine_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
+                                           f'{item_name}-mapper']
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
-                if (item_name in machine_name or item_name in
-                        item_details.get('name') and item_details.get('pack')):
+                if (machine_name in item_possible_machine_names or
+                        item_name in item_details.get('name') and item_details.get('pack')):
                     packs.add(item_details.get('pack'))
 
         return packs
@@ -662,8 +664,8 @@ class PackDependencies:
             _collect_mappers_dependencies(pack_items['mappers'], id_set)
 
         pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
-            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
-            | incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
+                            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
+                            | incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
 
         return pack_dependencies
 

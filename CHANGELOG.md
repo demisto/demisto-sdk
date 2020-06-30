@@ -1,4 +1,6 @@
 # Changelog
+
+#### 1.1.5
 * Fixed an issue in **find-dependencies** command.
 * **lint** command now verifies flake8 on CommonServerPython script.
 

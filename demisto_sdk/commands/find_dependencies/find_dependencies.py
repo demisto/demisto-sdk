@@ -180,8 +180,6 @@ class PackDependencies:
                 if (machine_name in item_possible_machine_names or item_name == item_details.get('name')) \
                         and item_details.get('pack'):
                     if item_details.get('pack') not in constants.IGNORED_DEPENDENCY_CALCULATION:
-                        if item_details.get('pack') == 'DigitalGuardian':
-                            print('bla')
                         packs.add(item_details.get('pack'))
 
         return packs

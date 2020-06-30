@@ -62,6 +62,8 @@ class Uploader:
                 self.incident_type_uploader(self.path)
             elif file_type == 'classifier':
                 self.classifier_uploader(self.path)
+            elif file_type == 'classifier_5_9_9':
+                self.classifier_uploader(self.path)
             elif file_type == 'layout':
                 self.layout_uploader(self.path)
             elif file_type == 'dashboard':
@@ -128,11 +130,25 @@ class Uploader:
             path (str): Path for directory to upload.
         """
         if is_path_of_integration_directory(path):
+            # Upload unified integration files
+            list_unified_integrations = get_child_files(path)
+            for unified_integration in list_unified_integrations:
+                file_type = find_type(unified_integration)
+                if file_type == 'integration':
+                    self.integration_uploader(unified_integration)
+            # Upload spliced integration files
             list_integrations = get_child_directories(path)
             for integration in list_integrations:
                 self.integration_uploader(integration)
 
         elif is_path_of_script_directory(path):
+            # Upload unified scripts files
+            list_unified_scripts = get_child_files(path)
+            for unified_script in list_unified_scripts:
+                file_type = find_type(unified_script)
+                if file_type == 'script':
+                    self.script_uploader(unified_script)
+            # Upload spliced scripts
             list_script = get_child_directories(path)
             for script in list_script:
                 self.script_uploader(script)

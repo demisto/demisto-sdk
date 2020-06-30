@@ -4,26 +4,20 @@ import re
 from collections import OrderedDict
 from distutils.version import LooseVersion
 
+import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (INTEGRATION_REGEX,
-                                                   INTEGRATION_YML_REGEX,
-                                                   PLAYBOOK_REGEX,
-                                                   SCRIPT_JS_REGEX,
-                                                   SCRIPT_PY_REGEX,
-                                                   SCRIPT_REGEX,
-                                                   SCRIPT_YML_REGEX,
-                                                   TEST_PLAYBOOK_REGEX,
-                                                   TEST_SCRIPT_REGEX)
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import (collect_ids,
-                                               get_script_or_integration_id,
-                                               print_error)
+                                               get_script_or_integration_id)
 from demisto_sdk.commands.common.update_id_set import (get_integration_data,
                                                        get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
-class IDSetValidator:
+class IDSetValidator(BaseValidator):
     """IDSetValidator was designed to make sure we create the id_set.json in the correct way so we can use it later on.
 
     The id_set.json file is created using the update_id_set.py script. It contains all the data from the various
@@ -45,7 +39,9 @@ class IDSetValidator:
 
     ID_SET_PATH = "./Tests/id_set.json"
 
-    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration()):
+    def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
+                 print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_circle = is_circle
         self.configuration = configuration
         if not is_test_run and self.is_circle:
@@ -62,8 +58,11 @@ class IDSetValidator:
                 id_set = json.load(id_set_file)
             except ValueError as ex:
                 if "Expecting property name" in str(ex):
-                    print_error("You probably merged from master and your id_set.json has conflicts. "
-                                "Run `demisto-sdk create-id-set`, it should reindex your id_set.json")
+                    error_message, error_code = Errors.id_set_conflicts()
+                    if self.handle_error(error_message, error_code, file_path="id_set.json"):
+                        raise
+                    else:
+                        pass
 
                 raise
 
@@ -94,13 +93,14 @@ class IDSetValidator:
                     checked_instance_fromversion == obj_from_version:
                 is_found = True
                 if checked_instance_data != obj_data[file_id]:
-                    print_error(f"You have failed to update id_set.json with the data of {file_path} "
-                                f"please run `demisto-sdk create-id-set`")
-                    return False
+                    error_message, error_code = Errors.id_set_not_updated(file_path)
+                    if self.handle_error(error_message, error_code, file_path="id_set.json"):
+                        return False
 
         if not is_found:
-            print_error(f"You have failed to update id_set.json with the data of {file_path} "
-                        f"please run `demisto-sdk create-id-set`")
+            error_message, error_code = Errors.id_set_not_updated(file_path)
+            if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                return True
 
         return is_found
 
@@ -115,32 +115,31 @@ class IDSetValidator:
         """
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
-            if re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            if re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = get_playbook_data(file_path)
                 is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
 
-            elif re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = get_playbook_data(file_path)
                 is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.test_playbook_set)
 
-            elif re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(constants.PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
 
                 script_data = get_script_data(file_path)
                 is_valid = self.is_valid_in_id_set(file_path, script_data, self.script_set)
 
-            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.PACKS_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(constants.PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
 
                 integration_data = get_integration_data(file_path)
                 is_valid = self.is_valid_in_id_set(file_path, integration_data, self.integration_set)
 
-            elif re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(constants.PACKS_SCRIPT_PY_REGEX, file_path, re.IGNORECASE):
 
                 unifier = Unifier(os.path.dirname(file_path))
-                yml_path, code = unifier.get_script_package_data()
+                yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
                 is_valid = self.is_valid_in_id_set(yml_path, script_data, self.script_set)
 
@@ -184,9 +183,9 @@ class IDSetValidator:
                         break
 
         if is_duplicated:
-            print_error("The ID {} already exists, please update the file or update the "
-                        "id_set.json toversion field of this id to match the "
-                        "old occurrence of this id".format(obj_id))
+            error_message, error_code = Errors.duplicated_id(obj_id)
+            if not self.handle_error(error_message, error_code, file_path='id_set.json'):
+                return False
 
         return is_duplicated
 
@@ -202,35 +201,34 @@ class IDSetValidator:
         is_used = False
         is_json_file = False
         if self.is_circle:
-            if re.match(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            if re.match(constants.TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 obj_type = self.TEST_PLAYBOOK_SECTION
                 obj_id = collect_ids(file_path)
                 obj_data = get_playbook_data(file_path)
 
-            elif re.match(SCRIPT_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(TEST_SCRIPT_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(constants.TEST_SCRIPT_REGEX, file_path, re.IGNORECASE):
                 obj_type = self.SCRIPTS_SECTION
                 obj_id = get_script_or_integration_id(file_path)
                 obj_data = get_script_data(file_path)
 
-            elif re.match(INTEGRATION_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(INTEGRATION_YML_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.PACKS_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(constants.PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
 
                 obj_type = self.INTEGRATION_SECTION
                 obj_id = get_script_or_integration_id(file_path)
                 obj_data = get_integration_data(file_path)
 
-            elif re.match(PLAYBOOK_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 obj_type = self.PLAYBOOK_SECTION
                 obj_id = collect_ids(file_path)
                 obj_data = get_playbook_data(file_path)
 
-            elif re.match(SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_PY_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(SCRIPT_JS_REGEX, file_path, re.IGNORECASE):
+            elif re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
+                    re.match(constants.PACKS_SCRIPT_PY_REGEX, file_path, re.IGNORECASE):
 
                 unifier = Unifier(os.path.dirname(os.path.dirname(file_path)))
-                yml_path, code = unifier.get_script_package_data()
+                yml_path, code = unifier.get_script_or_integration_package_data()
 
                 obj_data = get_script_data(yml_path, script_code=code)
 

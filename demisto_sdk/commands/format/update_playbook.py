@@ -19,20 +19,16 @@ class PlaybookYMLFormat(BaseUpdateYML):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
         print('Adding empty descriptions to relevant tasks')
-        if 'description' not in self.data:
-            self.data['description'] = ''
-
         for task_id, task in self.data.get('tasks', {}).items():
-            if task['task'].get('description'):
-                continue  # In case we already have a description we should skip the setting of an empty value
-
-            task['task'].update({'description': ''})
+            if not task['task'].get('description') and task['type'] in ['title', 'start', 'playbook']:
+                task['task'].update({'description': ''})
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
@@ -72,10 +68,19 @@ class PlaybookYMLFormat(BaseUpdateYML):
         if 'sourceplaybookid' in self.data:
             self.data.pop('sourceplaybookid', None)
 
+    def remove_copy_and_dev_suffixes_from_subplaybook(self):
+        for task_id, task in self.data.get('tasks', {}).items():
+            if task['task'].get('playbookName'):
+                task['task']['playbookName'] = task['task'].get('playbookName').replace('_dev', '').\
+                    replace('_copy', '')
+                task['task']['name'] = task['task'].get('name').replace('_dev', ''). \
+                    replace('_copy', '')
+
     def run_format(self) -> int:
         try:
             super().update_yml()
             self.update_tests()
+            self.remove_copy_and_dev_suffixes_from_subplaybook()
             self.update_conf_json('playbook')
             self.add_description()
             self.delete_sourceplaybookid()

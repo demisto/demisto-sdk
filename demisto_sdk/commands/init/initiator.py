@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
+                                                   DOC_FILES_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
@@ -78,7 +79,7 @@ class Initiator:
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR]
+                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
 
     def init(self):
         """Starts the init command process.
@@ -148,9 +149,6 @@ class Initiator:
         for directory in self.DIR_LIST:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
-
-        with open(os.path.join(self.full_output_path, 'CHANGELOG.md'), 'a') as fp:
-            fp.write("## [Unreleased]")
 
         fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()

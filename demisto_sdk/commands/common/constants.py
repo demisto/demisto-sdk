@@ -1,242 +1,5 @@
 import re
-from typing import Any, List
-
-
-class Errors:
-    BACKWARDS = "Possible backwards compatibility break"
-
-    @staticmethod
-    def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
-        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
-
-    @staticmethod
-    def feed_wrong_from_version(file_path, given_fromversion, needed_from_version="5.5.0"):
-        return "{} is a feed and has wrong fromversion. got `{}` expected `{}`" \
-            .format(file_path, given_fromversion, needed_from_version)
-
-    @staticmethod
-    def pwsh_wrong_version(file_path, given_fromversion, needed_from_version='5.5.0'):
-        return (f'{file_path}: detected type: powershell and fromversion less than {needed_from_version}.'
-                f' Found version: {given_fromversion}')
-
-    @staticmethod
-    def not_used_display_name(file_path, field_name):
-        return "The display details for {} will not be used in the file {} due to the type of the parameter".format(
-            field_name, file_path)
-
-    @staticmethod
-    def empty_display_configuration(file_path, field_name):
-        return "No display details were entered for the field {} in the file {}.".format(field_name, file_path)
-
-    @staticmethod
-    def no_yml_file(file_path):
-        return "No yml files were found in {} directory.".format(file_path)
-
-    @staticmethod
-    def wrong_filename(filepath, file_type):
-        return '{} is not a valid {} filename.'.format(filepath, file_type)
-
-    @staticmethod
-    def wrong_path(filepath):
-        return "{} is not a valid filepath.".format(filepath)
-
-    @staticmethod
-    def wrong_version(file_path, expected="-1"):
-        return "{}: The version for our files should always be {}, please update the file.".format(file_path, expected)
-
-    @staticmethod
-    def wrong_version_reputations(file_path, object_id, version):
-        return "{} Reputation object with id {} must have version {}".format(file_path, object_id, version)
-
-    @staticmethod
-    def dbot_invalid_output(file_path, command_name, missing_outputs, context_standard):
-        return "{}: The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. " \
-               "Fix according to context standard {} ".format(file_path, command_name, missing_outputs,
-                                                              context_standard)
-
-    @staticmethod
-    def dbot_invalid_description(file_path, command_name, missing_descriptions, context_standard):
-        return "{}: The DBotScore description of the reputation command {} aren't valid. Missing: {}. " \
-               "Fix according to context standard {} " \
-            .format(file_path, command_name, missing_descriptions, context_standard)
-
-    @staticmethod
-    def missing_reputation(file_path, command_name, reputation_output, context_standard):
-        return "{}: The outputs of the reputation command {} aren't valid. The {} outputs is missing. " \
-               "Fix according to context standard {} " \
-            .format(file_path, command_name, reputation_output, context_standard)
-
-    @staticmethod
-    def wrong_subtype(file_name):
-        return "{}: The subtype for our yml files should be either python2 or python3, " \
-               "please update the file.".format(file_name)
-
-    @staticmethod
-    def beta_in_str(file_path, field):
-        return "{}: Field '{}' should NOT contain the substring \"beta\" in a new beta integration. " \
-               "please change the id in the file.".format(field, file_path)
-
-    @classmethod
-    def beta_in_id(cls, file_path):
-        return cls.beta_in_str(file_path, 'id')
-
-    @classmethod
-    def beta_in_name(cls, file_path):
-        return cls.beta_in_str(file_path, 'name')
-
-    @staticmethod
-    def duplicate_arg_in_file(script_path, arg, command_name=None):
-        err_msg = "{}: The argument '{}' is duplicated".format(script_path, arg)
-        if command_name:
-            err_msg += " in '{}'.".format(command_name)
-        err_msg += ", please remove one of its appearances."
-        return err_msg
-
-    @staticmethod
-    def duplicate_param(param_name, file_path):
-        return "{}: The parameter '{}' of the " \
-               "file is duplicated, please remove one of its appearances.".format(file_path, param_name)
-
-    @staticmethod
-    def added_required_fields(file_path, field):
-        return "You've added required fields in the file '{}', the field is '{}'".format(file_path, field)
-
-    @staticmethod
-    def from_version_modified_after_rename():
-        return "fromversion might have been modified, please make sure it hasn't changed."
-
-    @staticmethod
-    def from_version_modified(file_path):
-        return "{}: You've added fromversion to an existing file in the system, this is not allowed, please undo." \
-            .format(file_path)
-
-    @classmethod
-    def breaking_backwards_no_old_script(cls, e):
-        return "{}\n{}, Could not find the old file.".format(cls.BACKWARDS, str(e))
-
-    @classmethod
-    def breaking_backwards_subtype(cls, file_path):
-        return "{}: {}, You've changed the subtype, please undo.".format(file_path, cls.BACKWARDS)
-
-    @classmethod
-    def breaking_backwards_context(cls, file_path):
-        return "{}: {}, You've changed the context in the file," \
-               " please undo.".format(file_path, cls.BACKWARDS)
-
-    @classmethod
-    def breaking_backwards_command(cls, file_path, old_command):
-        return "{}: {}, You've changed the context in the file,please " \
-               "undo. the command is:\n{}".format(file_path, cls.BACKWARDS, old_command)
-
-    @classmethod
-    def breaking_backwards_arg_changed(cls, file_path):
-        return "{}: {}, You've changed the name of an arg in " \
-               "the file, please undo.".format(file_path, cls.BACKWARDS)
-
-    @classmethod
-    def breaking_backwards_command_arg_changed(cls, file_path, command):
-        return "{}: {}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(file_path, cls.BACKWARDS, command)
-
-    @staticmethod
-    def no_beta_in_display(file_path):
-        return "{} :Field 'display' in Beta integration yml file should include the string \"beta\", " \
-               "but was not found in the file.".format(file_path)
-
-    @staticmethod
-    def id_might_changed():
-        return "ID might have changed, please make sure to check you have the correct one."
-
-    @staticmethod
-    def id_changed(file_path):
-        return "{}: You've changed the ID of the file, please undo.".format(file_path)
-
-    @staticmethod
-    def file_id_contains_slashes():
-        return "File's ID contains slashes - please remove."
-
-    @staticmethod
-    def missing_release_notes(file_path, rn_path):
-        return '{}:  is missing releaseNotes, Please add it under {}'.format(file_path, rn_path)
-
-    @staticmethod
-    def display_param(param_name, param_display):
-        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
-
-    @staticmethod
-    def wrong_file_extension(file_extension, accepted_extensions):
-        return "File extension {} is not valid. accepted {}".format(file_extension, accepted_extensions)
-
-    @staticmethod
-    def might_need_release_notes(file_path):
-        return "{}: You might need RN in file, please make sure to check that.".format(file_path)
-
-    @staticmethod
-    def unknown_file(file_path):
-        return "{}:  File type is unknown, check it out.".format(file_path)
-
-    @staticmethod
-    def wrong_default_argument(file_path, arg_name, command_name):
-        return "{}: The argument '{}' of the command '{}' is not configured as default" \
-            .format(file_path, arg_name, command_name)
-
-    @staticmethod
-    def wrong_display_name(param_name, param_display):
-        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
-
-    @staticmethod
-    def wrong_default_parameter(param_name):
-        return Errors.wrong_default_parameter_not_empty(param_name, "''")
-
-    @staticmethod
-    def wrong_default_parameter_not_empty(param_name, default_value):
-        return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
-
-    @staticmethod
-    def wrong_required_value(param_name):
-        return 'The required field of the {} parameter should be False'.format(param_name)
-
-    @staticmethod
-    def wrong_required_type(param_name):
-        return 'The type field of the {} parameter should be 8'.format(param_name)
-
-    @staticmethod
-    def beta_field_not_found(file_path):
-        return "{}: Beta integration yml file should have the field \"beta: true\", but was not found in the file." \
-            .format(file_path)
-
-    @staticmethod
-    def no_default_arg(file_path, command_name):
-        return "{}: Could not find default argument {} in command {}".format(file_path, command_name, command_name)
-
-    @staticmethod
-    def wrong_category(file_path, category):
-        return "{}: The category '{}' is not in the integration schemas, the valid options are:\n{}" \
-            .format(file_path, category, '\n'.join(INTEGRATION_CATEGORIES))
-
-    @staticmethod
-    def no_common_server_python(path):
-        return "Could not get CommonServerPythonScript.py file. Please download it manually from {} and " \
-               "add it to the root of the repository.".format(path)
-
-    @staticmethod
-    def invalid_file_path(file_path):
-        return f"Found incompatible file path: {file_path}."
-
-    @staticmethod
-    def invalid_v2_integration_name(file_path):
-        return f"The display name of the v2 integration : {file_path} is incorrect , should be **name** v2.\n" \
-               f"e.g: Kenna v2, Jira v2"
-
-    @staticmethod
-    def invalid_v2_script_name(file_path):
-        return f"The name of the v2 script : {file_path} is incorrect , should be **name**V2." \
-               f" e.g: DBotTrainTextClassifierV2"
-
-    @staticmethod
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
-
+from typing import List
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
@@ -254,12 +17,13 @@ INDICATOR_FIELDS_DIR = 'IndicatorFields'
 INDICATOR_TYPES_DIR = 'IndicatorTypes'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
+MAPPERS_DIR = 'Classifiers'
 CONNECTIONS_DIR = 'Connections'
-BETA_INTEGRATIONS_DIR = 'Beta_Integrations'
 PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
 RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
+DOC_FILES_DIR = 'doc_files'
 
 SCRIPT = 'script'
 INTEGRATION = 'integration'
@@ -275,6 +39,7 @@ REPORT = 'report'
 INDICATOR_TYPE = 'reputation'
 WIDGET = 'widget'
 TOOL = 'tools'
+BETA_INTEGRATION = 'betaintegration'
 
 ENTITY_TYPE_TO_DIR = {
     INTEGRATION: INTEGRATIONS_DIR,
@@ -289,8 +54,10 @@ ENTITY_TYPE_TO_DIR = {
     DASHBOARD: DASHBOARDS_DIR,
     INDICATOR_TYPE: INDICATOR_TYPES_DIR,
     REPORT: REPORTS_DIR,
-    WIDGET: WIDGETS_DIR
+    WIDGET: WIDGETS_DIR,
+    BETA_INTEGRATION: INTEGRATIONS_DIR
 }
+
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
@@ -310,13 +77,11 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
-    BETA_INTEGRATIONS_DIR
+    CONNECTIONS_DIR
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
     INTEGRATIONS_DIR,
-    BETA_INTEGRATIONS_DIR,
     SCRIPTS_DIR,
     PLAYBOOKS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -493,112 +258,106 @@ DESCRIPTION_REGEX = r'.*\.md'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
 CONF_PATH = 'Tests/conf.json'
 
+PACKS_DIR_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}'
+PACK_DIR_REGEX = fr'{PACKS_DIR_REGEX}\/([^\\\/]+)'
+
+INTEGRATIONS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INTEGRATIONS_DIR}'
+INTEGRATION_PACKAGE_REGEX = fr'{INTEGRATIONS_DIR_REGEX}\/([^\\/]+)'
+
+PACKS_INTEGRATION_PY_REGEX = fr'{INTEGRATION_PACKAGE_REGEX}\/\2\.py'
+PACKS_INTEGRATION_TEST_PY_REGEX = fr'{INTEGRATION_PACKAGE_REGEX}/\2_test\.py'
+PACKS_INTEGRATION_PS_REGEX = fr'{INTEGRATION_PACKAGE_REGEX}/\2.ps1$'
+PACKS_INTEGRATION_PS_TEST_REGEX = fr'{INTEGRATION_PACKAGE_REGEX}/\2\.Tests\.ps1$'
+PACKS_INTEGRATION_YML_REGEX = fr'{INTEGRATION_PACKAGE_REGEX}/\2\.yml'
+PACKS_INTEGRATION_README_REGEX = fr'{INTEGRATION_PACKAGE_REGEX}/README.md$'
+
+PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX = fr'{INTEGRATIONS_DIR_REGEX}/integration-([^\\/]+)'
+PACKS_INTEGRATION_NON_SPLIT_YML_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}\.yml$'
+PACKS_INTEGRATION_NON_SPLIT_README_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}_README.md$'
+
+
+SCRIPTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{SCRIPTS_DIR}'
+SCRIPT_DIR_REGEX = fr'{SCRIPTS_DIR_REGEX}\/([^\\/]+)'
 SCRIPT_TYPE_REGEX = '.*script-.*.yml'
-SCRIPT_PY_REGEX = r'{}{}/([^\\/]+)/\1.py$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
-SCRIPT_TEST_PY_REGEX = r'{}{}/([^\\/]+)/\1_test.py$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
-SCRIPT_JS_REGEX = r'{}{}/([^\\/]+)/\1.js$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
-SCRIPT_PS_REGEX = r'{}{}/([^\\/]+)/\1.ps1$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
-SCRIPT_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
+PACKS_SCRIPT_PY_REGEX = fr'{SCRIPT_DIR_REGEX}/\2\.py'
+PACKS_SCRIPT_TEST_PY_REGEX = fr'{SCRIPT_DIR_REGEX}/\2_test\.py'
+PACKS_SCRIPT_PS_REGEX = fr'{SCRIPT_DIR_REGEX}/\2.ps1$'
+PACKS_SCRIPT_TEST_PS_REGEX = fr'{SCRIPT_DIR_REGEX}/\2\.Tests\.ps1$'
+PACKS_SCRIPT_YML_REGEX = fr'{SCRIPT_DIR_REGEX}\/\2\.yml'
+PACKS_SCRIPT_README_REGEX = fr'{SCRIPT_DIR_REGEX}/README.md$'
+
+PACKS_SCRIPT_NON_SPLIT_BASE_REGEX = fr'{SCRIPTS_DIR_REGEX}/script-([^\\/]+)'
+PACKS_SCRIPT_TEST_PLAYBOOK = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}/script-([^\\/]+).yml$'
+PACKS_SCRIPT_NON_SPLIT_YML_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}\.yml$'
+PACKS_SCRIPT_NON_SPLIT_README_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}_README.md$'
+
+
+PACKS_LAYOUTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{LAYOUTS_DIR}'
+PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_WIDGETS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIDGETS_DIR}'
+PACKS_WIDGET_JSON_REGEX = fr'{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_DASHBOARDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{DASHBOARDS_DIR}'
+PACKS_DASHBOARD_JSON_REGEX = fr'{PACKS_DASHBOARDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_REPORTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{REPORTS_DIR}'
+PACKS_REPORT_JSON_REGEX = fr'{PACKS_REPORTS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_INCIDENT_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INCIDENT_TYPES_DIR}'
+PACKS_INCIDENT_TYPE_JSON_REGEX = fr'{PACKS_INCIDENT_TYPES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_INCIDENT_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INCIDENT_FIELDS_DIR}'
+PACKS_INCIDENT_FIELD_JSON_REGEX = fr'{PACKS_INCIDENT_FIELDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_INDICATOR_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INDICATOR_TYPES_DIR}'
+PACKS_INDICATOR_TYPE_JSON_REGEX = fr'{PACKS_INDICATOR_TYPES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_INDICATOR_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INDICATOR_FIELDS_DIR}'
+PACKS_INDICATOR_FIELD_JSON_REGEX = fr'{PACKS_INDICATOR_FIELDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
+
+_PACKS_CLASSIFIER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)'
+PACKS_CLASSIFIER_JSON_REGEX = fr'{_PACKS_CLASSIFIER_BASE_REGEX}\.json'
+
+# old classifier structure
+_PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
+PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
+
+_PACKS_MAPPER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*'
+PACKS_MAPPER_JSON_REGEX = fr'{_PACKS_MAPPER_BASE_REGEX}\.json'
+
+
+PACKS_CONNECTIONS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}'
+PACKS_CONNECTION_JSON_REGEX = fr'{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$'
+
+PACKS_RELEASE_NOTES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{RELEASE_NOTES_DIR}'
+
+PLAYBOOKS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{PLAYBOOKS_DIR}'
+PLAYBOOK_BASE_REGEX = fr'{PLAYBOOKS_DIR_REGEX}\/.*'
+PLAYBOOK_YML_REGEX = fr'{PLAYBOOK_BASE_REGEX}\.yml'
+PLAYBOOK_README_REGEX = fr'{PLAYBOOK_BASE_REGEX}_README\.md$'
+
 TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
-SCRIPT_REGEX = r'{}{}/(script-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, SCRIPTS_DIR)
+TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml'
 
-INTEGRATION_PY_REGEX = r'{}{}/([^\\/]+)/\1.py$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_TEST_PY_REGEX = r'{}{}/([^\\/]+)/\1_test.py$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_JS_REGEX = r'{}{}/([^\\/]+)/\1.js$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_PS_REGEX = r'{}{}/([^\\/]+)/\1.ps1$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_YML_REGEX = r'{}{}/([^\\/]+)/([^\\/]+).yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_REGEX = r'{}{}/(integration-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_README_REGEX = r'{}{}/([^\\/]+)/README.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-INTEGRATION_OLD_README_REGEX = r'{}{}/integration-([^\\/]+_README.md)$'.format(CAN_START_WITH_DOT_SLASH,
-                                                                               INTEGRATIONS_DIR)
 
-INTEGRATION_CHANGELOG_REGEX = r'{}{}/([^\\/]+)/CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INTEGRATIONS_DIR)
-
-PACKS_DIR_REGEX = r'^{}{}/'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-PACKS_INTEGRATION_JS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
-    CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
-PACKS_SCRIPT_JS_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.js'.format(
-    CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
-PACKS_INTEGRATION_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.py'.format(
-    CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
-PACKS_INTEGRATION_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(
-    CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
-PACKS_INTEGRATION_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                             INTEGRATIONS_DIR)
-PACKS_INTEGRATION_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, INTEGRATIONS_DIR)
-PACKS_SCRIPT_NON_SPLIT_YML_REGEX = r'{}{}/([^/]+)/{}/script-([^/]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                                 SCRIPTS_DIR)
-PACKS_SCRIPT_YML_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
-PACKS_SCRIPT_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, SCRIPTS_DIR)
-PACKS_SCRIPT_TEST_PY_REGEX = r'{}{}/([^/]+)/{}/([^/]+)/\2_test\.py'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                           SCRIPTS_DIR)
-PACKS_PLAYBOOK_YML_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, PLAYBOOKS_DIR)
-PACKS_TEST_PLAYBOOKS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.yml'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                    TEST_PLAYBOOKS_DIR)
-PACKS_CLASSIFIERS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, CLASSIFIERS_DIR)
-PACKS_DASHBOARDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, DASHBOARDS_DIR)
-PACKS_INCIDENT_TYPES_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                     INCIDENT_TYPES_DIR)
-PACKS_INCIDENT_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                      INCIDENT_FIELDS_DIR)
-PACKS_INDICATOR_FIELDS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                       INDICATOR_FIELDS_DIR)
-PACKS_INDICATOR_TYPES_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
-                                                                      INDICATOR_TYPES_DIR)
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
                                                                                      PACKS_DIR,
                                                                                      INDICATOR_TYPES_DIR)
-PACKS_LAYOUTS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, LAYOUTS_DIR)
-PACKS_WIDGETS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, WIDGETS_DIR)
-PACKS_REPORTS_REGEX = r'{}/([^/]+)/{}/([^.]+)\.json'.format(PACKS_DIR, REPORTS_DIR)
-PACKS_CHANGELOG_REGEX = r'{}{}/([^/]+)/CHANGELOG\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
 PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                    RELEASE_NOTES_DIR)
 PACKS_TOOLS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.zip'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, TOOLS_DIR)
-PACKS_README_REGEX = r'{}{}/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-PACKS_README_REGEX_INNER = r'{}{}/([^/]+)/([^/]+)/([^/]+)/README\.md'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-
-PACKS_PACKAGE_META_REGEX = r'{}{}/([^/]+)/package-meta\.json'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR)
-
-BETA_SCRIPT_REGEX = r'{}{}/(script-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, BETA_INTEGRATIONS_DIR)
-BETA_INTEGRATION_REGEX = r'{}{}/(integration-[^\\/]+)\.yml$'.format(CAN_START_WITH_DOT_SLASH, BETA_INTEGRATIONS_DIR)
-BETA_INTEGRATION_YML_REGEX = r'{}{}/([^\\/]+)/\1.yml$'.format(CAN_START_WITH_DOT_SLASH, BETA_INTEGRATIONS_DIR)
-BETA_PLAYBOOK_REGEX = r'{}{}.*playbook-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, BETA_INTEGRATIONS_DIR)
 
 PLAYBOOK_REGEX = r'{}(?!Test){}/playbook-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, PLAYBOOKS_DIR)
-PLAYBOOK_CHANGELOG_REGEX = r'{}(?!Test){}/*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, PLAYBOOKS_DIR)
 
-TEST_PLAYBOOK_REGEX = r'{}{}/playbook-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
+TEST_PLAYBOOK_REGEX = r'{}{}/(?!script-).*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
 TEST_NOT_PLAYBOOK_REGEX = r'{}{}/(?!playbook).*-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
-
-INCIDENT_TYPE_REGEX = r'{}{}/incidenttype-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, INCIDENT_TYPES_DIR)
-INCIDENT_TYPE_CHANGELOG_REGEX = r'{}{}/*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INCIDENT_TYPES_DIR)
-
-INDICATOR_FIELDS_REGEX = r'{}{}/incidentfield-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_FIELDS_DIR)
-INDICATOR_FIELD_CHANGELOG_REGEX = r'{}{}/*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_FIELDS_DIR)
-INCIDENT_FIELD_REGEX = r'{}{}/incidentfield-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, INCIDENT_FIELDS_DIR)
-INCIDENT_FIELD_CHANGELOG_REGEX = r'{}{}/*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INCIDENT_FIELDS_DIR)
-
-WIDGETS_REGEX = r'{}{}/widget-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, WIDGETS_DIR)
-WIDGETS_CHANGELOG_REGEX = r'{}{}/*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, WIDGETS_DIR)
-
-DASHBOARD_REGEX = r'{}{}.*dashboard-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, DASHBOARDS_DIR)
-DASHBOARD_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, DASHBOARD_REGEX)
 
 CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CONNECTIONS_DIR)
 
-CLASSIFIER_REGEX = r'{}{}.*classifier-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
-CLASSIFIER_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, CLASSIFIERS_DIR)
-
-LAYOUT_REGEX = r'{}{}.*layout-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, LAYOUTS_DIR)
-LAYOUT_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, LAYOUTS_DIR)
-
-REPORT_REGEX = r'{}{}.*report-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
-REPORT_CHANGELOG_REGEX = r'{}{}.*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, REPORTS_DIR)
-
-INDICATOR_TYPES_REGEX = r'{}{}/reputation-.*\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
-INDICATOR_TYPES_CHANGELOG_REGEX = r'{}{}/*_CHANGELOG.md$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
-INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
+INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
 
 PACK_METADATA_NAME = 'name'
 PACK_METADATA_DESC = 'description'
@@ -621,6 +380,14 @@ PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SU
                         PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
                         PACK_METADATA_TAGS, PACK_METADATA_CREATED, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS)
 API_MODULES_PACK = 'ApiModules'
+API_MODULE_PY_REGEX = r'{}{}/{}/{}/([^/]+)/([^.]+)\.py'.format(
+    CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR)
+API_MODULE_YML_REGEX = r'{}{}/{}/{}/([^/]+)/([^.]+)\.yml'.format(
+    CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR)
+API_MODULE_REGEXES = [
+    API_MODULE_PY_REGEX,
+    API_MODULE_YML_REGEX
+]
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
@@ -643,14 +410,11 @@ PACKS_README_FILE_NAME = 'README.md'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
-    PACKS_INTEGRATION_TEST_PY_REGEX,
-    INTEGRATION_TEST_PY_REGEX,
-    SCRIPT_TEST_PY_REGEX
+    PACKS_INTEGRATION_TEST_PY_REGEX
 ]
 
 PYTHON_INTEGRATION_REGEXES = [
-    INTEGRATION_PY_REGEX,
-    PACKS_INTEGRATION_PY_REGEX,
+    PACKS_INTEGRATION_PY_REGEX
 ]
 
 PLAYBOOKS_REGEXES_LIST = [
@@ -659,7 +423,6 @@ PLAYBOOKS_REGEXES_LIST = [
 ]
 
 PYTHON_SCRIPT_REGEXES = [
-    SCRIPT_PY_REGEX,
     PACKS_SCRIPT_PY_REGEX
 ]
 
@@ -672,56 +435,38 @@ PYTHON_ALL_REGEXES: List[str] = sum(
 )
 
 INTEGRATION_REGXES: List[str] = [
-    INTEGRATION_REGEX,
-    PACKS_INTEGRATION_REGEX,
-    BETA_INTEGRATION_REGEX
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX
 ]
 
 YML_INTEGRATION_REGEXES: List[str] = [
-    INTEGRATION_REGEX,
     PACKS_INTEGRATION_YML_REGEX,
-    INTEGRATION_YML_REGEX,
-    BETA_INTEGRATION_YML_REGEX
-]
-
-YML_BETA_INTEGRATIONS_REGEXES: List[str] = [
-    BETA_INTEGRATION_REGEX,
-    BETA_INTEGRATION_YML_REGEX,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX
 ]
 
 YML_ALL_INTEGRATION_REGEXES: List[str] = sum(
     [
         YML_INTEGRATION_REGEXES,
-        YML_BETA_INTEGRATIONS_REGEXES,
     ], []
 )
 
-YML_BETA_SCRIPTS_REGEXES: List[str] = [
-    BETA_SCRIPT_REGEX,
-]
 YML_SCRIPT_REGEXES: List[str] = [
-    SCRIPT_REGEX,
     PACKS_SCRIPT_YML_REGEX,
-    SCRIPT_YML_REGEX
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    PACKS_SCRIPT_TEST_PLAYBOOK
 ]
 
 YML_ALL_SCRIPTS_REGEXES: List[str] = sum(
     [
-        YML_BETA_SCRIPTS_REGEXES,
         YML_SCRIPT_REGEXES
     ], []
 )
 
 YML_PLAYBOOKS_NO_TESTS_REGEXES: List[str] = [
-    PLAYBOOK_REGEX,
-    PACKS_PLAYBOOK_YML_REGEX,
-    PLAYBOOK_REGEX,
+    PLAYBOOK_YML_REGEX
 ]
 
 YML_TEST_PLAYBOOKS_REGEXES: List[str] = [
-    TEST_PLAYBOOK_REGEX,
-    PACKS_TEST_PLAYBOOKS_REGEX,
-    TEST_PLAYBOOK_REGEX
+    TEST_PLAYBOOK_YML_REGEX
 ]
 
 YML_ALL_PLAYBOOKS_REGEX: List[str] = sum(
@@ -741,54 +486,51 @@ YML_ALL_REGEXES: List[str] = sum(
 )
 
 JSON_INDICATOR_AND_INCIDENT_FIELDS = [
-    INCIDENT_FIELD_REGEX,
-    INDICATOR_FIELDS_REGEX,
-    PACKS_INCIDENT_FIELDS_REGEX,
-    PACKS_INDICATOR_FIELDS_REGEX
+    PACKS_INCIDENT_FIELD_JSON_REGEX,
+    PACKS_INDICATOR_FIELD_JSON_REGEX
 ]
 
 JSON_ALL_WIDGETS_REGEXES = [
-    WIDGETS_REGEX,
-    PACKS_WIDGETS_REGEX,
+    PACKS_WIDGET_JSON_REGEX,
 ]
 
 JSON_ALL_DASHBOARDS_REGEXES = [
-    DASHBOARD_REGEX,
-    PACKS_DASHBOARDS_REGEX,
+    PACKS_DASHBOARD_JSON_REGEX,
 ]
 
 JSON_ALL_CLASSIFIER_REGEXES = [
-    CLASSIFIER_REGEX,
-    PACKS_CLASSIFIERS_REGEX,
+    PACKS_CLASSIFIER_JSON_REGEX,
+]
+
+JSON_ALL_CLASSIFIER_REGEXES_5_9_9 = [
+    PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
+]
+
+JSON_ALL_MAPPER_REGEXES = [
+    PACKS_MAPPER_JSON_REGEX,
 ]
 
 JSON_ALL_LAYOUT_REGEXES = [
-    LAYOUT_REGEX,
-    PACKS_LAYOUTS_REGEX,
+    PACKS_LAYOUT_JSON_REGEX,
 ]
 
 JSON_ALL_INCIDENT_FIELD_REGEXES = [
-    INCIDENT_FIELD_REGEX,
-    PACKS_INCIDENT_FIELDS_REGEX,
+    PACKS_INCIDENT_FIELD_JSON_REGEX,
 ]
 
 JSON_ALL_INCIDENT_TYPES_REGEXES = [
-    INCIDENT_TYPE_REGEX,
-    PACKS_INCIDENT_TYPES_REGEX,
+    PACKS_INCIDENT_TYPE_JSON_REGEX,
 ]
 
 JSON_ALL_INDICATOR_FIELDS_REGEXES = [
-    INDICATOR_FIELDS_REGEX,
-    PACKS_INDICATOR_FIELDS_REGEX
+    PACKS_INDICATOR_FIELD_JSON_REGEX
 ]
 
 JSON_ALL_INDICATOR_TYPES_REGEXES = [
-    INDICATOR_TYPES_REGEX,
-    PACKS_INDICATOR_TYPES_REGEX
+    PACKS_INDICATOR_TYPE_JSON_REGEX
 ]
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [
-    INDICATOR_TYPES_REPUTATIONS_REGEX,
     PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX
 ]
 
@@ -797,67 +539,48 @@ JSON_ALL_CONNECTIONS_REGEXES = [
 ]
 
 JSON_ALL_REPORTS_REGEXES = [
-    REPORT_REGEX,
+    PACKS_REPORT_JSON_REGEX
 ]
 
-BETA_REGEXES = [
-    BETA_SCRIPT_REGEX,
-    BETA_INTEGRATION_YML_REGEX,
-    BETA_PLAYBOOK_REGEX,
-]
 CHECKED_TYPES_REGEXES = [
     # Playbooks
-    PLAYBOOK_REGEX,
-    PACKS_PLAYBOOK_YML_REGEX,
-    BETA_PLAYBOOK_REGEX,
-    # Integrations yaml
-    INTEGRATION_YML_REGEX,
-    BETA_INTEGRATION_YML_REGEX,
+    PLAYBOOK_YML_REGEX,
+    TEST_PLAYBOOK_YML_REGEX,
+
+    # Integrations
     PACKS_INTEGRATION_YML_REGEX,
-    # Integrations unified
-    INTEGRATION_REGEX,
-    # Integrations Code
-    BETA_INTEGRATION_REGEX,
     PACKS_INTEGRATION_PY_REGEX,
-    # Integrations Tests
+    PACKS_INTEGRATION_PS_REGEX,
     PACKS_INTEGRATION_TEST_PY_REGEX,
+    PACKS_INTEGRATION_README_REGEX,
+
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+
     # Scripts yaml
-    SCRIPT_YML_REGEX,
-    SCRIPT_REGEX,
     PACKS_SCRIPT_YML_REGEX,
-    # Widgets
-    WIDGETS_REGEX,
-    PACKS_WIDGETS_REGEX,
-    DASHBOARD_REGEX,
-    CONNECTIONS_REGEX,
-    CLASSIFIER_REGEX,
-    # Layouts
-    LAYOUT_REGEX,
-    PACKS_LAYOUTS_REGEX,
-    INCIDENT_FIELD_REGEX,
-    INDICATOR_FIELDS_REGEX,
-    INCIDENT_TYPE_REGEX,
-    INDICATOR_TYPES_REGEX,
-    REPORT_REGEX,
-    # changelog
-    PACKS_CHANGELOG_REGEX,
-    # ReadMe,
-    INTEGRATION_README_REGEX,
-    PACKS_README_REGEX,
-    PACKS_README_REGEX_INNER,
-    INTEGRATION_OLD_README_REGEX,
-    # Pack Misc
-    PACKS_CLASSIFIERS_REGEX,
-    PACKS_DASHBOARDS_REGEX,
-    PACKS_INCIDENT_TYPES_REGEX,
-    PACKS_INCIDENT_FIELDS_REGEX,
-    PACKS_INDICATOR_FIELDS_REGEX,
-    PACKS_INDICATOR_TYPES_REGEX,
-    PACKS_LAYOUTS_REGEX,
-    PACKS_WIDGETS_REGEX,
-    PACKS_REPORTS_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    PACKS_SCRIPT_PY_REGEX,
+    PACKS_SCRIPT_PS_REGEX,
+    PACKS_SCRIPT_TEST_PY_REGEX,
+    PACKS_SCRIPT_README_REGEX,
+    PACKS_SCRIPT_TEST_PLAYBOOK,
+
+    PACKS_CLASSIFIER_JSON_REGEX,
+    PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
+    PACKS_MAPPER_JSON_REGEX,
+    PACKS_DASHBOARD_JSON_REGEX,
+    PACKS_INCIDENT_TYPE_JSON_REGEX,
+    PACKS_INCIDENT_FIELD_JSON_REGEX,
+    PACKS_INDICATOR_FIELD_JSON_REGEX,
+    PACKS_INDICATOR_TYPE_JSON_REGEX,
+    PACKS_LAYOUT_JSON_REGEX,
+    PACKS_WIDGET_JSON_REGEX,
+    PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
-    PACKS_TOOLS_REGEX
+    PACKS_TOOLS_REGEX,
+    CONNECTIONS_REGEX,
+    # ReleaseNotes
+    PACKS_RELEASE_NOTES_REGEX
 ]
 
 CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in
@@ -866,47 +589,25 @@ CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT
 PATHS_TO_VALIDATE: List[str] = sum(
     [
         PYTHON_ALL_REGEXES,
-        JSON_ALL_REPORTS_REGEXES,
-        BETA_REGEXES
+        JSON_ALL_REPORTS_REGEXES
     ], []
 )
 
 PACKAGE_SCRIPTS_REGEXES = [
-    SCRIPT_YML_REGEX,
-    SCRIPT_PY_REGEX,
-    SCRIPT_JS_REGEX,
     PACKS_SCRIPT_PY_REGEX,
-    PACKS_SCRIPT_JS_REGEX,
     PACKS_SCRIPT_YML_REGEX
 ]
 
-PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, BETA_INTEGRATIONS_DIR]
+PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
 IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
 
-PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+/)?(?:Integrations|Scripts|Beta_Integrations)/([^\\/]+)/([^\\/]+).yml'
+PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml'
 
-OLD_YML_FORMAT_FILE = [INTEGRATION_REGEX, SCRIPT_REGEX]
+OLD_YML_FORMAT_FILE = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX]
 
-DIR_LIST = [
-    INTEGRATIONS_DIR,
-    BETA_INTEGRATIONS_DIR,
-    SCRIPTS_DIR,
-    PLAYBOOKS_DIR,
-    REPORTS_DIR,
-    DASHBOARDS_DIR,
-    WIDGETS_DIR,
-    INCIDENT_TYPES_DIR,
-    INCIDENT_FIELDS_DIR,
-    LAYOUTS_DIR,
-    CLASSIFIERS_DIR,
-    INDICATOR_TYPES_DIR,
-    CONNECTIONS_DIR,
-    INDICATOR_FIELDS_DIR,
-    TESTS_DIR
-]
 DIR_LIST_FOR_REGULAR_ENTETIES = [
     PLAYBOOKS_DIR,
     REPORTS_DIR,
@@ -926,36 +627,40 @@ PACKS_DIRECTORIES = [
     DASHBOARDS_DIR,
     WIDGETS_DIR,
     INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR
+    INDICATOR_TYPES_DIR,
+    INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    REPORTS_DIR,
+    CONNECTIONS_DIR,
+    PLAYBOOKS_DIR
 ]
 SPELLCHECK_FILE_TYPES = [
-    INTEGRATION_REGEX,
-    INTEGRATION_YML_REGEX,
-    PLAYBOOK_REGEX,
-    SCRIPT_REGEX,
-    SCRIPT_YML_REGEX
+    PACKS_INTEGRATION_YML_REGEX,
+    PACKS_SCRIPT_YML_REGEX,
+    PLAYBOOK_YML_REGEX
 ]
 
 KNOWN_FILE_STATUSES = ['a', 'm', 'd', 'r'] + ['r{:03}'.format(i) for i in range(101)]
 
 CODE_FILES_REGEX = [
-    INTEGRATION_JS_REGEX,
-    INTEGRATION_PY_REGEX,
-    SCRIPT_PY_REGEX,
-    SCRIPT_JS_REGEX,
     PACKS_INTEGRATION_PY_REGEX,
-    PACKS_INTEGRATION_JS_REGEX,
     PACKS_SCRIPT_PY_REGEX,
-    PACKS_SCRIPT_JS_REGEX
+    PACKS_INTEGRATION_PS_REGEX,
+    PACKS_SCRIPT_PS_REGEX
 ]
 
-SCRIPTS_REGEX_LIST = [SCRIPT_YML_REGEX, SCRIPT_PY_REGEX, SCRIPT_JS_REGEX, SCRIPT_PS_REGEX]
+SCRIPTS_REGEX_LIST = [PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_PS_REGEX]
 
 # All files that have related yml file
-REQUIRED_YML_FILE_TYPES = [SCRIPT_PY_REGEX, INTEGRATION_PY_REGEX, PACKS_INTEGRATION_PY_REGEX, PACKS_SCRIPT_PY_REGEX,
-                           SCRIPT_JS_REGEX, INTEGRATION_JS_REGEX, PACKS_SCRIPT_JS_REGEX, PACKS_INTEGRATION_JS_REGEX,
-                           PACKS_README_REGEX, INTEGRATION_README_REGEX, INTEGRATION_CHANGELOG_REGEX,
-                           PACKS_CHANGELOG_REGEX]
+REQUIRED_YML_FILE_TYPES = [PACKS_INTEGRATION_PY_REGEX,
+                           PACKS_INTEGRATION_README_REGEX,
+                           PACKS_INTEGRATION_NON_SPLIT_README_REGEX,
+
+                           PACKS_SCRIPT_PY_REGEX,
+                           PACKS_SCRIPT_README_REGEX,
+                           PACKS_SCRIPT_NON_SPLIT_README_REGEX,
+
+                           PLAYBOOK_README_REGEX]
 
 TYPE_PWSH = 'powershell'
 TYPE_PYTHON = 'python'
@@ -987,6 +692,8 @@ PYTHON_SUBTYPES = {'python3', 'python2'}
 CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
 CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
 SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
+CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
+CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
@@ -1030,20 +737,24 @@ SCHEMA_TO_REGEX = {
     'widget': JSON_ALL_WIDGETS_REGEXES,
     'dashboard': JSON_ALL_DASHBOARDS_REGEXES,
     'canvas-context-connections': JSON_ALL_CONNECTIONS_REGEXES,
+    'classifier_5_9_9': JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
     'classifier': JSON_ALL_CLASSIFIER_REGEXES,
+    'mapper': JSON_ALL_MAPPER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
     'image': [IMAGE_REGEX],
     'reputation': JSON_ALL_INDICATOR_TYPES_REGEXES,
     'reputations': JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
-    'changelog': [INTEGRATION_CHANGELOG_REGEX, PACKS_CHANGELOG_REGEX, INDICATOR_TYPES_CHANGELOG_REGEX,
-                  INCIDENT_TYPE_CHANGELOG_REGEX, INCIDENT_FIELD_CHANGELOG_REGEX, INDICATOR_FIELD_CHANGELOG_REGEX,
-                  DASHBOARD_CHANGELOG_REGEX, CLASSIFIER_CHANGELOG_REGEX, LAYOUT_CHANGELOG_REGEX,
-                  REPORT_CHANGELOG_REGEX, WIDGETS_CHANGELOG_REGEX, PLAYBOOK_CHANGELOG_REGEX,
-                  PACKS_RELEASE_NOTES_REGEX],
-    'readme': [INTEGRATION_README_REGEX, PACKS_README_REGEX, PACKS_README_REGEX_INNER],
-    'report': [PACKS_REPORTS_REGEX],
+    'readme': [PACKS_INTEGRATION_README_REGEX,
+               PACKS_INTEGRATION_NON_SPLIT_README_REGEX,
+               PLAYBOOK_README_REGEX,
+               PACKS_SCRIPT_README_REGEX,
+               PACKS_SCRIPT_NON_SPLIT_README_REGEX
+               ],
+
+    'report': [PACKS_REPORT_JSON_REGEX],
+    'release-notes': [PACKS_RELEASE_NOTES_REGEX]
 }
 
 FILE_TYPES_PATHS_TO_VALIDATE = {
@@ -1055,7 +766,6 @@ DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
 DIR_TO_PREFIX = {
     'Integrations': INTEGRATION_PREFIX,
-    'Beta_Integrations': INTEGRATION_PREFIX,
     'Scripts': SCRIPT_PREFIX
 }
 

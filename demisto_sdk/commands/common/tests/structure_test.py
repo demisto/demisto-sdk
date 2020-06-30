@@ -5,19 +5,21 @@ from typing import List, Tuple
 
 import pytest
 import yaml
-from demisto_sdk.commands.common.constants import DIR_LIST
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
-    DASHBOARD_TARGET, INCIDENT_FIELD_TARGET, INDICATORFIELD_EXACT_SCHEME,
-    INDICATORFIELD_EXTRA_FIELDS, INDICATORFIELD_MISSING_AND_EXTRA_FIELDS,
-    INDICATORFIELD_MISSING_FIELD, INTEGRATION_TARGET, INVALID_DASHBOARD_PATH,
-    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_YML_1,
-    INVALID_INTEGRATION_YML_2, INVALID_INTEGRATION_YML_3,
-    INVALID_INTEGRATION_YML_4, INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_ID_PATH,
-    INVALID_PLAYBOOK_PATH, INVALID_REPUTATION_FILE, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET, VALID_DASHBOARD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
+    DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
+    INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,
+    INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD,
+    INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
+    INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
+    INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4, INVALID_LAYOUT_PATH,
+    INVALID_PLAYBOOK_ID_PATH, INVALID_PLAYBOOK_PATH, INVALID_REPUTATION_FILE,
+    INVALID_WIDGET_PATH, LAYOUT_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
+    VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
     VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
@@ -42,6 +44,7 @@ class TestStructureValidator:
             if isfile(target) is True:
                 pytest.fail(f"{target} File in tests already exists!")
         # Creating directory for tests if they're not exists
+
         for directory in DIR_LIST:
             if not os.path.exists(directory):
                 cls.CREATED_DIRS.append(directory)
@@ -132,7 +135,7 @@ class TestStructureValidator:
         assert validator.is_file_id_without_slashes() is answer, error
 
     INPUTS_IS_PATH_VALID = [
-        ("Reports/report-sade.json", True),
+        ("Packs/Test/Reports/report-sade.json", True),
         ("Notinregex/report-sade.json", False),
         ("Packs/Test/Integrations/Cymon/Cymon.yml", True),
     ]
@@ -157,7 +160,8 @@ class TestStructureValidator:
     ]  # type: List[Tuple[str, str, bool]]
 
     @pytest.mark.parametrize('source, target, answer', INPUTS_IS_VALID_FILE)
-    def test_is_file_valid(self, source, target, answer):
+    def test_is_file_valid(self, source, target, answer, mocker):
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         try:
             copyfile(source, target)
             structure = StructureValidator(target)

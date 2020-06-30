@@ -1,147 +1,258 @@
-import pytest
+from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
+                                                   PACK_METADATA_SUPPORT)
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
+                                                PRESET_ERROR_TO_CHECK,
+                                                PRESET_ERROR_TO_IGNORE)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.tools import (get_not_registered_tests,
-                                               is_test_config_match)
-from demisto_sdk.tests.constants_test import (
-    INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, VALID_INTEGRATION_TEST_PATH,
-    VALID_TEST_PLAYBOOK_PATH)
+from TestSuite.test_tools import ChangeCWD
 
-HAS_TESTS_KEY_UNPUTS = [
-    (VALID_INTEGRATION_TEST_PATH, 'integration', True),
-    (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, 'integration', False)
-]
+DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK['deprecated'])
 
 
-@pytest.mark.parametrize('file_path, schema, expected', HAS_TESTS_KEY_UNPUTS)
-def test_yml_has_test_key(file_path, schema, expected):
-    # type: (str, str, bool) -> None
+def test_handle_error():
     """
-        Given
-        - A yml file test playbook list and the yml file type
+    Given
+    - An ignore errors list associated with a file.
+    - An error, message, code and file paths.
 
-        When
-        - Checking if file has test playbook exists
+    When
+    - Running handle_error method.
 
-        Then
-        -  Ensure the method 'yml_has_test_key' return answer accordingly
+    Then
+    - Ensure the resulting error messages are correctly formatted.
+    - Ensure ignored error codes return None.
+    - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
+    - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    structure_validator = StructureValidator(file_path, predefined_scheme=schema)
-    validator = BaseValidator(structure_validator)
-    tests = structure_validator.current_file.get('tests')
-    assert validator.yml_has_test_key(tests, schema) == expected
+    base_validator = BaseValidator(ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True)
+
+    # passing the flag checks - checked separately
+    base_validator.checked_files.union({'PATH', "file_name"})
+
+    formatted_error = base_validator.handle_error("Error-message", "SC102", "PATH")
+    assert formatted_error == 'PATH: [SC102] - Error-message\n'
+    assert 'PATH - [SC102]' in FOUND_FILES_AND_ERRORS
+
+    formatted_error = base_validator.handle_error("another-error-message", "IN101", "path/to/file_name")
+    assert formatted_error == 'path/to/file_name: [IN101] - another-error-message\n'
+    assert 'path/to/file_name - [IN101]' in FOUND_FILES_AND_ERRORS
+
+    formatted_error = base_validator.handle_error("ignore-file-specific", "BA101", "path/to/file_name")
+    assert formatted_error is None
+    assert 'path/to/file_name - [BA101]' not in FOUND_FILES_AND_ERRORS
+    assert 'path/to/file_name - [BA101]' in FOUND_FILES_AND_IGNORED_ERRORS
 
 
-FIND_TEST_MATCH_INPUT = [
-    (
-        {'integrations': 'integration1', 'playbookID': 'playbook1'},
-        'integration1',
-        'playbook1',
-        'integration',
-        True
-    ),
-    (
-        {'integrations': 'integration1', 'playbookID': 'playbook1'},
-        'integration2',
-        'playbook1',
-        'integration',
-        False
-    ),
-    (
-        {'integrations': ['integration1', 'integration2'], 'playbookID': 'playbook1'},
-        'integration1',
-        'playbook1',
-        'integration',
-        True
-    ),
-    (
-        {'integrations': ['integration1', 'integration2'], 'playbookID': 'playbook1'},
-        'integration3',
-        'playbook1',
-        'integration',
-        False
-    ),
-    (
-        {'playbookID': 'playbook1'},
-        '',
-        'playbook1',
-        'playbook',
-        True
-    ),
-
-]
-
-
-@pytest.mark.parametrize('test_config, integration_id, test_playbook_id, file_type, expected', FIND_TEST_MATCH_INPUT)
-def test_find_test_match(test_config, integration_id, test_playbook_id, expected, file_type):
-    # type: (dict, str, str, bool, str) -> None
+def test_check_deprecated_where_ignored_list_exists(repo):
     """
-        Given
-        - A test configuration from 'conf.json' file. test-playbook id and a content item id
+    Given
+    - An deprecated integration yml.
+    - A pre-existing ignored errors list for the integration.
 
-        When
-        - checking if the test configuration matches the content item and the test-playbook
+    When
+    - Running check_deprecated method.
 
-        Then
-        -  Ensure the method 'find_test_match' return answer accordingly
+    Then
+    - Ensure the resulting ignored errors list included the existing errors as well as the deprecated default error list.
     """
-    assert is_test_config_match(test_config, test_playbook_id, integration_id) == expected
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.yml.write_dict({'deprecated': True})
+    files_path = integration.yml.path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={'integration.yml': ['BA101']})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['integration.yml'] == ["BA101"] + DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
 
 
-NOT_REGISTERED_TESTS_INPUT = [
-    (
-        VALID_INTEGRATION_TEST_PATH,
-        'integration',
-        [{'integrations': 'PagerDuty v2', 'playbookID': 'PagerDuty Test'}],
-        'PagerDuty v2',
-        []
-    ),
-    (
-        VALID_INTEGRATION_TEST_PATH,
-        'integration',
-        [{'integrations': 'test', 'playbookID': 'PagerDuty Test'}],
-        'PagerDuty v2',
-        ['PagerDuty Test']
-    ),
-    (
-        VALID_INTEGRATION_TEST_PATH,
-        'integration',
-        [{'integrations': 'PagerDuty v2', 'playbookID': 'Playbook'}],
-        'PagerDuty v3',
-        ['PagerDuty Test']
-    ),
-    (
-        VALID_TEST_PLAYBOOK_PATH,
-        'playbook',
-        [{'integrations': 'Account Enrichment', 'playbookID': 'PagerDuty Test'}],
-        'Account Enrichment',
-        []
-    ),
-    (
-        VALID_TEST_PLAYBOOK_PATH,
-        'playbook',
-        [{'integrations': 'Account Enrichment', 'playbookID': 'Playbook'}],
-        'Account Enrichment',
-        ['PagerDuty Test']
-    ),
-]
-
-
-@pytest.mark.parametrize('file_path, schema, conf_json_data, content_item_id, expected', NOT_REGISTERED_TESTS_INPUT)
-def test_get_not_registered_tests(file_path, schema, conf_json_data, content_item_id, expected):
-    # type: (str, str, list, str, list) -> None
+def test_check_deprecated_where_ignored_list_does_not_exist(repo):
     """
-        Given
-        - A content item with test playbooks configured on it
+    Given
+    - An deprecated integration yml.
+    - No pre-existing ignored errors list for the integration.
 
-        When
-        - Checking if the test playbooks are configured in 'conf.json' file
+    When
+    - Running check_deprecated method.
 
-        Then
-        -  Ensure the method 'get_not_registered_tests' return all test playbooks that are not configured
+    Then
+    - Ensure the resulting ignored errors list included the deprecated default error list only.
     """
-    structure_validator = StructureValidator(file_path, predefined_scheme=schema)
-    tests = structure_validator.current_file.get('tests')
-    assert get_not_registered_tests(conf_json_data, content_item_id, schema, tests) == expected
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.yml.write_dict({'deprecated': True})
+    files_path = integration.yml.path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['integration.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+
+
+def test_check_deprecated_non_deprecated_integration_no_ignored_errors(repo):
+    """
+    Given
+    - An non-deprecated integration yml.
+    - No pre-existing ignored errors list for the integration.
+
+    When
+    - Running check_deprecated method.
+
+    Then
+    - Ensure there is no resulting ignored errors list.
+    """
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.yml.write_dict({'deprecated': False})
+    files_path = integration.yml.path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.check_deprecated(files_path)
+    assert 'integration' not in base_validator.ignored_errors
+
+
+def test_check_deprecated_non_deprecated_integration_with_ignored_errors(repo):
+    """
+    Given
+    - An non-deprecated integration yml.
+    - A pre-existing ignored errors list for the integration.
+
+    When
+    - Running check_deprecated method.
+
+    Then
+    - Ensure the resulting ignored errors list is the pre-existing one.
+    """
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    integration.yml.write_dict({'deprecated': False})
+    files_path = integration.yml.path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={'integration.yml': ["BA101"]})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['integration.yml'] == ['BA101']
+
+
+def test_check_deprecated_playbook(repo):
+    """
+    Given
+    - An non-deprecated playbook yml.
+
+    When
+    - Running check_deprecated method.
+
+    Then
+    - Ensure the resulting ignored errors list included the deprecated default error list only.
+    """
+    pack = repo.create_pack('pack')
+    playbook = pack.create_integration('playbook-somePlaybook')
+    playbook.yml.write_dict({'hidden': True})
+    files_path = playbook.yml.path
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.check_deprecated(files_path)
+    assert base_validator.ignored_errors['playbook-somePlaybook.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+
+
+def test_check_support_status_xsoar_file(repo, mocker):
+    """
+    Given
+    - An xsoar supported integration yml.
+
+    When
+    - Running check_support_status method.
+
+    Then
+    - Ensure the resulting ignored errors list does not include the integration file name.
+    """
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    meta_json = {
+        PACK_METADATA_SUPPORT: "xsoar",
+        PACK_METADATA_CERTIFICATION: "certified"
+    }
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
+    pack.pack_metadata.write_json(meta_json)
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+
+        assert 'integration.yml' not in base_validator.ignored_errors
+
+
+def test_check_support_status_non_certified_partner_file(repo, mocker):
+    """
+    Given
+    - An non-certified partner supported integration yml.
+
+    When
+    - Running check_support_status method.
+
+    Then
+    - Ensure the resulting ignored errors list includes the non-certified-partner ignore-list.
+    """
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    meta_json = {
+        PACK_METADATA_SUPPORT: "partner",
+        PACK_METADATA_CERTIFICATION: "not certified"
+    }
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
+    pack.pack_metadata.write_json(meta_json)
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+
+        assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['non-certified-partner']
+
+
+def test_check_support_status_certified_partner_file(repo, mocker):
+    """
+    Given
+    - An certified partner supported integration yml.
+
+    When
+    - Running check_support_status method.
+
+    Then
+    - Ensure the resulting ignored errors list includes the community ignore-list.
+    """
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    meta_json = {
+        PACK_METADATA_SUPPORT: "partner",
+        PACK_METADATA_CERTIFICATION: "certified"
+    }
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
+    pack.pack_metadata.write_json(meta_json)
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+
+        assert 'integration.yml' not in base_validator.ignored_errors
+
+
+def test_check_support_status_community_file(repo, mocker):
+    """
+    Given
+    - An community supported integration yml.
+
+    When
+    - Running check_support_status method.
+
+    Then
+    - Ensure the resulting ignored errors list does not include the integration file name.
+    """
+    pack = repo.create_pack('pack')
+    integration = pack.create_integration('integration')
+    meta_json = {
+        PACK_METADATA_SUPPORT: "community",
+        PACK_METADATA_CERTIFICATION: "not certified"
+    }
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
+    pack.pack_metadata.write_json(meta_json)
+    with ChangeCWD(repo.path):
+        base_validator = BaseValidator(ignored_errors={})
+        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+
+        assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['community']

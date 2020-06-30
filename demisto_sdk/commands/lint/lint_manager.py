@@ -15,7 +15,8 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
+                                                   TYPE_PWSH, TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (print_error, print_v,
@@ -79,14 +80,16 @@ class LintManager:
         # Check env requirements satisfied - bootstrap in use
         validate_env()
         # Get content repo object
+        is_external_repo = False
         try:
             git_repo = git.Repo(os.getcwd(),
                                 search_parent_directories=True)
             remote_url = git_repo.remote().urls.__next__()
-            if 'content' not in remote_url:
-                raise git.InvalidGitRepositoryError
+            is_fork_repo = 'content' in remote_url
+            is_external_repo = tools.is_external_repository()
 
-            is_private_repo = tools.is_private_repository()
+            if not is_fork_repo and not is_external_repo:
+                raise git.InvalidGitRepositoryError
 
             facts["content_repo"] = git_repo
             logger.debug(f"Content path {git_repo.working_dir}")
@@ -109,7 +112,7 @@ class LintManager:
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
-            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_private_repo=is_private_repo)
+            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_external_repo=is_external_repo)
             logger.debug("Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error(
@@ -140,7 +143,7 @@ class LintManager:
         Args:
             content_repo(git.Repo): Content repository object.
             input(str): dir pack specified as argument.
-            git(bool): Perform lint and test only on chaged packs.
+            git(bool): Perform lint and test only on changed packs.
             all_packs(bool): Whether to run on all packages.
 
         Returns:
@@ -152,7 +155,14 @@ class LintManager:
         elif not all_packs and not git and not input:
             pkgs = [Path().cwd()]
         else:
-            pkgs = [Path(item) for item in input.split(',')]
+            pkgs = []
+            for item in input.split(','):
+                is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
+                if is_pack:
+                    pkgs.extend(LintManager._get_all_packages(content_dir=item))
+                else:
+                    pkgs.append(Path(item))
+
         total_found = len(pkgs)
         if git:
             pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
@@ -166,20 +176,18 @@ class LintManager:
 
     @staticmethod
     def _get_all_packages(content_dir: str) -> List[str]:
-        """Gets all integration, script and beta_integrations in packages and packs in content repo.
+        """Gets all integration, script in packages and packs in content repo.
 
         Returns:
             list: A list of integration, script and beta_integration names.
         """
         # ￿Get packages from main content path
         content_main_pkgs: set = set(Path(content_dir).glob(['Integrations/*/',
-                                                             'Scripts/*/',
-                                                             'Beta_Integrations/*/']))
+                                                             'Scripts/*/', ]))
         # Get packages from packs path
         packs_dir: Path = Path(content_dir) / 'Packs'
         content_packs_pkgs: set = set(packs_dir.glob(['*/Integrations/*/',
-                                                      '*/Scripts/*/',
-                                                      '*/Beta_Integrations/*/']))
+                                                      '*/Scripts/*/']))
         all_pkgs = content_packs_pkgs.union(content_main_pkgs)
 
         return list(all_pkgs)

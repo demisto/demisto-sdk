@@ -5,10 +5,10 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH,
-                                                   Errors)
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
@@ -19,21 +19,25 @@ from demisto_sdk.commands.common.tools import (print_error, print_warning,
                                                server_version_compare)
 
 
-class IntegrationValidator(BaseValidator):
+class IntegrationValidator(ContentEntityValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
     EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {'longRunning'}
+    ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental'}
 
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
             return True
-        self.is_valid = False
-        print_error(Errors.wrong_version(self.file_path))
-        return False
+
+        error_message, error_code = Errors.wrong_version()
+        if self.handle_error(error_message, error_code, file_path=self.file_path):
+            self.is_valid = False
+            return False
+
+        return True
 
     def is_backward_compatible(self):
         # type: () -> bool
@@ -54,11 +58,12 @@ class IntegrationValidator(BaseValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False) -> bool:
         """Check whether the Integration is valid or not
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
+                skip_test_conf (bool): If true then will skip test playbook configuration validation
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -80,8 +85,11 @@ class IntegrationValidator(BaseValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.are_tests_configured()
         ]
+
+        if not skip_test_conf:
+            answers.append(self.are_tests_configured())
+
         return all(answers)
 
     def are_tests_configured(self) -> bool:
@@ -118,13 +126,32 @@ class IntegrationValidator(BaseValidator):
             configuration_param_name = configuration_param['name']
             if configuration_param_name == param_name:
                 if configuration_param['display'] != param_display:
-                    err_msgs.append(Errors.wrong_display_name(param_name, param_display))
+                    error_message, error_code = Errors.wrong_display_name(param_name, param_display)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
+                    if formatted_message:
+                        err_msgs.append(formatted_message)
+
                 if configuration_param.get('defaultvalue', '') not in ('false', ''):
-                    err_msgs.append(Errors.wrong_default_parameter(param_name))
+                    error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
+                    if formatted_message:
+                        err_msgs.append(formatted_message)
+
                 if configuration_param.get('required', False):
-                    err_msgs.append(Errors.wrong_required_value(param_name))
+                    error_message, error_code = Errors.wrong_required_value(param_name)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
+                    if formatted_message:
+                        err_msgs.append(formatted_message)
+
                 if configuration_param.get('type') != 8:
-                    err_msgs.append(Errors.wrong_required_type(param_name))
+                    error_message, error_code = Errors.wrong_required_type(param_name)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
+                    if formatted_message:
+                        err_msgs.append(formatted_message)
 
         if err_msgs:
             print_error('{} Received the following error for {} validation:\n{}'
@@ -172,12 +199,10 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. True if valid, False otherwise.
         """
-        err_msg = None
         if configuration_param.get('required', False):
-            err_msg = Errors.wrong_required_value(param_name)
-        if err_msg:
-            print_error(err_msg)
-            return False
+            error_message, error_code = Errors.wrong_required_value(param_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
         return True
 
     def is_valid_category(self):
@@ -185,9 +210,11 @@ class IntegrationValidator(BaseValidator):
         """Check that the integration category is in the schema."""
         category = self.current_file.get('category', None)
         if category not in INTEGRATION_CATEGORIES:
-            self.is_valid = False
-            print_error(Errors.wrong_category(self.file_path, category))
-            return False
+            error_message, error_code = Errors.wrong_category(category)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
         return True
 
     def is_valid_default_arguments(self):
@@ -209,12 +236,17 @@ class IntegrationValidator(BaseValidator):
                     if arg_name == command_name:
                         flag_found_arg = True
                         if arg.get('default') is False:
-                            self.is_valid = False
-                            flag = False
-                            print_error(Errors.wrong_default_argument(self.file_path, arg_name, command_name))
+                            error_message, error_code = Errors.wrong_default_argument(arg_name,
+                                                                                      command_name)
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                                self.is_valid = False
+                                flag = False
+
                 if not flag_found_arg:
-                    print_error(Errors.no_default_arg(self.file_path, command_name))
-                    flag = False
+                    error_message, error_code = Errors.no_default_arg(command_name)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        flag = False
+
         if not flag:
             print_error(Errors.suggest_fix(self.file_path))
         return flag
@@ -247,27 +279,30 @@ class IntegrationValidator(BaseValidator):
                 for dbot_score_output in DBOT_SCORES_DICT:
                     if dbot_score_output not in context_outputs_paths:
                         missing_outputs.add(dbot_score_output)
-                        self.is_valid = False
-                        output_for_reputation_valid = False
                     else:  # DBot Score output path is in the outputs
                         if DBOT_SCORES_DICT.get(dbot_score_output) not in context_outputs_descriptions:
                             missing_descriptions.add(dbot_score_output)
                             # self.is_valid = False - Do not fail build over wrong description
 
                 if missing_outputs:
-                    print_error(Errors.dbot_invalid_output(
-                        self.file_path, command_name, missing_outputs, context_standard))
+                    error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
+                                                                           context_standard)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        output_for_reputation_valid = False
+
                 if missing_descriptions:
                     print_warning(Errors.dbot_invalid_description(
-                        self.file_path, command_name, missing_descriptions, context_standard))
+                        command_name, missing_descriptions, context_standard))
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
                 if reputation_output and not reputation_output.intersection(context_outputs_paths):
-                    self.is_valid = False
-                    output_for_reputation_valid = False
-                    print_error(Errors.missing_reputation(
-                        self.file_path, command_name, reputation_output, context_standard))
+                    error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
+                                                                          context_standard)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        output_for_reputation_valid = False
 
         return output_for_reputation_valid
 
@@ -278,9 +313,11 @@ class IntegrationValidator(BaseValidator):
         if type_ == 'python':
             subtype = self.current_file.get('script', {}).get('subtype')
             if subtype not in PYTHON_SUBTYPES:
-                print_error(Errors.wrong_subtype(self.file_path))
-                self.is_valid = False
-                return False
+                error_message, error_code = Errors.wrong_subtype()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
+
         return True
 
     def is_changed_subtype(self):
@@ -292,9 +329,11 @@ class IntegrationValidator(BaseValidator):
             if self.old_file:
                 old_subtype = self.old_file.get('script', {}).get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    print_error(Errors.breaking_backwards_subtype(self.file_path))
-                    self.is_valid = False
-                    return True
+                    error_message, error_code = Errors.breaking_backwards_subtype()
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        return True
+
         return False
 
     def is_valid_beta(self):
@@ -316,8 +355,10 @@ class IntegrationValidator(BaseValidator):
         common_fields = self.current_file.get('commonfields', {})
         integration_id = common_fields.get('id', '')
         if 'beta' in integration_id.lower():
-            print_error(Errors.beta_in_id(self.file_path))
-            return False
+            error_message, error_code = Errors.beta_in_id()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True
 
     def _name_has_no_beta_substring(self):
@@ -325,8 +366,10 @@ class IntegrationValidator(BaseValidator):
         """Checks that 'name' field dose not include the substring 'beta'"""
         name = self.current_file.get('name', '')
         if 'beta' in name.lower():
-            print_error(Errors.beta_in_name(self.file_path))
-            return False
+            error_message, error_code = Errors.beta_in_name()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True
 
     def _has_beta_param(self):
@@ -334,8 +377,10 @@ class IntegrationValidator(BaseValidator):
         """Checks that integration has 'beta' field with value set to true"""
         beta = self.current_file.get('beta', False)
         if not beta:
-            print_error(Errors.beta_field_not_found(self.file_path))
-            return False
+            error_message, error_code = Errors.beta_field_not_found()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True
 
     def _is_display_contains_beta(self):
@@ -343,8 +388,10 @@ class IntegrationValidator(BaseValidator):
         """Checks that 'display' field includes the substring 'beta'"""
         display = self.current_file.get('display', '')
         if 'beta' not in display.lower():
-            print_error(Errors.no_beta_in_display(self.file_path))
-            return False
+            error_message, error_code = Errors.no_beta_in_display()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True
 
     def is_there_duplicate_args(self):
@@ -360,11 +407,14 @@ class IntegrationValidator(BaseValidator):
             arg_list = []  # type: list
             for arg in command.get('arguments', []):
                 if arg in arg_list:
-                    self.is_valid = False
-                    is_there_duplicates = True
-                    print_error(Errors.duplicate_arg_in_file(self.file_path, arg['name'], command['name']))
+                    error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        is_there_duplicates = True
+
                 else:
                     arg_list.append(arg)
+
         return is_there_duplicates
 
     def is_there_duplicate_params(self):
@@ -380,9 +430,11 @@ class IntegrationValidator(BaseValidator):
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
-                self.is_valid = False
-                has_duplicate_params = True
-                print_error(Errors.duplicate_param(param_name, self.file_path))
+                error_message, error_code = Errors.duplicate_param(param_name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    has_duplicate_params = True
+
             else:
                 param_list.append(param_name)
 
@@ -420,9 +472,11 @@ class IntegrationValidator(BaseValidator):
         for command, args_dict in old_command_to_args.items():
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
-                print_error(Errors.breaking_backwards_command_arg_changed(self.file_path, command))
-                self.is_valid = False
-                return True
+                error_message, error_code = Errors.breaking_backwards_command_arg_changed(command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return True
+
         return False
 
     @staticmethod
@@ -453,8 +507,10 @@ class IntegrationValidator(BaseValidator):
                 try:
                     context_list.append(output['contextPath'])
                 except KeyError:
-                    print_error('Invalid context output for command {}. Output is {}'.format(command_name, output))
-                    self.is_valid = False
+                    error_message, error_code = Errors.invalid_context_output(command_name, output)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+
             command_to_context_dict[command['name']] = sorted(context_list)
         return command_to_context_dict
 
@@ -476,9 +532,11 @@ class IntegrationValidator(BaseValidator):
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
-                    print_error(Errors.breaking_backwards_command(self.file_path, old_command))
-                    self.is_valid = False
-                    return True
+                    error_message, error_code = Errors.breaking_backwards_command(old_command)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        return True
+
         return False
 
     @staticmethod
@@ -507,14 +565,18 @@ class IntegrationValidator(BaseValidator):
             if field in old_field_to_required.keys():
                 # if required is True and old_field is False.
                 if required and required != old_field_to_required[field]:
-                    print_error(Errors.added_required_fields(self.file_path, field))
-                    self.is_valid = False
-                    is_added_required = True
+                    error_message, error_code = Errors.added_required_fields(field)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        is_added_required = True
+
             # if required is True but no old field.
             elif required:
-                print_error(Errors.added_required_fields(self.file_path, field))
-                self.is_valid = False
-                is_added_required = True
+                error_message, error_code = Errors.added_required_fields(field)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    is_added_required = True
+
         return is_added_required
 
     def is_id_equals_name(self):
@@ -540,21 +602,29 @@ class IntegrationValidator(BaseValidator):
             # This parameter type will not use the display value.
             if field_type == self.EXPIRATION_FIELD_TYPE:
                 if configuration_display:
-                    print_error(Errors.not_used_display_name(self.file_path, configuration_param['name']))
-                    self.is_valid = False
-                    return True
+                    error_message, error_code = Errors.not_used_display_name(configuration_param['name'])
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        return True
 
             elif not is_field_hidden and not configuration_display \
                     and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
-                print_error(Errors.empty_display_configuration(self.file_path, configuration_param['name']))
-                self.is_valid = False
-                return True
+                error_message, error_code = Errors.empty_display_configuration(configuration_param['name'])
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return True
 
         return False
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True)
+        # dockers should not be checked when running on all files
+        if self.skip_docker_check:
+            return True
+
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,
+                                                      ignored_errors=self.ignored_errors,
+                                                      print_as_warnings=self.print_as_warnings)
         if docker_image_validator.is_docker_image_valid():
             return True
 
@@ -567,9 +637,11 @@ class IntegrationValidator(BaseValidator):
         if self.current_file.get("script", {}).get("feed"):
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) == 1:
-                print_error(Errors.feed_wrong_from_version(self.file_path, from_version))
-                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
-                valid_from_version = False
+                error_message, error_code = Errors.feed_wrong_from_version(from_version)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
+                    valid_from_version = False
+
             valid_feed_params = self.all_feed_params_exist()
         return valid_from_version and valid_feed_params
 
@@ -577,9 +649,10 @@ class IntegrationValidator(BaseValidator):
         if self.current_file.get("script", {}).get("type") == TYPE_PWSH:
             from_version = self.current_file.get("fromversion", "0.0.0")
             if not from_version or server_version_compare("5.5.0", from_version) > 0:
-                print_error(Errors.pwsh_wrong_version(self.file_path, from_version))
-                print_error(Errors.suggest_fix(self.file_path, '--from-version', '5.5.0'))
-                return False
+                error_message, error_code = Errors.pwsh_wrong_version(from_version)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
+                    return False
         return True
 
     def is_valid_fetch(self) -> bool:
@@ -593,14 +666,10 @@ class IntegrationValidator(BaseValidator):
             params = [_key for _key in self.current_file.get('configuration', [])]
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
-                    print_error(
-                        f'{self.file_path}:'
-                        f'A required parameter "{param.get("name")}" is missing or malformed '
-                        f'in the YAML file.\n'
-                        'The correct format of the parameter should be as follows:'
-                        f'\n{yaml.dump(param)}'
-                    )
-                    fetch_params_exist = False
+                    error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
+                                                                                  yaml.dump(param))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        fetch_params_exist = False
 
         return fetch_params_exist
 
@@ -617,15 +686,9 @@ class IntegrationValidator(BaseValidator):
                 params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
-                print_error(
-                    f'{self.file_path}'
-                    f'Feed Integration was detected '
-                    f'A required parameter "{param.get("name")}" is missing or malformed '
-                    f'in the YAML file.\n'
-                    'The correct format of the parameter should be as follows:'
-                    f'\n{yaml.dump(param)}'
-                )
-                params_exist = False
+                error_message, error_code = Errors.parameter_missing_for_feed(param.get('name'), yaml.dump(param))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    params_exist = False
 
         return params_exist
 
@@ -637,8 +700,10 @@ class IntegrationValidator(BaseValidator):
             display_name = self.current_file.get('display')
             correct_name = " v2"
             if not display_name.endswith(correct_name):
-                print_error(Errors.invalid_v2_integration_name(self.file_path))
-                return False
+                error_message, error_code = Errors.invalid_v2_integration_name()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
             return True
 
     def is_valid_hidden_params(self) -> bool:
@@ -653,8 +718,10 @@ class IntegrationValidator(BaseValidator):
             is_param_hidden = int_parameter.get('hidden')
             param_name = int_parameter.get('name')
             if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
-                ans = False
-                print_error(Errors.found_hidden_param(param_name))
+                error_message, error_code = Errors.found_hidden_param(param_name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    ans = False
+
         return ans
 
     def is_valid_image(self) -> bool:
@@ -663,7 +730,8 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool. True if integration image/logo is valid, False otherwise.
         """
-        image_validator = ImageValidator(self.file_path)
+        image_validator = ImageValidator(self.file_path, ignored_errors=self.ignored_errors,
+                                         print_as_warnings=self.print_as_warnings)
         if not image_validator.is_valid():
             return False
         return True
@@ -674,7 +742,8 @@ class IntegrationValidator(BaseValidator):
         Returns:
             bool: True if description is valid, False otherwise.
         """
-        description_validator = DescriptionValidator(self.file_path)
+        description_validator = DescriptionValidator(self.file_path, ignored_errors=self.ignored_errors,
+                                                     print_as_warnings=self.print_as_warnings)
         if beta_integration:
             if not description_validator.is_valid_beta_description():
                 return False

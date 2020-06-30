@@ -10,7 +10,7 @@ from wcmatch.pathlib import Path
 @pytest.fixture
 def linter_obj(mocker) -> Linter:
     mocker.patch.object(linter, 'docker')
-    return Linter(pack_dir=Path(__file__).parent / 'data' / 'Integration' / 'intergration_sample',
+    return Linter(pack_dir=Path(__file__).parent / 'content' / 'Integrations' / 'Sample_integration',
                   content_repo=Path(__file__).parent / 'data',
                   req_3=["pytest==3.0"],
                   req_2=["pytest==2.0"],
@@ -29,7 +29,7 @@ def demisto_content() -> Callable:
     content_path = Path(__file__).parent / 'content'
 
     # Create file structure
-    dirs = ['Integrations', 'Scripts', 'Beta_Integrations']
+    dirs = ['Integrations', 'Scripts']
     for dir_n in dirs:
         (content_path / dir_n).mkdir(parents=True)
         (content_path / 'Packs' / 'Sample' / dir_n).mkdir(parents=True)

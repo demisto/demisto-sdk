@@ -61,8 +61,15 @@ TEST_SCRIPT_FILE = os.path.join(FILES_PATH, 'fake-script.yml')
 
 # demisto/python-deb doesn't contain a latest tag
 @pytest.mark.parametrize('image', ['python', 'python-deb', 'python3', 'python3-deb'])
-def test_get_docker_image_latest_tag(image):
-    tag = DockerImageValidator.get_docker_image_latest_tag('demisto/' + image, '')
+def test_get_docker_image_latest_tag(image, mocker):
+    with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
+        docker_image_validator = DockerImageValidator(None, None, None)
+        docker_image_validator.yml_file = {}
+        docker_image_validator.file_path = "PATH"
+        docker_image_validator.ignored_errors = []
+        docker_image_validator.docker_image_latest_tag = '1.0.3'
+        docker_image_validator.docker_image_name = 'demisto/python'
+        tag = docker_image_validator.get_docker_image_latest_tag(docker_image_name='demisto/' + image, yml_docker_image='')
     # current latest tag is 2.7.16.2728 or 3.7.2.2728 disable-secrets-detection
     assert int(tag.split('.')[3]) >= 2728
 
@@ -75,8 +82,16 @@ data_test_none_demisto_docker = [
 
 @pytest.mark.parametrize('docker, docker_tag, expected_output', data_test_none_demisto_docker)
 def test_none_demisto_docker(docker, docker_tag, expected_output):
-    assert DockerImageValidator.get_docker_image_latest_tag(docker,
-                                                            '{}:{}'.format(docker, docker_tag)) == expected_output
+    with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
+        docker_image_validator = DockerImageValidator(None, None, None)
+        docker_image_validator.yml_file = {}
+        docker_image_validator.file_path = "PATH"
+        docker_image_validator.ignored_errors = {}
+        docker_image_validator.checked_files = set()
+        docker_image_validator.docker_image_latest_tag = '1.0.3'
+        docker_image_validator.docker_image_name = 'demisto/python'
+        assert docker_image_validator.get_docker_image_latest_tag(docker_image_name=docker,
+                                                                  yml_docker_image='{}:{}'.format(docker, docker_tag)) == expected_output
 
 
 # disable-secrets-detection-start
@@ -126,10 +141,18 @@ def test_clear_non_numbered_tags(input_tags, output_tags):
 
 # disable-secrets-detection-start
 def test_parse_docker_image():
-    assert 'demisto/python', '1.3-alpine' == DockerImageValidator.parse_docker_image('demisto/python:1.3-alpine')
-    assert 'demisto/slack', '1.2.3.4' == DockerImageValidator.parse_docker_image('demisto/slack:1.2.3.4')
-    assert 'demisto/python', '' == DockerImageValidator.parse_docker_image('demisto/python/1.2.3.4')
-    assert ('', '') == DockerImageValidator.parse_docker_image('blah/blah:1.2.3.4')
+    with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
+        docker_image_validator = DockerImageValidator(None, None, None)
+        docker_image_validator.yml_file = {}
+        docker_image_validator.file_path = "PATH"
+        docker_image_validator.ignored_errors = {}
+        docker_image_validator.checked_files = set()
+        docker_image_validator.docker_image_latest_tag = '1.0.3'
+        docker_image_validator.docker_image_name = 'demisto/python'
+        assert 'demisto/python', '1.3-alpine' == docker_image_validator.parse_docker_image(docker_image='demisto/python:1.3-alpine')
+        assert 'demisto/slack', '1.2.3.4' == docker_image_validator.parse_docker_image(docker_image='demisto/slack:1.2.3.4')
+        assert 'demisto/python', '' == docker_image_validator.parse_docker_image(docker_image='demisto/python/1.2.3.4')
+        assert ('', '') == docker_image_validator.parse_docker_image(docker_image='blah/blah:1.2.3.4')
 
 
 # disable-secrets-detection-end
@@ -148,6 +171,10 @@ def test_is_docker_image_latest_tag_with_default_image():
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
+        docker_image_validator.file_path = "PATH"
+        docker_image_validator.ignored_errors = {}
+        docker_image_validator.code_type = 'python'
+        docker_image_validator.checked_files = set()
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
 
@@ -176,8 +203,12 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
+        docker_image_validator.ignored_errors = {}
+        docker_image_validator.checked_files = set()
         docker_image_validator.docker_image_latest_tag = 'latest'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.file_path = "PATH"
+        docker_image_validator.code_type = 'python'
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
@@ -203,8 +234,11 @@ def test_is_docker_image_latest_tag_with_latest_tag():
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
+        docker_image_validator.ignored_errors = {}
+        docker_image_validator.file_path = "path"
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.code_type = 'python'
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
@@ -226,22 +260,25 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
    Then
    -  If the docker image is numeric and the most update one, it is Valid
    -  If the docker image is not numeric and labeled "latest", it is Invalid
-   - If the docker image is not the most updated one it is still valid
-        (however, a warning will be printed)
+   - If the docker image is not the most updated one it is invalid
   """
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
+        docker_image_validator.ignored_errors = {}
+        docker_image_validator.file_path = "path"
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.code_type = 'python'
+        docker_image_validator.checked_files = set()
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.is_valid = True
 
-        assert docker_image_validator.is_docker_image_latest_tag() is True
-        assert docker_image_validator.is_latest_tag is True
-        assert docker_image_validator.is_docker_image_valid() is True
+        assert docker_image_validator.is_docker_image_latest_tag() is False
+        assert docker_image_validator.is_latest_tag is False
+        assert docker_image_validator.is_docker_image_valid() is False
 
 
 def test_is_docker_image_latest_tag_without_tag():
@@ -259,8 +296,11 @@ def test_is_docker_image_latest_tag_without_tag():
     with mock.patch.object(DockerImageValidator, '__init__', lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
+        docker_image_validator.ignored_errors = {}
+        docker_image_validator.file_path = "path"
         docker_image_validator.docker_image_latest_tag = ''
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.code_type = 'python'
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'

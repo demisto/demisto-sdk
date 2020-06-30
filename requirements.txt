@@ -1,11 +1,14 @@
+autopep8>=1.4.4
 bandit>=1.6.2
 bs4>=0.0.1
 click>=7.0
+colorama==0.4.1
+configparser>=5.0.0
 dateparser>=0.7.2
 demisto-py>=2.0.11
 dictor>=0.1.5
 docker>=4.2.0
-flake8>=3.7.9
+flake8>=3.8.3
 flatten_dict>=0.3.0
 gitpython>=3.1.0
 isort>=4.3.21

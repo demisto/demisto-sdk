@@ -33,11 +33,13 @@ class Pack:
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         self.classifiers: List[JSONBased] = list()
+        self.mapper: List[JSONBased] = list()
         self.dashboards: List[JSONBased] = list()
         self.incident_types: List[JSONBased] = list()
         self.incident_field: List[JSONBased] = list()
         self.indicator_field: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+        self.release_notes: List[TextBased] = list()
 
         # Create base pack
         self._pack_path = packs_dir / name
@@ -57,6 +59,8 @@ class Pack:
         self._classifiers_path = self._pack_path / 'Classifiers'
         self._classifiers_path.mkdir()
 
+        self._mappers_path = self._classifiers_path
+
         self._dashboards_path = self._pack_path / 'Dashboards'
         self._dashboards_path.mkdir()
 
@@ -68,6 +72,9 @@ class Pack:
 
         self._indicator_fields = self._pack_path / 'IndicatorFields'
         self._indicator_fields.mkdir()
+
+        self._release_notes = self._pack_path / 'ReleaseNotes'
+        self._release_notes.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -128,16 +135,38 @@ class Pack:
         self.scripts.append(script)
         return script
 
-    def create_json_based(
+    def create_test_script(self):
+        script = self.create_script('sample_script')
+        script.create_default_script()
+        return script
+
+    def _create_json_based(
             self,
             name,
             prefix: str,
             content: dict = None,
+            dir_path: Path = None
     ):
         if content is None:
             content = {}
-        obj = JSONBased(self._pack_path, name, prefix)
+        if dir_path:
+            obj = JSONBased(dir_path, name, prefix)
+        else:
+            obj = JSONBased(self._pack_path, name, prefix)
         obj.write_json(content)
+        return obj
+
+    def _create_text_based(
+            self,
+            name,
+            content: str = '',
+            dir_path: Path = None
+    ):
+        if dir_path:
+            obj = TextBased(dir_path, name)
+        else:
+            obj = TextBased(self._pack_path, name)
+        obj.write_text(content)
         return obj
 
     def create_classifier(
@@ -146,9 +175,19 @@ class Pack:
             content: dict = None
     ):
         prefix = 'classifier'
-        classifier = self.create_json_based(name, prefix, content)
+        classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
         return classifier
+
+    def create_mapper(
+            self,
+            name,
+            content: dict = None
+    ):
+        prefix = 'classifier-mapper'
+        mapper = self._create_json_based(name, prefix, content)
+        self.mapper.append(mapper)
+        return mapper
 
     def create_dashboard(
             self,
@@ -156,7 +195,7 @@ class Pack:
             content: dict = None
     ):
         prefix = 'dashboard'
-        dashboard = self.create_json_based(name, prefix, content)
+        dashboard = self._create_json_based(name, prefix, content)
         self.dashboards.append(dashboard)
         return dashboard
 
@@ -164,9 +203,14 @@ class Pack:
             self,
             name,
             content: dict = None,
+            release_notes: bool = False
     ):
         prefix = 'incident-field'
-        incident_field = self.create_json_based(name, prefix, content)
+        incident_field = self._create_json_based(name, prefix, content)
+        if release_notes:
+            release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
+                                                    dir_path=self._incidents_field_path)
+            self.incident_field.append(release_notes)
         self.incident_field.append(incident_field)
         return incident_field
 
@@ -175,7 +219,7 @@ class Pack:
             name,
             content: dict = None):
         prefix = 'incident-type'
-        incident_type = self.create_json_based(name, prefix, content)
+        incident_type = self._create_json_based(name, prefix, content)
         self.incident_types.append(incident_type)
         return incident_type
 
@@ -185,5 +229,10 @@ class Pack:
             content: dict = None
     ):
         prefix = 'incident-field'
-        indicator_field = self.create_json_based(name, prefix, content)
+        indicator_field = self._create_json_based(name, prefix, content)
         self.indicator_field.append(indicator_field)
+
+    def create_release_notes(self, version: str, content: str = ''):
+        rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)
+        self.release_notes.append(rn)
+        return rn

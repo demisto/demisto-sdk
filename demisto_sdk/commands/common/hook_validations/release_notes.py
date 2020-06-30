@@ -3,13 +3,15 @@ from __future__ import print_function
 import itertools
 
 from demisto_sdk.commands.common.constants import VALIDATED_PACK_ITEM_TYPES
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import (get_latest_release_notes_text,
-                                               get_release_notes_file_path,
-                                               print_error)
+                                               get_release_notes_file_path)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
-class ReleaseNotesValidator:
+class ReleaseNotesValidator(BaseValidator):
     """Release notes validator is designed to ensure the existence and correctness of the release notes in content repo.
 
     Attributes:
@@ -19,7 +21,9 @@ class ReleaseNotesValidator:
         master_diff (str): the changes in the changelog file compared to origin/master.
     """
 
-    def __init__(self, file_path, modified_files=None, pack_name=None, added_files=None):
+    def __init__(self, file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
+                 print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.file_path = file_path
         self.modified_files = modified_files
         self.added_files = added_files
@@ -35,24 +39,29 @@ class ReleaseNotesValidator:
                 if not (permitted_type in file for permitted_type in VALIDATED_PACK_ITEM_TYPES):
                     continue
                 elif self.pack_name in file:
-                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None, added_files=set())
+                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None,
+                                              added_files=set())
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)
                     if file_name and file_type:
-                        if (file_type not in self.latest_release_notes) and (file_name not in self.latest_release_notes):
-                            print_error(f"No release note entry was found for a {file_type.lower()} in the {self.pack_name} pack. "
-                                        f"Please rerun the update-release-notes command without -u to generate an"
-                                        f" updated template.")
-                            is_valid = False
+                        if (file_type not in self.latest_release_notes) and (
+                                file_name not in self.latest_release_notes):
+                            entity_name = update_rn_util.get_display_name(file)
+                            error_message, error_code = Errors.missing_release_notes_entry(file_type, self.pack_name,
+                                                                                           entity_name)
+                            if self.handle_error(error_message, error_code, self.file_path):
+                                is_valid = False
         return is_valid
 
     def has_release_notes_been_filled_out(self):
         release_notes_comments = self.latest_release_notes
         if len(release_notes_comments) == 0:
-            print_error(f"Please complete the release notes found at: {self.file_path}")
-            return False
+            error_message, error_code = Errors.release_notes_file_empty()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
         elif '%%UPDATE_RN%%' in release_notes_comments:
-            print_error(f"Please finish filling out the release notes found at: {self.file_path}")
-            return False
+            error_message, error_code = Errors.release_notes_not_finished()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
         return True
 
     def is_file_valid(self):

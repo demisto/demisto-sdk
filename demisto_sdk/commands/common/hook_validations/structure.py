@@ -12,17 +12,20 @@ import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
-    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX, Errors)
+    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX)
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.tools import (checked_type,
                                                get_content_file_type_dump,
                                                get_matching_regex,
-                                               get_remote_file, print_error)
+                                               get_remote_file)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 from pykwalify.core import Core
 
 
-class StructureValidator:
+class StructureValidator(BaseValidator):
     """Structure validator is designed to validate the correctness of the file structure we enter to content repo.
 
         Attributes:
@@ -43,8 +46,8 @@ class StructureValidator:
     }
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
-                 configuration=Configuration()):
-        # type: (str, Optional[bool], Optional[str], Optional[str], Configuration, Optional[bool]) -> None
+                 configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master'):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_valid = True
         self.file_path = file_path.replace('\\', '/')
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
@@ -54,7 +57,7 @@ class StructureValidator:
         if is_new_file or predefined_scheme:
             self.old_file = {}
         else:
-            self.old_file = get_remote_file(old_file_path if old_file_path else file_path)
+            self.old_file = get_remote_file(old_file_path if old_file_path else file_path, tag=tag)
         self.configuration = configuration
 
     def is_valid_file(self):
@@ -90,8 +93,9 @@ class StructureValidator:
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        print_error(f"The file {self.file_path} does not match any scheme we have please, refer to the following list"
-                    f" for the various file name options we have in our repo {pretty_formatted_string_of_regexes}")
+        error_message, error_code = Errors.structure_doesnt_match_scheme(pretty_formatted_string_of_regexes)
+        self.handle_error(error_message, error_code, file_path=self.file_path)
+
         return None
 
     def is_valid_scheme(self):
@@ -101,7 +105,7 @@ class StructureValidator:
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, 'image', 'readme', 'changelog']:
+        if self.scheme_name in [None, 'image', 'readme', 'release-notes']:
             return True
         # ignore reputations.json
         if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
@@ -110,19 +114,24 @@ class StructureValidator:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')
             log.setLevel(logging.WARNING)
+            scheme_file_name = 'integration' if self.scheme_name == 'betaintegration' else self.scheme_name
             path = os.path.normpath(
-                os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(self.scheme_name)))
+                os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))
             core = Core(source_file=self.file_path,
                         schema_files=[path])
             core.validate(raise_exception=True)
         except Exception as err:
             try:
-                print_error(self.parse_error_msg(err))
-                print_error(Errors.suggest_fix(self.file_path))
+                error_message, error_code = self.parse_error_msg(err)
+                if self.handle_error(error_message, error_code, self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
+                    self.is_valid = False
+                    return False
             except Exception:
-                print_error('Failed: {} failed.\nin {}'.format(self.file_path, str(err)))
-            self.is_valid = False
-            return False
+                error_message, error_code = Errors.pykwalify_general_error(err)
+                if self.handle_error(error_message, error_code, self.file_path):
+                    self.is_valid = False
+                    return False
         return True
 
     @staticmethod
@@ -158,9 +167,10 @@ class StructureValidator:
         """
         file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and '/' in file_id:
-            self.is_valid = False
-            print_error(Errors.file_id_contains_slashes())
-            return False
+            error_message, error_code = Errors.file_id_contains_slashes()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
 
         return True
 
@@ -178,8 +188,9 @@ class StructureValidator:
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            print_error(f"The file id for {self.file_path} has changed from {old_version_id} to {new_file_id}")
-            return True
+            error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return True
 
         # False - the id has not changed.
         return False
@@ -202,9 +213,10 @@ class StructureValidator:
             return True
 
         if from_version_old != from_version_new:
-            print_error(Errors.from_version_modified(self.file_path))
-            self.is_valid = False
-            return False
+            error_message, error_code = Errors.from_version_modified()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
 
         return True
 
@@ -226,7 +238,9 @@ class StructureValidator:
             elif file_extension in ['.png', '.md']:
                 return {}
 
-        print_error(Errors.wrong_file_extension(file_extension, self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys()))
+        error_message, error_code = Errors.wrong_file_extension(file_extension,
+                                                                self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys())
+        self.handle_error(error_message, error_code, file_path=self.file_path)
         return {}
 
     def get_file_type(self):
@@ -256,7 +270,9 @@ class StructureValidator:
         """
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
-            print_error(Errors.invalid_file_path(self.file_path))
+            error_message, error_code = Errors.invalid_file_path()
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid_path = True
         return is_valid_path
 
     def parse_error_msg(self, err) -> str:
@@ -310,30 +326,26 @@ class StructureValidator:
 
             # if the error is from arguments of file
             if curr.get('name'):
-                return ('Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
-                                                                                  curr_string_transformer(
-                                                                                      curr.get('name')),
-                                                                                  str(key_list).strip('[]').replace(
-                                                                                      ',', '->')))
+                return Errors.pykwalify_missing_parameter(str(key_from_error),
+                                                          curr_string_transformer(curr.get('name')),
+                                                          str(key_list).strip('[]').replace(',', '->'))
+
             # if the error is from outputs of file
             elif curr.get('contextPath'):
-                return ('Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
-                                                                                  curr_string_transformer(
-                                                                                      curr.get('contextPath')),
-                                                                                  str(key_list).strip('[]').replace(
-                                                                                      ',', '->')))
+                return Errors.pykwalify_missing_parameter(str(key_from_error),
+                                                          curr_string_transformer(curr.get('contextPath')),
+                                                          str(key_list).strip('[]').replace(',', '->'))
             # if the error is from neither arguments , outputs nor root
             else:
-                return (
-                    'Failed: {} failed.\nMissing {} in \n{}\nPath: {}'.format(self.file_path, str(key_from_error),
-                                                                              curr_string_transformer(curr),
-                                                                              str(key_list).strip('[]').replace(',',
-                                                                                                                '->')))
+                return Errors.pykwalify_missing_parameter(str(key_from_error), curr_string_transformer(curr),
+                                                          str(key_list).strip('[]').replace(',', '->'))
         else:
-            if 'key' in str(err):
-                key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            else:
-                key_from_error = str(err).split('Key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            return (
-                'Failed: {} failed.\nMissing {} in {}'.format(self.file_path, str(key_from_error), "root",
-                                                              ))
+            err_msg = str(err).lower()
+            if 'key' in err_msg:
+                key_from_error = err_msg.split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+
+                if 'not defined' in err_msg:
+                    return Errors.pykwalify_field_undefined(str(key_from_error))
+
+                else:
+                    return Errors.pykwalify_missing_in_root(str(key_from_error))

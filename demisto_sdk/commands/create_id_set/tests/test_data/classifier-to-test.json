@@ -1,0 +1,17 @@
+{
+	"id": "dummy classifier",
+	"name": "dummy classifier",
+	"type": "classification",
+	"description": "dummy classifier",
+	"defaultIncidentType": "dummy incident type",
+	"keyTypeMap": {
+		"Integrity": "dummy incident type 2",
+		"Security": "dummy incident type 3"
+	},
+	"transformer": {
+		"complex": null,
+		"simple": "Category"
+	},
+	"version": -1,
+	"fromVersion": "6.0.0"
+}

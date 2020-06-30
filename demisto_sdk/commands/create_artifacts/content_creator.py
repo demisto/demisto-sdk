@@ -10,9 +10,7 @@ import zipfile
 from typing import List
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.constants import (BASE_PACK,
-                                                   BETA_INTEGRATIONS_DIR,
-                                                   CLASSIFIERS_DIR,
+from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DIR_TO_PREFIX,
@@ -41,11 +39,13 @@ from ruamel.yaml import YAML
 class ContentCreator:
 
     def __init__(self, artifacts_path: str, content_version='', content_bundle_path='',
-                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False):
+                 test_bundle_path='', packs_bundle_path='', preserve_bundles=False, packs=False,
+                 no_update_commonserver=False):
         self.artifacts_path = artifacts_path if artifacts_path else '/home/circleci/project/artifacts'
         self.content_version = content_version
         self.preserve_bundles = preserve_bundles
-        self.only_packs = tools.is_private_repository() or packs
+        self.only_packs = tools.is_external_repository() or packs
+        self.no_update_commonserverpython = no_update_commonserver
 
         # temp folder names
         self.content_bundle = content_bundle_path if content_bundle_path else os.path.join(self.artifacts_path,
@@ -57,7 +57,6 @@ class ContentCreator:
 
         # directories in which content resides
         self.content_directories = [
-            BETA_INTEGRATIONS_DIR,
             CLASSIFIERS_DIR,
             CONNECTIONS_DIR,
             DASHBOARDS_DIR,
@@ -71,6 +70,7 @@ class ContentCreator:
             REPORTS_DIR,
             SCRIPTS_DIR,
             WIDGETS_DIR,
+            RELEASE_NOTES_DIR
         ]
 
         self.packages_to_skip = []
@@ -102,13 +102,12 @@ class ContentCreator:
     def create_unifieds_and_copy(self, package_dir, dest_dir='', skip_dest_dir=''):
         """
         For directories that have packages, aka subdirectories for each integration/script
-        e.g. "Integrations", "Beta_Integrations", "Scripts". Creates a unified yml and writes
+        e.g. "Integrations", "Scripts". Creates a unified yml and writes
         it to the dest_dir
 
         Arguments:
             package_dir: (str)
-                Path to directory in which there are package subdirectories. e.g. "Integrations",
-                "Beta_Integrations", "Scripts"
+                Path to directory in which there are package subdirectories. e.g. "Integrations", "Scripts"
             dest_dir: (str)
                 Path to destination directory to which the unified yml for a package should be written
             skip_dest_dir: (str)
@@ -157,7 +156,7 @@ class ContentCreator:
         """
         dest_dir_path = os.path.dirname(out_path)
         dest_file_name = os.path.basename(out_path)
-        if not dest_file_name.startswith('playbook-'):
+        if not dest_file_name.startswith('playbook-') and tools.find_type(path) == 'playbook':
             new_name = '{}{}'.format('playbook-', dest_file_name)
             out_path = os.path.join(dest_dir_path, new_name)
         shutil.copyfile(path, out_path)
@@ -280,21 +279,24 @@ class ContentCreator:
 
             shutil.copyfile(path, os.path.join(bundle, new_path))
 
-    def copy_dir_files(self, *args):
+    def copy_dir_files(self, *args, is_legacy_bundle=True):
         """
         Copy the yml, md, json and zip files from inside a directory to a bundle.
 
         :param args: (source directory, destination bundle)
+        :param is_legacy_bundle: flag to copy md files to bundle.
+            Should be False for content-new.zip and test-content.zip
         :return: None
         """
         # handle *.json files
         self.copy_dir_json(*args)
         # handle *.yml files
         self.copy_dir_yml(*args)
-        # handle *.md files
-        self.copy_dir_md(*args)
         # handle *.zip files
         self.add_tools_to_bundle(*args)
+        if not is_legacy_bundle:
+            # handle *.md files
+            self.copy_dir_md(*args)
 
     def copy_test_files(self, test_playbooks_dir=TEST_PLAYBOOKS_DIR):
         """
@@ -309,8 +311,9 @@ class ContentCreator:
             if os.path.isdir(path):
                 non_circle_tests = glob.glob(os.path.join(path, '*'))
                 for new_path in non_circle_tests:
-                    print(f'copying path {new_path}')
-                    shutil.copyfile(new_path, os.path.join(self.test_bundle, os.path.basename(new_path)))
+                    if os.path.isfile(new_path):
+                        print(f'copying path {new_path}')
+                        shutil.copyfile(new_path, os.path.join(self.test_bundle, os.path.basename(new_path)))
 
             else:
                 # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
@@ -400,10 +403,9 @@ class ContentCreator:
                         for yml_file in non_split_yml_files:
                             shutil.copyfile(os.path.join(content_dir, yml_file), os.path.join(dest_dir, yml_file))
                 else:
-                    self.copy_dir_files(content_dir, dest_dir)
+                    self.copy_dir_files(content_dir, dest_dir, is_legacy_bundle=False)
 
-    @staticmethod
-    def update_content_version(content_ver: str = '', path: str = ''):
+    def update_content_version(self, content_ver: str = '', path: str = ''):
         regex = r'CONTENT_RELEASE_VERSION = .*'
         if not content_ver:
             try:
@@ -415,6 +417,9 @@ class ContentCreator:
                 return
 
         try:
+            if self.no_update_commonserverpython:
+                return
+
             if not path:
                 path = get_common_server_path('.')
             with open(path, 'r+') as file_:
@@ -425,8 +430,9 @@ class ContentCreator:
         except Exception as ex:
             print_warning(f'Could not open CommonServerPython File - {ex}')
 
-    @staticmethod
-    def update_branch(path: str = ''):
+    def update_branch(self, path: str = ''):
+        if self.no_update_commonserverpython:
+            return
 
         regex = r'CONTENT_BRANCH_NAME = .*'
         branch_name = get_current_working_branch()

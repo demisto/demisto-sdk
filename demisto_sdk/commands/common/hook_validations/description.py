@@ -1,13 +1,16 @@
 import glob
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   BETA_INTEGRATION_REGEX,
-                                                   INTEGRATION_REGEX)
-from demisto_sdk.commands.common.tools import (get_yaml, os, print_error,
-                                               print_warning, re)
+import click
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_INTEGRATION_YML_REGEX)
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.tools import get_yaml, os, re
 
 
-class DescriptionValidator:
+class DescriptionValidator(BaseValidator):
     """DescriptionValidator was designed to make sure we provide a detailed description properly.
 
     Attributes:
@@ -15,7 +18,8 @@ class DescriptionValidator:
         _is_valid (bool): the attribute which saves the valid/in-valid status of the current file.
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self._is_valid = True
 
         self.file_path = file_path
@@ -30,36 +34,30 @@ class DescriptionValidator:
         data_dictionary = get_yaml(self.file_path)
         description_in_yml = data_dictionary.get('detaileddescription', '') if data_dictionary else ''
 
-        if not re.match(BETA_INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
-            package_path = os.path.dirname(self.file_path)
+        if not re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE):
             try:
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
-                self._is_valid = False
-                print_error("No detailed description file was found in the package {}. Please add one,"
-                            " and make sure it includes the beta disclaimer note."
-                            "It should contain the string in constant"
-                            "\"BETA_INTEGRATION_DISCLAIMER\"".format(package_path))
-                return False
+                error_message, error_code = Errors.description_missing_in_beta_integration()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
+                    return False
 
             with open(md_file_path) as description_file:
                 description = description_file.read()
             if BETA_INTEGRATION_DISCLAIMER not in description:
-                self._is_valid = False
-                print_error("Detailed description in beta integration package {} "
-                            "dose not contain the beta disclaimer note. "
-                            "It should contain the string in constant"
-                            " \"BETA_INTEGRATION_DISCLAIMER\".".format(package_path))
-                return False
+                error_message, error_code = Errors.no_beta_disclaimer_in_description()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
+                    return False
             else:
                 return True
         elif BETA_INTEGRATION_DISCLAIMER not in description_in_yml:
-            self._is_valid = False
-            print_error("Detailed description field in beta integration {} "
-                        "dose not contain the beta disclaimer note."
-                        "It should contain the string in constant"
-                        " \"BETA_INTEGRATION_DISCLAIMER\".".format(self.file_path))
-            return False
+            error_message, error_code = Errors.no_beta_disclaimer_in_yml()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
+
         return True
 
     def is_duplicate_description(self):
@@ -68,14 +66,15 @@ class DescriptionValidator:
         is_description_in_package = False
         package_path = None
         md_file_path = None
-        if not re.match(INTEGRATION_REGEX, self.file_path, re.IGNORECASE) \
-                and not re.match(BETA_INTEGRATION_REGEX, self.file_path, re.IGNORECASE):
+        if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+                path_without_extension = os.path.splitext(self.file_path)[0]
+                md_file_path = glob.glob(path_without_extension + '_description.md')[0]
             except IndexError:
-                print_warning("No detailed description file was found in the package {}."
-                              " Consider adding one.".format(package_path))
+                error_message, error_code = Errors.no_description_file_warning()
+                click.secho(f"{self.file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n", fg="yellow")
+
             if md_file_path:
                 is_description_in_package = True
 
@@ -88,9 +87,9 @@ class DescriptionValidator:
             is_description_in_yml = True
 
         if is_description_in_package and is_description_in_yml:
-            self._is_valid = False
-            print_error("A description was found both in the package and in the yml, "
-                        "please update the package {}.".format(package_path))
-            return False
+            error_message, error_code = Errors.description_in_package_and_yml()
+            if self.handle_error(error_message, error_code, file_path=package_path):
+                self._is_valid = False
+                return False
 
         return True

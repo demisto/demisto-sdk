@@ -16,6 +16,8 @@ def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator.modified_files = modified_files
     release_notes_validator.added_files = added_files
     release_notes_validator.pack_name = 'CortexXDR'
+    release_notes_validator.ignored_errors = {}
+    release_notes_validator.checked_files = set()
     return release_notes_validator
 
 
@@ -48,6 +50,7 @@ def test_rn_master_diff(release_notes, expected_result, mocker):
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    ReleaseNotesValidator.ignored_errors = []
     validator = get_validator(release_notes)
     assert validator.is_file_valid() == expected_result
 
@@ -71,49 +74,49 @@ def test_init():
 
 
 NOT_FILLED_OUT_RN = '''
-#### IncidentTypes
-- __Cortex XDR Incident__
-%%UPDATE_RN%%
+### IncidentTypes
+#### Cortex XDR Incident
+- %%UPDATE_RN%%
 
-#### IncidentFields
-- __XDR Alerts__
-%%UPDATE_RN%%
+### IncidentFields
+#### XDR Alerts
+- %%UPDATE_RN%%
 
-#### Integrations
-- __Cortex XDR - IR__
-%%UPDATE_RN%%
+### Integrations
+#### Cortex XDR - IR
+- %%UPDATE_RN%%
 
-#### Scripts
-- __EntryWidgetNumberHostsXDR__
-%%UPDATE_RN%%
+### Scripts
+#### EntryWidgetNumberHostsXDR
+- %%UPDATE_RN%%
 '''
 FILLED_OUT_RN = '''
-#### IncidentTypes
-- __Cortex XDR Incident__
-Test
+### IncidentTypes
+#### Cortex XDR Incident
+- Test
 
-#### IncidentFields
-- __XDR Alerts__
-Test
+### IncidentFields
+#### XDR Alerts
+- Test
 
-#### Integrations
-- __Cortex XDR - IR__
-Test
+### Integrations
+#### Cortex XDR - IR
+- Test
 
-#### Scripts
-- __EntryWidgetNumberHostsXDR__
-Test
+### Scripts
+#### EntryWidgetNumberHostsXDR
+- Test
 
 ### Playbooks
-- __Cortex XDR Incident Handling__
-test
+#### Cortex XDR Incident Handling
+- test
 '''
 
 
 TEST_RELEASE_NOTES_TEST_BANK_1 = [
     ('', False),  # Completely Empty
-    ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
-     'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript \n- Grammar correction for '
      'code description. ', False),
     (NOT_FILLED_OUT_RN, True),
     (FILLED_OUT_RN, True)
@@ -195,8 +198,8 @@ def test_are_release_notes_complete_invalid_file_type(release_notes, complete_ex
 
 TEST_RELEASE_NOTES_TEST_BANK_ADDED = [
     ('', False),  # Completely Empty
-    ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
-     'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
      'code description. ', False),
     (NOT_FILLED_OUT_RN, False),
     (FILLED_OUT_RN, True)
@@ -231,8 +234,8 @@ def test_are_release_notes_complete_added(release_notes, complete_expected_resul
 
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
-    ('#### Integrations\n- __HelloWorld__\n  - Grammar correction for code '  # Missing Items
-     'description.\n\n#### Scripts\n- __HelloWorldScript__\n  - Grammar correction for '
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
      'code description. ', True),
     (NOT_FILLED_OUT_RN, False),
     (FILLED_OUT_RN, True)

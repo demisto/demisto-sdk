@@ -14,8 +14,6 @@ mapping:
     type: any
   isDefault:
     type: bool
-  fromversion:
-    type: str
   sortValues:
     type: any
   id:
@@ -26,26 +24,35 @@ mapping:
     required: True
   fromVersion:
     type: str
+  fromversion:
+    type: str
   toVersion:
     type: str
-  brandName:
+  toversion:
+    type: str
+  name:
+    type: str
+    required: True
+  type:
+    type: str
+    required: True
+  description:
     type: str
     required: True
   modified:
     type: str
   defaultIncidentType:
     type: str
-  mapping:
-    type: map
-    allowempty: True
   unclassifiedCases:
     type: map
     allowempty: True
   transformer:
     type: map
+    required: True
     allowempty: True
   keyTypeMap:
     type: map
+    required: True
     allowempty: True
   custom:
     type: bool

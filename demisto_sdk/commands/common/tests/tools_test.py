@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 from pathlib import Path
 
@@ -6,22 +7,25 @@ import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
-                                                   PACKS_PLAYBOOK_YML_REGEX,
-                                                   PACKS_TEST_PLAYBOOKS_REGEX,
-                                                   PLAYBOOKS_DIR)
+                                                   PLAYBOOK_YML_REGEX,
+                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
-                                               find_type, get_depth,
-                                               get_dict_from_file,
+                                               find_type, get_code_lang,
+                                               get_depth, get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
-                                               get_files_in_dir,
+                                               get_file, get_files_in_dir,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
                                                get_matching_regex,
                                                get_release_notes_file_path,
-                                               get_ryaml, retrieve_file_ending,
+                                               get_ryaml,
+                                               has_remote_configured,
+                                               is_origin_content_repo,
+                                               retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
@@ -47,6 +51,10 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('file_path, func', FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    def test_get_file_exception(self):
+        path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
+        assert get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml')) == {}
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
@@ -107,6 +115,14 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
     def test_retrieve_file_ending(self, path, output):
         assert retrieve_file_ending(path) == output
+
+    @pytest.mark.parametrize('data, entity, output', [
+        ({'script': {'type': 'javascript'}}, INTEGRATIONS_DIR, 'javascript'),
+        ({'type': 'javascript'}, SCRIPTS_DIR, 'javascript'),
+        ({}, LAYOUTS_DIR, '')
+    ])
+    def test_get_code_lang(self, data, entity, output):
+        assert get_code_lang(data, entity) == output
 
 
 class TestGetRemoteFile:
@@ -176,9 +192,9 @@ class TestGetRemoteFile:
 
 class TestGetMatchingRegex:
     INPUTS = [
-        ('Packs/XDR/Playbooks/XDR.yml', [PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX],
-         PACKS_PLAYBOOK_YML_REGEX),
-        ('Packs/XDR/NoMatch/XDR.yml', [PACKS_PLAYBOOK_YML_REGEX, PACKS_TEST_PLAYBOOKS_REGEX], False)
+        ('Packs/XDR/Playbooks/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX],
+         PLAYBOOK_YML_REGEX),
+        ('Packs/XDR/NoMatch/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX], False)
     ]
 
     @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)
@@ -195,7 +211,8 @@ class TestServerVersionCompare:
     INPUTS = [
         (V0, V5, RIGHT_IS_LATER),
         (V5, V0, LEFT_IS_LATER),
-        (V5, V5, EQUAL)
+        (V5, V5, EQUAL),
+        ("4.5.0", "4.5", EQUAL)
     ]
 
     @pytest.mark.parametrize("left, right, answer", INPUTS)
@@ -330,3 +347,49 @@ def test_get_release_notes_file_path_invalid():
     """
     filepath = '/SomePack/1_1_1.json'
     assert get_release_notes_file_path(filepath) is None
+
+
+remote_testbank = [
+    ('origin  https://github.com/turbodog/content.git', False),
+    ('upstream  https://github.com/demisto/content.git', True)
+]
+
+
+@pytest.mark.parametrize('git_value, response', remote_testbank)
+def test_has_remote(mocker, git_value, response):
+    """
+    While: Testing if the remote upstream contains demisto/content
+    Given:
+      1. Origin string not containing demisto/content
+      2. Upstream string containing demisto/content
+    Expects:
+      1. Test condition fails
+      2. Test condition passes
+    :param git_value: Git string from `git remotes -v`
+    """
+    mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
+    test_remote = has_remote_configured()
+    assert response == test_remote
+
+
+origin_testbank = [
+    ('origin  https://github.com/turbodog/content.git', False),
+    ('origin  https://github.com/demisto/content.git', True)
+]
+
+
+@pytest.mark.parametrize('git_value, response', origin_testbank)
+def test_origin_content(mocker, git_value, response):
+    """
+    While: Testing if the remote origin contains demisto/content
+    Given:
+      1. Origin string not containing demisto/content
+      2. Origin string containing demisto/content
+    Expects:
+      1. Test condition fails
+      2. Test condition passes
+    :param git_value: Git string from `git remotes -v`
+    """
+    mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
+    test_remote = is_origin_content_repo()
+    assert response == test_remote

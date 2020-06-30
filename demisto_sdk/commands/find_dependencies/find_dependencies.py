@@ -172,12 +172,12 @@ class PackDependencies:
             items_names = [items_names]
 
         for item_name in items_names:
-            item_possible_machine_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
+            item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
                                            f'{item_name}-mapper']
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
-                if (machine_name in item_possible_machine_names or item_name == item_details.get('name')) \
+                if (machine_name in item_possible_names or item_name == item_details.get('name')) \
                         and item_details.get('pack'):
                     if item_details.get('pack') not in constants.IGNORED_DEPENDENCY_CALCULATION:
                         packs.add(item_details.get('pack'))

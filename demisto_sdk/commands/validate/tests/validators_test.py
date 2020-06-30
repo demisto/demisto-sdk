@@ -500,7 +500,7 @@ class TestValidators:
         (VALID_INTEGRATION_TEST_PATH, 'integration', True),
         (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
         (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
-        (TEST_PLAYBOOK, 'playbook', False)
+        (TEST_PLAYBOOK, 'testplaybook', False)
     ]
 
     @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)

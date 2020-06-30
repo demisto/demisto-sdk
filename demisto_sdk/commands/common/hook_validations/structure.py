@@ -49,6 +49,7 @@ class StructureValidator(BaseValidator):
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master'):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_valid = True
+        self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
 
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
@@ -71,7 +72,7 @@ class StructureValidator(BaseValidator):
         Returns:
             (bool): Is file is valid
         """
-        if self.check_for_spaces_in_file_name():
+        if self.check_for_spaces_in_file_name() and self.is_valid_file_extension():
             answers = [
                 self.is_valid_file_path(),
                 self.is_valid_scheme(),
@@ -227,6 +228,15 @@ class StructureValidator(BaseValidator):
 
         return True
 
+    def is_valid_file_extension(self):
+        file_extension = os.path.splitext(self.file_path)[1]
+        if file_extension not in self.valid_extensions:
+            error_message, error_code = Errors.wrong_file_extension(file_extension, self.valid_extensions)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True
+
     def load_data_from_file(self):
         # type: () -> dict
         """Loads data according to function defined in FILE_SUFFIX_TO_LOAD_FUNCTION
@@ -245,9 +255,6 @@ class StructureValidator(BaseValidator):
             elif file_extension in ['.png', '.md']:
                 return {}
 
-        error_message, error_code = Errors.wrong_file_extension(file_extension,
-                                                                self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys())
-        self.handle_error(error_message, error_code, file_path=self.file_path)
         return {}
 
     def get_file_type(self):

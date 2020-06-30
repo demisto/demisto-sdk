@@ -177,9 +177,11 @@ class PackDependencies:
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
-                if (machine_name in item_possible_machine_names or item_name in item_details.get('name')) \
+                if (machine_name in item_possible_machine_names or item_name == item_details.get('name')) \
                         and item_details.get('pack'):
                     if item_details.get('pack') not in constants.IGNORED_DEPENDENCY_CALCULATION:
+                        if item_details.get('pack') == 'DigitalGuardian':
+                            print('bla')
                         packs.add(item_details.get('pack'))
 
         return packs

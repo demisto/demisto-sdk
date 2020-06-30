@@ -364,7 +364,7 @@ class TestContentCreator:
         - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
         """
         pack = repo.create_pack('pack')
-        json_path = pack.create_json_based("some_json", prefix='', content={}).path
+        json_path = pack.create_dashboard("some_json", content={}).path
         content_creator = ContentCreator(artifacts_path=self.content_repo)
 
         with ChangeCWD(repo.path):
@@ -381,7 +381,7 @@ class TestContentCreator:
         - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
         """
         pack = repo.create_pack('pack')
-        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": "1.0.0"}).path
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "1.0.0"}).path
         content_creator = ContentCreator(artifacts_path=self.content_repo)
 
         with ChangeCWD(repo.path):
@@ -402,7 +402,7 @@ class TestContentCreator:
         higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
-        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": higher_version}).path
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": higher_version}).path
 
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
@@ -418,7 +418,7 @@ class TestContentCreator:
         - the resulting json has no fromVersion
         """
         pack = repo.create_pack('pack')
-        json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": "1.0.0"}).path
+        json_path = pack.create_dashboard("some_json", content={"toVersion": "1.0.0"}).path
         content_creator = ContentCreator(artifacts_path=self.content_repo)
 
         with ChangeCWD(repo.path):
@@ -439,7 +439,7 @@ class TestContentCreator:
         higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
-        json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": higher_version}).path
+        json_path = pack.create_dashboard("some_json", content={"toVersion": higher_version}).path
 
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
@@ -459,8 +459,8 @@ class TestContentCreator:
         higher_version = LATEST_SUPPORTED_VERSION.split('.')
         higher_version[0] = str(int(higher_version[0]) + 1)
         higher_version = '.'.join(higher_version)
-        json_path = pack.create_json_based("some_json", prefix='', content={"toVersion": higher_version,
-                                                                            "fromVersion": "1.0.0"}).path
+        json_path = pack.create_dashboard("some_json", content={"toVersion": higher_version,
+                                                                "fromVersion": "1.0.0"}).path
 
         with ChangeCWD(repo.path):
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
@@ -524,7 +524,7 @@ class TestContentCreator:
         """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": "6.0.0"}).path
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "6.0.0"}).path
         with ChangeCWD(repo.path):
             assert not content_creator.check_from_version(json_path)
 
@@ -539,7 +539,7 @@ class TestContentCreator:
         """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        json_path = pack.create_json_based("some_json", prefix='', content={"fromVersion": "1.0.0"}).path
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "1.0.0"}).path
         with ChangeCWD(repo.path):
             assert content_creator.check_from_version(json_path)
 
@@ -554,7 +554,7 @@ class TestContentCreator:
         """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        json_path = pack.create_json_based("some_json", prefix='', content={}).path
+        json_path = pack.create_dashboard("some_json", content={}).path
         with ChangeCWD(repo.path):
             assert content_creator.check_from_version(json_path)
 

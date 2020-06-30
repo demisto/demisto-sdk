@@ -665,8 +665,8 @@ class PackDependencies:
             _collect_mappers_dependencies(pack_items['mappers'], id_set)
 
         pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
-                            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
-                            | incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
+            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
+            | incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
 
         return pack_dependencies
 

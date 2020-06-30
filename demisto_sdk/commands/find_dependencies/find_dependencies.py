@@ -172,8 +172,7 @@ class PackDependencies:
             items_names = [items_names]
 
         for item_name in items_names:
-            item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
-                                           f'{item_name}-mapper']
+            item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}', f'{item_name}-mapper']
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]

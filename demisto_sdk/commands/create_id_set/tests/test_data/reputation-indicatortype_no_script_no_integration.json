@@ -1,0 +1,221 @@
+{
+    "id": "indicator-type-dummy",
+    "version": -1,
+    "fromVersion": "5.5.0",
+    "modified": "2019-07-18T08:57:51.058271942Z",
+    "sortValues": null,
+    "commitMessage": "",
+    "shouldPublish": false,
+    "shouldCommit": false,
+    "regex": "",
+    "details": "dummy",
+    "prevDetails": "dummy",
+    "reputationScriptName": "",
+    "reputationCommand": "",
+    "enhancementScriptNames": [],
+    "system": false,
+    "locked": false,
+    "disabled": false,
+    "file": false,
+    "updateAfter": 0,
+    "mergeContext": false,
+    "formatScript": "",
+    "contextPath": "",
+    "contextValue": "",
+    "excludedBrands": [],
+    "expiration": 0,
+    "defaultMapping": {
+      "accounttype": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Type",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "blocked": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Blocked",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "displayname": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "DisplayName",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "domainname": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Domain",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "emailaddress": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Email.Address",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "groups": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Groups",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "indicatoridentification": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "ID",
+          "transformers": [
+            {
+              "operator": "toUpperCase",
+              "args": {}
+            },
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "organizationalunitou": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "OrganizationUnit",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "username": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Username",
+          "transformers": [
+            {
+              "operator": "uniq",
+              "args": {}
+            }
+          ]
+        }
+      },
+      "associations": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Associations",
+          "transformers": [{
+            "operator": "uniq",
+            "args": {}
+          }]
+        }
+      },
+      "reportedby": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "ReportedBy",
+          "transformers": [{
+            "operator": "uniq",
+            "args": {}
+          }]
+        }
+      },
+      "threattypes": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "ThreatTypes",
+          "transformers": [{
+            "operator": "uniq",
+            "args": {}
+          }]
+        }
+      },
+      "trafficlightprotocol": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "TrafficLightProtocol",
+          "transformers": [{
+            "operator": "uniq",
+            "args": {}
+          }]
+        }
+      },
+      "tags": {
+        "simple": "",
+        "complex": {
+          "root": "dummy",
+          "filters": [],
+          "accessor": "Tags",
+          "transformers": [{
+            "operator": "uniq",
+            "args": {}
+          }]
+        }
+      }
+    },
+    "manualMapping": null,
+    "fileHashesPriority": null
+  }

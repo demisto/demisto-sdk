@@ -19,18 +19,20 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n##### Hello World Integration\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Playbooks\n##### Hello World Playbook\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Scripts\n##### Hello World Script\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Incident Fields\n##### Hello World IncidentField\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Classifiers\n##### Hello World Classifier\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Layouts\n##### Hello World Layout\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Incident Types\n##### Hello World Incident Type\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Indicator Types\n##### Hello World Indicator Type\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Widgets\n##### Hello World Widget\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Dashboards\n##### Hello World Dashboard\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Connections\n##### Hello World Connection\n  - %%UPDATE_RN%%\n" \
-                          "\n#### Reports\n##### Hello World Report\n  - %%UPDATE_RN%%\n"
+        expected_result = \
+            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
+            "\n#### Connections\n##### Hello World Connection\n- %%UPDATE_RN%%\n" \
+            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Fields\n##### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Types\n##### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Types\n##### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
+            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
+            "\n#### Layouts\n##### Hello World Layout\n- %%UPDATE_RN%%\n" \
+            "##### Second Hello World Layout\n- %%UPDATE_RN%%\n" \
+            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
+            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
+            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
+            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
@@ -44,6 +46,7 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Layout": "Layouts",
             "Hello World Incident Type": "Incident Types",
             "Hello World Indicator Type": "Indicator Types",
+            "Second Hello World Layout": "Layouts",
             "Hello World Widget": "Widgets",
             "Hello World Dashboard": "Dashboards",
             "Hello World Connection": "Connections",
@@ -262,11 +265,11 @@ class TestRNUpdateUnit:
     CURRENT_RN = """
 #### Incident Types
 ##### Cortex XDR Incident
-  - %%UPDATE_RN%%
+- %%UPDATE_RN%%
 
 #### Incident Fields
 ##### XDR Alerts
-  - %%UPDATE_RN%%
+- %%UPDATE_RN%%
 """
     CHANGED_FILES = {
         "Cortex XDR Incident": "Incident Type",
@@ -279,24 +282,24 @@ class TestRNUpdateUnit:
     EXPECTED_RN_RES = """
 #### Incident Types
 ##### Cortex XDR Incident
-  - %%UPDATE_RN%%
+- %%UPDATE_RN%%
 
 #### Incident Fields
 ##### Sample IncidentField
-  - %%UPDATE_RN%%
+- %%UPDATE_RN%%
 
 ##### XDR Alerts
-  - %%UPDATE_RN%%
+- %%UPDATE_RN%%
 
 #### Integration
 ##### Sample
-  - %%UPDATE_RN%%
+- %%UPDATE_RN%%
 
 ##### Cortex XDR - IR
-  - %%UPDATE_RN%%
+- %%UPDATE_RN%%
 """
 
-    diff_package = [('Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layout')),
+    diff_package = [('Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layouts')),
                     ('Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
                     ('IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
                     ('IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
@@ -372,7 +375,7 @@ class TestRNUpdateUnit:
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
-        assert new_rn == self.EXPECTED_RN_RES
+        assert self.EXPECTED_RN_RES == new_rn
 
     def test_commit_to_bump(self):
         """

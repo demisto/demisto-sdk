@@ -24,9 +24,12 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 PACK_METADATA_PATH = 'pack_metadata.json'
-CONTRIBUTOR_DISPLAY_NAME = ' ({} contribution)'
-CONTRIBUTOR_DETAILED_DESC = '### This is a {} contributed integration' \
-                            '\nFor all questions and enhancement requests please contact the partner directly:'
+CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
+CONTRIBUTOR_DETAILED_DESC = '### {} Contributed Integration\n' \
+                            '#### Integration Author: {}\n' \
+                            'Support and maintenance for this integration are provided by the author. ' \
+                            'Please use the following contact details:'
+
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 
 
@@ -35,7 +38,10 @@ class Unifier:
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
                  image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
-        directory_name = ""
+        directory_name = ''
+        # Changing relative path to current abspath fixed problem with default output file name.
+        if input == '.':
+            input = os.path.abspath(input)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:
                 directory_name = optional_dir_name
@@ -177,8 +183,9 @@ class Unifier:
             if self.is_contributor_pack(contributor_type):
                 contributor_email = metadata_data.get('email', '')
                 contributor_url = metadata_data.get('url', '')
+                author = metadata_data.get('author')
                 yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
-                                                            contributor_url)
+                                                            contributor_url, author)
 
         output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
@@ -240,8 +247,8 @@ class Unifier:
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
-        script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
+        script_path = list(filter(lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
+                                  sorted(glob.glob(os.path.join(self.package_path, '*' + script_type)))))[0]
 
         return script_path
 
@@ -391,7 +398,7 @@ class Unifier:
             return support_field, json_pack_metadata
         return None, None
 
-    def add_contributors_support(self, unified_yml, contributor_type, contributor_email, contributor_url):
+    def add_contributors_support(self, unified_yml, contributor_type, contributor_email, contributor_url, author=''):
         """Add contributor support to the unified file - text in the display name and detailed description.
 
         Args:
@@ -399,17 +406,18 @@ class Unifier:
             contributor_type (str): The contributor type - partner / developer / community
             contributor_email (str): The contributor email.
             contributor_url (str): The contributor url.
+            author (str): The packs author.
 
         Returns:
             The unified yaml file.
         """
         unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')
-        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type)
+        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
         if contributor_email:
-            contributor_description += f'\n**Email** - [mailto](mailto:{contributor_email})'
+            contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
         if contributor_url:
-            contributor_description += f'\n**URL** - [{contributor_url}]({contributor_url})'
+            contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
         unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
 
         return unified_yml

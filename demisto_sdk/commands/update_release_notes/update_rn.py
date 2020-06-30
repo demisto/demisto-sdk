@@ -68,7 +68,7 @@ class UpdateRN:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "
                                 f"created release notes found at {rn_path} and document any changes you "
-                                f"made by replacing '%%_UPDATE_RN%%'.\n - Commit "
+                                f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
                                 f"the new release notes to your branch.\nFor information regarding proper"
                                 f" format of the release notes, please refer to "
                                 f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
@@ -88,9 +88,13 @@ class UpdateRN:
         return True
 
     def is_bump_required(self):
-        diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
-        if "currentVersion" in diff:
-            return False
+        try:
+            diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
+            if "currentVersion" in diff:
+                return False
+        except RuntimeError:
+            print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "
+                          f"Please verify the pack exists and the pack name is correct.")
         return True
 
     def find_added_pack_files(self):
@@ -110,7 +114,9 @@ class UpdateRN:
     def get_display_name(file_path):
         struct = StructureValidator(file_path=file_path, is_new_file=True)
         file_data = struct.load_data_from_file()
-        if 'name' in file_data:
+        if 'display' in file_data:
+            name = file_data.get('display', None)
+        elif 'name' in file_data:
             name = file_data.get('name', None)
         elif 'TypeName' in file_data:
             name = file_data.get('TypeName', None)
@@ -154,7 +160,7 @@ class UpdateRN:
             elif 'Classifiers' in file_path:
                 _file_type = 'Classifiers'
             elif 'Layouts' in file_path:
-                _file_type = 'Layout'
+                _file_type = 'Layouts'
             elif 'Reports' in file_path:
                 _file_type = 'Reports'
             elif 'Widgets' in file_path:
@@ -249,69 +255,69 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in changed_items.items():
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1]):
             if k == 'N/A':
                 continue
             elif v == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Playbook':
                 if not playbook_header:
                     rn_string += '\n#### Playbooks\n'
                     playbook_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Script':
                 if not script_header:
                     rn_string += '\n#### Scripts\n'
                     script_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Incident Fields':
                 if not inc_flds_header:
                     rn_string += '\n#### Incident Fields\n'
                     inc_flds_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Classifiers':
                 if not classifier_header:
                     rn_string += '\n#### Classifiers\n'
                     classifier_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Layouts':
                 if not layout_header:
                     rn_string += '\n#### Layouts\n'
                     layout_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Incident Types':
                 if not inc_types_header:
                     rn_string += '\n#### Incident Types\n'
                     inc_types_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Indicator Types':
                 if not ind_types_header:
                     rn_string += '\n#### Indicator Types\n'
                     ind_types_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Reports':
                 if not rep_types_header:
                     rn_string += '\n#### Reports\n'
                     rep_types_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Widgets':
                 if not widgets_header:
                     rn_string += '\n#### Widgets\n'
                     widgets_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Dashboards':
                 if not dashboards_header:
                     rn_string += '\n#### Dashboards\n'
                     dashboards_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Connections':
                 if not connections_header:
                     rn_string += '\n#### Connections\n'
                     connections_header = True
-                rn_string += f'##### {k}\n  - %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 
     def update_existing_rn(self, current_rn, changed_files):
@@ -326,7 +332,7 @@ class UpdateRN:
                 else:
                     self.existing_rn_changed = True
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n##### {k}\n  - %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
@@ -335,13 +341,13 @@ class UpdateRN:
                 self.existing_rn_changed = True
                 if v in new_rn:
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n##### {k}\n  - %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = f'\n#### {v}\n##### {k}\n  - %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n#### {v}\n##### {k}\n- %%UPDATE_RN%%\n'
                     new_rn += new_rn_part
         return new_rn
 

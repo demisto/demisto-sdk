@@ -37,13 +37,10 @@ class TestYamlParse:
 
     def test_checks_common_server_python(self, repo):
         """
-
         Given
         - Repo with CommonServerPython script
-
         When
         - Running lint on a repo with a change to CommonServerPython
-
         Then
         - Validate that the CommonServerPython is in the file list to check
         """

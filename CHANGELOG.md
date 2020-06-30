@@ -1,5 +1,9 @@
 # Changelog
 
+#### 1.1.5
+* Fixed an issue in **find-dependencies** command.
+* **lint** command now verifies flake8 on CommonServerPython script.
+
 #### 1.1.4
 * Fixed an issue with the default output file name of the **unify** command when using "." as an output path.
 * **Unify** command now adds contributor details to the display name and description.

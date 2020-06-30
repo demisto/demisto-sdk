@@ -17,7 +17,7 @@ To do so, you can do the following:
   `./Utils/trigger_content_nightly_build.sh <branch_name> <circle_token>` and make sure to wait until the build is finished.
 7) In demisto-sdk repository's main page click on **releases**.
 8) Click on **Draft a new release**.
-9) Update the **Tag version** and **Release title** - the form should be vX.X.X .
+9) Update the **Tag version** and **Release title** - the form should be `vX.X.X` .
 10) In the **Describe the release** text box enter the CHANGELOG contents for this release.
 11) If nightly passes ok, press **Publish release** - your release is now public.
 12) Update the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file again, this time with the release tag.

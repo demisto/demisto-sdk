@@ -212,6 +212,7 @@ class TestStructureValidator:
 
     def test_is_valid_file_extension(self, mocker):
         mocker.patch.object(StructureValidator, "handle_error", return_value='Not-non-string')
+        mocker.patch.object(StructureValidator, 'load_data_from_file', return_value="")
         image = "image.png"
         yml_file = "yml_file.yml"
         json_file = "json_file.json"

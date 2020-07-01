@@ -645,7 +645,8 @@ def generate_test_playbook(**kwargs):
     required=False,
     help="The path to the zip file downloaded via the Marketplace contribution UI. "
     "This will format the contents of the zip file to a pack format ready for contribution "
-    "and save the newly formatted pack data to a new zip file in the same directory as the original zip file.")
+    "in the content repository on your local machine. The command should be executed from the "
+    "content repository's base directory.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

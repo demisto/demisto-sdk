@@ -1,4 +1,5 @@
 # Changelog
+* Fixed issue where correct error message would not propagate for invalid images.
 * Improved **validate** command performance time and outputs.
 * Added the flag *--no-docker-checks* to **validate** command to skip docker checks.
 * Added the flag *--print-ignored-files* to **validate** command to print ignored files report when the command is done.

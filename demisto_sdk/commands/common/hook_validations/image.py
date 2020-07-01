@@ -36,6 +36,9 @@ class ImageValidator(BaseValidator):
                         self._is_valid = False
 
                     self.file_path = ''
+            else:
+                self.file_path = ''
+                self._is_valid = False
 
     def is_valid(self):
         """Validate that the image exists and that it is in the permitted size limits."""

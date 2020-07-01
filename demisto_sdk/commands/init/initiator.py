@@ -110,6 +110,7 @@ class Initiator:
             return self.pack_init()
 
     def convert_contribution_to_pack(self):
+        '''Create a Pack in the content repo from the contents of a contribution zipfile'''
         packs_dir = os.path.join(get_content_path(), 'Packs')
         metadata_dict = {}
         with zipfile.ZipFile(self.contribution) as zipped_contrib:
@@ -151,6 +152,14 @@ class Initiator:
         os.remove(os.path.join(pack_dir, 'metadata.json'))
 
     def content_item_to_package_format(self, content_item_dir, del_unified):
+        '''
+        Iterate over the YAML files in a directory and create packages (a containing directory and
+        component files) from the YAMLs of integrations and scripts
+
+        Args:
+            content_item_dir (str): Path to the directory containing the content item YAML file(s)
+            del_unified (bool): Whether to delete the unified yaml the package was extracted from
+        '''
         child_files = get_child_files(content_item_dir)
         content_item_file_path = ''
         for child_file in child_files:
@@ -238,6 +247,10 @@ class Initiator:
         return True
 
     def create_pack_base_files(self):
+        '''
+        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        to be in the base directory of a pack
+        '''
         fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 

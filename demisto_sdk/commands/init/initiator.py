@@ -8,12 +8,13 @@ from typing import Dict, List, Union
 
 import yaml
 import yamlordereddictloader
-from demisto_sdk.commands.split_yml.extractor import Extractor
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
+                                                   ENTITY_TYPE_TO_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
@@ -28,16 +29,14 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL,
-                                                   ENTITY_TYPE_TO_DIR)
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               get_content_path,
-                                               find_type,
+                                                   XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
                                                get_child_files,
                                                get_common_server_path,
-                                               print_color, print_error,
-                                               print_v)
+                                               get_content_path, print_color,
+                                               print_error, print_v)
+from demisto_sdk.commands.split_yml.extractor import Extractor
 
 
 class Initiator:

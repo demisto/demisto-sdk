@@ -206,11 +206,10 @@ class ContentCreator:
                 unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
 
-            unified_yml_paths = unification_tool.merge_script_package_to_yml(file_name_suffix=self.file_name_suffix,
-                                                                             filter_6_0=True)
-
-            for unified_yml_path in unified_yml_paths:
-                self.add_from_version_to_yml(unified_yml_path)
+            if parse_version(unification_tool.yml_data.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+                unified_yml_paths = unification_tool.merge_script_package_to_yml(file_name_suffix=self.file_name_suffix)
+                for unified_yml_path in unified_yml_paths:
+                    self.add_from_version_to_yml(unified_yml_path)
 
     @staticmethod
     def add_tools_to_bundle(tools_dir_path, bundle):
@@ -508,11 +507,11 @@ class ContentCreator:
                                 continue
                             unifier = Unifier(package_dir, dir_name, dest_dir)
 
-                            new_file_paths = unifier.merge_script_package_to_yml(file_name_suffix=self.file_name_suffix,
-                                                                                 filter_6_0=True)
-
-                            for new_file_path in new_file_paths:
-                                self.add_from_version_to_yml(new_file_path)
+                            if parse_version(unifier.yml_data.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+                                new_file_paths = unifier.merge_script_package_to_yml(
+                                    file_name_suffix=self.file_name_suffix)
+                                for new_file_path in new_file_paths:
+                                    self.add_from_version_to_yml(new_file_path)
 
                     non_split_yml_files = [f for f in os.listdir(content_dir)
                                            if os.path.isfile(os.path.join(content_dir, f)) and

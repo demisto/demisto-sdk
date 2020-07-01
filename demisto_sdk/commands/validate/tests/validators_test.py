@@ -717,3 +717,87 @@ class TestValidators:
         added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is False
+
+    def test_filter_changed_files(self, mocker):
+        """
+            Given:
+                - A string of git diff results
+            When:
+                - running filter_changed_files on the string
+            Then:
+                - Ensure the modified files are recognized correctly.
+                - Ensure the added files are recognized correctly.
+                - Ensure the renamed file is in a tup;e in the modified files.
+                - Ensure modified metadata files are in the changed_meta_files and that the added one is not.
+                - Ensure the added code and meta files are not in added files.
+                - Ensure old format file is recognized correctly.
+                - Ensure deleted file is recognized correctly.
+                - Ensure ignored files are set correctly.
+        """
+        mocker.patch.object(os.path, 'isfile', return_value=True)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
+        diff_string = "M	Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json\n" \
+                      "M	Packs/EWS/Classifiers/classifier-EWS_v2.json\n" \
+                      "M	Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py\n" \
+                      "M	Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml\n" \
+                      "M	Packs/F5/pack_metadata.json\n"\
+                      "R100	Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml	" \
+                      "Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml\n" \
+                      "A	Packs/MyNewPack/.pack-ignore\n" \
+                      "A	Packs/MyNewPack/.secrets-ignore\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/README.md\n" \
+                      "A	Packs/MyNewPack/README.md\n" \
+                      "A	Packs/MyNewPack/pack_metadata.json\n" \
+                      "D	Packs/DeprecatedContent/Scripts/script-ExtractURL.yml"
+
+        validate_manager = ValidateManager()
+        modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager.\
+            filter_changed_files(files_string=diff_string, print_ignored_files=True)
+
+        # checking that modified files are recognized correctly
+        assert 'Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json' in modified_files
+        assert 'Packs/EWS/Classifiers/classifier-EWS_v2.json' in modified_files
+        assert ('Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml',
+                'Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml') in modified_files
+
+        # check that the modified code file is not there but the yml file is
+        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.yml' in modified_files
+        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py' not in modified_files
+
+        # check that the modified metadata file is in the changed_meta_files but the added one is not
+        assert 'Packs/F5/pack_metadata.json' in changed_meta_files
+        assert 'Packs/MyNewPack/pack_metadata.json' not in changed_meta_files
+
+        # check that the added files are recognized correctly
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/README.md' in added_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml' in added_files
+
+        # check that the added code files and meta file are not in the added_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py' not in added_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' not in added_files
+        assert 'Packs/MyNewPack/pack_metadata.json' not in added_files
+
+        # check that non-image, pipfile, description or schema are in the ignored files and the rest are
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile' not in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock' not in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md' not \
+               in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png' not \
+               in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/.secrets-ignore' in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' in \
+               validate_manager.ignored_files
+        assert 'Packs/MyNewPack/.pack-ignore' in validate_manager.ignored_files
+
+        # check recognized old-format file
+        assert 'Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml' in old_format_files
+
+        # check recognized deleted file
+        assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files

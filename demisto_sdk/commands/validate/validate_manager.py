@@ -612,10 +612,11 @@ class ValidateManager:
             old_format_files(set): file names which are in the old format.
         """
         invalid_files = []
-        for f in old_format_files:
-            yaml_data = get_yaml(f)
+        for file_path in old_format_files:
+            click.echo(f"Validating old-format file {file_path}")
+            yaml_data = get_yaml(file_path)
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
-                invalid_files.append(f)
+                invalid_files.append(file_path)
         if invalid_files:
             error_message, error_code = Errors.invalid_package_structure(invalid_files)
             if self.handle_error(error_message, error_code, file_path="General-Error"):

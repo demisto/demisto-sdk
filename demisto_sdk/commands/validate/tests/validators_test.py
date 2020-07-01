@@ -694,6 +694,14 @@ class TestValidators:
         assert res is False
 
     def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
+        """
+            Given:
+                - packs with modified files and release notes
+            When:
+                - running validate_no_missing_release_notes on the files
+            Then:
+                - return a True as no release notes are missing
+        """
         pack1 = repo.create_pack('PackName1')
         incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         pack2 = repo.create_pack('PackName2')
@@ -707,6 +715,14 @@ class TestValidators:
             assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is True
 
     def test_validate_no_missing_release_notes__missing_rn(self, repo):
+        """
+            Given:
+                - 2 packs with modified files and release notes for only one
+            When:
+                - running validate_no_missing_release_notes on the files
+            Then:
+                - return a False as there are release notes missing
+        """
         pack1 = repo.create_pack('PackName1')
         incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         pack2 = repo.create_pack('PackName2')
@@ -717,6 +733,34 @@ class TestValidators:
         added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is False
+
+    def test_validate_no_old_format__with_toversion(self):
+        """
+            Given:
+                - an old format_file with toversion
+            When:
+                - running validate_no_old_format on the file
+            Then:
+                - return a True as the file is valid
+        """
+        validate_manager = ValidateManager()
+        old_format_files = {"demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/"
+                            "script-SampleScriptPackageSanityDocker45_45.yml"}
+        assert validate_manager.validate_no_old_format(old_format_files)
+
+    def test_validate_no_old_format__without_toversion(self, mocker):
+        """
+            Given:
+                - an old format_file without toversion
+            When:
+                - running validate_no_old_format on the file
+            Then:
+                - return a False as the file is invalid
+        """
+        mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
+        validate_manager = ValidateManager()
+        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml"}
+        assert not validate_manager.validate_no_old_format(old_format_files)
 
     def test_filter_changed_files(self, mocker):
         """

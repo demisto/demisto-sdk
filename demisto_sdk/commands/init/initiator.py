@@ -8,7 +8,6 @@ from typing import Dict, List, Union
 
 import yaml
 import yamlordereddictloader
-
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,

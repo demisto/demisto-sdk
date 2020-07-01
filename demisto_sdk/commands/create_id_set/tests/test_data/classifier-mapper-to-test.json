@@ -30,6 +30,15 @@
 					"simple": "Resolved"
 				}
 			}
+		},
+		"dummy incident type 3": {
+			"dontMapEventToLabels": false,
+			"internalMapping": {
+				"occurred": {
+					"complex": null,
+					"simple": "Resolved"
+				}
+			}
 		}
 	},
 	"version": -1,

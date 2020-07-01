@@ -55,8 +55,12 @@ class BaseValidator:
         formatted_error = f"{file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
 
         if file_path:
+            if not isinstance(file_path, str):
+                file_path = str(file_path)
+
             file_name = os.path.basename(file_path)
             self.check_file_flags(file_name, file_path)
+
         else:
             file_name = 'No-Name'
 

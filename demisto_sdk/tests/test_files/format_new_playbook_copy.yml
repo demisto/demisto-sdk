@@ -196,7 +196,7 @@ tasks:
       version: -1
       name: Fake name
       description: Get file information using the Virus Total Private API integration.
-      playbookName: File Enrichment - Virus Total Private API
+      playbookName: File Enrichment - Virus Total Private API_dev_copy
       type: playbook
       iscommand: false
       brand: ""

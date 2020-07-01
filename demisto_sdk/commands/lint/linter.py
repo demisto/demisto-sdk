@@ -221,9 +221,15 @@ class Linter:
             lint_files = set(
                 self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"],
                                         flags=NEGATE))
+
+        # Add CommonServer to the lint checks
         if 'commonserver' in self._pack_abs_dir.name.lower():
+            # Powershell
             if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                 self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+            # Python
+            elif self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]
         else:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)

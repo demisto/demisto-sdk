@@ -1,10 +1,11 @@
 from typing import Callable
 
+from demisto_sdk.commands.lint import linter
+from wcmatch.pathlib import Path
+
 
 class TestYamlParse:
     def test_valid_yaml_key_script_is_dict(self, demisto_content, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     type_script_key=True)
         runner = linter.Linter(content_repo=demisto_content,
@@ -15,8 +16,6 @@ class TestYamlParse:
         assert not runner._gather_facts(modules={})
 
     def test_valid_yaml_key_script_is_not_dict(self, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     type_script_key=False)
         runner = linter.Linter(content_repo=demisto_content,
@@ -27,8 +26,6 @@ class TestYamlParse:
         assert not runner._gather_facts(modules={})
 
     def test_not_valid_yaml(self, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     yml=True)
         runner = linter.Linter(content_repo=demisto_content,
@@ -38,11 +35,32 @@ class TestYamlParse:
                                docker_engine=False)
         assert runner._gather_facts(modules={})
 
+    def test_checks_common_server_python(self, repo):
+        """
+        Given
+        - Repo with CommonServerPython script
+        When
+        - Running lint on a repo with a change to CommonServerPython
+        Then
+        - Validate that the CommonServerPython is in the file list to check
+        """
+        pack = repo.create_pack('Base')
+        script = pack.create_script('CommonServerPython')
+        script.create_default_script()
+        script_path = Path(script.path)
+        runner = linter.Linter(content_repo=pack.path,
+                               pack_dir=script_path,
+                               req_2=[],
+                               req_3=[],
+                               docker_engine=False)
+        runner._gather_facts(modules={})
+        common_server_python_path = runner._facts.get('lint_files')[0]
+        assert 'Packs/Base/Scripts/CommonServerPython/CommonServerPython.py' in str(
+            common_server_python_path)
+
 
 class TestPythonPack:
     def test_package_is_python_pack(self, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     js_type=False)
         runner = linter.Linter(content_repo=demisto_content,
@@ -53,8 +71,6 @@ class TestPythonPack:
         assert not runner._gather_facts(modules={})
 
     def test_package_is_not_python_pack(self, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     js_type=True)
         runner = linter.Linter(content_repo=demisto_content,
@@ -67,8 +83,6 @@ class TestPythonPack:
 
 class TestDockerImagesCollection:
     def test_docker_images_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         exp_image = "test-image:12.0"
         exp_py_num = 2.7
         mocker.patch.object(linter.Linter, '_docker_login')
@@ -87,8 +101,6 @@ class TestDockerImagesCollection:
         assert runner._facts["images"][0][1] == exp_py_num
 
     def test_docker_images_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         exp_image = "demisto/python:1.3-alpine"
         exp_py_num = 2.7
         mocker.patch.object(linter.Linter, '_docker_login')
@@ -110,8 +122,6 @@ class TestDockerImagesCollection:
 
 class TestTestsCollection:
     def test_tests_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
@@ -125,8 +135,6 @@ class TestTestsCollection:
         assert runner._facts["test"]
 
     def test_tests_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
@@ -142,8 +150,6 @@ class TestTestsCollection:
 
 class TestLintFilesCollection:
     def test_lint_files_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
@@ -158,8 +164,6 @@ class TestLintFilesCollection:
         assert runner._facts['lint_unittest_files'][0] == integration_path / f'{integration_path.name}_test.py'
 
     def test_lint_files_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
@@ -175,8 +179,6 @@ class TestLintFilesCollection:
 
 class TestTestRequirementsCollection:
     def test_test_requirements_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content, test_reqs=True)
@@ -192,8 +194,6 @@ class TestTestRequirementsCollection:
             assert test_req in runner._facts["additional_requirements"]
 
     def test_test_requirements_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
-        from demisto_sdk.commands.lint import linter
-        from wcmatch.pathlib import Path
         mocker.patch.object(linter.Linter, '_docker_login')
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content)

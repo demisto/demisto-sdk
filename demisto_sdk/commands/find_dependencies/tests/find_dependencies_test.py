@@ -5,6 +5,7 @@ import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+from TestSuite.utils import IsEqualFunctions
 
 
 @pytest.fixture(scope="module")
@@ -33,7 +34,7 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_script_item(self, id_set):
         pack_id = "PrismaCloudCompute"
-        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
+
         expected_result = [
             {
                 "PrismaCloudComputeParseAuditAlert": {
@@ -65,7 +66,9 @@ class TestIdSetFilters:
             }
         ]
 
-        assert found_filtered_result == expected_result
+        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
+
+        assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
 
     @pytest.mark.parametrize("pack_id", ["Claroty", "Code42", "Cymulate"])
     def test_search_for_pack_playbook_item(self, pack_id, id_set):
@@ -75,7 +78,7 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_playbook_item(self, id_set):
         pack_id = "Expanse"
-        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
+
         expected_result = [
             {
                 "ExpanseParseRawIncident": {
@@ -93,7 +96,9 @@ class TestIdSetFilters:
             }
         ]
 
-        assert found_filtered_result == expected_result
+        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
+
+        assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
 
 
 class TestDependsOnScriptAndIntegration:
@@ -115,9 +120,10 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("dependency_integration_command,expected_result",
                              [("sslbl-get-indicators", {("Feedsslabusech", True)}),
@@ -137,11 +143,14 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_two_scripts(self, id_set):
+        expected_result = {('HelloWorld', True), ('PrismaCloudCompute', True)}
+
         test_input = [
             {
                 "DummyScript": {
@@ -155,11 +164,14 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == {('HelloWorld', True), ('PrismaCloudCompute', True)}
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_two_integrations(self, id_set):
+        expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+
         test_input = [
             {
                 "DummyScript": {
@@ -173,11 +185,14 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_with_two_inputs(self, id_set):
+        expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+
         test_input = [
             {
                 "DummyScript1": {
@@ -203,7 +218,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("generic_command", ["ip", "domain", "url"])
     def test_collect_detection_of_optional_dependencies(self, generic_command, id_set):
@@ -255,9 +270,10 @@ class TestDependsOnPlaybook:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("dependency_playbook,expected_result",
                              [("Pentera Run Scan", {("Pcysys", True)}),
@@ -285,9 +301,10 @@ class TestDependsOnPlaybook:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("integration_command,expected_result",
                              [("aws-get-indicators", {("FeedAWS", True)}),
@@ -315,9 +332,10 @@ class TestDependsOnPlaybook:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_playbooks_dependencies_on_integrations_with_brand(self, id_set):
         command = "ip"
@@ -408,16 +426,11 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                         id_set=id_set)
 
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
 class TestDependsOnLayout:
-    @pytest.mark.parametrize("dependency_types, dependency_fields ,expected_result",
-                             [("Fake", "Fake", set()),
-                              ("Fake", "Fake", set()),
-                              ("Fake", "Fake", set())
-                              ])
-    def test_collect_layouts_dependencies(self, dependency_types, dependency_fields, expected_result, id_set):
+    def test_collect_layouts_dependencies(self, id_set):
         """
         Given
             - A layout entry in the id_set.
@@ -428,6 +441,8 @@ class TestDependsOnLayout:
         Then
             - Extracting the packs that the layout depends on.
         """
+        expected_result = {("FeedMitreAttack", True), ("PrismaCloudCompute", True), ("CommonTypes", True), ("CrisisManagement", True)}
+
         test_input = [
             {
                 "Dummy Layout": {
@@ -437,27 +452,24 @@ class TestDependsOnLayout:
                     "kind": "edit",
                     "path": "dummy_path",
                     "incident_and_indicator_types": [
-                        dependency_types
+                        "MITRE ATT&CK",
+                        "Prisma Cloud Compute Cloud Discovery"
                     ],
                     "incident_and_indicator_fields": [
-                        dependency_fields
+                        "indicator_adminname",
+                        "indicator_jobtitle"
                     ]
                 }
             }
         ]
+
         found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input, id_set=id_set)
 
-        # TODO: update the test once the implementation of all dependencies is working
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
 class TestDependsOnIncidentField:
-    @pytest.mark.parametrize("dependency_types, dependency_scripts ,expected_result",
-                             [("Fake", "Fake", set()),
-                              ("Fake", "Fake", set()),
-                              ("Fake", "Fake", set())
-                              ])
-    def test_collect_incident_field_dependencies(self, dependency_types, dependency_scripts, expected_result, id_set):
+    def test_collect_incident_field_dependencies(self, id_set):
         """
         Given
             - An incident field entry in the id_set.
@@ -468,6 +480,8 @@ class TestDependsOnIncidentField:
         Then
             - Extracting the packs that the incident field depends on.
         """
+        expected_result = {("Expanse", True), ("IllusiveNetworks", True), ("Carbon_Black_Enterprise_Response", True), ("Phishing", True)}
+
         test_input = [
             {
                 "Dummy Incident Field": {
@@ -475,28 +489,25 @@ class TestDependsOnIncidentField:
                     "fromversion": "5.0.0",
                     "pack": "dummy_pack",
                     "incident_types": [
-                        dependency_types
+                        "Expanse Appearance",
+                        "Illusive Networks Incident"
                     ],
                     "scripts": [
-                        dependency_scripts
+                        "CBLiveFetchFiles",
+                        "CheckEmailAuthenticity"
                     ]
                 }
             }
         ]
+
         found_result = PackDependencies._collect_incidents_fields_dependencies(
             pack_incidents_fields=test_input, id_set=id_set)
 
-        # TODO: update the test once the implementation of all dependencies is working
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
 class TestDependsOnIndicatorType:
-    @pytest.mark.parametrize("dependency_integrations, dependency_scripts ,expected_result",
-                             [("Fake", "Fake", set()),
-                              ("Fake", "Fake", set()),
-                              ("Fake", "Fake", set())
-                              ])
-    def test_collect_layouts_dependencies(self, dependency_integrations, dependency_scripts, expected_result, id_set):
+    def test_collect_indicator_type_dependencies(self, id_set):
         """
         Given
             - An indicator type entry in the id_set.
@@ -507,6 +518,8 @@ class TestDependsOnIndicatorType:
         Then
             - Extracting the packs that the indicator type depends on.
         """
+        expected_result = {("Feedsslabusech", True), ("AbuseDB", True), ("ActiveMQ", True), ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)}
+
         test_input = [
             {
                 "Dummy Indicator Type": {
@@ -514,32 +527,26 @@ class TestDependsOnIndicatorType:
                     "fromversion": "5.0.0",
                     "pack": "dummy_pack",
                     "integrations": [
-                        dependency_integrations
+                        "abuse.ch SSL Blacklist Feed",
+                        "AbuseIPDB",
+                        "ActiveMQ"
                     ],
                     "scripts": [
-                        dependency_scripts
+                        "AssignAnalystToIncident",
+                        "CBAlerts"
                     ]
                 }
             }
         ]
+
         found_result = PackDependencies._collect_indicators_types_dependencies(
             pack_indicators_types=test_input, id_set=id_set)
 
-        # TODO: update the test once the implementation of all dependencies is working
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
 class TestDependsOnIntegrations:
-    @pytest.mark.parametrize(
-        "dependency_classifiers, dependency_mappers, dependency_incident_types, dependency_indicator_fields, "
-        "dependency_indicator_types, expected_result",
-        [("Fake", [], "Fake", "Fake", "Fake", set()),
-         ("Fake", [], "Fake", "Fake", "Fake", set()),
-         ("Fake", [], "Fake", "Fake", "Fake", set())
-         ])
-    def test_collect_layouts_dependencies(self, dependency_classifiers, dependency_mappers, dependency_incident_types,
-                                          dependency_indicator_fields, dependency_indicator_types, expected_result,
-                                          id_set):
+    def test_collect_integration_dependencies(self, id_set):
         """
         Given
             - An integration entry in the id_set.
@@ -548,34 +555,33 @@ class TestDependsOnIntegrations:
         Then
             - Extracting the packs that the integration depends on.
         """
+        expected_result = {("HelloWorld", True), ("Claroty", True), ("EWS", True), ("CrisisManagement", True), ("CommonTypes", True)}
+
         test_input = [
             {
                 "Dummy Integration": {
-                    "name": "Dummy Incident Field",
+                    "name": "Dummy Integration",
                     "fromversion": "5.0.0",
                     "pack": "dummy_pack",
-                    "classifiers": dependency_classifiers,
-                    "mappers": dependency_mappers,
-                    "incident_types": dependency_incident_types,
-                    "indicator_fields": dependency_indicator_fields,
-                    "indicator_types": dependency_indicator_types
+                    "classifiers": "HelloWorld",
+                    "mappers": [
+                        "Claroty-mapper",
+                        "EWS v2-mapper"
+                    ],
+                    "incident_types": "HR Ticket",
+                    "indicator_fields": "CommonTypes",
                 }
             }
         ]
-        found_result = PackDependencies._collect_incidents_fields_dependencies(
-            pack_incidents_fields=test_input, id_set=id_set)
 
-        # TODO: update the test once the implementation of all dependencies is working
-        assert found_result == expected_result
+        found_result = PackDependencies._collect_integrations_dependencies(
+            pack_integrations=test_input, id_set=id_set)
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
 class TestDependsOnIncidentType:
-    @pytest.mark.parametrize("dependency_playbook, dependency_scripts ,expected_result",
-                             [("Fake", "Fake", set()),
-                              ("Fake", "Fake", set()),
-                              ("Fake", "Fake", set())
-                              ])
-    def test_collect_incident_type_dependencies(self, dependency_playbook, dependency_scripts, expected_result, id_set):
+    def test_collect_incident_type_dependencies(self, id_set):
         """
         Given
             - An incident type entry in the id_set.
@@ -584,31 +590,28 @@ class TestDependsOnIncidentType:
         Then
             - Extracting the packs that the incident type depends on.
         """
+        expected_result = {("AutoFocus", True), ("Volatility", True)}
+
         test_input = [
             {
                 "Dummy Incident Type": {
                     "name": "Dummy Incident Type",
                     "fromversion": "5.0.0",
                     "pack": "dummy_pack",
-                    "playbooks": dependency_playbook,
-                    "scripts": dependency_scripts
+                    "playbooks": "Autofocus Query Samples, Sessions and Tags",
+                    "scripts": "AnalyzeMemImage"
                 }
             }
         ]
+
         found_result = PackDependencies._collect_incidents_types_dependencies(
             pack_incidents_types=test_input, id_set=id_set)
 
-        # TODO: update the test once the implementation of all dependencies is working
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
 class TestDependsOnClassifiers:
-    @pytest.mark.parametrize("dependency_types ,expected_result",
-                             [("Fake", set()),
-                              ("Fake", set()),
-                              ("Fake", set())
-                              ])
-    def test_collect_classifier_dependencies(self, dependency_types, expected_result, id_set):
+    def test_collect_classifier_dependencies(self, id_set):
         """
         Given
             - A classifier entry in the id_set.
@@ -617,6 +620,8 @@ class TestDependsOnClassifiers:
         Then
             - Extracting the packs that the classifier depends on.
         """
+        expected_result = {("Claroty", True), ("PAN-OS", True), ("Logzio", True)}
+
         test_input = [
             {
                 "Dummy Classifier": {
@@ -624,25 +629,22 @@ class TestDependsOnClassifiers:
                     "fromversion": "5.0.0",
                     "pack": "dummy_pack",
                     "incident_types": [
-                        dependency_types
+                        "Claroty Integrity Incident",
+                        "FirewallUpgrade",
+                        "Logz.io Alert"
                     ],
                 }
             }
         ]
+
         found_result = PackDependencies._collect_classifiers_dependencies(
             pack_classifiers=test_input, id_set=id_set)
 
-        # TODO: update the test once the implementation of all dependencies is working
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
 class TestDependsOnMappers:
-    @pytest.mark.parametrize("dependency_types, dependency_fields, expected_result",
-                             [("Fake", "Fake", set()),
-                              ("Fake", "Fake", set()),
-                              ("Fake", "Fake", set())
-                              ])
-    def test_collect_classifier_dependencies(self, dependency_types, dependency_fields, expected_result, id_set):
+    def test_collect_mapper_dependencies(self, id_set):
         """
         Given
             - A mapper entry in the id_set.
@@ -651,6 +653,8 @@ class TestDependsOnMappers:
         Then
             - Extracting the packs that the mapper depends on.
         """
+        expected_result = {("AccessInvestigation", True), ("CommonTypes", True), ("PrismaCloud", True), ("BruteForce", True)}
+
         test_input = [
             {
                 "Dummy Mapper": {
@@ -658,19 +662,40 @@ class TestDependsOnMappers:
                     "fromversion": "5.0.0",
                     "pack": "dummy_pack",
                     "incident_types": [
-                        dependency_types
+                        "Access",
+                        "Authentication",
+                        "AWS CloudTrail Misconfiguration"
                     ],
                     "incident_fields": [
-                        dependency_fields
+                        "incident_accountgroups",
+                        "incident_accountid"
                     ],
                 }
             }
         ]
+
         found_result = PackDependencies._collect_mappers_dependencies(
             pack_mappers=test_input, id_set=id_set)
 
-        # TODO: update the test once the implementation of all dependencies is working
-        assert found_result == expected_result
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+SEARCH_PACKS_INPUT = [
+    (['type'], 'IncidentFields', set()),
+    (['emailaddress'], 'IncidentFields', {'Compliance'}),
+    (['E-mail Address'], 'IncidentFields', {'Compliance'}),
+    (['adminemail'], 'IndicatorFields', {'CommonTypes'}),
+    (['Admin Email'], 'IndicatorFields', {'CommonTypes'}),
+    (['Claroty'], 'Mappers', {'Claroty'}),
+    (['Claroty - Incoming Mapper'], 'Mappers', {'Claroty'}),
+    (['Cortex XDR - IR'], 'Classifiers', {'CortexXDR'}),
+]
+
+
+@pytest.mark.parametrize('item_names, section_name, expected_result', SEARCH_PACKS_INPUT)
+def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set):
+    found_packs = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
+    assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
 
 
 class TestDependencyGraph:

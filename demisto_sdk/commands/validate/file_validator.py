@@ -377,6 +377,8 @@ class FilesValidator:
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path
             file_type = find_type(file_path)
+            if file_type:
+                file_type = file_type.value
             pack_name = get_pack_name(file_path)
             ignored_errors_list = self.get_error_ignore_list(pack_name)
             # unified files should not be validated
@@ -557,6 +559,9 @@ class FilesValidator:
 
         for file_path in added_files:
             file_type = find_type(file_path) if not received_file_type else received_file_type
+
+            if not isinstance(file_type, str):
+                file_type = file_type.value
 
             pack_name = get_pack_name(file_path)
             ignored_errors_list = self.get_error_ignore_list(pack_name)
@@ -950,7 +955,10 @@ class FilesValidator:
                     fg="bright_cyan")
         for index, file in enumerate(sorted(all_files_to_validate)):
             click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
-            self.run_all_validations_on_file(file, file_type=find_type(file))
+            file_type = find_type(file)
+            if file_type:
+                file_type = file_type.value
+            self.run_all_validations_on_file(file, file_type=file_type)
 
     def validate_pack(self):
         """Validate files in a specified pack"""
@@ -961,7 +969,10 @@ class FilesValidator:
         click.secho("================= Validating other pack files =================", fg="bright_cyan")
         for file in pack_files:
             click.echo(f'\nValidating {file}')
-            self.run_all_validations_on_file(file, file_type=find_type(file))
+            file_type = find_type(file)
+            if file_type:
+                file_type = file_type.value
+            self.run_all_validations_on_file(file, file_type=file_type)
 
     def validate_all_files_schema(self):
         """Validate all files in the repo are in the right format."""
@@ -1058,7 +1069,10 @@ class FilesValidator:
                 if os.path.isfile(self.file_path):
                     print('Not using git, validating file: {}'.format(self.file_path))
                     self.is_backward_check = False  # if not using git, no need for BC checks
-                    self.validate_added_files({self.file_path}, received_file_type=find_type(self.file_path))
+                    file_type = find_type(self.file_path)
+                    if file_type:
+                        file_type = file_type.value
+                    self.validate_added_files({self.file_path}, received_file_type=file_type)
                 elif os.path.isdir(self.file_path):
                     self.validate_pack()
             else:

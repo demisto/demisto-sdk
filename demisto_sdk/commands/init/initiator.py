@@ -1,12 +1,14 @@
 import json
 import os
 import shutil
+import zipfile
 from datetime import datetime
 from distutils.dir_util import copy_tree
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import yaml
 import yamlordereddictloader
+from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
@@ -26,8 +28,13 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL)
+                                                   XSOAR_SUPPORT_URL,
+                                                   ENTITY_TYPE_TO_DIR)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               get_content_path,
+                                               find_type,
+                                               get_child_directories,
+                                               get_child_files,
                                                get_common_server_path,
                                                print_color, print_error,
                                                print_v)
@@ -46,7 +53,8 @@ class Initiator:
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
-                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
+                 contribution: Union[str, None] = None):
         self.output = output if output else ''
         self.id = id
 
@@ -56,6 +64,7 @@ class Initiator:
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.configuration = Configuration()
+        self.contribution = contribution
 
         # if no flag given automatically create a pack.
         if not integration and not script and not pack:
@@ -85,7 +94,9 @@ class Initiator:
         """Starts the init command process.
 
         """
-        if self.is_integration:
+        if self.contribution:
+            self.convert_contribution_to_pack()
+        elif self.is_integration:
             self.get_created_dir_name(created_object="integration")
             self.get_object_id(created_object="integration")
             return self.integration_init()
@@ -98,6 +109,60 @@ class Initiator:
         elif self.is_pack:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
+
+    def convert_contribution_to_pack(self):
+        packs_dir = os.path.join(get_content_path(), 'Packs')
+        metadata_dict = {}
+        with zipfile.ZipFile(self.contribution) as zipped_contrib:
+            with zipped_contrib.open('metadata.json') as metadata_file:
+                metadata = json.loads(metadata_file.read())
+                pack_name = metadata.get('name', 'ContributionPack')
+                metadata_dict['name'] = pack_name
+                metadata_dict['author'] = metadata.get('author', '')
+                metadata_dict['support'] = metadata.get('support', '')
+                metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
+                metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
+        if os.path.exists(os.path.join(packs_dir, pack_name)):
+            if pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
+                # increment by one
+                pack_name = pack_name[:-1] + str(int(pack_name[-1]) + 1)
+            else:
+                pack_name += 'V2'
+        pack_dir = os.path.join(packs_dir, pack_name)
+        os.mkdir(pack_dir)
+        shutil.unpack_archive(filename=self.contribution, extract_dir=pack_dir)
+        pack_subdirectories = get_child_directories(pack_dir)
+        for pack_subdir in pack_subdirectories:
+            basename = os.path.basename(pack_subdir)
+            if basename in ENTITY_TYPE_TO_DIR:
+                dst_name = ENTITY_TYPE_TO_DIR.get(basename)
+                src_path = os.path.join(pack_dir, basename)
+                dst_path = os.path.join(pack_dir, dst_name)
+                content_item_dir = shutil.move(src_path, dst_path)
+                if basename in {'integration', 'automation'}:
+                    self.content_item_to_package_format(content_item_dir, del_unified=True)
+        # create pack's base files
+        self.full_output_path = pack_dir
+        self.create_pack_base_files()
+        metadata_dict = Initiator.create_metadata(fill_manually=False, data=metadata_dict)
+        metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
+        with open(metadata_path, 'w') as pack_metadata_file:
+            json.dump(metadata_dict, pack_metadata_file, indent=4)
+        # remove metadata.json file
+        os.remove(os.path.join(pack_dir, 'metadata.json'))
+
+    def content_item_to_package_format(self, content_item_dir, del_unified):
+        child_files = get_child_files(content_item_dir)
+        content_item_file_path = ''
+        for child_file in child_files:
+            cf_name_lower = os.path.basename(child_file).lower()
+            if cf_name_lower.startswith(('integration', 'automation')) and cf_name_lower.endswith('yml'):
+                content_item_file_path = child_file
+                file_type = find_type(content_item_file_path)
+                extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
+                extractor.extract_to_package_format()
+                if del_unified:
+                    os.remove(content_item_file_path)
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -150,14 +215,7 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
 
-        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
-        fp.close()
-
-        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
-        fp.close()
-
-        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
-        fp.close()
+        self.create_pack_base_files()
 
         print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
 
@@ -180,12 +238,23 @@ class Initiator:
 
         return True
 
+    def create_pack_base_files(self):
+        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
+        fp.close()
+
     @staticmethod
-    def create_metadata(fill_manually: bool) -> Dict:
+    def create_metadata(fill_manually: bool, data: dict = {}) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
             fill_manually (bool): Whether to interact with the user to fill in metadata details or not.
+            data (dict): Dictionary keys and value to insert into the pack metadata.
 
         Returns:
             Dict. Pack metadata JSON content.
@@ -204,6 +273,9 @@ class Initiator:
             'useCases': [],
             'keywords': []
         }
+
+        if data:
+            pack_metadata.update(data)
 
         if not fill_manually:
             return pack_metadata  # return xsoar template

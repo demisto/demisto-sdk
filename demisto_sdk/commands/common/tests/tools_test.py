@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
                                                    PLAYBOOK_YML_REGEX,
                                                    PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOK_YML_REGEX)
+                                                   TEST_PLAYBOOK_YML_REGEX,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
@@ -22,7 +23,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_latest_release_notes_text,
                                                get_matching_regex,
                                                get_release_notes_file_path,
-                                               get_ryaml, retrieve_file_ending,
+                                               get_ryaml,
+                                               has_remote_configured,
+                                               is_origin_content_repo,
+                                               retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
@@ -76,17 +80,17 @@ class TestGenericFunctions:
         assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
     data_test_find_type = [
-        (VALID_DASHBOARD_PATH, 'dashboard'),
-        (VALID_INCIDENT_FIELD_PATH, 'incidentfield'),
-        (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
-        (INDICATORFIELD_EXTRA_FIELDS, 'indicatorfield'),
-        (VALID_INTEGRATION_TEST_PATH, 'integration'),
-        (VALID_LAYOUT_PATH, 'layout'),
-        (VALID_PLAYBOOK_ID_PATH, 'playbook'),
-        (VALID_REPUTATION_FILE, 'reputation'),
-        (VALID_SCRIPT_PATH, 'script'),
-        (VALID_WIDGET_PATH, 'widget'),
-        ('', '')
+        (VALID_DASHBOARD_PATH, FileType.DASHBOARD),
+        (VALID_INCIDENT_FIELD_PATH, FileType.INCIDENT_FIELD),
+        (VALID_INCIDENT_TYPE_PATH, FileType.INCIDENT_TYPE),
+        (INDICATORFIELD_EXTRA_FIELDS, FileType.INDICATOR_FIELD),
+        (VALID_INTEGRATION_TEST_PATH, FileType.INTEGRATION),
+        (VALID_LAYOUT_PATH, FileType.LAYOUT),
+        (VALID_PLAYBOOK_ID_PATH, FileType.PLAYBOOK),
+        (VALID_REPUTATION_FILE, FileType.REPUTATION),
+        (VALID_SCRIPT_PATH, FileType.SCRIPT),
+        (VALID_WIDGET_PATH, FileType.WIDGET),
+        ('', None)
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -344,3 +348,49 @@ def test_get_release_notes_file_path_invalid():
     """
     filepath = '/SomePack/1_1_1.json'
     assert get_release_notes_file_path(filepath) is None
+
+
+remote_testbank = [
+    ('origin  https://github.com/turbodog/content.git', False),
+    ('upstream  https://github.com/demisto/content.git', True)
+]
+
+
+@pytest.mark.parametrize('git_value, response', remote_testbank)
+def test_has_remote(mocker, git_value, response):
+    """
+    While: Testing if the remote upstream contains demisto/content
+    Given:
+      1. Origin string not containing demisto/content
+      2. Upstream string containing demisto/content
+    Expects:
+      1. Test condition fails
+      2. Test condition passes
+    :param git_value: Git string from `git remotes -v`
+    """
+    mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
+    test_remote = has_remote_configured()
+    assert response == test_remote
+
+
+origin_testbank = [
+    ('origin  https://github.com/turbodog/content.git', False),
+    ('origin  https://github.com/demisto/content.git', True)
+]
+
+
+@pytest.mark.parametrize('git_value, response', origin_testbank)
+def test_origin_content(mocker, git_value, response):
+    """
+    While: Testing if the remote origin contains demisto/content
+    Given:
+      1. Origin string not containing demisto/content
+      2. Origin string containing demisto/content
+    Expects:
+      1. Test condition fails
+      2. Test condition passes
+    :param git_value: Git string from `git remotes -v`
+    """
+    mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
+    test_remote = is_origin_content_repo()
+    assert response == test_remote

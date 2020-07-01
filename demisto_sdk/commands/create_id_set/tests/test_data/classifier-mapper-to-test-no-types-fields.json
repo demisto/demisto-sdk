@@ -1,0 +1,10 @@
+{
+	"id": "dummy mapper",
+	"name": "dummy mapper",
+	"type": "mapping-incoming",
+	"description": "dummy mapper",
+	"defaultIncidentType": "",
+	"mapping": {},
+	"version": -1,
+	"fromVersion": "6.0.0"
+}

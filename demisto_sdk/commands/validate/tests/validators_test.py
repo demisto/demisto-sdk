@@ -6,7 +6,7 @@ from shutil import copyfile
 from typing import Any, Type
 
 import pytest
-from demisto_sdk.commands.common.constants import CONF_PATH
+from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -32,6 +32,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.file_validator import FilesValidator
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST,
     GIT_HAVE_MODIFIED_AND_NEW_FILES, INCIDENT_FIELD_TARGET,
@@ -49,8 +50,8 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET,
-    TEST_PLAYBOOK, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
-    VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+    VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH,
+    VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
     VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
     VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
@@ -58,6 +59,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
     VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH, WIDGET_TARGET)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
+    INCIDENT_FIELD
 from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
@@ -354,7 +357,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('file_path, file_type', FILE_PATHS)
     def test_is_valid_rn(self, mocker, file_path, file_type):
-        mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', sreturn_value=None)
+        mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value=None)
         mocker.patch.object(StructureValidator, 'is_valid_file', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_subtype', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_feed', return_value=True)
@@ -367,7 +370,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'are_tests_configured', return_value=True)
         mocker.patch.object(PlaybookValidator, 'are_tests_configured', return_value=True)
         file_validator = FilesValidator(skip_conf_json=True)
-        file_validator.validate_added_files(file_path, file_type)
+        file_validator.validate_added_files(set(file_path), file_type)
         assert file_validator._is_valid
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
@@ -401,10 +404,15 @@ class TestValidators:
         file_validator.run_all_validations_on_file(file_path, file_type)
         assert file_validator._is_valid
 
-    def test_files_validator_validate_pack_unique_files(self,):
+    def test_files_validator_validate_pack_unique_files__file_validator(self,):
         files_validator = FilesValidator(skip_conf_json=True)
         files_validator.validate_pack_unique_files({VALID_PACK})
         assert files_validator._is_valid
+
+    def test_files_validator_validate_pack_unique_files__validate_manager(self, ):
+        validate_manager = ValidateManager(skip_conf_json=True)
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
+        assert result
 
     FILE_PATH = [
         ([VALID_SCRIPT_PATH], 'script')
@@ -457,7 +465,23 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
-    def test_verify_no_dup_rn(self, added_files: set, expected: bool):
+    def test_verify_no_dup_rn__validate_manager(self, added_files: set, expected: bool):
+        """
+            Given:
+                - A list of added files
+            When:
+                - verifying there are no other new release notes.
+            Then:
+                - return a validation response
+            Case 1: Release notes in different packs.
+            Case 2: Release notes where one is in the same pack
+        """
+        validate_manager = ValidateManager(skip_conf_json=True)
+        result = validate_manager.validate_no_duplicated_release_notes(added_files)
+        assert result is expected
+
+    @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
+    def test_verify_no_dup_rn__file_validator(self, added_files: set, expected: bool):
         """
             Given:
                 - A list of added files
@@ -476,7 +500,7 @@ class TestValidators:
         (VALID_INTEGRATION_TEST_PATH, 'integration', True),
         (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
         (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
-        (TEST_PLAYBOOK, 'playbook', False)
+        (TEST_PLAYBOOK, 'testplaybook', False)
     ]
 
     @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
@@ -510,7 +534,15 @@ class TestValidators:
         file_validator.validate_added_files({INVALID_IGNORED_UNIFIED_INTEGRATION})
         assert file_validator._is_valid
 
-    def test_get_error_ignore_list(self, mocker):
+    def test_get_error_ignore_list__file_validator(self, mocker):
+        """
+            Given:
+                - A file path to pack ignore
+            When:
+                - running get_error_ignore_list from file validator
+            Then:
+                - verify that the created ignored_errors list is correct
+        """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
@@ -522,21 +554,56 @@ class TestValidators:
         assert ignore_errors_list['file_name'] == ['BA101', 'IF107']
         assert 'SC100' not in ignore_errors_list['file_name']
 
-    def test_create_ignored_errors_list(self, mocker):
+    def test_create_ignored_errors_list__file_validator(self):
+        """
+            Given:
+                - A list of errors that should be checked
+            When:
+                - Running create_ignored_errors_list from file validator
+            Then:
+                - verify that the ignored error list that comes out is correct
+        """
         file_validator = FilesValidator()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BC101", "BC102", "BC103", "BC104"]
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
+
+    def test_get_error_ignore_list__validate_manager(self, mocker):
+        """
+            Given:
+                - A file path to pack ignore
+            When:
+                - running get_error_ignore_list from validate manager
+            Then:
+                - verify that the created ignored_errors list is correct
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
+
+        mocker.patch.object(ValidateManager, 'get_pack_ignore_file_path', return_value=test_file)
+
+        validate_manager = ValidateManager()
+        ignore_errors_list = validate_manager.get_error_ignore_list("fake")
+        assert ignore_errors_list['file_name'] == ['BA101', 'IF107']
+        assert 'SC100' not in ignore_errors_list['file_name']
+
+    def test_create_ignored_errors_list__validate_manager(self):
+        validate_manager = ValidateManager()
+        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
+        ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
             Given:
-                - A file path to a new script, that is not located in a "regular" scripts path
+                - A list of errors that should be checked
             When:
-                - verifying added files are valid
+                - Running create_ignored_errors_list from validate manager
             Then:
-                - verify that the validation detects the correct file type and passes successfully
+                - verify that the ignored error list that comes out is correct
         """
 
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
@@ -558,37 +625,223 @@ class TestValidators:
             finally:
                 sys.stdout = saved_stdout
 
+    def test_is_py_or_yml__validate_manager(self):
+        """
+            Given:
+                - A file path which contains a python script
+            When:
+                - validating the associated yml file
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'CortexXDR',
+                                 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
+        validate_manager = ValidateManager()
+        res = validate_manager._is_py_script_or_integration(test_file)
+        assert res is False
 
-def test_is_py_or_yml():
-    """
-        Given:
-            - A file path which contains a python script
-        When:
-            - verifying the yml is valid
-        Then:
-            - return a False validation response
-    """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'CortexXDR',
-                             'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
-    file_validator = FilesValidator()
-    res = file_validator._is_py_script_or_integration(test_file)
-    assert res is False
+    def test_is_py_or_yml_invalid__validate_manager(self):
+        """
+            Given:
+                - A file path which contains a python script in a legacy yml schema
+            When:
+                - verifying the yml is valid using validate manager
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path,
+                                 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
+        validate_manager = ValidateManager()
+        res = validate_manager._is_py_script_or_integration(test_file)
+        assert res is False
 
+    def test_is_py_or_yml__file_validator(self):
+        """
+            Given:
+                - A file path which contains a python script
+            When:
+                - verifying the yml is valid using file validator
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path, 'CortexXDR',
+                                 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
+        file_validator = FilesValidator()
+        res = file_validator._is_py_script_or_integration(test_file)
+        assert res is False
 
-def test_is_py_or_yml_invalid():
-    """
-        Given:
-            - A file path which contains a python script in a legacy yml schema
-        When:
-            - verifying the yml is valid
-        Then:
-            - return a False validation response
-    """
-    files_path = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    test_file = os.path.join(files_path, 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
-    file_validator = FilesValidator()
-    res = file_validator._is_py_script_or_integration(test_file)
-    assert res is False
+    def test_is_py_or_yml_invalid__file_validator(self):
+        """
+            Given:
+                - A file path which contains a python script in a legacy yml schema
+            When:
+                - verifying the yml is valid using file validator
+            Then:
+                - return a False validation response
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        test_file = os.path.join(files_path,
+                                 'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
+        file_validator = FilesValidator()
+        res = file_validator._is_py_script_or_integration(test_file)
+        assert res is False
+
+    def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
+        """
+            Given:
+                - packs with modified files and release notes
+            When:
+                - running validate_no_missing_release_notes on the files
+            Then:
+                - return a True as no release notes are missing
+        """
+        pack1 = repo.create_pack('PackName1')
+        incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        pack2 = repo.create_pack('PackName2')
+        incident_field2 = pack2.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        validate_manager = ValidateManager()
+        modified_files = {incident_field1.get_path_from_pack(),
+                          incident_field2.get_path_from_pack()}
+        added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md',
+                       'Packs/PackName2/ReleaseNotes/1_1_1.md'}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is True
+
+    def test_validate_no_missing_release_notes__missing_rn(self, repo):
+        """
+            Given:
+                - 2 packs with modified files and release notes for only one
+            When:
+                - running validate_no_missing_release_notes on the files
+            Then:
+                - return a False as there are release notes missing
+        """
+        pack1 = repo.create_pack('PackName1')
+        incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        pack2 = repo.create_pack('PackName2')
+        incident_field2 = pack2.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        validate_manager = ValidateManager()
+        modified_files = {incident_field1.get_path_from_pack(),
+                          incident_field2.get_path_from_pack()}
+        added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is False
+
+    def test_validate_no_old_format__with_toversion(self):
+        """
+            Given:
+                - an old format_file with toversion
+            When:
+                - running validate_no_old_format on the file
+            Then:
+                - return a True as the file is valid
+        """
+        validate_manager = ValidateManager()
+        old_format_files = {"demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/"
+                            "script-SampleScriptPackageSanityDocker45_45.yml"}
+        assert validate_manager.validate_no_old_format(old_format_files)
+
+    def test_validate_no_old_format__without_toversion(self, mocker):
+        """
+            Given:
+                - an old format_file without toversion
+            When:
+                - running validate_no_old_format on the file
+            Then:
+                - return a False as the file is invalid
+        """
+        mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
+        validate_manager = ValidateManager()
+        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml"}
+        assert not validate_manager.validate_no_old_format(old_format_files)
+
+    def test_filter_changed_files(self, mocker):
+        """
+            Given:
+                - A string of git diff results
+            When:
+                - running filter_changed_files on the string
+            Then:
+                - Ensure the modified files are recognized correctly.
+                - Ensure the added files are recognized correctly.
+                - Ensure the renamed file is in a tup;e in the modified files.
+                - Ensure modified metadata files are in the changed_meta_files and that the added one is not.
+                - Ensure the added code and meta files are not in added files.
+                - Ensure old format file is recognized correctly.
+                - Ensure deleted file is recognized correctly.
+                - Ensure ignored files are set correctly.
+        """
+        mocker.patch.object(os.path, 'isfile', return_value=True)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
+        diff_string = "M	Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json\n" \
+                      "M	Packs/EWS/Classifiers/classifier-EWS_v2.json\n" \
+                      "M	Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py\n" \
+                      "M	Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml\n" \
+                      "M	Packs/F5/pack_metadata.json\n"\
+                      "R100	Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml	" \
+                      "Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml\n" \
+                      "A	Packs/MyNewPack/.pack-ignore\n" \
+                      "A	Packs/MyNewPack/.secrets-ignore\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock\n" \
+                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/README.md\n" \
+                      "A	Packs/MyNewPack/README.md\n" \
+                      "A	Packs/MyNewPack/pack_metadata.json\n" \
+                      "D	Packs/DeprecatedContent/Scripts/script-ExtractURL.yml"
+
+        validate_manager = ValidateManager()
+        modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager.\
+            filter_changed_files(files_string=diff_string, print_ignored_files=True)
+
+        # checking that modified files are recognized correctly
+        assert 'Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json' in modified_files
+        assert 'Packs/EWS/Classifiers/classifier-EWS_v2.json' in modified_files
+        assert ('Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml',
+                'Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml') in modified_files
+
+        # check that the modified code file is not there but the yml file is
+        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.yml' in modified_files
+        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py' not in modified_files
+
+        # check that the modified metadata file is in the changed_meta_files but the added one is not
+        assert 'Packs/F5/pack_metadata.json' in changed_meta_files
+        assert 'Packs/MyNewPack/pack_metadata.json' not in changed_meta_files
+
+        # check that the added files are recognized correctly
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/README.md' in added_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml' in added_files
+
+        # check that the added code files and meta file are not in the added_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py' not in added_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' not in added_files
+        assert 'Packs/MyNewPack/pack_metadata.json' not in added_files
+
+        # check that non-image, pipfile, description or schema are in the ignored files and the rest are
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile' not in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock' not in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md' not \
+               in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png' not \
+               in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/.secrets-ignore' in validate_manager.ignored_files
+        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' in \
+               validate_manager.ignored_files
+        assert 'Packs/MyNewPack/.pack-ignore' in validate_manager.ignored_files
+
+        # check recognized old-format file
+        assert 'Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml' in old_format_files
+
+        # check recognized deleted file
+        assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files

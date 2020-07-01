@@ -21,13 +21,15 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
-    CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, DASHBOARDS_DIR, DEF_DOCKER,
-    DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR)
+    CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN,
+    CONTENT_GITHUB_UPSTREAM, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, JSON_ALL_INDICATOR_TYPES_REGEXES,
+    LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
+    PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
+    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
+    SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER,
+    WIDGETS_DIR, FileType)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -243,6 +245,33 @@ def get_child_files(directory):
         path in os.listdir(directory) if os.path.isfile(os.path.join(directory, path))
     ]
     return child_files
+
+
+def has_remote_configured():
+    """
+    Checks to see if a remote named "upstream" is configured. This is important for forked
+    repositories as it will allow validation against the demisto/content master branch as
+    opposed to the master branch of the fork.
+    :return: bool : True if remote is configured, False if not.
+    """
+    remotes = run_command('git remote -v')
+    if re.search(CONTENT_GITHUB_UPSTREAM, remotes):
+        return True
+    else:
+        return False
+
+
+def is_origin_content_repo():
+    """
+    Checks to see if a remote named "origin" is configured. This check helps to determine if
+    validation needs to be ran against the origin master branch or the upstream master branch
+    :return: bool : True if remote is configured, False if not.
+    """
+    remotes = run_command('git remote -v')
+    if re.search(CONTENT_GITHUB_ORIGIN, remotes):
+        return True
+    else:
+        return False
 
 
 def get_last_remote_release_version():
@@ -552,6 +581,25 @@ def get_pack_name(file_path):
     return match.group(1) if match else None
 
 
+def get_pack_names_from_files(file_paths, skip_file_types=None):
+    if skip_file_types is None:
+        skip_file_types = set()
+
+    packs = set()
+    for path in file_paths:
+        # in renamed files are in tuples - the second element is the new file name
+        if isinstance(path, tuple):
+            path = path[1]
+
+        file_type = find_type(path)
+        if file_type not in skip_file_types:
+            pack = get_pack_name(path)
+            if pack and is_file_path_in_pack(path):
+                packs.add(pack)
+
+    return packs
+
+
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
 
@@ -696,69 +744,92 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
     Returns:
         string representing the content file type
     """
+    if path.endswith('.md'):
+        if 'README' in path:
+            return FileType.README
+
+        elif RELEASE_NOTES_DIR in path:
+            return FileType.RELEASE_NOTES
+
+        elif 'description' in path:
+            return FileType.DESCRIPTION
+
+        else:
+            return FileType.CHANGELOG
+
+    if path.endswith('.png'):
+        return FileType.IMAGE
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
 
     if file_type == 'py':
-        return 'pythonfile'
+        return FileType.PYTHON_FILE
 
     if file_type == 'yml':
         if 'category' in _dict:
             if 'beta' in _dict:
-                return 'betaintegration'
+                return FileType.BETA_INTEGRATION
 
-            return 'integration'
+            return FileType.INTEGRATION
 
         elif 'script' in _dict:
-            return 'script'
+            if TEST_PLAYBOOKS_DIR in path:
+                return FileType.TEST_SCRIPT
+
+            else:
+                return FileType.SCRIPT
 
         elif 'tasks' in _dict:
-            return 'playbook'
+            if TEST_PLAYBOOKS_DIR in path:
+                return FileType.TEST_PLAYBOOK
+
+            return FileType.PLAYBOOK
 
     elif file_type == 'json':
         if 'widgetType' in _dict:
-            return 'widget'
+            return FileType.WIDGET
 
-        elif 'reportType' in _dict:
-            return 'report'
+        elif 'orientation' in _dict:
+            return FileType.REPORT
 
         elif 'preProcessingScript' in _dict:
-            return 'incidenttype'
+            return FileType.INCIDENT_TYPE
 
-        elif 'regex' in _dict:
-            return 'reputation'
+        elif 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
+            return FileType.REPUTATION
 
         elif 'brandName' in _dict and 'transformer' in _dict:
-            return 'classifier_5_9_9'
+            return FileType.OLD_CLASSIFIER
 
         elif 'transformer' in _dict and 'keyTypeMap' in _dict:
-            return 'classifier'
+            return FileType.CLASSIFIER
 
         elif 'canvasContextConnections' in _dict:
-            return 'canvas-context-connections'
+            return FileType.CONNECTION
 
         elif 'mapping' in _dict:
-            return 'mapper'
+            return FileType.MAPPER
 
         elif 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
-                return 'layout'
+                return FileType.LAYOUT
 
             else:
-                return 'dashboard'
+                return FileType.DASHBOARD
 
         # When using it for all files validation- sometimes 'id' can be integer
         elif 'id' in _dict:
             if isinstance(_dict.get('id'), str):
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
-                    return 'incidentfield'
+                    return FileType.INCIDENT_FIELD
                 elif _id.startswith('indicator'):
-                    return 'indicatorfield'
+                    return FileType.INDICATOR_FIELD
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
-    return ''
+    return None
 
 
 def get_common_server_path(env_dir):

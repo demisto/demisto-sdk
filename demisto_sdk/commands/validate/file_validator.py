@@ -72,7 +72,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
                                                find_type, get_pack_name,
                                                get_remote_file, get_yaml,
+                                               has_remote_configured,
                                                is_file_path_in_pack,
+                                               is_origin_content_repo,
                                                print_color, print_error,
                                                print_warning, run_command,
                                                should_file_skip_validation)
@@ -271,14 +273,38 @@ class FilesValidator:
             print_ignored_files=self.print_ignored_files)
 
         if not self.is_circle:
-            files_string = run_command('git diff --name-status --no-merges HEAD')
-            nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.get_modified_files(
-                files_string, print_ignored_files=self.print_ignored_files)
+            remote_configured = has_remote_configured()
+            is_origin_demisto = is_origin_content_repo()
+            if remote_configured and not is_origin_demisto:
+                files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = \
+                    self.get_modified_files(files_string, print_ignored_files=self.print_ignored_files)
 
-            all_changed_files_string = run_command('git diff --name-status {}'.format(tag))
-            modified_files_from_tag, added_files_from_tag, _, _ = \
-                self.get_modified_files(all_changed_files_string,
-                                        print_ignored_files=self.print_ignored_files)
+                all_changed_files_string = run_command(
+                    'git diff --name-status upstream/master...HEAD')
+                modified_files_from_tag, added_files_from_tag, _, _ = \
+                    self.get_modified_files(all_changed_files_string,
+                                            print_ignored_files=self.print_ignored_files)
+            else:
+                if (not is_origin_demisto and not remote_configured) and self.silence_init_prints:
+                    print_warning(
+                        "Warning: The changes may fail validation once submitted via a "
+                        "PR. To validate your changes, please make sure you have a git remote setup"
+                        " and pointing to github.com/demisto/content.\nYou can do this by running "
+                        "the following commands:\n\ngit remote add upstream https://github.com/"
+                        "demisto/content.git\ngit fetch upstream\n\nMore info about configuring "
+                        "a remote for a fork is available here: https://help.github.com/en/"
+                        "github/collaborating-with-issues-and-pull-requests/configuring-a-"
+                        "remote-for-a-fork"
+                    )
+                files_string = run_command('git diff --name-status --no-merges HEAD')
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = self.get_modified_files(
+                    files_string, print_ignored_files=self.print_ignored_files)
+
+                all_changed_files_string = run_command('git diff --name-status {}'.format(tag))
+                modified_files_from_tag, added_files_from_tag, _, _ = \
+                    self.get_modified_files(all_changed_files_string,
+                                            print_ignored_files=self.print_ignored_files)
 
             if self.file_path:
                 if F'M\t{self.file_path}' in files_string:
@@ -351,6 +377,8 @@ class FilesValidator:
             if isinstance(file_path, tuple):
                 old_file_path, file_path = file_path
             file_type = find_type(file_path)
+            if file_type:
+                file_type = file_type.value
             pack_name = get_pack_name(file_path)
             ignored_errors_list = self.get_error_ignore_list(pack_name)
             # unified files should not be validated
@@ -532,6 +560,9 @@ class FilesValidator:
         for file_path in added_files:
             file_type = find_type(file_path) if not received_file_type else received_file_type
 
+            if not isinstance(file_type, str):
+                file_type = file_type.value
+
             pack_name = get_pack_name(file_path)
             ignored_errors_list = self.get_error_ignore_list(pack_name)
             # unified files should not be validated
@@ -540,7 +571,7 @@ class FilesValidator:
             print('\nValidating {}'.format(file_path))
             self.check_for_spaces_in_file_name(file_path)
 
-            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE) and not file_type:
+            if re.search(TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 continue
 
             elif ('ReleaseNotes' in file_path) and not self.skip_pack_rn_validation:
@@ -924,7 +955,10 @@ class FilesValidator:
                     fg="bright_cyan")
         for index, file in enumerate(sorted(all_files_to_validate)):
             click.echo(f'Validating {file}. Progress: {"{:.2f}".format(index / len(all_files_to_validate) * 100)}%')
-            self.run_all_validations_on_file(file, file_type=find_type(file))
+            file_type = find_type(file)
+            if file_type:
+                file_type = file_type.value
+            self.run_all_validations_on_file(file, file_type=file_type)
 
     def validate_pack(self):
         """Validate files in a specified pack"""
@@ -935,7 +969,10 @@ class FilesValidator:
         click.secho("================= Validating other pack files =================", fg="bright_cyan")
         for file in pack_files:
             click.echo(f'\nValidating {file}')
-            self.run_all_validations_on_file(file, file_type=find_type(file))
+            file_type = find_type(file)
+            if file_type:
+                file_type = file_type.value
+            self.run_all_validations_on_file(file, file_type=file_type)
 
     def validate_all_files_schema(self):
         """Validate all files in the repo are in the right format."""
@@ -1032,7 +1069,10 @@ class FilesValidator:
                 if os.path.isfile(self.file_path):
                     print('Not using git, validating file: {}'.format(self.file_path))
                     self.is_backward_check = False  # if not using git, no need for BC checks
-                    self.validate_added_files({self.file_path}, received_file_type=find_type(self.file_path))
+                    file_type = find_type(self.file_path)
+                    if file_type:
+                        file_type = file_type.value
+                    self.validate_added_files({self.file_path}, received_file_type=file_type)
                 elif os.path.isdir(self.file_path):
                     self.validate_pack()
             else:

@@ -15,18 +15,18 @@ class DashboardValidator(ContentEntityValidator):
         return widgets
 
     def is_valid_dashboard(self, validate_rn=True):
-        # type: () -> bool
+        # type: (bool) -> bool
         """Check whether the dashboard is valid or not.
 
         Returns:
             bool. Whether the dashboard is valid or not
         """
-        is_dashboard_valid = [
+        is_dashboard_valid = all([
             super().is_valid_file(validate_rn),
             self.is_valid_version()
-        ]
+        ])
 
-        # check only on added files
+        # check only on added filescontent_entity_validator_test
         if not self.old_file:
             is_dashboard_valid = all([
                 is_dashboard_valid,

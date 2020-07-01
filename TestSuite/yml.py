@@ -8,10 +8,10 @@ from TestSuite.file import File
 class YAML(File):
     def __init__(self, tmp_path: Path, repo_path: str, yml: Optional[dict] = None):
         if yml is None:
-            yml = ''
+            init_yml = ''
         else:
-            yml = yaml.dump(yml)
-        super().__init__(tmp_path, repo_path, yml)
+            init_yml = yaml.dump(yml)
+        super().__init__(tmp_path, repo_path, init_yml)
 
     def write_dict(self, yml: dict):
         super().write(str(yaml.dump(yml)))

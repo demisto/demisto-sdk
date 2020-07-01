@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
@@ -275,10 +275,10 @@ class StructureValidator(BaseValidator):
                 is_valid_path = True
         return is_valid_path
 
-    def parse_error_msg(self, err) -> str:
+    def parse_error_msg(self, err) -> Tuple[str, str]:
         """A wrapper which runs the print error message for a list of errors in yaml
         Returns:
-            parsed error message from pykwalify
+            str, str: parsed error message from pykwalify
         """
         if ".\n" in str(err):
             for error in str(err).split('.\n'):
@@ -286,7 +286,10 @@ class StructureValidator(BaseValidator):
         else:
             return self.parse_error_line(str(err))
 
-    def parse_error_line(self, err) -> str:
+        # should not get here
+        return '', ''
+
+    def parse_error_line(self, err) -> Tuple[str, str]:
         """Returns a parsed error message from pykwalify
         Args: an schema error message from pykwalify
         """
@@ -349,3 +352,6 @@ class StructureValidator(BaseValidator):
 
                 else:
                     return Errors.pykwalify_missing_in_root(str(key_from_error))
+
+        # should not get here
+        return '', ''

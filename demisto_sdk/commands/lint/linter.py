@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from copy import deepcopy
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # 3-rd party packages
 import docker
@@ -67,7 +67,7 @@ class Linter:
             "docker_engine": docker_engine
         }
         # Pack lint status object - visualize it
-        self._pkg_lint_status = {
+        self._pkg_lint_status: Dict = {
             "pkg": None,
             "pack_type": None,
             "path": str(self._content_repo),
@@ -111,7 +111,7 @@ class Linter:
             return self._pkg_lint_status
 
         # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-        with add_tmp_lint_files(content_repo=self._content_repo,
+        with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
                                 pack_path=self._pack_abs_dir,
                                 lint_files=self._facts["lint_files"],
                                 modules=modules,
@@ -497,7 +497,7 @@ class Linter:
         except docker.errors.APIError:
             return False
 
-    def _docker_image_create(self, docker_base_image: str) -> str:
+    def _docker_image_create(self, docker_base_image: list) -> str:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
             2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
@@ -506,10 +506,10 @@ class Linter:
                 demisto_sdk/commands/lint/templates/dockerfile.jinja2
 
         Args:
-            docker_base_image(str): docker image to use as base for installing dev deps..
+            docker_base_image(list): docker image to use as base for installing dev deps and python version.
 
         Returns:
-            string. image name to use
+            str, str. image name to use and errors string.
         """
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""

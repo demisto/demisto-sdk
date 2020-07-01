@@ -138,6 +138,7 @@ def test_playbook_task_description_name(source_path):
     base_yml = PlaybookYMLFormat(source_path, path=schema_path)
     base_yml.add_description()
     base_yml.update_playbook_task_name()
+    base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
     assert 'description' in base_yml.data['tasks']['7']['task']
     assert base_yml.data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API'
@@ -360,3 +361,16 @@ def test_set_feed_params_in_config(source, target, path, answer):
     os.remove(target)
     os.rmdir(path)
     assert res is answer
+
+
+@pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
+def test_playbook_task_name(source_path):
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
+    base_yml = PlaybookYMLFormat(source_path, path=schema_path)
+
+    assert base_yml.data['tasks']['29']['task']['playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
+    base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
+
+    assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
+    assert base_yml.data['tasks']['29']['task']['playbookName'] == 'File Enrichment - Virus Total Private API'

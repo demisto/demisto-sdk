@@ -830,7 +830,7 @@ class ValidateManager:
             elif not os.path.isfile(file_path):
                 continue
 
-            # changes in old scripts and integrations
+            # changes in old scripts and integrations - unified python scripts/integrations
             elif file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
                     self._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)

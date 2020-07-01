@@ -115,6 +115,7 @@ class Initiator:
         metadata_dict = {}
         with zipfile.ZipFile(self.contribution) as zipped_contrib:
             with zipped_contrib.open('metadata.json') as metadata_file:
+                print_color(f'Pulling relevant information from {metadata_file.name}', LOG_COLORS.NATIVE)
                 metadata = json.loads(metadata_file.read())
                 pack_name = metadata.get('name', 'ContributionPack')
                 metadata_dict['name'] = pack_name
@@ -123,11 +124,15 @@ class Initiator:
                 metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
                 metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
         if os.path.exists(os.path.join(packs_dir, pack_name)):
+            print_color(
+                f'Modifying pack name because pack {pack_name} already exists in the content repo', LOG_COLORS.NATIVE
+            )
             if pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
                 # increment by one
                 pack_name = pack_name[:-1] + str(int(pack_name[-1]) + 1)
             else:
                 pack_name += 'V2'
+            print_color(f'New pack name is "{pack_name}"', LOG_COLORS.NATIVE)
         pack_dir = os.path.join(packs_dir, pack_name)
         os.mkdir(pack_dir)
         shutil.unpack_archive(filename=self.contribution, extract_dir=pack_dir)
@@ -251,6 +256,7 @@ class Initiator:
         Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
         to be in the base directory of a pack
         '''
+        print_color('Creating pack base files', LOG_COLORS.NATIVE)
         fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 

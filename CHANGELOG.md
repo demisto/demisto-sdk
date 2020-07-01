@@ -27,7 +27,6 @@
 * Improved pack dependencies detection.
 * Fixed an issue where test playbooks were mishandled in **validate** command.
 
-
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.
 * Added default behavior for **update-release-notes** command.

@@ -143,7 +143,7 @@ class ContentCreator:
     def add_suffix_to_file_path(self, file_path):
         return os.path.splitext(file_path)[0] + self.file_name_suffix + os.path.splitext(file_path)[1]
 
-    def check_from_version(self, file_path):
+    def check_from_version_not_above_6_0_0(self, file_path):
         if file_path.endswith('.yml'):
             yml_content = get_yaml(file_path)
             if parse_version(yml_content.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
@@ -155,7 +155,7 @@ class ContentCreator:
                 return False
 
         elif file_path.endswith('.md'):
-            self.check_md_related_from_version(file_path)
+            return self.check_md_related_from_version(file_path)
 
         return True
 
@@ -164,10 +164,10 @@ class ContentCreator:
         json_file = base_file_name + '.json'
         yml_file = base_file_name + '.yml'
         if os.path.exists(json_file):
-            return self.check_from_version(json_file)
+            return self.check_from_version_not_above_6_0_0(json_file)
 
         elif os.path.exists(yml_file):
-            return self.check_from_version(yml_file)
+            return self.check_from_version_not_above_6_0_0(yml_file)
 
         return True
 
@@ -273,7 +273,7 @@ class ContentCreator:
         if scan_files:
             print(f"\nStarting process for {dir_path}")
         for path in scan_files:
-            if self.check_from_version(path):
+            if self.check_from_version_not_above_6_0_0(path):
                 new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, os.path.basename(path)))
                 if len(os.path.basename(path)) >= self.file_name_max_size:
                     self.long_file_names.append(path)
@@ -320,7 +320,7 @@ class ContentCreator:
             print(f"\nStarting process for {dir_path}")
             for path in scan_files:
                 print(f" - processing: {path}")
-                if self.check_from_version(path):
+                if self.check_from_version_not_above_6_0_0(path):
                     dpath = os.path.basename(path)
                     if dir_name == 'IncidentTypes':
                         if not dpath.startswith('incidenttype-'):
@@ -373,7 +373,7 @@ class ContentCreator:
             print(f"\nStarting process for {dir_path}")
             for path in scan_files:
                 print(f" - processing: {path}")
-                if self.check_from_version(path):
+                if self.check_from_version_not_above_6_0_0(path):
                     new_path = self.add_suffix_to_file_path(os.path.basename(path))
                     if dir_name == RELEASE_NOTES_DIR:
                         if os.path.isfile(os.path.join(bundle, new_path)):
@@ -421,7 +421,7 @@ class ContentCreator:
             if os.path.isdir(path):
                 non_circle_tests = glob.glob(os.path.join(path, '*'))
                 for new_path in non_circle_tests:
-                    if os.path.isfile(new_path) and self.check_from_version(new_path):
+                    if os.path.isfile(new_path) and self.check_from_version_not_above_6_0_0(new_path):
                         print(f'copying path {new_path}')
                         new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle,
                                                                                   os.path.basename(new_path)))
@@ -429,7 +429,7 @@ class ContentCreator:
                         self.add_from_version_to_yml(new_file_path)
 
             else:
-                if self.check_from_version(path):
+                if self.check_from_version_not_above_6_0_0(path):
                     # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
                     # but when copied to the test_bundle, playbook-* prefix should be added to them
                     file_type = find_type(path)

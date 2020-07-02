@@ -480,7 +480,7 @@ class TestContentCreator:
         integration = pack.create_integration('integration')
         integration.write_yml({"fromversion": "1.0.0"})
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version(integration.yml_path)
+            assert content_creator.check_from_version_not_above_6_0_0(integration.yml_path)
 
     def test_check_from_version__yml_no_fromvesrion(self, repo):
         """
@@ -495,7 +495,7 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         integration = pack.create_integration('integration')
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version(integration.yml_path)
+            assert content_creator.check_from_version_not_above_6_0_0(integration.yml_path)
 
     def test_check_from_version__yml_high_fromvesrion(self, repo):
         """
@@ -511,7 +511,7 @@ class TestContentCreator:
         integration = pack.create_integration('integration')
         integration.write_yml({"fromversion": "6.0.0"})
         with ChangeCWD(repo.path):
-            assert not content_creator.check_from_version(integration.yml_path)
+            assert not content_creator.check_from_version_not_above_6_0_0(integration.yml_path)
 
     def test_check_from_version__json_high_fromvesrion(self, repo):
         """
@@ -526,7 +526,7 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         json_path = pack.create_dashboard("some_json", content={"fromVersion": "6.0.0"}).path
         with ChangeCWD(repo.path):
-            assert not content_creator.check_from_version(json_path)
+            assert not content_creator.check_from_version_not_above_6_0_0(json_path)
 
     def test_check_from_version__json_low_fromvesrion(self, repo):
         """
@@ -541,7 +541,7 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         json_path = pack.create_dashboard("some_json", content={"fromVersion": "1.0.0"}).path
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version(json_path)
+            assert content_creator.check_from_version_not_above_6_0_0(json_path)
 
     def test_check_from_version__json_no_fromvesrion(self, repo):
         """
@@ -556,7 +556,7 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         json_path = pack.create_dashboard("some_json", content={}).path
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version(json_path)
+            assert content_creator.check_from_version_not_above_6_0_0(json_path)
 
     def test_add_suffix_to_file_path(self):
         """

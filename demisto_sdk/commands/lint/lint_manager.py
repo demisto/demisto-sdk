@@ -104,7 +104,7 @@ class LintManager:
                 with open(file=pipfile_lock_path) as f:
                     lock_file: dict = json.load(fp=f)["develop"]
                     facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in
-                                                       lock_file.items()]  # type:ignore
+                                                       lock_file.items()]  # type: ignore
                     logger.debug(f"Test requirements successfully collected for python {py_num}:\n"
                                  f" {facts[f'requirements_{py_num}']}")
         except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:

@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict
 
 EXPECTED_LIST_WORKFLOWS = {
     'Securonix.Workflows(val.Workflow == obj.Workflow)':

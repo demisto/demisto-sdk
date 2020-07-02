@@ -13,6 +13,12 @@ jobs:
       steps:
         - checkout
         - run:
+            name: Tox build
+            command: |
+              pip install tox
+              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
+              tox -e py38 -v
+        - run:
             name: Print environment variables
             command: |
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
@@ -21,12 +27,6 @@ jobs:
               pylint --version
               pytest --version
               flake8 --version
-        - run:
-            name: Tox build
-            command: |
-              pip install tox
-              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
-              tox -e py38 -v
         - run:
             name: Pre-commit
             command: |

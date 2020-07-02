@@ -103,8 +103,8 @@ class LintManager:
                 pipfile_lock_path = pipfile_dir / f'pipfile_python{py_num}/Pipfile.lock'
                 with open(file=pipfile_lock_path) as f:
                     lock_file: dict = json.load(fp=f)["develop"]
-                    facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in
-                                                       lock_file.items()]  # type: ignore
+                    facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in  # type: ignore
+                                                       lock_file.items()]
                     logger.debug(f"Test requirements successfully collected for python {py_num}:\n"
                                  f" {facts[f'requirements_{py_num}']}")
         except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
@@ -113,8 +113,8 @@ class LintManager:
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
-            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"],
-                                                     is_external_repo=is_external_repo)  # type: ignore
+            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"],  # type: ignore
+                                                     is_external_repo=is_external_repo)
             logger.debug("Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error(

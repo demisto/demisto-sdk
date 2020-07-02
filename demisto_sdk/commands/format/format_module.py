@@ -107,8 +107,8 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
         os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
     UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
                                                          from_version=from_version,
-                                                         **kwargs)  # type: ignore
-    format_res, validate_res = UpdateObject.format_file()
+                                                         **kwargs)
+    format_res, validate_res = UpdateObject.format_file()  # type: ignore
     return logger(input, format_res, validate_res)
 
 

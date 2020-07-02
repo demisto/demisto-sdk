@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 import demisto_sdk.commands.common.tools as tools
 # Third party packages
@@ -43,7 +43,7 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: bool, log_path: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str):
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
@@ -547,7 +547,7 @@ class LintManager:
         wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
                                                  subsequent_indent=' ' * len(fail_pack_prefix))
         # intersection of all failed packages
-        failed = set()  # type: set[str]
+        failed: Set[str] = set()
         for packs in lint_status.values():
             failed = failed.union(packs)
         # Log unit-tests summary
@@ -583,7 +583,7 @@ class LintManager:
         :param path: str
             The path to save the report.
         """
-        failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])  # type: set[str]
+        failed_ut: Set[Any] = set().union([second_val for val in lint_status.values() for second_val in val])
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))

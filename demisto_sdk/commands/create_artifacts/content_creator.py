@@ -27,7 +27,8 @@ from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR, TOOL,
-                                                   TOOLS_DIR, WIDGETS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
@@ -230,7 +231,9 @@ class ContentCreator:
         """
         dest_dir_path = os.path.dirname(out_path)
         dest_file_name = os.path.basename(out_path)
-        if not dest_file_name.startswith('playbook-') and tools.find_type(path) == 'playbook':
+        file_type = find_type(path)
+        if not dest_file_name.startswith('playbook-') and (file_type == FileType.PLAYBOOK or
+                                                           file_type == FileType.TEST_PLAYBOOK):
             new_name = '{}{}'.format('playbook-', dest_file_name)
             out_path = self.add_suffix_to_file_path(os.path.join(dest_dir_path, new_name))
         shutil.copyfile(path, out_path)
@@ -431,13 +434,13 @@ class ContentCreator:
                     # but when copied to the test_bundle, playbook-* prefix should be added to them
                     file_type = find_type(path)
                     path_basename = os.path.basename(path)
-                    if file_type == 'script':
+                    if file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
                         if not path_basename.startswith('script-'):
                             path_basename = f'script-{os.path.basename(path)}'
-                    elif file_type == 'playbook':
+                    elif file_type in (FileType.PLAYBOOK, FileType.TEST_PLAYBOOK):
                         if not path_basename.startswith('playbook-'):
                             path_basename = f'playbook-{os.path.basename(path)}'
-                    print(f'\nCopying path {path} as {path_basename}')
+                    print(f'Copying path {path} as {path_basename}')
                     new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle, path_basename))
                     shutil.copyfile(path, new_file_path)
                     self.add_from_version_to_yml(new_file_path)

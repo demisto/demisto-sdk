@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (print_error, print_warning,
+from demisto_sdk.commands.common.tools import (print_error,
                                                server_version_compare)
 
 
@@ -292,8 +292,9 @@ class IntegrationValidator(ContentEntityValidator):
                         output_for_reputation_valid = False
 
                 if missing_descriptions:
-                    print_warning(Errors.dbot_invalid_description(
-                        command_name, missing_descriptions, context_standard))
+                    error_message, error_code = Errors.dbot_invalid_description(command_name, missing_descriptions,
+                                                                                context_standard)
+                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)

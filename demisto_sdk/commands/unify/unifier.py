@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
                                                    SCRIPTS_DIR,
-                                                   TYPE_TO_EXTENSION)
+                                                   TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                get_yml_paths_in_dir,
@@ -286,7 +286,7 @@ class Unifier:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')
 
-        if find_type(yml_path) == 'script':
+        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')

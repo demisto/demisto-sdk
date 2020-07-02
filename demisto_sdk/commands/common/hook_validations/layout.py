@@ -13,7 +13,6 @@ class LayoutValidator(ContentEntityValidator):
         """
         answers = [
             super().is_valid_file(validate_rn),
-            self.is_valid_version()
         ]
         return all(answers)
 

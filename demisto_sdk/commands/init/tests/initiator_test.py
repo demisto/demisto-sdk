@@ -3,7 +3,9 @@ from collections import OrderedDict, deque
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
+from mock import patch
 
+import logging
 import pytest
 import yaml
 import yamlordereddictloader
@@ -13,6 +15,8 @@ from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    XSOAR_AUTHOR, XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
+from TestSuite.contribution import Contribution
+from TestSuite.repo import Repo
 
 DIR_NAME = 'DirName'
 PACK_NAME = 'PackName'
@@ -181,3 +185,40 @@ def test_yml_reformatting(tmp_path, initiator):
             'display': 'HelloWorld',
             'name': 'HelloWorld'
         })
+
+
+@patch('demisto_sdk.commands.init.initiator.get_content_path')
+def test_convert_contribution_zip(get_content_path_mock, tmp_path, initiator):
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / 'content_repo'
+    repo_dir.mkdir()
+    get_content_path_mock.return_value = repo_dir
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / 'target_dir'
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / 'contrib_zip'
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
+    # contrib_zip.create_zip(contribution_zip_dir)
+    contrib_zip.create_zip(contribution_zip_dir)
+    logging.warning(f'contrib_zip.created_zip_filepath = "{contrib_zip.created_zip_filepath}"')
+
+    # target_dir should have been deleted after creation of the zip file
+    assert not target_dir.exists()
+
+    # mocker.patch.object(get_content_path, re)
+
+    initiator.contribution = contrib_zip.created_zip_filepath
+    initiator.init()
+
+    converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
+    assert converted_pack_path.exists()
+
+    import os
+    logging.error(f'{os.listdir(converted_pack_path)}')
+    logging.error(f'{os.walk(converted_pack_path)}')

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -123,3 +124,6 @@ class Integration:
     @deprecated(reason="use integration.yml.rel_path instead")
     def yml_path(self):
         return self.yml.rel_path
+
+    def image_path(self):
+        return os.path.relpath(str(self._image_file), self._repo.path)

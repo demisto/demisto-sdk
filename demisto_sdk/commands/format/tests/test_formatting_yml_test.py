@@ -162,7 +162,7 @@ EQUAL_TEST = [
 
 @pytest.mark.parametrize('input, output, path', EQUAL_TEST)
 def test_eqaul_value_in_file(input, output, path):
-    os.mkdir(path)
+    os.makedirs(path, exist_ok=True)
     shutil.copyfile(input, output)
     format = format_manager(input=output)
     check = True
@@ -236,7 +236,7 @@ FORMAT_FILES = [
 
 @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
 def test_format_file(source, target, path, answer):
-    os.makedirs(path)
+    os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
     res = format_manager(input=target, output=target)
     os.remove(target)
@@ -313,7 +313,7 @@ def test_set_fetch_params_in_config(source, target, path, answer):
     - Ensure the file was created.
     - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
     """
-    os.mkdir(path)
+    os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
     res = format_manager(input=target)
     with open(target, 'r') as f:
@@ -346,7 +346,7 @@ def test_set_feed_params_in_config(source, target, path, answer):
     - Ensure that the feedBypassExclusionList, Fetch indicators , feedReputation, feedReliability ,
      feedExpirationPolicy, feedExpirationInterval ,feedFetchInterval params were added to the yml of the integration.
     """
-    os.mkdir(path)
+    os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
     res = format_manager(input=target)
     with open(target, 'r') as f:

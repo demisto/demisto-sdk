@@ -26,6 +26,7 @@ class ConfJsonValidator(BaseValidator):
 
     def is_valid_conf_json(self):
         """Validate the fields skipped_tests, skipped_integrations and unmockable_integrations in conf.json file."""
+        print('\nValidating conf.json')
         skipped_tests_conf = self.conf_data['skipped_tests']
         skipped_integrations_conf = self.conf_data['skipped_integrations']
         unmockable_integrations_conf = self.conf_data['unmockable_integrations']

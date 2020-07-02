@@ -26,7 +26,7 @@ class DashboardValidator(ContentEntityValidator):
             self.is_valid_version()
         ])
 
-        # check only on added filescontent_entity_validator_test
+        # check only on added files
         if not self.old_file:
             is_dashboard_valid = all([
                 is_dashboard_valid,

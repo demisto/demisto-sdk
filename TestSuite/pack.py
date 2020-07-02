@@ -185,7 +185,7 @@ class Pack:
             content: dict = None
     ):
         prefix = 'classifier-mapper'
-        mapper = self._create_json_based(name, prefix, content)
+        mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
         self.mapper.append(mapper)
         return mapper
 
@@ -195,7 +195,7 @@ class Pack:
             content: dict = None
     ):
         prefix = 'dashboard'
-        dashboard = self._create_json_based(name, prefix, content)
+        dashboard = self._create_json_based(name, prefix, content, dir_path=self._dashboards_path)
         self.dashboards.append(dashboard)
         return dashboard
 
@@ -206,7 +206,7 @@ class Pack:
             release_notes: bool = False
     ):
         prefix = 'incident-field'
-        incident_field = self._create_json_based(name, prefix, content)
+        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incidents_field_path)
         if release_notes:
             release_notes_to_append = self._create_text_based(f'{incident_field}_CHANGELOG.md',
                                                               dir_path=self._incidents_field_path)
@@ -219,7 +219,7 @@ class Pack:
             name,
             content: dict = None):
         prefix = 'incident-type'
-        incident_type = self._create_json_based(name, prefix, content)
+        incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
         self.incident_types.append(incident_type)
         return incident_type
 
@@ -229,7 +229,7 @@ class Pack:
             content: dict = None
     ):
         prefix = 'incident-field'
-        indicator_field = self._create_json_based(name, prefix, content)
+        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields)
         self.indicator_field.append(indicator_field)
 
     def create_release_notes(self, version: str, content: str = ''):

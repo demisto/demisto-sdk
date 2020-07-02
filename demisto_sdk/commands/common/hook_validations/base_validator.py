@@ -39,10 +39,13 @@ class BaseValidator:
 
         return False
 
-    def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None):
+    def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
+                     drop_line=False):
         """Handle an error that occurred during validation
 
         Args:
+            drop_line (bool): Whether to drop a line at the beginning of the error message
+            warning (bool): Print the error as a warning
             suggested_fix(str): A suggested fix
             error_message(str): The error message
             file_path(str): The file from which the error occurred
@@ -54,6 +57,9 @@ class BaseValidator:
         """
         formatted_error = f"{file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
 
+        if drop_line:
+            formatted_error = "\n" + formatted_error
+
         if file_path:
             if not isinstance(file_path, str):
                 file_path = str(file_path)
@@ -64,9 +70,8 @@ class BaseValidator:
         else:
             file_name = 'No-Name'
 
-        if self.should_ignore_error(error_code, self.ignored_errors.get('pack')) or \
-                self.should_ignore_error(error_code, self.ignored_errors.get(file_name)):
-            if self.print_as_warnings:
+        if self.should_ignore_error(error_code, self.ignored_errors.get(file_name)) or warning:
+            if self.print_as_warnings or warning:
                 click.secho(formatted_error, fg="yellow")
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
@@ -113,7 +118,7 @@ class BaseValidator:
             certification = metadata_json.get(PACK_METADATA_CERTIFICATION)
 
             if support == 'partner':
-                if certification != 'certified':
+                if certification is not None and certification != 'certified':
                     self.add_flag_to_ignore_list(file_path, 'non-certified-partner')
 
             elif support == 'community':

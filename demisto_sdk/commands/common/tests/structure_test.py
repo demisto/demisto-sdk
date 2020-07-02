@@ -199,3 +199,41 @@ class TestStructureValidator:
         structure = StructureValidator(file_path=path)
         err = structure.parse_error_line(error)
         assert correct in err
+
+    def test_check_for_spaces_in_file_name(self, mocker):
+        mocker.patch.object(StructureValidator, "handle_error", return_value='Not-non-string')
+        file_with_spaces = "Packs/pack/Classifiers/space in name"
+        file_without_spaces = "Packs/pack/Classifiers/no-space-in-name"
+        structure = StructureValidator(file_path=file_with_spaces)
+        assert structure.check_for_spaces_in_file_name() is False
+
+        structure = StructureValidator(file_path=file_without_spaces)
+        assert structure.check_for_spaces_in_file_name() is True
+
+    def test_is_valid_file_extension(self, mocker):
+        mocker.patch.object(StructureValidator, "handle_error", return_value='Not-non-string')
+        mocker.patch.object(StructureValidator, 'load_data_from_file', return_value="")
+        image = "image.png"
+        yml_file = "yml_file.yml"
+        json_file = "json_file.json"
+        md_file = "md_file.md"
+        non_valid_file = "not_valid.py"
+        no_extension = "no_ext"
+
+        structure = StructureValidator(file_path=image)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=yml_file)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=json_file)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=md_file)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=non_valid_file)
+        assert not structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=no_extension)
+        assert not structure.is_valid_file_extension()

@@ -1,4 +1,14 @@
 # Changelog
+* Improved **validate** command performance time and outputs.
+* Added the flag *--no-docker-checks* to **validate** command to skip docker checks.
+* Added the flag *--print-ignored-files* to **validate** command to print ignored files report when the command is done.
+* Added the following validations in **validate** command:
+   * Validating that existing release notes are not modified.
+   * Validating release notes are not added to new packs.
+   * Validating that the "currentVersion" field was raised in the pack_metadata for modified packs.
+   * Validating that the timestamp in the "created" field in the pack_metadata is in ISO format.
+* Running `demisto-sdk validate` will run the **validate** command using git and only on committed files (same as using *-g --post-commit*).
+* Fixed an issue where release notes were not checked correctly in **validate** command.
 
 #### 1.1.5
 * Fixed an issue in **find-dependencies** command.

@@ -21,10 +21,7 @@ class DashboardValidator(ContentEntityValidator):
         Returns:
             bool. Whether the dashboard is valid or not
         """
-        is_dashboard_valid = all([
-            super().is_valid_file(validate_rn),
-            self.is_valid_version()
-        ])
+        is_dashboard_valid = super().is_valid_file(validate_rn)
 
         # check only on added files
         if not self.old_file:

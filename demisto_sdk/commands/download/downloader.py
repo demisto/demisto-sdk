@@ -394,7 +394,7 @@ class Downloader:
             name: str = get_entity_name_by_entity_type(file_data, PLAYBOOKS_DIR)
             if name and 'test' in name.lower():
                 return TEST_PLAYBOOKS_DIR
-        return ENTITY_TYPE_TO_DIR.get(file_type)
+        return ENTITY_TYPE_TO_DIR.get(file_type, '')
 
     def update_pack_hierarchy(self) -> None:
         """

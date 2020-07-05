@@ -13,6 +13,9 @@ from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    XSOAR_AUTHOR, XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
+from mock import patch
+from TestSuite.contribution import Contribution
+from TestSuite.repo import Repo
 
 DIR_NAME = 'DirName'
 PACK_NAME = 'PackName'
@@ -181,3 +184,75 @@ def test_yml_reformatting(tmp_path, initiator):
             'display': 'HelloWorld',
             'name': 'HelloWorld'
         })
+
+
+@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.init.initiator.get_content_path')
+def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path, initiator):
+    '''Create a fake contribution zip file and test that it is converted to a Pack correctly
+
+    Args:
+        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
+            used in the test
+        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
+        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
+        initiator (fixture): Initializes an instance of the 'Initiator' class
+
+    Scenario: Simulate executing the 'init' command with the 'contribution' option passed
+
+    Given
+    - A contribution zip file
+    - The zipfile contains a unified script file
+    - The zipfile contains a unified integration file
+    When
+    - Converting the zipfile to a valid Pack structure
+    Then
+    - Ensure script and integration are componentized and in valid directory structure
+    '''
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / 'content_repo'
+    repo_dir.mkdir()
+    get_content_path_mock.return_value = repo_dir
+    get_python_version_mock.return_value = 3.7
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / 'target_dir'
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / 'contrib_zip'
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
+    # contrib_zip.create_zip(contribution_zip_dir)
+    contrib_zip.create_zip(contribution_zip_dir)
+
+    # target_dir should have been deleted after creation of the zip file
+    assert not target_dir.exists()
+
+    initiator.contribution = contrib_zip.created_zip_filepath
+    initiator.init()
+
+    converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
+    assert converted_pack_path.exists()
+
+    scripts_path = converted_pack_path / 'Scripts'
+    sample_script_path = scripts_path / 'SampleScript'
+    script_yml = sample_script_path / 'SampleScript.yml'
+    script_py = sample_script_path / 'SampleScript.py'
+
+    assert scripts_path.exists()
+    assert sample_script_path.exists()
+    assert script_yml.exists()
+    assert script_py.exists()
+
+    integrations_path = converted_pack_path / 'Integrations'
+    sample_integration_path = integrations_path / 'Sample'
+    integration_yml = sample_integration_path / 'Sample.yml'
+    integration_py = sample_integration_path / 'Sample.py'
+    integration_description = sample_integration_path / 'Sample_description.md'
+    integration_image = sample_integration_path / 'Sample_image.png'
+    integration_files = [integration_yml, integration_py, integration_description, integration_image]
+    for integration_file in integration_files:
+        assert integration_file.exists()

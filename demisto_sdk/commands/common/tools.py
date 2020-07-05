@@ -1239,4 +1239,4 @@ def get_content_release_identifier(branch_name: str) -> Optional[str]:
     except Exception:
         return
     else:
-        return file_content.get('references').get('environment').get('environment').get('GIT_SHA1')
+        return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')

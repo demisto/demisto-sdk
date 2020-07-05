@@ -1,18 +1,17 @@
 import json
 import os
 import shutil
-import zipfile
-import click
 import traceback
+import zipfile
 from datetime import datetime
 from distutils.dir_util import copy_tree
 from typing import Dict, List, Union
 
+import click
 import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (AUTOMATION,
-                                                   CLASSIFIERS_DIR,
+from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
@@ -28,8 +27,7 @@ from demisto_sdk.commands.common.constants import (AUTOMATION,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
                                                    PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPT,
-                                                   SCRIPTS_DIR,
+                                                   SCRIPT, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
@@ -38,8 +36,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
                                                get_child_files,
                                                get_common_server_path,
-                                               get_content_path,
-                                               print_error, print_v)
+                                               get_content_path, print_error,
+                                               print_v)
 from demisto_sdk.commands.split_yml.extractor import Extractor
 
 

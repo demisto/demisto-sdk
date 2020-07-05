@@ -1,10 +1,9 @@
 import os
+import shutil
 from pathlib import Path
 from typing import Optional
 
 import yaml
-import os
-import shutil
 from demisto_sdk.commands.unify.unifier import Unifier
 from deprecated import deprecated
 from TestSuite.file import File

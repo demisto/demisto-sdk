@@ -3,7 +3,6 @@ from collections import OrderedDict, deque
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
-from mock import patch
 
 import pytest
 import yaml
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    XSOAR_AUTHOR, XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
+from mock import patch
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
@@ -256,4 +256,3 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_files = [integration_yml, integration_py, integration_description, integration_image]
     for integration_file in integration_files:
         assert integration_file.exists()
-

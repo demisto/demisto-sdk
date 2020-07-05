@@ -10,8 +10,8 @@ from TestSuite.test_tools import suite_join_path
 
 class Script(Integration):
     # Im here just to have one!!!
-    def __init__(self, tmpdir: Path, name, repo, unified=False):
-        super().__init__(tmpdir, name, repo, unified)
+    def __init__(self, tmpdir: Path, name, repo, create_unified=False):
+        super().__init__(tmpdir, name, repo, create_unified)
 
     def create_default_script(self):
         default_script_dir = 'assets/default_script'

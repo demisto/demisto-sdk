@@ -12,7 +12,7 @@ from TestSuite.yml import YAML
 
 
 class Integration:
-    def __init__(self, tmpdir: Path, name, repo, unified: bool = False):
+    def __init__(self, tmpdir: Path, name, repo, create_unified: bool = False):
         # Save entities
         self.name = name
         self._repo = repo
@@ -23,7 +23,7 @@ class Integration:
         self._tmpdir_integration_path.mkdir()
 
         # if creating a unified yaml
-        self.create_unified = unified
+        self.create_unified = create_unified
 
         self.path = str(self._tmpdir_integration_path)
         self.code = File(self._tmpdir_integration_path / f'{self.name}.py', self._repo.path)

@@ -5,7 +5,6 @@ from typing import List, Optional
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.script import Script
-# from TestSuite.secrets import Secrets
 from TestSuite.text_based import TextBased
 
 

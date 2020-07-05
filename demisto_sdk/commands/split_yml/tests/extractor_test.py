@@ -1,6 +1,7 @@
 import base64
 import os
 
+import pytest
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
@@ -114,21 +115,23 @@ def test_extract_to_package_format_pwsh(tmpdir):
         assert yaml_obj['fromversion'] == '5.5.0'
         assert not yaml_obj['script']['script']
 
-# def test_extract_to_package_format_py(tmpdir, mocker):
-#     mocker.patch(
-#         'demisto_sdk.commands.split_yml.extractor.get_python_version',
-#         return_value='2.7'
-#     )
-#     mocker.patch(
-#         'demisto_sdk.commands.split_yml.extractor.get_pipenv_dir',
-#         return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
-#     )
-#     out = tmpdir.join('Integrations')
-#     extractor = Extractor(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
-#                           output=str(out), file_type='integration')
-#     extractor.extract_to_package_format()
-#     with open(out.join('Zoom').join('Zoom.py'), 'r', encoding='utf-8') as f:
-#         file_data = f.read()
-#         # check imports are sorted
-#         assert 'import datetime\nimport json\nimport shutil\nfrom zipfile import ZipFile\n\nimport requests\n\n' \
-#                'import demistomock as demisto\nimport jwt\nfrom CommonServerPython import *\n' in file_data
+
+@pytest.mark.skip(reason="Skipping until fixed")
+def test_extract_to_package_format_py(tmpdir, mocker):
+    mocker.patch(
+        'demisto_sdk.commands.split_yml.extractor.get_python_version',
+        return_value='2.7'
+    )
+    mocker.patch(
+        'demisto_sdk.commands.split_yml.extractor.get_pipenv_dir',
+        return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
+    )
+    out = tmpdir.join('Integrations')
+    extractor = Extractor(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+                          output=str(out), file_type='integration')
+    extractor.extract_to_package_format()
+    with open(out.join('Zoom').join('Zoom.py'), 'r', encoding='utf-8') as f:
+        file_data = f.read()
+        # check imports are sorted
+        assert 'import datetime\nimport json\nimport shutil\nfrom zipfile import ZipFile\n\nimport requests\n\n' \
+               'import demistomock as demisto\nimport jwt\nfrom CommonServerPython import *\n' in file_data

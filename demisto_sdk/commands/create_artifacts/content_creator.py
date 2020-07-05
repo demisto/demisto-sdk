@@ -273,33 +273,35 @@ class ContentCreator:
         if scan_files:
             print(f"\nStarting process for {dir_path}")
         for path in scan_files:
-            if self.check_from_version_not_above_6_0_0(path):
-                new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, os.path.basename(path)))
-                if len(os.path.basename(path)) >= self.file_name_max_size:
-                    self.long_file_names.append(path)
+            if not self.check_from_version_not_above_6_0_0(path):
+                continue
 
-                ryaml = YAML()
-                ryaml.allow_duplicate_keys = True
-                with io.open(path, mode='r', encoding='utf-8') as file_:
-                    yml_info = ryaml.load(file_)
-                ver = yml_info.get('fromversion', '0')
-                updated_yml_info = self.add_from_version_to_yml(yml_content=yml_info, save_yml=False)
-                if updated_yml_info:
-                    yml_info = updated_yml_info
+            new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, os.path.basename(path)))
+            if len(os.path.basename(path)) >= self.file_name_max_size:
+                self.long_file_names.append(path)
 
-                process_message = f' - processing: {path}'
-                if ver != '0' and ver != '':
-                    process_message += f' - current fromversion: {ver}'
-                print(process_message)
-                if dir_name in ['Playbooks', 'TestPlaybooks']:
-                    # in TestPlaybook dir we might have scripts - all should go to test_bundle
-                    if dir_name == 'TestPlaybooks' and os.path.basename(path).startswith('script-'):
-                        self.copy_content_yml(path, new_file_path, yml_info)
-                    self.copy_playbook_yml(path, new_file_path)
-                else:
+            ryaml = YAML()
+            ryaml.allow_duplicate_keys = True
+            with io.open(path, mode='r', encoding='utf-8') as file_:
+                yml_info = ryaml.load(file_)
+            ver = yml_info.get('fromversion', '0')
+            updated_yml_info = self.add_from_version_to_yml(yml_content=yml_info, save_yml=False)
+            if updated_yml_info:
+                yml_info = updated_yml_info
+
+            process_message = f' - processing: {path}'
+            if ver != '0' and ver != '':
+                process_message += f' - current fromversion: {ver}'
+            print(process_message)
+            if dir_name in ['Playbooks', 'TestPlaybooks']:
+                # in TestPlaybook dir we might have scripts - all should go to test_bundle
+                if dir_name == 'TestPlaybooks' and os.path.basename(path).startswith('script-'):
                     self.copy_content_yml(path, new_file_path, yml_info)
+                self.copy_playbook_yml(path, new_file_path)
+            else:
+                self.copy_content_yml(path, new_file_path, yml_info)
 
-                content_files += 1
+            content_files += 1
 
         if content_files > 0:
             print(f'Finished process - total files: {content_files}\n')
@@ -320,40 +322,42 @@ class ContentCreator:
             print(f"\nStarting process for {dir_path}")
             for path in scan_files:
                 print(f" - processing: {path}")
-                if self.check_from_version_not_above_6_0_0(path):
-                    dpath = os.path.basename(path)
-                    if dir_name == 'IncidentTypes':
-                        if not dpath.startswith('incidenttype-'):
-                            dpath = f'incidenttype-{dpath}'
-                    if dir_name == 'IndicatorTypes':
-                        if not dpath.startswith('reputation-') and 'reputations.json' not in dpath:
-                            dpath = f'reputation-{dpath}'
-                    # this part is a workaround because server doesn't support indicatorfield-*.json naming
-                    if dir_name in ['IndicatorFields', 'IncidentFields']:
-                        if not dpath.startswith('incidentfield-'):
-                            dpath = f'incidentfield-{dpath}'
-                    if dir_name == 'Dashboards':
-                        if not dpath.startswith('dashboard-'):
-                            dpath = f'dashboard-{dpath}'
-                    if dir_name == 'Layouts':
-                        if not dpath.startswith('layout-'):
-                            dpath = f'layout-{dpath}'
-                    new_path = dpath
-                    if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
-                        new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
-                    if os.path.isfile(os.path.join(bundle, new_path)):
-                        raise NameError(
-                            f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
-                        )
-                    dpath = new_path
+                if not self.check_from_version_not_above_6_0_0(path):
+                    continue
 
-                    if len(dpath) >= self.file_name_max_size:
-                        self.long_file_names.append(os.path.basename(dpath))
+                dpath = os.path.basename(path)
+                if dir_name == 'IncidentTypes':
+                    if not dpath.startswith('incidenttype-'):
+                        dpath = f'incidenttype-{dpath}'
+                if dir_name == 'IndicatorTypes':
+                    if not dpath.startswith('reputation-') and 'reputations.json' not in dpath:
+                        dpath = f'reputation-{dpath}'
+                # this part is a workaround because server doesn't support indicatorfield-*.json naming
+                if dir_name in ['IndicatorFields', 'IncidentFields']:
+                    if not dpath.startswith('incidentfield-'):
+                        dpath = f'incidentfield-{dpath}'
+                if dir_name == 'Dashboards':
+                    if not dpath.startswith('dashboard-'):
+                        dpath = f'dashboard-{dpath}'
+                if dir_name == 'Layouts':
+                    if not dpath.startswith('layout-'):
+                        dpath = f'layout-{dpath}'
+                new_path = dpath
+                if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
+                    new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
+                if os.path.isfile(os.path.join(bundle, new_path)):
+                    raise NameError(
+                        f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
+                    )
+                dpath = new_path
 
-                    new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, dpath))
-                    shutil.copyfile(path, new_file_path)
-                    self.add_from_version_to_json(new_file_path)
-                    count_files += 1
+                if len(dpath) >= self.file_name_max_size:
+                    self.long_file_names.append(os.path.basename(dpath))
+
+                new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, dpath))
+                shutil.copyfile(path, new_file_path)
+                self.add_from_version_to_json(new_file_path)
+                count_files += 1
 
             print(f"Finished process for {count_files} files\n")
 
@@ -373,19 +377,21 @@ class ContentCreator:
             print(f"\nStarting process for {dir_path}")
             for path in scan_files:
                 print(f" - processing: {path}")
-                if self.check_from_version_not_above_6_0_0(path):
-                    new_path = self.add_suffix_to_file_path(os.path.basename(path))
-                    if dir_name == RELEASE_NOTES_DIR:
-                        if os.path.isfile(os.path.join(bundle, new_path)):
-                            raise NameError(
-                                f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
-                            )
+                if not self.check_from_version_not_above_6_0_0(path):
+                    continue
 
-                    if len(new_path) >= self.file_name_max_size:
-                        self.long_file_names.append(os.path.basename(new_path))
+                new_path = self.add_suffix_to_file_path(os.path.basename(path))
+                if dir_name == RELEASE_NOTES_DIR:
+                    if os.path.isfile(os.path.join(bundle, new_path)):
+                        raise NameError(
+                            f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
+                        )
 
-                    shutil.copyfile(path, os.path.join(bundle, new_path))
-                    count_files += 1
+                if len(new_path) >= self.file_name_max_size:
+                    self.long_file_names.append(os.path.basename(new_path))
+
+                shutil.copyfile(path, os.path.join(bundle, new_path))
+                count_files += 1
 
             print(f"Finished process for {count_files} files")
 
@@ -429,21 +435,23 @@ class ContentCreator:
                         self.add_from_version_to_yml(new_file_path)
 
             else:
-                if self.check_from_version_not_above_6_0_0(path):
-                    # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
-                    # but when copied to the test_bundle, playbook-* prefix should be added to them
-                    file_type = find_type(path)
-                    path_basename = os.path.basename(path)
-                    if file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
-                        if not path_basename.startswith('script-'):
-                            path_basename = f'script-{os.path.basename(path)}'
-                    elif file_type in (FileType.PLAYBOOK, FileType.TEST_PLAYBOOK):
-                        if not path_basename.startswith('playbook-'):
-                            path_basename = f'playbook-{os.path.basename(path)}'
-                    print(f'Copying path {path} as {path_basename}')
-                    new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle, path_basename))
-                    shutil.copyfile(path, new_file_path)
-                    self.add_from_version_to_yml(new_file_path)
+                if not self.check_from_version_not_above_6_0_0(path):
+                    continue
+
+                # test playbooks in test_playbooks_dir in packs can start without playbook* prefix
+                # but when copied to the test_bundle, playbook-* prefix should be added to them
+                file_type = find_type(path)
+                path_basename = os.path.basename(path)
+                if file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+                    if not path_basename.startswith('script-'):
+                        path_basename = f'script-{os.path.basename(path)}'
+                elif file_type in (FileType.PLAYBOOK, FileType.TEST_PLAYBOOK):
+                    if not path_basename.startswith('playbook-'):
+                        path_basename = f'playbook-{os.path.basename(path)}'
+                print(f'Copying path {path} as {path_basename}')
+                new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle, path_basename))
+                shutil.copyfile(path, new_file_path)
+                self.add_from_version_to_yml(new_file_path)
 
     def copy_packs_to_content_bundles(self, packs):
         """

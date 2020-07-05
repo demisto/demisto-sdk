@@ -151,8 +151,8 @@ class Unifier:
         output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
 
         if file_name_suffix:
-            output_filename = ''.join(output_filename.split('.')[:-1]) + file_name_suffix + \
-                              '.' + output_filename.split('.')[-1]
+            # append suffix to output file name
+            output_filename = file_name_suffix.join(os.path.splitext(output_filename))
 
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)

@@ -171,9 +171,9 @@ class Contribution:
         prefix = 'incident-field'
         incident_field = self._create_json_based(name, prefix, content, dir_path=self._incident_fields_path)
         if release_notes:
-            release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
-                                                    dir_path=self._incidents_field_path)
-            self.incident_field.append(release_notes)
+            release_notes_file = self._create_text_based(f'{incident_field}_CHANGELOG.md',
+                                                         dir_path=self._incident_fields_path)
+            self.incident_field.append(release_notes_file)
         self.incident_field.append(incident_field)
         return incident_field
 
@@ -224,11 +224,11 @@ class Contribution:
         self.create_metadata_for_zip()
         if zip_dst:
             self.created_zip_filepath = shutil.make_archive(
-                zip_dst / self.name, 'zip', self.target_dir
+                str(zip_dst / self.name), 'zip', self.target_dir
             )
         else:
             self.created_zip_filepath = shutil.make_archive(
-                self.target_dir.parent / self.name, 'zip', self.target_dir
+                str(self.target_dir.parent / self.name), 'zip', self.target_dir
             )
         if del_src_files:
             shutil.rmtree(self.target_dir)

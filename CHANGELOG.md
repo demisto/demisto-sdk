@@ -9,6 +9,7 @@
    * Validating that the timestamp in the "created" field in the pack_metadata is in ISO format.
 * Running `demisto-sdk validate` will run the **validate** command using git and only on committed files (same as using *-g --post-commit*).
 * Fixed an issue where release notes were not checked correctly in **validate** command.
+* Fixed an issue in the **create-id-set** command where optional tasks were not taken into consideration.
 
 #### 1.1.5
 * Fixed an issue in **find-dependencies** command.

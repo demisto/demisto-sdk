@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import zipfile
+import click
 from datetime import datetime
 from distutils.dir_util import copy_tree
 from typing import Dict, List, Union
@@ -9,7 +10,8 @@ from typing import Dict, List, Union
 import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+from demisto_sdk.commands.common.constants import (AUTOMATION,
+                                                   CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
@@ -18,12 +20,14 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
+                                                   INTEGRATION,
                                                    INTEGRATION_CATEGORIES,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
                                                    PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPT,
                                                    SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
@@ -33,7 +37,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
                                                get_child_files,
                                                get_common_server_path,
-                                               get_content_path, print_color,
+                                               get_content_path,
                                                print_error, print_v)
 from demisto_sdk.commands.split_yml.extractor import Extractor
 
@@ -52,7 +56,7 @@ class Initiator:
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
                  pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
-                 contribution: Union[str, None] = None):
+                 contribution: Union[str] = None):
         self.output = output if output else ''
         self.id = id
 
@@ -79,8 +83,6 @@ class Initiator:
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
-    PACK_TEMPLATE_FOLDER = 'PackData'
-    PACK_METADATA_TEMPLATE = 'metadata_template.json'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
 
@@ -109,66 +111,70 @@ class Initiator:
             return self.pack_init()
 
     def convert_contribution_to_pack(self):
-        '''Create a Pack in the content repo from the contents of a contribution zipfile'''
-        packs_dir = os.path.join(get_content_path(), 'Packs')
-        metadata_dict = {}
-        with zipfile.ZipFile(self.contribution) as zipped_contrib:
-            with zipped_contrib.open('metadata.json') as metadata_file:
-                print_color(f'Pulling relevant information from {metadata_file.name}', LOG_COLORS.NATIVE)
-                metadata = json.loads(metadata_file.read())
-                pack_name = metadata.get('name', 'ContributionPack')
-                metadata_dict['name'] = pack_name
-                metadata_dict['author'] = metadata.get('author', '')
-                metadata_dict['support'] = metadata.get('support', '')
-                metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
-                metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
-        if os.path.exists(os.path.join(packs_dir, pack_name)):
-            print_color(
-                f'Modifying pack name because pack {pack_name} already exists in the content repo', LOG_COLORS.NATIVE
-            )
-            if pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
-                # increment by one
-                pack_name = pack_name[:-1] + str(int(pack_name[-1]) + 1)
-            else:
-                pack_name += 'V2'
-            print_color(f'New pack name is "{pack_name}"', LOG_COLORS.NATIVE)
-        pack_dir = os.path.join(packs_dir, pack_name)
-        os.mkdir(pack_dir)
-        shutil.unpack_archive(filename=self.contribution, extract_dir=pack_dir)
-        pack_subdirectories = get_child_directories(pack_dir)
-        for pack_subdir in pack_subdirectories:
-            basename = os.path.basename(pack_subdir)
-            if basename in ENTITY_TYPE_TO_DIR:
-                dst_name = ENTITY_TYPE_TO_DIR.get(basename)
-                src_path = os.path.join(pack_dir, basename)
-                dst_path = os.path.join(pack_dir, dst_name)
-                content_item_dir = shutil.move(src_path, dst_path)
-                if basename in {'integration', 'automation'}:
-                    self.content_item_to_package_format(content_item_dir, del_unified=True)
-        # create pack's base files
-        self.full_output_path = pack_dir
-        self.create_pack_base_files()
-        metadata_dict = Initiator.create_metadata(fill_manually=False, data=metadata_dict)
-        metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
-        with open(metadata_path, 'w') as pack_metadata_file:
-            json.dump(metadata_dict, pack_metadata_file, indent=4)
-        # remove metadata.json file
-        os.remove(os.path.join(pack_dir, 'metadata.json'))
+        """Create a Pack in the content repo from the contents of a contribution zipfile"""
+        try:
+            packs_dir = os.path.join(get_content_path(), 'Packs')
+            metadata_dict = {}
+            with zipfile.ZipFile(self.contribution) as zipped_contrib:
+                with zipped_contrib.open('metadata.json') as metadata_file:
+                    click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
+                    metadata = json.loads(metadata_file.read())
+                    pack_name = metadata.get('name', 'ContributionPack')
+                    metadata_dict['name'] = pack_name
+                    metadata_dict['author'] = metadata.get('author', '')
+                    metadata_dict['support'] = metadata.get('support', '')
+                    metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
+                    metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
+            if os.path.exists(os.path.join(packs_dir, pack_name)):
+                click.echo(
+                    f'Modifying pack name because pack {pack_name} already exists in the content repo',
+                    color=LOG_COLORS.NATIVE
+                )
+                if pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
+                    # increment by one
+                    pack_name = pack_name[:-1] + str(int(pack_name[-1]) + 1)
+                else:
+                    pack_name += 'V2'
+                click.echo(f'New pack name is "{pack_name}"', color=LOG_COLORS.NATIVE)
+            pack_dir = os.path.join(packs_dir, pack_name)
+            os.mkdir(pack_dir)
+            shutil.unpack_archive(filename=self.contribution, extract_dir=pack_dir)
+            pack_subdirectories = get_child_directories(pack_dir)
+            for pack_subdir in pack_subdirectories:
+                basename = os.path.basename(pack_subdir)
+                if basename in ENTITY_TYPE_TO_DIR:
+                    dst_name = ENTITY_TYPE_TO_DIR.get(basename)
+                    src_path = os.path.join(pack_dir, basename)
+                    dst_path = os.path.join(pack_dir, dst_name)
+                    content_item_dir = shutil.move(src_path, dst_path)
+                    if basename in {SCRIPT, AUTOMATION, INTEGRATION}:
+                        self.content_item_to_package_format(content_item_dir, del_unified=True)
+            # create pack's base files
+            self.full_output_path = pack_dir
+            self.create_pack_base_files()
+            metadata_dict = Initiator.create_metadata(fill_manually=False, data=metadata_dict)
+            metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
+            with open(metadata_path, 'w') as pack_metadata_file:
+                json.dump(metadata_dict, pack_metadata_file, indent=4)
+            # remove metadata.json file
+            os.remove(os.path.join(pack_dir, 'metadata.json'))
+        except Exception as e:
+            click.echo(f'Creating a Pack from the contribution zip failed with error: {e}', color=LOG_COLORS.RED)
 
-    def content_item_to_package_format(self, content_item_dir, del_unified):
-        '''
+    def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
+        """
         Iterate over the YAML files in a directory and create packages (a containing directory and
         component files) from the YAMLs of integrations and scripts
 
         Args:
             content_item_dir (str): Path to the directory containing the content item YAML file(s)
             del_unified (bool): Whether to delete the unified yaml the package was extracted from
-        '''
+        """
         child_files = get_child_files(content_item_dir)
         content_item_file_path = ''
         for child_file in child_files:
             cf_name_lower = os.path.basename(child_file).lower()
-            if cf_name_lower.startswith(('integration', 'automation')) and cf_name_lower.endswith('yml'):
+            if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith('yml'):
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
                 extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
@@ -229,7 +235,10 @@ class Initiator:
 
         self.create_pack_base_files()
 
-        print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
+        click.echo(
+            f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
+            color=LOG_COLORS.GREEN
+        )
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
@@ -239,7 +248,7 @@ class Initiator:
             pack_metadata = Initiator.create_metadata(fill_manually)
             json.dump(pack_metadata, fp, indent=4)
 
-            print_color(f"Created pack metadata at path : {metadata_path}", LOG_COLORS.GREEN)
+            click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
@@ -251,11 +260,11 @@ class Initiator:
         return True
 
     def create_pack_base_files(self):
-        '''
+        """
         Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
         to be in the base directory of a pack
-        '''
-        print_color('Creating pack base files', LOG_COLORS.NATIVE)
+        """
+        click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
         fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
         fp.close()
 
@@ -266,7 +275,7 @@ class Initiator:
         fp.close()
 
     @staticmethod
-    def create_metadata(fill_manually: bool, data: dict = {}) -> Dict:
+    def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
@@ -391,7 +400,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
+        click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
         return True
 
@@ -429,7 +438,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
+        click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 
         return True
 

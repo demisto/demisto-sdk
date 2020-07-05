@@ -853,6 +853,6 @@ def test_content_release_identifier_exists():
     This test assures that if someone changes the .circle/config.yml scheme, it'll fail.
     """
     fv = FilesValidator()
-    fv.branch_name = '20.7.0'
+    fv.branch_name = 'master'
     sha1 = fv.get_content_release_identifier()
     assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'

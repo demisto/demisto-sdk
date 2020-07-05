@@ -186,13 +186,15 @@ def test_yml_reformatting(tmp_path, initiator):
         })
 
 
+@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
 @patch('demisto_sdk.commands.init.initiator.get_content_path')
-def test_convert_contribution_zip(get_content_path_mock, tmp_path, initiator):
+def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path, initiator):
     '''Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
-        get_content_path_mock (MagicMock): Patch the 'get_content_path' function to return the fake repo directory
+        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
             used in the test
+        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
         initiator (fixture): Initializes an instance of the 'Initiator' class
 
@@ -212,6 +214,7 @@ def test_convert_contribution_zip(get_content_path_mock, tmp_path, initiator):
     repo_dir = tmp_path / 'content_repo'
     repo_dir.mkdir()
     get_content_path_mock.return_value = repo_dir
+    get_python_version_mock.return_value = 3.7
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / 'target_dir'

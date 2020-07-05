@@ -13,10 +13,7 @@ class JSONBased:
         else:
             self.name = f'{name}.json'
 
-        if isinstance(self._dir_path, str):
-            self._file_path = os.path.join(self._dir_path, self.name)
-        else:
-            self._file_path = dir_path / self.name
+        self._file_path = dir_path / self.name
         self.path = str(self._file_path)
         self.write_json({})
 

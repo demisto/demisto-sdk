@@ -74,7 +74,7 @@ class ContentCreator:
             RELEASE_NOTES_DIR
         ]
 
-        self.packages_to_skip = []
+        self.packages_to_skip = []  # type: list
         self.packs_to_skip = ['ApiModules']  # See the pack README
 
         # zip files names (the extension will be added later - shutil demands file name without extension)

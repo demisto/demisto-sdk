@@ -82,7 +82,7 @@ class Contribution:
             unified: Optional[bool] = True
     ):
         if name is None:
-            name = f'integration_{len(self.integrations)}'
+            name = f'integration{len(self.integrations)}'
         integration = Integration(self._integrations_path, name, self._repo, unified)
         integration.create_default_integration()
         self.integrations.append(integration)
@@ -220,18 +220,12 @@ class Contribution:
         self.create_incident_type(name='fakeincidenttype')
         self.create_indicator_field(name='fakeindicatorfield')
         self.create_mapper(name='fakemapper')
-        # create 2 integrations and 2 scripts
         self.create_integration()
-        self.create_integration()
-        self.create_script()
         self.create_script()
         self.create_metadata_for_zip()
         if zip_dst:
             self.created_zip_filepath = shutil.make_archive(
                 zip_dst / self.name, 'zip', self.target_dir
-            )
-            shutil.make_archive(
-                base_name=self.name, format='zip', base_dir=self.target_dir
             )
         else:
             self.created_zip_filepath = shutil.make_archive(

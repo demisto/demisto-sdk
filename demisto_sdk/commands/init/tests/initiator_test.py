@@ -189,6 +189,25 @@ def test_yml_reformatting(tmp_path, initiator):
 
 @patch('demisto_sdk.commands.init.initiator.get_content_path')
 def test_convert_contribution_zip(get_content_path_mock, tmp_path, initiator):
+    '''Create a fake contribution zip file and test that it is converted to a Pack correctly
+
+    Args:
+        get_content_path_mock (MagicMock): Patch the 'get_content_path' function to return the fake repo directory
+            used in the test
+        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
+        initiator (fixture): Initializes an instance of the 'Initiator' class
+
+    Scenario: Simulate executing the 'init' command with the 'contribution' option passed
+
+    Given
+    - A contribution zip file
+    - The zipfile contains a unified script file
+    - The zipfile contains a unified integration file
+    When
+    - Converting the zipfile to a valid Pack structure
+    Then
+    - Ensure script and integration are componentized and in valid directory structure
+    '''
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -211,14 +230,29 @@ def test_convert_contribution_zip(get_content_path_mock, tmp_path, initiator):
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()
 
-    # mocker.patch.object(get_content_path, re)
-
     initiator.contribution = contrib_zip.created_zip_filepath
     initiator.init()
 
     converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
     assert converted_pack_path.exists()
 
-    import os
-    logging.error(f'{os.listdir(converted_pack_path)}')
-    logging.error(f'{os.walk(converted_pack_path)}')
+    scripts_path = converted_pack_path / 'Scripts'
+    sample_script_path = scripts_path / 'SampleScript'
+    script_yml = sample_script_path / 'SampleScript.yml'
+    script_py = sample_script_path / 'SampleScript.py'
+
+    assert scripts_path.exists()
+    assert sample_script_path.exists()
+    assert script_yml.exists()
+    assert script_py.exists()
+
+    integrations_path = converted_pack_path / 'Integrations'
+    sample_integration_path = integrations_path / 'Sample'
+    integration_yml = sample_integration_path / 'Sample.yml'
+    integration_py = sample_integration_path / 'Sample.py'
+    integration_description = sample_integration_path / 'Sample_description.md'
+    integration_image = sample_integration_path / 'Sample_image.png'
+    integration_files = [integration_yml, integration_py, integration_description, integration_image]
+    for integration_file in integration_files:
+        assert integration_file.exists()
+

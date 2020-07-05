@@ -1237,6 +1237,6 @@ def get_content_release_identifier(branch_name: str) -> Optional[str]:
     try:
         file_content = get_remote_file('.circleci/config.yml', tag=branch_name)
     except Exception:
-        return
+        return None
     else:
         return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')

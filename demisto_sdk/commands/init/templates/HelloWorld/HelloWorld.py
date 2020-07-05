@@ -16,7 +16,7 @@ requests.packages.urllib3.disable_warnings()
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
-class Client(BaseClient):
+class Client(BaseClient):  # type: ignore
     """
     Client will implement the service API, and should not contain any Demisto logic.
     Should only do requests and return data.

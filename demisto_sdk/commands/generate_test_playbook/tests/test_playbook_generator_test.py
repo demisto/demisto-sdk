@@ -15,7 +15,7 @@ def load_file_from_test_dir(filename):
 
 class TestGenerateTestPlaybook:
     TEMP_DIR = 'temp'
-    CREATED_DIRS = list()
+    CREATED_DIRS = list()  # type: list
 
     @classmethod
     def setup_class(cls):

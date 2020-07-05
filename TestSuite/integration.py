@@ -115,12 +115,12 @@ class Integration:
     def update_description(self, description: str):
         self.yml.update_description(description)
 
-    @property
+    @property  # type: ignore
     @deprecated(reason="use integration.code.rel_path instead")
     def py_path(self):
         return self.code.rel_path
 
-    @property
+    @property  # type: ignore
     @deprecated(reason="use integration.yml.rel_path instead")
     def yml_path(self):
         return self.yml.rel_path

@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Callable
 from mock import patch
 
-import logging
 import pytest
 import yaml
 import yamlordereddictloader
@@ -225,7 +224,6 @@ def test_convert_contribution_zip(get_content_path_mock, tmp_path, initiator):
     contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
     # contrib_zip.create_zip(contribution_zip_dir)
     contrib_zip.create_zip(contribution_zip_dir)
-    logging.warning(f'contrib_zip.created_zip_filepath = "{contrib_zip.created_zip_filepath}"')
 
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()

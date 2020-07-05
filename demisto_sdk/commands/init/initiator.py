@@ -3,6 +3,7 @@ import os
 import shutil
 import zipfile
 import click
+import traceback
 from datetime import datetime
 from distutils.dir_util import copy_tree
 from typing import Dict, List, Union
@@ -159,7 +160,10 @@ class Initiator:
             # remove metadata.json file
             os.remove(os.path.join(pack_dir, 'metadata.json'))
         except Exception as e:
-            click.echo(f'Creating a Pack from the contribution zip failed with error: {e}', color=LOG_COLORS.RED)
+            click.echo(
+                f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
+                color=LOG_COLORS.RED
+            )
 
     def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
         """
@@ -177,6 +181,7 @@ class Initiator:
             if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith('yml'):
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
+                file_type = file_type.value if file_type else file_type
                 extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
                 extractor.extract_to_package_format()
                 if del_unified:

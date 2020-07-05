@@ -142,7 +142,6 @@ def test_extract_to_package_format_py(pack, mocker, tmp_path):
                           output=str(out), file_type='integration')
     extractor.extract_to_package_format()
     with open(out / 'TestIntegration.py', encoding='utf-8') as f:
-        sorted_imports = "import datetime\nimport json\n\nimport demistomock as demisto\nfrom CommonServerPython import *"
         file_data = f.read()
         # check imports are sorted
-        assert sorted_imports == file_data
+        assert non_sorted_imports not in file_data

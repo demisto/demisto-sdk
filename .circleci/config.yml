@@ -198,7 +198,6 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-7
             - tox3-8
             - precommit-checks
             - coveralls-check

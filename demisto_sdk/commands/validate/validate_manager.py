@@ -954,7 +954,7 @@ class ValidateManager:
         except Exception:
             return
         else:
-            return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
+            return file_content.get('references').get('environment').get('environment').get('GIT_SHA1')
 
     @staticmethod
     def _is_py_script_or_integration(file_path):

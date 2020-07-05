@@ -14,7 +14,7 @@ class YAML(File):
         super().__init__(tmp_path, repo_path, init_yml)
 
     def write_dict(self, yml: dict):
-        super().write(str(yaml.dump(yml)))
+        super().write(yaml.dump(yml))
 
     def update(self, update_obj: dict):
         yml_contents = yaml.load(self.read())

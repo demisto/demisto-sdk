@@ -113,7 +113,7 @@ class StructureValidator(BaseValidator):
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES]:
+        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK]:
             return True
         # ignore reputations.json
         if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):

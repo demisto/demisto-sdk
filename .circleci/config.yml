@@ -17,7 +17,6 @@ jobs:
             command: |
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
               echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
-
         - run:
             name: Tox build
             command: |

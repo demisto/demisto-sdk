@@ -1,35 +1,34 @@
+import shutil
 from pathlib import Path
 from typing import List, Optional
 
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.script import Script
-from TestSuite.secrets import Secrets
 from TestSuite.text_based import TextBased
 
 
-class Pack:
-    """A class that mocks a pack inside to content repo
+class Contribution:
+    """A class that mocks a contribution zip file downloaded from a demisto server
 
     Note:
         Do not include the `self` parameter in the ``Args`` section.
 
     Args:
-        packs_dir: A Path to the root of Packs dir
-        name: name of the pack to create
+        name: name of the contribution (used in metadata.json file)
 
     Attributes:
-        path (str): A path to the content pack.
-        secrets (Secrets): Exception error code.
+        path (str): A path to the contribution zip file.
         integrations: A list contains any created integration
         scripts:  A list contains any created Script
 
     """
 
-    def __init__(self, packs_dir: Path, name: str, repo):
+    def __init__(self, tmpdir: Path, name: str, repo):
         # Initiate lists:
         self._repo = repo
         self.repo_path = repo.path
+        self.target_dir = tmpdir
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         self.classifiers: List[JSONBased] = list()
@@ -39,99 +38,63 @@ class Pack:
         self.incident_field: List[JSONBased] = list()
         self.indicator_field: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
-        self.release_notes: List[TextBased] = list()
 
-        # Create base pack
-        self._pack_path = packs_dir / name
-        self._pack_path.mkdir()
-        self.path = str(self._pack_path)
+        self.name = name
+        self.created_zip_filepath = ''
 
-        # Create repo structure
-        self._integrations_path = self._pack_path / 'Integrations'
+        # Create contribution structure
+        self._integrations_path = self.target_dir / 'integration'
         self._integrations_path.mkdir()
 
-        self._scripts_path = self._pack_path / 'Scripts'
+        self._scripts_path = self.target_dir / 'automation'
         self._scripts_path.mkdir()
 
-        self._playbooks_path = self._pack_path / 'Playbooks'
+        self._playbooks_path = self.target_dir / 'playbook'
         self._playbooks_path.mkdir()
 
-        self._classifiers_path = self._pack_path / 'Classifiers'
+        self._classifiers_path = self.target_dir / 'classifier'
         self._classifiers_path.mkdir()
 
         self._mappers_path = self._classifiers_path
 
-        self._dashboards_path = self._pack_path / 'Dashboards'
+        self._dashboards_path = self.target_dir / 'dashboard'
         self._dashboards_path.mkdir()
 
-        self._incidents_field_path = self._pack_path / 'IncidentFields'
-        self._incidents_field_path.mkdir()
+        self._incident_fields_path = self.target_dir / 'incidentfield'
+        self._incident_fields_path.mkdir()
 
-        self._incident_types_path = self._pack_path / 'IncidentTypes'
+        self._incident_types_path = self.target_dir / 'incidenttype'
         self._incident_types_path.mkdir()
 
-        self._indicator_fields = self._pack_path / 'IndicatorFields'
-        self._indicator_fields.mkdir()
+        self._indicator_fields_path = self.target_dir / 'indicatorfield'
+        self._indicator_fields_path.mkdir()
 
-        self._release_notes = self._pack_path / 'ReleaseNotes'
-        self._release_notes.mkdir()
+        self._reports_path = self.target_dir / 'report'
+        self._reports_path.mkdir()
 
-        self.secrets = Secrets(self._pack_path)
-
-        self.pack_ignore = TextBased(self._pack_path, '.pack-ignore')
-
-        self.readme = TextBased(self._pack_path, 'README.md')
-
-        self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata.json', '')
+        self._reputations_path = self.target_dir / 'reputation'
+        self._reputations_path.mkdir()
 
     def create_integration(
             self,
             name: Optional[str] = None,
-            code: Optional[str] = None,
-            yml: Optional[dict] = None,
-            readme: Optional[str] = None,
-            description: Optional[str] = None,
-            changelog: Optional[str] = None,
-            image: Optional[bytes] = None
+            unified: Optional[bool] = True
     ):
         if name is None:
-            name = f'integration_{len(self.integrations)}'
-        if yml is None:
-            yml = {}
-        integration = Integration(self._integrations_path, name, self._repo)
-        integration.build(
-            code,
-            yml,
-            readme,
-            description,
-            changelog,
-            image
-        )
+            name = f'integration{len(self.integrations)}'
+        integration = Integration(self._integrations_path, name, self._repo, unified)
+        integration.create_default_integration()
         self.integrations.append(integration)
         return integration
 
     def create_script(
             self,
             name: Optional[str] = None,
-            yml: Optional[dict] = None,
-            code: str = '',
-            readme: str = '',
-            description: str = '',
-            changelog: str = '',
-            image: bytes = b''):
+            unified: Optional[bool] = True):
         if name is None:
-            name = f'script{len(self.integrations)}'
-        if yml is None:
-            yml = {}
-        script = Script(self._scripts_path, name, self._repo)
-        script.build(
-            code,
-            yml,
-            readme,
-            description,
-            changelog,
-            image
-        )
+            name = f'script{len(self.scripts)}'
+        script = Script(self._scripts_path, name, self._repo, unified)
+        script.create_default_script()
         self.scripts.append(script)
         return script
 
@@ -152,7 +115,7 @@ class Pack:
         if dir_path:
             obj = JSONBased(dir_path, name, prefix)
         else:
-            obj = JSONBased(self._pack_path, name, prefix)
+            obj = JSONBased(self.target_dir, name, prefix)
         obj.write_json(content)
         return obj
 
@@ -165,7 +128,7 @@ class Pack:
         if dir_path:
             obj = TextBased(dir_path, name)
         else:
-            obj = TextBased(self._pack_path, name)
+            obj = TextBased(self.target_dir, name)
         obj.write_text(content)
         return obj
 
@@ -206,11 +169,11 @@ class Pack:
             release_notes: bool = False
     ):
         prefix = 'incident-field'
-        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incidents_field_path)
+        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incident_fields_path)
         if release_notes:
-            release_notes_to_append = self._create_text_based(f'{incident_field}_CHANGELOG.md',
-                                                              dir_path=self._incidents_field_path)
-            self.incident_field.append(release_notes_to_append)
+            release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
+                                                    dir_path=self._incidents_field_path)
+            self.incident_field.append(release_notes)
         self.incident_field.append(incident_field)
         return incident_field
 
@@ -229,10 +192,43 @@ class Pack:
             content: dict = None
     ):
         prefix = 'incident-field'
-        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields)
+        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields_path)
         self.indicator_field.append(indicator_field)
 
-    def create_release_notes(self, version: str, content: str = ''):
-        rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)
-        self.release_notes.append(rn)
-        return rn
+    def create_metadata_for_zip(self):
+        fake_metadata = {
+            "name": self.name,
+            "description": "",
+            "updated": "0001-01-01T00:00:00Z",
+            "created": "2020-06-30T10:35:51.24973515Z",
+            "support": "internalContribution",
+            "author": "Who Cares",
+            "authorImage": "",
+            "supportDetails": {
+                "url": "",
+                "email": "madeup@madeup.com"
+            }
+        }
+        self.metadata = JSONBased(self.target_dir, 'metadata', '')
+        self.metadata.write_json(fake_metadata)
+
+    def create_zip(self, zip_dst: Optional[Path] = None, del_src_files: bool = True):
+        self.create_classifier(name='fakeclassifier')
+        self.create_dashboard(name='fakedashboard')
+        self.create_incident_field(name='fakeincidentfield')
+        self.create_incident_type(name='fakeincidenttype')
+        self.create_indicator_field(name='fakeindicatorfield')
+        self.create_mapper(name='fakemapper')
+        self.create_integration()
+        self.create_script()
+        self.create_metadata_for_zip()
+        if zip_dst:
+            self.created_zip_filepath = shutil.make_archive(
+                zip_dst / self.name, 'zip', self.target_dir
+            )
+        else:
+            self.created_zip_filepath = shutil.make_archive(
+                self.target_dir.parent / self.name, 'zip', self.target_dir
+            )
+        if del_src_files:
+            shutil.rmtree(self.target_dir)

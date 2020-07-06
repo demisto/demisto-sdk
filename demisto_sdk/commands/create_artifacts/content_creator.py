@@ -121,10 +121,11 @@ class ContentCreator:
 
             file_type = find_type(file_path)
 
-            if find_type in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
+            if find_type in (FileType.INTEGRATION, FileType.BETA_INTEGRATION) and \
+                    yml_content.get('script').get('script') != '-':
                 yml_content['script']['script'] = FoldedScalarString(yml_content['script']['script'])
 
-            elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+            elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT) and yml_content.get('script') != '-':
                 yml_content['script'] = FoldedScalarString(yml_content['script'])
 
             if save_yml:

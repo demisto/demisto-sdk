@@ -15,9 +15,11 @@ import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
 from glob import glob
+from typing import Optional
 
 import click
 import demisto_sdk.commands.common.constants as constants
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
@@ -70,8 +72,9 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
-                                               find_type, get_pack_name,
-                                               get_remote_file, get_yaml,
+                                               find_type,
+                                               get_content_release_identifier,
+                                               get_pack_name, get_yaml,
                                                has_remote_configured,
                                                is_file_path_in_pack,
                                                is_origin_content_repo,
@@ -1088,7 +1091,7 @@ class FilesValidator:
             no_error (bool): If set to true will restore self._is_valid after run (will not return new errors)
         """
         if not self.prev_ver:
-            content_release_branch_id = self.get_content_release_identifier()
+            content_release_branch_id = get_content_release_identifier(self.branch_name)
             if not content_release_branch_id:
                 print_warning('could\'t get content\'s release branch ID. Skipping validation.')
                 return
@@ -1123,13 +1126,8 @@ class FilesValidator:
 
         return False
 
-    def get_content_release_identifier(self):
-        try:
-            file_content = get_remote_file('.circleci/config.yml', tag=self.branch_name)
-        except Exception:
-            return
-        else:
-            return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
+    def get_content_release_identifier(self) -> Optional[str]:
+        return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
     def get_pack_ignore_file_path(pack_name):

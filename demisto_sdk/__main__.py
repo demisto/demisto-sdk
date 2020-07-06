@@ -644,6 +644,14 @@ def generate_test_playbook(**kwargs):
 @click.option(
     '--common_server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
+@click.option(
+    '-c', '--contribution',
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
+    required=False,
+    help="The path to the zip file downloaded via the Marketplace contribution UI. "
+    "This will format the contents of the zip file to a pack format ready for contribution "
+    "in the content repository on your local machine. The command should be executed from the "
+    "content repository's base directory.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

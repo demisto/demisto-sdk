@@ -113,7 +113,6 @@ tasks:
       script: '|||xdr-update-incident'
       type: regular
       iscommand: true
-      skipunavailable: false
       brand: ""
     nexttasks:
       '#none#':
@@ -140,6 +139,7 @@ tasks:
     note: false
     timertriggers: []
     ignoreworker: false
+    skipunavailable: false
   "10":
     id: "10"
     taskid: d2a748f4-da16-4e04-8103-21dc350805d8
@@ -218,7 +218,6 @@ tasks:
       script: '|||autofocus-sample-analysis'
       type: regular
       iscommand: true
-      skipunavailable: true
       brand: ""
     nexttasks:
       '#none#':
@@ -253,6 +252,7 @@ tasks:
     note: false
     timertriggers: []
     ignoreworker: false
+    skipunavailable: true
   "20":
     id: "20"
     taskid: d6741055-dd11-4b6d-83b7-4f14c74a1a84
@@ -406,7 +406,6 @@ tasks:
       scriptName: StopScheduledTask
       type: regular
       iscommand: false
-      skipunavailable: true
       brand: ""
     nexttasks:
       '#none#':
@@ -425,6 +424,7 @@ tasks:
     note: false
     timertriggers: []
     ignoreworker: false
+    skipunavailable: true
   "30":
     id: "30"
     taskid: 7afb43bf-64bd-44e2-85e9-fb9b2cdf90dd

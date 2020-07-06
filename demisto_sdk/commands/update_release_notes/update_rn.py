@@ -255,7 +255,7 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in sorted(changed_items.items(), key=lambda x: x[1]):
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1] if x[1] is not None else ''):
             if k == 'N/A':
                 continue
             elif v == 'Integration':

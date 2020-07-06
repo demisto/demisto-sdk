@@ -21,10 +21,6 @@ references:
       requires:
         - checkout-content
 
-    restore_cache: &restore_cache
-      restore_cache:
-        key: tox-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "tox.ini" }}
-
 jobs:
   print-env-vars:
       docker:
@@ -41,7 +37,6 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
-        - *restore_cache
         - run:
             name: Tox build
             command: |
@@ -54,10 +49,7 @@ jobs:
             paths:
               - coverage_html_report
               - .coverage
-        - save_cache:
-            paths:
               - .tox
-            key: tox-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "tox.ini" }}
   tox3-8:
       docker:
         - image: python:3.8
@@ -73,7 +65,8 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
-        - *restore_cache
+        - attach_workspace:
+            at: ~/project
         - run:
             name: Pre-commit
             command: |
@@ -102,7 +95,8 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
-        - *restore_cache
+        - attach_workspace:
+            at: ~/project
         - run:
             name: Checkout the Content Repo
             command: |
@@ -119,7 +113,6 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
-        - *restore_cache
         - attach_workspace:
             at: ~/project
         - run:
@@ -149,7 +142,6 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
-        - *restore_cache
         - attach_workspace:
             at: ~/project
         - run:
@@ -169,7 +161,6 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
-        - *restore_cache
         - attach_workspace:
             at: ~/project
         - run:

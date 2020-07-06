@@ -108,6 +108,20 @@ class ContentCreator:
 
         return 0
 
+    @staticmethod
+    def find_yml_file_type(file_path, yml_content):
+        if file_path:
+            return find_type(file_path)
+
+        else:
+            if 'script' in yml_content:
+                if isinstance(yml_content.get('script'), str):
+                    return FileType.SCRIPT
+                else:
+                    return FileType.INTEGRATION
+            else:
+                return FileType.PLAYBOOK
+
     def add_from_version_to_yml(self, file_path=None, yml_content=None, save_yml=True):
         if self.no_fromversion:
             return {}
@@ -119,13 +133,13 @@ class ContentCreator:
                 LATEST_SUPPORTED_VERSION) > parse_version(yml_content.get('fromversion', '0.0.0')):
             yml_content['fromversion'] = LATEST_SUPPORTED_VERSION
 
-            file_type = find_type(file_path)
+            file_type = self.find_yml_file_type(file_path, yml_content)
 
             if find_type in (FileType.INTEGRATION, FileType.BETA_INTEGRATION) and \
-                    yml_content.get('script').get('script') != '-':
+                    yml_content.get('script').get('script') not in ('-', ''):
                 yml_content['script']['script'] = FoldedScalarString(yml_content['script']['script'])
 
-            elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT) and yml_content.get('script') != '-':
+            elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT) and yml_content.get('script') not in ('-', ''):
                 yml_content['script'] = FoldedScalarString(yml_content['script'])
 
             if save_yml:

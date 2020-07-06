@@ -40,7 +40,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 from demisto_sdk.commands.unify.unifier import Unifier
 from ruamel.yaml import YAML
 
-LATEST_SUPPORTED_VERSION = '4.5.0'
+LATEST_SUPPORTED_VERSION = '4.1.0'
 
 
 class ContentCreator:

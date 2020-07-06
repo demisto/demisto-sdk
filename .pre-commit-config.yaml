@@ -11,7 +11,7 @@ repos:
         exclude: demisto_sdk/tests/test_files/*
     -   id: check-json
     -   id: check-yaml
-        exclude: demisto_sdk/tests/test_files/*
+        exclude: demisto_sdk/tests/test_files/*|\.circleci/config\.yml
     -   id: debug-statements
         language_version: python3
     -   id: name-tests-test

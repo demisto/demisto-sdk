@@ -1,8 +1,10 @@
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
+from typing import Optional
 
 import click
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
@@ -49,10 +51,11 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.tools import (checked_type,
                                                filter_packagify_changes,
-                                               find_type, get_pack_name,
+                                               find_type,
+                                               get_content_release_identifier,
+                                               get_pack_name,
                                                get_pack_names_from_files,
-                                               get_remote_file, get_yaml,
-                                               has_remote_configured,
+                                               get_yaml, has_remote_configured,
                                                is_origin_content_repo,
                                                run_command)
 
@@ -708,7 +711,7 @@ class ValidateManager:
             self.skip_pack_rn_validation = True
             # on master branch - we use '..' comparison range to check changes from the last release branch.
             self.compare_type = '..'
-            self.prev_ver = self.get_content_release_identifier()
+            self.prev_ver = get_content_release_identifier(self.branch_name)
 
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
@@ -948,13 +951,8 @@ class ValidateManager:
         branch_name_reg = re.search(r'\* (.*)', branches)
         return branch_name_reg.group(1)
 
-    def get_content_release_identifier(self):
-        try:
-            file_content = get_remote_file('.circleci/config.yml', tag=self.branch_name)
-        except Exception:
-            return
-        else:
-            return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
+    def get_content_release_identifier(self) -> Optional[str]:
+        return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
     def _is_py_script_or_integration(file_path):

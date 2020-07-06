@@ -19,15 +19,12 @@ HelloWorld Integration code.
 
 """
 
+import traceback
+from typing import Any, Dict, Tuple
+
 import demistomock as demisto
 from CommonServerPython import *
 from CommonServerUserPython import *
-
-from typing import Dict, Any, Tuple
-import traceback
-
-
-''' STANDALONE FUNCTION '''
 
 
 def say_hello(name: str) -> str:
@@ -41,9 +38,6 @@ def say_hello(name: str) -> str:
     """
 
     return f'Hello {name}'
-
-
-''' COMMAND FUNCTION '''
 
 
 def say_hello_command(args: Dict[str, Any]) -> Tuple[str, dict, str]:
@@ -87,18 +81,12 @@ def say_hello_command(args: Dict[str, Any]) -> Tuple[str, dict, str]:
     )
 
 
-''' MAIN FUNCTION '''
-
-
 def main():
     try:
         return_outputs(*say_hello_command(demisto.args()))
     except Exception as ex:
         demisto.error(traceback.format_exc())  # print the traceback
         return_error(f'Failed to execute HelloWorldScript. Error: {str(ex)}')
-
-
-''' ENTRY POINT '''
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):

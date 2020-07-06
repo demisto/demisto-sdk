@@ -240,28 +240,24 @@ variable is ``__main__`` , ``__builtin__`` (for Python 2) or ``builtins`` (for
 Python 3) and then calls the ``main()`` function. Just keep this convention.
 
 """
-import demistomock as demisto
-from CommonServerPython import *
-from CommonServerUserPython import *
 
 import json
-import urllib3
-import dateparser
 import traceback
-from typing import Any, Dict, Tuple, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
+
+import dateparser
+import demistomock as demisto  # noqa: E402 lgtm [py/polluting-import]
+import urllib3
+from CommonServerPython import *  # noqa: E402 lgtm [py/polluting-import]
+from CommonServerUserPython import *  # noqa: E402 lgtm [py/polluting-import]
 
 # Disable insecure warnings
 urllib3.disable_warnings()
 
 
-''' CONSTANTS '''
-
-
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 MAX_INCIDENTS_TO_FETCH = 50
 HELLOWORLD_SEVERITIES = ['Low', 'Medium', 'High', 'Critical']
-
-''' CLIENT CLASS '''
 
 
 class Client(BaseClient):
@@ -468,9 +464,6 @@ class Client(BaseClient):
         return f'Hello {name}'
 
 
-''' HELPER FUNCTIONS '''
-
-
 def parse_domain_date(domain_date: Union[List[str], str], date_format: str = '%Y-%m-%dT%H:%M:%S.000Z') -> Optional[str]:
     """Converts whois date format to an ISO8601 string
 
@@ -607,9 +600,6 @@ def arg_to_timestamp(arg: Any, arg_name: str, required: bool = False) -> Optiona
         # Convert to int if the input is a float
         return int(arg)
     raise ValueError(f'Invalid date: "{arg_name}"')
-
-
-''' COMMAND FUNCTIONS '''
 
 
 def test_module(client: Client, first_fetch_time: int) -> str:
@@ -1407,9 +1397,6 @@ def scan_results_command(client: Client, args: Dict[str, Any]) -> Union[Dict[str
         raise ValueError('Incorrect format, must be "json" or "file"')
 
 
-''' MAIN FUNCTION '''
-
-
 def main() -> None:
     """main function, parses params and runs command functions
 
@@ -1526,9 +1513,6 @@ def main() -> None:
     except Exception as e:
         demisto.error(traceback.format_exc())  # print the traceback
         return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
-
-
-''' ENTRY POINT '''
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):

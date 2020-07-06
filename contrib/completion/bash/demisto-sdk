@@ -1,0 +1,561 @@
+#/usr/bin/env bash
+#
+# bash completion for demisto-sdk
+# shamelessly based on docker-compose completion
+# https://github.com/docker/compose/blob/master/contrib/completion/bash/docker-compose
+#
+# Not compatible with zsh - check _demisto-sdk for zsh completion
+#
+# To enable:
+# - copy in your home directory (example: ~/.completions/demisto-sdk)
+# - install and enable bash-completion (for _filedir and _get_comp_words_by_ref)
+# - run "source ~/.completions/demisto-sdk"
+#
+# You may want to automate the steps above using .bashrc
+
+_demisto_sdk_top_completions() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h -v" -- "$cur" ) )
+            ;;
+        *)
+            COMPREPLY=( $( compgen -W "${commands[*]}" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_download_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --output
+        --insecure
+        --verbose
+        --force
+        --list-files
+        --all-custom-content
+        --run-format
+    "
+
+    case "$prev" in
+        --input|-i)
+            return
+            ;;
+        --output|-o)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_find_dependencies_completions() {
+    local subcommand_options="
+        --help
+        --pack_folder_name
+        --id_set_path
+    "
+
+    case "$prev" in
+        --pack_folder_name|-p)
+            return
+            ;;
+        --id_set_path|-i)
+            _filedir
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_format_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --from-version
+        --no-validate
+    "
+
+    case "$prev" in
+        --from-version|-fv)
+            return
+            ;;
+        --input|-i)
+            _filedir "y?(a)ml"
+            return
+            ;;
+        --output|-o)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_generate_docs_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --use_cases
+        --command
+        --examples
+        --permissions
+        --command_permissions
+        --limitations
+        --insecure
+        --verbose
+    "
+
+    case "$prev" in
+        --input|-i)
+            _filedir "y?(a)ml"
+            return
+            ;;
+        --output|-o)
+            _filedir -d
+            return
+            ;;
+        --examples|-e)
+            _filedir
+            return
+            ;;
+        --command_permissions|-cp)
+            _filedir
+            return
+            ;;
+        --permissions|-p)
+            COMPREPLY=( $( compgen -W "none general per-command" -- "$cur" ) )
+            return
+            ;;
+        --command|-c|--limitations|-l|--use_cases|-uc)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_generate_test_playbook_completions() {
+    local subcommand_options="
+        --help
+        --verbose
+        --name
+        --input
+        --output
+        --no-outputs
+    "
+
+    case "$prev" in
+        --input|-i)
+            _filedir "y?(a)ml"
+            return
+            ;;
+        --output|-o)
+            _filedir -d
+            return
+            ;;
+        --name|-n)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_init_completions() {
+    local subcommand_options="
+        --help
+        --name
+        --id
+        --output
+        --integration
+        --script
+        --pack
+        --demisto_mock
+        --common_server
+    "
+
+    case "$prev" in
+        --id|--name|-n)
+            return
+            ;;
+        --output|-o)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_json_to_outputs_completions() {
+    local subcommand_options="
+        --help
+        --command
+        --input
+        --prefix
+        --output
+        --verbose
+        --interactive
+    "
+
+    case "$prev" in
+        --input|-i)
+            _filedir
+            return
+            ;;
+        --output|-o)
+            _filedir
+            return
+            ;;
+        --prefix|-p|--command|-c)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_lint_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --git
+        --all-packs
+        --verbose
+        --quiet
+        --parallel
+        --no-flake8
+        --no-bandit
+        --no-mypy
+        --no-vulture
+        --no-pylint
+        --no-test
+        --no-pwsh-analyze
+        --no-pwsh-test
+        --keep-container
+        --test-xml
+        --failure-report
+        --log-path
+    "
+
+    case "$prev" in
+        --parallel|-p)
+            return
+            ;;
+        --test-xml|--failure-report|--log-path|-lp)
+            _filedir
+            return
+            ;;
+        --input|-i)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_run_completions() {
+    local subcommand_options="
+        --help                    
+        --query
+        --insecure
+        --verbose
+        --debug
+        --debug-path
+    "
+
+    case "$prev" in
+        --query|-q)
+            return
+            ;;
+        --debug-path)
+            _filedir
+            ;;
+        --input|-i)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_run_playbook_completions() {
+    local subcommand_options="
+        --help                    
+        --url
+        --insecure
+        --playbook_id
+        --wait
+        --timeout
+    "
+
+    case "$prev" in
+        --url|-u|--playbook_id|-p|--timeout|-t)
+            _filedir
+            return
+            ;;
+        --whitelist|-wl)
+            _filedir
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_secrets_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --post-commit
+        --ignore-entropy
+        --whitelist
+    "
+
+    case "$prev" in
+        --input|-i)
+            _filedir
+            return
+            ;;
+        --whitelist|-wl)
+            _filedir
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_split_yml_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --output
+        --no-demisto-mock
+        --no-common-server
+        --no-auto-create-dir
+    "
+
+    case "$prev" in
+        --input|-i)
+            _filedir "y?(a)ml"
+            return
+            ;;
+        --output|-o)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_unify_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --output
+        --force
+    "
+
+    case "$prev" in
+        --input|-i)
+            _filedir "y?(a)ml"
+            return
+            ;;
+        --output|-o)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_update_release_notes_completions() {
+    local subcommand_options="
+        --help
+        --pack
+        --update_type
+        --version
+        --all
+        --pre_release
+    "
+
+    case "$prev" in
+        --pack|-p|--version|-v)
+            return
+            ;;
+        --update_type|-u)
+            COMPREPLY=( $( compgen -W "major minor revision" -- "$cur" ) )
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_upload_completions() {
+    local subcommand_options="
+        --help
+        --input
+        --insecure
+        --verbose
+    "
+
+    case "$prev" in
+        --input|-i)
+            _filedir
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_validate_completions() {
+    local subcommand_options="
+        --help
+        --no-conf-json           
+        --id-set
+        --prev-ver
+        --post-commit
+        --no-backward-comp
+        --use-git
+        --validate-all
+        --input
+        --skip-pack-release-notes
+        --print-ignored-errors
+    "
+
+    case "$prev" in
+        --prev-ver)
+            return
+            ;;
+        --input|-i)
+            _filedir
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        *)
+            COMPREPLY=( $( compgen -W "$subcommand_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_demisto_sdk_completions()
+{
+    local commands=(
+        download
+        find-dependencies
+        format
+        generate-docs
+        generate-test-playbook
+        init
+        json-to-outputs
+        lint
+        run
+        run-playbook
+        secrets
+        split-yml
+        unify
+        update-release-notes
+        upload
+        validate
+    )
+
+    COMPREPLY=()
+    local cur prev words cword
+    _get_comp_words_by_ref -n : cur prev words cword
+
+    local command='demisto_sdk_top'
+    local top_level_options=()
+    local counter=1
+
+    while [ $counter -lt $cword ]; do
+        case "${words[$counter]}" in
+            -*)
+                ;;
+            *)
+                command="${words[$counter]}"
+                break
+                ;;
+        esac
+        (( counter++ ))
+    done
+
+    local completions_func=_${command//-/_}_completions
+    declare -F $completions_func >/dev/null && $completions_func
+
+    return 0
+}
+
+complete -o default -F _demisto_sdk_completions demisto-sdk

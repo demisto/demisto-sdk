@@ -1,0 +1,260 @@
+#compdef demisto-sdk
+#
+# zsh completion for demisto-sdk
+#
+# How To Install
+#
+# If you are using Oh-My-Zsh:
+# - mkdir -p ~/.oh-my-zsh/plugins/demisto-sdk
+# - place this file in the directory ~/.oh-my-zsh/plugins/demisto-sdk
+# - in ~/.zshrc add "demisto-sdk" to your plugins list
+# - restart zsh
+#
+# If you are not using zsh, place this file in one of the directories
+# in fpath
+
+function _demisto-sdk {
+    typeset -A opt_args
+    local context state line curcontext="$curcontext"
+
+    local ret=1
+
+    _arguments -C \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(- :)'{-v,--version}'[Get the demisto-sdk version.]' \
+        '1: :->cmds' \
+        '*::arg:->args' \
+        && ret=0
+
+    case $state in
+        cmds)
+            _demisto-sdk_cmds && ret=0
+        ;;
+
+        args)
+            _demisto-sdk_${words[1]//-/_} && ret=0
+        ;;
+    esac
+
+    return ret
+}
+
+function _demisto-sdk_cmds {
+    local -a commands
+    
+    commands=(
+        'download:Download custom content from Demisto instance.'
+        'find-dependencies:Find pack dependencies and update pack metadata.'
+        'format:Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/incidenttype/indicatortype/layout/dashboard file.'
+        'generate-docs:Generate documentation for integration, playbook or script from yaml file.'
+        'generate-test-playbook:Generate test playbook from integration or script.'
+        'init:Initiate a new Pack, Integration or Script.'
+        'json-to-outputs:Generate the YAML for a command from the JSON result.'
+        'lint:Perform multiple checks on a package.'
+        'run:Run integration command on remote Demisto instance in the playground.'
+        'run-playbook:Run a playbook in Demisto.'
+        'secrets:Run Secrets validator to catch sensitive data before exposing your code to public repository.'
+        'split-yml:Split the code, image and description files from a Demisto integration or script yaml file.'
+        'unify:Unify code, image, description and yml files to a single Demisto yml file.'
+        'update-release-notes:Auto-increment pack version and generate release notes template.'
+        'upload:Upload integration to Demisto instance.'
+        'validate:Validate your content files.'
+    )
+
+    _describe -t commands 'demisto-sdk command' commands
+}
+
+function _demisto-sdk_download {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-o --output -lf --list-files)'{-o,--output}'[The path of a package directory to download custom content to]:package directory:_files -/' \
+        '(-i --input -lf --list-files -a --all-custom-content)'{-i,--input}'[Custom content file name to be downloaded.]:content file name: ' \
+        '--insecure[Skip certificate validation.]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output.]' \
+        '(-f --force -lf --list-files)'{-f,--force}'[Whether to override existing files or not.]' \
+        '(-f --force -fmt --run-format -o --output -i --input -lf --list-files -a --all-custom-content)'{-lf,--list-files}'[Prints a list of all custom content files available to be downloaded.]' \
+        '(-i --input -lf --list-files -a --all-custom-content)'{-a,--all-custom-content}'[Download all available custom content files.]' \
+        '(-fmt --run-format -lf --list-files)'{-fmt,--run-format}'[Whether to run demisto-sdk format on downloaded files or not.]'
+}
+
+function _demisto-sdk_find_dependencies {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-p --pack_folder_name)'{-p,--pack_folder_name}'[Pack folder name to find dependencies.]:package directory:_demisto-sdk_local_pack_names' \
+        '(-i --id_set_path)'{-i,--id_set_path}'[Path to id set json file.]:set json file:_files' \
+}
+
+function _demisto-sdk_format {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-i --input)'{-i,--input}'[The path of the script yml file.]:script:_files -g \*\.\(yml\|yaml\|YAML\|YML\|json\|JSON\)' \
+        '(-o --output)'{-o,--output}'[The path where the formatted file will be saved to. Default: replace]: :_files -g \*\.\(yml\|yaml\|YAML\|YML\|json\|JSON\)' \
+        '(-fv --from-version)'{-fv,--from-version}'[Specify fromversion of the pack.]:version: ' \
+        '(-nv --no-validate)'{-nv,--no-validate}'[Set when validate on file is not wanted.]'
+}
+
+function _demisto-sdk_generate_docs {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-i --input)'{-i,--input}'[Path of the yml file.]:script:_files -g \*\.\(yml\|yaml\|YAML\|YML\)' \
+        '(-o --output)'{-o,--output}'[The output dir to write the documentation file into. Default: input dir]:output directory:_files -/' \
+        '(-uc --use_cases)'{-uc,--use_cases}'[For integration - Top use-cases.]:use cases: ' \
+        '(-c --command)'{-c,--command}'[Comma-separated command names to generate doc for.]:command names: ' \
+        '(-e --examples)'{-e,--examples}'[Path for file containing command or script examples.]:command examples:_files' \
+        '(-p --permissions)'{-p,--permissions}'[Permissions needed.]:permissions:(none general per-command)' \
+        '(-cp --command_permissions)'{-cp,--command_permissions}'[Path for file containing commands permissions.]:command permissions:_files' \
+        '(-l --limitations)'{-l,--limitations}'[Known limitations.]:limitations: ' \
+        '--insecure[Skip certificate validation.]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output.]'
+}
+
+function _demisto-sdk_generate_test_playbook {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-i --input)'{-i,--input}'[Specify integration/script yml path.]:script:_files -g \*\.\(yml\|yaml\|YAML\|YML\)' \
+        '(-o --output)'{-o,--output}'[Specify output directory. Default: input dir]:output directory:_files -/' \
+        '(-n --name)'{-n,--name}'[Specify test playbook name.]:playbook name: ' \
+        '--no-outputs[Skip generating verification conditions for each output contextPath.]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output.]'
+}
+
+function _demisto-sdk_init {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-n --name)'{-n,--name}'[The name of the directory and file you want to create.]:name:_files' \
+        '--id[The id used in the yml file of the integration or script.]:id: ' \
+        '(-o --output)'{-o,--output}'[The output dir to write the object into. Default: current dir]:output directory:_files -/' \
+        '(--script --pack)--integration[Create an Integration based on HelloWorld example.]' \
+        '(--integration --pack)--script[Create a script based on HelloWorldScript example.]' \
+        '(--integration --script)--pack[Create pack and its sub directories.]' \
+        '--demisto_mock[Copy demistomock.]' \
+        '--common_server[Copy CommonServerPython.]'
+}
+
+function _demisto-sdk_json_to_outputs {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-c --command)'{-c,--command}'[Command name (e.g. xdr-get-incidents)]:command name: ' \
+        '(-i --input)'{-i,--input}'[Valid JSON file path.]:json file:_files -g \*\.\(json\|JSON\)' \
+        '(-o --output)'{-o,--output}'[Output file path. Default: stdout]:output:_files' \
+        '(-p --prefix)'{-p,--prefix}'[Output prefix (like Jira.Ticket, VirusTotal.IP).]:output prefix: ' \
+        '--interactive[If passed, then for each output field will ask user interactively to enter the description.]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output.]'
+}
+
+function _demisto-sdk_lint {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-i --input -g --git -a --all-packs)'{-i,--input}'[Specify directory of integration/script.]:directory:_files -/' \
+        '(-i --input -g --git -a --all-packs)'{-g,--git}'[Will run only on changed packages.]' \
+        '(-i --input -g --git -a --all-packs)'{-a,--all-packs}'[Run lint on all directories in content repo.]' \
+        '(-v --verbose -q --quiet)'{-v,--verbose}'[Verbose output.]' \
+        '(-v --verbose -q --quiet)'{-q,--quiet}'[Quiet output.]' \
+        '(-p --parallel)'{-p,--parallel}'[Run tests in parallel.]:concurrency: ' \
+        '--no-flake8[Do NOT run flake8 linter.]' \
+        '--no-bandit[Do NOT run bandit linter.]' \
+        '--no-mypy[Do NOT run mypy static type checking.]' \
+        '--no-vulture[Do NOT run vulture linter.]' \
+        '--no-pylint[Do NOT run pylint linter.]' \
+        '--no-test[Do NOT test (skip pytest).]' \
+        '--no-pwsh-analyze[Do NOT run powershell analyze.]' \
+        '--no-pwsh-test[Do NOT run powershell test.]' \
+        '(-kc --keep-container)'{-kc,--keep-container}'[Keep the test container.]' \
+        '--test-xml[Path to store pytest xml results.]:path:_files' \
+        '--failure-report[Path to store failed packs report.]:path:_files' \
+        '(-lp --log-path)'{-lp,--log-path}'[Path to store all levels of logs.]:path:_files'
+}
+
+function _demisto-sdk_run {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output.]' \
+        '--insecure[Skip certificate validation.]' \
+        '(-q --query)'{-q,--query}'[The query to run.]:query: ' \
+        '(-D --debug)'{-D,--debug}'[Enable debug-mode.]' \
+        '--debug-path[The path to save the debug file at.]:debug file:_files'
+}
+
+function _demisto-sdk_run_playbook {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output.]' \
+        '--insecure[Skip certificate validation.]' \
+        '(-u --url)'{-u,--url}'[URL to a Demisto instance. Default: DEMISTO_BASE_URL]:url: ' \
+        '(-w --wait)'{-w,--wait}'[Wait until the playbook run is finished.]' \
+        '(-p --playbook_id)'{-p,--playbook_id}'[The playbook ID to run.]:playbook id: ' \
+        '(-t --timeout)'{-t,--timeout}'[Timeout for the command.]:timeout: '
+}
+
+function _demisto-sdk_secrets {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-i --input)'{-i,--input}'[Specify file of to check secret on.]:file:_files' \
+        '--post-commit[???]' \
+        '(-ie --ignore-entropy)'{-ie,--ignore-entropy}'[Ignore entropy algorithm.]' \
+        '(-wl --whitelist)'{-wl,--whitelist}'[Full path to whitelist file.]:allow list:_files -g \*\.\(json\|JSON\)'
+}
+
+function _demisto-sdk_split_yml {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-i --input)'{-i,--input}'[The yml file to extract from.]:yml file:_files -g \*\.\(yml\|yaml\|YAML\|YML\)' \
+        '(-o --output)'{-o,--output}'[The output dir to write the extracted code/description/image to.]:output directory:_files -/' \
+        '--no-demisto-mock[Do not add an import for demisto mock.]' \
+        '--no-common-server[Do not add an import for CommonServerPython.]' \
+        '--no-auto-create-dir[Do not auto create the directory if the target directory ends with *Integrations/*Scripts.]'
+}
+
+function _demisto-sdk_unify {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-i --input)'{-i,--input}'[The path to the files to unify.]:input directory:_files -/' \
+        '(-o --output)'{-o,--output}'[The output dir to write the unified yml to.]:output directory:_files -/' \
+        '--force[Forcefully overwrites the preexisting yml if one exists.]'
+}
+
+function _demisto-sdk_update_release_notes {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-p --pack --all)'{-p,--pack}'[Name of the pack.]:name: ' \
+        '(-u --update_type)'{-u,--update_type}'[The type of update being done]:update type:(major minor revision)' \
+        '(-v --version)'{-v,--version}'[Bump to a specific version.]:version: ' \
+        '(-p --pack --all)--all[Update all changed packs]' \
+        '--pre_release[Indicates that this change should be designated a pre-release version.]'
+}
+
+function _demisto-sdk_upload {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output.]' \
+        '--insecure[Skip certificate validation.]' \
+        '(-i --input)'{-i,--input}'[The path of file or a directory to upload.]:path:_files'
+}
+
+function _demisto-sdk_validate {
+    _arguments \
+        '(- :)'{-h,--help}'[Get help.]' \
+        '--no-conf-json[Skip conf.json validation.]' \
+        '(-s --id-set)'{-s,--id-set}'[Validate the id_set file.]' \
+        '--prev-ver[Previous branch or SHA1 commit to run checks against.]:version: ' \
+        '--post-commit[Whether the validation should run only on the current branch''s committed changed files.]' \
+        '--no-backward-comp[Do not check backward compatibility.]' \
+        '(-g --use-git -a --validate-all -i --input)'{-g,--use-git}'[Validate changes using git]' \
+        '(-g --use-git -a --validate-all -i --input --post-commit)'{-a,--validate-all}'[Whether to run all validation on all files or not.]' \
+        '(-g --use-git -a --validate-all -i --input --post-commit)'{-i,--input}'[The path of the content pack/file to validate specifically.]:input:_files' \
+        '--skip-pack-release-notes[Skip validation of pack release notes.]' \
+        '--print-ignored-errors[Print ignored errors as warnings.]'
+}
+
+# Utilities
+function _demisto-sdk_local_pack_names {
+    local -a local_pack_names
+
+    for pack in Packs/*(N); do
+        [[ -d ${pack} ]] && local_pack_names+=($(basename ${pack}))
+    done
+
+    _describe -t local-pack-names 'local pack names' local_pack_names "$@"
+}
+
+_demisto-sdk "@"

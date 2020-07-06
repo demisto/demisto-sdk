@@ -12,7 +12,6 @@ from typing import List
 from pkg_resources import parse_version
 
 import demisto_sdk.commands.common.tools as tools
-import yaml
 from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -39,6 +38,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                print_warning)
 from demisto_sdk.commands.unify.unifier import Unifier
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import FoldedScalarString
 
 LATEST_SUPPORTED_VERSION = '4.1.0'
 
@@ -119,9 +119,17 @@ class ContentCreator:
                 LATEST_SUPPORTED_VERSION) > parse_version(yml_content.get('fromversion', '0.0.0')):
             yml_content['fromversion'] = LATEST_SUPPORTED_VERSION
 
+            file_type = find_type(file_path)
+
+            if find_type in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
+                yml_content['script']['script'] = FoldedScalarString(yml_content['script']['script'])
+
+            elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+                yml_content['script'] = FoldedScalarString(yml_content['script'])
+
             if save_yml:
                 with open(file_path, 'w') as f:
-                    yaml.dump(yml_content, f)
+                    YAML().dump(yml_content, f)
 
         return yml_content
 

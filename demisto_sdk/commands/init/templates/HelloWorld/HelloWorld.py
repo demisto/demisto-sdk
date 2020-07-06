@@ -260,7 +260,7 @@ MAX_INCIDENTS_TO_FETCH = 50
 HELLOWORLD_SEVERITIES = ['Low', 'Medium', 'High', 'Critical']
 
 
-class Client(BaseClient):
+class Client(BaseClient):   # type: ignore
     """Client class to interact with the service API
 
     This Client implements API calls, and does not contain any Demisto logic.

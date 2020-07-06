@@ -845,3 +845,14 @@ class TestValidators:
 
         # check recognized deleted file
         assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
+
+
+def test_content_release_identifier_exists():
+    """
+    When running validate file, it should get a git sha1 from content repo.
+    This test assures that if someone changes the .circle/config.yml scheme, it'll fail.
+    """
+    fv = FilesValidator()
+    fv.branch_name = 'master'
+    sha1 = fv.get_content_release_identifier()
+    assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'

@@ -12,7 +12,7 @@ from TestSuite.yml import YAML
 
 
 class Integration:
-    def __init__(self, tmpdir: Path, name, repo, create_unified: bool = False):
+    def __init__(self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False):
         # Save entities
         self.name = name
         self._repo = repo

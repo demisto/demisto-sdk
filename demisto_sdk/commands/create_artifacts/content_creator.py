@@ -143,7 +143,7 @@ class ContentCreator:
                 yml_content['script'] = FoldedScalarString(yml_content['script'])
 
             if save_yml:
-                with open(file_path, 'w') as f:
+                with open(file_path, mode='w', encoding='utf-8') as f:
                     YAML().dump(yml_content, f)
 
         return yml_content
@@ -230,7 +230,7 @@ class ContentCreator:
                 unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
 
-            if parse_version(unification_tool.yml_data.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+            if parse_version(unification_tool.yml_data.get('fromversion', '0.0.0')) <= parse_version('6.0.0'):
                 unified_yml_paths = unification_tool.merge_script_package_to_yml(file_name_suffix=self.file_name_suffix)
                 for unified_yml_path in unified_yml_paths:
                     self.add_from_version_to_yml(unified_yml_path)
@@ -541,7 +541,7 @@ class ContentCreator:
                                 continue
                             unifier = Unifier(package_dir, dir_name, dest_dir)
 
-                            if parse_version(unifier.yml_data.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+                            if parse_version(unifier.yml_data.get('fromversion', '0.0.0')) <= parse_version('6.0.0'):
                                 new_file_paths = unifier.merge_script_package_to_yml(
                                     file_name_suffix=self.file_name_suffix)
                                 for new_file_path in new_file_paths:

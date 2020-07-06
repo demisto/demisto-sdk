@@ -115,7 +115,8 @@ def test_extract_to_package_format_pwsh(tmpdir):
         assert not yaml_obj['script']['script']
 
 
-def test_extract_to_package_format_py(tmpdir, mocker):
+def test_extract_to_package_format_py(pack, mocker, tmp_path):
+    mocker.patch.object(Extractor, 'extract_image', return_value='12312321')
     mocker.patch(
         'demisto_sdk.commands.split_yml.extractor.get_python_version',
         return_value='2.7'
@@ -124,12 +125,23 @@ def test_extract_to_package_format_py(tmpdir, mocker):
         'demisto_sdk.commands.split_yml.extractor.get_pipenv_dir',
         return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
     )
-    out = tmpdir.join('Integrations')
-    extractor = Extractor(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+    integration = pack.create_integration('Sample')
+    integration.create_default_integration()
+    out = tmp_path / 'TestIntegration'
+    non_sorted_imports = 'from CommonServerPython import *\nimport datetime\nimport json'
+    integration.yml.update(
+        {
+            'image': '',
+            'script': {
+                'type': 'python',
+                'script': non_sorted_imports
+            }
+        }
+    )
+    extractor = Extractor(input=integration.yml.path,
                           output=str(out), file_type='integration')
     extractor.extract_to_package_format()
-    with open(out.join('Zoom').join('Zoom.py'), 'r', encoding='utf-8') as f:
+    with open(out / 'TestIntegration.py', encoding='utf-8') as f:
         file_data = f.read()
         # check imports are sorted
-        assert 'import datetime\nimport json\nimport shutil\nfrom zipfile import ZipFile\n\nimport requests\n\n' \
-               'import demistomock as demisto\nimport jwt\nfrom CommonServerPython import *\n' in file_data
+        assert non_sorted_imports not in file_data

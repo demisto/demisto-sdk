@@ -1,36 +1,44 @@
 import json
 import os
 import shutil
+import traceback
+import zipfile
 from datetime import datetime
 from distutils.dir_util import copy_tree
-from typing import Dict, List
+from typing import Dict, List, Union
 
+import click
 import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
+                                                   ENTITY_TYPE_TO_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
+                                                   INTEGRATION,
                                                    INTEGRATION_CATEGORIES,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
                                                    PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPTS_DIR,
+                                                   SCRIPT, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+                                               get_child_directories,
+                                               get_child_files,
                                                get_common_server_path,
-                                               print_color, print_error,
+                                               get_content_path, print_error,
                                                print_v)
+from demisto_sdk.commands.split_yml.extractor import Extractor
 
 
 class Initiator:
@@ -46,7 +54,8 @@ class Initiator:
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
-                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
+                 contribution: Union[str] = None):
         self.output = output if output else ''
         self.id = id
 
@@ -56,6 +65,7 @@ class Initiator:
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.configuration = Configuration()
+        self.contribution = contribution
 
         # if no flag given automatically create a pack.
         if not integration and not script and not pack:
@@ -72,8 +82,6 @@ class Initiator:
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
-    PACK_TEMPLATE_FOLDER = 'PackData'
-    PACK_METADATA_TEMPLATE = 'metadata_template.json'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
 
@@ -85,7 +93,9 @@ class Initiator:
         """Starts the init command process.
 
         """
-        if self.is_integration:
+        if self.contribution:
+            self.convert_contribution_to_pack()
+        elif self.is_integration:
             self.get_created_dir_name(created_object="integration")
             self.get_object_id(created_object="integration")
             return self.integration_init()
@@ -98,6 +108,82 @@ class Initiator:
         elif self.is_pack:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
+
+    def convert_contribution_to_pack(self):
+        """Create a Pack in the content repo from the contents of a contribution zipfile"""
+        try:
+            packs_dir = os.path.join(get_content_path(), 'Packs')
+            metadata_dict = {}
+            with zipfile.ZipFile(self.contribution) as zipped_contrib:
+                with zipped_contrib.open('metadata.json') as metadata_file:
+                    click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
+                    metadata = json.loads(metadata_file.read())
+                    pack_name = metadata.get('name', 'ContributionPack')
+                    metadata_dict['name'] = pack_name
+                    metadata_dict['author'] = metadata.get('author', '')
+                    metadata_dict['support'] = metadata.get('support', '')
+                    metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
+                    metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
+            if os.path.exists(os.path.join(packs_dir, pack_name)):
+                click.echo(
+                    f'Modifying pack name because pack {pack_name} already exists in the content repo',
+                    color=LOG_COLORS.NATIVE
+                )
+                if pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
+                    # increment by one
+                    pack_name = pack_name[:-1] + str(int(pack_name[-1]) + 1)
+                else:
+                    pack_name += 'V2'
+                click.echo(f'New pack name is "{pack_name}"', color=LOG_COLORS.NATIVE)
+            pack_dir = os.path.join(packs_dir, pack_name)
+            os.mkdir(pack_dir)
+            shutil.unpack_archive(filename=self.contribution, extract_dir=pack_dir)
+            pack_subdirectories = get_child_directories(pack_dir)
+            for pack_subdir in pack_subdirectories:
+                basename = os.path.basename(pack_subdir)
+                if basename in ENTITY_TYPE_TO_DIR:
+                    dst_name = ENTITY_TYPE_TO_DIR.get(basename)
+                    src_path = os.path.join(pack_dir, basename)
+                    dst_path = os.path.join(pack_dir, dst_name)
+                    content_item_dir = shutil.move(src_path, dst_path)
+                    if basename in {SCRIPT, AUTOMATION, INTEGRATION}:
+                        self.content_item_to_package_format(content_item_dir, del_unified=True)
+            # create pack's base files
+            self.full_output_path = pack_dir
+            self.create_pack_base_files()
+            metadata_dict = Initiator.create_metadata(fill_manually=False, data=metadata_dict)
+            metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
+            with open(metadata_path, 'w') as pack_metadata_file:
+                json.dump(metadata_dict, pack_metadata_file, indent=4)
+            # remove metadata.json file
+            os.remove(os.path.join(pack_dir, 'metadata.json'))
+        except Exception as e:
+            click.echo(
+                f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
+                color=LOG_COLORS.RED
+            )
+
+    def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
+        """
+        Iterate over the YAML files in a directory and create packages (a containing directory and
+        component files) from the YAMLs of integrations and scripts
+
+        Args:
+            content_item_dir (str): Path to the directory containing the content item YAML file(s)
+            del_unified (bool): Whether to delete the unified yaml the package was extracted from
+        """
+        child_files = get_child_files(content_item_dir)
+        content_item_file_path = ''
+        for child_file in child_files:
+            cf_name_lower = os.path.basename(child_file).lower()
+            if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith('yml'):
+                content_item_file_path = child_file
+                file_type = find_type(content_item_file_path)
+                file_type = file_type.value if file_type else file_type
+                extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
+                extractor.extract_to_package_format()
+                if del_unified:
+                    os.remove(content_item_file_path)
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -150,16 +236,12 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
 
-        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
-        fp.close()
+        self.create_pack_base_files()
 
-        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
-        fp.close()
-
-        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
-        fp.close()
-
-        print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
+        click.echo(
+            f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
+            color=LOG_COLORS.GREEN
+        )
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
@@ -169,7 +251,7 @@ class Initiator:
             pack_metadata = Initiator.create_metadata(fill_manually)
             json.dump(pack_metadata, fp, indent=4)
 
-            print_color(f"Created pack metadata at path : {metadata_path}", LOG_COLORS.GREEN)
+            click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
@@ -180,12 +262,28 @@ class Initiator:
 
         return True
 
+    def create_pack_base_files(self):
+        """
+        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        to be in the base directory of a pack
+        """
+        click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
+        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
+        fp.close()
+
     @staticmethod
-    def create_metadata(fill_manually: bool) -> Dict:
+    def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
             fill_manually (bool): Whether to interact with the user to fill in metadata details or not.
+            data (dict): Dictionary keys and value to insert into the pack metadata.
 
         Returns:
             Dict. Pack metadata JSON content.
@@ -204,6 +302,9 @@ class Initiator:
             'useCases': [],
             'keywords': []
         }
+
+        if data:
+            pack_metadata.update(data)
 
         if not fill_manually:
             return pack_metadata  # return xsoar template
@@ -302,7 +403,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
+        click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
         return True
 
@@ -340,7 +441,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
+        click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 
         return True
 

@@ -178,7 +178,6 @@ class PlaybookValidator(ContentEntityValidator):
         unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
 
         # Remove all nexttasks from unhandled_reply_options (UPPER)
-        next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch, next_task_id in next_tasks.items():
             try:
                 if next_task_id:

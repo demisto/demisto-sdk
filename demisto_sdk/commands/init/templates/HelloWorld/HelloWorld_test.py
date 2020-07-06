@@ -52,8 +52,8 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 
 """
 
-import json
 import io
+import json
 
 
 def util_load_json(path):

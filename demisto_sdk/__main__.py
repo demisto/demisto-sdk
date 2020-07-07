@@ -784,6 +784,9 @@ def id_set_command(**kwargs):
     '--all', help="Update all changed packs", is_flag=True
 )
 @click.option(
+    '--text', help="Text to add to all of the release notes files", is_flag=True
+)
+@click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 def update_pack_releasenotes(**kwargs):
@@ -791,6 +794,7 @@ def update_pack_releasenotes(**kwargs):
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
+    text = kwargs.get('text')
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
     modified, added, old, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
@@ -822,7 +826,7 @@ def update_pack_releasenotes(**kwargs):
         for pack in packs:
             update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
                                       pre_release=pre_release, added_files=added,
-                                      specific_version=specific_version)
+                                      specific_version=specific_version, text=text)
             update_pack_rn.execute_update()
     elif is_all and _pack:
         print_error("Please remove the --all flag when specifying only one pack.")

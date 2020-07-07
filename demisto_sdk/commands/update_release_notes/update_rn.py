@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 class UpdateRN:
     def __init__(self, pack: str, update_type: None, pack_files: set, added_files: set,
-                 specific_version: str = None, pre_release: bool = False):
+                 specific_version: str = None, pre_release: bool = False, text: str = ''):
 
         self.pack = pack
         self.update_type = update_type
@@ -33,6 +33,7 @@ class UpdateRN:
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
+        self.text = text
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -242,6 +243,8 @@ class UpdateRN:
                     raise
 
     def build_rn_template(self, changed_items: dict):
+        template_string = self.text if self.text else '%%UPDATE_RN%%'
+
         rn_string = ''
         integration_header = False
         playbook_header = False
@@ -262,62 +265,62 @@ class UpdateRN:
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Playbook':
                 if not playbook_header:
                     rn_string += '\n#### Playbooks\n'
                     playbook_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Script':
                 if not script_header:
                     rn_string += '\n#### Scripts\n'
                     script_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Incident Fields':
                 if not inc_flds_header:
                     rn_string += '\n#### Incident Fields\n'
                     inc_flds_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Classifiers':
                 if not classifier_header:
                     rn_string += '\n#### Classifiers\n'
                     classifier_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Layouts':
                 if not layout_header:
                     rn_string += '\n#### Layouts\n'
                     layout_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Incident Types':
                 if not inc_types_header:
                     rn_string += '\n#### Incident Types\n'
                     inc_types_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Indicator Types':
                 if not ind_types_header:
                     rn_string += '\n#### Indicator Types\n'
                     ind_types_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Reports':
                 if not rep_types_header:
                     rn_string += '\n#### Reports\n'
                     rep_types_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Widgets':
                 if not widgets_header:
                     rn_string += '\n#### Widgets\n'
                     widgets_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Dashboards':
                 if not dashboards_header:
                     rn_string += '\n#### Dashboards\n'
                     dashboards_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
             elif v == 'Connections':
                 if not connections_header:
                     rn_string += '\n#### Connections\n'
                     connections_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {template_string}\n'
         return rn_string
 
     def update_existing_rn(self, current_rn, changed_files):

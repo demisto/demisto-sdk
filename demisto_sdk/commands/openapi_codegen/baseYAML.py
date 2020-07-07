@@ -1,33 +1,466 @@
-blankIntegration = """commonfields:
-  id: $ID$
-  version: $VERSION$
-name: $NAME$
-display: $DISPLAY$
-description: $DESCRIPTION$
-category: Utilities
-image: data:image/png;base64,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
-configuration:
-- display: $NAME$ URL to use
-  name: url
-  defaultvalue: "https://$HOST$"
-  type: 0
-  required: true
-- display: Use system proxy settings
-  name: proxy
-  defaultvalue: ''
-  type: 8
-  required: false
-- display: Trust any certificate (not secure)
-  name: insecure
-  defaultvalue: "false"
-  type: 8
-  required: false
-script:
-  script: $SCRIPT$
-  type: python
-  commands:
-$COMMANDS$
-  dockerimage: demisto/python3:3.7.3.286
-  runonce: false
-  subtype: python3
-"""
+import json
+
+
+class XSOARIntegration:
+    def __init__(self, commonfields, name, display, category, image, description, detaileddescription, configuration,
+                 script):
+        self.commonfields = commonfields
+        self.name = name
+        self.display = display
+        self.category = category
+        self.image = image
+        self.description = description
+        self.detaileddescription = detaileddescription
+        self.configuration = configuration
+        self.script = script
+
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True, indent=4)
+
+    @classmethod
+    def get_base_integration(cls):
+        commonfields = XSOARIntegration.CommonFields('GeneratedIntegration', -1)
+        name = 'GeneratedIntegration'
+        display = 'GeneratedIntegration'
+        category = 'Utilities'
+        image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAyCAYAAACXpx/YAAAABGdBTUEAALGPC/xh" \
+                "BQAACYJJREFUeAHtmwmMVdUdhw8zDDMKjIAgIohIRUaghBSLGmWJWGONaAON2CUmik2pTRu7poCEqq3VtjY2Fl" \
+                "vcWqRY1BRJwaWtSSmWxYgooAiOwAAKZREBkZ2Zft+bd8jlOW8YMhSYy/sl39yz3bP8/+eee++5b0IoqGCBlFhg" \
+                "JON4GWbBNSkZU2EYWQtcFYqbVYVfXLUwjB+0IDQLG0jveypYp+hUGCRjHBqG9awKX+jeP9xQcUno32kFaVecCm" \
+                "M/VRy8MPx7TeusQ6vDko2dCS8qOLjpWqA5XX8YtsAemBq27zkn1ITqsHHn5rCvWgd7LzZ/JUyAVKpZKkcVwujQ" \
+                "qsXtYcrwtqFjqw6ZMZYWtcDBtePdX7037Nz3SSZ93fZNYfTMEpw+hvizabNHWpfo/mFEr4/CueVdQoui0gzRuX" \
+                "qwhLS2Ze0y9O1YEa69cB2pl6XNuY7HpSyNKsKpR16dDlTvD9v3bgunl1i2JI2GSJODb8JBo+Aj6BCKmtXv4Mm" \
+                "L54aHXu2dderFHJ/LhlN1SIuDB/Kee3+4d+iWULm1NDz9VjmvRG3yemrzrk04twf5A6AS2oMPXKlTWhw8jPvo" \
+                "qjC0+xDgEcsLsh7NXbua3I2gc1UqnevA0vKQtSwsWl/GM3JN2HPgkzB1ybzgk3I+9Wjn1d0L0jLB8400+9qQN7" \
+                "vJZLSipzN4sDofx7bEzcVh7BXvheG9Ls07guHT5oe1O/aTPw909n0wH1Kl4pSMZh/jmBoO1rzE0Q2ObqFfpzNC" \
+                "v7O75h3fyD6dQ3npBl6VOoWS4tPC5l1nUfbFvOWbaEaalqiD+GD5IT/UHArlCxSFm/rUvvs+uGBOWLY5LZP9" \
+                "sPGm5R582KCIvB/mrNbhDdPsKt+BqxpWuGmVqv9dsWmNJdnbc4jMDWXNd4fWLXZmMrqU7wqPXT+Ie/SBcPP" \
+                "0BWHz7paZ9J1725K2g/Bg2J5JS9GfNC3RSbesJ9KbJ+qLwQewPuHD3d/lHl2d+eBQubWC452krwKd+ib4wJU" \
+                "6pXWJ1lG7YA68AGew8VHJ7lZxZh96QOe3SfNVyV94vAapdC7jSs17sGOpT2vCog0tg3vPew/s5oGqHYXd7Cgo" \
+                "JRbwCXkKfJhlYkrGVRhGjgX8VUftw1VORlqjaXiKdrn9OgyE7lANm2Au/BVWQEOlPZwAtU/eDT2rUO7/ZgF/Cuu" \
+                "HArc18rGUvF/CrTAE3N0qgqScHM/DdPgxeKWfC2l9y2BoJ78eo4v5nHqkdD9EeGX/Da6E06EDuHf9O/Dqvwe6Q" \
+                "UEnyAIuxUdyZEPy/Y20+i342nQdlMJwmAa+K38PCjrOFvADQ0McaJn6JsOsbL/P5OgHB69cnZ6s23flgo6zBX" \
+                "bTXtIJ+cL/oFx/uADcwuwIneEz0B18qHKZ/j3UVafn94GCjrMFfNLN59QjpXv176nnfHfBHoXeUNAJssA22j2S" \
+                "I482/wPqHAftT9CYCs0mLOCu1NE6MF9577FfAz8bpkpNeaPjLTyxGJ6EN+Bj8B7bE/zPwc9BJ/AeK2Xge20x+J" \
+                "q0AzxvEvhaVFDBAgULFCxQsEDBAgULFCxwTC3gK4EPJrkc00YaUdnVnLsWhh5lHXFcTfWDwU8Z73+g9CjHfVjx" \
+                "ImLfAX9umot5J4NOoxN+2fF4NIrj8sm6ITqPQrPhooYUPsZl6mrbp31p1JtOcnaPoLL/Jjru/u2ppO4MdjCUn" \
+                "4BB19X2ePohjVLyKl1ITf4bR8SN99fhV6DshO+et4GzahTMB3eUZkFyCfVXiuZPBjckZoPvpL+BDfAMXABRlh8" \
+                "LM8D6FkB9+786ws0J32VnQwUcSfdT4HH4JrhaLYUbQfkFyTz1F1iUCdXuW08j7L+kvgv+sCBqIAHt45bnSvCHf" \
+                "L5XK9t6BCy/Dn4EA2A6rAfL+oVK++dr2zqsP0p/PAXa0y9cP4FiUFeCdWqX2eCF6vktINwFNXAn3J6lN0c1AQ6" \
+                "Cm/VPgJ1100A9DXfDSNDR5kXtI7Af/gATwfrdiNBY92bjD3CMsrztTAXr1HHvgAa4ATxfQ6ieoFGfA9ueB048yy" \
+                "YVx9U1m2jdtrEANLhO2QiqFzge23ESagfrs2wl3AwPged/FspAp/8dtM0/QcPHCWNbxleDdvWcb8AUcMfMT5O2d" \
+                "RnU1TbJGVv48UPFvmwnPAGeAs8fAyraaBPhcTATzB8Chxy8k7CGlVGgnAHLYSHoBA2alA1fBF7lVtgXlGU1mLK" \
+                "MHXMSRK0gYJ1RlnfwUQ8TsD4nWux8dPCDpNlXHdcWvgyWTa4IRA+NK+lgJ4ZjUmPB8yqMoNFg/BIj6HIwfivYz" \
+                "pngODzPSRbzCGacZ7zcCNLB1fB5IznqRPxaMP9n2bzctk22jujg2BcnbdQSAjpURRtpC6Ut7M94jR/lTLKD8ng" \
+                "2UcNPAmfpKohOIxhugSp4CQaB6l57yPzVmMqBbIYYN20jaLSkLBe1PBvoGBMSxwsJu4qsga3wLKgOtYd6/zpox" \
+                "6Tsg2pTe/jUX9tR2sJ2toC2aQ+VsBq8EK4BJ8Hb4MURtZfAazHCsQ+8Ak7uO8Dxng8NUezLq4nChh1zsv/Rxt" \
+                "HxbZIOTpx7KNiK0PfBjjprh4Kys0/Ao9AN7oZjqTjzq+qo9H3SdsHZUJIguUKQfNSKE6x59sx12aPOS7bzQ+K" \
+                "WnQXa5x54F4ZBfXqGTOvuDFdDnGgEM/V5jG0bTir2RbtHGXZCuarkVbLCEZTyvhE1g8AEaA194QV4BLyflILy" \
+                "fBtyiWmsXIa+COfB9eAM9SrRIKpH7SH8meNtMBHugxrQ2c9DY/RB9uSvcPSKnQurYBxsA5fEwfBH0OHfgjHwJH" \
+                "jlJK9eop9SGSnet7vAdWA8Krftd2JG9hj78m3iVVABXgSTwPHXq7vItVAuzsj9MBZUPzgAvzaCXBp96PgYfg6e" \
+                "/yVQzs7JmVDtn/c4/CsRn0N4ZSJu+cXg0mI9SyEuS06mZWDb0Si3ENYJljXdiZerOK6u2YypHOM9zaRR4PmXG" \
+                "kEl8AqY5hXaDpzMr4Np8ibECfdiIt28NXAHqNy2THMl2AbWre3eAMuputrOrcOLzElmW9rdid4KVLwHO3FUOVj" \
+                "uASONkfcjO9dY6eA/gStCNCDBQ2pGyHSPUYZ1XnR6TG/ssQsVOK6kOhBJpvUmvhNcavvB5fAyONnrs4d9bQP5" \
+                "VFfbuWU7kRAdm5t30sZzr/iTtqPZjn2Vo1fRjeDD4gBYDo19DqCKdGomw/pBExqatw3vf3HJ3ZCNn3WyjeF/Pm" \
+                "PRmBKd/dAAAAAASUVORK5CYII="
+        description = 'Generated integration'
+        detaileddescription = 'This integration was auto generated by the Cortex XSOAR SDK.'
+
+        configurations = [XSOARIntegration.Configuration(display='Server URL (e.g. https://soar.monstersofhack.com)',
+                                                         name='url',
+                                                         defaultvalue='https://soar.monstersofhack.com',
+                                                         type_=0,
+                                                         required=True),
+                          XSOARIntegration.Configuration(display='Fetch incidents',
+                                                         name='isFetch',
+                                                         type_=8,
+                                                         required=False),
+                          XSOARIntegration.Configuration(display='Incident type',
+                                                         name='incidentType',
+                                                         type_=13,
+                                                         required=False),
+                          XSOARIntegration.Configuration(display='Maximum number of incidents per fetch',
+                                                         name='max_fetch',
+                                                         defaultvalue='10',
+                                                         type_=0,
+                                                         required=False),
+                          XSOARIntegration.Configuration(display='API Key',
+                                                         name='apikey',
+                                                         type_=4,
+                                                         required=True),
+                          XSOARIntegration.Configuration(display='Score threshold for ip reputation command (0-100)',
+                                                         name='threshold_ip',
+                                                         defaultvalue='65',
+                                                         type_=0,
+                                                         required=False),
+                          XSOARIntegration.Configuration(display='Score threshold for domain reputation command (0-100)',
+                                                         name='threshold_domain',
+                                                         defaultvalue='65',
+                                                         type_=0,
+                                                         required=False),
+                          XSOARIntegration.Configuration(display='Fetch alerts with status (ACTIVE, CLOSED)',
+                                                         name='alert_status',
+                                                         defaultvalue='ACTIVE',
+                                                         type_=15,
+                                                         required=False,
+                                                         options=['ACTIVE', 'CLOSED']),
+                          XSOARIntegration.Configuration(display='Fetch alerts with type',
+                                                         name='alert_type',
+                                                         type_=0,
+                                                         required=False),
+                          XSOARIntegration.Configuration(display='Minimum severity of alerts to fetch',
+                                                         name='min_severity',
+                                                         defaultvalue='Low',
+                                                         type_=15,
+                                                         required=True,
+                                                         options=['Low', 'Medium', 'High', 'Critical']),
+                          XSOARIntegration.Configuration(display='Trust any certificate (not secure)',
+                                                         name='insecure',
+                                                         type_=8,
+                                                         required=False),
+                          XSOARIntegration.Configuration(display='Use system proxy settings',
+                                                         name='proxy',
+                                                         type_=8,
+                                                         required=False)]
+
+        script = XSOARIntegration.Script('', 'python', 'python3', '3.8.3.9324', True, False)
+
+        return cls(commonfields, name, display, category, image, description, detaileddescription, configurations,
+                   script)
+
+
+
+    @property
+    def commonfields(self):
+        return self._commonfields
+
+    @commonfields.setter
+    def commonfields(self, common_fields):
+        self._commonfields = common_fields
+        
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+
+    @property
+    def display(self):
+        return self._display
+
+    @display.setter
+    def display(self, display):
+        self._display = display
+
+    @property
+    def category(self):
+        return self._category
+
+    @category.setter
+    def category(self, category):
+        self._category = category
+
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, image):
+        self._image = image
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, description):
+        self._description = description
+
+    @property
+    def detaileddescription(self):
+        return self._detaileddescription
+
+    @detaileddescription.setter
+    def detaileddescription(self, detaileddescription):
+        self._detaileddescription = detaileddescription
+
+    @property
+    def configuration(self):
+        return self._configuration
+
+    @configuration.setter
+    def configuration(self, configuration):
+        self._configuration = configuration
+
+    @property
+    def script(self):
+        return self._script
+
+    @script.setter
+    def script(self, script):
+        self._script = script
+
+    class CommonFields:
+        def __init__(self, id_, version):
+            self.id = id_
+            self.version = version
+
+        @property
+        def id(self):
+            return self._id
+
+        @id.setter
+        def id(self, id_):
+            self._id = id_
+
+        @property
+        def version(self):
+            return self._version
+
+        @version.setter
+        def version(self, version):
+            self._version = version
+
+    class Configuration:
+        def __init__(self, name, display, type_, required, defaultvalue=None, options=None):
+            self.name = name
+            self.display = display
+            self.defaultvalue = defaultvalue
+            self.type = type_
+            self.required = required
+            if options:
+                self.options = options
+            if defaultvalue:
+                self.defaultvalue = defaultvalue
+
+        @property
+        def display(self):
+            return self._display
+
+        @display.setter
+        def display(self, display):
+            self._display = display
+
+        @property
+        def name(self):
+            return self._name
+
+        @name.setter
+        def name(self, name):
+            self._name = name
+
+        @property
+        def defaultvalue(self):
+            return self._defaultvalue
+
+        @defaultvalue.setter
+        def defaultvalue(self, defaultvalue):
+            self._defaultvalue = defaultvalue
+
+        @property
+        def type(self):
+            return self._type
+
+        @type.setter
+        def type(self, type_):
+            self._type = type_
+
+        @property
+        def required(self):
+            return self._required
+
+        @required.setter
+        def required(self, required):
+            self._required = required
+
+        @property
+        def options(self):
+            return self._options
+
+        @options.setter
+        def options(self, options):
+            self._options = options
+
+    class Script:
+        def __init__(self, script, type_, subtype, dockerimage, isfetch, runonce, commands=None):
+            self.script = script
+            self.type = type_
+            self.subtype = subtype
+            self.dockerimage = dockerimage
+            self.isfetch = isfetch
+            self.runonce = runonce
+            if commands:
+                self.commands = commands
+
+        @property
+        def script(self):
+            return self._script
+
+        @script.setter
+        def script(self, script):
+            self._script = script
+
+        @property
+        def type(self):
+            return self._type
+
+        @type.setter
+        def type(self, type_):
+            self._type = type_
+
+        @property
+        def subtype(self):
+            return self._subtype
+
+        @subtype.setter
+        def subtype(self, subtype):
+            self._subtype = subtype
+
+        @property
+        def dockerimage(self):
+            return self._dockerimage
+
+        @dockerimage.setter
+        def dockerimage(self, dockerimage):
+            self._dockerimage = dockerimage
+
+        @property
+        def isfetch(self):
+            return self._isfetch
+
+        @isfetch.setter
+        def isfetch(self, isfetch):
+            self._isfetch = isfetch
+
+        @property
+        def runonce(self):
+            return self._runonce
+
+        @runonce.setter
+        def runonce(self, runonce):
+            self._runonce = runonce
+
+        @property
+        def commands(self):
+            return self._commands
+
+        @commands.setter
+        def commands(self, commands):
+            self._commands = commands
+
+    class Command:
+        def __init__(self, name, description, arguments=None, outputs=None):
+            self.name = name
+            self.description = description
+            if arguments:
+                self.arguments = arguments
+            if outputs:
+                self.outputs = outputs
+
+        @property
+        def name(self):
+            return self._name
+
+        @name.setter
+        def name(self, name):
+            self._name = name
+
+        @property
+        def description(self):
+            return self._description
+
+        @description.setter
+        def description(self, description):
+            self._description = description
+
+        @property
+        def arguments(self):
+            return self._arguments
+
+        @arguments.setter
+        def arguments(self, arguments):
+            self._arguments = arguments
+
+        @property
+        def outputs(self):
+            return self._outputs
+
+        @outputs.setter
+        def outputs(self, outputs):
+            self._outputs = outputs
+
+        class Argument:
+            def __init__(self, name, description, auto=None, predefined=None):
+                self.name = name
+                self.description = description
+                if auto:
+                    self.auto = auto
+                if predefined:
+                    self.predefined = predefined
+
+            @property
+            def name(self):
+                return self._name
+
+            @name.setter
+            def name(self, name):
+                self._name = name
+
+            @property
+            def description(self):
+                return self._description
+
+            @description.setter
+            def description(self, description):
+                self._description = description
+
+            @property
+            def auto(self):
+                return self._auto
+
+            @auto.setter
+            def auto(self, auto):
+                self._auto = auto
+
+            @property
+            def predefined(self):
+                return self._predefined
+
+            @predefined.setter
+            def predefined(self, predefined):
+                self._predefined = predefined
+
+        class Output:
+            def __init__(self, type_, context_path, description):
+                self.type = type_
+                self.contextPath = context_path
+                self.description = description
+
+            @property
+            def type(self):
+                return self._type
+
+            @type.setter
+            def type(self, type_):
+                self._type = type_
+
+            @property
+            def contextPath(self):
+                return self._contextPath
+
+            @contextPath.setter
+            def contextPath(self, context_path):
+                self._contextPath = context_path
+
+            @property
+            def description(self):
+                return self._description
+
+            @description.setter
+            def description(self, description):
+                self._description = description
+
+print(XSOARIntegration.get_base_integration().to_json())

@@ -129,6 +129,9 @@ class ContentCreator:
                 LATEST_SUPPORTED_VERSION) > parse_version(yml_content.get('fromversion', '0.0.0')):
             yml_content['fromversion'] = LATEST_SUPPORTED_VERSION
 
+            if 'detaileddescription' in yml_content:
+                yml_content['detaileddescription'] = FoldedScalarString(yml_content['detaileddescription'])
+
             self.fix_script_in_unified_yml(yml_content)
 
             if save_yml:

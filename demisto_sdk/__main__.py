@@ -784,7 +784,7 @@ def id_set_command(**kwargs):
     '--all', help="Update all changed packs", is_flag=True
 )
 @click.option(
-    '--text', help="Text to add to all of the release notes files", is_flag=True
+    '--text', help="Text to add to all of the release notes files",
 )
 @click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",

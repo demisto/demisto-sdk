@@ -126,8 +126,9 @@ class ContentCreator:
         ryaml.preserve_quotes = True
         ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if not yml_content:
-            with open(file_path, 'r') as yml_file:
-                yml_content = ryaml.load(yml_file)
+            # with open(file_path, 'r') as yml_file:
+            #     yml_content = ryaml.load(yml_file)
+            yml_content = get_yaml(file_path)
 
         if parse_version(yml_content.get('toversion', '99.99.99')) > parse_version(
                 LATEST_SUPPORTED_VERSION) > parse_version(yml_content.get('fromversion', '0.0.0')):

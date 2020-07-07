@@ -122,12 +122,7 @@ class ContentCreator:
         if self.no_fromversion:
             return {}
 
-        ryaml = YAML()
-        ryaml.preserve_quotes = True
-        ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if not yml_content:
-            # with open(file_path, 'r') as yml_file:
-            #     yml_content = ryaml.load(yml_file)
             yml_content = get_yaml(file_path)
 
         if parse_version(yml_content.get('toversion', '99.99.99')) > parse_version(
@@ -140,6 +135,9 @@ class ContentCreator:
             self.fix_script_in_unified_yml(yml_content)
 
             if save_yml:
+                ryaml = YAML()
+                ryaml.preserve_quotes = True
+                ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
                 with open(file_path, mode='w', encoding='utf-8') as f:
                     ryaml.dump(yml_content, f)
 
@@ -682,7 +680,6 @@ class ContentCreator:
             self.copy_file_to_artifacts('beta-release-notes.md')
             self.copy_file_to_artifacts('packs-release-notes.md')
             print_success(f'finished creating the content artifacts at "{os.path.abspath(self.artifacts_path)}"')
-            print_success("\nTHIS IS THE LATEST VERSION\n")
         finally:
             if not self.preserve_bundles:
                 if os.path.exists(self.content_bundle):

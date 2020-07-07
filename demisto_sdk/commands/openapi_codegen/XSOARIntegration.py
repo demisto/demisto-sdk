@@ -1,4 +1,5 @@
 import json
+import yaml
 
 
 class XSOARIntegration:
@@ -17,6 +18,9 @@ class XSOARIntegration:
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__,
                           sort_keys=True, indent=4)
+
+    def to_yaml(self):
+        return yaml.load(self.to_json())
 
     @classmethod
     def get_base_integration(cls):
@@ -124,108 +128,18 @@ class XSOARIntegration:
                                                          type_=8,
                                                          required=False)]
 
-        script = XSOARIntegration.Script('', 'python', 'python3', '3.8.3.9324', True, False)
+        script = XSOARIntegration.Script('', 'python', 'python3', 'demisto/python3:3.8.3.9324', True, False)
 
         return cls(commonfields, name, display, category, image, description, detaileddescription, configurations,
                    script)
-
-
-
-    @property
-    def commonfields(self):
-        return self._commonfields
-
-    @commonfields.setter
-    def commonfields(self, common_fields):
-        self._commonfields = common_fields
-        
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        self._name = name
-
-    @property
-    def display(self):
-        return self._display
-
-    @display.setter
-    def display(self, display):
-        self._display = display
-
-    @property
-    def category(self):
-        return self._category
-
-    @category.setter
-    def category(self, category):
-        self._category = category
-
-    @property
-    def image(self):
-        return self._image
-
-    @image.setter
-    def image(self, image):
-        self._image = image
-
-    @property
-    def description(self):
-        return self._description
-
-    @description.setter
-    def description(self, description):
-        self._description = description
-
-    @property
-    def detaileddescription(self):
-        return self._detaileddescription
-
-    @detaileddescription.setter
-    def detaileddescription(self, detaileddescription):
-        self._detaileddescription = detaileddescription
-
-    @property
-    def configuration(self):
-        return self._configuration
-
-    @configuration.setter
-    def configuration(self, configuration):
-        self._configuration = configuration
-
-    @property
-    def script(self):
-        return self._script
-
-    @script.setter
-    def script(self, script):
-        self._script = script
 
     class CommonFields:
         def __init__(self, id_, version):
             self.id = id_
             self.version = version
 
-        @property
-        def id(self):
-            return self._id
-
-        @id.setter
-        def id(self, id_):
-            self._id = id_
-
-        @property
-        def version(self):
-            return self._version
-
-        @version.setter
-        def version(self, version):
-            self._version = version
-
     class Configuration:
-        def __init__(self, name, display, type_, required, defaultvalue=None, options=None):
+        def __init__(self, name, display, type_, required, defaultvalue='', options=None):
             self.name = name
             self.display = display
             self.defaultvalue = defaultvalue
@@ -235,54 +149,6 @@ class XSOARIntegration:
                 self.options = options
             if defaultvalue:
                 self.defaultvalue = defaultvalue
-
-        @property
-        def display(self):
-            return self._display
-
-        @display.setter
-        def display(self, display):
-            self._display = display
-
-        @property
-        def name(self):
-            return self._name
-
-        @name.setter
-        def name(self, name):
-            self._name = name
-
-        @property
-        def defaultvalue(self):
-            return self._defaultvalue
-
-        @defaultvalue.setter
-        def defaultvalue(self, defaultvalue):
-            self._defaultvalue = defaultvalue
-
-        @property
-        def type(self):
-            return self._type
-
-        @type.setter
-        def type(self, type_):
-            self._type = type_
-
-        @property
-        def required(self):
-            return self._required
-
-        @required.setter
-        def required(self, required):
-            self._required = required
-
-        @property
-        def options(self):
-            return self._options
-
-        @options.setter
-        def options(self, options):
-            self._options = options
 
     class Script:
         def __init__(self, script, type_, subtype, dockerimage, isfetch, runonce, commands=None):
@@ -295,172 +161,27 @@ class XSOARIntegration:
             if commands:
                 self.commands = commands
 
-        @property
-        def script(self):
-            return self._script
-
-        @script.setter
-        def script(self, script):
-            self._script = script
-
-        @property
-        def type(self):
-            return self._type
-
-        @type.setter
-        def type(self, type_):
-            self._type = type_
-
-        @property
-        def subtype(self):
-            return self._subtype
-
-        @subtype.setter
-        def subtype(self, subtype):
-            self._subtype = subtype
-
-        @property
-        def dockerimage(self):
-            return self._dockerimage
-
-        @dockerimage.setter
-        def dockerimage(self, dockerimage):
-            self._dockerimage = dockerimage
-
-        @property
-        def isfetch(self):
-            return self._isfetch
-
-        @isfetch.setter
-        def isfetch(self, isfetch):
-            self._isfetch = isfetch
-
-        @property
-        def runonce(self):
-            return self._runonce
-
-        @runonce.setter
-        def runonce(self, runonce):
-            self._runonce = runonce
-
-        @property
-        def commands(self):
-            return self._commands
-
-        @commands.setter
-        def commands(self, commands):
-            self._commands = commands
-
-    class Command:
-        def __init__(self, name, description, arguments=None, outputs=None):
-            self.name = name
-            self.description = description
-            if arguments:
-                self.arguments = arguments
-            if outputs:
-                self.outputs = outputs
-
-        @property
-        def name(self):
-            return self._name
-
-        @name.setter
-        def name(self, name):
-            self._name = name
-
-        @property
-        def description(self):
-            return self._description
-
-        @description.setter
-        def description(self, description):
-            self._description = description
-
-        @property
-        def arguments(self):
-            return self._arguments
-
-        @arguments.setter
-        def arguments(self, arguments):
-            self._arguments = arguments
-
-        @property
-        def outputs(self):
-            return self._outputs
-
-        @outputs.setter
-        def outputs(self, outputs):
-            self._outputs = outputs
-
-        class Argument:
-            def __init__(self, name, description, auto=None, predefined=None):
+        class Command:
+            def __init__(self, name, description, arguments=None, outputs=None):
                 self.name = name
                 self.description = description
-                if auto:
-                    self.auto = auto
-                if predefined:
-                    self.predefined = predefined
+                if arguments:
+                    self.arguments = arguments
+                if outputs:
+                    self.outputs = outputs
 
-            @property
-            def name(self):
-                return self._name
+            class Argument:
+                def __init__(self, name, description, required, auto=None, predefined=None):
+                    self.name = name
+                    self.description = description
+                    self.required = required
+                    if auto:
+                        self.auto = auto
+                    if predefined:
+                        self.predefined = predefined
 
-            @name.setter
-            def name(self, name):
-                self._name = name
-
-            @property
-            def description(self):
-                return self._description
-
-            @description.setter
-            def description(self, description):
-                self._description = description
-
-            @property
-            def auto(self):
-                return self._auto
-
-            @auto.setter
-            def auto(self, auto):
-                self._auto = auto
-
-            @property
-            def predefined(self):
-                return self._predefined
-
-            @predefined.setter
-            def predefined(self, predefined):
-                self._predefined = predefined
-
-        class Output:
-            def __init__(self, type_, context_path, description):
-                self.type = type_
-                self.contextPath = context_path
-                self.description = description
-
-            @property
-            def type(self):
-                return self._type
-
-            @type.setter
-            def type(self, type_):
-                self._type = type_
-
-            @property
-            def contextPath(self):
-                return self._contextPath
-
-            @contextPath.setter
-            def contextPath(self, context_path):
-                self._contextPath = context_path
-
-            @property
-            def description(self):
-                return self._description
-
-            @description.setter
-            def description(self, description):
-                self._description = description
-
-print(XSOARIntegration.get_base_integration().to_json())
+            class Output:
+                def __init__(self, type_, context_path, description):
+                    self.type = type_
+                    self.contextPath = context_path
+                    self.description = description

@@ -64,7 +64,7 @@ def main():
         if command == 'test-module':
             test_module(client)
         else:
-            commands[command](client, demisto.args())
+            commands[command](client, args)
 
     except Exception as e:
         demisto.results(e)

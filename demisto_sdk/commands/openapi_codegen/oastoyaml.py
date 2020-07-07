@@ -8,11 +8,12 @@ import autopep8
 import yaml
 import tempfile
 import baseCode
-import baseYAML
+from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegration
 
 camelToSnakePattern = re.compile(r'(?<!^)(?=[A-Z])')
 
-illegalChars = ['`', ':', '\n', "'", "<br>", "[", "]", "*", '"']
+illegal_description_chars = ['`', ':', '\n', "'", '<br>', '[', ']', '*', '"']
+illegal_func_chars = illegal_description_chars + [' ', '(', ')']
 illegalFunctionNames = ['type', 'from']
 prependIllegal = "i"
 outputTypes = {
@@ -24,13 +25,14 @@ outputTypes = {
 removedNames = ['.properties', '.items']
 
 
-class DemistoIntegration:
-    def __init__(self, file_path, baseName, commandpretext, includecommands, verbose=False):
+class OpenAPIIntegration:
+    def __init__(self, file_path, base_name, command_prefix, context_path, include_commands, verbose=False):
         self.json = None
-        self.baseName = baseName
-        self.filtercommands = False
-        self.includecommands = []
-        self.commandpretext = commandpretext
+        self.baseName = base_name
+        self.filter_commands = False
+        self.include_commands = []
+        self.command_prefix = command_prefix
+        self.context_path = context_path
         self.fileLoad = False
         self.swagger = None
         self.openapi = None
@@ -40,21 +42,18 @@ class DemistoIntegration:
         self.schemes = None
         self.name = None
         self.display = None
-        self.category = None
         self.description = None
         self.configuration = list()
         self.script = None
         self.security = None
-        self.dockerimage = None
         self.consumes = list()
         self.produces = list()
-        self.category = "Utilities"
         self.security = None
         self.securitySchemes = None
         self.functions = list()
         self.parameters = list()
         self.verbose = verbose
-        self.loadFile(file_path, includecommands)
+        self.load_file(file_path, include_commands)
 
     def extract_values(self, obj, key):
 
@@ -131,7 +130,7 @@ class DemistoIntegration:
 
     def add_function(self, path, method, data, pars, commandpretext):
         new_function = dict()
-        new_function['path'] = path
+        new_function['path'] = '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/')
         new_function['method'] = method
         name = data.get('operationId', None)
         if not name:
@@ -141,20 +140,21 @@ class DemistoIntegration:
             except:
                 name = None
         if not name:
-            name = "-".join([x for x in path.split("/")
-                             if "{" not in x]).lstrip("-")
-        name = camelToSnake(name)
-        name = name.replace("_", "-").replace("--", "-").replace(".", "")
+            name = '_'.join([re.sub(r'\{[^)]*\}', '', x) for x in path.split('/')])
+        for i in illegal_func_chars:
+            name = name.replace(i, '_')
+        name = camel_to_snake(name)
+        name = name.replace('__', '_').strip('_')
         if commandpretext:
             name = "{}-".format(commandpretext.lower()) + name
         new_function['name'] = name
         func_desc = data.get('summary', None)
         if not func_desc:
             func_desc = data.get('description', "")
-        for i in illegalChars:
-            func_desc = func_desc.replace(i, " ")
+        for i in illegal_description_chars:
+            func_desc = func_desc.replace(i, '_')
         new_function['description'] = func_desc
-        new_function['execution'] = True
+        new_function['execution'] = False
         new_function['arguments'] = list()
         new_function['parameters'] = data.get('parameters', None)
         if not new_function['parameters']:
@@ -167,8 +167,8 @@ class DemistoIntegration:
             arg_name = str(arg.get('name', ""))
             new_arg['name'] = arg_name
             arg_desc = arg.get('description', "")
-            for i in illegalChars:
-                arg_desc = arg_desc.replace(i, " ")
+            for i in illegal_description_chars:
+                arg_desc = arg_desc.replace(i, "_")
             new_arg['description'] = f"\"{arg_desc}\""
             new_arg['required'] = arg.get('required')
             new_arg['default'] = arg.get('default', "")
@@ -200,17 +200,17 @@ class DemistoIntegration:
                     description = v.get('description', '')
                     this_type = v.get('type', 'object')
                     this_type = outputTypes.get(this_type)
-                    name = v.get('name')
-                    for i in illegalChars:
-                        description = description.replace(i, " ")
+                    resp_name = v.get('name')
+                    for i in illegal_description_chars:
+                        description = description.replace(i, "_")
                     new_function['outputs'].append(
-                        {"name": name, "type": this_type, "description": description})
+                        {"name": resp_name, "type": this_type, "description": description})
             new_function['responses'].append(new_response)
 
         self.functions.append(new_function)
         self.functions = sorted(self.functions, key=lambda x: x['name'])
 
-    def loadFile(self, file_path, includecommands):
+    def load_file(self, file_path, includecommands):
         error = None
         try:
             self.json = json.load(open(file_path, "rb"))
@@ -231,10 +231,10 @@ class DemistoIntegration:
         try:
             if includecommands:
                 with open(includecommands, "r") as fp:
-                    self.includecommands = fp.read().split("\n")
-                    self.filtercommands = True
+                    self.include_commands = fp.read().split("\n")
+                    self.filter_commands = True
         except:
-            self.filtercommands = False
+            self.filter_commands = False
             print("** WARNING ** -- There was an error loading the commands file {}\nIt has been ignored".format(
                 includecommands))
         self.swagger = str(self.json.get('swagger', None))
@@ -245,11 +245,12 @@ class DemistoIntegration:
             self.host = self.json.get('servers', [])[0]['url']
         if self.host:
             self.addConfig("Host", "host", self.host, 4, True)
+        else:
+            self.host = ''
         self.basePath = self.json.get('basePath', "")
         self.name = self.json['info']['title']
         self.display = self.json['info']['title']
         self.description = self.json.get('info', {}).get('description', "")
-        self.version = -1
         self.id = self.name
         self.consumes = self.json.get('consumes', [])
         self.produces = self.json.get('produces', [])
@@ -262,10 +263,10 @@ class DemistoIntegration:
         for path, function in self.json['paths'].items():
             for method, data in function.items():
                 if "parameters" not in method:
-                    if (self.filtercommands and data.get('operationId',
-                                                         "") in self.includecommands) or not self.filtercommands:
+                    if (self.filter_commands and data.get('operationId',
+                                                         "") in self.include_commands) or not self.filter_commands:
                         self.add_function(path, method, data, function.get(
-                            'parameters', []), self.commandpretext)
+                            'parameters', []), self.command_prefix)
                     else:
                         if self.verbose:
                             print("Ignoring command '{}' as it is not in the include commands list".format(
@@ -301,7 +302,6 @@ class DemistoIntegration:
                     argument_default = f", {arg['default']})"
                 else:
                     argument_default = f", '{arg['default']}')"
-                # argumentDefault = ")" if arg['required'] else f", '{arg['default']}')"
                 this_argument = baseCode.baseArgument.replace(
                     "$DARGNAME$", arg['name']) + argument_default
                 new_arg_name = arg['name']
@@ -332,8 +332,6 @@ class DemistoIntegration:
             else:
                 this_function = "\n".join(
                     [x for x in this_function.split("\n") if "$PARAMETERS$" not in x])
-                # params = ""
-            # thisFunction = thisFunction.replace("$PARAMETERS$", params)
 
             if new_data:
                 all_new_data = ",".join(new_data)
@@ -356,14 +354,13 @@ class DemistoIntegration:
             if new_data:
                 this_function = this_function.replace("$NEWDATA$", ", data=data")
             else:
-                # thisFunction = "\n".join([x for x in thisFunction.split("\n") if "$NEWDATA$" not in x])
                 this_function = this_function.replace("$NEWDATA$", "")
 
             this_function = this_function.replace(
-                "$CONTEXTNAME$", func['name'].title().replace("-", ""))
-            contextcontext = func['name'].title().replace("-", "")
-            if self.commandpretext:
-                contextcontext = f"{self.commandpretext}.{contextcontext}"
+                "$CONTEXTNAME$", func['name'].title().replace("_", ""))
+            contextcontext = func['name'].title().replace("_", "")
+            if self.command_prefix:
+                contextcontext = f"{self.command_prefix}.{contextcontext}"
             this_function = this_function.replace(
                 "$CONTEXTCONTEXT$", contextcontext)
             these_functions.append(this_function)
@@ -371,105 +368,88 @@ class DemistoIntegration:
         data = data.replace("$FUNCTIONS$", "\n".join(these_functions))
         data = data.replace("$BASEURL$", self.basePath)
 
-        listFunctions = list()
+        list_functions = list()
 
         # Add the command mappings:
         for func in self.functions:
-            thisListFunction = baseCode.baseListFunctions.replace(
+            function = baseCode.baseListFunctions.replace(
                 "$FUNCTIONNAME$", func['name'])
             fn = func['name'].replace("-", "_")
-            thisListFunction = thisListFunction.replace(
+            function = function.replace(
                 "$FUNCTIONCOMMAND$", f"{fn}_command")
-            listFunctions.append(thisListFunction)
+            list_functions.append(function)
 
-        data = data.replace("$COMMANDSLIST$", "\n\t".join(listFunctions))
+        data = data.replace("$COMMANDSLIST$", "\n\t".join(list_functions))
         data = autopep8.fix_code(data)
 
         return data
 
-    def return_integration(self, noCode):
-        # Create a base file for YAML file
-        yaml = baseYAML.blankIntegration
-
+    def return_integration(self, no_code):
+        integration = XSOARIntegration.get_base_integration()
         # Create the commands section
-        commands = list()
+        commands = []
         for func in self.functions:
-            args = list()
+            args = []
+            options = None
+            auto = None
             for arg in func['arguments']:
-                argName = arg['name']
-                required = "true" if arg['required'] else "false"
+                arg_name = arg['name']
+                required = True if arg['required'] else False
                 description = arg.get('description', None)
                 if not description and "body" in arg['in']:
                     try:
-                        thisType = arg['schema']['properties']['members']['type']
+                        type_ = arg['schema']['properties']['members']['type']
                         properties = ",".join(
                             arg['schema']['properties']['members']['items']['properties'].keys())
-                        description = f"An {thisType} containing the following items - {properties}"
+                        description = f"An {type_} containing the following items - {properties}"
                     except KeyError:
                         description = None
-                a = f"    - name: {argName}\n      required: {required}\n"
                 if description:
-                    d = description.split('.')[0]
-                    d = d.split("\n")[0]
-                    if d.startswith('"') and not d.endswith('"'):
-                        d += '"'
-                    elif d.endswith('"') and not d.startswith('"'):
-                        d = '"' + d
-                    a += f"      description: {d}\n"
-                    print(d)
+                    description = description.split('.')[0].split('\n')[0]
+                    if description.startswith('"') and not description.endswith('"'):
+                        description += '"'
+                    elif description.endswith('"') and not description.startswith('"'):
+                        description = '"' + description
+                else:
+                    description = ''
+
                 if arg['enums']:
-                    enums = str()
-                    for enum in arg['enums']:
-                        enums += f"      - \"{enum}\"\n"
-                    a += f"      auto: PREDEFINED\n      predefined:\n{enums}"
-                args.append(a)
-            outputs = list()
+                    auto = 'PREDEFINED'
+                    options = arg['enums']
+
+                args.append(XSOARIntegration.Script.Command.Argument(arg_name, description, required, auto, options))
+
+            outputs = []
 
             for output in func['outputs']:
-                o = "    - contextPath: "
-                if self.commandpretext:
-                    o += f"{self.commandpretext.title()}."
-                fn = func['name'].title().replace("-", "")
-                outputName = output['name']
-                outputDescription = output['description']
-                outputType = output['type']
-                o += f"{fn}.{outputName}\n      description: \"{outputDescription}\"\n      type: {outputType}\n"
-                outputs.append(o)
-            fn = func['name']
-            theseArgs = "".join(args)
-            theseOutputs = "".join(outputs)
-            thisDescription = func['description']
-            s = f"  - name: {fn}\n"
-            if len(theseArgs) > 0:
-                s = f"{s}    arguments:\n{theseArgs}"
-            if len(theseOutputs) > 0:
-                s = f"{s}    outputs:\n{theseOutputs}"
-            s = f"{s}    description: {thisDescription}"
-            commands.append(s)
+                output_name = ''
+                if self.context_path:
+                    output_name = f'{self.context_path}.'
+                name = func['name'].title().replace('_', '').split('-')
+                if len(name) > 1:
+                    name = name[1]
+                else:
+                    name = name[0]
 
-        # Create the other configurations that might be required
-        configurations = list()
-        for k, v in self.securitySchemes.items():
-            try:
-                if "header" in v['in']:
-                    pass
-            except:
-                pass
+                output_name += name
+                output_postfix = output['name']
+                output_description = output['description']
+                output_type = output['type']
 
-        yaml = yaml.replace("$ID$", self.id)
-        yaml = yaml.replace("$VERSION$", str(self.version))
-        yaml = yaml.replace("$NAME$", self.name)
-        yaml = yaml.replace("$DISPLAY$", self.display)
-        yaml = yaml.replace(
-            "$DESCRIPTION$", self.description.replace("\n", " "))
-        yaml = yaml.replace("$HOST$", self.host)
-        yaml = yaml.replace("$COMMANDS$", "\n".join(commands))
-        if noCode:
-            yaml = yaml.replace("$SCRIPT$", "''")
-        else:
-            code = self.return_python_code().replace("\n", "\n    ")
-            yaml = yaml.replace("$SCRIPT$", f"|+\n    {code}")
-        return yaml.encode(encoding='utf-8')
+                outputs.append(XSOARIntegration.Script.Command.Output(output_type, f'{output_name}.{output_postfix}',
+                                                                      output_description))
+            command_name = func['name'].replace('_', '-')
+            command_description = func['description']
+            commands.append(XSOARIntegration.Script.Command(command_name, command_description, args, outputs))
+
+        script = ''
+        if not no_code:
+            script = self.return_python_code()
+
+        integration.script.script = script
+        integration.script.commands = commands
+
+        return integration
 
     def save_python_code(self, directory):
         filename = os.path.join(directory, f"{self.baseName}.py")
@@ -485,37 +465,40 @@ class DemistoIntegration:
         filename = os.path.join(directory, f"{self.baseName}.yml")
         try:
             with open(filename, "wb") as fp:
-                fp.write(self.return_integration(no_code))
+                fp.write(yaml.dump(self.return_integration(no_code).to_yaml()).encode())
             return filename
         except Exception as err:
             print(f"Error writing {filename} - {err}")
             raise
 
-    def savePackage(self, directory):
+    def save_package(self, directory):
         code_path = self.save_python_code(directory)
         yml_path = self.save_yaml(directory, no_code=True)
         return code_path, yml_path
 
 
-def camelToSnake(camel):
+def camel_to_snake(camel):
     snake = camelToSnakePattern.sub('_', camel).lower()
     return snake
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('swaggerFile', metavar='swaggerFile',
+    parser.add_argument('swagger_file', metavar='swagger_file',
                         help='The swagger file to load')
-    parser.add_argument('baseName', metavar='baseName',
+    parser.add_argument('base_name', metavar='base_name',
                         help='The base filename to use for the generated files')
-    parser.add_argument('-p', '--outputPackage', action='store_true',
+    parser.add_argument('-p', '--output_package', action='store_true',
                         help='Output the integration as a package (separate code and yml files)')
     parser.add_argument('-d', '--directory', metavar='directory',
                         help='Directory to store the output to (default is current working directory)')
-    parser.add_argument('-t', '--commandpretext', metavar='commandpretext',
+    parser.add_argument('-t', '--command_prefix', metavar='command_prefix',
                         help='Add an additional word to each commands text')
-    parser.add_argument('-i', '--includecommands', metavar='includecommands',
-                        help='A line delimited file containing the commands that should ONLY be generated. This works with the "operationId" of a path.')
+    parser.add_argument('-c', '--context_path', metavar='context_path',
+                        help='Context output path')
+    parser.add_argument('-i', '--include_commands', metavar='include_commands',
+                        help='A line delimited file containing the commands that should ONLY be generated.'
+                             ' This works with the "operationId" of a path.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Be verbose with the log output')
 
@@ -537,11 +520,11 @@ def main():
         print(f"The directory provided '{directory}' is not a directory")
         sys.exit(1)
 
-    integration = DemistoIntegration(args.swaggerFile, args.baseName, args.commandpretext, args.includecommands,
-                                     verbose=args.verbose)
+    integration = OpenAPIIntegration(args.swagger_file, args.base_name, args.command_prefix, args.context_path,
+                                     args.include_commands, verbose=args.verbose)
 
-    if args.outputPackage:
-        if integration.savePackage(directory):
+    if args.output_package:
+        if integration.save_package(directory):
             print(f"Created package in {directory}")
         else:
             print(f"There was an error creating the package in {directory}")

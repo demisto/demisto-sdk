@@ -135,8 +135,11 @@ class ContentCreator:
             self.fix_script_in_unified_yml(yml_content)
 
             if save_yml:
+                ryaml = YAML()
+                ryaml.preserve_quotes = True
+                ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
                 with open(file_path, mode='w', encoding='utf-8') as f:
-                    YAML().dump(yml_content, f)
+                    ryaml.dump(yml_content, f)
 
         return yml_content
 

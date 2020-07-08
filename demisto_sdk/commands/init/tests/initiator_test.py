@@ -33,10 +33,11 @@ name_reformatting_test_examples = [
     ('PackYayOK', 'PackYayOK'),
     ('pack yay ok!', 'PackYayOk'),
     ('PackYayOK', 'PackYayOK'),
-    ('-pack-yay-ok-', 'Pack-yay-ok'),
+    ('-pack-yay-ok--', 'Pack-Yay-Ok'),
     ('PackYayOK', 'PackYayOK'),
     ('The quick brown fox, jumps over the lazy dog!', 'TheQuickBrownFox_JumpsOverTheLazyDog'),
-    ('The quick`*+.brown fox, ;jumps over @@the lazy dog!', 'TheQuick_BrownFox_JumpsOver_TheLazyDog')
+    ('The quick`*+.brown fox, ;jumps over @@the lazy dog!', 'TheQuick_BrownFox_JumpsOver_TheLazyDog'),
+    ('ThE quIck`*+.brown fox, ;jumps ovER @@the lazy dog!', 'ThEQuIck_BrownFox_JumpsOvER_TheLazyDog')
 ]
 
 

@@ -7,7 +7,7 @@ import traceback
 import zipfile
 from datetime import datetime
 from distutils.dir_util import copy_tree
-from string import capwords, punctuation
+from string import punctuation
 from typing import Dict, List, Union
 
 import click
@@ -35,7 +35,8 @@ from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
+                                               find_type,
                                                get_child_directories,
                                                get_child_files,
                                                get_common_server_path,
@@ -140,20 +141,20 @@ class Initiator:
         Returns:
             str: The reformatted pack name
         """
-        temp = capwords(name.strip().strip('-_'))
+        temp = capital_case(name.strip().strip('-_'))
         punctuation_to_replace = punctuation.replace('-', '').replace('_', '')
         translation_dict = {x: '_' for x in punctuation_to_replace}
         translation_table = str.maketrans(translation_dict)
         temp = temp.translate(translation_table).strip('-_')
         temp = re.sub(r'-+', '-', re.sub(r'_+', '_', temp))
-        comparator = capwords(temp.replace('_', ' '))
+        comparator = capital_case(temp.replace('_', ' ').replace('-', ' '))
         result = ''
         i = j = 0
         while i < len(temp):
             temp_char = temp[i]
             comp_char = comparator[j]
             if temp_char.casefold() != comp_char.casefold():
-                while temp_char in {' ', '_'}:
+                while temp_char in {' ', '_', '-'}:
                     result += f'{temp_char}'
                     i += 1
                     temp_char = temp[i]

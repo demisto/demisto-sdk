@@ -230,6 +230,15 @@ def test_pascal_case():
     assert res == "GoodLifeHereV2"
 
 
+def test_capital_case():
+    res = tools.pascal_case("PowerShell Remoting")
+    assert res == "PowerShell Remoting"
+    res = tools.pascal_case("good life")
+    assert res == "Good Life"
+    res = tools.pascal_case("good_life-here v2")
+    assert res == "Good_life-here V2"
+
+
 class TestPrintColor:
     def test_print_color(self, mocker):
         mocker.patch('builtins.print')

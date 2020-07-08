@@ -122,8 +122,12 @@ class ContentCreator:
         if self.no_fromversion:
             return {}
 
+        ryaml = YAML()
+        ryaml.preserve_quotes = True
+        ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if not yml_content:
-            yml_content = get_yaml(file_path)
+            with open(file_path, 'r') as yml_file:
+                yml_content = ryaml.load(yml_file)
 
         if parse_version(yml_content.get('toversion', '99.99.99')) > parse_version(
                 LATEST_SUPPORTED_VERSION) > parse_version(yml_content.get('fromversion', '0.0.0')):
@@ -135,9 +139,6 @@ class ContentCreator:
             self.fix_script_in_unified_yml(yml_content)
 
             if save_yml:
-                ryaml = YAML()
-                ryaml.preserve_quotes = True
-                ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
                 with open(file_path, mode='w', encoding='utf-8') as f:
                     ryaml.dump(yml_content, f)
 
@@ -147,14 +148,15 @@ class ContentCreator:
         if self.no_fromversion:
             return {}
 
-        json_content = tools.get_json(file_path)
+        with open(file_path, 'r') as f:
+            json_content = json.load(f)
 
         if parse_version(json_content.get('toVersion', '99.99.99')) > parse_version(
                 LATEST_SUPPORTED_VERSION) > parse_version(json_content.get('fromVersion', '0.0.0')):
             json_content['fromVersion'] = LATEST_SUPPORTED_VERSION
 
             with open(file_path, 'w') as f:
-                json.dump(json_content, f, indent=4)
+                json.dump(json_content, f, indent=4, ensure_ascii=False)
 
         return json_content
 
@@ -450,7 +452,8 @@ class ContentCreator:
                         new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle,
                                                                                   os.path.basename(new_path)))
                         shutil.copyfile(new_path, new_file_path)
-                        self.add_from_version_to_yml(new_file_path)
+                        if new_file_path.endswith('yml'):
+                            self.add_from_version_to_yml(new_file_path)
 
             else:
                 if not self.check_from_version_not_above_6_0_0(path):
@@ -469,7 +472,8 @@ class ContentCreator:
                 print(f'Copying path {path} as {path_basename}')
                 new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle, path_basename))
                 shutil.copyfile(path, new_file_path)
-                self.add_from_version_to_yml(new_file_path)
+                if new_file_path.endswith('yml'):
+                    self.add_from_version_to_yml(new_file_path)
 
     def copy_packs_to_content_bundles(self, packs):
         """

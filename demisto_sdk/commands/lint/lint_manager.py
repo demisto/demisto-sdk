@@ -43,7 +43,7 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver=None):
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
@@ -53,11 +53,12 @@ class LintManager:
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
+        self.prev_ver = prev_ver if prev_ver else 'master'
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
                                                     git=git,
-                                                    all_packs=all_packs)
+                                                    all_packs=all_packs, base_branch=self.prev_ver)
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -139,7 +140,8 @@ class LintManager:
 
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool) -> List[Path]:
+    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool,
+                      base_branch: str) -> List[Path]:
         """ Get packages paths to run lint command.
 
         Args:
@@ -147,6 +149,7 @@ class LintManager:
             input(str): dir pack specified as argument.
             git(bool): Perform lint and test only on changed packs.
             all_packs(bool): Whether to run on all packages.
+            base_branch (str): Name of the branch to run the diff on.
 
         Returns:
             List[Path]: Pkgs to run lint
@@ -168,7 +171,7 @@ class LintManager:
         total_found = len(pkgs)
         if git:
             pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
-                                                        pkgs=pkgs)
+                                                        pkgs=pkgs, base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
@@ -195,12 +198,14 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path]) -> List[Path]:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str) -> List[Path]:
         """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
         run on Lint.
 
         Args:
             pkgs(List[Path]): pkgs to check
+            base_branch (str): Name of the branch to run the diff on.
+
 
         Returns:
             List[Path]: A list of names of packages that should run.
@@ -210,10 +215,10 @@ class LintManager:
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
         last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                     content_repo.remote().refs.master)
-        changed_from_master = {content_repo.working_dir / Path(item.b_path).parent for item in
-                               content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
-        all_changed = staged_files.union(changed_from_master)
+                                                     f'{content_repo.remote()}/{base_branch}')
+        changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
+                             content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
+        all_changed = staged_files.union(changed_from_base)
         pkgs_to_check = all_changed.intersection(pkgs)
 
         return list(pkgs_to_check)

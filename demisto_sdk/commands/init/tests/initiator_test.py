@@ -269,14 +269,14 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
 
 
 @pytest.mark.parametrize('input_name,expected_output_name', name_reformatting_test_examples)
-def test_convert_to_valid_name(initiator, input_name, expected_output_name):
-    '''Test the 'convert_to_valid_name' method with various inputs
+def test_format_pack_dir_name(initiator, input_name, expected_output_name):
+    '''Test the 'format_pack_dir_name' method with various inputs
 
     Args:
         initiator (fixture): An instance of the Initiator class
         input_name (str): A 'name' argument value to test
         expected_output_name (str): The value expected to be returned by passing 'input_name'
-            to the 'convert_to_valid_name' method
+            to the 'format_pack_dir_name' method
 
     Scenario: The demisto-sdk 'init' command is executed with the 'contribution' option
 
@@ -284,16 +284,16 @@ def test_convert_to_valid_name(initiator, input_name, expected_output_name):
     - A pack name (taken from the contribution metadata or explicitly passed as a command option)
 
     When
-    - The pack name is passed to the 'convert_to_valid_name' method
+    - The pack name is passed to the 'format_pack_dir_name' method
 
     Then
     - Ensure the reformatted pack name returned by the method matches the expected output
     - Ensure the reformatted pack name returned by the method contains only valid characters
         (alphanumeric, underscore, and dash with no whitespace)
     '''
-    output_name = initiator.convert_to_valid_name(input_name)
+    output_name = initiator.format_pack_dir_name(input_name)
     assert output_name == expected_output_name
-    assert not re.search(r'\s'), 'Whitespace was found in the returned value from executing "convert_to_valid_name"'
+    assert not re.search(r'\s'), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
     err_msg = 'Characters other than alphanumeric, underscore, and dash were found in the output'
     assert all([char.isalnum() or char in {'_', '-'} for char in output_name]), err_msg
     if len(output_name) > 1:

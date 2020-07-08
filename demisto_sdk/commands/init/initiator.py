@@ -84,7 +84,7 @@ class Initiator:
         self.name = name
         if name is not None and len(name) != 0:
             if self.contribution:
-                self.name = self.convert_to_valid_name(name)
+                self.name = self.format_pack_dir_name(name)
             else:
                 while ' ' in name:
                     name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
@@ -122,7 +122,7 @@ class Initiator:
             return self.pack_init()
 
     @staticmethod
-    def convert_to_valid_name(name: str) -> str:
+    def format_pack_dir_name(name: str) -> str:
         """Formats a (pack) name to a valid value
 
         Specification:
@@ -181,7 +181,7 @@ class Initiator:
                     metadata = json.loads(metadata_file.read())
                     # a name passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
-                    pack_name = self.name or self.convert_to_valid_name(metadata.get('name', 'ContributionPack'))
+                    pack_name = self.name or self.format_pack_dir_name(metadata.get('name', 'ContributionPack'))
                     # a description passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
                     pack_description = self.description or metadata.get('description')

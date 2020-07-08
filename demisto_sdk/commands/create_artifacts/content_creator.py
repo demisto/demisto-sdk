@@ -12,6 +12,7 @@ from typing import List
 from pkg_resources import parse_version
 
 import demisto_sdk.commands.common.tools as tools
+import ujson
 from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -149,14 +150,15 @@ class ContentCreator:
             return {}
 
         with open(file_path, 'r') as f:
-            json_content = json.load(f)
+            json_content = ujson.load(f)
 
         if parse_version(json_content.get('toVersion', '99.99.99')) > parse_version(
                 LATEST_SUPPORTED_VERSION) > parse_version(json_content.get('fromVersion', '0.0.0')):
             json_content['fromVersion'] = LATEST_SUPPORTED_VERSION
 
+            # ujson lets you keep html chars as unicode like "<" should be "\u003c"
             with open(file_path, 'w') as f:
-                json.dump(json_content, f, indent=4, ensure_ascii=False)
+                ujson.dump(json_content, f, indent=4, encode_html_chars=True)
 
         return json_content
 

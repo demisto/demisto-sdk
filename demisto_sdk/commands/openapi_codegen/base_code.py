@@ -1,7 +1,7 @@
-baseArgument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$')"
-baseParams = """params={$PARAMS$}"""
-baseListFunctions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
-baseFunction = """def $FUNCTIONNAME$_command(client, args):
+base_argument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$')"
+base_params = """params={$PARAMS$}"""
+base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
+base_function = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
     $PARAMETERS$
     $DATA$
@@ -14,7 +14,7 @@ baseFunction = """def $FUNCTIONNAME$_command(client, args):
         return_error(f'Error in API call {response.status_code} - {response.text}')
 
 """
-baseCode = """''' IMPORTS '''
+base_code = """''' IMPORTS '''
 import json
 
 

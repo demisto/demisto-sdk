@@ -106,7 +106,7 @@ class OpenAPIIntegration:
                             for item in obj.get('allOf', []):
                                 arr = extract(item, arr, context)
                     else:
-                        arr.append({"name": ".".join(context), "type": obj.get('type', 'Unknown'),
+                        arr.append({'name': '.'.join(context), 'type': obj.get('type', 'Unknown'),
                                     'description': obj.get('description', '')})
 
                 elif obj.get('type') and type(obj.get('type')) == dict:
@@ -148,7 +148,7 @@ class OpenAPIIntegration:
         new_function['name'] = name
         func_desc = data.get('summary', None)
         if not func_desc:
-            func_desc = data.get('description', "")
+            func_desc = data.get('description', '')
         for i in illegal_description_chars:
             func_desc = func_desc.replace(i, '_')
         new_function['description'] = func_desc
@@ -162,14 +162,14 @@ class OpenAPIIntegration:
             iter_item = data.get('parameters', [])
         for arg in iter_item:
             new_arg = dict()
-            arg_name = str(arg.get('name', ""))
+            arg_name = str(arg.get('name', ''))
             new_arg['name'] = arg_name
-            arg_desc = arg.get('description', "")
+            arg_desc = arg.get('description', '')
             for i in illegal_description_chars:
-                arg_desc = arg_desc.replace(i, "_")
-            new_arg['description'] = f"\"{arg_desc}\""
+                arg_desc = arg_desc.replace(i, '_')
+            new_arg['description'] = f'\"{arg_desc}\"'
             new_arg['required'] = arg.get('required')
-            new_arg['default'] = arg.get('default', "")
+            new_arg['default'] = arg.get('default', '')
             new_arg['in'] = arg.get('in', None)
             new_arg['type'] = arg_types.get(arg.get('type', 'string'), 'string')
             new_arg['enums'] = [str(x) for x in arg.get(
@@ -219,8 +219,8 @@ class OpenAPIIntegration:
             sys.exit(-1)
         try:
             if includecommands:
-                with open(includecommands, "r") as fp:
-                    self.include_commands = fp.read().split("\n")
+                with open(includecommands, 'r') as fp:
+                    self.include_commands = fp.read().split('\n')
                     self.filter_commands = True
         except Exception as e:
             self.filter_commands = False
@@ -241,7 +241,7 @@ class OpenAPIIntegration:
         self.produces = self.json.get('produces', [])
         self.security = self.json.get('security', [])
         self.schemes = self.json.get('schemes', [])
-        self.securitySchemes = self.json.get('securityDefinitions', {}) if self.swagger == "2.0" else self.json.get(
+        self.securitySchemes = self.json.get('securityDefinitions', {}) if self.swagger == '2.0' else self.json.get(
             'securitySchemes', {})
         self.functions = list()
         self.parameters = self.json.get('parameters', [])
@@ -295,7 +295,7 @@ class OpenAPIIntegration:
             if arguments_found:
                 this_function = this_function.replace('$ARGUMENTS$', '\n    '.join(arguments))
             else:
-                this_function = "\n".join(
+                this_function = '\n'.join(
                     [x for x in this_function.split('\n') if '$ARGUMENTS$' not in x])
 
             if new_params:
@@ -308,7 +308,7 @@ class OpenAPIIntegration:
                 params = base_params.replace('$PARAMS$', ', '.join(modified_params))
                 this_function = this_function.replace('$PARAMETERS$', params)
             else:
-                this_function = "\n".join(
+                this_function = '\n'.join(
                     [x for x in this_function.split('\n') if '$PARAMETERS$' not in x])
 
             if new_data:
@@ -372,12 +372,12 @@ class OpenAPIIntegration:
                 arg_name = arg['name']
                 required = True if arg['required'] else False
                 description = arg.get('description', None)
-                if not description and "body" in arg['in']:
+                if not description and 'body' in arg['in']:
                     try:
                         type_ = arg['schema']['properties']['members']['type']
-                        properties = ",".join(
+                        properties = ','.join(
                             arg['schema']['properties']['members']['items']['properties'].keys())
-                        description = f"An {type_} containing the following items - {properties}"
+                        description = f'An {type_} containing the following items - {properties}'
                     except KeyError:
                         description = None
                 if description:

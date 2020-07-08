@@ -54,4 +54,4 @@ conventions and expected file and directory structure.
 
 `demisto-sdk init -n "My New Pack" -c ~/Downloads/my_contribution.zip -d "This pack introduces the 'My Example' Integration allowing you to execute commands on 'My Example' product directly from Cortex XSOAR"`
 This will do the same as in the previous example except that it will use the passed name and description for the converted
-contribution pack.
+contribution pack metadata.

@@ -12,8 +12,8 @@ from demisto_sdk.commands.openapi_codegen.base_code import (
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
 
-camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z])')
-illegal_description_chars = ['`', ':', '\n', "'", '<br>', '[', ']', '*', '"']
+camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
+illegal_description_chars = ['`', ':', '\n', "'", '<br>', '[', ']', '*', '"', '\r']
 illegal_func_chars = illegal_description_chars + [' ', '(', ')']
 illegal_function_names = ['type', 'from']
 prepend_illegal = 'i'
@@ -21,6 +21,7 @@ output_types = {
     'string': 'String',
     'integer': 'Number',
     'object': 'Unknown',
+    'array': 'Unknown',
     'boolean': 'Boolean',
 }
 arg_types = {
@@ -57,17 +58,16 @@ class OpenAPIIntegration:
         self.produces = list()
         self.security = None
         self.securitySchemes = None
+        self.definitions = None
         self.functions = list()
         self.parameters = list()
         self.verbose = verbose
         self.load_file(file_path, include_commands)
 
     def extract_values(self, obj, key):
-
         arr = []
 
         def extract(obj, arr, key):
-
             if isinstance(obj, dict):
                 for k, v in obj.items():
                     if k == key:
@@ -84,7 +84,6 @@ class OpenAPIIntegration:
         return results
 
     def extract_outputs(self, obj, context):
-
         arr = []
 
         def extract(obj, arr, context):
@@ -126,7 +125,7 @@ class OpenAPIIntegration:
         results = extract(obj, arr, context)
         return results
 
-    def add_function(self, path, method, data, pars, commandpretext):
+    def add_function(self, path, method, data, pars, command_prefix):
         new_function = dict()
         new_function['path'] = '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/')
         new_function['method'] = method
@@ -140,17 +139,17 @@ class OpenAPIIntegration:
         if not name:
             name = '_'.join([re.sub(r'\{[^)]*\}', '', x) for x in path.split('/')])
         for i in illegal_func_chars:
-            name = name.replace(i, '_')
+            name = name.replace(i, '')
         name = camel_to_snake(name)
         name = name.replace('__', '_').strip('_')
-        if commandpretext:
-            name = '{}-'.format(commandpretext.lower()) + name
+        if command_prefix:
+            name = '{}-'.format(command_prefix.lower()) + name
         new_function['name'] = name
         func_desc = data.get('summary', None)
         if not func_desc:
             func_desc = data.get('description', '')
         for i in illegal_description_chars:
-            func_desc = func_desc.replace(i, '_')
+            func_desc = func_desc.replace(i, ' ')
         new_function['description'] = func_desc
         new_function['execution'] = False
         new_function['arguments'] = list()
@@ -166,8 +165,8 @@ class OpenAPIIntegration:
             new_arg['name'] = arg_name
             arg_desc = arg.get('description', '')
             for i in illegal_description_chars:
-                arg_desc = arg_desc.replace(i, '_')
-            new_arg['description'] = f'\"{arg_desc}\"'
+                arg_desc = arg_desc.replace(i, ' ')
+            new_arg['description'] = arg_desc
             new_arg['required'] = arg.get('required')
             new_arg['default'] = arg.get('default', '')
             new_arg['in'] = arg.get('in', None)
@@ -183,7 +182,11 @@ class OpenAPIIntegration:
             new_response['description'] = response.get('description', None)
             if response.get('schema'):
                 schema = response['schema']
-                all_items = self.extract_values(schema, 'properties')
+                if '$ref' in schema:
+                    ref = schema['$ref'].split('/')[-1]
+                    all_items = self.extract_values(self.definitions.get(ref, {}), 'properties')
+                else:
+                    all_items = self.extract_values(schema, 'properties')
                 data = self.extract_outputs(all_items, [])
                 for v in data:
                     description = v.get('description', '')
@@ -191,7 +194,7 @@ class OpenAPIIntegration:
                     this_type = output_types.get(this_type)
                     resp_name = v.get('name')
                     for i in illegal_description_chars:
-                        description = description.replace(i, '_')
+                        description = description.replace(i, ' ')
                     new_function['outputs'].append(
                         {'name': resp_name, 'type': this_type, 'description': description})
             new_function['responses'].append(new_response)
@@ -243,6 +246,7 @@ class OpenAPIIntegration:
         self.schemes = self.json.get('schemes', [])
         self.securitySchemes = self.json.get('securityDefinitions', {}) if self.swagger == '2.0' else self.json.get(
             'securitySchemes', {})
+        self.definitions = self.json.get('definitions', {})
         self.functions = list()
         self.parameters = self.json.get('parameters', [])
         for path, function in self.json['paths'].items():
@@ -336,8 +340,8 @@ class OpenAPIIntegration:
 
             this_function = this_function.replace('$CONTEXTNAME$', func['name'].title().replace('_', ''))
             contextcontext = func['name'].title().replace('_', '')
-            if self.command_prefix:
-                contextcontext = f'{self.command_prefix}.{contextcontext}'
+            if self.context_path:
+                contextcontext = f'{self.context_path}.{contextcontext}'
             this_function = this_function.replace(
                 '$CONTEXTCONTEXT$', contextcontext)
             these_functions.append(this_function)
@@ -350,7 +354,7 @@ class OpenAPIIntegration:
         # Add the command mappings:
         for func in self.functions:
             function = base_list_functions.replace(
-                '$FUNCTIONNAME$', func['name'])
+                '$FUNCTIONNAME$', func['name'].replace('_', '-'))
             fn = func['name'].replace('-', '_')
             function = function.replace('$FUNCTIONCOMMAND$', f'{fn}_command')
             list_functions.append(function)

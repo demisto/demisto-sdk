@@ -33,7 +33,7 @@ name_reformatting_test_examples = [
     ('PackYayOK', 'PackYayOK'),
     ('pack yay ok!', 'PackYayOk'),
     ('PackYayOK', 'PackYayOK'),
-    ('-pack-yay-ok-', 'Packyayok'),
+    ('-pack-yay-ok-', 'Pack-yay-ok'),
     ('PackYayOK', 'PackYayOK'),
     ('The quick brown fox, jumps over the lazy dog!', 'TheQuickBrownFox_JumpsOverTheLazyDog'),
     ('The quick`*+.brown fox, ;jumps over @@the lazy dog!', 'TheQuick_BrownFox_JumpsOver_TheLazyDog')
@@ -293,7 +293,7 @@ def test_format_pack_dir_name(initiator, input_name, expected_output_name):
     '''
     output_name = initiator.format_pack_dir_name(input_name)
     assert output_name == expected_output_name
-    assert not re.search(r'\s'), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
+    assert not re.search(r'\s', output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
     err_msg = 'Characters other than alphanumeric, underscore, and dash were found in the output'
     assert all([char.isalnum() or char in {'_', '-'} for char in output_name]), err_msg
     if len(output_name) > 1:

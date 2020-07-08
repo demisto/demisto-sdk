@@ -140,13 +140,11 @@ class Initiator:
         Returns:
             str: The reformatted pack name
         """
-        temp = name.strip().strip('-_')
-        temp = capwords(temp)
+        temp = capwords(name.strip().strip('-_'))
         punctuation_to_replace = punctuation.replace('-', '').replace('_', '')
         translation_dict = {x: '_' for x in punctuation_to_replace}
         translation_table = str.maketrans(translation_dict)
-        temp = temp.translate(translation_table)
-        temp = temp.strip('-_')
+        temp = temp.translate(translation_table).strip('-_')
         temp = re.sub(r'-+', '-', re.sub(r'_+', '_', temp))
         comparator = capwords(temp.replace('_', ' '))
         result = ''
@@ -184,14 +182,16 @@ class Initiator:
                     pack_name = self.name or self.format_pack_dir_name(metadata.get('name', 'ContributionPack'))
                     # a description passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
-                    pack_description = self.description or metadata.get('description')
-                    metadata_dict['description'] = pack_description
+                    metadata_dict['description'] = self.description or metadata.get('description')
                     metadata_dict['name'] = pack_name
                     metadata_dict['author'] = metadata.get('author', '')
                     metadata_dict['support'] = metadata.get('support', '')
                     metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
                     metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
-                    metadata_dict['dependencies'] = metadata.get('dependencies')  # not sure about this one
+                    metadata_dict['categories'] = metadata.get('categories') if metadata.get('categories') else []
+                    metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
+                    metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []
+                    metadata_dict['keywords'] = metadata.get('keywords') if metadata.get('keywords') else []
             if os.path.exists(os.path.join(packs_dir, pack_name)):
                 click.echo(
                     f'Modifying pack name because pack {pack_name} already exists in the content repo',
@@ -227,6 +227,12 @@ class Initiator:
             os.remove(os.path.join(pack_dir, 'metadata.json'))
             click.echo(f'Executing \'format\' on the restructured contribution zip files at "{pack_dir}"')
             format_manager(input=pack_dir)
+        except Exception as e:
+            click.echo(
+                f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
+                color=LOG_COLORS.RED
+            )
+        finally:
             if self.contrib_conversion_errs:
                 click.echo(
                     'The following errors occurred while converting unified content YAMLs to package structure:'
@@ -234,11 +240,6 @@ class Initiator:
                 click.echo(
                     textwrap.indent('\n'.join(self.contrib_conversion_errs), '\t')
                 )
-        except Exception as e:
-            click.echo(
-                f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
-                color=LOG_COLORS.RED
-            )
 
     def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
         """

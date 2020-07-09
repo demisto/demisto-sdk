@@ -172,7 +172,7 @@ class LintManager:
         total_found = len(pkgs)
         if git:
             pkgs = self._filter_changed_packages(content_repo=content_repo,
-                                                        pkgs=pkgs, base_branch=base_branch)
+                                                 pkgs=pkgs, base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
@@ -217,7 +217,7 @@ class LintManager:
         last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                      f'{content_repo.remote()}/{base_branch}')
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
-                               content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
+                             content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_base)
         pkgs_to_check = all_changed.intersection(pkgs)
 

@@ -43,7 +43,7 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver=None):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver: str):
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
@@ -53,12 +53,13 @@ class LintManager:
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
-        self.prev_ver = prev_ver if prev_ver else 'master'
+        self._prev_ver = prev_ver
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
                                                     git=git,
-                                                    all_packs=all_packs, base_branch=self.prev_ver)
+                                                    all_packs=all_packs,
+                                                    base_branch=self._prev_ver)
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -170,8 +171,8 @@ class LintManager:
 
         total_found = len(pkgs)
         if git:
-            pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
-                                                        pkgs=pkgs, base_branch=base_branch)
+            pkgs = self._filter_changed_packages(content_repo=content_repo,
+                                                 pkgs=pkgs, base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
@@ -210,8 +211,9 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
-              f"{content_repo.active_branch}{Colors.reset}")
+        print(
+            f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
+            f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
         last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,

@@ -133,7 +133,7 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
             try:
                 modules_content[module] = (content_repo.working_dir / module).read_bytes()
             except FileNotFoundError:
-                logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
+                logger.debug(f'Module {module} was not found, possibly deleted due to being in a feature branch')
 
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub

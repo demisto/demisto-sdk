@@ -193,7 +193,7 @@ class Initiator:
                     metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
                     metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []
                     metadata_dict['keywords'] = metadata.get('keywords') if metadata.get('keywords') else []
-            if os.path.exists(os.path.join(packs_dir, pack_name)):
+            while os.path.exists(os.path.join(packs_dir, pack_name)):
                 click.echo(
                     f'Modifying pack name because pack {pack_name} already exists in the content repo',
                     color=LOG_COLORS.NATIVE

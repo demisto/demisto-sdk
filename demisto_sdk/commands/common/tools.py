@@ -928,6 +928,22 @@ def pascal_case(st: str) -> str:
     return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
 
 
+def capital_case(st: str) -> str:
+    """Capitalize the first letter of each word of a string. The remaining characters are untouched.
+
+    Arguments:
+        st {str} -- string to convert
+
+    Returns:
+        str -- converted string
+    """
+    if len(st) >= 1:
+        words = st.split()
+        return ' '.join([f'{s[:1].upper()}{s[1:]}' for s in words if len(s) >= 1])
+    else:
+        return ''
+
+
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)

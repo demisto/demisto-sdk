@@ -654,7 +654,7 @@ class ContentCreator:
                 shutil.make_archive(self.content_zip, 'zip', self.content_bundle)
                 shutil.make_archive(self.test_zip, 'zip', self.test_bundle)
 
-                shutil.copyfile("./Tests/id_set.json", os.path.join(self.artifacts_path, "id_set.json"))
+                self.copy_file_to_artifacts("./Tests/id_set.json")
 
             shutil.make_archive(self.packs_zip, 'zip', self.packs_bundle)
 

@@ -237,6 +237,8 @@ def test_capital_case():
     assert res == "Good Life"
     res = tools.capital_case("good_life-here v2")
     assert res == "Good_life-here V2"
+    res = tools.capital_case("")
+    assert res == ""
 
 
 class TestPrintColor:

@@ -231,11 +231,11 @@ def test_pascal_case():
 
 
 def test_capital_case():
-    res = tools.pascal_case("PowerShell Remoting")
+    res = tools.capital_case("PowerShell Remoting")
     assert res == "PowerShell Remoting"
-    res = tools.pascal_case("good life")
+    res = tools.capital_case("good life")
     assert res == "Good Life"
-    res = tools.pascal_case("good_life-here v2")
+    res = tools.capital_case("good_life-here v2")
     assert res == "Good_life-here V2"
 
 

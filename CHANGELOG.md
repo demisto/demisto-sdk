@@ -1,4 +1,5 @@
 # Changelog
+* Added the *--description* option to the **init** command.
 * Added the *--contribution* option to the **init** command which converts a contribution zip to proper pack format.
 * Improved **validate** command performance time and outputs.
 * Added the flag *--no-docker-checks* to **validate** command to skip docker checks.

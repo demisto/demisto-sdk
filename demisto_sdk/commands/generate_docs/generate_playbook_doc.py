@@ -89,7 +89,7 @@ def get_playbook_dependencies(playbook: dict, playbook_path: str) -> Tuple[list,
     commands = set()
     playbooks = set()
 
-    playbook_tasks = playbook.get('tasks')
+    playbook_tasks = playbook.get('tasks', {})
     playbook_path = os.path.relpath(playbook_path)
     pack_path = os.path.dirname(os.path.dirname(playbook_path))
     integration_dir_path = os.path.join(pack_path, 'Integrations')
@@ -101,9 +101,9 @@ def get_playbook_dependencies(playbook: dict, playbook_path: str) -> Tuple[list,
             # Get all yml files
             integrations_files.append(file)
     for task in playbook_tasks:
-        task = playbook_tasks[task]['task']
-        if task['iscommand']:
-            integration = task['script']
+        task = playbook_tasks.get(task, {}).get('task')
+        if task.get('iscommand'):
+            integration = task.get('script')
             brand_integration = task.get('brand')
             integration_name, command_name = integration.split('|||')
             if command_name:

@@ -928,6 +928,22 @@ def pascal_case(st: str) -> str:
     return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
 
 
+def capital_case(st: str) -> str:
+    """Capitalize the first letter of each word of a string. The remaining characters are untouched.
+
+    Arguments:
+        st {str} -- string to convert
+
+    Returns:
+        str -- converted string
+    """
+    if len(st) >= 1:
+        words = st.split()
+        return ' '.join([f'{s[:1].upper()}{s[1:]}' for s in words if len(s) >= 1])
+    else:
+        return ''
+
+
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)
@@ -1222,3 +1238,21 @@ def get_code_lang(file_data: dict, file_entity: str) -> str:
     elif file_entity == SCRIPTS_DIR:
         return file_data.get('type', {})
     return ''
+
+
+def get_content_release_identifier(branch_name: str) -> Optional[str]:
+    """
+
+    Args:
+        branch_name: the branch name to get config.yml from
+
+    Returns:
+        GIT_SHA1 of latest content release if successfully returned from content repo.
+        else None.
+    """
+    try:
+        file_content = get_remote_file('.circleci/config.yml', tag=branch_name)
+    except Exception:
+        return None
+    else:
+        return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')

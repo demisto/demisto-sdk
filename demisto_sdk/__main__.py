@@ -314,6 +314,11 @@ def validate(config, **kwargs):
     '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
 )
 @click.option(
+    '-s', '--suffix', help='The added suffix to all files in the created artifacts', hidden=True)
+@click.option(
+    '--no-fromversion', is_flag=True, help='Whether to update fromversion on yml and json files or not.'
+)
+@click.option(
     '--packs', is_flag=True,
     help='If passed, will create only content_packs.zip'
 )
@@ -639,6 +644,21 @@ def generate_test_playbook(**kwargs):
 @click.option(
     '--common_server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
+@click.option(
+    '-c', '--contribution',
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
+    required=False,
+    help="The path to the zip file downloaded via the Marketplace contribution UI. "
+    "This will format the contents of the zip file to a pack format ready for contribution "
+    "in the content repository on your local machine. The command should be executed from the "
+    "content repository's base directory. When this option is passed, the only other options "
+    "that are considered are \"name\" and \"description\" - all others are ignored.")
+@click.option(
+    '-d', '--description',
+    type=click.STRING,
+    default='',
+    help="The description to attach to the converted contribution pack. Used when the \"contribution\" "
+    "option is passed.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 EXPECTED_LIST_WORKFLOWS = {
     'Securonix.Workflows(val.Workflow == obj.Workflow)':
         [
@@ -205,4 +207,4 @@ EXPECTED_ENTITY_IN_WATCHLIST = {
         'Entityname': '1002'
     }
 }
-EXPECTED_ADD_ENTITY_TO_WATCHLIST = {}
+EXPECTED_ADD_ENTITY_TO_WATCHLIST: Dict[Any, Any] = {}

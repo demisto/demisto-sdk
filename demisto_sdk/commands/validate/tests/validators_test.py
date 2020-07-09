@@ -3,7 +3,7 @@ import os
 import sys
 from io import StringIO
 from shutil import copyfile
-from typing import Any, Type
+from typing import Any, Type, Union
 
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
@@ -66,7 +66,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 class TestValidators:
-    CREATED_DIRS = list()
+    CREATED_DIRS = list()  # type: list[str]
 
     @classmethod
     def setup_class(cls):
@@ -127,8 +127,8 @@ class TestValidators:
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
-            validator = validator(structure)
-            assert validator.is_valid_version() is answer
+            res_validator = validator(structure)
+            assert res_validator.is_valid_version() is answer
         finally:
             os.remove(target)
 
@@ -140,7 +140,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
     def test_is_condition_branches_handled(self, source, answer):
-        # type: (str, str, Any) -> None
+        # type: (str, str) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -167,8 +167,8 @@ class TestValidators:
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
-            validator = validator(structure)
-            assert validator.is_valid_file(validate_rn=False) is answer
+            res_validator = validator(structure)
+            assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
 
@@ -188,14 +188,14 @@ class TestValidators:
                              INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
     def test_is_release_notes_exists(self, source_dummy, target_dummy,
                                      source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
             mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
             mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
-            validator = OldReleaseNotesValidator(target_dummy)
-            assert validator.validate_file_release_notes_exists() is answer
+            res_validator = OldReleaseNotesValidator(target_dummy)
+            assert res_validator.validate_file_release_notes_exists() is answer
         finally:
             os.remove(target_dummy)
             os.remove(target_release_notes)
@@ -239,14 +239,14 @@ class TestValidators:
                              'validator, answer', test_package)
     def test_valid_release_notes_structure(self, source_dummy, target_dummy,
                                            source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
             mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
             mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
-            validator = OldReleaseNotesValidator(target_dummy)
-            assert validator.is_valid_release_notes_structure() is answer
+            res_validator = OldReleaseNotesValidator(target_dummy)
+            assert res_validator.is_valid_release_notes_structure() is answer
         finally:
             os.remove(target_dummy)
             os.remove(target_release_notes)
@@ -266,12 +266,12 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
     def test_is_id_equals_name(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        # type: (str, str, Any, Type[Union[ScriptValidator, PlaybookValidator, IntegrationValidator]]) -> None
         try:
             copyfile(str(source), target)
             structure = StructureValidator(str(source))
-            validator = validator(structure)
-            assert validator.is_id_equals_name() is answer
+            res_validator = validator(structure)
+            assert res_validator.is_id_equals_name() is answer
         finally:
             os.remove(target)
 
@@ -282,7 +282,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, answer', INPUTS_IS_CONNECTED_TO_ROOT)
     def test_is_root_connected_to_all_tasks(self, source, answer):
-        # type: (str, str, Any) -> None
+        # type: (str, bool) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -845,3 +845,14 @@ class TestValidators:
 
         # check recognized deleted file
         assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
+
+
+def test_content_release_identifier_exists():
+    """
+    When running validate file, it should get a git sha1 from content repo.
+    This test assures that if someone changes the .circle/config.yml scheme, it'll fail.
+    """
+    fv = FilesValidator()
+    fv.branch_name = 'master'
+    sha1 = fv.get_content_release_identifier()
+    assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'

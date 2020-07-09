@@ -29,7 +29,7 @@ class TestIntegrationValidator:
     SCRIPT_WITH_DOCKER_IMAGE_1 = {"script": {"dockerimage": "test"}}
     SCRIPT_WITH_DOCKER_IMAGE_2 = {"script": {"dockerimage": "test1"}}
     SCRIPT_WITH_NO_DOCKER_IMAGE = {"script": {"no": "dockerimage"}}
-    EMPTY_CASE = {}
+    EMPTY_CASE = {}  # type: dict[any, any]
     IS_DOCKER_IMAGE_CHANGED = [
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_NO_DOCKER_IMAGE, True),
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_DOCKER_IMAGE_2, True),

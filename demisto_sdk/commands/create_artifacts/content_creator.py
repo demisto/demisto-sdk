@@ -158,7 +158,8 @@ class ContentCreator:
 
             # ujson lets you keep html chars as unicode like "<" should be "\u003c"
             with open(file_path, 'w') as f:
-                ujson.dump(json_content, f, indent=4, encode_html_chars=True)
+                ujson.dump(json_content, f, indent=4, encode_html_chars=True, escape_forward_slashes=False,
+                           ensure_ascii=False)
 
         return json_content
 

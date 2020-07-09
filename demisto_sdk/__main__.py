@@ -393,7 +393,7 @@ def secrets(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
-         no_pwsh_test: bool, keep_container: bool, test_xml: str, failure_report: str, log_path: str, prev_ver: str):
+         no_pwsh_test: bool, keep_container: bool, prev_ver: str, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n

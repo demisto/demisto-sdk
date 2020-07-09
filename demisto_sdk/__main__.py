@@ -351,12 +351,14 @@ def create(**kwargs):
 @click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
+@click.option(
+    '--prev-ver', help='The branch against which to run secrets validation')
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
     secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
                                ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'],
-                               input_path=kwargs.get('input'))
+                               input_path=kwargs.get('input'), prev_ver=kwargs.get('prev_ver'))
     return secrets.run()
 
 

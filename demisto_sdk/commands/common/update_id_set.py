@@ -155,7 +155,7 @@ def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict) -> tupl
         task_details = task.get('task', {})
 
         enriched_id = task_details.get(param_to_enrich_by)
-        skippable = task_details.get('skipunavailable', False)
+        skippable = task.get('skipunavailable', False)
         if enriched_id:
             implementing_ids.add(enriched_id)
             if skippable:
@@ -173,7 +173,7 @@ def get_commmands_from_playbook(data_dict: dict) -> tuple:
         task_details = task.get('task', {})
 
         command = task_details.get('script')
-        skippable = task_details.get('skipunavailable', False)
+        skippable = task.get('skipunavailable', False)
         if command:
             splitted_cmd = command.split('|')
 
@@ -492,7 +492,7 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
                 'x3': [False]
             }
     """
-    values = {key: [] for key in keys_to_search}
+    values = {key: [] for key in keys_to_search}  # type: dict
 
     def get_values(current_object):
         if not current_object or not isinstance(current_object, (dict, list)):

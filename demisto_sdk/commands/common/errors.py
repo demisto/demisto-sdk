@@ -6,8 +6,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
-FOUND_FILES_AND_ERRORS = []
-FOUND_FILES_AND_IGNORED_ERRORS = []
+FOUND_FILES_AND_ERRORS = []  # type: list
+FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113']
 
@@ -881,7 +881,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def structure_doesnt_match_scheme(pretty_formatted_string_of_regexes):
-        return f"The file does not match any scheme we have, please refer to the following list" \
+        return f"The file does not match any scheme we have, please refer to the following list " \
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod

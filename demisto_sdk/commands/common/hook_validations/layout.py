@@ -5,7 +5,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 
 class LayoutValidator(ContentEntityValidator):
 
-    def is_valid_layout(self, validate_rn=True):  # type: () -> bool
+    def is_valid_layout(self, validate_rn=True):
+        # type: (bool) -> bool
         """Check whether the layout is valid or not.
 
         Returns:

@@ -12,7 +12,7 @@ from typing import List
 from pkg_resources import parse_version
 
 import demisto_sdk.commands.common.tools as tools
-import yaml
+import ujson
 from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                print_warning)
 from demisto_sdk.commands.unify.unifier import Unifier
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import FoldedScalarString
 
 LATEST_SUPPORTED_VERSION = '4.1.0'
 
@@ -108,20 +109,39 @@ class ContentCreator:
 
         return 0
 
+    @staticmethod
+    def fix_script_in_unified_yml(yml_content):
+        if 'script' in yml_content:
+            if isinstance(yml_content.get('script'), str):
+                if yml_content.get('script') not in ('-', ''):
+                    yml_content['script'] = FoldedScalarString(yml_content['script'])
+
+            elif yml_content.get('script').get('script') not in ('-', ''):
+                yml_content['script']['script'] = FoldedScalarString(yml_content['script']['script'])
+
     def add_from_version_to_yml(self, file_path=None, yml_content=None, save_yml=True):
         if self.no_fromversion:
             return {}
 
+        ryaml = YAML()
+        ryaml.preserve_quotes = True
+        ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if not yml_content:
-            yml_content = get_yaml(file_path)
+            with open(file_path, 'r') as yml_file:
+                yml_content = ryaml.load(yml_file)
 
         if parse_version(yml_content.get('toversion', '99.99.99')) > parse_version(
                 LATEST_SUPPORTED_VERSION) > parse_version(yml_content.get('fromversion', '0.0.0')):
             yml_content['fromversion'] = LATEST_SUPPORTED_VERSION
 
+            if 'detaileddescription' in yml_content:
+                yml_content['detaileddescription'] = FoldedScalarString(yml_content['detaileddescription'])
+
+            self.fix_script_in_unified_yml(yml_content)
+
             if save_yml:
-                with open(file_path, 'w') as f:
-                    yaml.dump(yml_content, f)
+                with open(file_path, mode='w', encoding='utf-8') as f:
+                    ryaml.dump(yml_content, f)
 
         return yml_content
 
@@ -129,14 +149,17 @@ class ContentCreator:
         if self.no_fromversion:
             return {}
 
-        json_content = tools.get_json(file_path)
+        with open(file_path, 'r') as f:
+            json_content = ujson.load(f)
 
         if parse_version(json_content.get('toVersion', '99.99.99')) > parse_version(
                 LATEST_SUPPORTED_VERSION) > parse_version(json_content.get('fromVersion', '0.0.0')):
             json_content['fromVersion'] = LATEST_SUPPORTED_VERSION
 
+            # ujson lets you keep html chars as unicode like "<" should be "\u003c"
             with open(file_path, 'w') as f:
-                json.dump(json_content, f, indent=4)
+                ujson.dump(json_content, f, indent=4, encode_html_chars=True, escape_forward_slashes=False,
+                           ensure_ascii=False)
 
         return json_content
 
@@ -207,7 +230,7 @@ class ContentCreator:
                 unification_tool = Unifier(package, package_dir_name, skip_dest_dir)
                 print('skipping {}'.format(package))
 
-            if parse_version(unification_tool.yml_data.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+            if parse_version(unification_tool.yml_data.get('fromversion', '0.0.0')) <= parse_version('6.0.0'):
                 unified_yml_paths = unification_tool.merge_script_package_to_yml(file_name_suffix=self.file_name_suffix)
                 for unified_yml_path in unified_yml_paths:
                     self.add_from_version_to_yml(unified_yml_path)
@@ -432,7 +455,8 @@ class ContentCreator:
                         new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle,
                                                                                   os.path.basename(new_path)))
                         shutil.copyfile(new_path, new_file_path)
-                        self.add_from_version_to_yml(new_file_path)
+                        if new_file_path.endswith('yml'):
+                            self.add_from_version_to_yml(new_file_path)
 
             else:
                 if not self.check_from_version_not_above_6_0_0(path):
@@ -451,7 +475,8 @@ class ContentCreator:
                 print(f'Copying path {path} as {path_basename}')
                 new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle, path_basename))
                 shutil.copyfile(path, new_file_path)
-                self.add_from_version_to_yml(new_file_path)
+                if new_file_path.endswith('yml'):
+                    self.add_from_version_to_yml(new_file_path)
 
     def copy_packs_to_content_bundles(self, packs):
         """
@@ -518,7 +543,7 @@ class ContentCreator:
                                 continue
                             unifier = Unifier(package_dir, dir_name, dest_dir)
 
-                            if parse_version(unifier.yml_data.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+                            if parse_version(unifier.yml_data.get('toversion', '99.99.99')) >= parse_version('6.0.0'):
                                 new_file_paths = unifier.merge_script_package_to_yml(
                                     file_name_suffix=self.file_name_suffix)
                                 for new_file_path in new_file_paths:

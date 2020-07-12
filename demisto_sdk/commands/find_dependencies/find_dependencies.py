@@ -236,6 +236,20 @@ class PackDependencies:
         return [(p, True) for p in pack_ids]
 
     @staticmethod
+    def _label_as_optional(pack_ids):
+        """
+        Sets pack as optional.
+
+        Args:
+            pack_ids (set): collection of pack ids to set as optional.
+
+        Returns:
+            list: collection of pack id and whether mandatory flag.
+
+        """
+        return [(p, False) for p in pack_ids]
+
+    @staticmethod
     def _collect_scripts_dependencies(pack_scripts, id_set):
         """
         Collects script pack dependencies.
@@ -437,7 +451,7 @@ class PackDependencies:
 
             if packs_found_from_integrations:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_integrations)
+                    _label_as_optional(packs_found_from_integrations)
                 dependencies_packs.update(pack_dependencies_data)
 
             related_scripts = incident_field_data.get('scripts', [])

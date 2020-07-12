@@ -543,7 +543,7 @@ class ContentCreator:
                                 continue
                             unifier = Unifier(package_dir, dir_name, dest_dir)
 
-                            if parse_version(unifier.yml_data.get('fromversion', '0.0.0')) <= parse_version('6.0.0'):
+                            if parse_version(unifier.yml_data.get('toversion', '99.99.99')) >= parse_version('6.0.0'):
                                 new_file_paths = unifier.merge_script_package_to_yml(
                                     file_name_suffix=self.file_name_suffix)
                                 for new_file_path in new_file_paths:

@@ -1,6 +1,8 @@
-base_argument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$')"
+base_argument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$'"
 base_params = """params={$PARAMS$}"""
+base_data = """data={$DATAOBJ$}"""
 base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
+# TODO: return_results()
 base_function = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
     $PARAMETERS$

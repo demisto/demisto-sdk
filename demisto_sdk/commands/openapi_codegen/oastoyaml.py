@@ -1,20 +1,20 @@
 import argparse
+import autopep8
 import json
 import os
 import re
 import shutil
 import sys
-
-import autopep8
 import yaml
+
+from distutils.util import strtobool
 from demisto_sdk.commands.openapi_codegen.base_code import (
-    base_argument, base_code, base_function, base_list_functions, base_params)
-from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
-    XSOARIntegration
+    base_argument, base_code, base_function, base_list_functions, base_params, base_data)
+from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegration
 
 camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
-illegal_description_chars = ['`', ':', '\n', "'", '<br>', '[', ']', '*', '"', '\r']
-illegal_func_chars = illegal_description_chars + [' ', '(', ')']
+illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', '<para/>']
+illegal_func_chars = illegal_description_chars + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
 illegal_function_names = ['type', 'from']
 prepend_illegal = 'i'
 output_types = {
@@ -36,14 +36,15 @@ removed_names = ['.properties', '.items']
 
 
 class OpenAPIIntegration:
-    def __init__(self, file_path, base_name, command_prefix, context_path, include_commands, verbose=False):
+    def __init__(self, file_path, base_name, command_prefix, context_path, include_commands,
+                 verbose=False, fix_code=False):
         self.json = None
         self.baseName = base_name
         self.filter_commands = False
         self.include_commands = []
         self.command_prefix = command_prefix
         self.context_path = context_path
-        self.fileLoad = False
+        self.file_load = False
         self.swagger = None
         self.openapi = None
         self.host = None
@@ -59,9 +60,11 @@ class OpenAPIIntegration:
         self.security = None
         self.securitySchemes = None
         self.definitions = None
+        self.components = None
         self.functions = list()
         self.parameters = list()
         self.verbose = verbose
+        self.fix_code = fix_code
         self.load_file(file_path, include_commands)
 
     def extract_values(self, obj, key):
@@ -125,7 +128,7 @@ class OpenAPIIntegration:
         results = extract(obj, arr, context)
         return results
 
-    def add_function(self, path, method, data, pars, command_prefix):
+    def add_function(self, path, method, data, params):
         new_function = dict()
         new_function['path'] = '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/')
         new_function['method'] = method
@@ -138,41 +141,34 @@ class OpenAPIIntegration:
                 name = None
         if not name:
             name = '_'.join([re.sub(r'\{[^)]*\}', '', x) for x in path.split('/')])
-        for i in illegal_func_chars:
-            name = name.replace(i, '')
-        name = camel_to_snake(name)
-        name = name.replace('__', '_').strip('_')
-        if command_prefix:
-            name = '{}-'.format(command_prefix.lower()) + name
+        name = self.clean_function_name(name)
         new_function['name'] = name
         func_desc = data.get('summary', None)
         if not func_desc:
             func_desc = data.get('description', '')
-        for i in illegal_description_chars:
-            func_desc = func_desc.replace(i, ' ')
+        func_desc = self.clean_description(func_desc)
         new_function['description'] = func_desc
         new_function['execution'] = False
         new_function['arguments'] = list()
         new_function['parameters'] = data.get('parameters', None)
         if not new_function['parameters']:
-            new_function['parameters'] = pars
-            iter_item = pars
+            new_function['parameters'] = params
+            iter_item = params
         else:
             iter_item = data.get('parameters', [])
         for arg in iter_item:
+            # ￿￿TODO: extract args from $ref?
             new_arg = dict()
             arg_name = str(arg.get('name', ''))
             new_arg['name'] = arg_name
             arg_desc = arg.get('description', '')
-            for i in illegal_description_chars:
-                arg_desc = arg_desc.replace(i, ' ')
+            arg_desc = self.clean_description(arg_desc)
             new_arg['description'] = arg_desc
             new_arg['required'] = arg.get('required')
             new_arg['default'] = arg.get('default', '')
             new_arg['in'] = arg.get('in', None)
-            new_arg['type'] = arg_types.get(arg.get('type', 'string'), 'string')
-            new_arg['enums'] = [str(x) for x in arg.get(
-                'enum')] if arg.get('enum', None) else None
+            new_arg['type'] = arg_types.get(arg.get('type', 'string'), 'str')
+            new_arg['enums'] = [str(x) for x in arg.get('enum')] if arg.get('enum', None) else None
             new_function['arguments'].append(new_arg)
         new_function['outputs'] = list()
         new_function['responses'] = list()
@@ -180,21 +176,28 @@ class OpenAPIIntegration:
             new_response = dict()
             new_response['code'] = response_code
             new_response['description'] = response.get('description', None)
-            if response.get('schema'):
-                schema = response['schema']
-                if '$ref' in schema:
-                    ref = schema['$ref'].split('/')[-1]
-                    all_items = self.extract_values(self.definitions.get(ref, {}), 'properties')
+            all_items = []
+            schemas = self.extract_values(response, 'schema')
+            if schemas:
+                schema = schemas[0]
+                refs = self.extract_values(schema, '$ref')
+                if refs:
+                    for ref in refs:
+                        ref = ref.split('/')[-1]
+                        if self.definitions:
+                            all_items.extend(self.extract_values(self.definitions.get(ref, {}), 'properties'))
+                        elif self.components:
+                            all_items.extend(self.extract_values(self.components.get('schemas', {}).get(ref, {}),
+                                                                 'properties'))
                 else:
-                    all_items = self.extract_values(schema, 'properties')
+                    all_items.extend(self.extract_values(schema, 'properties'))
                 data = self.extract_outputs(all_items, [])
                 for v in data:
                     description = v.get('description', '')
                     this_type = v.get('type', 'object')
                     this_type = output_types.get(this_type)
                     resp_name = v.get('name')
-                    for i in illegal_description_chars:
-                        description = description.replace(i, ' ')
+                    description = self.clean_description(description)
                     new_function['outputs'].append(
                         {'name': resp_name, 'type': this_type, 'description': description})
             new_function['responses'].append(new_response)
@@ -203,20 +206,21 @@ class OpenAPIIntegration:
         self.functions = sorted(self.functions, key=lambda x: x['name'])
 
     def load_file(self, file_path, includecommands):
+        # TODO: add prints
         error = None
         try:
             self.json = json.load(open(file_path, 'rb'))
-            self.fileLoad = True
+            self.file_load = True
         except Exception as err:
             error = err
-        if not self.fileLoad:
+        if not self.file_load:
             try:
                 stream = open(file_path, 'rb')
                 self.json = yaml.safe_load(stream)
-                self.fileLoad = True
+                self.file_load = True
             except Exception as err:
                 error = err
-        if not self.fileLoad:
+        if not self.file_load:
             print('Failed')
             print(error)
             sys.exit(-1)
@@ -247,15 +251,21 @@ class OpenAPIIntegration:
         self.securitySchemes = self.json.get('securityDefinitions', {}) if self.swagger == '2.0' else self.json.get(
             'securitySchemes', {})
         self.definitions = self.json.get('definitions', {})
+        self.components = self.json.get('components', {})
         self.functions = list()
         self.parameters = self.json.get('parameters', [])
         for path, function in self.json['paths'].items():
+            # TODO: try except
             for method, data in function.items():
                 if 'parameters' not in method:
+                    # TODO: what if there is no operationId?
                     if (self.filter_commands and data.get('operationId',
                                                           '') in self.include_commands) or not self.filter_commands:
+                        # TODO: parallel?
+                        print(f'Adding command for the path: {path}')
                         self.add_function(path, method, data, function.get(
-                            'parameters', []), self.command_prefix)
+                            'parameters', []))
+                        print(f'Finished adding command for the path: {path}')
                     else:
                         if self.verbose:
                             print('Ignoring command "{}" as it is not in the include commands list'.format(
@@ -267,27 +277,39 @@ class OpenAPIIntegration:
         data = base_code
 
         # Replace the consume data
+        # TODO: this + produces
         data = data.replace('$CONSUMES$', ', '.join(self.consumes))
 
         # Build the functions from swagger file
         these_functions = list()
         for func in self.functions:
             function_name = func['name'].replace('-', '_')
+            print(f'Adding the function {function_name} to the code...')
             this_function = base_function.replace('$FUNCTIONNAME$', function_name)
             new_params = [x['name'] for x in func['arguments'] if 'query' in x['in']]
-            new_data = [x['name'] for x in func['arguments'] if 'body' in x['in']]
+            new_data = [x['name'] for x in func['arguments'] if x['in'] in ['formData', 'body']]
             arguments = list()
             arguments_found = False
 
             for arg in func['arguments']:
                 arguments_found = True
-                if arg['required']:
-                    argument_default = ')'
-                elif arg['type'] == 'int':
-                    argument_default = f', {arg["default"]})'
-                else:
-                    argument_default = f", '{arg['default']}')"
-                this_argument = base_argument.replace('$DARGNAME$', arg['name']) + argument_default
+                argument_default = ''
+                if not arg['required']:
+                    if arg['type'] == 'int':
+                        try:
+                            default = int(arg['default'])
+                        except Exception:
+                            default = 0
+                        argument_default = f', {default}'
+                    elif arg['type'] == 'bool':
+                        try:
+                            default = strtobool(arg['default'])
+                        except Exception:
+                            default = False
+                        argument_default = f', {default}'
+                    else:
+                        argument_default = f", '{arg['default']}'"
+                this_argument = f"{base_argument.replace('$DARGNAME$', arg['name'])}{argument_default}))"
                 new_arg_name = arg['name']
                 if new_arg_name in illegal_function_names:
                     new_arg_name = f'{prepend_illegal}{new_arg_name}'
@@ -303,22 +325,15 @@ class OpenAPIIntegration:
                     [x for x in this_function.split('\n') if '$ARGUMENTS$' not in x])
 
             if new_params:
-                modified_params = list()
-                for p in new_params:
-                    if p in illegal_function_names:
-                        modified_params.append(f'\"{p}\": {prepend_illegal}{p}')
-                    else:
-                        modified_params.append(f'\"{p}\": {p}')
-                params = base_params.replace('$PARAMS$', ', '.join(modified_params))
+                params = self.format_params(new_params, base_params, '$PARAMS$')
                 this_function = this_function.replace('$PARAMETERS$', params)
             else:
                 this_function = '\n'.join(
                     [x for x in this_function.split('\n') if '$PARAMETERS$' not in x])
 
             if new_data:
-                all_new_data = ','.join(new_data)
-                this_function = this_function.replace(
-                    '$DATA$', f'data = {all_new_data}')
+                new_data = self.format_params(new_data, base_data, '$DATAOBJ$')
+                this_function = this_function.replace('$DATA$', new_data)
             else:
                 this_function = '\n'.join(
                     [x for x in this_function.split('\n') if '$DATA$' not in x])
@@ -353,16 +368,34 @@ class OpenAPIIntegration:
 
         # Add the command mappings:
         for func in self.functions:
+            prefix = ''
+            if self.command_prefix:
+                prefix = f'{self.command_prefix}-'
+
             function = base_list_functions.replace(
-                '$FUNCTIONNAME$', func['name'].replace('_', '-'))
+                '$FUNCTIONNAME$', f"{prefix}{func['name']}".replace('_', '-'))
             fn = func['name'].replace('-', '_')
             function = function.replace('$FUNCTIONCOMMAND$', f'{fn}_command')
             list_functions.append(function)
 
         data = data.replace('$COMMANDSLIST$', '\n\t'.join(list_functions))
-        data = autopep8.fix_code(data)
+        print('Finished creating the python code.')
+
+        if self.fix_code:
+            print('Fixing the code with autopep8...')
+            data = autopep8.fix_code(data)
 
         return data
+
+    def format_params(self, new_params, base, base_string):
+        modified_params = list()
+        for p in new_params:
+            if p in illegal_function_names:
+                modified_params.append(f'\"{p}\": {prepend_illegal}{p}')
+            else:
+                modified_params.append(f'\"{p}\": {p}')
+        params = base.replace(base_string, ', '.join(modified_params))
+        return params
 
     def return_integration(self, no_code):
         integration = XSOARIntegration.get_base_integration()
@@ -414,7 +447,10 @@ class OpenAPIIntegration:
 
                 outputs.append(XSOARIntegration.Script.Command.Output(output_type, f'{output_name}.{output_postfix}',
                                                                       output_description))
-            command_name = func['name'].replace('_', '-')
+            prefix = ''
+            if self.command_prefix:
+                prefix = f'{self.command_prefix}-'
+            command_name = f"{prefix}{func['name']}".replace('_', '-')
             command_description = func['description']
             commands.append(XSOARIntegration.Script.Command(command_name, command_description, args, outputs))
 
@@ -445,6 +481,7 @@ class OpenAPIIntegration:
         return integration
 
     def save_python_code(self, directory):
+        print('Creating python file...')
         filename = os.path.join(directory, f'{self.baseName}.py')
         try:
             with open(filename, 'w') as fp:
@@ -455,6 +492,7 @@ class OpenAPIIntegration:
             raise
 
     def save_yaml(self, directory, no_code=False):
+        print('Creating yaml file...')
         filename = os.path.join(directory, f'{self.baseName}.yml')
         try:
             with open(filename, 'wb') as fp:
@@ -465,6 +503,7 @@ class OpenAPIIntegration:
             raise
 
     def save_image_and_desc(self, directory):
+        print('Creating image and description files...')
         image_path = os.path.join(directory, f'{self.baseName}_image.png')
         desc_path = os.path.join(directory, f'{self.baseName}_description.md')
         try:
@@ -479,6 +518,22 @@ class OpenAPIIntegration:
         yml_path = self.save_yaml(directory, no_code=True)
         image_path, desc_path = self.save_image_and_desc(directory)
         return code_path, yml_path, image_path, desc_path
+
+    @staticmethod
+    def clean_description(description):
+        for i in illegal_description_chars:
+            description = description.replace(i, ' ')
+        return description
+
+    @staticmethod
+    def clean_function_name(name):
+        for i in illegal_func_chars:
+            name = name.replace(i, '')
+
+        name = camel_to_snake(name)
+        name = name.replace('-', '_').replace('__', '_').strip('_')
+
+        return name
 
 
 def camel_to_snake(camel):
@@ -505,6 +560,8 @@ def main():
                              ' This works with the "operationId" of a path.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Be verbose with the log output')
+    parser.add_argument('-f', '--fix_code', action='store_true',
+                        help='Fix the python code using autopep8.')
 
     args = parser.parse_args()
 
@@ -524,8 +581,9 @@ def main():
         print(f'The directory provided "{directory}" is not a directory')
         sys.exit(1)
 
+    print('Processing swagger file...')
     integration = OpenAPIIntegration(args.swagger_file, args.base_name, args.command_prefix, args.context_path,
-                                     args.include_commands, verbose=args.verbose)
+                                     args.include_commands, verbose=args.verbose, fix_code=args.fix_code)
 
     if args.output_package:
         if integration.save_package(directory):

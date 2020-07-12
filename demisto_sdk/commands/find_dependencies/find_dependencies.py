@@ -238,7 +238,7 @@ class PackDependencies:
     @staticmethod
     def _label_as_optional(pack_ids):
         """
-        Sets pack as mandatory.
+        Sets pack as optional.
 
         Args:
             pack_ids (set): collection of pack ids to set as optional.

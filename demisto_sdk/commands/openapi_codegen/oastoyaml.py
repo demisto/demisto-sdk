@@ -387,16 +387,6 @@ class OpenAPIIntegration:
 
         return data
 
-    def format_params(self, new_params, base, base_string):
-        modified_params = list()
-        for p in new_params:
-            if p in illegal_function_names:
-                modified_params.append(f'\"{p}\": {prepend_illegal}{p}')
-            else:
-                modified_params.append(f'\"{p}\": {p}')
-        params = base.replace(base_string, ', '.join(modified_params))
-        return params
-
     def return_integration(self, no_code):
         integration = XSOARIntegration.get_base_integration()
         # Create the commands section
@@ -431,22 +421,13 @@ class OpenAPIIntegration:
             outputs = []
 
             for output in func['outputs']:
-                output_name = ''
+                output_name = output['name']
                 if self.context_path:
-                    output_name = f'{self.context_path}.'
-                name = func['name'].title().replace('_', '').split('-')
-                if len(name) > 1:
-                    name = name[1]
-                else:
-                    name = name[0]
-
-                output_name += name
-                output_postfix = output['name']
+                    output_name = f'{self.context_path}.{output_name}'
                 output_description = output['description']
                 output_type = output['type']
 
-                outputs.append(XSOARIntegration.Script.Command.Output(output_type, f'{output_name}.{output_postfix}',
-                                                                      output_description))
+                outputs.append(XSOARIntegration.Script.Command.Output(output_type, output_name, output_description))
             prefix = ''
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
@@ -535,6 +516,17 @@ class OpenAPIIntegration:
 
         return name
 
+    @staticmethod
+    def format_params(new_params, base, base_string):
+        modified_params = list()
+        for p in new_params:
+            if p in illegal_function_names:
+                modified_params.append(f'\"{p}\": {prepend_illegal}{p}')
+            else:
+                modified_params.append(f'\"{p}\": {p}')
+        params = base.replace(base_string, ', '.join(modified_params))
+        return params
+
 
 def camel_to_snake(camel):
     snake = camel_to_snake_pattern.sub('_', camel).lower()
@@ -543,19 +535,19 @@ def camel_to_snake(camel):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('swagger_file', metavar='swagger_file',
+    parser.add_argument('-i', 'input_file', metavar='input_file',
                         help='The swagger file to load')
-    parser.add_argument('base_name', metavar='base_name',
+    parser.add_argument('-n', 'base_name', metavar='base_name',
                         help='The base filename to use for the generated files')
     parser.add_argument('-p', '--output_package', action='store_true',
                         help='Output the integration as a package (separate code and yml files)')
-    parser.add_argument('-d', '--directory', metavar='directory',
+    parser.add_argument('-o', '--output_dir', metavar='output_dir',
                         help='Directory to store the output to (default is current working directory)')
     parser.add_argument('-t', '--command_prefix', metavar='command_prefix',
                         help='Add an additional word to each commands text')
     parser.add_argument('-c', '--context_path', metavar='context_path',
                         help='Context output path')
-    parser.add_argument('-i', '--include_commands', metavar='include_commands',
+    parser.add_argument('-ic', '--include_commands', metavar='include_commands',
                         help='A line delimited file containing the commands that should ONLY be generated.'
                              ' This works with the "operationId" of a path.')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -568,7 +560,7 @@ def main():
     if not args.directory:
         directory = os.getcwd()
     else:
-        directory = args.directory
+        directory = args.output_dir
 
     # Check the directory exists and if not, try to create it
     if not os.path.exists(directory):
@@ -582,7 +574,7 @@ def main():
         sys.exit(1)
 
     print('Processing swagger file...')
-    integration = OpenAPIIntegration(args.swagger_file, args.base_name, args.command_prefix, args.context_path,
+    integration = OpenAPIIntegration(args.input_file, args.base_name, args.command_prefix, args.context_path,
                                      args.include_commands, verbose=args.verbose, fix_code=args.fix_code)
 
     if args.output_package:

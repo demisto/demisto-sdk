@@ -2,7 +2,6 @@ base_argument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$'"
 base_params = """params={$PARAMS$}"""
 base_data = """data={$DATAOBJ$}"""
 base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
-# TODO: return_results()
 base_function = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
     $PARAMETERS$
@@ -11,29 +10,18 @@ base_function = """def $FUNCTIONNAME$_command(client, args):
     response = client.http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$)
 
     if isinstance(response, dict):
-        return_results('$CONTEXTNAME$', response, '$CONTEXTCONTEXT$')
+        command_results = CommandResults(
+            outputs_prefix='$CONTEXTNAME$',
+            outputs_key_field='$CONTEXTCONTEXT$',
+            outputs=response
+        )
+        return_results(command_results)
     else:
         return_error(f'Error in API call {response.status_code} - {response.text}')
 
 """
 base_code = """''' IMPORTS '''
 import json
-
-
-def return_results(table_name, in_data, context_path):
-    raw = in_data
-    data = in_data if isinstance(in_data,  list) else [in_data]
-    md_data = list()
-    for item in data:
-        new_item = dict()
-        for k, v in item.items():
-            try:
-                new_item[k] = json.dumps(v)
-            except ValueError:
-                new_item[k] = v
-        md_data.append(new_item)
-    md = tableToMarkdown(table_name, md_data)
-    return_outputs(md, {context_path: data}, raw)
 
 class Client(BaseClient):
     def http_request(self, *args, **kwargs):
@@ -69,7 +57,6 @@ def main():
             commands[command](client, args)
 
     except Exception as e:
-        demisto.results(e)
         return_error(str(e))
 
 

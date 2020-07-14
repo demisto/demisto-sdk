@@ -472,11 +472,11 @@ class OpenAPIIntegration:
         if self.host:
             url = self.host
 
-        integration.configuration.append(XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
-                                                                        name='url',
-                                                                        defaultvalue=url,
-                                                                        type_=0,
-                                                                        required=True))
+        integration.configuration.insert(0, XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
+                                                                           name='url',
+                                                                           defaultvalue=url,
+                                                                           type_=0,
+                                                                           required=True))
 
         return integration
 

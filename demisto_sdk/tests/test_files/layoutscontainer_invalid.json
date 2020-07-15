@@ -3,7 +3,7 @@
     "group": "something else",
     "name": "Incident Layout",
     "description": "test",
-    "version": -1,
+    "version": -2,
     "fromVersion": "5.0.0",
     "edit": {
         "tabs": [

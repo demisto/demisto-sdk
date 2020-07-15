@@ -518,7 +518,12 @@ class TestDependsOnIndicatorType:
         Then
             - Extracting the packs that the indicator type depends on.
         """
-        expected_result = {("Feedsslabusech", True), ("AbuseDB", True), ("ActiveMQ", True), ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)}
+        expected_result = {
+            # integration dependencies
+            ("Feedsslabusech", False), ("AbuseDB", False), ("ActiveMQ", False),
+            # script dependencies
+            ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)
+        }
 
         test_input = [
             {

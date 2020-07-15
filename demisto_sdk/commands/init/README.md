@@ -49,5 +49,9 @@ This will create a new pack named "My_Pack" under the "Packs" directory in conte
 
 `demisto-sdk init --contribution ~/Downloads/my_contribution.zip`
 This will use the data and content items in the zip file "my_contribution.zip" to construct a pack in the "Packs"
-directory in the content repo whichh contains the content items from the zip file formatted to the content repo's
+directory in the content repo which will contain the content items from the zip file formatted to the content repo's
 conventions and expected file and directory structure.
+
+`demisto-sdk init -n "My New Pack" -c ~/Downloads/my_contribution.zip -d "This pack introduces the 'My Example' Integration allowing you to execute commands on 'My Example' product directly from Cortex XSOAR"`
+This will do the same as in the previous example except that it will use the passed name and description for the converted
+contribution pack metadata.

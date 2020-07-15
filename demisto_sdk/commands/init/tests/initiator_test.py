@@ -1,4 +1,5 @@
 import os
+import re
 from collections import OrderedDict, deque
 from datetime import datetime
 from pathlib import Path
@@ -27,7 +28,17 @@ PACK_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
 
 
-# PACK_PRICE = '0'
+name_reformatting_test_examples = [
+    ('PACKYAYOK', 'PACKYAYOK'),
+    ('PackYayOK', 'PackYayOK'),
+    ('pack yay ok!', 'PackYayOk'),
+    ('PackYayOK', 'PackYayOK'),
+    ('-pack-yay-ok--', 'Pack-Yay-Ok'),
+    ('PackYayOK', 'PackYayOK'),
+    ('The quick brown fox, jumps over the lazy dog!', 'TheQuickBrownFox_JumpsOverTheLazyDog'),
+    ('The quick`*+.brown fox, ;jumps over @@the lazy dog!', 'TheQuick_BrownFox_JumpsOver_TheLazyDog'),
+    ('ThE quIck`*+.brown fox, ;jumps ovER @@the lazy dog!', 'ThEQuIck_BrownFox_JumpsOvER_TheLazyDog')
+]
 
 
 @pytest.fixture
@@ -256,3 +267,39 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_files = [integration_yml, integration_py, integration_description, integration_image]
     for integration_file in integration_files:
         assert integration_file.exists()
+
+
+@pytest.mark.parametrize('input_name,expected_output_name', name_reformatting_test_examples)
+def test_format_pack_dir_name(initiator, input_name, expected_output_name):
+    '''Test the 'format_pack_dir_name' method with various inputs
+
+    Args:
+        initiator (fixture): An instance of the Initiator class
+        input_name (str): A 'name' argument value to test
+        expected_output_name (str): The value expected to be returned by passing 'input_name'
+            to the 'format_pack_dir_name' method
+
+    Scenario: The demisto-sdk 'init' command is executed with the 'contribution' option
+
+    Given
+    - A pack name (taken from the contribution metadata or explicitly passed as a command option)
+
+    When
+    - The pack name is passed to the 'format_pack_dir_name' method
+
+    Then
+    - Ensure the reformatted pack name returned by the method matches the expected output
+    - Ensure the reformatted pack name returned by the method contains only valid characters
+        (alphanumeric, underscore, and dash with no whitespace)
+    '''
+    output_name = initiator.format_pack_dir_name(input_name)
+    assert output_name == expected_output_name
+    assert not re.search(r'\s', output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
+    err_msg = 'Characters other than alphanumeric, underscore, and dash were found in the output'
+    assert all([char.isalnum() or char in {'_', '-'} for char in output_name]), err_msg
+    if len(output_name) > 1:
+        first_char = output_name[0]
+        if first_char.isalpha():
+            assert first_char.isupper(), 'The output\'s first character should be capitalized'
+    assert not output_name.startswith(('-', '_')), 'The output\'s first character must be alphanumeric'
+    assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'

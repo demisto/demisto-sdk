@@ -1,10 +1,13 @@
 import json
 import os
+import re
 import shutil
+import textwrap
 import traceback
 import zipfile
 from datetime import datetime
 from distutils.dir_util import copy_tree
+from string import punctuation
 from typing import Dict, List, Union
 
 import click
@@ -32,12 +35,14 @@ from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
+                                               find_type,
                                                get_child_directories,
                                                get_child_files,
                                                get_common_server_path,
                                                get_content_path, print_error,
                                                print_v)
+from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split_yml.extractor import Extractor
 
 
@@ -51,11 +56,13 @@ class Initiator:
            integration (bool): Indicates whether to create an integration.
            script (bool): Indicates whether to create a script.
            full_output_path (str): The full path to the newly created pack/integration/script
+           contribution (str|Nonetype): The path to a contribution zip file
+           description (str): Description to attach to a converted contribution pack
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
                  pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
-                 contribution: Union[str] = None):
+                 contribution: Union[str] = None, description: str = ''):
         self.output = output if output else ''
         self.id = id
 
@@ -66,6 +73,8 @@ class Initiator:
         self.common_server = common_server
         self.configuration = Configuration()
         self.contribution = contribution
+        self.description = description
+        self.contrib_conversion_errs: List[str] = []
 
         # if no flag given automatically create a pack.
         if not integration and not script and not pack:
@@ -73,9 +82,13 @@ class Initiator:
 
         self.full_output_path = ''
 
+        self.name = name
         if name is not None and len(name) != 0:
-            while ' ' in name:
-                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+            if self.contribution:
+                self.name = self.format_pack_dir_name(name)
+            else:
+                while ' ' in name:
+                    name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
@@ -109,6 +122,53 @@ class Initiator:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
 
+    @staticmethod
+    def format_pack_dir_name(name: str) -> str:
+        """Formats a (pack) name to a valid value
+
+        Specification:
+            A valid pack name does not contain any whitespace and may only contain alphanumeric, underscore, and
+            dash characters. The name must begin and end with an alphanumeric character. If it begins with an
+            alphabetical character, that character must be capitalized.
+
+        Behavior:
+            Individual words are titlecased, whitespace is stripped, and disallowed punctuation and space
+            characters are replaced with underscores.
+
+        Args:
+            name (str): The proposed pack name to convert to valid pack name format
+
+        Returns:
+            str: The reformatted pack name
+        """
+        temp = capital_case(name.strip().strip('-_'))
+        punctuation_to_replace = punctuation.replace('-', '').replace('_', '')
+        translation_dict = {x: '_' for x in punctuation_to_replace}
+        translation_table = str.maketrans(translation_dict)
+        temp = temp.translate(translation_table).strip('-_')
+        temp = re.sub(r'-+', '-', re.sub(r'_+', '_', temp))
+        comparator = capital_case(temp.replace('_', ' ').replace('-', ' '))
+        result = ''
+        i = j = 0
+        while i < len(temp):
+            temp_char = temp[i]
+            comp_char = comparator[j]
+            if temp_char.casefold() != comp_char.casefold():
+                while temp_char in {' ', '_', '-'}:
+                    result += f'{temp_char}'
+                    i += 1
+                    temp_char = temp[i]
+                while comp_char in {' '}:
+                    j += 1
+                    comp_char = comparator[j]
+            else:
+                result += comparator[j]
+                i += 1
+                j += 1
+        result = result.replace(' ', '')
+        result = re.sub(r'-+', '-', re.sub(r'_+', '_', result))
+        return result
+
     def convert_contribution_to_pack(self):
         """Create a Pack in the content repo from the contents of a contribution zipfile"""
         try:
@@ -118,18 +178,27 @@ class Initiator:
                 with zipped_contrib.open('metadata.json') as metadata_file:
                     click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
                     metadata = json.loads(metadata_file.read())
-                    pack_name = metadata.get('name', 'ContributionPack')
+                    # a name passed on the cmd line should take precedence over one pulled
+                    # from contribution metadata
+                    pack_name = self.name or self.format_pack_dir_name(metadata.get('name', 'ContributionPack'))
+                    # a description passed on the cmd line should take precedence over one pulled
+                    # from contribution metadata
+                    metadata_dict['description'] = self.description or metadata.get('description')
                     metadata_dict['name'] = pack_name
                     metadata_dict['author'] = metadata.get('author', '')
                     metadata_dict['support'] = metadata.get('support', '')
                     metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
                     metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
-            if os.path.exists(os.path.join(packs_dir, pack_name)):
+                    metadata_dict['categories'] = metadata.get('categories') if metadata.get('categories') else []
+                    metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
+                    metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []
+                    metadata_dict['keywords'] = metadata.get('keywords') if metadata.get('keywords') else []
+            while os.path.exists(os.path.join(packs_dir, pack_name)):
                 click.echo(
                     f'Modifying pack name because pack {pack_name} already exists in the content repo',
                     color=LOG_COLORS.NATIVE
                 )
-                if pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
+                if len(pack_name) >= 2 and pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
                     # increment by one
                     pack_name = pack_name[:-1] + str(int(pack_name[-1]) + 1)
                 else:
@@ -157,11 +226,21 @@ class Initiator:
                 json.dump(metadata_dict, pack_metadata_file, indent=4)
             # remove metadata.json file
             os.remove(os.path.join(pack_dir, 'metadata.json'))
+            click.echo(f'Executing \'format\' on the restructured contribution zip files at "{pack_dir}"')
+            format_manager(input=pack_dir)
         except Exception as e:
             click.echo(
                 f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
                 color=LOG_COLORS.RED
             )
+        finally:
+            if self.contrib_conversion_errs:
+                click.echo(
+                    'The following errors occurred while converting unified content YAMLs to package structure:'
+                )
+                click.echo(
+                    textwrap.indent('\n'.join(self.contrib_conversion_errs), '\t')
+                )
 
     def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
         """
@@ -180,8 +259,13 @@ class Initiator:
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
                 file_type = file_type.value if file_type else file_type
-                extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
-                extractor.extract_to_package_format()
+                try:
+                    extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
+                    extractor.extract_to_package_format()
+                except Exception as e:
+                    err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
+                              f'into its component parts.\nError: "{e}"'
+                    self.contrib_conversion_errs.append(err_msg)
                 if del_unified:
                     os.remove(content_item_file_path)
 

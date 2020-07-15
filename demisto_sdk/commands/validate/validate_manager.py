@@ -704,8 +704,8 @@ class ValidateManager:
                                              not self.branch_name.startswith('20.')):
 
             # on a non-master branch - we use '...' comparison range to check changes from origin/master.
+            # if not in master or release branch use the pre-existing prev_ver (The branch against which we compare)
             self.compare_type = '...'
-            self.prev_ver = 'origin/master'
 
         else:
             self.skip_pack_rn_validation = True

@@ -651,7 +651,14 @@ def generate_test_playbook(**kwargs):
     help="The path to the zip file downloaded via the Marketplace contribution UI. "
     "This will format the contents of the zip file to a pack format ready for contribution "
     "in the content repository on your local machine. The command should be executed from the "
-    "content repository's base directory.")
+    "content repository's base directory. When this option is passed, the only other options "
+    "that are considered are \"name\" and \"description\" - all others are ignored.")
+@click.option(
+    '-d', '--description',
+    type=click.STRING,
+    default='',
+    help="The description to attach to the converted contribution pack. Used when the \"contribution\" "
+    "option is passed.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
@@ -813,7 +820,8 @@ def update_pack_releasenotes(**kwargs):
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1):
-        print_warning('No changes were detected.')
+        print_warning('No changes were detected. If changes were made, please commit the changes '
+                      'and rerun the command')
         sys.exit(0)
     if is_all and not _pack:
         packs = list(_packs - packs_existing_rn)

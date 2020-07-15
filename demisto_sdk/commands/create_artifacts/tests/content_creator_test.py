@@ -466,12 +466,13 @@ class TestContentCreator:
             json_content = content_creator.add_from_version_to_json(file_path=json_path)
             assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
 
-    def test_check_from_version__yml_low_fromvesrion(self, repo):
+    def test_should_process_file_to_bundle__yml_low_fromvesrion_content_bundle(self, repo):
         """
         Given
-        - An yml path with a fromversion lower than 6.0.0
+        - A yml path with a fromversion lower than 6.0.0
+        - creating content bundle
         When
-        - running check_from_version method
+        - running should_process_file_to_bundle method
         Then
         - return True
         """
@@ -480,12 +481,112 @@ class TestContentCreator:
         integration = pack.create_integration('integration')
         integration.write_yml({"fromversion": "1.0.0"})
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version_not_above_6_0_0(integration.yml_path)
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.content_bundle)
 
-    def test_check_from_version__yml_no_fromvesrion(self, repo):
+    def test_should_process_file_to_bundle__yml_no_fromvesrion_content_bundle(self, repo):
         """
         Given
         - An yml path with no fromversion
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__yml_high_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An yml path with a fromversion higher than 6.0.0
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "6.0.0"})
+        with ChangeCWD(repo.path):
+            assert not content_creator.should_process_file_to_bundle(integration.yml_path,
+                                                                     content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__json_high_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An json path with a fromVersion higher than 6.0.0
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "6.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert not content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__json_low_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An json path with a fromVersion lower than 6.0.0
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "1.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__json_no_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An json path with no fromVersion
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={}).path
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__yml_low_tovesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A yml path with a toversion lower than 6.0.0
+        - creating packs bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "1.0.0"})
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.packs_bundle)
+
+    def test_should_process_file_to_bundle__yml_no_tovesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A yml path with no toversion
+        - creating packs bundle
         When
         - running check_from_version method
         Then
@@ -495,28 +596,30 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         integration = pack.create_integration('integration')
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version_not_above_6_0_0(integration.yml_path)
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.packs_bundle)
 
-    def test_check_from_version__yml_high_fromvesrion(self, repo):
+    def test_should_process_file_to_bundle__yml_high_fromvesrion_packs_bundle(self, repo):
         """
         Given
-        - An yml path with a fromversion higher than 6.0.0
+        - A yml path with a fromversion higher than 6.0.0
+        - creating packs bundle
         When
-        - running check_from_version method
+        - running should_process_file_to_bundle method
         Then
-        - return False
+        - return True
         """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         integration = pack.create_integration('integration')
         integration.write_yml({"fromversion": "6.0.0"})
         with ChangeCWD(repo.path):
-            assert not content_creator.check_from_version_not_above_6_0_0(integration.yml_path)
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.packs_bundle)
 
-    def test_check_from_version__json_high_fromvesrion(self, repo):
+    def test_should_process_file_to_bundle__json_high_fromvesrion_packs_bundle(self, repo):
         """
         Given
-        - An json path with a fromVersion higher than 6.0.0
+        - A json path with a fromVersion higher than 6.0.0
+        - creating packs bundle
         When
         - running check_from_version method
         Then
@@ -526,29 +629,31 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         json_path = pack.create_dashboard("some_json", content={"fromVersion": "6.0.0"}).path
         with ChangeCWD(repo.path):
-            assert not content_creator.check_from_version_not_above_6_0_0(json_path)
+            assert not content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
 
-    def test_check_from_version__json_low_fromvesrion(self, repo):
+    def test_should_process_file_to_bundle__json_low_tovesrion_packs_bundle(self, repo):
         """
         Given
-        - An json path with a fromVersion lower than 6.0.0
+        - A json path with a toVersion lower than 6.0.0
+        - creating packs bundle
         When
-        - running check_from_version method
+        - running should_process_file_to_bundle method
         Then
-        - return True
+        - return False
         """
         pack = repo.create_pack('pack')
         content_creator = ContentCreator(artifacts_path=self.content_repo)
-        json_path = pack.create_dashboard("some_json", content={"fromVersion": "1.0.0"}).path
+        json_path = pack.create_dashboard("some_json", content={"toVersion": "1.0.0"}).path
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version_not_above_6_0_0(json_path)
+            assert not content_creator.should_process_file_to_bundle(json_path, content_creator.packs_bundle)
 
-    def test_check_from_version__json_no_fromvesrion(self, repo):
+    def test_should_process_file_to_bundle__json_no_tovesrion_packs_bundle(self, repo):
         """
         Given
-        - An json path with no fromVersion
+        - A json path with no toVersion
+        - creating packs bundle
         When
-        - running check_from_version method
+        - running should_process_file_to_bundle method
         Then
         - return True
         """
@@ -556,7 +661,7 @@ class TestContentCreator:
         content_creator = ContentCreator(artifacts_path=self.content_repo)
         json_path = pack.create_dashboard("some_json", content={}).path
         with ChangeCWD(repo.path):
-            assert content_creator.check_from_version_not_above_6_0_0(json_path)
+            assert content_creator.should_process_file_to_bundle(json_path, content_creator.packs_bundle)
 
     def test_add_suffix_to_file_path(self):
         """

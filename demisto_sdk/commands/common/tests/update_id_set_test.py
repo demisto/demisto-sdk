@@ -789,7 +789,7 @@ class TestGenericFunctions:
             -  Finding all dependent incident fields in the input
         """
 
-        result = get_incident_fields_by_playbook_input(input=playbook_input.get('value'))
+        result = get_incident_fields_by_playbook_input(playbook_input.get('value'))
         if are_there_incident_fields:
             assert "field_name" in result
         else:

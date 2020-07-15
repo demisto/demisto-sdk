@@ -15,8 +15,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name, print_error,
                                                print_warning)
-from demisto_sdk.commands.create_artifacts.content_creator import \
-    ContentCreator
+from demisto_sdk.commands.create_artifacts.content_artifact_creator import \
+    ContentArtifacts
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -314,8 +314,6 @@ def validate(config, **kwargs):
     '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
 )
 @click.option(
-    '-s', '--suffix', help='The added suffix to all files in the created artifacts', hidden=True)
-@click.option(
     '--no-fromversion', is_flag=True, help='Whether to update fromversion on yml and json files or not.'
 )
 @click.option(
@@ -323,8 +321,8 @@ def validate(config, **kwargs):
     help='If passed, will create only content_packs.zip'
 )
 def create(**kwargs):
-    content_creator = ContentCreator(**kwargs)
-    return content_creator.run()
+    content_creator = ContentArtifacts(**kwargs)
+    return content_creator.create_content_artifact()
 
 
 # ====================== secrets ====================== #

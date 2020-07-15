@@ -314,6 +314,8 @@ def validate(config, **kwargs):
     '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
 )
 @click.option(
+    '-s', '--suffix', help='The added suffix to all files in the created artifacts', hidden=True)
+@click.option(
     '--no-fromversion', is_flag=True, help='Whether to update fromversion on yml and json files or not.'
 )
 @click.option(
@@ -388,7 +390,7 @@ def secrets(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
-def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
+def lint(input: str, git: str, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n

@@ -613,8 +613,7 @@ class TestContentCreator:
         integration = pack.create_integration('integration')
         integration.write_yml({"fromversion": "6.0.0"})
         with ChangeCWD(repo.path):
-            assert not content_creator.should_process_file_to_bundle(integration.yml_path,
-                                                                     content_creator.packs_bundle)
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.packs_bundle)
 
     def test_should_process_file_to_bundle__json_high_fromvesrion_packs_bundle(self, repo):
         """

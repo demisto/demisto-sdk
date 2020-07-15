@@ -174,12 +174,13 @@ class ContentCreator:
             bundle (str): the bundle being created
 
         Returns:
-            bool. True if the file should be added to the bundle (above 6.0.0 and in packs bundle or exists below 6.0.0
-            and in content bundle or in test bundle both above and below 6.0.0)
+            bool. True if the file should be added to the bundle under the following conditions:
+             * a file exists above version 6.0.0 and in packs bundle
+             * a file exists below 6.0.0 in the content or test bundles
         """
         if file_path.endswith('.yml'):
             yml_content = get_yaml(file_path)
-            if bundle == self.packs_bundle:
+            if self.packs_bundle in bundle:
                 # in packs bundle we keep only if the to version is above 6.0.0
                 if parse_version(yml_content.get('toversion', '99.99.99')) < parse_version('6.0.0'):
                     return False
@@ -191,7 +192,7 @@ class ContentCreator:
 
         elif file_path.endswith('.json'):
             json_content = tools.get_json(file_path)
-            if bundle == self.packs_bundle:
+            if self.packs_bundle in bundle:
                 # in packs bundle we keep only if the to version is above 6.0.0
                 if parse_version(json_content.get('toVersion', '99.99.99')) <= parse_version('6.0.0'):
                     return False

@@ -304,15 +304,26 @@ class PackDependencies:
 
         for playbook in pack_playbooks:
             playbook_data = next(iter(playbook.values()))
+            skippable_tasks = set(playbook_data.get('skippable_tasks', []))
+
             # searching for packs of implementing scripts
             implementing_script_names = playbook_data.get('implementing_scripts', [])
-            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(implementing_script_names,
-                                                                                     id_set['scripts'])
-            # ---- scripts packs ----
-            if packs_found_from_scripts:  # found packs of implementing scripts
-                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
+            mandatory_scripts = set(implementing_script_names) - skippable_tasks
+            optional_scripts = set(implementing_script_names) - mandatory_scripts
+
+            optional_script_packs = PackDependencies._search_packs_by_items_names(list(optional_scripts),
+                                                                                  id_set['scripts'])
+            if optional_script_packs:  # found packs of optional scripts
+                pack_dependencies_data = PackDependencies._label_as_optional(optional_script_packs)
                 dependencies_packs.update(pack_dependencies_data)
 
+            mandatory_script_packs = PackDependencies._search_packs_by_items_names(list(mandatory_scripts),
+                                                                                   id_set['scripts'])
+            if mandatory_script_packs:  # found packs of implementing scripts
+                pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_script_packs)
+                dependencies_packs.update(pack_dependencies_data)
+
+            # searching for packs of implementing integrations
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
 
             for command, integration_name in implementing_commands_and_integrations.items():
@@ -328,10 +339,19 @@ class PackDependencies:
 
             # ---- other playbooks packs ----
             implementing_playbook_names = playbook_data.get('implementing_playbooks', [])
-            packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(implementing_playbook_names,
-                                                                                       id_set['playbooks'])
-            if packs_found_from_playbooks:
-                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
+            mandatory_playbooks = set(implementing_playbook_names) - skippable_tasks
+            optional_playbooks = set(implementing_playbook_names) - mandatory_playbooks
+
+            optional_playbook_packs = PackDependencies._search_packs_by_items_names(list(optional_playbooks),
+                                                                                    id_set['playbooks'])
+            if optional_playbook_packs:
+                pack_dependencies_data = PackDependencies._label_as_optional(optional_playbook_packs)
+                dependencies_packs.update(pack_dependencies_data)
+
+            mandatory_playbook_packs = PackDependencies._search_packs_by_items_names(list(mandatory_playbooks),
+                                                                                     id_set['playbooks'])
+            if mandatory_playbook_packs:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_playbook_packs)
                 dependencies_packs.update(pack_dependencies_data)
 
             # ---- incident fields packs ----
@@ -349,6 +369,7 @@ class PackDependencies:
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
                 dependencies_packs.update(pack_dependencies_data)
+
         return dependencies_packs
 
     @staticmethod

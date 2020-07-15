@@ -269,6 +269,49 @@ LAYOUT = {
     "version": -1
 }
 
+LAYOUTS_CONTAINER = {
+    "id": "my-layoutscontainer",
+    "name": "my_layoutscontainer",
+    "group": "incident",
+    "description": "description",
+    "fromVersion": "6.0.0",
+    "detailsV2": {
+        "tabs": [
+            {
+                "id": "caseinfoid",
+                "name": "Incident Info",
+                "sections": [
+                    {
+                        "displayType": "ROW",
+                        "h": 2,
+                        "i": "caseinfoid",
+                        "isVisible": True,
+                        "items": [
+                            {
+                                "endCol": 2,
+                                "fieldId": "type",
+                                "height": 24,
+                                "id": "incident-type-field",
+                                "index": 0,
+                                "startCol": 0
+                            },
+                        ],
+                        "moved": False,
+                        "name": "Details",
+                        "static": False,
+                        "w": 1,
+                        "x": 0,
+                        "y": 0
+                    },
+                ],
+                "type": "custom",
+                "hidden": False
+            },
+        ]
+    },
+    "version": -1
+}
+
 REPORT = {
     "id": "report",
     "name": "report",

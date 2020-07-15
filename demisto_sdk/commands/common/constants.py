@@ -55,6 +55,7 @@ class FileType(Enum):
     INDICATOR_FIELD = 'indicatorfield'
     REPUTATION = 'reputation'
     LAYOUT = 'layout'
+    LAYOUTS_CONTAINER = 'layoutscontainer'
     DASHBOARD = 'dashboard'
     INCIDENT_TYPE = 'incidenttype'
     MAPPER = 'mapper'

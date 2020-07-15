@@ -164,7 +164,9 @@ ERROR_CODE = {
     "invalid_to_version_in_mapper": "MP101",
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
-    "invalid_type_in_mapper": "MP104"
+    "invalid_type_in_mapper": "MP104",
+    "invalid_version_in_layout": "LO100",
+    "invalid_version_in_layoutscontainer": "LO101",
 }
 
 
@@ -936,6 +938,16 @@ class Errors:
     @error_code_decorator
     def pykwalify_general_error(error):
         return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layout(version_field):
+        return f'{version_field} field in layout needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layoutscontainer(version_field):
+        return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
 
     @staticmethod
     @error_code_decorator

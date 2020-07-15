@@ -34,7 +34,8 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.layout import (
+    LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
@@ -335,6 +336,9 @@ class ValidateManager:
         elif file_type == FileType.LAYOUT:
             return self.validate_layout(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.LAYOUTS_CONTAINER:
+            return self.validate_layoutscontainer(structure_validator, pack_error_ignore_list)
+
         elif file_type == FileType.DASHBOARD:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
 
@@ -485,6 +489,11 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return layout_validator.is_valid_layout(validate_rn=False)
 
+    def validate_layoutscontainer(self, structure_validator, pack_error_ignore_list):
+        layout_validator = LayoutsContainerValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors)
+        return layout_validator.is_valid_layout(validate_rn=False)
+
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors)
@@ -503,12 +512,6 @@ class ValidateManager:
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors)
         return mapper_validator.is_valid_mapper(validate_rn=False)
-
-    def validate_old_classifier(self, structure_validator, pack_error_ignore_list):
-        classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=False,
-                                                   ignored_errors=pack_error_ignore_list,
-                                                   print_as_warnings=self.print_ignored_errors)
-        return classifier_validator.is_valid_classifier(validate_rn=False)
 
     def validate_classifier(self, structure_validator, pack_error_ignore_list, file_type):
         if file_type == FileType.CLASSIFIER:

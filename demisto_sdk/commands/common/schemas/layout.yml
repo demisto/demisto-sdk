@@ -15,6 +15,7 @@ mapping:
     type: str
   toVersion:
     type: str
+    required: True
   system:
     type: bool
   layout:

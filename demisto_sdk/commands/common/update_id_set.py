@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INDICATOR_FIELD_JSON_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_YML_REGEX,
-    PACKS_LAYOUT_JSON_REGEX, PACKS_MAPPER_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
+    PACKS_LAYOUT_JSON_REGEX, PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+    PACKS_MAPPER_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_REGEX, PLAYBOOK_YML_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SCRIPTS_REGEX_LIST, TEST_PLAYBOOK_REGEX,
@@ -553,6 +554,33 @@ def get_layout_data(path):
     return {id_: data}
 
 
+def get_layoutscontainer_data(path):
+    json_data = get_json(path)
+    layouts_container_fields = ["group", "edit", "indicatorsDetails", "indicatorsQuickView", "quickView", "close",
+                                "details", "detailsV2", "mobile", "name"]
+    data = OrderedDict({field: json_data[field] for field in layouts_container_fields if json_data.get(field)})
+
+    id_ = json_data.get('id')
+    pack = get_pack_name(path)
+    incident_indicator_types_dependency = {id_}
+    incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+
+    if data.get('name'):
+        incident_indicator_types_dependency.add(data['name'])
+    if json_data.get('toVersion'):
+        data['toversion'] = json_data['toVersion']
+    if json_data.get('fromVersion'):
+        data['fromversion'] = json_data['fromVersion']
+    if pack:
+        data['pack'] = pack
+    data['file_path'] = path
+    data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
+    if incident_indicator_fields_dependency['fieldId']:
+        data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+
+    return {id_: data}
+
+
 def get_incident_field_data(path, incidents_types_list):
     data = OrderedDict()
     json_data = get_json(path)
@@ -1016,6 +1044,24 @@ def process_layouts(file_path: str, print_logs: bool) -> list:
     return res
 
 
+def process_layoutscontainer(file_path: str, print_logs: bool) -> list:
+    """
+    Process a Layouts_Container JSON file
+    Args:
+        file_path: The file path from layout folder
+        print_logs: Whether to print logs to stdout
+
+    Returns:
+        a list of layout data.
+    """
+    res = []
+    if checked_type(file_path, [PACKS_LAYOUTS_CONTAINER_JSON_REGEX]):
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
+        res.append(get_layoutscontainer_data(file_path))
+    return res
+
+
 def process_reports(file_path: str, print_logs: bool) -> list:
     """
     Process a report JSON file
@@ -1242,6 +1288,9 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
         if 'Layouts' in objects_to_create:
             print_color("\nStarting iteration over Layouts", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_layouts, print_logs=print_logs), get_general_paths(LAYOUTS_DIR)):
+                layouts_list.extend(arr)
+            for arr in pool.map(partial(process_layoutscontainer, print_logs=print_logs),
+                                get_general_paths(LAYOUTS_DIR)):
                 layouts_list.extend(arr)
 
         progress_bar.update(1)

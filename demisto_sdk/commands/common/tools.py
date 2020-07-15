@@ -737,7 +737,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):  # noqa: C901
     """
     returns the content file type
 
@@ -812,24 +812,25 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
         if 'mapping' in _dict:
             return FileType.MAPPER
 
-        if ('layout' in _dict or 'kind' in _dict) and ('kind' in _dict or 'typeId' in _dict):
-            return FileType.LAYOUT
+        if 'layout' in _dict or 'kind' in _dict:
+            if 'kind' in _dict or 'typeId' in _dict:
+                return FileType.LAYOUT
+
+            return FileType.DASHBOARD
 
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
-        return FileType.DASHBOARD
-
-    # When using it for all files validation- sometimes 'id' can be integer
-    if 'id' in _dict:
-        if isinstance(_dict['id'], str):
-            _id = _dict['id'].lower()
-            if _id.startswith('incident'):
-                return FileType.INCIDENT_FIELD
-            if _id.startswith('indicator'):
-                return FileType.INDICATOR_FIELD
-        else:
-            print(f'The file {path} could not be recognized, please update the "id" to be a string')
+        # When using it for all files validation- sometimes 'id' can be integer
+        if 'id' in _dict:
+            if isinstance(_dict['id'], str):
+                _id = _dict['id'].lower()
+                if _id.startswith('incident'):
+                    return FileType.INCIDENT_FIELD
+                if _id.startswith('indicator'):
+                    return FileType.INDICATOR_FIELD
+            else:
+                print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
     return None
 
@@ -887,8 +888,8 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(
-        command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) ->\
+        Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.

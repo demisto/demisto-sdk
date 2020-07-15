@@ -907,8 +907,8 @@ class TestLayoutValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         layout_copy = LAYOUT.copy()
-        layout_copy['layout']['version'] = 2
-        layout = pack._create_json_based(name='layout', prefix='', content=LAYOUT)
+        layout_copy['version'] = 2
+        layout = pack._create_json_based(name='layout', prefix='', content=layout_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)

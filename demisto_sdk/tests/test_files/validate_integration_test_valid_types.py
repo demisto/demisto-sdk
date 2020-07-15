@@ -222,6 +222,7 @@ LAYOUT = {
     "TypeName": "my-layout",
     "kind": "details",
     "fromVersion": "5.0.0",
+    "toVersion": "5.9.9",
     "layout": {
         "TypeName": "",
         "id": "my-layout",

@@ -556,8 +556,8 @@ def get_layout_data(path):
 
 def get_layoutscontainer_data(path):
     json_data = get_json(path)
-    layouts_container_fields = ["edit", "indicatorsDetails", "indicatorsQuickView", "quickView", "close", "details",
-                                "detailsV2", "mobile", "name"]
+    layouts_container_fields = ["group", "edit", "indicatorsDetails", "indicatorsQuickView", "quickView", "close",
+                                "details", "detailsV2", "mobile", "name"]
     data = OrderedDict({field: json_data[field] for field in layouts_container_fields if json_data.get(field)})
 
     id_ = json_data.get('id')

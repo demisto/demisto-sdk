@@ -445,6 +445,7 @@ class TestLayouts:
         result = result.get('layouts_container_test')
         assert 'detailsV2' in result.keys()
         assert 'name' in result.keys()
+        assert 'group' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
         assert 'file_path' in result.keys()

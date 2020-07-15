@@ -442,7 +442,7 @@ class ContentCreator:
 
             print(f"Finished process for {count_files} files")
 
-    def copy_dir_files(self, *args, is_legacy_bundle=True, packs_bundle=False):
+    def copy_dir_files(self, *args, is_legacy_bundle=True):
         """
         Copy the yml, md, json and zip files from inside a directory to a bundle.
 

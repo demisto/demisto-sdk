@@ -75,11 +75,10 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if self.to_version:
-            if LooseVersion(self.to_version) >= LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
-                error_message, error_code = Errors.invalid_version_in_layoutscontainer('toVersion')
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return False
+        if self.to_version and LooseVersion(self.to_version) < LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+            error_message, error_code = Errors.invalid_version_in_layoutscontainer('toVersion')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
         return True
 
 
@@ -104,7 +103,7 @@ class LayoutValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if LooseVersion(self.to_version) >= LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+        if not self.to_version or LooseVersion(self.to_version) >= LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layout('toVersion')
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

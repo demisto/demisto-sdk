@@ -1,18 +1,19 @@
 base_argument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$'"
 base_params = """params={$PARAMS$}"""
 base_data = """data={$DATAOBJ$}"""
+base_headers = """headers={$HEADERSOBJ$}"""
 base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
 base_function = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
     $PARAMETERS$
     $DATA$
 
-    response = client.http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$)
+    response = client.http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$$HEADERS$)
 
     if isinstance(response, dict):
         command_results = CommandResults(
             outputs_prefix='$CONTEXTNAME$',
-            outputs_key_field='$CONTEXTCONTEXT$',
+            outputs_key_field='',
             outputs=response
         )
         return_results(command_results)
@@ -22,6 +23,8 @@ base_function = """def $FUNCTIONNAME$_command(client, args):
 """
 base_code = """''' IMPORTS '''
 import json
+import demistomock as demisto
+from CommonServerPython import *
 
 class Client(BaseClient):
     def http_request(self, *args, **kwargs):
@@ -43,10 +46,9 @@ def main():
 
     command = demisto.command()
     LOG(f'Command being called is {command}')
-    # TODO: add headers
-    headers = {}
+    headers={'Accept': 'application/json', 'Content-Type': 'application/json'}
     try:
-        client = Client(urljoin(url, "$BASEURL$"), verify_certificate, proxy)
+        client = Client(urljoin(url, "$BASEURL$"), verify_certificate, proxy, headers=headers)
         commands = {
     $COMMANDSLIST$
         }

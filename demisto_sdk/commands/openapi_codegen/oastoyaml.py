@@ -9,14 +9,14 @@ import yaml
 
 from distutils.util import strtobool
 from demisto_sdk.commands.openapi_codegen.base_code import (
-    base_argument, base_code, base_function, base_list_functions, base_params, base_data)
+    base_argument, base_code, base_function, base_list_functions, base_params, base_data, base_headers)
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegration
 
 camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
 illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', '<para/>']
 illegal_func_chars = illegal_description_chars + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
 illegal_function_names = ['type', 'from']
-prepend_illegal = 'i'
+prepend_illegal = '_'
 output_types = {
     'string': 'String',
     'integer': 'Number',
@@ -33,6 +33,7 @@ arg_types = {
     'str': 'str',
 }
 removed_names = ['.properties', '.items']
+JSON_TYPE_HEADER = 'application/json'
 
 
 class OpenAPIIntegration:
@@ -55,8 +56,6 @@ class OpenAPIIntegration:
         self.configuration = list()
         self.script = None
         self.security = None
-        self.consumes = list()
-        self.produces = list()
         self.security = None
         self.securitySchemes = None
         self.definitions = None
@@ -149,8 +148,10 @@ class OpenAPIIntegration:
         func_desc = self.clean_description(func_desc)
         new_function['description'] = func_desc
         new_function['execution'] = False
-        new_function['arguments'] = list()
+        new_function['arguments'] = []
         new_function['parameters'] = data.get('parameters', None)
+        new_function['consumes'] = data.get('consumes', [])
+        new_function['produces'] = data.get('produces', [])
         if not new_function['parameters']:
             new_function['parameters'] = params
             iter_item = params
@@ -158,7 +159,7 @@ class OpenAPIIntegration:
             iter_item = data.get('parameters', [])
         for arg in iter_item:
             # ￿￿TODO: extract args from $ref?
-            new_arg = dict()
+            new_arg = {}
             arg_name = str(arg.get('name', ''))
             new_arg['name'] = arg_name
             arg_desc = arg.get('description', '')
@@ -244,8 +245,6 @@ class OpenAPIIntegration:
         self.base_path = self.json.get('basePath', '')
         self.name = self.json['info']['title']
         self.description = self.json.get('info', {}).get('description', '')
-        self.consumes = self.json.get('consumes', [])
-        self.produces = self.json.get('produces', [])
         self.security = self.json.get('security', [])
         self.schemes = self.json.get('schemes', [])
         self.securitySchemes = self.json.get('securityDefinitions', {}) if self.swagger == '2.0' else self.json.get(
@@ -276,20 +275,24 @@ class OpenAPIIntegration:
         # Use the code from baseCode in py as the basis
         data = base_code
 
-        # Replace the consume data
-        # TODO: this + produces
-        data = data.replace('$CONSUMES$', ', '.join(self.consumes))
-
         # Build the functions from swagger file
-        these_functions = list()
+        functions = []
         for func in self.functions:
             function_name = func['name'].replace('-', '_')
             print(f'Adding the function {function_name} to the code...')
-            this_function = base_function.replace('$FUNCTIONNAME$', function_name)
+            function = base_function.replace('$FUNCTIONNAME$', function_name)
             new_params = [x['name'] for x in func['arguments'] if 'query' in x['in']]
             new_data = [x['name'] for x in func['arguments'] if x['in'] in ['formData', 'body']]
-            arguments = list()
+            arguments = []
             arguments_found = False
+            headers = []
+
+            if func['consumes']:
+                headers.append({'Content-Type': JSON_TYPE_HEADER
+                                if JSON_TYPE_HEADER in func['consumes'] else func['consumes'][0]})
+            if func['produces']:
+                headers.append({'Accept': JSON_TYPE_HEADER
+                                if JSON_TYPE_HEADER in func['produces'] else func['produces'][0]})
 
             for arg in func['arguments']:
                 arguments_found = True
@@ -319,52 +322,63 @@ class OpenAPIIntegration:
                 arguments.append(this_argument)
 
             if arguments_found:
-                this_function = this_function.replace('$ARGUMENTS$', '\n    '.join(arguments))
+                function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
             else:
-                this_function = '\n'.join(
-                    [x for x in this_function.split('\n') if '$ARGUMENTS$' not in x])
+                function = '\n'.join(
+                    [x for x in function.split('\n') if '$ARGUMENTS$' not in x])
 
             if new_params:
                 params = self.format_params(new_params, base_params, '$PARAMS$')
-                this_function = this_function.replace('$PARAMETERS$', params)
+                function = function.replace('$PARAMETERS$', params)
             else:
-                this_function = '\n'.join(
-                    [x for x in this_function.split('\n') if '$PARAMETERS$' not in x])
+                function = '\n'.join(
+                    [x for x in function.split('\n') if '$PARAMETERS$' not in x])
 
             if new_data:
                 new_data = self.format_params(new_data, base_data, '$DATAOBJ$')
-                this_function = this_function.replace('$DATA$', new_data)
+                function = function.replace('$DATA$', new_data)
             else:
-                this_function = '\n'.join(
-                    [x for x in this_function.split('\n') if '$DATA$' not in x])
+                function = '\n'.join(
+                    [x for x in function.split('\n') if '$DATA$' not in x])
 
-            this_function = this_function.replace('$METHOD$', func['method'])
+            if headers:
+                new_headers = ''
+                for header in headers:
+                    for k, v in header.items():
+                        new_headers = f"{new_headers}'{k}':'{v}', "
+
+                new_headers = new_headers[:-2]
+                new_headers = base_headers.replace('$HEADERSOBJ$', new_headers)
+            else:
+                new_headers = ''
+
+            function = function.replace('$HEADERS$', f', {new_headers}')
+            function = function.replace('$METHOD$', func['method'])
             func['path'] = f"'{func['path']}'" if "'" not in func['path'] else func['path']
             func['path'] = f"f{func['path']}" if "{" in func['path'] else func['path']
-            this_function = this_function.replace('$PATH$', func['path'])
+            function = function.replace('$PATH$', func['path'])
 
             if new_params:
-                this_function = this_function.replace(
+                function = function.replace(
                     '$NEWPARAMS$', ', params=params')
             else:
-                this_function = this_function.replace('$NEWPARAMS$', '')
+                function = function.replace('$NEWPARAMS$', '')
             if new_data:
-                this_function = this_function.replace('$NEWDATA$', ', data=data')
+                function = function.replace('$NEWDATA$', ', data=data')
             else:
-                this_function = this_function.replace('$NEWDATA$', '')
+                function = function.replace('$NEWDATA$', '')
 
-            this_function = this_function.replace('$CONTEXTNAME$', func['name'].title().replace('_', ''))
-            contextcontext = func['name'].title().replace('_', '')
             if self.context_path:
-                contextcontext = f'{self.context_path}.{contextcontext}'
-            this_function = this_function.replace(
-                '$CONTEXTCONTEXT$', contextcontext)
-            these_functions.append(this_function)
+                context_name = self.context_path
+            else:
+                context_name = func['name'].title().replace('_', '')
+            function = function.replace('$CONTEXTNAME$', context_name)
+            functions.append(function)
 
-        data = data.replace('$FUNCTIONS$', '\n'.join(these_functions))
+        data = data.replace('$FUNCTIONS$', '\n'.join(functions))
         data = data.replace('$BASEURL$', self.base_path)
 
-        list_functions = list()
+        list_functions = []
 
         # Add the command mappings:
         for func in self.functions:
@@ -428,6 +442,7 @@ class OpenAPIIntegration:
                 output_type = output['type']
 
                 outputs.append(XSOARIntegration.Script.Command.Output(output_type, output_name, output_description))
+
             prefix = ''
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
@@ -521,7 +536,7 @@ class OpenAPIIntegration:
         modified_params = list()
         for p in new_params:
             if p in illegal_function_names:
-                modified_params.append(f'\"{p}\": {prepend_illegal}{p}')
+                modified_params.append(f'\"{p}\": {p}{prepend_illegal}')
             else:
                 modified_params.append(f'\"{p}\": {p}')
         params = base.replace(base_string, ', '.join(modified_params))
@@ -535,9 +550,9 @@ def camel_to_snake(camel):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', 'input_file', metavar='input_file',
+    parser.add_argument('-i', '--input_file', metavar='input_file',
                         help='The swagger file to load')
-    parser.add_argument('-n', 'base_name', metavar='base_name',
+    parser.add_argument('-n', '--base_name', metavar='base_name',
                         help='The base filename to use for the generated files')
     parser.add_argument('-p', '--output_package', action='store_true',
                         help='Output the integration as a package (separate code and yml files)')
@@ -557,7 +572,7 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.directory:
+    if not args.output_dir:
         directory = os.getcwd()
     else:
         directory = args.output_dir

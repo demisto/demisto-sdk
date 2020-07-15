@@ -196,11 +196,9 @@ def execute_command(command_example, insecure: bool):
             if entry.contents:
                 content: str = entry.contents
                 if isinstance(content, STRING_TYPES):
-                    md_example += content
+                    md_example = format_md(content)
                 else:
-                    md_example += json.dumps(content)
-
-            md_example = format_md(md_example)
+                    md_example = f'```\n{json.dumps(content, sort_keys=True, indent=4)}\n```'
 
     except RuntimeError:
         errors.append('The provided example for cmd {} has failed...'.format(cmd))
@@ -261,6 +259,7 @@ def build_example_dict(command_examples: list, insecure: bool):
 def format_md(md: str) -> str:
     """
     Formats a given md string by replacing <br> and <hr> tags with <br/> or <hr/>
+    Will also remove style tags such as: style="background:#eeeeee; border:1px solid #cccccc; padding:5px" which cause mdx to fail
     :param
         md (str): String representing mark down.
     :return:
@@ -269,6 +268,7 @@ def format_md(md: str) -> str:
     replace_tuples = [
         (r'<br>(</br>)?', '<br/>'),
         (r'<hr>(</hr>)?', '<hr/>'),
+        (r'style="[a-zA-Z0-9:;#\.\s\(\)\-\,]*?"', ''),
     ]
     if md:
         for old, new in replace_tuples:

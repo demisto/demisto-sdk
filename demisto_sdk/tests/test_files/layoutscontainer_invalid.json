@@ -131,7 +131,7 @@
                         "name": "Team Members",
                         "static": false,
                         "type": "team",
-                        "w": 1,
+                        "w": 2,
                         "x": 2,
                         "y": 2
                     },

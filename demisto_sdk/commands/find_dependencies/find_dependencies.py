@@ -318,6 +318,38 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _differentiate_playbook_implementing_objects(implementing_objects, skippable_tasks, id_set_section):
+        """
+        Differentiate implementing objects by skippable.
+
+        Args:
+            implementing_objects (list): playbook object collection.
+            skippable_tasks (set): playbook skippable tasks.
+            id_set_section (list): id set section corresponds to implementing_objects (scripts or playbooks).
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+        """
+        dependencies = set()
+
+        mandatory_scripts = set(implementing_objects) - skippable_tasks
+        optional_scripts = set(implementing_objects) - mandatory_scripts
+
+        optional_script_packs = PackDependencies._search_packs_by_items_names(list(optional_scripts),
+                                                                              id_set_section)
+        if optional_script_packs:  # found packs of optional objects
+            pack_dependencies_data = PackDependencies._label_as_optional(optional_script_packs)
+            dependencies.update(pack_dependencies_data)
+
+        mandatory_script_packs = PackDependencies._search_packs_by_items_names(list(mandatory_scripts),
+                                                                               id_set_section)
+        if mandatory_script_packs:  # found packs of mandatory objects
+            pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_script_packs)
+            dependencies.update(pack_dependencies_data)
+
+        return dependencies
+
+    @staticmethod
     def _collect_playbooks_dependencies(pack_playbooks, id_set, verbose_file):
         """
         Collects playbook pack dependencies.
@@ -340,23 +372,6 @@ class PackDependencies:
 
             skippable_tasks = set(playbook_data.get('skippable_tasks', []))
 
-            # searching for packs of implementing scripts
-            implementing_script_names = playbook_data.get('implementing_scripts', [])
-            mandatory_scripts = set(implementing_script_names) - skippable_tasks
-            optional_scripts = set(implementing_script_names) - mandatory_scripts
-
-            optional_script_packs = PackDependencies._search_packs_by_items_names(list(optional_scripts),
-                                                                                  id_set['scripts'])
-            if optional_script_packs:  # found packs of optional scripts
-                pack_dependencies_data = PackDependencies._label_as_optional(optional_script_packs)
-                playbook_dependency.update(pack_dependencies_data)
-
-            mandatory_script_packs = PackDependencies._search_packs_by_items_names(list(mandatory_scripts),
-                                                                                   id_set['scripts'])
-            if mandatory_script_packs:  # found packs of implementing scripts
-                pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_script_packs)
-                playbook_dependency.update(pack_dependencies_data)
-
             # searching for packs of implementing integrations
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
 
@@ -365,28 +380,27 @@ class PackDependencies:
                                                                                              id_set['integrations']) \
                     if integration_name else PackDependencies._search_packs_by_integration_command(command, id_set)
 
-                # ---- integrations packs ----
                 if packs_found_from_integration:
-                    pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
-                        packs_found_from_integration)
+                    if command in skippable_tasks:
+                        pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_integration)
+                    else:
+                        pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
+                            packs_found_from_integration)
                     playbook_dependency.update(pack_dependencies_data)
 
-            # ---- other playbooks packs ----
-            implementing_playbook_names = playbook_data.get('implementing_playbooks', [])
-            mandatory_playbooks = set(implementing_playbook_names) - skippable_tasks
-            optional_playbooks = set(implementing_playbook_names) - mandatory_playbooks
+            # searching for packs of implementing scripts
+            playbook_dependency.update(PackDependencies._differentiate_playbook_implementing_objects(
+                playbook_data.get('implementing_scripts', []),
+                skippable_tasks,
+                id_set['scripts']
+            ))
 
-            optional_playbook_packs = PackDependencies._search_packs_by_items_names(list(optional_playbooks),
-                                                                                    id_set['playbooks'])
-            if optional_playbook_packs:
-                pack_dependencies_data = PackDependencies._label_as_optional(optional_playbook_packs)
-                playbook_dependency.update(pack_dependencies_data)
-
-            mandatory_playbook_packs = PackDependencies._search_packs_by_items_names(list(mandatory_playbooks),
-                                                                                     id_set['playbooks'])
-            if mandatory_playbook_packs:
-                pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_playbook_packs)
-                playbook_dependency.update(pack_dependencies_data)
+            # searching for packs of implementing playbooks
+            playbook_dependency.update(PackDependencies._differentiate_playbook_implementing_objects(
+                playbook_data.get('implementing_playbooks', []),
+                skippable_tasks,
+                id_set['playbooks']
+            ))
 
             # ---- incident fields packs ----
             incident_fields = playbook_data.get('incident_fields', [])
@@ -834,9 +848,11 @@ class PackDependencies:
             verbose_file
         )
 
-        pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
-            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
-            | incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
+        pack_dependencies = (
+            scripts_dependencies | playbooks_dependencies | layouts_dependencies |
+            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
+            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
+        )
 
         return pack_dependencies
 

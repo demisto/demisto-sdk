@@ -463,6 +463,68 @@ class TestDependsOnPlaybook:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_playbooks_dependencies_skip_unavailable(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set.
+            -
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the playbook depends on.
+        """
+        expected_result = {
+            # playbooks:
+            ('Slack', False), ('Indeni', True),
+            # integrations:
+            ('FeedAlienVault', False), ('ipinfo', True), ('FeedAutofocus', True),
+            # scripts:
+            ('GetServerURL', False), ('HelloWorld', True),
+        }
+        test_input = [
+            {
+                'Dummy Playbook': {
+                    'name': 'Dummy Playbook',
+                    'file_path': 'dummy_path',
+                    'fromversion': 'dummy_version',
+                    'implementing_scripts': [
+                        'GetServerURL',
+                        'HelloWorldScript',
+                    ],
+                    'implementing_playbooks': [
+                        'Failed Login Playbook - Slack v2',
+                        'Indeni Demo',
+                    ],
+                    'command_to_integration': {
+                        'alienvault-get-indicators': '',
+                        'ip': 'ipinfo',
+                        'autofocus-get-indicators': '',
+                    },
+                    'tests': [
+                        'dummy_playbook'
+                    ],
+                    'pack': 'dummy_pack',
+                    'incident_fields': [
+                    ],
+                    'skippable_tasks': [
+                        'Print',
+                        'Failed Login Playbook - Slack v2',
+                        'alienvault-get-indicators',
+                        'GetServerURL',
+                    ]
+                }
+            },
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnLayout:
     def test_collect_layouts_dependencies(self, id_set):

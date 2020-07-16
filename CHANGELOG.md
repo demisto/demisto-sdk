@@ -12,6 +12,8 @@
 * Running `demisto-sdk validate` will run the **validate** command using git and only on committed files (same as using *-g --post-commit*).
 * Fixed an issue where release notes were not checked correctly in **validate** command.
 * Fixed an issue in the **create-id-set** command where optional playbook tasks were not taken into consideration.
+* Added a prompt to the `demisto-sdk update-release-notes` command to prompt users to commit changes before running the release notes command.
+* Added support to `layoutscontainer` in **validate** command.
 
 #### 1.1.5
 * Fixed an issue in **find-dependencies** command.

@@ -166,31 +166,56 @@ class ContentCreator:
     def add_suffix_to_file_path(self, file_path):
         return os.path.splitext(file_path)[0] + self.file_name_suffix + os.path.splitext(file_path)[1]
 
-    def check_from_version_not_above_6_0_0(self, file_path):
+    def should_process_file_to_bundle(self, file_path, bundle):
+        """
+
+        Args:
+            file_path (str): the file_path being processed
+            bundle (str): the bundle being created
+
+        Returns:
+            bool. True if the file should be added to the bundle under the following conditions:
+             * a file exists above version 6.0.0 and in packs bundle
+             * a file exists below 6.0.0 in the content or test bundles
+        """
         if file_path.endswith('.yml'):
             yml_content = get_yaml(file_path)
-            if parse_version(yml_content.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
-                return False
+            if self.packs_bundle in bundle:
+                # in packs bundle we keep only if the to version is above 6.0.0
+                if parse_version(yml_content.get('toversion', '99.99.99')) < parse_version('6.0.0'):
+                    return False
+
+            else:
+                # in content and test bundles we keep only if the from version is below 6.0.0
+                if parse_version(yml_content.get('fromversion', '0.0.0')) >= parse_version('6.0.0'):
+                    return False
 
         elif file_path.endswith('.json'):
             json_content = tools.get_json(file_path)
-            if parse_version(json_content.get('fromVersion', '0.0.0')) >= parse_version('6.0.0'):
-                return False
+            if self.packs_bundle in bundle:
+                # in packs bundle we keep only if the to version is above 6.0.0
+                if parse_version(json_content.get('toVersion', '99.99.99')) <= parse_version('6.0.0'):
+                    return False
+
+            else:
+                # in content and test bundles we keep only if the from version is below 6.0.0
+                if parse_version(json_content.get('fromVersion', '0.0.0')) >= parse_version('6.0.0'):
+                    return False
 
         elif file_path.endswith('.md'):
-            return self.check_md_related_from_version(file_path)
+            return self.check_md_related_from_version(file_path, bundle)
 
         return True
 
-    def check_md_related_from_version(self, file_path):
+    def check_md_related_from_version(self, file_path, bundle):
         base_file_name = os.path.splitext(file_path)[0].replace('_CHANGELOG', '').replace('_README', '')
         json_file = base_file_name + '.json'
         yml_file = base_file_name + '.yml'
         if os.path.exists(json_file):
-            return self.check_from_version_not_above_6_0_0(json_file)
+            return self.should_process_file_to_bundle(json_file, bundle)
 
         elif os.path.exists(yml_file):
-            return self.check_from_version_not_above_6_0_0(yml_file)
+            return self.should_process_file_to_bundle(yml_file, bundle)
 
         return True
 
@@ -296,7 +321,7 @@ class ContentCreator:
         if scan_files:
             print(f"\nStarting process for {dir_path}")
         for path in scan_files:
-            if not self.check_from_version_not_above_6_0_0(path):
+            if not self.should_process_file_to_bundle(path, bundle):
                 continue
 
             new_file_path = self.add_suffix_to_file_path(os.path.join(bundle, os.path.basename(path)))
@@ -345,7 +370,7 @@ class ContentCreator:
             print(f"\nStarting process for {dir_path}")
             for path in scan_files:
                 print(f" - processing: {path}")
-                if not self.check_from_version_not_above_6_0_0(path):
+                if not self.should_process_file_to_bundle(path, bundle):
                     continue
 
                 dpath = os.path.basename(path)
@@ -363,8 +388,13 @@ class ContentCreator:
                     if not dpath.startswith('dashboard-'):
                         dpath = f'dashboard-{dpath}'
                 if dir_name == 'Layouts':
-                    if not dpath.startswith('layout-'):
-                        dpath = f'layout-{dpath}'
+                    file_type = tools.find_type(path)
+                    if file_type == FileType.LAYOUTS_CONTAINER:
+                        if not dpath.startswith('layoutcontainer-'):
+                            dpath = f'layoutcontainer-{dpath}'
+                    else:
+                        if not dpath.startswith('layout-'):
+                            dpath = f'layout-{dpath}'
                 new_path = dpath
                 if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
                     new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')
@@ -400,7 +430,7 @@ class ContentCreator:
             print(f"\nStarting process for {dir_path}")
             for path in scan_files:
                 print(f" - processing: {path}")
-                if not self.check_from_version_not_above_6_0_0(path):
+                if not self.should_process_file_to_bundle(path, bundle):
                     continue
 
                 new_path = self.add_suffix_to_file_path(os.path.basename(path))
@@ -425,6 +455,7 @@ class ContentCreator:
         :param args: (source directory, destination bundle)
         :param is_legacy_bundle: flag to copy md files to bundle.
             Should be False for content-new.zip and test-content.zip
+        :param packs_bundle: is the bundle being created is the content_packs.zip
         :return: None
         """
         # handle *.json files
@@ -450,7 +481,7 @@ class ContentCreator:
             if os.path.isdir(path):
                 non_circle_tests = glob.glob(os.path.join(path, '*'))
                 for new_path in non_circle_tests:
-                    if os.path.isfile(new_path) and self.check_from_version_not_above_6_0_0(new_path):
+                    if os.path.isfile(new_path) and self.should_process_file_to_bundle(new_path, self.test_bundle):
                         print(f'copying path {new_path}')
                         new_file_path = self.add_suffix_to_file_path(os.path.join(self.test_bundle,
                                                                                   os.path.basename(new_path)))
@@ -459,7 +490,7 @@ class ContentCreator:
                             self.add_from_version_to_yml(new_file_path)
 
             else:
-                if not self.check_from_version_not_above_6_0_0(path):
+                if not self.should_process_file_to_bundle(path, self.test_bundle):
                     continue
 
                 # test playbooks in test_playbooks_dir in packs can start without playbook* prefix

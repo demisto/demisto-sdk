@@ -828,7 +828,8 @@ def update_pack_releasenotes(**kwargs):
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1):
-        print_warning('No changes were detected.')
+        print_warning('No changes were detected. If changes were made, please commit the changes '
+                      'and rerun the command')
         sys.exit(0)
     if is_all and not _pack:
         packs = list(_packs - packs_existing_rn)

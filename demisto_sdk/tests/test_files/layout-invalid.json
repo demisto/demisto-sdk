@@ -1,6 +1,7 @@
 {
 	"typeId": "ExtraHop Detection",
 	"kind": true,
+	"toVersion": "5.9.9",
 	"layout": {
 		"id": "ExtraHop Detection",
 		"version": 55,

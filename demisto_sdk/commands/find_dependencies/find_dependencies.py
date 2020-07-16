@@ -428,14 +428,14 @@ class PackDependencies:
         for incident_field in pack_incidents_fields:
             incident_field_data = next(iter(incident_field.values()))
 
-            related_incident_types = incident_field_data.get('incident_types', [])
-            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_incident_types, id_set['IncidentTypes'])
-
-            if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_types)
-                dependencies_packs.update(pack_dependencies_data)
+            # related_incident_types = incident_field_data.get('incident_types', [])
+            # packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+            #     related_incident_types, id_set['IncidentTypes'])
+            #
+            # if packs_found_from_incident_types:
+            #     pack_dependencies_data = PackDependencies. \
+            #         _label_as_mandatory(packs_found_from_incident_types)
+            #     dependencies_packs.update(pack_dependencies_data)
 
             related_scripts = incident_field_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(

@@ -10,6 +10,26 @@ from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
+class VerboseFile:
+    def __init__(self, file_path=''):
+        self.file_path = file_path
+        self.fd = None
+
+    def __enter__(self):
+        if self.file_path:
+            self.fd = open(self.file_path, 'w')
+        return self
+
+    def write(self, message, ending='\n'):
+        if self.fd:
+            self.fd.write(f'{message}{ending}')
+
+    def __exit__(self, type_, value, traceback):
+        if self.fd:
+            self.fd.close()
+        self.fd = None
+
+
 def parse_for_pack_metadata(dependency_graph, graph_root):
     """
     Parses calculated dependency graph and returns first and all level parsed dependency.
@@ -250,22 +270,26 @@ class PackDependencies:
         return [(p, False) for p in pack_ids]
 
     @staticmethod
-    def _collect_scripts_dependencies(pack_scripts, id_set):
+    def _collect_scripts_dependencies(pack_scripts, id_set, verbose_file):
         """
         Collects script pack dependencies.
 
         Args:
             pack_scripts (list): pack scripts collection.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Scripts')
 
         for script_mapping in pack_scripts:
             script = next(iter(script_mapping.values()))
+            script_dep = set()
+
             # depends on list can have both scripts and integration commands
             dependencies_commands = script.get('depends_on', [])
 
@@ -275,7 +299,7 @@ class PackDependencies:
 
                 if pack_name:  # found script dependency implementing pack name
                     pack_dependencies_data = PackDependencies._label_as_mandatory(pack_name)
-                    dependencies_packs.update(pack_dependencies_data)  # set found script as mandatory
+                    script_dep.update(pack_dependencies_data)  # set found script as mandatory
                     continue  # found dependency in script section, skipping to next depends on element
 
                 # try to search dependency by integration integration
@@ -283,27 +307,37 @@ class PackDependencies:
 
                 if pack_names:  # found integration dependency implementing pack name
                     pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(pack_names)
-                    dependencies_packs.update(pack_dependencies_data)
+                    script_dep.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(script.get("file_path", ""))} depends on: '
+                f'{script_dep}  '
+            )
+            dependencies_packs.update(script_dep)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_playbooks_dependencies(pack_playbooks, id_set):
+    def _collect_playbooks_dependencies(pack_playbooks, id_set, verbose_file):
         """
         Collects playbook pack dependencies.
 
         Args:
             pack_playbooks (list): collection of pack playbooks data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Playbooks')
 
         for playbook in pack_playbooks:
             playbook_data = next(iter(playbook.values()))
+            playbook_dependency = set()
+
             skippable_tasks = set(playbook_data.get('skippable_tasks', []))
 
             # searching for packs of implementing scripts
@@ -315,13 +349,13 @@ class PackDependencies:
                                                                                   id_set['scripts'])
             if optional_script_packs:  # found packs of optional scripts
                 pack_dependencies_data = PackDependencies._label_as_optional(optional_script_packs)
-                dependencies_packs.update(pack_dependencies_data)
+                playbook_dependency.update(pack_dependencies_data)
 
             mandatory_script_packs = PackDependencies._search_packs_by_items_names(list(mandatory_scripts),
                                                                                    id_set['scripts'])
             if mandatory_script_packs:  # found packs of implementing scripts
                 pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_script_packs)
-                dependencies_packs.update(pack_dependencies_data)
+                playbook_dependency.update(pack_dependencies_data)
 
             # searching for packs of implementing integrations
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
@@ -335,7 +369,7 @@ class PackDependencies:
                 if packs_found_from_integration:
                     pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
                         packs_found_from_integration)
-                    dependencies_packs.update(pack_dependencies_data)
+                    playbook_dependency.update(pack_dependencies_data)
 
             # ---- other playbooks packs ----
             implementing_playbook_names = playbook_data.get('implementing_playbooks', [])
@@ -346,13 +380,13 @@ class PackDependencies:
                                                                                     id_set['playbooks'])
             if optional_playbook_packs:
                 pack_dependencies_data = PackDependencies._label_as_optional(optional_playbook_packs)
-                dependencies_packs.update(pack_dependencies_data)
+                playbook_dependency.update(pack_dependencies_data)
 
             mandatory_playbook_packs = PackDependencies._search_packs_by_items_names(list(mandatory_playbooks),
                                                                                      id_set['playbooks'])
             if mandatory_playbook_packs:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_playbook_packs)
-                dependencies_packs.update(pack_dependencies_data)
+                playbook_dependency.update(pack_dependencies_data)
 
             # ---- incident fields packs ----
             incident_fields = playbook_data.get('incident_fields', [])
@@ -360,7 +394,7 @@ class PackDependencies:
                 incident_fields, id_set['IncidentFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
-                dependencies_packs.update(pack_dependencies_data)
+                playbook_dependency.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
             indicator_fields = playbook_data.get('indicator_fields', [])
@@ -368,27 +402,36 @@ class PackDependencies:
                 indicator_fields, id_set['IndicatorFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
-                dependencies_packs.update(pack_dependencies_data)
+                playbook_dependency.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: '
+                f'{playbook_dependency}  '
+            )
+            dependencies_packs.update(playbook_dependency)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_layouts_dependencies(pack_layouts, id_set):
+    def _collect_layouts_dependencies(pack_layouts, id_set, verbose_file):
         """
         Collects layouts pack dependencies.
 
         Args:
             pack_layouts (list): collection of pack playbooks data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Layouts')
 
         for layout in pack_layouts:
             layout_data = next(iter(layout.values()))
+            layout_dependency = set()
 
             related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
             packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
@@ -397,7 +440,7 @@ class PackDependencies:
             if packs_found_from_incident_indicator_types:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_indicator_types)
-                dependencies_packs.update(pack_dependencies_data)
+                layout_dependency.update(pack_dependencies_data)
 
             related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
             packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
@@ -406,27 +449,36 @@ class PackDependencies:
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_indicator_fields)
-                dependencies_packs.update(pack_dependencies_data)
+                layout_dependency.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(layout_data.get("file_path", ""))} depends on: '
+                f'{layout_dependency}  '
+            )
+            dependencies_packs.update(layout_dependency)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_fields_dependencies(pack_incidents_fields, id_set):
+    def _collect_incidents_fields_dependencies(pack_incidents_fields, id_set, verbose_file):
         """
         Collects in incidents fields dependencies.
 
         Args:
             pack_incidents_fields (list): collection of pack incidents fields data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Incident Fields')
 
         for incident_field in pack_incidents_fields:
             incident_field_data = next(iter(incident_field.values()))
+            incident_field_dependency = set()
 
             # related_incident_types = incident_field_data.get('incident_types', [])
             # packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
@@ -444,62 +496,81 @@ class PackDependencies:
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
-                dependencies_packs.update(pack_dependencies_data)
+                incident_field_dependency.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(incident_field_data.get("file_path", ""))} depends on: '
+                f'{incident_field_dependency}  '
+            )
+            dependencies_packs.update(incident_field_dependency)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_indicators_types_dependencies(pack_indicators_types, id_set):
+    def _collect_indicators_types_dependencies(pack_indicators_types, id_set, verbose_file):
         """
         Collects in indicators types dependencies.
 
         Args:
             pack_indicators_types (list): collection of pack indicators types data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Indicator Types')
 
         for indicator_type in pack_indicators_types:
-            incident_field_data = next(iter(indicator_type.values()))
+            indicator_type_data = next(iter(indicator_type.values()))
+            indicator_type_dependency = set()
 
-            related_integrations = incident_field_data.get('integrations', [])
+            related_integrations = indicator_type_data.get('integrations', [])
             packs_found_from_integrations = PackDependencies._search_packs_by_items_names(
                 related_integrations, id_set['integrations'])
 
             if packs_found_from_integrations:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_optional(packs_found_from_integrations)
-                dependencies_packs.update(pack_dependencies_data)
+                indicator_type_dependency.update(pack_dependencies_data)
 
-            related_scripts = incident_field_data.get('scripts', [])
+            related_scripts = indicator_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
                 related_scripts, id_set['scripts'])
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
-                dependencies_packs.update(pack_dependencies_data)
+                indicator_type_dependency.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: '
+                f'{indicator_type_dependency}  '
+            )
+            dependencies_packs.update(indicator_type_dependency)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_integrations_dependencies(pack_integrations, id_set):
+    def _collect_integrations_dependencies(pack_integrations, id_set, verbose_file):
         """
         Collects integrations dependencies.
         Args:
             pack_integrations (list): collection of pack integrations data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
+
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Integrations')
 
         for integration in pack_integrations:
             integration_data = next(iter(integration.values()))
+            integration_dependency = set()
 
             related_classifiers = integration_data.get('classifiers', [])
             packs_found_from_classifiers = PackDependencies._search_packs_by_items_names_or_ids(
@@ -535,63 +606,81 @@ class PackDependencies:
                     _label_as_mandatory({related_indicator_fields})
                 dependencies_packs.update(pack_dependencies_data)
 
+            verbose_file.write(
+                f'{os.path.basename(integration_data.get("file_path", ""))} depends on: '
+                f'{integration_dependency}  '
+            )
+            dependencies_packs.update(integration_dependency)
+
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_types_dependencies(pack_incidents_types, id_set):
+    def _collect_incidents_types_dependencies(pack_incidents_types, id_set, verbose_file):
         """
         Collects in incidents types dependencies.
 
         Args:
             pack_incidents_types (list): collection of pack incidents types data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Incident Types')
 
         for incident_type in pack_incidents_types:
-            incident_field_data = next(iter(incident_type.values()))
+            incident_type_data = next(iter(incident_type.values()))
+            incident_type_dependency = set()
 
-            related_playbooks = incident_field_data.get('playbooks', [])
+            related_playbooks = incident_type_data.get('playbooks', [])
             packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(
                 related_playbooks, id_set['playbooks'])
 
             if packs_found_from_playbooks:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_playbooks)
-                dependencies_packs.update(pack_dependencies_data)
+                incident_type_dependency.update(pack_dependencies_data)
 
-            related_scripts = incident_field_data.get('scripts', [])
+            related_scripts = incident_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
                 related_scripts, id_set['scripts'])
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
-                dependencies_packs.update(pack_dependencies_data)
+                incident_type_dependency.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: '
+                f'{incident_type_dependency}  '
+            )
+            dependencies_packs.update(incident_type_dependency)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_classifiers_dependencies(pack_classifiers, id_set):
+    def _collect_classifiers_dependencies(pack_classifiers, id_set, verbose_file):
         """
         Collects in classifiers dependencies.
 
         Args:
             pack_classifiers (list): collection of pack classifiers data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Classifiers')
 
         for classifier in pack_classifiers:
             classifier_data = next(iter(classifier.values()))
+            classifier_dependency = set()
 
             related_incident_types = classifier_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
@@ -600,27 +689,36 @@ class PackDependencies:
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_types)
-                dependencies_packs.update(pack_dependencies_data)
+                classifier_dependency.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: '
+                f'{classifier_dependency}  '
+            )
+            dependencies_packs.update(classifier_dependency)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_mappers_dependencies(pack_mappers, id_set):
+    def _collect_mappers_dependencies(pack_mappers, id_set, verbose_file):
         """
         Collects in mappers dependencies.
 
         Args:
             pack_mappers (list): collection of pack mappers data.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
 
         """
         dependencies_packs = set()
+        verbose_file.write('\n### Mappers')
 
         for mapper in pack_mappers:
             mapper_data = next(iter(mapper.values()))
+            mapper_dependency = set()
 
             related_incident_types = mapper_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
@@ -629,7 +727,7 @@ class PackDependencies:
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_types)
-                dependencies_packs.update(pack_dependencies_data)
+                mapper_dependency.update(pack_dependencies_data)
 
             related_incident_fields = mapper_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
@@ -638,7 +736,13 @@ class PackDependencies:
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_fields)
-                dependencies_packs.update(pack_dependencies_data)
+                mapper_dependency.update(pack_dependencies_data)
+
+            verbose_file.write(
+                f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: '
+                f'{mapper_dependency}  '
+            )
+            dependencies_packs.update(mapper_dependency)
 
         return dependencies_packs
 
@@ -669,34 +773,66 @@ class PackDependencies:
         return pack_items
 
     @staticmethod
-    def _find_pack_dependencies(pack_id, id_set):
+    def _find_pack_dependencies(pack_id, id_set, verbose_file):
         """
         Searches for specific pack dependencies.
 
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
         """
+        verbose_file.write(f'\n\n# Pack ID: {pack_id}')
         pack_items = PackDependencies._collect_pack_items(pack_id, id_set)
 
-        scripts_dependencies = PackDependencies._collect_scripts_dependencies(pack_items['scripts'], id_set)
-        playbooks_dependencies = PackDependencies._collect_playbooks_dependencies(pack_items['playbooks'], id_set)
-        layouts_dependencies = PackDependencies._collect_layouts_dependencies(pack_items['layouts'], id_set)
+        scripts_dependencies = PackDependencies._collect_scripts_dependencies(
+            pack_items['scripts'],
+            id_set,
+            verbose_file
+        )
+        playbooks_dependencies = PackDependencies._collect_playbooks_dependencies(
+            pack_items['playbooks'],
+            id_set,
+            verbose_file
+        )
+        layouts_dependencies = PackDependencies._collect_layouts_dependencies(
+            pack_items['layouts'],
+            id_set,
+            verbose_file
+        )
         incidents_fields_dependencies = PackDependencies._collect_incidents_fields_dependencies(
-            pack_items['incidents_fields'], id_set)
+            pack_items['incidents_fields'],
+            id_set,
+            verbose_file
+        )
         indicators_types_dependencies = PackDependencies._collect_indicators_types_dependencies(
-            pack_items['indicators_types'], id_set)
-        integrations_dependencies = PackDependencies. \
-            _collect_integrations_dependencies(pack_items['integrations'], id_set)
-        incidents_types_dependencies = PackDependencies. \
-            _collect_incidents_types_dependencies(pack_items['incidents_types'], id_set)
-        classifiers_dependencies = PackDependencies. \
-            _collect_classifiers_dependencies(pack_items['classifiers'], id_set)
-        mappers_dependencies = PackDependencies. \
-            _collect_mappers_dependencies(pack_items['mappers'], id_set)
+            pack_items['indicators_types'],
+            id_set,
+            verbose_file
+        )
+        integrations_dependencies = PackDependencies._collect_integrations_dependencies(
+            pack_items['integrations'],
+            id_set,
+            verbose_file
+        )
+        incidents_types_dependencies = PackDependencies._collect_incidents_types_dependencies(
+            pack_items['incidents_types'],
+            id_set,
+            verbose_file
+        )
+        classifiers_dependencies = PackDependencies._collect_classifiers_dependencies(
+            pack_items['classifiers'],
+            id_set,
+            verbose_file
+        )
+        mappers_dependencies = PackDependencies._collect_mappers_dependencies(
+            pack_items['mappers'],
+            id_set,
+            verbose_file
+        )
 
         pack_dependencies = scripts_dependencies | playbooks_dependencies | layouts_dependencies | \
             incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies \
@@ -705,13 +841,14 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def build_dependency_graph(pack_id, id_set):
+    def build_dependency_graph(pack_id, id_set, verbose_file):
         """
         Builds all level of dependencies and returns dependency graph.
 
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
 
         Returns:
             DiGraph: all level dependencies of given pack.
@@ -725,7 +862,7 @@ class PackDependencies:
             leaf_nodes = [n for n in graph.nodes() if graph.out_degree(n) == 0]
 
             for leaf in leaf_nodes:
-                leaf_dependencies = PackDependencies._find_pack_dependencies(leaf, id_set)
+                leaf_dependencies = PackDependencies._find_pack_dependencies(leaf, id_set, verbose_file=verbose_file)
 
                 if leaf_dependencies:
                     for dependency_name, is_mandatory in leaf_dependencies:
@@ -738,22 +875,24 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def find_dependencies(pack_name, id_set_path=None):
+    def find_dependencies(pack_name, id_set_path=None, debug_file_path=None):
         """
         Main function for dependencies search and pack metadata update.
 
         Args:
             pack_name (str): pack id, currently pack folder name is in use.
             id_set_path (str): id set json.
+            debug_file_path (str): path to dependency explanations file.
 
         """
         if not id_set_path:
-            id_set = IDSetCreator(output=None, print_logs=False).create_id_set()
+            id_set = IDSetCreator(print_logs=False).create_id_set()
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
-
-        dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set)
+        with VerboseFile(debug_file_path) as verbose_file:
+            dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set,
+                                                                       verbose_file=verbose_file)
         first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
         update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         # print the found pack dependency results

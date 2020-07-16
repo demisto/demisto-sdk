@@ -480,7 +480,12 @@ class TestDependsOnIncidentField:
         Then
             - Extracting the packs that the incident field depends on.
         """
-        expected_result = {("Expanse", True), ("IllusiveNetworks", True), ("Carbon_Black_Enterprise_Response", True), ("Phishing", True)}
+        expected_result = {
+            # incident types
+            # ("Expanse", True), ("IllusiveNetworks", True),
+            # scripts
+            ("Carbon_Black_Enterprise_Response", True), ("Phishing", True)
+        }
 
         test_input = [
             {

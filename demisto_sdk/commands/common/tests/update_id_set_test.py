@@ -377,6 +377,30 @@ class TestPlaybooks:
         assert 'incident_fields' not in result.keys()
         assert 'indicator_fields' not in result.keys()
 
+    @staticmethod
+    def test_get_playbook_data_bad_graph():
+        """
+        Given
+            - A playbook file called playbook-invalid-bad-graph.yml:
+                - task 1 point to non-existing task
+                - task 2 is not connected
+
+        When
+            - parsing playbook files
+
+        Then
+            - parsing flow graph from file successfully (only tasks 0 and 1 will be in the graph)
+        """
+        #                                         test_files/   playbook-invalid-bad-graph.yml'
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'playbook-invalid-bad-graph.yml')
+        result = get_playbook_data(test_file_path)
+        playbook_data = result.get('InvalidPlaybook-BadGraph', {})
+        assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
+        assert playbook_data.get('command_to_integration', {}).get('ip') == ''
+        assert playbook_data.get('command_to_integration', {}).get('domain') == ''
+        assert 'domain' in playbook_data.get('skippable_tasks', [])
+        assert 'ip' not in playbook_data.get('skippable_tasks', [])
+
 
 class TestLayouts:
     @staticmethod

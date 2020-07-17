@@ -224,10 +224,10 @@ def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict, graph: 
     return list(implementing_ids), list(implementing_ids_skippable)
 
 
-def get_commmands_from_playbook(data_dict: dict) -> tuple:
+def get_commands_from_playbook(data_dict: dict) -> tuple:
     command_to_integration = {}
     command_to_integration_skippable = set()
-    tasks = data_dict.get('tasks', [])
+    tasks = data_dict.get('tasks', {})
 
     for task in tasks.values():
         task_details = task.get('task', {})
@@ -451,7 +451,7 @@ def get_playbook_data(file_path: str) -> dict:
                                                                                           data_dictionary,
                                                                                           graph
                                                                                           )
-    command_to_integration, command_to_integration_skippable = get_commmands_from_playbook(data_dictionary)
+    command_to_integration, command_to_integration_skippable = get_commands_from_playbook(data_dictionary)
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
                        command_to_integration_skippable)
     pack = get_pack_name(file_path)

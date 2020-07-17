@@ -390,8 +390,8 @@ class ContentCreator:
                 if dir_name == 'Layouts':
                     file_type = tools.find_type(path)
                     if file_type == FileType.LAYOUTS_CONTAINER:
-                        if not dpath.startswith('layoutcontainer-'):
-                            dpath = f'layoutcontainer-{dpath}'
+                        if not dpath.startswith('layoutscontainer-'):
+                            dpath = f'layoutscontainer-{dpath}'
                     else:
                         if not dpath.startswith('layout-'):
                             dpath = f'layout-{dpath}'

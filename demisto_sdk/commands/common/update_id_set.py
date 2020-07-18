@@ -138,7 +138,7 @@ def get_changed_files(files_string):
     return added_files_list, modified_files_list, added_script_list, modified_script_list
 
 
-def build_dependency_graph(playbook_data):
+def build_tasks_graph(playbook_data):
     """
     Builds tasks flow graph.
 
@@ -435,7 +435,7 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
 def get_playbook_data(file_path: str) -> dict:
     playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
-    graph = build_dependency_graph(data_dictionary)
+    graph = build_tasks_graph(data_dictionary)
 
     id_ = data_dictionary.get('id', '-')
     name = data_dictionary.get('name', '-')

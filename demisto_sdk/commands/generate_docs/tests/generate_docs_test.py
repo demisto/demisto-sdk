@@ -51,6 +51,8 @@ def test_format_md():
     # these are a valid but we replace for completeness
     assert format_md('test<br></br>\nthis<br>again').count('<br/>') == 2
     assert format_md('test<hr></hr>\nthis<hr>again').count('<hr/>') == 2
+    # test removing style
+    assert 'style=' not in format_md('<div style="background:#eeeeee; border:1px solid #cccccc; padding:5px 10px">"this is a test"</div>')
 
 
 def test_stringEscapeMD():

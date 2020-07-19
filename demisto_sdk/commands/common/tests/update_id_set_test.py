@@ -392,7 +392,6 @@ class TestPlaybooks:
         Then
             - parsing flow graph from file successfully (only tasks 0 and 1 will be in the graph)
         """
-        #                                         test_files/   playbook-invalid-bad-graph.yml'
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'playbook-invalid-bad-graph.yml')
         result = get_playbook_data(test_file_path)
         playbook_data = result.get('InvalidPlaybook-BadGraph', {})
@@ -401,6 +400,29 @@ class TestPlaybooks:
         assert playbook_data.get('command_to_integration', {}).get('domain') == ''
         assert 'domain' in playbook_data.get('skippable_tasks', [])
         assert 'ip' not in playbook_data.get('skippable_tasks', [])
+
+    @staticmethod
+    def test_get_playbook_data_bad_graph_2():
+        """
+        Given
+            - A playbook file called playbook-invalid-bad-graph_2.yml:
+                - starttaskid=5 but task 5 does not exist
+
+        When
+            - parsing playbook files
+
+        Then
+            - parsing flow graph from file successfully (no actual tasks will be in the graph)
+        """
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'playbook-invalid-bad-graph_2.yml')
+        result = get_playbook_data(test_file_path)
+        playbook_data = result.get('InvalidPlaybook-BadGraph', {})
+        assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
+        assert playbook_data.get('command_to_integration', {}).get('ip') == ''
+        assert playbook_data.get('command_to_integration', {}).get('domain') == ''
+        # domain task is marked as skippable so it will be included regardless to the graph.
+        assert 'domain' in playbook_data.get('skippable_tasks', [])
+        assert len(playbook_data.get('skippable_tasks', [])) == 1
 
 
 class TestLayouts:

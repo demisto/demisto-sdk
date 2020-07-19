@@ -2,7 +2,7 @@ id: InvalidPlaybook-BadGraph
 version: -1
 vcShouldKeepItemLegacyProdMachine: false
 name: InvalidPlaybook-BadGraph
-starttaskid: "0"
+starttaskid: "5"
 tasks:
   "0":
     id: "0"

@@ -148,7 +148,7 @@ def build_tasks_graph(playbook_data):
     Returns:
         DiGraph: all tasks of given playbook.
     """
-    initial_task = playbook_data.get('starttaskid', '0')
+    initial_task = playbook_data.get('starttaskid', '')
     tasks = playbook_data.get('tasks', {})
 
     graph = networkx.DiGraph()
@@ -163,11 +163,11 @@ def build_tasks_graph(playbook_data):
             leaf_task = tasks.get(leaf)
             leaf_mandatory = graph.nodes[leaf]['mandatory']
 
-            # In this case the playbook is invalid, one of the "nexttasks" fields contain invalid task id.
+            # In this case the playbook is invalid, starttaskid contains invalid task id.
             if not leaf_task:
                 print_error(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
                 continue
-                # raise ValueError(f'No such task {leaf} in playbook {playbook_data.get("id")}')
+
             leaf_next_tasks = sum(leaf_task.get('nexttasks', {}).values(), [])
 
             for task_id in leaf_next_tasks:
@@ -175,7 +175,6 @@ def build_tasks_graph(playbook_data):
                 if not task:
                     print_error(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
                     continue
-                    # raise ValueError(f'No such task {leaf} in playbook {playbook_data.get("id")}')
 
                 # If task can't be skipped and predecessor task is mandatory - set as mandatory.
                 mandatory = leaf_mandatory and not task.get('skipunavailable', False)

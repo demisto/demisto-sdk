@@ -90,6 +90,8 @@ mapping:
         enum: ['python2', 'python3']
       feed:
         type: bool
+      isFetchSamples:
+        type: bool
   system:
     type: bool
   hidden:

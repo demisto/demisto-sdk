@@ -631,7 +631,7 @@ class ValidateManager:
                 invalid_files.append(file_path)
         if invalid_files:
             error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code, file_path="General-Error"):
+            if self.handle_error(error_message, error_code, file_path=file_path):
                 return False
         return True
 

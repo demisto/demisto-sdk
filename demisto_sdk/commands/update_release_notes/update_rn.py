@@ -183,7 +183,7 @@ class UpdateRN:
     def bump_version_number(self, specific_version: str = None, pre_release: bool = False):
         if self.update_type is None and specific_version is None:
             raise ValueError("Received no update type when one was expected.")
-        new_version = None  # This will never happen since we pre-validate the argument
+        new_version = ''  # This will never happen since we pre-validate the argument
         data_dictionary = self.get_pack_metadata()
         if specific_version:
             print_color(f"Bumping {self.pack} to the version {specific_version}. If you need to update"
@@ -255,7 +255,7 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in sorted(changed_items.items(), key=lambda x: x[1]):
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1] if x[1] is not None else ''):
             if k == 'N/A':
                 continue
             elif v == 'Integration':

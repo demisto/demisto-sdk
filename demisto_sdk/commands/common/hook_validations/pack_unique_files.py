@@ -5,39 +5,46 @@ import io
 import json
 import os
 import re
+from datetime import datetime
+from distutils.version import LooseVersion
 
+from dateutil import parser
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_DEPENDENCIES,
-    PACK_METADATA_DESC, PACK_METADATA_EMAIL, PACK_METADATA_FIELDS,
-    PACK_METADATA_KEYWORDS, PACK_METADATA_NAME, PACK_METADATA_SUPPORT,
-    PACK_METADATA_TAGS, PACK_METADATA_URL, PACK_METADATA_USE_CASES,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PACKS_WHITELIST_FILE_NAME)
+    API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CREATED,
+    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
+    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
+    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
+    PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import pack_name_to_path
+from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
+                                               pack_name_to_path)
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
+ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
-    def __init__(self, pack, ignored_errors=None, print_as_warnings=False):
+    def __init__(self, pack, pack_path=None, ignored_errors=None, print_as_warnings=False, should_version_raise=False):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
         """
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.pack = pack
-        self.pack_path = pack_name_to_path(self.pack)
+        self.pack_path = pack_name_to_path(self.pack) if not pack_path else pack_path
         self.secrets_file = PACKS_WHITELIST_FILE_NAME
         self.pack_ignore_file = PACKS_PACK_IGNORE_FILE_NAME
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.readme_file = PACKS_README_FILE_NAME
         self._errors = []
+        self.should_version_raise = should_version_raise
 
     # error handling
     def _add_error(self, error, file_path):
@@ -61,7 +68,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if raw:
             errors = self._errors
         elif self._errors:
-            errors = '@@@Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
+            errors = ' - Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
 
         return errors
 
@@ -104,6 +111,15 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
+    @staticmethod
+    def check_timestamp_format(timestamp):
+        """Check that the timestamp is in ISO format"""
+        try:
+            datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
+            return True
+        except ValueError:
+            return False
+
     # secrets validation
     def validate_secrets_file(self):
         """Validate everything related to .secrets-ignore file"""
@@ -143,9 +159,27 @@ class PackUniqueFilesValidator(BaseValidator):
         """Validate everything related to pack_metadata.json file"""
         if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid(),
                                                                    self._is_valid_contributor_pack_support_details()]):
-            return True
+            if self.should_version_raise:
+                return self.validate_version_bump()
+
+            else:
+                return True
 
         return False
+
+    def validate_version_bump(self):
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        old_meta_file_content = get_remote_file(metadata_file_path)
+        current_meta_file_content = get_json(metadata_file_path)
+        old_version = old_meta_file_content.get('currentVersion', '0.0.0')
+        current_version = current_meta_file_content.get('currentVersion', '0.0.0')
+        if LooseVersion(old_version) < LooseVersion(current_version):
+            return True
+
+        elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack), metadata_file_path):
+            return False
+
+        return True
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
@@ -154,29 +188,45 @@ class PackUniqueFilesValidator(BaseValidator):
             if not pack_meta_file_content:
                 if self._add_error(Errors.pack_metadata_empty(), self.pack_meta_file):
                     return False
+
             metadata = json.loads(pack_meta_file_content)
             if not isinstance(metadata, dict):
                 if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file), self.pack_meta_file):
                     return False
+
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
                 if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields),
                                    self.pack_meta_file):
                     return False
+
             # check validity of pack metadata mandatory fields
             name_field = metadata.get(PACK_METADATA_NAME, '').lower()
             if not name_field or 'fill mandatory field' in name_field:
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
+
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
                     return False
+
             # check non mandatory dependency field
             dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
                 if self._add_error(Errors.dependencies_field_should_be_dict(self.pack_meta_file), self.pack_meta_file):
                     return False
+
+            # check created field in iso format
+            created_field = metadata.get(PACK_METADATA_CREATED, '')
+            if not self.check_timestamp_format(created_field):
+                suggested_value = parser.parse(created_field).isoformat() + "Z"
+                if self._add_error(
+                        Errors.pack_timestamp_field_not_in_iso_format(PACK_METADATA_CREATED,
+                                                                      created_field, suggested_value),
+                        self.pack_meta_file):
+                    return False
+
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
                                PACK_METADATA_USE_CASES):
@@ -187,6 +237,7 @@ class PackUniqueFilesValidator(BaseValidator):
                         if self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field),
                                            self.pack_meta_file):
                             return False
+
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False

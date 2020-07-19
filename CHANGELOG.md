@@ -1,13 +1,35 @@
 # Changelog
-* Fixed issue with default outfile file name for **unify** command when using an input of ".".
-* *Unify* command now adds contributor details to the display name and description.
-* *Format* command now adds *isFetch* and *incidenttype* fields to integration yml.
+* Added the *--description* option to the **init** command.
+* Added the *--contribution* option to the **init** command which converts a contribution zip to proper pack format.
+* Improved **validate** command performance time and outputs.
+* Added the flag *--no-docker-checks* to **validate** command to skip docker checks.
+* Added the flag *--print-ignored-files* to **validate** command to print ignored files report when the command is done.
+* Added the following validations in **validate** command:
+   * Validating that existing release notes are not modified.
+   * Validating release notes are not added to new packs.
+   * Validating that the "currentVersion" field was raised in the pack_metadata for modified packs.
+   * Validating that the timestamp in the "created" field in the pack_metadata is in ISO format.
+* Running `demisto-sdk validate` will run the **validate** command using git and only on committed files (same as using *-g --post-commit*).
+* Fixed an issue where release notes were not checked correctly in **validate** command.
+* Fixed an issue in the **create-id-set** command where optional playbook tasks were not taken into consideration.
+* Added a prompt to the `demisto-sdk update-release-notes` command to prompt users to commit changes before running the release notes command.
+* Added support to `layoutscontainer` in **validate** command.
+
+#### 1.1.5
+* Fixed an issue in **find-dependencies** command.
+* **lint** command now verifies flake8 on CommonServerPython script.
+
+#### 1.1.4
+* Fixed an issue with the default output file name of the **unify** command when using "." as an output path.
+* **Unify** command now adds contributor details to the display name and description.
+* **Format** command now adds *isFetch* and *incidenttype* fields to integration yml.
 * Removed the *feedIncremental* field from the integration schema.
-* *Format* command now adds *feedBypassExclusionList*, *Fetch indicators*, *feedReputation*, *feedReliability*,
+* **Format** command now adds *feedBypassExclusionList*, *Fetch indicators*, *feedReputation*, *feedReliability*,
      *feedExpirationPolicy*, *feedExpirationInterval* and *feedFetchInterval* fields to integration yml.
 * Fixed an issue in the playbooks schema.
 * Fixed an issue where generated release notes were out of order.
-
+* Improved pack dependencies detection.
+* Fixed an issue where test playbooks were mishandled in **validate** command.
 
 #### 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.

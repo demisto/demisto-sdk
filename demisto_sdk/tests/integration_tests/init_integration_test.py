@@ -73,7 +73,7 @@ def test_integration_init_integration_positive(tmp_path):
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {
-        "Pipfile", "Pipfile.lock", "README.md", f"{integration_name}.py",
+        "Pipfile", "Pipfile.lock", f"{integration_name}.py",
         f"{integration_name}.yml", f"{integration_name}_description.md", f"{integration_name}_test.py",
-        f"{integration_name}_image.png"
+        f"{integration_name}_image.png", "test_data"
     } == integration_dir_files

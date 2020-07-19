@@ -518,7 +518,12 @@ class TestDependsOnIndicatorType:
         Then
             - Extracting the packs that the indicator type depends on.
         """
-        expected_result = {("Feedsslabusech", True), ("AbuseDB", True), ("ActiveMQ", True), ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)}
+        expected_result = {
+            # integration dependencies
+            ("Feedsslabusech", False), ("AbuseDB", False), ("ActiveMQ", False),
+            # script dependencies
+            ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)
+        }
 
         test_input = [
             {
@@ -678,6 +683,24 @@ class TestDependsOnMappers:
             pack_mappers=test_input, id_set=id_set)
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+SEARCH_PACKS_INPUT = [
+    (['type'], 'IncidentFields', set()),
+    (['emailaddress'], 'IncidentFields', {'Compliance'}),
+    (['E-mail Address'], 'IncidentFields', {'Compliance'}),
+    (['adminemail'], 'IndicatorFields', {'CommonTypes'}),
+    (['Admin Email'], 'IndicatorFields', {'CommonTypes'}),
+    (['Claroty'], 'Mappers', {'Claroty'}),
+    (['Claroty - Incoming Mapper'], 'Mappers', {'Claroty'}),
+    (['Cortex XDR - IR'], 'Classifiers', {'CortexXDR'}),
+]
+
+
+@pytest.mark.parametrize('item_names, section_name, expected_result', SEARCH_PACKS_INPUT)
+def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set):
+    found_packs = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
+    assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
 
 
 class TestDependencyGraph:

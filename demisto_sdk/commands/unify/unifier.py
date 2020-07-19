@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
                                                    SCRIPTS_DIR,
-                                                   TYPE_TO_EXTENSION)
+                                                   TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                get_yml_paths_in_dir,
@@ -143,12 +143,16 @@ class Unifier:
 
         return output_map
 
-    def merge_script_package_to_yml(self):
+    def merge_script_package_to_yml(self, file_name_suffix=None):
         """Merge the various components to create an output yml file
         """
         print("Merging package: {}".format(self.package_path))
         package_dir_name = os.path.basename(self.package_path)
         output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+
+        if file_name_suffix:
+            # append suffix to output file name
+            output_filename = file_name_suffix.join(os.path.splitext(output_filename))
 
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
@@ -283,7 +287,7 @@ class Unifier:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')
 
-        if find_type(yml_path) == 'script':
+        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')

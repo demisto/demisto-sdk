@@ -1,7 +1,10 @@
+import os
+import shutil
 from pathlib import Path
 from typing import Optional
 
 import yaml
+from demisto_sdk.commands.unify.unifier import Unifier
 from deprecated import deprecated
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
@@ -9,7 +12,7 @@ from TestSuite.yml import YAML
 
 
 class Integration:
-    def __init__(self, tmpdir: Path, name, repo):
+    def __init__(self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False):
         # Save entities
         self.name = name
         self._repo = repo
@@ -19,6 +22,9 @@ class Integration:
         self._tmpdir_integration_path = tmpdir / f'{self.name}'
         self._tmpdir_integration_path.mkdir()
 
+        # if creating a unified yaml
+        self.create_unified = create_unified
+
         self.path = str(self._tmpdir_integration_path)
         self.code = File(self._tmpdir_integration_path / f'{self.name}.py', self._repo.path)
         self.yml = YAML(self._tmpdir_integration_path / f'{self.name}.yml', self._repo.path)
@@ -26,9 +32,6 @@ class Integration:
         self.description = File(self._tmpdir_integration_path / f'{self.name}_description.md', self._repo.path)
         self.changelog = File(self._tmpdir_integration_path / 'CHANGELOG.md', self._repo.path)
         self.image = File(self._tmpdir_integration_path / f'{self.name}.png', self._repo.path)
-
-        # build integration
-        self.create_default_integration()
 
     def build(
             self,
@@ -73,6 +76,10 @@ class Integration:
         changelog.close()
         description.close()
         code.close()
+        if self.create_unified:
+            unifier = Unifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
+            unifier.merge_script_package_to_yml()
+            shutil.rmtree(self._tmpdir_integration_path)
 
     # Deprecated methods
 
@@ -114,12 +121,15 @@ class Integration:
     def update_description(self, description: str):
         self.yml.update_description(description)
 
-    @property
+    @property  # type: ignore
     @deprecated(reason="use integration.code.rel_path instead")
     def py_path(self):
         return self.code.rel_path
 
-    @property
+    @property  # type: ignore
     @deprecated(reason="use integration.yml.rel_path instead")
     def yml_path(self):
         return self.yml.rel_path
+
+    def image_path(self):
+        return os.path.relpath(str(self._image_file), self._repo.path)

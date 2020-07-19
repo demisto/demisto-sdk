@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from copy import deepcopy
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # 3-rd party packages
 import docker
@@ -56,7 +56,7 @@ class Linter:
             self._docker_client: docker.DockerClient = docker.from_env()
             self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
-        self._facts = {
+        self._facts: Dict[str, Any] = {
             "images": [],
             "python_version": 0,
             "env_vars": {},
@@ -67,7 +67,7 @@ class Linter:
             "docker_engine": docker_engine
         }
         # Pack lint status object - visualize it
-        self._pkg_lint_status = {
+        self._pkg_lint_status: Dict = {
             "pkg": None,
             "pack_type": None,
             "path": str(self._content_repo),
@@ -111,7 +111,7 @@ class Linter:
             return self._pkg_lint_status
 
         # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-        with add_tmp_lint_files(content_repo=self._content_repo,
+        with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
                                 pack_path=self._pack_abs_dir,
                                 lint_files=self._facts["lint_files"],
                                 modules=modules,
@@ -162,10 +162,10 @@ class Linter:
         # Parsing pack yaml - in order to verify if check needed
         try:
 
-            script_obj: dict = {}
-            yml_obj: dict = YAML().load(yml_file)
+            script_obj: Dict = {}
+            yml_obj: Dict = YAML().load(yml_file)
             if isinstance(yml_obj, dict):
-                script_obj: dict = yml_obj.get('script') if isinstance(yml_obj.get('script'), dict) else yml_obj
+                script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
 
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
@@ -221,9 +221,15 @@ class Linter:
             lint_files = set(
                 self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"],
                                         flags=NEGATE))
+
+        # Add CommonServer to the lint checks
         if 'commonserver' in self._pack_abs_dir.name.lower():
+            # Powershell
             if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                 self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+            # Python
+            elif self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]
         else:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)
@@ -257,9 +263,10 @@ class Linter:
             no_vulture(bool): Whether to skip Vulture.
         """
         if self._facts["lint_files"]:
+            exit_code: int = 0
             for lint_check in ["flake8", "bandit", "mypy", "vulture"]:
-                exit_code: int = SUCCESS
-                output: str = ""
+                exit_code = SUCCESS
+                output = ""
                 if lint_check == "flake8" and not no_flake8:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_files"])
@@ -276,8 +283,8 @@ class Linter:
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
         if self._facts['lint_unittest_files']:
             for lint_check in ["flake8"]:
-                exit_code: int = SUCCESS
-                output: str = ""
+                exit_code = SUCCESS
+                output = ""
                 if lint_check == "flake8" and not no_flake8:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_unittest_files"])
@@ -403,7 +410,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_lint_on_docker_image(self, no_pylint: list, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+    def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str):
         """ Run lint check on docker image
 
@@ -450,7 +457,7 @@ class Linter:
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
                                                                                        keep_container=keep_container,
                                                                                        test_xml=test_xml)
-                                status["pytest_json"]: dict = test_json
+                                status["pytest_json"] = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                             # Perform powershell analyze
                             if not no_pwsh_analyze and check == "pwsh_analyze" and self._facts["lint_files"]:
@@ -497,7 +504,7 @@ class Linter:
         except docker.errors.APIError:
             return False
 
-    def _docker_image_create(self, docker_base_image: str) -> str:
+    def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
             2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
@@ -506,10 +513,10 @@ class Linter:
                 demisto_sdk/commands/lint/templates/dockerfile.jinja2
 
         Args:
-            docker_base_image(str): docker image to use as base for installing dev deps..
+            docker_base_image(list): docker image to use as base for installing dev deps and python version.
 
         Returns:
-            string. image name to use
+            str, str. image name to use and errors string.
         """
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""
@@ -574,8 +581,8 @@ class Linter:
                 logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
                 dockerfile = template.render(image=test_image_name,
                                              copy_pack=True)
-                with open(file=dockerfile_path, mode="+x") as f:
-                    f.write(str(dockerfile))
+                with open(file=dockerfile_path, mode="+x") as file:
+                    file.write(str(dockerfile))
 
                 docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
                                                                       dockerfile=dockerfile_path.stem,
@@ -708,7 +715,7 @@ class Linter:
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
             # Getting container exit code
-            container_exit_code: int = container_status.get("StatusCode")
+            container_exit_code = container_status.get("StatusCode")
             # Getting container logs
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code in [0, 1, 2, 5]:
@@ -717,15 +724,15 @@ class Linter:
                 # 2-Test execution was interrupted by the user
                 # 5-No tests were collected
                 if test_xml:
-                    test_data_xml: bytes = get_file_from_container(container_obj=container_obj,
-                                                                   container_path="/devwork/report_pytest.xml")
+                    test_data_xml = get_file_from_container(container_obj=container_obj,
+                                                            container_path="/devwork/report_pytest.xml")
                     xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
                     with open(file=xml_apth, mode='bw') as f:
-                        f.write(test_data_xml)
+                        f.write(test_data_xml)  # type: ignore
 
-                test_json: dict = json.loads(get_file_from_container(container_obj=container_obj,
-                                                                     container_path="/devwork/report_pytest.json",
-                                                                     encoding="utf-8"))
+                test_json = json.loads(get_file_from_container(container_obj=container_obj,
+                                                               container_path="/devwork/report_pytest.json",
+                                                               encoding="utf-8"))
                 for test in test_json.get('report', {}).get("tests"):
                     if test.get("call", {}).get("longrepr"):
                         test["call"]["longrepr"] = test["call"]["longrepr"].split('\n')

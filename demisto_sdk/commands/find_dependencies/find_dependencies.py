@@ -172,12 +172,14 @@ class PackDependencies:
             items_names = [items_names]
 
         for item_name in items_names:
+            item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}', f'{item_name}-mapper']
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
-                if (item_name in machine_name or item_name in
-                        item_details.get('name') and item_details.get('pack')):
-                    packs.add(item_details.get('pack'))
+                if (machine_name in item_possible_names or item_name == item_details.get('name')) \
+                        and item_details.get('pack'):
+                    if item_details.get('pack') not in constants.IGNORED_DEPENDENCY_CALCULATION:
+                        packs.add(item_details.get('pack'))
 
         return packs
 
@@ -232,6 +234,20 @@ class PackDependencies:
 
         """
         return [(p, True) for p in pack_ids]
+
+    @staticmethod
+    def _label_as_optional(pack_ids):
+        """
+        Sets pack as optional.
+
+        Args:
+            pack_ids (set): collection of pack ids to set as optional.
+
+        Returns:
+            list: collection of pack id and whether mandatory flag.
+
+        """
+        return [(p, False) for p in pack_ids]
 
     @staticmethod
     def _collect_scripts_dependencies(pack_scripts, id_set):
@@ -435,7 +451,7 @@ class PackDependencies:
 
             if packs_found_from_integrations:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_integrations)
+                    _label_as_optional(packs_found_from_integrations)
                 dependencies_packs.update(pack_dependencies_data)
 
             related_scripts = incident_field_data.get('scripts', [])

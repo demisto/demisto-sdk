@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
                                                    PLAYBOOK_YML_REGEX,
                                                    PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOK_YML_REGEX)
+                                                   TEST_PLAYBOOK_YML_REGEX,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
@@ -79,17 +80,17 @@ class TestGenericFunctions:
         assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
     data_test_find_type = [
-        (VALID_DASHBOARD_PATH, 'dashboard'),
-        (VALID_INCIDENT_FIELD_PATH, 'incidentfield'),
-        (VALID_INCIDENT_TYPE_PATH, 'incidenttype'),
-        (INDICATORFIELD_EXTRA_FIELDS, 'indicatorfield'),
-        (VALID_INTEGRATION_TEST_PATH, 'integration'),
-        (VALID_LAYOUT_PATH, 'layout'),
-        (VALID_PLAYBOOK_ID_PATH, 'playbook'),
-        (VALID_REPUTATION_FILE, 'reputation'),
-        (VALID_SCRIPT_PATH, 'script'),
-        (VALID_WIDGET_PATH, 'widget'),
-        ('', '')
+        (VALID_DASHBOARD_PATH, FileType.DASHBOARD),
+        (VALID_INCIDENT_FIELD_PATH, FileType.INCIDENT_FIELD),
+        (VALID_INCIDENT_TYPE_PATH, FileType.INCIDENT_TYPE),
+        (INDICATORFIELD_EXTRA_FIELDS, FileType.INDICATOR_FIELD),
+        (VALID_INTEGRATION_TEST_PATH, FileType.INTEGRATION),
+        (VALID_LAYOUT_PATH, FileType.LAYOUT),
+        (VALID_PLAYBOOK_ID_PATH, FileType.PLAYBOOK),
+        (VALID_REPUTATION_FILE, FileType.REPUTATION),
+        (VALID_SCRIPT_PATH, FileType.SCRIPT),
+        (VALID_WIDGET_PATH, FileType.WIDGET),
+        ('', None)
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -227,6 +228,17 @@ def test_pascal_case():
     assert res == "GoodLife"
     res = tools.pascal_case("good_life-here v2")
     assert res == "GoodLifeHereV2"
+
+
+def test_capital_case():
+    res = tools.capital_case("PowerShell Remoting")
+    assert res == "PowerShell Remoting"
+    res = tools.capital_case("good life")
+    assert res == "Good Life"
+    res = tools.capital_case("good_life-here v2")
+    assert res == "Good_life-here V2"
+    res = tools.capital_case("")
+    assert res == ""
 
 
 class TestPrintColor:

@@ -6,13 +6,13 @@ import json
 import logging
 import os
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
-    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX)
+    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -49,8 +49,13 @@ class StructureValidator(BaseValidator):
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master'):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self.is_valid = True
+        self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
+
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
+        if isinstance(self.scheme_name, str):
+            self.scheme_name = FileType(self.scheme_name)
+
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
         self.fromversion = fromversion
@@ -67,17 +72,20 @@ class StructureValidator(BaseValidator):
         Returns:
             (bool): Is file is valid
         """
-        answers = [
-            self.is_valid_file_path(),
-            self.is_valid_scheme(),
-            self.is_file_id_without_slashes(),
-        ]
+        if self.check_for_spaces_in_file_name() and self.is_valid_file_extension():
+            answers = [
+                self.is_valid_file_path(),
+                self.is_valid_scheme(),
+                self.is_file_id_without_slashes(),
+            ]
 
-        if self.old_file:  # In case the file is modified
-            answers.append(not self.is_id_modified())
-            answers.append(self.is_valid_fromversion_on_modified())
+            if self.old_file:  # In case the file is modified
+                answers.append(not self.is_id_modified())
+                answers.append(self.is_valid_fromversion_on_modified())
 
-        return all(answers)
+            return all(answers)
+
+        return False
 
     def scheme_of_file_by_path(self):
         # type:  () -> Optional[str]
@@ -105,7 +113,7 @@ class StructureValidator(BaseValidator):
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, 'image', 'readme', 'release-notes']:
+        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK]:
             return True
         # ignore reputations.json
         if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
@@ -114,7 +122,7 @@ class StructureValidator(BaseValidator):
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')
             log.setLevel(logging.WARNING)
-            scheme_file_name = 'integration' if self.scheme_name == 'betaintegration' else self.scheme_name
+            scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))
             core = Core(source_file=self.file_path,
@@ -220,6 +228,15 @@ class StructureValidator(BaseValidator):
 
         return True
 
+    def is_valid_file_extension(self):
+        file_extension = os.path.splitext(self.file_path)[1]
+        if file_extension not in self.valid_extensions:
+            error_message, error_code = Errors.wrong_file_extension(file_extension, self.valid_extensions)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True
+
     def load_data_from_file(self):
         # type: () -> dict
         """Loads data according to function defined in FILE_SUFFIX_TO_LOAD_FUNCTION
@@ -238,9 +255,6 @@ class StructureValidator(BaseValidator):
             elif file_extension in ['.png', '.md']:
                 return {}
 
-        error_message, error_code = Errors.wrong_file_extension(file_extension,
-                                                                self.FILE_SUFFIX_TO_LOAD_FUNCTION.keys())
-        self.handle_error(error_message, error_code, file_path=self.file_path)
         return {}
 
     def get_file_type(self):
@@ -252,7 +266,9 @@ class StructureValidator(BaseValidator):
         """
         # If scheme_name exists, already found that the file is in the right path
         if self.scheme_name:
-            return self.scheme_name
+            if isinstance(self.scheme_name, str):
+                return self.scheme_name
+            return self.scheme_name.value
 
         for file_type, regexes in FILE_TYPES_PATHS_TO_VALIDATE.items():
             for regex in regexes:
@@ -275,10 +291,10 @@ class StructureValidator(BaseValidator):
                 is_valid_path = True
         return is_valid_path
 
-    def parse_error_msg(self, err) -> str:
+    def parse_error_msg(self, err) -> Tuple[str, str]:
         """A wrapper which runs the print error message for a list of errors in yaml
         Returns:
-            parsed error message from pykwalify
+            str, str: parsed error message from pykwalify
         """
         if ".\n" in str(err):
             for error in str(err).split('.\n'):
@@ -286,7 +302,10 @@ class StructureValidator(BaseValidator):
         else:
             return self.parse_error_line(str(err))
 
-    def parse_error_line(self, err) -> str:
+        # should not get here
+        return '', ''
+
+    def parse_error_line(self, err) -> Tuple[str, str]:
         """Returns a parsed error message from pykwalify
         Args: an schema error message from pykwalify
         """
@@ -349,3 +368,15 @@ class StructureValidator(BaseValidator):
 
                 else:
                     return Errors.pykwalify_missing_in_root(str(key_from_error))
+
+        # should not get here
+        return '', ''
+
+    def check_for_spaces_in_file_name(self):
+        file_name = os.path.basename(self.file_path)
+        if file_name.count(' ') > 0:
+            error_message, error_code = Errors.file_name_include_spaces_error(file_name)
+            if self.handle_error(error_message, error_code, self.file_path):
+                return False
+
+        return True

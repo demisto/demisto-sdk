@@ -1,6 +1,5 @@
 import glob
 
-import click
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_INTEGRATION_YML_REGEX)
@@ -73,7 +72,7 @@ class DescriptionValidator(BaseValidator):
                 md_file_path = glob.glob(path_without_extension + '_description.md')[0]
             except IndexError:
                 error_message, error_code = Errors.no_description_file_warning()
-                click.secho(f"{self.file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n", fg="yellow")
+                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
             if md_file_path:
                 is_description_in_package = True

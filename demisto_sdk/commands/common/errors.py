@@ -6,8 +6,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
-FOUND_FILES_AND_ERRORS = []
-FOUND_FILES_AND_IGNORED_ERRORS = []
+FOUND_FILES_AND_ERRORS = []  # type: list
+FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113']
 
@@ -26,6 +26,7 @@ ERROR_CODE = {
     "id_should_equal_name": "BA101",
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
+    "changes_may_fail_validation": "BA104",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -93,6 +94,8 @@ ERROR_CODE = {
     "multiple_release_notes_files": "RN105",
     "missing_release_notes_for_pack": "RN106",
     "missing_release_notes_entry": "RN107",
+    "added_release_notes_for_new_pack": "RN108",
+    "modified_existing_release_notes": "RN109",
     "playbook_cant_have_rolename": "PB100",
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
@@ -130,6 +133,8 @@ ERROR_CODE = {
     "empty_field_in_pack_metadata": "PA111",
     "pack_metadata_isnt_json": "PA112",
     "pack_metadata_missing_url_and_email": "PA113",
+    "pack_metadata_version_should_be_raised": "PA114",
+    "pack_timestamp_field_not_in_iso_format": 'PA115',
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
@@ -159,7 +164,9 @@ ERROR_CODE = {
     "invalid_to_version_in_mapper": "MP101",
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
-    "invalid_type_in_mapper": "MP104"
+    "invalid_type_in_mapper": "MP104",
+    "invalid_version_in_layout": "LO100",
+    "invalid_version_in_layoutscontainer": "LO101",
 }
 
 
@@ -200,6 +207,17 @@ class Errors:
     @error_code_decorator
     def file_name_include_spaces_error(file_name):
         return "Please remove spaces from the file's name: '{}'.".format(file_name)
+
+    @staticmethod
+    @error_code_decorator
+    def changes_may_fail_validation():
+        return "Warning: The changes may fail validation once submitted via a " \
+               "PR. To validate your changes, please make sure you have a git remote setup" \
+               " and pointing to github.com/demisto/content.\nYou can do this by running " \
+               "the following commands:\n\ngit remote add upstream https://github.com/" \
+               "demisto/content.git\ngit fetch upstream\n\nMore info about configuring " \
+               "a remote for a fork is available here: https://help.github.com/en/" \
+               "github/collaborating-with-issues-and-pull-requests/configuring-a-remote-for-a-fork"
 
     @staticmethod
     @error_code_decorator
@@ -610,6 +628,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def added_release_notes_for_new_pack(pack_name):
+        return f"ReleaseNotes were added for the newly created pack \"{pack_name}\" - remove them"
+
+    @staticmethod
+    @error_code_decorator
+    def modified_existing_release_notes(pack_name):
+        return f"Modified existing release notes for \"{pack_name}\" - revert the change and add new release notes " \
+               f"if needed by running:\n`demisto-sdk update-release-notes -p {pack_name} -u (major|minor|revision)`\n" \
+               f"You can refer to the documentation found here: " \
+               f"https://xsoar.pan.dev/docs/integrations/changelog for more information."
+
+    @staticmethod
+    @error_code_decorator
     def playbook_cant_have_rolename():
         return "Playbook can not have a rolename."
 
@@ -807,6 +838,20 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_version_should_be_raised(pack):
+        return f"The pack version needs to be raised - update the \"currentVersion\" field in the " \
+               f"pack_metadata.json or in case release notes are required run:\n" \
+               f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"generate them according to the new standard."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_timestamp_field_not_in_iso_format(field_name, value, changed_value):
+        return f"The field \"{field_name}\" should be in the following format: YYYY-MM-DDThh:mm:ssZ, found {value}.\n" \
+               f"Suggested change: {changed_value}"
+
+    @staticmethod
+    @error_code_decorator
     def readme_error(stderr):
         return f'Failed verifying README.md Error Message is: {stderr}'
 
@@ -818,7 +863,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def reputation_expiration_should_be_numeric():
-        return 'Expiration field should have a numeric value.'
+        return 'Expiration field should have a positive numeric value.'
 
     @staticmethod
     @error_code_decorator
@@ -893,6 +938,16 @@ class Errors:
     @error_code_decorator
     def pykwalify_general_error(error):
         return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layout(version_field):
+        return f'{version_field} field in layout needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layoutscontainer(version_field):
+        return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
 
     @staticmethod
     @error_code_decorator

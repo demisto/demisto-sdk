@@ -3,7 +3,7 @@ commonfields:
   version: -1
 name: Awa
 display: Awa
-category: Net
+category: Network Security
 description: Net
 detaileddescription: ""
 configuration:
@@ -55,6 +55,7 @@ script:
   type: python
   commands:
   - name: awake-query-devices
+    description: ''
     arguments:
     - name: queryExpression
       description: A query expression in Awake Query Language

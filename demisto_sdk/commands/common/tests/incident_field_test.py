@@ -269,10 +269,10 @@ class TestIncidentFieldsValidator:
         assert validator.is_current_valid_from_version() == is_valid, f'is_valid_from_version({from_version})' \
                                                                       f' returns {not is_valid}.'
 
-    IS_FROM_VERSION_CHANGED_NO_OLD = {}
+    IS_FROM_VERSION_CHANGED_NO_OLD = {}  # type: dict[any, any]
     IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
     IS_FROM_VERSION_CHANGED_NEW = {"fromVersion": "5.0.0"}
-    IS_FROM_VERSION_CHANGED_NO_NEW = {}
+    IS_FROM_VERSION_CHANGED_NO_NEW = {}  # type: dict[any, any]
     IS_FROM_VERSION_CHANGED_NEW_HIGHER = {"fromVersion": "5.5.0"}
     IS_CHANGED_FROM_VERSION_INPUTS = [
         (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NO_OLD, False),

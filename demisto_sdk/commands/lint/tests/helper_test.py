@@ -30,7 +30,7 @@ EXIT_CODES = {
                                     (True, False, True, True, True, True, False, True, True, 0b10111101)])
 def test_build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                                  no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool,
-                                 expected_value: int) -> bool:
+                                 expected_value: int):
     from demisto_sdk.commands.lint.helpers import build_skipped_exit_code
 
     assert expected_value == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture, no_test,

@@ -359,7 +359,10 @@ class Downloader:
         For example: integration-HelloWorld.yml downloaded from Demisto.
         """
         file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
-        file_type: str = find_type(_dict=file_data, file_type=file_ending)  # For example: integration
+        file_type = find_type(path=file_path, _dict=file_data, file_type=file_ending)  # For example: integration
+        if file_type:
+            file_type = file_type.value
+
         file_entity = self.file_type_to_entity(file_data, file_type)  # For example: Integrations
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
@@ -391,7 +394,7 @@ class Downloader:
             name: str = get_entity_name_by_entity_type(file_data, PLAYBOOKS_DIR)
             if name and 'test' in name.lower():
                 return TEST_PLAYBOOKS_DIR
-        return ENTITY_TYPE_TO_DIR.get(file_type)
+        return ENTITY_TYPE_TO_DIR.get(file_type, '')
 
     def update_pack_hierarchy(self) -> None:
         """

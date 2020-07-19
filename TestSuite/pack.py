@@ -229,9 +229,10 @@ class Pack:
         prefix = 'incidentfield'
         incident_field = self._create_json_based(name, prefix, content, dir_path=self._incidents_field_path)
         if release_notes:
-            release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
-                                                    dir_path=self._incidents_field_path)
-            self.incident_fields.append(release_notes)
+            # release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
+            # dir_path=self._incidents_field_path)
+            # self.incident_fields.append(release_notes)
+            pass
         self.incident_fields.append(incident_field)
         return incident_field
 

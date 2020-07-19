@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INDICATOR_FIELD_JSON_REGEX, PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_YML_REGEX,
-    PACKS_LAYOUT_JSON_REGEX, PACKS_MAPPER_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
+    PACKS_LAYOUT_JSON_REGEX, PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+    PACKS_MAPPER_JSON_REGEX, PACKS_REPORT_JSON_REGEX,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_REGEX, PLAYBOOK_YML_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SCRIPTS_REGEX_LIST, TEST_PLAYBOOK_REGEX,
@@ -155,7 +156,7 @@ def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict) -> tupl
         task_details = task.get('task', {})
 
         enriched_id = task_details.get(param_to_enrich_by)
-        skippable = task_details.get('skipunavailable', False)
+        skippable = task.get('skipunavailable', False)
         if enriched_id:
             implementing_ids.add(enriched_id)
             if skippable:
@@ -173,7 +174,7 @@ def get_commmands_from_playbook(data_dict: dict) -> tuple:
         task_details = task.get('task', {})
 
         command = task_details.get('script')
-        skippable = task_details.get('skipunavailable', False)
+        skippable = task.get('skipunavailable', False)
         if command:
             splitted_cmd = command.split('|')
 
@@ -492,7 +493,7 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
                 'x3': [False]
             }
     """
-    values = {key: [] for key in keys_to_search}
+    values = {key: [] for key in keys_to_search}  # type: dict
 
     def get_values(current_object):
         if not current_object or not isinstance(current_object, (dict, list)):
@@ -546,6 +547,33 @@ def get_layout_data(path):
         data['pack'] = pack
     if kind:
         data['kind'] = kind
+    data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
+    if incident_indicator_fields_dependency['fieldId']:
+        data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+
+    return {id_: data}
+
+
+def get_layoutscontainer_data(path):
+    json_data = get_json(path)
+    layouts_container_fields = ["group", "edit", "indicatorsDetails", "indicatorsQuickView", "quickView", "close",
+                                "details", "detailsV2", "mobile", "name"]
+    data = OrderedDict({field: json_data[field] for field in layouts_container_fields if json_data.get(field)})
+
+    id_ = json_data.get('id')
+    pack = get_pack_name(path)
+    incident_indicator_types_dependency = {id_}
+    incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+
+    if data.get('name'):
+        incident_indicator_types_dependency.add(data['name'])
+    if json_data.get('toVersion'):
+        data['toversion'] = json_data['toVersion']
+    if json_data.get('fromVersion'):
+        data['fromversion'] = json_data['fromVersion']
+    if pack:
+        data['pack'] = pack
+    data['file_path'] = path
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
@@ -626,7 +654,7 @@ def get_indicator_type_data(path, all_integrations):
     for integration in all_integrations:
         integration_name = next(iter(integration))
         integration_commands = integration.get(integration_name).get('commands')
-        if reputation_command in integration_commands:
+        if integration_commands and reputation_command in integration_commands:
             associated_integrations.add(integration_name)
 
     if name:
@@ -983,6 +1011,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
+        all_integrations: The integrations section in the id set
 
     Returns:
         a list of indicator type data.
@@ -1012,6 +1041,24 @@ def process_layouts(file_path: str, print_logs: bool) -> list:
         if print_logs:
             print("adding {} to id_set".format(file_path))
         res.append(get_layout_data(file_path))
+    return res
+
+
+def process_layoutscontainer(file_path: str, print_logs: bool) -> list:
+    """
+    Process a Layouts_Container JSON file
+    Args:
+        file_path: The file path from layout folder
+        print_logs: Whether to print logs to stdout
+
+    Returns:
+        a list of layout data.
+    """
+    res = []
+    if checked_type(file_path, [PACKS_LAYOUTS_CONTAINER_JSON_REGEX]):
+        if print_logs:
+            print("adding {} to id_set".format(file_path))
+        res.append(get_layoutscontainer_data(file_path))
     return res
 
 
@@ -1231,8 +1278,9 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
         # Has to be called after 'Integrations' is called
         if 'IndicatorTypes' in objects_to_create:
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_indicator_types, print_logs=print_logs, all_integrations=integration_list),
-                                get_general_paths(INDICATOR_TYPES_DIR)):
+            for arr in pool.map(
+                    partial(process_indicator_types, print_logs=print_logs, all_integrations=integration_list),
+                    get_general_paths(INDICATOR_TYPES_DIR)):
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1240,6 +1288,9 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
         if 'Layouts' in objects_to_create:
             print_color("\nStarting iteration over Layouts", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_layouts, print_logs=print_logs), get_general_paths(LAYOUTS_DIR)):
+                layouts_list.extend(arr)
+            for arr in pool.map(partial(process_layoutscontainer, print_logs=print_logs),
+                                get_general_paths(LAYOUTS_DIR)):
                 layouts_list.extend(arr)
 
         progress_bar.update(1)

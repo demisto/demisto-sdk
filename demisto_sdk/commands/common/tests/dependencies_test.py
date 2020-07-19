@@ -303,6 +303,16 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
 
 @pytest.mark.parametrize('test_number', range(10))
 def test_dependencies(repo, test_number):
+    """ This test will run 10 times, when each time it will randomly generate dependencies in the repo and verify that
+        the expected dependencies has been updated in the pack metadata correctly.
+
+        Given
+        - Content repository
+        When
+        - Running find_dependencies
+        Then
+        - Update packs dependencies in pack metadata
+    """
     print(f'Starting test number {test_number} for find_dependencies flow')
 
     number_of_packs = 10
@@ -316,9 +326,42 @@ def test_dependencies(repo, test_number):
     with ChangeCWD(repo.path):
         PackDependencies.find_dependencies(f'pack_{pack_to_verify}')
 
-    dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get('dependencies').keys()
+    dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get(
+        'dependencies').keys()
 
     if f'pack_{pack_to_verify}' in dependencies:
         dependencies.remove(f'pack_{pack_to_verify}')
+
+    assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
+
+
+@pytest.mark.parametrize('entity_class', CLASSES)
+def test_specific_entity(repo, entity_class):
+    """ This test will run for each entity in the repo, when each time it will randomly generate dependencies
+        in the repo and verify that the expected dependencies has been updated in the pack metadata correctly.
+
+        Given
+        - Content repository and content entity
+        When
+        - Running find_dependencies
+        Then
+        - Update packs dependencies in pack metadata
+    """
+    number_of_packs = 20
+    repo.setup_content_repo(number_of_packs)
+
+    methods_pool: list = \
+        [(method_name, entity_class) for method_name in list(entity_class.__dict__.keys())
+         if '_' != method_name[0]]
+
+    dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool) - 1)
+
+    with ChangeCWD(repo.path):
+        PackDependencies.find_dependencies('pack_0')
+
+    dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
+
+    if 'pack_0' in dependencies:
+        dependencies.remove('pack_0')
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))

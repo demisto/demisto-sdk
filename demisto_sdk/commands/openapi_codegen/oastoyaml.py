@@ -8,6 +8,7 @@ import sys
 import yaml
 
 from distutils.util import strtobool
+from demisto_sdk.commands.common.tools import print_error, print_success
 from demisto_sdk.commands.openapi_codegen.base_code import (
     base_argument, base_code, base_function, base_list_functions, base_params, base_data, base_headers)
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegration
@@ -34,17 +35,21 @@ arg_types = {
 }
 removed_names = ['.properties', '.items']
 JSON_TYPE_HEADER = 'application/json'
+DEFAULT_HOST = 'https://www.example.com/api'
+API_KEY_AUTH_TYPE = 'bearer'
+CREDENTIALS_AUTH_TYPE = 'basic'
 
 
 class OpenAPIIntegration:
-    def __init__(self, file_path, base_name, command_prefix, context_path, include_commands,
-                 verbose=False, fix_code=False):
+    def __init__(self, file_path, base_name, command_prefix, context_path,
+                 verbose=False, fix_code=False, configuration=None):
         self.json = None
         self.baseName = base_name
         self.filter_commands = False
         self.include_commands = []
         self.command_prefix = command_prefix
         self.context_path = context_path
+        self.configuration = configuration
         self.file_load = False
         self.swagger = None
         self.openapi = None
@@ -53,18 +58,14 @@ class OpenAPIIntegration:
         self.schemes = None
         self.name = None
         self.description = None
-        self.configuration = list()
         self.script = None
-        self.security = None
-        self.security = None
-        self.securitySchemes = None
         self.definitions = None
         self.components = None
-        self.functions = list()
-        self.parameters = list()
+        self.functions = []
+        self.parameters = []
         self.verbose = verbose
         self.fix_code = fix_code
-        self.load_file(file_path, include_commands)
+        self.load_file(file_path)
 
     def extract_values(self, obj, key):
         arr = []
@@ -128,7 +129,7 @@ class OpenAPIIntegration:
         return results
 
     def add_function(self, path, method, data, params):
-        new_function = dict()
+        new_function = {}
         new_function['path'] = '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/')
         new_function['method'] = method
         name = data.get('operationId', None)
@@ -171,10 +172,10 @@ class OpenAPIIntegration:
             new_arg['type'] = arg_types.get(arg.get('type', 'string'), 'str')
             new_arg['enums'] = [str(x) for x in arg.get('enum')] if arg.get('enum', None) else None
             new_function['arguments'].append(new_arg)
-        new_function['outputs'] = list()
-        new_function['responses'] = list()
+        new_function['outputs'] = []
+        new_function['responses'] = []
         for response_code, response in data.get('responses', {}).items():
-            new_response = dict()
+            new_response = {}
             new_response['code'] = response_code
             new_response['description'] = response.get('description', None)
             all_items = []
@@ -190,6 +191,7 @@ class OpenAPIIntegration:
                         elif self.components:
                             all_items.extend(self.extract_values(self.components.get('schemas', {}).get(ref, {}),
                                                                  'properties'))
+                        new_function['context_path'] = ref
                 else:
                     all_items.extend(self.extract_values(schema, 'properties'))
                 data = self.extract_outputs(all_items, [])
@@ -199,15 +201,13 @@ class OpenAPIIntegration:
                     this_type = output_types.get(this_type)
                     resp_name = v.get('name')
                     description = self.clean_description(description)
-                    new_function['outputs'].append(
-                        {'name': resp_name, 'type': this_type, 'description': description})
+                    new_function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
             new_function['responses'].append(new_response)
 
         self.functions.append(new_function)
         self.functions = sorted(self.functions, key=lambda x: x['name'])
 
-    def load_file(self, file_path, includecommands):
-        # TODO: add prints
+    def load_file(self, file_path):
         error = None
         try:
             self.json = json.load(open(file_path, 'rb'))
@@ -222,18 +222,9 @@ class OpenAPIIntegration:
             except Exception as err:
                 error = err
         if not self.file_load:
-            print('Failed')
-            print(error)
-            sys.exit(-1)
-        try:
-            if includecommands:
-                with open(includecommands, 'r') as fp:
-                    self.include_commands = fp.read().split('\n')
-                    self.filter_commands = True
-        except Exception as e:
-            self.filter_commands = False
-            print(f'** WARNING ** -- There was an error loading the commands file {includecommands}: {e} '
-                  f'\nIt has been ignored')
+            print_error(f'Failed to load the swagger file: {error}')
+            sys.exit(1)
+
         self.swagger = str(self.json.get('swagger', None))
         self.openapi = str(self.json.get('openapi', None))
         if self.json.get('host', None):
@@ -245,56 +236,100 @@ class OpenAPIIntegration:
         self.base_path = self.json.get('basePath', '')
         self.name = self.json['info']['title']
         self.description = self.json.get('info', {}).get('description', '')
-        self.security = self.json.get('security', [])
         self.schemes = self.json.get('schemes', [])
-        self.securitySchemes = self.json.get('securityDefinitions', {}) if self.swagger == '2.0' else self.json.get(
-            'securitySchemes', {})
         self.definitions = self.json.get('definitions', {})
         self.components = self.json.get('components', {})
-        self.functions = list()
-        self.parameters = self.json.get('parameters', [])
+        self.functions = []
+        if not self.command_prefix:
+            self.command_prefix = '-'.join(self.name.split(' ')).lower()
+
         for path, function in self.json['paths'].items():
             # TODO: try except
             for method, data in function.items():
-                if 'parameters' not in method:
-                    # TODO: what if there is no operationId?
-                    if (self.filter_commands and data.get('operationId',
-                                                          '') in self.include_commands) or not self.filter_commands:
-                        # TODO: parallel?
-                        print(f'Adding command for the path: {path}')
-                        self.add_function(path, method, data, function.get(
-                            'parameters', []))
-                        print(f'Finished adding command for the path: {path}')
-                    else:
-                        if self.verbose:
-                            print('Ignoring command "{}" as it is not in the include commands list'.format(
-                                data.get('operationId', '')))
+                print(f'Adding command for the path: {path}')
+                self.add_function(path, method, data, function.get(
+                    'parameters', []))
+                print(f'Finished adding command for the path: {path}')
 
-    def return_python_code(self):
+        if not self.configuration:
+            self.generate_configuration()
 
+    def generate_configuration(self):
+        configuration = {
+            'swagger_id': self.name,
+            'name': self.name or 'GeneratedIntegration',
+            'description': self.description or 'This integration was auto generated by the Cortex XSOAR SDK.',
+            'category': 'Utilities',
+            'url': self.host or DEFAULT_HOST,
+            'auth': [API_KEY_AUTH_TYPE, CREDENTIALS_AUTH_TYPE],
+            'fetch_incidents': True,
+            'context_path': self.context_path or self.name,
+            'commands': []
+        }
+        for function in self.functions:
+            command = {
+                'name': function['name'].replace('_', '-'),
+                'path': function['path'],
+                'method': function['method'],
+                'description': function['description'],
+                'unique_key': '',
+                'arguments': [],
+                'outputs': [],
+                'context_path': function.get('context_path', '')
+            }
+            headers = []
+            if function['consumes']:
+                headers.append({'Content-Type': JSON_TYPE_HEADER
+                                if JSON_TYPE_HEADER in function['consumes'] else function['consumes'][0]})
+            if function['produces']:
+                headers.append({'Accept': JSON_TYPE_HEADER
+                                if JSON_TYPE_HEADER in function['produces'] else function['produces'][0]})
+
+            command['headers'] = headers
+            for arg in function['arguments']:
+                command['arguments'].append({
+                    'name': str(arg.get('name', '')),
+                    'description': self.clean_description(arg.get('description', '')),
+                    'required': arg.get('required'),
+                    'default': arg.get('default', ''),
+                    'in': arg.get('in', ''),
+                    'type': arg_types.get(arg.get('type', 'string'), 'string'),
+                    'options': [str(x) for x in arg.get('enum')] if arg.get('enum', None) else []
+                })
+
+            for output in function['outputs']:
+                command['outputs'].append({
+                    'name': output['name'],
+                    'description': output['description'],
+                    'type': output['type']
+                })
+
+            configuration['commands'].append(command)
+
+        configuration['code_type'] = 'python'
+        configuration['code_subtype'] = 'python3'
+        configuration['docker_image'] = 'demisto/python3:3.8.3.9324'
+        configuration['run_once'] = False
+
+        self.configuration = configuration
+
+    def get_python_code(self):
         # Use the code from baseCode in py as the basis
         data = base_code
 
-        # Build the functions from swagger file
+        # Build the functions from configuration file
         functions = []
-        for func in self.functions:
-            function_name = func['name'].replace('-', '_')
+        for command in self.configuration['commands']:
+            function_name = command['name'].replace('-', '_')
             print(f'Adding the function {function_name} to the code...')
             function = base_function.replace('$FUNCTIONNAME$', function_name)
-            new_params = [x['name'] for x in func['arguments'] if 'query' in x['in']]
-            new_data = [x['name'] for x in func['arguments'] if x['in'] in ['formData', 'body']]
+            new_params = [x['name'] for x in command['arguments'] if 'query' in x['in']]
+            new_data = [x['name'] for x in command['arguments'] if x['in'] in ['formData', 'body']]
             arguments = []
             arguments_found = False
-            headers = []
+            headers = command['headers']
 
-            if func['consumes']:
-                headers.append({'Content-Type': JSON_TYPE_HEADER
-                                if JSON_TYPE_HEADER in func['consumes'] else func['consumes'][0]})
-            if func['produces']:
-                headers.append({'Accept': JSON_TYPE_HEADER
-                                if JSON_TYPE_HEADER in func['produces'] else func['produces'][0]})
-
-            for arg in func['arguments']:
+            for arg in command['arguments']:
                 arguments_found = True
                 argument_default = ''
                 if not arg['required']:
@@ -353,10 +388,10 @@ class OpenAPIIntegration:
                 new_headers = ''
 
             function = function.replace('$HEADERS$', f', {new_headers}')
-            function = function.replace('$METHOD$', func['method'])
-            func['path'] = f"'{func['path']}'" if "'" not in func['path'] else func['path']
-            func['path'] = f"f{func['path']}" if "{" in func['path'] else func['path']
-            function = function.replace('$PATH$', func['path'])
+            function = function.replace('$METHOD$', command['method'])
+            command['path'] = f"'{command['path']}'" if "'" not in command['path'] else command['path']
+            command['path'] = f"f{command['path']}" if "{" in command['path'] else command['path']
+            function = function.replace('$PATH$', command['path'])
 
             if new_params:
                 function = function.replace(
@@ -368,27 +403,40 @@ class OpenAPIIntegration:
             else:
                 function = function.replace('$NEWDATA$', '')
 
-            if self.context_path:
+            if self.configuration['context_path']:
                 context_name = self.context_path
             else:
-                context_name = func['name'].title().replace('_', '')
+                context_name = command['name'].title().replace('_', '')
+
+            if 'context_path' in command and command['context_path']:
+                function = function.replace('$CONTEXTPATH$', f'.{command["context_path"]}')
+            else:
+                function = function.replace('$CONTEXTPATH$', '')
+
+            if command['unique_key']:
+                function = function.replace('$UNIQUEKEY$', command['unique_key'])
+            else:
+                function = function.replace('$UNIQUEKEY$', '')
+
             function = function.replace('$CONTEXTNAME$', context_name)
             functions.append(function)
 
         data = data.replace('$FUNCTIONS$', '\n'.join(functions))
         data = data.replace('$BASEURL$', self.base_path)
 
+        # TODO: add headers
+
         list_functions = []
 
         # Add the command mappings:
-        for func in self.functions:
+        for command in self.functions:
             prefix = ''
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
 
             function = base_list_functions.replace(
-                '$FUNCTIONNAME$', f"{prefix}{func['name']}".replace('_', '-'))
-            fn = func['name'].replace('-', '_')
+                '$FUNCTIONNAME$', f"{prefix}{command['name']}".replace('_', '-'))
+            fn = command['name'].replace('-', '_')
             function = function.replace('$FUNCTIONCOMMAND$', f'{fn}_command')
             list_functions.append(function)
 
@@ -401,41 +449,34 @@ class OpenAPIIntegration:
 
         return data
 
-    def return_integration(self, no_code):
-        integration = XSOARIntegration.get_base_integration()
+    def get_yaml(self, no_code):
         # Create the commands section
         commands = []
-        for func in self.functions:
+        for command in self.configuration['commands']:
             args = []
             options = None
             auto = None
-            for arg in func['arguments']:
+            for arg in command['arguments']:
                 arg_name = arg['name']
                 required = True if arg['required'] else False
                 description = arg.get('description', None)
-                if not description and 'body' in arg['in']:
-                    try:
-                        type_ = arg['schema']['properties']['members']['type']
-                        properties = ','.join(
-                            arg['schema']['properties']['members']['items']['properties'].keys())
-                        description = f'An {type_} containing the following items - {properties}'
-                    except KeyError:
-                        description = None
                 if description:
-                    description = description.split('.')[0].split('\n')[0]
+                    description = self.clean_description(description)
                 else:
                     description = ''
 
-                if arg['enums']:
+                if arg['options']:
                     auto = 'PREDEFINED'
-                    options = arg['enums']
+                    options = arg['options']
 
                 args.append(XSOARIntegration.Script.Command.Argument(arg_name, description, required, auto, options))
 
             outputs = []
-
-            for output in func['outputs']:
+            context_path = command['context_path']
+            for output in command['outputs']:
                 output_name = output['name']
+                if context_path:
+                    output_name = f'{context_path}.{output_name}'
                 if self.context_path:
                     output_name = f'{self.context_path}.{output_name}'
                 output_description = output['description']
@@ -446,34 +487,90 @@ class OpenAPIIntegration:
             prefix = ''
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
-            command_name = f"{prefix}{func['name']}".replace('_', '-')
-            command_description = func['description']
+            command_name = f"{prefix}{command['name']}".replace('_', '-')
+            command_description = command['description']
             commands.append(XSOARIntegration.Script.Command(command_name, command_description, args, outputs))
 
         script = ''
         if not no_code:
-            script = self.return_python_code()
+            script = self.get_python_code()
 
-        integration.script.script = script
-        integration.script.commands = commands
+        commonfields = XSOARIntegration.CommonFields(self.configuration['name'], -1)
+        name = self.configuration['name']
+        display = self.configuration['name']
+        category = self.configuration['category']
+        description = self.configuration['description']
+        url = self.configuration['url']
+        configurations = [XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
+                                                         name='url',
+                                                         defaultvalue=url,
+                                                         type_=0,
+                                                         required=True)]
+        if not isinstance(self.configuration['auth'], list):
+            self.configuration['auth'] = [self.configuration['auth']]
 
-        if self.name:
-            integration.name = self.name
-            integration.commonfields.id = self.name
-            integration.display = self.name
-        if self.description:
-            integration.description = self.description
+        if API_KEY_AUTH_TYPE in self.configuration['auth']:
+            configurations.append(XSOARIntegration.Configuration(display='API Key',
+                                                                 name='api_key',
+                                                                 required=True,
+                                                                 type_=4))
+        if CREDENTIALS_AUTH_TYPE in self.configuration['auth']:
+            configurations.append(XSOARIntegration.Configuration(display='Username',
+                                                                 name='credentials',
+                                                                 required=True,
+                                                                 type_=9))
+        if self.configuration['fetch_incidents']:
+            configurations.extend([
+                XSOARIntegration.Configuration(display='Fetch incidents',
+                                               name='isFetch',
+                                               type_=8,
+                                               required=False),
+                XSOARIntegration.Configuration(display='Incident type',
+                                               name='incidentType',
+                                               type_=13,
+                                               required=False),
+                XSOARIntegration.Configuration(display='Maximum number of incidents per fetch',
+                                               name='max_fetch',
+                                               defaultvalue='10',
+                                               type_=0,
+                                               required=False),
+                XSOARIntegration.Configuration(display='API Key',
+                                               name='apikey',
+                                               type_=4,
+                                               required=True),
+                XSOARIntegration.Configuration(display='Fetch alerts with status (ACTIVE, CLOSED)',
+                                               name='alert_status',
+                                               defaultvalue='ACTIVE',
+                                               type_=15,
+                                               required=False,
+                                               options=['ACTIVE', 'CLOSED']),
+                XSOARIntegration.Configuration(display='Fetch alerts with type',
+                                               name='alert_type',
+                                               type_=0,
+                                               required=False),
+                XSOARIntegration.Configuration(display='Minimum severity of alerts to fetch',
+                                               name='min_severity',
+                                               defaultvalue='Low',
+                                               type_=15,
+                                               required=True,
+                                               options=['Low', 'Medium', 'High', 'Critical'])])
 
-        url = 'https://www.example.com/api'
-        if self.host:
-            url = self.host
+            configurations.extend([XSOARIntegration.Configuration(display='Trust any certificate (not secure)',
+                                                                  name='insecure',
+                                                                  type_=8,
+                                                                  required=False),
+                                   XSOARIntegration.Configuration(display='Use system proxy settings',
+                                                                  name='proxy',
+                                                                  type_=8,
+                                                                  required=False)])
 
-        integration.configuration.insert(0, XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
-                                                                           name='url',
-                                                                           defaultvalue=url,
-                                                                           type_=0,
-                                                                           required=True))
+        int_script = XSOARIntegration.Script(script, self.configuration['code_type'],
+                                             self.configuration['code_subtype'], self.configuration['docker_image'],
+                                             self.configuration['fetch_incidents'], self.configuration['run_once'],
+                                             commands)
 
+        integration = XSOARIntegration(commonfields, name, display, category, description, configuration=configurations,
+                                       script=int_script)
         return integration
 
     def save_python_code(self, directory):
@@ -481,7 +578,7 @@ class OpenAPIIntegration:
         filename = os.path.join(directory, f'{self.baseName}.py')
         try:
             with open(filename, 'w') as fp:
-                fp.write(self.return_python_code())
+                fp.write(self.get_python_code())
                 return filename
         except Exception as err:
             print(f'Error writing {filename} - {err}')
@@ -491,8 +588,19 @@ class OpenAPIIntegration:
         print('Creating yaml file...')
         filename = os.path.join(directory, f'{self.baseName}.yml')
         try:
-            with open(filename, 'wb') as fp:
-                fp.write(yaml.dump(self.return_integration(no_code).to_yaml()).encode())
+            with open(filename, 'w') as fp:
+                fp.write(yaml.dump(self.get_yaml(no_code).to_yaml()))
+            return filename
+        except Exception as err:
+            print(f'Error writing {filename} - {err}')
+            raise
+
+    def save_config(self, config, directory):
+        print('Creating configuration file...')
+        filename = os.path.join(directory, f'{self.baseName}.json')
+        try:
+            with open(filename, 'w') as fp:
+                json.dump(config, fp)
             return filename
         except Exception as err:
             print(f'Error writing {filename} - {err}')
@@ -533,7 +641,7 @@ class OpenAPIIntegration:
 
     @staticmethod
     def format_params(new_params, base, base_string):
-        modified_params = list()
+        modified_params = []
         for p in new_params:
             if p in illegal_function_names:
                 modified_params.append(f'\"{p}\": {p}{prepend_illegal}')
@@ -552,6 +660,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input_file', metavar='input_file',
                         help='The swagger file to load')
+    parser.add_argument('-cf', '--config_file', metavar='config_file',
+                        help='The integration configuration file')
     parser.add_argument('-n', '--base_name', metavar='base_name',
                         help='The base filename to use for the generated files')
     parser.add_argument('-p', '--output_package', action='store_true',
@@ -562,13 +672,12 @@ def main():
                         help='Add an additional word to each commands text')
     parser.add_argument('-c', '--context_path', metavar='context_path',
                         help='Context output path')
-    parser.add_argument('-ic', '--include_commands', metavar='include_commands',
-                        help='A line delimited file containing the commands that should ONLY be generated.'
-                             ' This works with the "operationId" of a path.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Be verbose with the log output')
     parser.add_argument('-f', '--fix_code', action='store_true',
                         help='Fix the python code using autopep8.')
+    parser.add_argument('-a', '--use_default', action='store_true',
+                        help='Use the automatically generated integration configuration')
 
     args = parser.parse_args()
 
@@ -588,20 +697,35 @@ def main():
         print(f'The directory provided "{directory}" is not a directory')
         sys.exit(1)
 
+    configuration = None
+    if args.config_file:
+        try:
+            with open(args.confg_file, 'r') as config_file:
+                configuration = json.load(config_file)
+        except Exception as e:
+            print_error(f'Failed to load configuration file: {e}')
+
     print('Processing swagger file...')
     integration = OpenAPIIntegration(args.input_file, args.base_name, args.command_prefix, args.context_path,
-                                     args.include_commands, verbose=args.verbose, fix_code=args.fix_code)
+                                     verbose=args.verbose, fix_code=args.fix_code, configuration=configuration)
+
+    if not args.config_file:
+        integration.save_config(integration.configuration, directory)
+        print_success(f'Created configuration file in {directory}')
+        if not args.use_default:
+            print('Run the command again with the created configuration file.')
+            sys.exit(0)
 
     if args.output_package:
         if integration.save_package(directory):
-            print(f'Created package in {directory}')
+            print_success(f'Created package in {directory}')
         else:
-            print(f'There was an error creating the package in {directory}')
+            print_error(f'There was an error creating the package in {directory}')
     else:
         python_file = integration.save_python_code(directory)
-        print(f'Created Python file {python_file}.py')
+        print_success(f'Created Python file {python_file}.py')
         yaml_file = integration.save_yaml(directory)
-        print(f'Created YAML file {yaml_file}.yml')
+        print_success(f'Created YAML file {yaml_file}.yml')
 
 
 if __name__ in ['__main__', 'builtins', 'builtins']:

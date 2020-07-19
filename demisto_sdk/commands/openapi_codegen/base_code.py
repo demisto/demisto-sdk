@@ -12,8 +12,8 @@ base_function = """def $FUNCTIONNAME$_command(client, args):
 
     if isinstance(response, dict):
         command_results = CommandResults(
-            outputs_prefix='$CONTEXTNAME$',
-            outputs_key_field='',
+            outputs_prefix='$CONTEXTNAME$$CONTEXTPATH$',
+            outputs_key_field='$UNIQUEKEY$',
             outputs=response
         )
         return_results(command_results)

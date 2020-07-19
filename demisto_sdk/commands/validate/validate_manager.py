@@ -88,6 +88,7 @@ class ValidateManager:
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
+        self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG, FileType.DESCRIPTION, FileType.TEST_PLAYBOOK)
@@ -120,6 +121,11 @@ class ValidateManager:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
+
+            if self.always_valid:
+                click.secho('Found the errors above, but not failing build', fg='yellow')
+                return 0
+
             click.secho('The files were found as invalid, the exact error message can be located above',
                         fg='red')
             return 1
@@ -715,6 +721,10 @@ class ValidateManager:
             # on master branch - we use '..' comparison range to check changes from the last release branch.
             self.compare_type = '..'
             self.prev_ver = get_content_release_identifier(self.branch_name)
+
+            # when running against git while on release branch - show errors but don't fail the validation
+            if self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
+                self.always_valid = True
 
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch

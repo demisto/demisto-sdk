@@ -288,7 +288,7 @@ class PackDependencies:
 
         for script_mapping in pack_scripts:
             script = next(iter(script_mapping.values()))
-            script_dep = set()
+            script_dependencies = set()
 
             # depends on list can have both scripts and integration commands
             dependencies_commands = script.get('depends_on', [])
@@ -299,7 +299,7 @@ class PackDependencies:
 
                 if pack_name:  # found script dependency implementing pack name
                     pack_dependencies_data = PackDependencies._label_as_mandatory(pack_name)
-                    script_dep.update(pack_dependencies_data)  # set found script as mandatory
+                    script_dependencies.update(pack_dependencies_data)  # set found script as mandatory
                     continue  # found dependency in script section, skipping to next depends on element
 
                 # try to search dependency by integration integration
@@ -307,13 +307,13 @@ class PackDependencies:
 
                 if pack_names:  # found integration dependency implementing pack name
                     pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(pack_names)
-                    script_dep.update(pack_dependencies_data)
+                    script_dependencies.update(pack_dependencies_data)
 
             verbose_file.write(
                 f'{os.path.basename(script.get("file_path", ""))} depends on: '
-                f'{script_dep}  '
+                f'{script_dependencies}  '
             )
-            dependencies_packs.update(script_dep)
+            dependencies_packs.update(script_dependencies)
 
         return dependencies_packs
 
@@ -368,7 +368,7 @@ class PackDependencies:
 
         for playbook in pack_playbooks:
             playbook_data = next(iter(playbook.values()))
-            playbook_dependency = set()
+            playbook_dependencies = set()
 
             skippable_tasks = set(playbook_data.get('skippable_tasks', []))
 
@@ -386,17 +386,17 @@ class PackDependencies:
                     else:
                         pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
                             packs_found_from_integration)
-                    playbook_dependency.update(pack_dependencies_data)
+                    playbook_dependencies.update(pack_dependencies_data)
 
             # searching for packs of implementing scripts
-            playbook_dependency.update(PackDependencies._differentiate_playbook_implementing_objects(
+            playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('implementing_scripts', []),
                 skippable_tasks,
                 id_set['scripts']
             ))
 
             # searching for packs of implementing playbooks
-            playbook_dependency.update(PackDependencies._differentiate_playbook_implementing_objects(
+            playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('implementing_playbooks', []),
                 skippable_tasks,
                 id_set['playbooks']
@@ -408,7 +408,7 @@ class PackDependencies:
                 incident_fields, id_set['IncidentFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
-                playbook_dependency.update(pack_dependencies_data)
+                playbook_dependencies.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
             indicator_fields = playbook_data.get('indicator_fields', [])
@@ -416,13 +416,15 @@ class PackDependencies:
                 indicator_fields, id_set['IndicatorFields'])
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
-                playbook_dependency.update(pack_dependencies_data)
+                playbook_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: '
-                f'{playbook_dependency}  '
-            )
-            dependencies_packs.update(playbook_dependency)
+            if playbook_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: '
+                    f'{playbook_dependencies}  '
+                )
+            dependencies_packs.update(playbook_dependencies)
 
         return dependencies_packs
 
@@ -445,7 +447,7 @@ class PackDependencies:
 
         for layout in pack_layouts:
             layout_data = next(iter(layout.values()))
-            layout_dependency = set()
+            layout_dependencies = set()
 
             related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
             packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
@@ -454,7 +456,7 @@ class PackDependencies:
             if packs_found_from_incident_indicator_types:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_indicator_types)
-                layout_dependency.update(pack_dependencies_data)
+                layout_dependencies.update(pack_dependencies_data)
 
             related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
             packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
@@ -463,13 +465,15 @@ class PackDependencies:
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_indicator_fields)
-                layout_dependency.update(pack_dependencies_data)
+                layout_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(layout_data.get("file_path", ""))} depends on: '
-                f'{layout_dependency}  '
-            )
-            dependencies_packs.update(layout_dependency)
+            if layout_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(layout_data.get("file_path", ""))} depends on: '
+                    f'{layout_dependencies}  '
+                )
+            dependencies_packs.update(layout_dependencies)
 
         return dependencies_packs
 
@@ -492,7 +496,7 @@ class PackDependencies:
 
         for incident_field in pack_incidents_fields:
             incident_field_data = next(iter(incident_field.values()))
-            incident_field_dependency = set()
+            incident_field_dependencies = set()
 
             # related_incident_types = incident_field_data.get('incident_types', [])
             # packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
@@ -510,13 +514,15 @@ class PackDependencies:
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
-                incident_field_dependency.update(pack_dependencies_data)
+                incident_field_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(incident_field_data.get("file_path", ""))} depends on: '
-                f'{incident_field_dependency}  '
-            )
-            dependencies_packs.update(incident_field_dependency)
+            if incident_field_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(incident_field_data.get("file_path", ""))} depends on: '
+                    f'{incident_field_dependencies}  '
+                )
+            dependencies_packs.update(incident_field_dependencies)
 
         return dependencies_packs
 
@@ -539,7 +545,7 @@ class PackDependencies:
 
         for indicator_type in pack_indicators_types:
             indicator_type_data = next(iter(indicator_type.values()))
-            indicator_type_dependency = set()
+            indicator_type_dependencies = set()
 
             related_integrations = indicator_type_data.get('integrations', [])
             packs_found_from_integrations = PackDependencies._search_packs_by_items_names(
@@ -548,7 +554,7 @@ class PackDependencies:
             if packs_found_from_integrations:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_optional(packs_found_from_integrations)
-                indicator_type_dependency.update(pack_dependencies_data)
+                indicator_type_dependencies.update(pack_dependencies_data)
 
             related_scripts = indicator_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
@@ -557,13 +563,15 @@ class PackDependencies:
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
-                indicator_type_dependency.update(pack_dependencies_data)
+                indicator_type_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: '
-                f'{indicator_type_dependency}  '
-            )
-            dependencies_packs.update(indicator_type_dependency)
+            if indicator_type_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: '
+                    f'{indicator_type_dependencies}  '
+                )
+            dependencies_packs.update(indicator_type_dependencies)
 
         return dependencies_packs
 
@@ -584,7 +592,7 @@ class PackDependencies:
 
         for integration in pack_integrations:
             integration_data = next(iter(integration.values()))
-            integration_dependency = set()
+            integration_dependencies = set()
 
             related_classifiers = integration_data.get('classifiers', [])
             packs_found_from_classifiers = PackDependencies._search_packs_by_items_names_or_ids(
@@ -620,11 +628,13 @@ class PackDependencies:
                     _label_as_mandatory({related_indicator_fields})
                 dependencies_packs.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(integration_data.get("file_path", ""))} depends on: '
-                f'{integration_dependency}  '
-            )
-            dependencies_packs.update(integration_dependency)
+            if integration_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(integration_data.get("file_path", ""))} depends on: '
+                    f'{integration_dependencies}  '
+                )
+            dependencies_packs.update(integration_dependencies)
 
         return dependencies_packs
 
@@ -647,7 +657,7 @@ class PackDependencies:
 
         for incident_type in pack_incidents_types:
             incident_type_data = next(iter(incident_type.values()))
-            incident_type_dependency = set()
+            incident_type_dependencies = set()
 
             related_playbooks = incident_type_data.get('playbooks', [])
             packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(
@@ -656,7 +666,7 @@ class PackDependencies:
             if packs_found_from_playbooks:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_playbooks)
-                incident_type_dependency.update(pack_dependencies_data)
+                incident_type_dependencies.update(pack_dependencies_data)
 
             related_scripts = incident_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
@@ -665,13 +675,15 @@ class PackDependencies:
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
-                incident_type_dependency.update(pack_dependencies_data)
+                incident_type_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: '
-                f'{incident_type_dependency}  '
-            )
-            dependencies_packs.update(incident_type_dependency)
+            if incident_type_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: '
+                    f'{incident_type_dependencies}  '
+                )
+            dependencies_packs.update(incident_type_dependencies)
 
         return dependencies_packs
 
@@ -694,7 +706,7 @@ class PackDependencies:
 
         for classifier in pack_classifiers:
             classifier_data = next(iter(classifier.values()))
-            classifier_dependency = set()
+            classifier_dependencies = set()
 
             related_incident_types = classifier_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
@@ -703,13 +715,15 @@ class PackDependencies:
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_types)
-                classifier_dependency.update(pack_dependencies_data)
+                classifier_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: '
-                f'{classifier_dependency}  '
-            )
-            dependencies_packs.update(classifier_dependency)
+            if classifier_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: '
+                    f'{classifier_dependencies}  '
+                )
+            dependencies_packs.update(classifier_dependencies)
 
         return dependencies_packs
 
@@ -732,7 +746,7 @@ class PackDependencies:
 
         for mapper in pack_mappers:
             mapper_data = next(iter(mapper.values()))
-            mapper_dependency = set()
+            mapper_dependencies = set()
 
             related_incident_types = mapper_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
@@ -741,7 +755,7 @@ class PackDependencies:
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_types)
-                mapper_dependency.update(pack_dependencies_data)
+                mapper_dependencies.update(pack_dependencies_data)
 
             related_incident_fields = mapper_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
@@ -750,13 +764,15 @@ class PackDependencies:
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_fields)
-                mapper_dependency.update(pack_dependencies_data)
+                mapper_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: '
-                f'{mapper_dependency}  '
-            )
-            dependencies_packs.update(mapper_dependency)
+            if mapper_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: '
+                    f'{mapper_dependencies}  '
+                )
+            dependencies_packs.update(mapper_dependencies)
 
         return dependencies_packs
 
@@ -891,7 +907,7 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def find_dependencies(pack_name, id_set_path=None, debug_file_path=None):
+    def find_dependencies(pack_name, id_set_path='', debug_file_path=''):
         """
         Main function for dependencies search and pack metadata update.
 

@@ -723,7 +723,7 @@ class ValidateManager:
             self.prev_ver = get_content_release_identifier(self.branch_name)
 
             # when running against git while on release branch - show errors but don't fail the validation
-            if self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
+            if self.branch_name.startswith('20.'):
                 self.always_valid = True
 
     def get_modified_and_added_files(self, compare_type, prev_ver):

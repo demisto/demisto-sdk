@@ -53,6 +53,9 @@ class LOG_COLORS:
 
 LOG_VERBOSE = False
 
+LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
+                           'indicatorsDetails'}
+
 
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
@@ -734,7 +737,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):  # noqa: C901
     """
     returns the content file type
 
@@ -748,14 +751,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
         if 'README' in path:
             return FileType.README
 
-        elif RELEASE_NOTES_DIR in path:
+        if RELEASE_NOTES_DIR in path:
             return FileType.RELEASE_NOTES
 
-        elif 'description' in path:
+        if 'description' in path:
             return FileType.DESCRIPTION
 
-        else:
-            return FileType.CHANGELOG
+        return FileType.CHANGELOG
 
     if path.endswith('.png'):
         return FileType.IMAGE
@@ -773,58 +775,59 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
 
             return FileType.INTEGRATION
 
-        elif 'script' in _dict:
+        if 'script' in _dict:
             if TEST_PLAYBOOKS_DIR in path:
                 return FileType.TEST_SCRIPT
 
-            else:
-                return FileType.SCRIPT
+            return FileType.SCRIPT
 
-        elif 'tasks' in _dict:
+        if 'tasks' in _dict:
             if TEST_PLAYBOOKS_DIR in path:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
 
-    elif file_type == 'json':
+    if file_type == 'json':
         if 'widgetType' in _dict:
             return FileType.WIDGET
 
-        elif 'orientation' in _dict:
+        if 'orientation' in _dict:
             return FileType.REPORT
 
-        elif 'preProcessingScript' in _dict:
+        if 'preProcessingScript' in _dict:
             return FileType.INCIDENT_TYPE
 
-        elif 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
+        if 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
             return FileType.REPUTATION
 
-        elif 'brandName' in _dict and 'transformer' in _dict:
+        if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER
 
-        elif 'transformer' in _dict and 'keyTypeMap' in _dict:
+        if 'transformer' in _dict and 'keyTypeMap' in _dict:
             return FileType.CLASSIFIER
 
-        elif 'canvasContextConnections' in _dict:
+        if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        elif 'mapping' in _dict:
+        if 'mapping' in _dict:
             return FileType.MAPPER
 
-        elif 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
-            else:
-                return FileType.DASHBOARD
+            return FileType.DASHBOARD
+
+        if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+            return FileType.LAYOUTS_CONTAINER
 
         # When using it for all files validation- sometimes 'id' can be integer
-        elif 'id' in _dict:
-            if isinstance(_dict.get('id'), str):
+        if 'id' in _dict:
+            if isinstance(_dict['id'], str):
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
                     return FileType.INCIDENT_FIELD
-                elif _id.startswith('indicator'):
+                if _id.startswith('indicator'):
                     return FileType.INDICATOR_FIELD
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
@@ -885,7 +888,8 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) ->\
+        Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.

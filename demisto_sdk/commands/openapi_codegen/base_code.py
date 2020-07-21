@@ -3,33 +3,49 @@ base_params = """params={$PARAMS$}"""
 base_data = """data={$DATAOBJ$}"""
 base_headers = """headers={$HEADERSOBJ$}"""
 base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
+base_credentials = """
+    username = params['credentials']['identifier']
+    password = params['credentials']['password']
+"""
+base_basic_auth = """(username, password)"""
+base_token = """headers['Authorization'] = [f'Bearer {params["api_key"]}']"""
 base_function = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
-    $PARAMETERS$
-    $DATA$
-
-    response = client.http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$$HEADERS$)
-
-    if isinstance(response, dict):
-        command_results = CommandResults(
-            outputs_prefix='$CONTEXTNAME$$CONTEXTPATH$',
-            outputs_key_field='$UNIQUEKEY$',
-            outputs=response
-        )
-        return_results(command_results)
-    else:
-        return_error(f'Error in API call {response.status_code} - {response.text}')
+    
+    response = client.$FUNCTIONNAME$_request($REQARGS$)
+    command_results = CommandResults(
+        outputs_prefix='$CONTEXTNAME$$CONTEXTPATH$',
+        outputs_key_field='$UNIQUEKEY$',
+        outputs=response
+    )
+    
+    return_results(command_results)
 
 """
+base_request_function = """def $FUNCTIONNAME$_request($REQARGS1$$REQARGS2$):
+    $PARAMETERS$
+    $DATA$
+    
+    try:
+        response = self._http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$$HEADERS$)
+        response.raise_for_status()
+    except Exception as e:
+        return_error(f'Error in API call: {e}')
+    
+    return response
+    
+"""
+base_client = """class Client(BaseClient):
+    def __init__(self, server_url, verify, proxy, headers, auth):
+        super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
+        
+        $REQUESTFUNCS$
+"""
 base_code = """''' IMPORTS '''
-import json
 import demistomock as demisto
 from CommonServerPython import *
 
-class Client(BaseClient):
-    def http_request(self, *args, **kwargs):
-        return self._http_request(*args, **kwargs)
-
+$CLIENT$
 
 $FUNCTIONS$
 def test_module(client):
@@ -43,12 +59,17 @@ def main():
     url = params.get('url')
     verify_certificate = not params.get('insecure', False)
     proxy = params.get('proxy', False)
+    $BASEAUTHPARAMS$
+    headers = {}
+    $BEARERAUTHPARAMS$
 
     command = demisto.command()
     LOG(f'Command being called is {command}')
-    headers={'Accept': 'application/json', 'Content-Type': 'application/json'}
+    headers['Accept'] = 'application/json'
+    headers['Content-Type'] = 'application/json'
+    
     try:
-        client = Client(urljoin(url, "$BASEURL$"), verify_certificate, proxy, headers=headers)
+        client = Client(urljoin(url, "$BASEURL$"), verify_certificate, proxy, headers=headers, auth=$BASEAUTH$)
         commands = {
     $COMMANDSLIST$
         }

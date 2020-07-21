@@ -1,0 +1,34 @@
+{
+  "name": "Name",
+  "id": "ID",
+  "display": "Display",
+  "description": "Description",
+  "category": "Utilities",
+  "url": "url",
+  "auth": "[API_KEY, CREDENTIALS]",
+  "fetch_incidents": "true",
+  "context_path": "path",
+  "headers": [],
+  "commands": [
+    {
+      "name": "command_name",
+      "description": "description",
+      "headers": [],
+      "arguments": [
+        {
+          "name": "name",
+          "type": "type",
+          "description": "description"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "path",
+          "type": "type",
+          "description": "description"
+        }
+      ],
+      "unique_key": "key"
+    }
+  ]
+}

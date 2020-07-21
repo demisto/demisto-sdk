@@ -838,8 +838,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_version_should_be_raised(pack):
-        return f"The pack version needs to be raised - update the \"currentVersion\" field in the " \
+    def pack_metadata_version_should_be_raised(pack, old_version):
+        return f"The pack version (currently: {old_version}) needs to be raised - " \
+               f"make sure you are merged from master and " \
+               f"update the \"currentVersion\" field in the " \
                f"pack_metadata.json or in case release notes are required run:\n" \
                f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."

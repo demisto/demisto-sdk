@@ -14,7 +14,8 @@ from demisto_sdk.commands.common.update_id_set import (
     get_incident_type_data, get_indicator_type_data, get_integration_data,
     get_layout_data, get_layoutscontainer_data, get_mapper_data,
     get_playbook_data, get_script_data, get_values_for_keys_recursively,
-    has_duplicate, re_create_id_set)
+    has_duplicate, process_integration, process_playbook, process_script,
+    re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -266,6 +267,22 @@ class TestIntegrations:
 
             assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
+    @staticmethod
+    def test_process_integration__exception():
+        """
+        Given
+            - An invalid "integration" file called yml_invalid_structure.yml where commonfields object is not a dict.
+
+        When
+            - parsing integration files
+
+        Then
+            - an exception will be raised
+        """
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'yml_invalid_structure.yml')
+        with pytest.raises(Exception):
+            process_integration(test_file_path, False)
+
 
 class TestScripts:
     SCRIPT_DATA = {
@@ -293,6 +310,22 @@ class TestScripts:
         returned_data = data.get('DummyScript')
 
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+
+    @staticmethod
+    def test_process_script__exception():
+        """
+        Given
+            - An invalid "script" file called yml_invalid_structure.yml where commonfields object is not a dict.
+
+        When
+            - parsing script files
+
+        Then
+            - an exception will be raised
+        """
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'yml_invalid_structure.yml')
+        with pytest.raises(Exception):
+            process_script(test_file_path, False)
 
 
 class TestPlaybooks:
@@ -377,6 +410,22 @@ class TestPlaybooks:
         assert 'tests' in result.keys()
         assert 'incident_fields' not in result.keys()
         assert 'indicator_fields' not in result.keys()
+
+    @staticmethod
+    def test_process_playbook__exception():
+        """
+        Given
+            - An invalid "playbook" file called yml_invalid_structure.yml where tasks object is not a dict.
+
+        When
+            - parsing playbook files
+
+        Then
+            - an exception will be raised
+        """
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'yml_invalid_structure.yml')
+        with pytest.raises(Exception):
+            process_playbook(test_file_path, False)
 
     @staticmethod
     def test_get_playbook_data_bad_graph():

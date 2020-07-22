@@ -872,48 +872,60 @@ def process_integration(file_path: str, print_logs: bool) -> list:
         list -- integration data list (may be empty)
     """
     res = []
-    if os.path.isfile(file_path):
-        if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
-            if print_logs:
-                print(f'adding {file_path} to id_set')
-            res.append(get_integration_data(file_path))
-    else:
-        # package integration
-        package_name = os.path.basename(file_path)
-        file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+    try:
         if os.path.isfile(file_path):
-            # locally, might have leftover dirs without committed files
-            if print_logs:
-                print(f'adding {file_path} to id_set')
-            res.append(get_integration_data(file_path))
+            if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
+                if print_logs:
+                    print(f'adding {file_path} to id_set')
+                res.append(get_integration_data(file_path))
+        else:
+            # package integration
+            package_name = os.path.basename(file_path)
+            file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            if os.path.isfile(file_path):
+                # locally, might have leftover dirs without committed files
+                if print_logs:
+                    print(f'adding {file_path} to id_set')
+                res.append(get_integration_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
 
     return res
 
 
 def process_script(file_path: str, print_logs: bool) -> list:
     res = []
-    if os.path.isfile(file_path):
-        if find_type(file_path) == FileType.SCRIPT:
+    try:
+        if os.path.isfile(file_path):
+            if find_type(file_path) == FileType.SCRIPT:
+                if print_logs:
+                    print(f'adding {file_path} to id_set')
+                res.append(get_script_data(file_path))
+        else:
+            # package script
+            unifier = Unifier(file_path)
+            yml_path, code = unifier.get_script_or_integration_package_data()
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_script_data(file_path))
-    else:
-        # package script
-        unifier = Unifier(file_path)
-        yml_path, code = unifier.get_script_or_integration_package_data()
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_script_data(yml_path, script_code=code))
+            res.append(get_script_data(yml_path, script_code=code))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
 
     return res
 
 
 def process_playbook(file_path: str, print_logs: bool) -> list:
     res = []
-    if find_type(file_path) == FileType.PLAYBOOK:
-        if print_logs:
-            print('adding {} to id_set'.format(file_path))
-        res.append(get_playbook_data(file_path))
+    try:
+        if find_type(file_path) == FileType.PLAYBOOK:
+            if print_logs:
+                print('adding {} to id_set'.format(file_path))
+            res.append(get_playbook_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
     return res
 
 
@@ -927,10 +939,14 @@ def process_classifier(file_path: str, print_logs: bool) -> list:
         a list of classifier data.
     """
     res = []
-    if find_type(file_path) in (FileType.CLASSIFIER, FileType.OLD_CLASSIFIER):
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_classifier_data(file_path))
+    try:
+        if find_type(file_path) in (FileType.CLASSIFIER, FileType.OLD_CLASSIFIER):
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_classifier_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
     return res
 
 
@@ -945,10 +961,14 @@ def process_dashboards(file_path: str, print_logs: bool) -> list:
         a list of dashboard data.
     """
     res = []
-    if find_type(file_path) == FileType.DASHBOARD:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_general_data(file_path))
+    try:
+        if find_type(file_path) == FileType.DASHBOARD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_general_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
     return res
 
 
@@ -964,10 +984,14 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
         a list of incident field data.
     """
     res = []
-    if find_type(file_path) == FileType.INCIDENT_FIELD:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_incident_field_data(file_path, incidents_types_list))
+    try:
+        if find_type(file_path) == FileType.INCIDENT_FIELD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_incident_field_data(file_path, incidents_types_list))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
     return res
 
 
@@ -982,10 +1006,14 @@ def process_incident_types(file_path: str, print_logs: bool) -> list:
         a list of incident field data.
     """
     res = []
-    if find_type(file_path) == FileType.INCIDENT_TYPE:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_incident_type_data(file_path))
+    try:
+        if find_type(file_path) == FileType.INCIDENT_TYPE:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_incident_type_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
     return res
 
 
@@ -1000,10 +1028,14 @@ def process_indicator_fields(file_path: str, print_logs: bool) -> list:
         a list of indicator field data.
     """
     res = []
-    if find_type(file_path) == FileType.INDICATOR_FIELD:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_general_data(file_path))
+    try:
+        if find_type(file_path) == FileType.INDICATOR_FIELD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_general_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
     return res
 
 
@@ -1019,11 +1051,16 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
         a list of indicator type data.
     """
     res = []
-    # ignore old reputations.json files
-    if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_indicator_type_data(file_path, all_integrations))
+    try:
+        # ignore old reputations.json files
+        if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_indicator_type_data(file_path, all_integrations))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
     return res
 
 
@@ -1038,10 +1075,15 @@ def process_layouts(file_path: str, print_logs: bool) -> list:
         a list of layout data.
     """
     res = []
-    if find_type(file_path) == FileType.LAYOUT:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_layout_data(file_path))
+    try:
+        if find_type(file_path) == FileType.LAYOUT:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_layout_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
     return res
 
 
@@ -1056,10 +1098,15 @@ def process_layoutscontainer(file_path: str, print_logs: bool) -> list:
         a list of layout data.
     """
     res = []
-    if find_type(file_path) == FileType.LAYOUTS_CONTAINER:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_layoutscontainer_data(file_path))
+    try:
+        if find_type(file_path) == FileType.LAYOUTS_CONTAINER:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_layoutscontainer_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
     return res
 
 
@@ -1074,10 +1121,15 @@ def process_reports(file_path: str, print_logs: bool) -> list:
         a list of report data.
     """
     res = []
-    if find_type(file_path) == FileType.REPORT:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_general_data(file_path))
+    try:
+        if find_type(file_path) == FileType.REPORT:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_general_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
     return res
 
 
@@ -1092,10 +1144,15 @@ def process_widgets(file_path: str, print_logs: bool) -> list:
         a list of widgets data.
     """
     res = []
-    if find_type(file_path) == FileType.WIDGET:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_general_data(file_path))
+    try:
+        if find_type(file_path) == FileType.WIDGET:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_general_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
     return res
 
 
@@ -1109,10 +1166,15 @@ def process_mappers(file_path: str, print_logs: bool) -> list:
         a list of classifier data.
     """
     res = []
-    if find_type(file_path) == FileType.MAPPER:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        res.append(get_mapper_data(file_path))
+    try:
+        if find_type(file_path) == FileType.MAPPER:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_mapper_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
     return res
 
 
@@ -1127,14 +1189,18 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     Returns:
         pair -- first element is a playbook second is a script. each may be None
     """
-    if print_logs:
-        print(f'adding {file_path} to id_set')
     script = None
     playbook = None
-    if find_type(file_path) == FileType.TEST_SCRIPT:
-        script = get_script_data(file_path)
-    if find_type(file_path) == FileType.TEST_PLAYBOOK:
-        playbook = get_playbook_data(file_path)
+    try:
+        if print_logs:
+            print(f'adding {file_path} to id_set')
+        if find_type(file_path) == FileType.TEST_SCRIPT:
+            script = get_script_data(file_path)
+        if find_type(file_path) == FileType.TEST_PLAYBOOK:
+            playbook = get_playbook_data(file_path)
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
 
     return playbook, script
 

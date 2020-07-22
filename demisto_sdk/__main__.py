@@ -800,6 +800,16 @@ def update_pack_releasenotes(**kwargs):
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
+
+    #############
+    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+    validate_manager.setup_git_params()
+    modified_files, added_files, old_format_files, changed_meta_files = \
+        validate_manager.get_modified_and_added_files('...', 'origin/master')
+    print(modified_files)
+    sys.exit(0)
+    ############
+
     modified, added, old, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
     packs_existing_rn = set()
     for pf in added:

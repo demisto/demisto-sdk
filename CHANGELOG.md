@@ -1,4 +1,5 @@
 # Changelog
+* The **feedReputation** parameter can now be hidden in a feed integration.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

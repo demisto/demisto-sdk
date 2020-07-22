@@ -850,6 +850,28 @@ class TestValidators:
         # check recognized deleted file
         assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
 
+    def test_setup_git_params(self, mocker):
+        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='20.0.7')
+        validate_manager = ValidateManager()
+        validate_manager.setup_git_params()
+
+        assert validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='master')
+        # resetting always_valid flag
+        validate_manager.always_valid = False
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '...'
+
 
 def test_content_release_identifier_exists():
     """

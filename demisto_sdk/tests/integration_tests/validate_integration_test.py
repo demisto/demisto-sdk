@@ -1392,6 +1392,7 @@ class TestValidationUsingGit:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'run_dependencies_validations_on_pack', return_value=True)
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
@@ -1440,6 +1441,7 @@ class TestValidationUsingGit:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'run_dependencies_validations_on_pack', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")

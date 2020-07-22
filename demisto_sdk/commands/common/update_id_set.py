@@ -101,7 +101,7 @@ def build_tasks_graph(playbook_data):
 
             # In this case the playbook is invalid, starttaskid contains invalid task id.
             if not leaf_task:
-                print_error(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
+                print_warning(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
                 continue
 
             leaf_next_tasks = sum(leaf_task.get('nexttasks', {}).values(), [])
@@ -109,7 +109,7 @@ def build_tasks_graph(playbook_data):
             for task_id in leaf_next_tasks:
                 task = tasks.get(task_id)
                 if not task:
-                    print_error(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
+                    print_warning(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
                     continue
 
                 # If task can't be skipped and predecessor task is mandatory - set as mandatory.
@@ -1019,7 +1019,8 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
         a list of indicator type data.
     """
     res = []
-    if find_type(file_path) == FileType.REPUTATION:
+    # ignore old reputations.json files
+    if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
         if print_logs:
             print(f'adding {file_path} to id_set')
         res.append(get_indicator_type_data(file_path, all_integrations))
@@ -1390,9 +1391,9 @@ def has_duplicate(id_set, id_to_check, object_type=None, print_logs=True):
         dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
         dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
 
-        if print_logs and dict1['name'] != dict2['name']:
+        if print_logs and dict1.get('name') != dict2.get('name'):
             print_warning('The following {} have the same ID ({}) but different names: '
-                          '"{}", "{}".'.format(object_type, id_to_check, dict1['name'], dict2['name']))
+                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':

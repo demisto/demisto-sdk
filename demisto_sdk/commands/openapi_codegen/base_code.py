@@ -1,7 +1,8 @@
 base_argument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$'"
 base_params = """params={$PARAMS$}"""
 base_data = """data={$DATAOBJ$}"""
-base_headers = """headers={$HEADERSOBJ$}"""
+base_headers = """headers=headers"""
+base_header = """headers[$HEADERKEY$] = $HEADERVALUE$"""
 base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
 base_credentials = """
     username = params['credentials']['identifier']
@@ -22,17 +23,22 @@ base_function = """def $FUNCTIONNAME$_command(client, args):
     return_results(command_results)
 
 """
-base_request_function = """def $FUNCTIONNAME$_request($REQARGS1$$REQARGS2$):
-    $PARAMETERS$
-    $DATA$
-    
-    try:
-        response = self._http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$$HEADERS$)
-        response.raise_for_status()
-    except Exception as e:
-        return_error(f'Error in API call: {e}')
-    
-    return response
+base_request_function = """
+    def $FUNCTIONNAME$_request(self$REQARGS$):
+        $PARAMETERS$
+        $DATA$
+        
+        headers = self.headers
+        $HEADERSOBJ$
+        
+        response = {}
+        try:
+            response = self._http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$, headers=headers)
+            response.raise_for_status()
+        except Exception as e:
+            return_error(f'Error in API call: {e}')
+        
+        return response
     
 """
 base_client = """class Client(BaseClient):

@@ -10,7 +10,7 @@ import yaml
 from distutils.util import strtobool
 from demisto_sdk.commands.common.tools import print_error, print_success
 from demisto_sdk.commands.openapi_codegen.base_code import (
-    base_argument, base_code, base_function, base_list_functions, base_params, base_data, base_headers,
+    base_argument, base_code, base_function, base_list_functions, base_params, base_data, base_headers, base_header,
     base_credentials, base_token, base_basic_auth, base_client, base_request_function)
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegration
 
@@ -37,7 +37,7 @@ arg_types = {
 removed_names = ['.properties', '.items']
 JSON_TYPE_HEADER = 'application/json'
 DEFAULT_HOST = 'https://www.example.com/api'
-API_KEY_AUTH_TYPE = 'bearer'
+API_KEY_AUTH_TYPE = 'apiKey'
 CREDENTIALS_AUTH_TYPE = 'basic'
 
 
@@ -54,6 +54,7 @@ class OpenAPIIntegration:
         self.file_load = False
         self.swagger = None
         self.openapi = None
+        self.security_definitions = None
         self.host = None
         self.base_path = None
         self.schemes = None
@@ -160,24 +161,30 @@ class OpenAPIIntegration:
         else:
             iter_item = data.get('parameters', [])
         for arg in iter_item:
-            # ￿￿TODO: extract args from $ref?
-            new_arg = {}
-            arg_name = str(arg.get('name', ''))
-            new_arg['name'] = arg_name
-            arg_desc = arg.get('description', '')
-            arg_desc = self.clean_description(arg_desc)
-            new_arg['description'] = arg_desc
-            new_arg['required'] = arg.get('required')
-            new_arg['default'] = arg.get('default', '')
-            new_arg['in'] = arg.get('in', None)
-            new_arg['type'] = arg_types.get(arg.get('type', 'string'), 'str')
-            new_arg['enums'] = [str(x) for x in arg.get('enum')] if arg.get('enum', None) else None
-            new_function['arguments'].append(new_arg)
+            refs = []
+            if 'schema' in arg:
+
+                refs = self.extract_values(arg['schema'], '$ref')
+                for ref in refs:
+                    ref = ref.split('/')[-1]
+                    ref_args = []
+                    if self.definitions:
+                        ref_args = self.extract_values(self.definitions.get(ref, {}), 'properties')
+                    elif self.components:
+                        ref_args = self.extract_values(self.components.get('schemas', {}).get(ref, {}), 'properties')
+                    for ref_arg in ref_args:
+                        for k, v in ref_arg.items():
+                            new_ref_arg = {'name': k, 'in': arg.get('in')}
+                            new_ref_arg.update(v)
+                            new_function['arguments'].append(self.init_arg(new_ref_arg))
+            if not refs:
+                new_function['arguments'].append(self.init_arg(arg))
         new_function['outputs'] = []
         new_function['responses'] = []
         for response_code, response in data.get('responses', {}).items():
             new_response = {}
-            new_response['code'] = response_code
+            if int(new_response.get('code', 200)) != 200:
+                continue
             new_response['description'] = response.get('description', None)
             all_items = []
             schemas = self.extract_values(response, 'schema')
@@ -240,29 +247,38 @@ class OpenAPIIntegration:
         self.schemes = self.json.get('schemes', [])
         self.definitions = self.json.get('definitions', {})
         self.components = self.json.get('components', {})
+        self.security_definitions = self.json.get('securityDefinitions', {})
         self.functions = []
         if not self.command_prefix:
             self.command_prefix = '-'.join(self.name.split(' ')).lower()
 
         for path, function in self.json['paths'].items():
-            # TODO: try except
-            for method, data in function.items():
-                print(f'Adding command for the path: {path}')
-                self.add_function(path, method, data, function.get(
-                    'parameters', []))
-                print(f'Finished adding command for the path: {path}')
+            try:
+                for method, data in function.items():
+                    print(f'Adding command for the path: {path}')
+                    self.add_function(path, method, data, function.get(
+                        'parameters', []))
+            except Exception as e:
+                print_error(f'Failed adding the command for the path {path}: {e}')
 
         if not self.configuration:
             self.generate_configuration()
 
     def generate_configuration(self):
+        security_types = []
+        if self.security_definitions:
+            all_security_types = [s.get('type') for s in self.security_definitions.values()]
+            security_types = [t for t in all_security_types if t in [API_KEY_AUTH_TYPE, CREDENTIALS_AUTH_TYPE]]
+        if not security_types:
+            security_types = [API_KEY_AUTH_TYPE]
+
         configuration = {
             'swagger_id': self.name,
             'name': self.name or 'GeneratedIntegration',
             'description': self.description or 'This integration was auto generated by the Cortex XSOAR SDK.',
             'category': 'Utilities',
             'url': self.host or DEFAULT_HOST,
-            'auth': [API_KEY_AUTH_TYPE],
+            'auth': security_types,
             'fetch_incidents': False,
             'context_path': self.context_path or self.name,
             'commands': []
@@ -330,6 +346,7 @@ class OpenAPIIntegration:
             new_params = [x['name'] for x in command['arguments'] if 'query' in x['in']]
             new_data = [x['name'] for x in command['arguments'] if x['in'] in ['formData', 'body']]
             arguments = []
+            argument_names = []
             arguments_found = False
             headers = command['headers']
 
@@ -355,6 +372,7 @@ class OpenAPIIntegration:
                 new_arg_name = arg['name']
                 if new_arg_name in illegal_function_names:
                     new_arg_name = f'{prepend_illegal}{new_arg_name}'
+                argument_names.append(new_arg_name)
                 this_argument = this_argument.replace('$SARGNAME$', new_arg_name)
                 this_argument = this_argument.replace('$ARGTYPE$', arg['type'])
 
@@ -362,45 +380,33 @@ class OpenAPIIntegration:
 
             if arguments_found:
                 function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
+                function = function.replace('$REQARGS$', ', '.join(argument_names))
+                req_function = req_function.replace('$REQARGS$', ', $REQARGS$')
+                req_function = req_function.replace('$REQARGS$', ', '.join(argument_names))
             else:
+                req_function = req_function.replace('$REQARGS$', '')
+                function = function.replace('$REQARGS$', '')
                 function = '\n'.join(
                     [x for x in function.split('\n') if '$ARGUMENTS$' not in x])
 
+            req_function = req_function.replace('$METHOD$', command['method'])
+            command['path'] = f"'{command['path']}'" if "'" not in command['path'] else command['path']
+            command['path'] = f"f{command['path']}" if "{" in command['path'] else command['path']
+            req_function = req_function.replace('$PATH$', command['path'])
+
             if new_params:
-                req_function = req_function.replace('$REQARGS1$', ', '.join(new_params))
                 params = self.format_params(new_params, base_params, '$PARAMS$')
                 req_function = req_function.replace('$PARAMETERS$', params)
             else:
-                req_function = req_function.replace('$REQARGS1$', '')
                 req_function = '\n'.join(
                     [x for x in req_function.split('\n') if '$PARAMETERS$' not in x])
 
             if new_data:
-                if new_params:
-                    req_function = req_function.replace('$REQARGS2$', ', $REQARGS2$')
-                req_function = req_function.replace('$REQARGS2$', ', '.join(new_data))
                 new_data = self.format_params(new_data, base_data, '$DATAOBJ$')
                 req_function = req_function.replace('$DATA$', new_data)
             else:
                 req_function = '\n'.join(
                     [x for x in req_function.split('\n') if '$DATA$' not in x])
-
-            if headers:
-                new_headers = ''
-                for header in headers:
-                    for k, v in header.items():
-                        new_headers = f"{new_headers}'{k}':'{v}', "
-
-                new_headers = new_headers[:-2]
-                new_headers = base_headers.replace('$HEADERSOBJ$', new_headers)
-            else:
-                new_headers = ''
-
-            req_function = req_function.replace('$HEADERS$', f', {new_headers}')
-            req_function = req_function.replace('$METHOD$', command['method'])
-            command['path'] = f"'{command['path']}'" if "'" not in command['path'] else command['path']
-            command['path'] = f"f{command['path']}" if "{" in command['path'] else command['path']
-            req_function = req_function.replace('$PATH$', command['path'])
 
             if new_params:
                 req_function = req_function.replace(
@@ -411,6 +417,17 @@ class OpenAPIIntegration:
                 req_function = req_function.replace('$NEWDATA$', ', data=data')
             else:
                 req_function = req_function.replace('$NEWDATA$', '')
+
+            if headers:
+                new_headers = []
+                for header in headers:
+                    for k, v in header.items():
+                        new_headers.append(base_header.replace('$HEADERKEY$', f"'{k}'")
+                                           .replace('$HEADERVALUE$', f"'{v}'"))
+
+                req_function = req_function.replace('$HEADERSOBJ$', ' \n        '.join(new_headers))
+            else:
+                req_function = req_function.replace('$HEADERSOBJ$', '')
 
             if self.configuration['context_path']:
                 context_name = self.context_path
@@ -433,7 +450,7 @@ class OpenAPIIntegration:
 
         data = data.replace('$FUNCTIONS$', '\n'.join(functions))
         data = data.replace('$BASEURL$', self.base_path)
-        client = base_client.replace(('$REQUESTFUNCS$', '\n'.join(req_functions)))
+        client = base_client.replace('$REQUESTFUNCS$', '\n'.join(req_functions))
         data = data.replace('$CLIENT$', client)
 
         if API_KEY_AUTH_TYPE in self.configuration['auth']:
@@ -644,6 +661,21 @@ class OpenAPIIntegration:
         yml_path = self.save_yaml(directory, no_code=True)
         image_path, desc_path = self.save_image_and_desc(directory)
         return code_path, yml_path, image_path, desc_path
+
+    def init_arg(self, arg):
+        new_arg = {}
+        arg_name = str(arg.get('name', ''))
+        new_arg['name'] = arg_name
+        arg_desc = arg.get('description', '')
+        arg_desc = self.clean_description(arg_desc)
+        new_arg['description'] = arg_desc
+        new_arg['required'] = arg.get('required')
+        new_arg['default'] = arg.get('default', '')
+        new_arg['in'] = arg.get('in', 'path')
+        new_arg['type'] = arg.get('type', 'string')
+        new_arg['enums'] = [str(x) for x in arg.get('enum')] if arg.get('enum', None) else None
+
+        return new_arg
 
     @staticmethod
     def clean_description(description):

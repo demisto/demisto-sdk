@@ -1,4 +1,0 @@
-name: Invalid YML File
-description: 'invalid yml file: "commonfields" and "tasks" are supposed to be dict objects.'
-commonfields: hello
-tasks: world

@@ -271,7 +271,7 @@ class TestIntegrations:
     def test_process_integration__exception():
         """
         Given
-            - An invalid "integration" file called yml_invalid_structure.yml where commonfields object is not a dict.
+            - An invalid "integration" file located at invalid_file_structures where commonfields object is not a dict.
 
         When
             - parsing integration files
@@ -279,7 +279,7 @@ class TestIntegrations:
         Then
             - an exception will be raised
         """
-        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'yml_invalid_structure.yml')
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         with pytest.raises(Exception):
             process_integration(test_file_path, False)
 
@@ -315,7 +315,7 @@ class TestScripts:
     def test_process_script__exception():
         """
         Given
-            - An invalid "script" file called yml_invalid_structure.yml where commonfields object is not a dict.
+            - An invalid "script" file located at invalid_file_structures where commonfields object is not a dict.
 
         When
             - parsing script files
@@ -323,7 +323,7 @@ class TestScripts:
         Then
             - an exception will be raised
         """
-        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'yml_invalid_structure.yml')
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'script.yml')
         with pytest.raises(Exception):
             process_script(test_file_path, False)
 
@@ -415,7 +415,7 @@ class TestPlaybooks:
     def test_process_playbook__exception():
         """
         Given
-            - An invalid "playbook" file called yml_invalid_structure.yml where tasks object is not a dict.
+            - An invalid "playbook" file located at invalid_file_structures where tasks object is not a dict.
 
         When
             - parsing playbook files
@@ -423,7 +423,7 @@ class TestPlaybooks:
         Then
             - an exception will be raised
         """
-        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'yml_invalid_structure.yml')
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'playbook.yml')
         with pytest.raises(Exception):
             process_playbook(test_file_path, False)
 

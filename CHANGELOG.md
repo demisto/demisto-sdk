@@ -1,4 +1,7 @@
 # Changelog
+* Added the *--no-update* flag to the **find-dependencies** command.
+* Added the following validations in **validate** command:
+   * Validating that a pack does not depend on unsupported content.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

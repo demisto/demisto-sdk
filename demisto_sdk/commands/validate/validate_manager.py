@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -7,8 +8,8 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
-    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
+    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, CORE_PACKS_LIST,
+    IGNORED_TYPES_REGEXES, KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX,
     FileType)
@@ -59,6 +60,8 @@ from demisto_sdk.commands.common.tools import (checked_type,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
                                                run_command)
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 
 
 class ValidateManager:
@@ -386,6 +389,7 @@ class ValidateManager:
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
                                                                         changed_meta_files))
+        validation_results.add(self.validate_pack_dependencies(modified_files, added_files))
 
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
@@ -580,6 +584,44 @@ class ValidateManager:
             valid_files.add(self.run_validations_on_file(file_path, self.get_error_ignore_list(pack_name),
                                                          is_modified=True, old_file_path=old_file_path))
         return all(valid_files)
+
+    @staticmethod
+    def run_dependencies_validations_on_pack(pack, id_set_path=None):
+        first_level_dependencies = PackDependencies.find_dependencies(
+            pack, id_set_path=id_set_path, echo_results=False, exclude_ignored_dependencies=False,
+            update_pack_metadata=False)
+
+        for core_pack in CORE_PACKS_LIST:
+            first_level_dependencies.pop(core_pack, None)
+        if not first_level_dependencies:
+            return True
+
+        dependency_result = json.dumps(first_level_dependencies, indent=4)
+        click.echo(click.style(f"Found dependencies result for {pack} pack:", bold=True))
+        click.echo(click.style(dependency_result, bold=True))
+
+        if first_level_dependencies.get('NonSupported') or first_level_dependencies.get('DeprecatedContent'):
+            click.echo(click.style(f"{pack} depends on unsupported content", bold=True))
+            return False
+
+        return True
+
+    def validate_pack_dependencies(self, modified_files, added_files, id_set_path=None):
+        """
+        Args:
+            id_set_path (str): Path of the id_set. Optional.
+            modified_files (set): a set of modified files.
+            added_files (set): a set of files that were added.
+
+        Returns:
+            bool. True if pack does not depend on unsupported content , False otherwise
+        """
+        click.secho(f'\n================= Running pack dependencies validation =================',
+                    fg="bright_cyan")
+        changes_packs = {get_pack_name(file_path) for file_path in modified_files}
+        changes_packs.update(get_pack_name(file_path) for file_path in added_files)
+
+        return all(self.run_dependencies_validations_on_pack(pack, id_set_path) for pack in changes_packs)
 
     def validate_added_files(self, added_files, modified_files):
         click.secho(f'\n================= Running validation on newly added files =================',

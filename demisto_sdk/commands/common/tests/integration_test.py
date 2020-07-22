@@ -556,12 +556,15 @@ class TestIsFeedParamsExist:
     HIDDEN_TRUE = {"configuration": [{"id": "n", "n": "n"}, {"display": "123", "required": "false", "hidden": True}]}
     HIDDEN_TRUE_AND_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"ty": "0", "r": "true", "hidden": True}]}
     HIDDEN_ALLOWED_TRUE = {"configuration": [{"name": "longRunning", "required": "false", "hidden": True}]}
+    HIDDEN_ALLOWED_FEED_REPUTATION = {"configuration": [{"name": "feedReputation", "required": "false", "hidden": True}]}
+
     IS_VALID_HIDDEN_PARAMS = [
         (NO_HIDDEN, True),
         (HIDDEN_FALSE, True),
         (HIDDEN_TRUE, False),
         (HIDDEN_TRUE_AND_FALSE, False),
-        (HIDDEN_ALLOWED_TRUE, True)
+        (HIDDEN_ALLOWED_TRUE, True),
+        (HIDDEN_ALLOWED_FEED_REPUTATION, True)
     ]
 
     @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)

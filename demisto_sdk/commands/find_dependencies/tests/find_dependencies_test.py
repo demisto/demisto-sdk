@@ -3,8 +3,9 @@ import os
 
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import (
+    PackDependencies, VerboseFile)
+from TestSuite.utils import IsEqualFunctions
 
 
 @pytest.fixture(scope="module")
@@ -33,7 +34,7 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_script_item(self, id_set):
         pack_id = "PrismaCloudCompute"
-        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
+
         expected_result = [
             {
                 "PrismaCloudComputeParseAuditAlert": {
@@ -65,7 +66,9 @@ class TestIdSetFilters:
             }
         ]
 
-        assert found_filtered_result == expected_result
+        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
+
+        assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
 
     @pytest.mark.parametrize("pack_id", ["Claroty", "Code42", "Cymulate"])
     def test_search_for_pack_playbook_item(self, pack_id, id_set):
@@ -75,7 +78,7 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_playbook_item(self, id_set):
         pack_id = "Expanse"
-        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
+
         expected_result = [
             {
                 "ExpanseParseRawIncident": {
@@ -85,12 +88,17 @@ class TestIdSetFilters:
                     "implementing_scripts": [
                         "ExpanseParseRawIncident"
                     ],
+                    "tests": [
+                        "No tests (auto formatted)"
+                    ],
                     "pack": "Expanse"
                 }
             }
         ]
 
-        assert found_filtered_result == expected_result
+        found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
+
+        assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
 
 
 class TestDependsOnScriptAndIntegration:
@@ -112,9 +120,13 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
-        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("dependency_integration_command,expected_result",
                              [("sslbl-get-indicators", {("Feedsslabusech", True)}),
@@ -134,11 +146,17 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
-        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_two_scripts(self, id_set):
+        expected_result = {('HelloWorld', True), ('PrismaCloudCompute', True)}
+
         test_input = [
             {
                 "DummyScript": {
@@ -152,11 +170,17 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
-        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == {('HelloWorld', True), ('PrismaCloudCompute', True)}
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_two_integrations(self, id_set):
+        expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+
         test_input = [
             {
                 "DummyScript": {
@@ -170,11 +194,17 @@ class TestDependsOnScriptAndIntegration:
                 }
             }
         ]
-        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
 
-        assert found_result == {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_with_two_inputs(self, id_set):
+        expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+
         test_input = [
             {
                 "DummyScript1": {
@@ -198,9 +228,12 @@ class TestDependsOnScriptAndIntegration:
             }
         ]
 
-        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
 
-        assert found_result == {('Active_Directory_Query', True), ('Feedsslabusech', True)}
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("generic_command", ["ip", "domain", "url"])
     def test_collect_detection_of_optional_dependencies(self, generic_command, id_set):
@@ -217,7 +250,10 @@ class TestDependsOnScriptAndIntegration:
             }
         ]
 
-        dependencies_set = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input, id_set=id_set)
+        dependencies_set = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                          id_set=id_set,
+                                                                          verbose_file=VerboseFile(),
+                                                                          )
 
         assert len(dependencies_set) > 0
 
@@ -252,9 +288,13 @@ class TestDependsOnPlaybook:
                 }
             }
         ]
-        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("dependency_playbook,expected_result",
                              [("Pentera Run Scan", {("Pcysys", True)}),
@@ -282,9 +322,13 @@ class TestDependsOnPlaybook:
                 }
             }
         ]
-        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("integration_command,expected_result",
                              [("aws-get-indicators", {("FeedAWS", True)}),
@@ -312,9 +356,13 @@ class TestDependsOnPlaybook:
                 }
             }
         ]
-        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
 
-        assert found_result == expected_result
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_playbooks_dependencies_on_integrations_with_brand(self, id_set):
         command = "ip"
@@ -339,7 +387,10 @@ class TestDependsOnPlaybook:
                 }
             }
         ]
-        found_result_set = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
+        found_result_set = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                            id_set=id_set,
+                                                                            verbose_file=VerboseFile(),
+                                                                            )
 
         assert len(found_result_set) == 1
         found_result = found_result_set.pop()
@@ -369,18 +420,423 @@ class TestDependsOnPlaybook:
             }
         ]
 
-        found_result_set = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input, id_set=id_set)
+        found_result_set = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                            id_set=id_set,
+                                                                            verbose_file=VerboseFile(),
+                                                                            )
 
         assert len(found_result_set) > 0
 
         for found_result in found_result_set:
             assert not found_result[1]  # validate that mandatory is set to False
 
+    def test_collect_playbooks_dependencies_on_incident_fields(self, id_set):
+        expected_result = {("DigitalGuardian", True), ("EmployeeOffboarding", True)}
+        test_input = [
+            {
+                "Dummy Playbook": {
+                    "name": "Dummy Playbook",
+                    "file_path": "dummy_path",
+                    "fromversion": "dummy_version",
+                    "implementing_scripts": [
+                    ],
+                    "implementing_playbooks": [
+                    ],
+                    "command_to_integration": {
+                    },
+                    "tests": [
+                        "dummy_playbook"
+                    ],
+                    "pack": "dummy_pack",
+                    "incident_fields": [
+                        "digitalguardianusername",
+                        "Google Display Name"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_playbooks_dependencies_skip_unavailable(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set.
+            -
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the playbook depends on.
+        """
+        expected_result = {
+            # playbooks:
+            ('Slack', False), ('Indeni', True),
+            # integrations:
+            ('FeedAlienVault', False), ('ipinfo', True), ('FeedAutofocus', True),
+            # scripts:
+            ('GetServerURL', False), ('HelloWorld', True),
+        }
+        test_input = [
+            {
+                'Dummy Playbook': {
+                    'name': 'Dummy Playbook',
+                    'file_path': 'dummy_path',
+                    'fromversion': 'dummy_version',
+                    'implementing_scripts': [
+                        'GetServerURL',
+                        'HelloWorldScript',
+                    ],
+                    'implementing_playbooks': [
+                        'Failed Login Playbook - Slack v2',
+                        'Indeni Demo',
+                    ],
+                    'command_to_integration': {
+                        'alienvault-get-indicators': '',
+                        'ip': 'ipinfo',
+                        'autofocus-get-indicators': '',
+                    },
+                    'tests': [
+                        'dummy_playbook'
+                    ],
+                    'pack': 'dummy_pack',
+                    'incident_fields': [
+                    ],
+                    'skippable_tasks': [
+                        'Print',
+                        'Failed Login Playbook - Slack v2',
+                        'alienvault-get-indicators',
+                        'GetServerURL',
+                    ]
+                }
+            },
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnLayout:
+    def test_collect_layouts_dependencies(self, id_set):
+        """
+        Given
+            - A layout entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+        """
+        expected_result = {("FeedMitreAttack", True), ("PrismaCloudCompute", True), ("CommonTypes", True),
+                           ("CrisisManagement", True)}
+
+        test_input = [
+            {
+                "Dummy Layout": {
+                    "typeID": "dummy_layout",
+                    "name": "Dummy Layout",
+                    "pack": "dummy_pack",
+                    "kind": "edit",
+                    "path": "dummy_path",
+                    "incident_and_indicator_types": [
+                        "MITRE ATT&CK",
+                        "Prisma Cloud Compute Cloud Discovery"
+                    ],
+                    "incident_and_indicator_fields": [
+                        "indicator_adminname",
+                        "indicator_jobtitle"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnIncidentField:
+    def test_collect_incident_field_dependencies(self, id_set):
+        """
+        Given
+            - An incident field entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the incident field depends on.
+        """
+        expected_result = {
+            # incident types
+            # ("Expanse", True), ("IllusiveNetworks", True),
+            # scripts
+            ("Carbon_Black_Enterprise_Response", True), ("Phishing", True)
+        }
+
+        test_input = [
+            {
+                "Dummy Incident Field": {
+                    "name": "Dummy Incident Field",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        "Expanse Appearance",
+                        "Illusive Networks Incident"
+                    ],
+                    "scripts": [
+                        "CBLiveFetchFiles",
+                        "CheckEmailAuthenticity"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_incidents_fields_dependencies(
+            pack_incidents_fields=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnIndicatorType:
+    def test_collect_indicator_type_dependencies(self, id_set):
+        """
+        Given
+            - An indicator type entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the indicator type depends on.
+        """
+        expected_result = {
+            # integration dependencies
+            ("Feedsslabusech", False), ("AbuseDB", False), ("ActiveMQ", False),
+            # script dependencies
+            ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)
+        }
+
+        test_input = [
+            {
+                "Dummy Indicator Type": {
+                    "name": "Dummy Indicator Type",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "integrations": [
+                        "abuse.ch SSL Blacklist Feed",
+                        "AbuseIPDB",
+                        "ActiveMQ"
+                    ],
+                    "scripts": [
+                        "AssignAnalystToIncident",
+                        "CBAlerts"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_indicators_types_dependencies(
+            pack_indicators_types=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnIntegrations:
+    def test_collect_integration_dependencies(self, id_set):
+        """
+        Given
+            - An integration entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the integration depends on.
+        """
+        expected_result = {("HelloWorld", True), ("Claroty", True), ("EWS", True), ("CrisisManagement", True),
+                           ("CommonTypes", True)}
+
+        test_input = [
+            {
+                "Dummy Integration": {
+                    "name": "Dummy Integration",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "classifiers": "HelloWorld",
+                    "mappers": [
+                        "Claroty-mapper",
+                        "EWS v2-mapper"
+                    ],
+                    "incident_types": "HR Ticket",
+                    "indicator_fields": "CommonTypes",
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_integrations_dependencies(
+            pack_integrations=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnIncidentType:
+    def test_collect_incident_type_dependencies(self, id_set):
+        """
+        Given
+            - An incident type entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the incident type depends on.
+        """
+        expected_result = {("AutoFocus", True), ("Volatility", True)}
+
+        test_input = [
+            {
+                "Dummy Incident Type": {
+                    "name": "Dummy Incident Type",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "playbooks": "Autofocus Query Samples, Sessions and Tags",
+                    "scripts": "AnalyzeMemImage"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_incidents_types_dependencies(
+            pack_incidents_types=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnClassifiers:
+    def test_collect_classifier_dependencies(self, id_set):
+        """
+        Given
+            - A classifier entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on.
+        """
+        expected_result = {("Claroty", True), ("PAN-OS", True), ("Logzio", True)}
+
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        "Claroty Integrity Incident",
+                        "FirewallUpgrade",
+                        "Logz.io Alert"
+                    ],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnMappers:
+    def test_collect_mapper_dependencies(self, id_set):
+        """
+        Given
+            - A mapper entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on.
+        """
+        expected_result = {("AccessInvestigation", True), ("CommonTypes", True), ("PrismaCloud", True),
+                           ("BruteForce", True)}
+
+        test_input = [
+            {
+                "Dummy Mapper": {
+                    "name": "Dummy Mapper",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        "Access",
+                        "Authentication",
+                        "AWS CloudTrail Misconfiguration"
+                    ],
+                    "incident_fields": [
+                        "incident_accountgroups",
+                        "incident_accountid"
+                    ],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_mappers_dependencies(
+            pack_mappers=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+SEARCH_PACKS_INPUT = [
+    (['type'], 'IncidentFields', set()),
+    (['emailaddress'], 'IncidentFields', {'Compliance'}),
+    (['E-mail Address'], 'IncidentFields', {'Compliance'}),
+    (['adminemail'], 'IndicatorFields', {'CommonTypes'}),
+    (['Admin Email'], 'IndicatorFields', {'CommonTypes'}),
+    (['Claroty'], 'Mappers', {'Claroty'}),
+    (['Claroty - Incoming Mapper'], 'Mappers', {'Claroty'}),
+    (['Cortex XDR - IR'], 'Classifiers', {'CortexXDR'}),
+]
+
+
+@pytest.mark.parametrize('item_names, section_name, expected_result', SEARCH_PACKS_INPUT)
+def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set):
+    found_packs = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
+    assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
+
 
 class TestDependencyGraph:
     def test_build_dependency_graph(self, id_set):
         pack_name = "ImpossibleTraveler"
-        found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set)
+        found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name,
+                                                              id_set=id_set,
+                                                              verbose_file=VerboseFile(),
+                                                              )
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
         pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
 

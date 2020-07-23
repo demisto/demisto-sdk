@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (print_error, print_warning,
+from demisto_sdk.commands.common.tools import (print_error,
                                                server_version_compare)
 
 
@@ -25,7 +25,7 @@ class IntegrationValidator(ContentEntityValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {'longRunning'}
+    ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
     def is_valid_version(self):
         # type: () -> bool
@@ -58,11 +58,12 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False) -> bool:
         """Check whether the Integration is valid or not
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
+                skip_test_conf (bool): If true then will skip test playbook configuration validation
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -84,8 +85,11 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.are_tests_configured()
         ]
+
+        if not skip_test_conf:
+            answers.append(self.are_tests_configured())
+
         return all(answers)
 
     def are_tests_configured(self) -> bool:
@@ -288,8 +292,9 @@ class IntegrationValidator(ContentEntityValidator):
                         output_for_reputation_valid = False
 
                 if missing_descriptions:
-                    print_warning(Errors.dbot_invalid_description(
-                        command_name, missing_descriptions, context_standard))
+                    error_message, error_code = Errors.dbot_invalid_description(command_name, missing_descriptions,
+                                                                                context_standard)
+                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
@@ -614,8 +619,8 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_docker_image_valid(self):
         # type: () -> bool
-        # dockers should not be checked on master branch
-        if self.branch_name == 'master':
+        # dockers should not be checked when running on all files
+        if self.skip_docker_check:
             return True
 
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,
@@ -680,6 +685,8 @@ class IntegrationValidator(ContentEntityValidator):
         for counter, param in enumerate(params):
             if 'defaultvalue' in param:
                 params[counter].pop('defaultvalue')
+            if 'hidden' in param:
+                params[counter].pop('hidden')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
                 error_message, error_code = Errors.parameter_missing_for_feed(param.get('name'), yaml.dump(param))

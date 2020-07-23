@@ -199,6 +199,8 @@ mapping:
                 type: int
               wait:
                 type: int
+              forEach:
+                type: bool
           conditions:
             type: seq
             sequence:

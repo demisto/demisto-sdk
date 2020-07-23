@@ -7,7 +7,7 @@ import requests
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import get_yaml, print_warning
+from demisto_sdk.commands.common.tools import get_yaml
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()
@@ -32,6 +32,8 @@ class DockerImageValidator(BaseValidator):
         self.is_integration = is_integration
         self.file_path = yml_file_path
         self.yml_file = get_yaml(yml_file_path)
+        self.py_version = self.get_python_version()
+        self.code_type = self.get_code_type()
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get('fromversion', '0')
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
@@ -39,10 +41,16 @@ class DockerImageValidator(BaseValidator):
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image)
 
     def is_docker_image_valid(self):
+        # javascript code should not check docker
+        if self.code_type == 'javascript':
+            return True
+
         if not self.docker_image_latest_tag:
             self.is_valid = False
+
         elif not self.is_docker_image_latest_tag():
             self.is_valid = False
+
         return self.is_valid
 
     def is_docker_image_latest_tag(self):
@@ -67,12 +75,15 @@ class DockerImageValidator(BaseValidator):
 
         if self.docker_image_latest_tag != self.docker_image_tag:
             # If docker image tag is not the most updated one that exists in docker-hub
-            print_warning('The docker image tag is not the latest, please update it.\n'
-                          'The docker image tag in the yml file is: {}\n'
-                          'The latest docker image tag in docker hub is: {}\n'
-                          'You can check for the most updated version of {} here: https://hub.docker.com/r/{}/tags\n'
-                          .format(self.docker_image_tag, self.docker_image_latest_tag, self.docker_image_name,
-                                  self.docker_image_name))
+            error_message, error_code = Errors.docker_not_on_the_latest_tag(self.docker_image_tag,
+                                                                            self.docker_image_latest_tag,
+                                                                            self.docker_image_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_latest_tag = False
+
+            else:
+                # if this error is ignored - do print it as a warning
+                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
@@ -81,6 +92,20 @@ class DockerImageValidator(BaseValidator):
                 self.is_latest_tag = False
 
         return self.is_latest_tag
+
+    def get_code_type(self):
+        if self.is_integration:
+            code_type = self.yml_file.get('script').get('type', 'python')
+        else:
+            code_type = self.yml_file.get('type', 'python')
+        return code_type
+
+    def get_python_version(self):
+        if self.is_integration:
+            python_version = self.yml_file.get('script').get('subtype', 'python2')
+        else:
+            python_version = self.yml_file.get('subtype', 'python2')
+        return python_version
 
     def get_docker_image_from_yml(self):
         if self.is_integration:
@@ -287,5 +312,8 @@ class DockerImageValidator(BaseValidator):
 
             return image, tag
         else:
-            # If the yml file has no docker image we provide a default one with numeric tag
-            return 'demisto/python', '2.7.17.6981'
+            if self.py_version == 'python2':
+                # If the yml file has no docker image we provide a default one with numeric tag
+                return 'demisto/python', self.get_docker_image_latest_tag('demisto/python', None)
+            else:
+                return 'demisto/python3', self.get_docker_image_latest_tag('demisto/python3', None)

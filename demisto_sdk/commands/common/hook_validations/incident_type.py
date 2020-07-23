@@ -1,8 +1,12 @@
+import re
 from distutils.version import LooseVersion
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+
+# Checks if playbookID is a UUID format
+INVALID_PLAYBOOK_ID = r'[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}'
 
 
 class IncidentTypeValidator(ContentEntityValidator):
@@ -37,7 +41,8 @@ class IncidentTypeValidator(ContentEntityValidator):
             is_incident_type__valid = all([
                 is_incident_type__valid,
                 self.is_id_equals_name(),
-                self.is_including_int_fields()
+                self.is_including_int_fields(),
+                self.is_valid_playbook_id()
             ])
 
         return is_incident_type__valid
@@ -125,3 +130,16 @@ class IncidentTypeValidator(ContentEntityValidator):
                 is_valid = False
 
         return is_valid
+
+    def is_valid_playbook_id(self):
+        # type: () -> bool
+        """Check if playbookId is valid
+        Returns:
+            bool. True if playbook ID is valid, False otherwise.
+        """
+        playbook_id = self.current_file.get('playbookId', '')
+        if playbook_id and re.search(INVALID_PLAYBOOK_ID, playbook_id):
+            error_message, error_code = Errors.incident_type_invalid_playbook_id_field()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True

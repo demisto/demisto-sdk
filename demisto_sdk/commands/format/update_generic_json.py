@@ -32,10 +32,10 @@ class BaseUpdateJSON(BaseUpdate):
 
     def update_json(self):
         """Manager function for the generic JSON updates."""
-        print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
 
         self.set_version_to_default()
         self.remove_unnecessary_keys()
         self.set_fromVersion(from_version=self.from_version)
 
-        print_color(F'=======Finished updates for files: {self.output_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)

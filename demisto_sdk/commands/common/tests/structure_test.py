@@ -5,6 +5,8 @@ from typing import List, Tuple
 
 import pytest
 import yaml
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
@@ -13,11 +15,13 @@ from demisto_sdk.tests.constants_test import (
     INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD,
     INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
     INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
-    INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4, INVALID_LAYOUT_PATH,
+    INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4,
+    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH,
     INVALID_PLAYBOOK_ID_PATH, INVALID_PLAYBOOK_PATH, INVALID_REPUTATION_FILE,
-    INVALID_WIDGET_PATH, LAYOUT_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
-    VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
+    INVALID_WIDGET_PATH, LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET,
+    PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET, VALID_DASHBOARD_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
+    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH,
     VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
@@ -25,6 +29,7 @@ from demisto_sdk.tests.constants_test import (
 
 class TestStructureValidator:
     INPUTS_TARGETS = [
+        LAYOUTS_CONTAINER_TARGET,
         LAYOUT_TARGET,
         DASHBOARD_TARGET,
         WIDGET_TARGET,
@@ -148,6 +153,8 @@ class TestStructureValidator:
     INPUTS_IS_VALID_FILE = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True),
         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False),
+        (VALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, True),
+        (INVALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, False),
         (INVALID_WIDGET_PATH, WIDGET_TARGET, False),
         (VALID_WIDGET_PATH, WIDGET_TARGET, True),
         (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True),
@@ -158,7 +165,8 @@ class TestStructureValidator:
     ]  # type: List[Tuple[str, str, bool]]
 
     @pytest.mark.parametrize('source, target, answer', INPUTS_IS_VALID_FILE)
-    def test_is_file_valid(self, source, target, answer):
+    def test_is_file_valid(self, source, target, answer, mocker):
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         try:
             copyfile(source, target)
             structure = StructureValidator(target)
@@ -196,3 +204,41 @@ class TestStructureValidator:
         structure = StructureValidator(file_path=path)
         err = structure.parse_error_line(error)
         assert correct in err
+
+    def test_check_for_spaces_in_file_name(self, mocker):
+        mocker.patch.object(StructureValidator, "handle_error", return_value='Not-non-string')
+        file_with_spaces = "Packs/pack/Classifiers/space in name"
+        file_without_spaces = "Packs/pack/Classifiers/no-space-in-name"
+        structure = StructureValidator(file_path=file_with_spaces)
+        assert structure.check_for_spaces_in_file_name() is False
+
+        structure = StructureValidator(file_path=file_without_spaces)
+        assert structure.check_for_spaces_in_file_name() is True
+
+    def test_is_valid_file_extension(self, mocker):
+        mocker.patch.object(StructureValidator, "handle_error", return_value='Not-non-string')
+        mocker.patch.object(StructureValidator, 'load_data_from_file', return_value="")
+        image = "image.png"
+        yml_file = "yml_file.yml"
+        json_file = "json_file.json"
+        md_file = "md_file.md"
+        non_valid_file = "not_valid.py"
+        no_extension = "no_ext"
+
+        structure = StructureValidator(file_path=image)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=yml_file)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=json_file)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=md_file)
+        assert structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=non_valid_file)
+        assert not structure.is_valid_file_extension()
+
+        structure = StructureValidator(file_path=no_extension)
+        assert not structure.is_valid_file_extension()

@@ -78,6 +78,9 @@ We assume that test playbooks contain the `test` word in their name.
 * Layouts
 * Classifiers
 
+### Not Supported
+Integrations / Scripts written in JavaScript.
+
 ### Examples
 ```
 demisto-sdk download -o Packs/TestPack -i "Test Integration" -i "TestScript" -i "TestPlaybook"

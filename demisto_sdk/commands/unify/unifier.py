@@ -2,6 +2,7 @@ import base64
 import copy
 import glob
 import io
+import json
 import os
 import re
 from typing import Tuple
@@ -10,7 +11,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
                                                    SCRIPTS_DIR,
-                                                   TYPE_TO_EXTENSION)
+                                                   TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                get_yml_paths_in_dir,
@@ -20,13 +21,25 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
+PACK_METADATA_PATH = 'pack_metadata.json'
+CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
+CONTRIBUTOR_DETAILED_DESC = '### {} Contributed Integration\n' \
+                            '#### Integration Author: {}\n' \
+                            'Support and maintenance for this integration are provided by the author. ' \
+                            'Please use the following contact details:'
+
+CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
+
 
 class Unifier:
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
                  image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
 
-        directory_name = ""
+        directory_name = ''
+        # Changing relative path to current abspath fixed problem with default output file name.
+        if input == '.':
+            input = os.path.abspath(input)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:
                 directory_name = optional_dir_name
@@ -58,7 +71,7 @@ class Unifier:
         self.ryaml.preserve_quotes = True
         self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if self.yml_path:
-            with open(self.yml_path, 'r') as yml_file:
+            with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
                 self.yml_data = self.ryaml.load(yml_file)
         else:
             self.yml_data = {}
@@ -130,12 +143,16 @@ class Unifier:
 
         return output_map
 
-    def merge_script_package_to_yml(self):
+    def merge_script_package_to_yml(self, file_name_suffix=None):
         """Merge the various components to create an output yml file
         """
         print("Merging package: {}".format(self.package_path))
         package_dir_name = os.path.basename(self.package_path)
         output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+
+        if file_name_suffix:
+            # append suffix to output file name
+            output_filename = file_name_suffix.join(os.path.splitext(output_filename))
 
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
@@ -156,6 +173,14 @@ class Unifier:
         if not self.is_script_package:
             yml_unified, image_path = self.insert_image_to_yml(self.yml_data, yml_unified)
             yml_unified, desc_path = self.insert_description_to_yml(self.yml_data, yml_unified)
+            contributor_type, metadata_data = self.get_contributor_data()
+
+            if self.is_contributor_pack(contributor_type):
+                contributor_email = metadata_data.get('email', '')
+                contributor_url = metadata_data.get('url', '')
+                author = metadata_data.get('author')
+                yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
+                                                            contributor_url, author)
 
         output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
@@ -164,7 +189,7 @@ class Unifier:
         return unifier_outputs[0]
 
     def insert_image_to_yml(self, yml_data, yml_unified):
-        image_data, found_img_path = self.get_data("*png")
+        image_data, found_img_path = self.get_data(self.package_path, "*png")
         image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
         if yml_data.get('image') and self.use_force is False:
@@ -176,7 +201,7 @@ class Unifier:
         return yml_unified, found_img_path
 
     def insert_description_to_yml(self, yml_data, yml_unified):
-        desc_data, found_desc_path = self.get_data('*_description.md')
+        desc_data, found_desc_path = self.get_data(self.package_path, '*_description.md')
 
         if yml_data.get('detaileddescription') and self.use_force is False:
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
@@ -186,8 +211,8 @@ class Unifier:
 
         return yml_unified, found_desc_path
 
-    def get_data(self, extension):
-        data_path = glob.glob(os.path.join(self.package_path, extension))
+    def get_data(self, path, extension):
+        data_path = glob.glob(os.path.join(path, extension))
         data = None
         found_data_path = None
         if not self.is_script_package and data_path:
@@ -210,15 +235,15 @@ class Unifier:
                         r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
         if self.package_path.endswith('/'):
             self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
-        if self.package_path.endswith('Scripts/CommonServerPython'):
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPython')):
             return os.path.join(self.package_path, 'CommonServerPython.py')
-        if self.package_path.endswith('Scripts/CommonServerPowerShell'):
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPowerShell')):
             return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
-        script_path = list(filter(lambda x: not re.search(ignore_regex, x),
-                                  glob.glob(os.path.join(self.package_path, '*' + script_type))))[0]
+        script_path = list(filter(lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
+                                  sorted(glob.glob(os.path.join(self.package_path, '*' + script_type)))))[0]
 
         return script_path
 
@@ -235,8 +260,11 @@ class Unifier:
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)
-        if script_type == '.ps1':
+        elif script_type == '.ps1':
             clean_code = self.clean_pwsh_code(script_code)
+        else:
+            # for JS scripts
+            clean_code = script_code
 
         if self.is_script_package:
             if yml_data.get('script', '') not in ('', '-'):
@@ -261,13 +289,13 @@ class Unifier:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')
 
-        if find_type(yml_path) == 'script':
+        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
         unifier = Unifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
-        with open(code_path, 'r') as code_file:
+        with io.open(code_path, 'r', encoding='utf-8') as code_file:
             code = code_file.read()
 
         return yml_path, code
@@ -338,3 +366,56 @@ class Unifier:
         script_code = script_code.replace(". $PSScriptRoot\\demistomock.ps1", "")
         script_code = script_code.replace(". $PSScriptRoot\\CommonServerPowerShell.ps1", "")
         return script_code
+
+    def get_pack_path(self):
+        return self.package_path.split('Integrations')[0]
+
+    def is_contributor_pack(self, contributor_type):
+        """Checks if the pack is a contribution.
+        Args:
+            contributor_type (str): The contributor type.
+        Returns:
+            (bool). True if it is a contributed pack, False otherwise.
+        """
+        if contributor_type in CONTRIBUTORS_LIST:
+            return True
+        return False
+
+    def get_contributor_data(self):
+        """Gets contributor data.
+
+        Returns:
+            (str, dict). Contributor type and file data.
+        """
+        pack_path = self.get_pack_path()
+        pack_metadata_data, pack_metadata_path = self.get_data(pack_path, PACK_METADATA_PATH)
+
+        if pack_metadata_data:
+            json_pack_metadata = json.loads(pack_metadata_data)
+            support_field = json_pack_metadata.get('support')
+            return support_field, json_pack_metadata
+        return None, None
+
+    def add_contributors_support(self, unified_yml, contributor_type, contributor_email, contributor_url, author=''):
+        """Add contributor support to the unified file - text in the display name and detailed description.
+
+        Args:
+            unified_yml: The unified yaml file.
+            contributor_type (str): The contributor type - partner / developer / community
+            contributor_email (str): The contributor email.
+            contributor_url (str): The contributor url.
+            author (str): The packs author.
+
+        Returns:
+            The unified yaml file.
+        """
+        unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+        existing_detailed_description = unified_yml.get('detaileddescription', '')
+        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
+        if contributor_email:
+            contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
+        if contributor_url:
+            contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
+        unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
+
+        return unified_yml

@@ -35,7 +35,7 @@ class TestFormattingJson:
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
     def test_format_file(self, source, target, path, answer):
-        os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, output=target)
         os.remove(target)

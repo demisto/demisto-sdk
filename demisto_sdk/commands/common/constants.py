@@ -1,4 +1,5 @@
 import re
+from enum import Enum
 from typing import List
 
 # dirs
@@ -17,6 +18,7 @@ INDICATOR_FIELDS_DIR = 'IndicatorFields'
 INDICATOR_TYPES_DIR = 'IndicatorTypes'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
+MAPPERS_DIR = 'Classifiers'
 CONNECTIONS_DIR = 'Connections'
 PACKS_DIR = 'Packs'
 TOOLS_DIR = 'Tools'
@@ -25,8 +27,10 @@ TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 
 SCRIPT = 'script'
+AUTOMATION = 'automation'
 INTEGRATION = 'integration'
 PLAYBOOK = 'playbook'
+TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
@@ -40,10 +44,42 @@ WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
 
+
+class FileType(Enum):
+    INTEGRATION = 'integration'
+    SCRIPT = 'script'
+    PLAYBOOK = 'playbook'
+    TEST_PLAYBOOK = 'testplaybook'
+    BETA_INTEGRATION = 'betaintegration'
+    INCIDENT_FIELD = 'incidentfield'
+    INDICATOR_FIELD = 'indicatorfield'
+    REPUTATION = 'reputation'
+    LAYOUT = 'layout'
+    LAYOUTS_CONTAINER = 'layoutscontainer'
+    DASHBOARD = 'dashboard'
+    INCIDENT_TYPE = 'incidenttype'
+    MAPPER = 'mapper'
+    OLD_CLASSIFIER = 'classifier_5_9_9'
+    CLASSIFIER = 'classifier'
+    WIDGET = 'widget'
+    REPORT = 'report'
+    CONNECTION = 'canvas-context-connections'
+    README = 'readme'
+    RELEASE_NOTES = 'releasenotes'
+    DESCRIPTION = 'description'
+    CHANGELOG = 'changelog'
+    IMAGE = 'image'
+    PYTHON_FILE = 'pythonfile'
+    JAVSCRIPT_FILE = 'javascriptfile'
+    POWERSHELL_FILE = 'powershellfile'
+    TEST_SCRIPT = 'script'
+
+
 ENTITY_TYPE_TO_DIR = {
     INTEGRATION: INTEGRATIONS_DIR,
     PLAYBOOK: PLAYBOOKS_DIR,
     SCRIPT: SCRIPTS_DIR,
+    AUTOMATION: SCRIPTS_DIR,
     LAYOUT: LAYOUTS_DIR,
     INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
     INCIDENT_TYPE: INCIDENT_TYPES_DIR,
@@ -281,17 +317,20 @@ SCRIPT_TYPE_REGEX = '.*script-.*.yml'
 PACKS_SCRIPT_PY_REGEX = fr'{SCRIPT_DIR_REGEX}/\2\.py'
 PACKS_SCRIPT_TEST_PY_REGEX = fr'{SCRIPT_DIR_REGEX}/\2_test\.py'
 PACKS_SCRIPT_PS_REGEX = fr'{SCRIPT_DIR_REGEX}/\2.ps1$'
-PACKS_SCRIPT_PS_REGEX = fr'{SCRIPT_DIR_REGEX}/\2\.Tests\.ps1$'
+PACKS_SCRIPT_TEST_PS_REGEX = fr'{SCRIPT_DIR_REGEX}/\2\.Tests\.ps1$'
 PACKS_SCRIPT_YML_REGEX = fr'{SCRIPT_DIR_REGEX}\/\2\.yml'
 PACKS_SCRIPT_README_REGEX = fr'{SCRIPT_DIR_REGEX}/README.md$'
 
 PACKS_SCRIPT_NON_SPLIT_BASE_REGEX = fr'{SCRIPTS_DIR_REGEX}/script-([^\\/]+)'
+PACKS_SCRIPT_TEST_PLAYBOOK = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}/script-([^\\/]+).yml$'
 PACKS_SCRIPT_NON_SPLIT_YML_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}\.yml$'
 PACKS_SCRIPT_NON_SPLIT_README_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}_README.md$'
 
 
 PACKS_LAYOUTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{LAYOUTS_DIR}'
-PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/([^/]+)\.json'
+PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/]+)\.json'
+
+PACKS_LAYOUTS_CONTAINER_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json'
 
 PACKS_WIDGETS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIDGETS_DIR}'
 PACKS_WIDGET_JSON_REGEX = fr'{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json'
@@ -338,7 +377,7 @@ PLAYBOOK_YML_REGEX = fr'{PLAYBOOK_BASE_REGEX}\.yml'
 PLAYBOOK_README_REGEX = fr'{PLAYBOOK_BASE_REGEX}_README\.md$'
 
 TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
-TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}\/{TEST_PLAYBOOKS_DIR}\/([^.]+)\.yml'
+TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml'
 
 
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
@@ -350,7 +389,7 @@ PACKS_TOOLS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.zip'.format(CAN_START_WITH_DOT_SL
 
 PLAYBOOK_REGEX = r'{}(?!Test){}/playbook-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, PLAYBOOKS_DIR)
 
-TEST_PLAYBOOK_REGEX = r'{}{}/playbook-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
+TEST_PLAYBOOK_REGEX = r'{}{}/(?!script-).*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
 TEST_NOT_PLAYBOOK_REGEX = r'{}{}/(?!playbook).*-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
 
 CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CONNECTIONS_DIR)
@@ -449,7 +488,8 @@ YML_ALL_INTEGRATION_REGEXES: List[str] = sum(
 
 YML_SCRIPT_REGEXES: List[str] = [
     PACKS_SCRIPT_YML_REGEX,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    PACKS_SCRIPT_TEST_PLAYBOOK
 ]
 
 YML_ALL_SCRIPTS_REGEXES: List[str] = sum(
@@ -511,6 +551,10 @@ JSON_ALL_LAYOUT_REGEXES = [
     PACKS_LAYOUT_JSON_REGEX,
 ]
 
+JSON_ALL_LAYOUTS_CONTAINER_REGEXES = [
+    PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+]
+
 JSON_ALL_INCIDENT_FIELD_REGEXES = [
     PACKS_INCIDENT_FIELD_JSON_REGEX,
 ]
@@ -560,6 +604,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_SCRIPT_PS_REGEX,
     PACKS_SCRIPT_TEST_PY_REGEX,
     PACKS_SCRIPT_README_REGEX,
+    PACKS_SCRIPT_TEST_PLAYBOOK,
 
     PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
@@ -574,6 +619,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
     PACKS_TOOLS_REGEX,
+    CONNECTIONS_REGEX,
     # ReleaseNotes
     PACKS_RELEASE_NOTES_REGEX
 ]
@@ -639,7 +685,9 @@ KNOWN_FILE_STATUSES = ['a', 'm', 'd', 'r'] + ['r{:03}'.format(i) for i in range(
 
 CODE_FILES_REGEX = [
     PACKS_INTEGRATION_PY_REGEX,
-    PACKS_SCRIPT_PY_REGEX
+    PACKS_SCRIPT_PY_REGEX,
+    PACKS_INTEGRATION_PS_REGEX,
+    PACKS_SCRIPT_PS_REGEX
 ]
 
 SCRIPTS_REGEX_LIST = [PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_PS_REGEX]
@@ -685,6 +733,8 @@ PYTHON_SUBTYPES = {'python3', 'python2'}
 CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
 CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
 SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
+CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
+CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
@@ -718,9 +768,6 @@ INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoin
                           'Vulnerability Management', 'Case Management', 'Forensics & Malware Analysis',
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
                           'Deception', 'Email Gateway']
-
-EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
-
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,
@@ -731,6 +778,7 @@ SCHEMA_TO_REGEX = {
     'classifier_5_9_9': JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
     'classifier': JSON_ALL_CLASSIFIER_REGEXES,
     'mapper': JSON_ALL_MAPPER_REGEXES,
+    'layoutscontainer': JSON_ALL_LAYOUTS_CONTAINER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
@@ -747,6 +795,9 @@ SCHEMA_TO_REGEX = {
     'report': [PACKS_REPORT_JSON_REGEX],
     'release-notes': [PACKS_RELEASE_NOTES_REGEX]
 }
+
+EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
+
 
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES

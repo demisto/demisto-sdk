@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 import demisto_sdk.commands.common.tools as tools
 # Third party packages
@@ -43,7 +43,7 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: bool, log_path: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str):
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
@@ -80,14 +80,16 @@ class LintManager:
         # Check env requirements satisfied - bootstrap in use
         validate_env()
         # Get content repo object
+        is_external_repo = False
         try:
             git_repo = git.Repo(os.getcwd(),
                                 search_parent_directories=True)
             remote_url = git_repo.remote().urls.__next__()
-            if 'content' not in remote_url:
-                raise git.InvalidGitRepositoryError
+            is_fork_repo = 'content' in remote_url
+            is_external_repo = tools.is_external_repository()
 
-            is_private_repo = tools.is_private_repository()
+            if not is_fork_repo and not is_external_repo:
+                raise git.InvalidGitRepositoryError
 
             facts["content_repo"] = git_repo
             logger.debug(f"Content path {git_repo.working_dir}")
@@ -101,7 +103,8 @@ class LintManager:
                 pipfile_lock_path = pipfile_dir / f'pipfile_python{py_num}/Pipfile.lock'
                 with open(file=pipfile_lock_path) as f:
                     lock_file: dict = json.load(fp=f)["develop"]
-                    facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in lock_file.items()]
+                    facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in  # type: ignore
+                                                       lock_file.items()]
                     logger.debug(f"Test requirements successfully collected for python {py_num}:\n"
                                  f" {facts[f'requirements_{py_num}']}")
         except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
@@ -110,7 +113,8 @@ class LintManager:
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
-            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"], is_private_repo=is_private_repo)
+            facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"],  # type: ignore
+                                                     is_external_repo=is_external_repo)
             logger.debug("Test mandatory modules successfully collected")
         except git.GitCommandError as e:
             print_error(
@@ -235,9 +239,9 @@ class LintManager:
             failure_report(str): Path for store failed packs report
 
         Returns:
-            int: exit code by falil exit codes by var EXIT_CODES
+            int: exit code by fail exit codes by var EXIT_CODES
         """
-        lint_status = {
+        lint_status: Dict = {
             "fail_packs_flake8": [],
             "fail_packs_bandit": [],
             "fail_packs_mypy": [],
@@ -314,7 +318,7 @@ class LintManager:
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code,
-                             skipped_code=skipped_code,
+                             skipped_code=int(skipped_code),
                              pkgs_type=pkgs_type)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
@@ -543,7 +547,7 @@ class LintManager:
         wrapper_fail_pack = textwrap.TextWrapper(initial_indent=fail_pack_prefix, width=preferred_width,
                                                  subsequent_indent=' ' * len(fail_pack_prefix))
         # intersection of all failed packages
-        failed = set()
+        failed: Set[str] = set()
         for packs in lint_status.values():
             failed = failed.union(packs)
         # Log unit-tests summary
@@ -579,7 +583,7 @@ class LintManager:
         :param path: str
             The path to save the report.
         """
-        failed_ut = set().union([second_val for val in lint_status.values() for second_val in val])
+        failed_ut: Set[Any] = set().union([second_val for val in lint_status.values() for second_val in val])
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))

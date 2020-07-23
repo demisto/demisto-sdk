@@ -41,13 +41,11 @@ mapping:
   description:
     type: str
     required: true
-  feedIncremental:
-    type: bool
-  defaultMapperIn:
+  defaultmapperin:
     type: str
-  defaultMapperOut:
+  defaultmapperout:
     type: str
-  defaultClassifier:
+  defaultclassifier:
     type: str
   detaileddescription:
     type: str
@@ -91,6 +89,8 @@ mapping:
         type: str
         enum: ['python2', 'python3']
       feed:
+        type: bool
+      isFetchSamples:
         type: bool
   system:
     type: bool

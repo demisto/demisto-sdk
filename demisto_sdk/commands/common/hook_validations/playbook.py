@@ -54,6 +54,9 @@ class PlaybookValidator(ContentEntityValidator):
         And prints an error message accordingly
         """
         file_type = self.structure_validator.scheme_name
+        if not isinstance(file_type, str):
+            file_type = file_type.value
+
         tests = self.current_file.get('tests', [])
         return self.yml_has_test_key(tests, file_type)
 
@@ -175,7 +178,6 @@ class PlaybookValidator(ContentEntityValidator):
         unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
 
         # Remove all nexttasks from unhandled_reply_options (UPPER)
-        next_tasks: Dict = task.get('nexttasks', {})
         for next_task_branch, next_task_id in next_tasks.items():
             try:
                 if next_task_id:
@@ -230,7 +232,8 @@ class PlaybookValidator(ContentEntityValidator):
                 tasks_bucket.add(task_id)
             next_tasks = task.get('nexttasks', {})
             for next_task_ids in next_tasks.values():
-                next_tasks_bucket.update(next_task_ids)
+                if next_task_ids:
+                    next_tasks_bucket.update(next_task_ids)
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
             error_message, error_code = Errors.playbook_unconnected_tasks(orphan_tasks)

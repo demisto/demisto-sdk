@@ -130,7 +130,7 @@ class SecretsValidator(object):
         all_files = files_string.split('\n')
         text_files_list = set()
         for file_name in all_files:
-            file_data = file_name.split()
+            file_data = list(filter(None, file_name.split('\t')))
             if not file_data:
                 continue
             file_status = file_data[0]

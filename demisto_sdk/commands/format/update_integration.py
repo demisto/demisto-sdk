@@ -1,6 +1,9 @@
 from typing import List, Tuple
 
-from demisto_sdk.commands.common.constants import BANG_COMMAND_NAMES, TYPE_PWSH
+from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   TYPE_PWSH)
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -22,7 +25,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
         'proxy': 'Use system proxy settings'
     }
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
@@ -73,6 +77,32 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
                     command['arguments'] = argument_list
 
+    def set_fetch_params_in_config(self):
+        """
+        Check if the data is of fetch integration and if so, check that isfetch and incidenttype exist with the
+        correct fields.
+        """
+        if self.data.get('script', {}).get('isfetch') is True:
+            params = [_key for _key in self.data.get('configuration', [])]
+            for param in FETCH_REQUIRED_PARAMS:
+                if param not in params:
+                    self.data['configuration'].append(param)
+
+    def set_feed_params_in_config(self):
+        """
+        format the feed integration yml so all required fields in feed integration will exist in the yml file.
+        """
+        if self.data.get("script", {}).get("feed"):
+            # Creates a deep copy of the feed integration configuration so the 'defaultvalue` field would not get
+            # popped from the original configuration params.
+            params = [dict(config) for config in self.data.get('configuration', [])]
+            for counter, param in enumerate(params):
+                if 'defaultvalue' in param:
+                    params[counter].pop('defaultvalue')
+            for param in FEED_REQUIRED_PARAMS:
+                if param not in params:
+                    self.data['configuration'].append(param)
+
     def run_format(self) -> int:
         try:
             super().update_yml()
@@ -80,6 +110,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()
             self.set_reputation_commands_basic_argument_as_needed()
+            self.set_fetch_params_in_config()
+            self.set_feed_params_in_config()
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception:

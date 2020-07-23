@@ -17,6 +17,7 @@ def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator.added_files = added_files
     release_notes_validator.pack_name = 'CortexXDR'
     release_notes_validator.ignored_errors = {}
+    release_notes_validator.checked_files = set()
     return release_notes_validator
 
 
@@ -73,16 +74,16 @@ def test_init():
 
 
 NOT_FILLED_OUT_RN = '''
-### IncidentTypes
+### Incident Types
 #### Cortex XDR Incident
 - %%UPDATE_RN%%
 
-### IncidentFields
+### Incident Fields
 #### XDR Alerts
 - %%UPDATE_RN%%
 
 ### Integrations
-#### Cortex XDR - IR
+#### Palo Alto Networks Cortex XDR - Investigation and Response
 - %%UPDATE_RN%%
 
 ### Scripts
@@ -90,16 +91,16 @@ NOT_FILLED_OUT_RN = '''
 - %%UPDATE_RN%%
 '''
 FILLED_OUT_RN = '''
-### IncidentTypes
+### Incident Types
 #### Cortex XDR Incident
 - Test
 
-### IncidentFields
+### Incident Fields
 #### XDR Alerts
 - Test
 
 ### Integrations
-#### Cortex XDR - IR
+#### Palo Alto Networks Cortex XDR - Investigation and Response
 - Test
 
 ### Scripts

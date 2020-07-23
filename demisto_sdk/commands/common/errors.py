@@ -1,15 +1,20 @@
 from typing import Any
 
-from demisto_sdk.commands.common.constants import (CONF_PATH,
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
+                                                   CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
-FOUND_FILES_AND_ERRORS = []
+FOUND_FILES_AND_ERRORS = []  # type: list
+FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113']
+
 
 PRESET_ERROR_TO_IGNORE = {
+    'community': ['BC', 'CJ', 'DS', "RM"],
+    'non-certified-partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {
@@ -20,6 +25,8 @@ ERROR_CODE = {
     "wrong_version": "BA100",
     "id_should_equal_name": "BA101",
     "file_type_not_supported": "BA102",
+    "file_name_include_spaces_error": "BA103",
+    "changes_may_fail_validation": "BA104",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -59,6 +66,7 @@ ERROR_CODE = {
     "docker_tag_not_fetched": "DO103",
     "no_docker_tag": "DO104",
     "docker_not_formatted_correctly": "DO105",
+    "docker_not_on_the_latest_tag": "DO106",
     "id_set_conflicts": "ID100",
     "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
@@ -86,6 +94,8 @@ ERROR_CODE = {
     "multiple_release_notes_files": "RN105",
     "missing_release_notes_for_pack": "RN106",
     "missing_release_notes_entry": "RN107",
+    "added_release_notes_for_new_pack": "RN108",
+    "modified_existing_release_notes": "RN109",
     "playbook_cant_have_rolename": "PB100",
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
@@ -94,6 +104,7 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
     "description_in_package_and_yml": "DS103",
+    "no_description_file_warning": "DS104",
     "invalid_incident_field_name": "IF100",
     "invalid_incident_field_content_key_value": "IF101",
     "invalid_incident_field_system_key_value": "IF102",
@@ -107,6 +118,7 @@ ERROR_CODE = {
     "from_version_modified_after_rename": "IF110",
     "incident_field_type_change": "IF111",
     "incident_type_integer_field": "IT100",
+    "incident_type_invalid_playbook_id_field": "IT101",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -120,10 +132,15 @@ ERROR_CODE = {
     "dependencies_field_should_be_dict": "PA110",
     "empty_field_in_pack_metadata": "PA111",
     "pack_metadata_isnt_json": "PA112",
+    "pack_metadata_missing_url_and_email": "PA113",
+    "pack_metadata_version_should_be_raised": "PA114",
+    "pack_timestamp_field_not_in_iso_format": 'PA115',
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
+    "reputation_invalid_indicator_type_id": "RP103",
+    "reputation_empty_required_fields": "RP104",
     "structure_doesnt_match_scheme": "ST100",
     "file_id_contains_slashes": "ST101",
     "file_id_changed": "ST102",
@@ -147,7 +164,9 @@ ERROR_CODE = {
     "invalid_to_version_in_mapper": "MP101",
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
-    "invalid_type_in_mapper": "MP104"
+    "invalid_type_in_mapper": "MP104",
+    "invalid_version_in_layout": "LO100",
+    "invalid_version_in_layoutscontainer": "LO101",
 }
 
 
@@ -183,6 +202,22 @@ class Errors:
         return "The file type is not supported in validate command\n " \
                "validate' command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+
+    @staticmethod
+    @error_code_decorator
+    def file_name_include_spaces_error(file_name):
+        return "Please remove spaces from the file's name: '{}'.".format(file_name)
+
+    @staticmethod
+    @error_code_decorator
+    def changes_may_fail_validation():
+        return "Warning: The changes may fail validation once submitted via a " \
+               "PR. To validate your changes, please make sure you have a git remote setup" \
+               " and pointing to github.com/demisto/content.\nYou can do this by running " \
+               "the following commands:\n\ngit remote add upstream https://github.com/" \
+               "demisto/content.git\ngit fetch upstream\n\nMore info about configuring " \
+               "a remote for a fork is available here: https://help.github.com/en/" \
+               "github/collaborating-with-issues-and-pull-requests/configuring-a-remote-for-a-fork"
 
     @staticmethod
     @error_code_decorator
@@ -417,6 +452,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
+        return f'The docker image tag is not the latest numeric tag, please update it.\n' \
+               f'The docker image tag in the yml file is: {docker_image_tag}\n' \
+               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
+               f'You can check for the most updated version of {docker_image_name} ' \
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
+
+    @staticmethod
+    @error_code_decorator
     def id_set_conflicts():
         return "You probably merged from master and your id_set.json has " \
                "conflicts. Run `demisto-sdk create-id-set`, it should reindex your id_set.json"
@@ -548,12 +592,16 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_not_finished():
-        return "Please finish filling out the release notes"
+        return "Please finish filling out the release notes. For common troubleshooting steps, please " \
+               "review the documentation found here: " \
+               "https://xsoar.pan.dev/docs/integrations/changelog#common-troubleshooting-tips"
 
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return "Your release notes file is empty, please complete it."
+        return "Your release notes file is empty, please complete it. If you are trying to exclude " \
+               "an item from the release notes, please refer to the documentation found here: " \
+               "https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
 
     @staticmethod
     @error_code_decorator
@@ -564,16 +612,32 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes_for_pack(pack):
-        return f"Release notes were not found for. Please run `demisto-sdk " \
+        return f"Release notes were not found. Please run `demisto-sdk " \
                f"update-release-notes -p {pack} -u (major|minor|revision)` to " \
-               f"generate release notes according to the new standard."
+               f"generate release notes according to the new standard. You can refer to the documentation " \
+               f"found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
     @staticmethod
     @error_code_decorator
     def missing_release_notes_entry(file_type, pack_name, entity_name):
         return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
                f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
-               f"generate an updated template."
+               f"generate an updated template. If you are trying to exclude an item from the release " \
+               f"notes, please refer to the documentation found here - " \
+               f"https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
+
+    @staticmethod
+    @error_code_decorator
+    def added_release_notes_for_new_pack(pack_name):
+        return f"ReleaseNotes were added for the newly created pack \"{pack_name}\" - remove them"
+
+    @staticmethod
+    @error_code_decorator
+    def modified_existing_release_notes(pack_name):
+        return f"Modified existing release notes for \"{pack_name}\" - revert the change and add new release notes " \
+               f"if needed by running:\n`demisto-sdk update-release-notes -p {pack_name} -u (major|minor|revision)`\n" \
+               f"You can refer to the documentation found here: " \
+               f"https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
     @staticmethod
     @error_code_decorator
@@ -590,7 +654,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def playbook_unhandled_condition(task_id, task_condition_labels):
-        return f'Playbook conditional task with id:{task_id} has unhandled ' \
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 
     @staticmethod
@@ -601,29 +665,34 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return "No detailed description file was found in the package. Please add one, " \
-               "and make sure it includes the beta disclaimer note." \
-               "It should contain the string in constant\"BETA_INTEGRATION_DISCLAIMER\""
+        return f"No detailed description file was found in the package. Please add one, " \
+               f"and make sure it includes the beta disclaimer note." \
+               f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_description():
-        return "The detailed description in beta integration package " \
-               "dose not contain the beta disclaimer note. It should contain the string in constant" \
-               "\"BETA_INTEGRATION_DISCLAIMER\"."
+        return f"The detailed description in beta integration package " \
+               f"does not contain the beta disclaimer note. Add the following to the description:\n" \
+               f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def no_beta_disclaimer_in_yml():
-        return "The detailed description field in beta integration " \
-               "dose not contain the beta disclaimer note. It should contain the string in constant" \
-               " \"BETA_INTEGRATION_DISCLAIMER\"."
+        return f"The detailed description field in beta integration " \
+               f"does not contain the beta disclaimer note. Add the following to the detailed description:\n" \
+               f"{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
     def description_in_package_and_yml():
         return "A description was found both in the " \
                "package and in the yml, please update the package."
+
+    @staticmethod
+    @error_code_decorator
+    def no_description_file_warning():
+        return "No detailed description file was found. Consider adding one."
 
     @staticmethod
     @error_code_decorator
@@ -643,7 +712,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_type(file_type, TypeFields):
-        return f"Type: `{file_type}` is not one of available type.\n" \
+        return f"Type: `{file_type}` is not one of available types.\n" \
                f"available types: {[value.value for value in TypeFields]}"
 
     @staticmethod
@@ -691,6 +760,11 @@ class Errors:
     @error_code_decorator
     def incident_type_integer_field(field):
         return f'The field {field} needs to be a positive integer. Please add it.\n'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_playbook_id_field():
+        return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
 
     @staticmethod
     @error_code_decorator
@@ -759,6 +833,27 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_missing_url_and_email():
+        return 'Contributed packs must include email or url.'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_version_should_be_raised(pack, old_version):
+        return f"The pack version (currently: {old_version}) needs to be raised - " \
+               f"make sure you are merged from master and " \
+               f"update the \"currentVersion\" field in the " \
+               f"pack_metadata.json or in case release notes are required run:\n" \
+               f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"generate them according to the new standard."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_timestamp_field_not_in_iso_format(field_name, value, changed_value):
+        return f"The field \"{field_name}\" should be in the following format: YYYY-MM-DDThh:mm:ssZ, found {value}.\n" \
+               f"Suggested change: {changed_value}"
+
+    @staticmethod
+    @error_code_decorator
     def readme_error(stderr):
         return f'Failed verifying README.md Error Message is: {stderr}'
 
@@ -770,12 +865,22 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def reputation_expiration_should_be_numeric():
-        return 'Expiration field should have a numeric value.'
+        return 'Expiration field should have a positive numeric value.'
 
     @staticmethod
     @error_code_decorator
     def reputation_id_and_details_not_equal():
         return 'id and details fields are not equal.'
+
+    @staticmethod
+    @error_code_decorator
+    def reputation_invalid_indicator_type_id():
+        return 'Indicator type "id" field can not include spaces or special characters.'
+
+    @staticmethod
+    @error_code_decorator
+    def reputation_empty_required_fields():
+        return 'id and details fields can not be empty.'
 
     @staticmethod
     @error_code_decorator
@@ -835,6 +940,16 @@ class Errors:
     @error_code_decorator
     def pykwalify_general_error(error):
         return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layout(version_field):
+        return f'{version_field} field in layout needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layoutscontainer(version_field):
+        return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
 
     @staticmethod
     @error_code_decorator
@@ -920,15 +1035,15 @@ class Errors:
 
     @staticmethod
     def id_might_changed():
-        return "ID might have changed, please make sure to check you have the correct one."
+        return "ID may have changed, please make sure to check you have the correct one."
 
     @staticmethod
     def id_changed():
-        return "You've changed the ID of the file, please undo."
+        return "You've changed the ID of the file, please undo this change."
 
     @staticmethod
     def might_need_release_notes():
-        return "You might need RN in file, please make sure to check that."
+        return "You may need RN in this file, please verify if they are required."
 
     @staticmethod
     def unknown_file():

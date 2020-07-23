@@ -29,6 +29,8 @@ VALID_REPUTATION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputations-va
 INVALID_REPUTATION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputations-invalid.json"
 VALID_LAYOUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/layout-valid.json"
 INVALID_LAYOUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/layout-invalid.json"
+VALID_LAYOUT_CONTAINER_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/layoutscontainer_valid.json"
+INVALID_LAYOUT_CONTAINER_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/layoutscontainer_invalid.json"
 VALID_INCIDENT_TYPE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/incidenttype-valid.json"
 VALID_WIDGET_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/widget-valid.json"
 INVALID_WIDGET_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/widget-invalid.json"
@@ -52,6 +54,7 @@ INVALID_MULTI_LINE_1_CHANGELOG_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/
 INVALID_MULTI_LINE_2_CHANGELOG_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid-multi-line_2_CHANGELOG.md"
 PACK_TARGET = "Packs/TestPack"
 LAYOUT_TARGET = f"{PACK_TARGET}/Layouts/layout-mock.json"
+LAYOUTS_CONTAINER_TARGET = f"{PACK_TARGET}/Layouts/layoutscontainer-mock.json"
 INDICATOR_TYPE_TARGET = f"{PACK_TARGET}/IndicatorTypes/reputations-valid.json"
 WIDGET_TARGET = f"{PACK_TARGET}/Widgets/widget-mocks.json"
 DASHBOARD_TARGET = f"{PACK_TARGET}/Dashboards/dashboard-mocks.json"
@@ -130,6 +133,16 @@ VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"
 CONF_JSON_MOCK_PATH = 'demisto_sdk/tests/test_files/conf.json'
+
+SOURCE_FORMAT_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-valid.yml"
+SOURCE_FORMAT_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-invalid.yml"
+
+FEED_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feedvalid.yml"
+FEED_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feed-invalid.yml"
+
+
+DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"
+INTEGRATION_PATH = "Integrations"
 
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',

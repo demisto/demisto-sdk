@@ -102,7 +102,7 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     return skipped_code
 
 
-def get_test_modules(content_repo: Optional[git.Repo], is_private_repo: bool) -> Dict[Path, bytes]:
+def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -> Dict[Path, bytes]:
     """ Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py
     2. Tests/scripts/dev_envs/pytest/conftest.py
@@ -112,7 +112,7 @@ def get_test_modules(content_repo: Optional[git.Repo], is_private_repo: bool) ->
     Returns:
         dict: path and file content - see below modules dict
     """
-    if is_private_repo:
+    if is_external_repo:
         modules = [Path("demistomock.py"),
                    Path("dev_envs/pytest/conftest.py"),
                    Path("CommonServerPython.py"),

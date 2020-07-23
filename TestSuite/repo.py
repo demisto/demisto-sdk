@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from TestSuite.conf_json import ConfJSON
 from TestSuite.global_secrets import GlobalSecrets
+from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 
 
@@ -43,6 +44,27 @@ class Repo:
         # Conf.json
         self.conf = ConfJSON(self._test_dir, 'conf.json', '')
         self.conf.write_json()
+
+        self.content_descriptor = JSONBased(self._tmpdir, 'content-descriptor', '')
+        self.content_descriptor.write_json({})
+
+        self.id_set = JSONBased(self._test_dir, 'id_set', '')
+        self.id_set.write_json({
+            'scripts': [],
+            'playbooks': [],
+            'integrations': [],
+            'TestPlaybooks': [],
+            'Classifiers': [],
+            'Dashboards': [],
+            'IncidentFields': [],
+            'IncidentTypes': [],
+            'IndicatorFields': [],
+            'IndicatorTypes': [],
+            'Layouts': [],
+            'Reports': [],
+            'Widgets': [],
+            'Mappers': [],
+        })
 
     def create_pack(self, name: Optional[str] = None):
         if name is None:

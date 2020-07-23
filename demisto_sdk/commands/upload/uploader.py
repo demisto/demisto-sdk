@@ -8,7 +8,7 @@ from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS,
                                                    CONTENT_ENTITY_UPLOAD_ORDER,
                                                    INTEGRATIONS_DIR, PACKS_DIR,
-                                                   SCRIPTS_DIR)
+                                                   SCRIPTS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, find_type, get_child_directories, get_child_files, get_json,
     get_parent_directory_name, is_path_of_classifier_directory,
@@ -50,25 +50,27 @@ class Uploader:
         # Input is a file
         elif os.path.isfile(self.path):
             file_type = find_type(self.path)
-            if file_type == 'integration':
+            if file_type == FileType.INTEGRATION:
                 self.integration_uploader(self.path)
-            elif file_type == 'script':
+            elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
                 self.script_uploader(self.path)
-            elif file_type == 'playbook':
+            elif file_type == FileType.PLAYBOOK:
                 self.playbook_uploader(self.path)
-            elif file_type == 'widget':
+            elif file_type == FileType.WIDGET:
                 self.widget_uploader(self.path)
-            elif file_type == 'incidenttype':
+            elif file_type == FileType.INCIDENT_TYPE:
                 self.incident_type_uploader(self.path)
-            elif file_type == 'classifier':
+            elif file_type == FileType.CLASSIFIER:
                 self.classifier_uploader(self.path)
-            elif file_type == 'classifier_5_9_9':
+            elif file_type == FileType.OLD_CLASSIFIER:
                 self.classifier_uploader(self.path)
-            elif file_type == 'layout':
+            elif file_type == FileType.LAYOUT:
                 self.layout_uploader(self.path)
-            elif file_type == 'dashboard':
+            elif file_type == FileType.LAYOUTS_CONTAINER:
+                self.layout_uploader(self.path)
+            elif file_type == FileType.DASHBOARD:
                 self.dashboard_uploader(self.path)
-            elif file_type == 'incidentfield':
+            elif file_type == FileType.INCIDENT_FIELD:
                 self.incident_field_uploader(self.path)
             else:
                 print_error(
@@ -134,7 +136,7 @@ class Uploader:
             list_unified_integrations = get_child_files(path)
             for unified_integration in list_unified_integrations:
                 file_type = find_type(unified_integration)
-                if file_type == 'integration':
+                if file_type == FileType.INTEGRATION:
                     self.integration_uploader(unified_integration)
             # Upload spliced integration files
             list_integrations = get_child_directories(path)
@@ -146,7 +148,7 @@ class Uploader:
             list_unified_scripts = get_child_files(path)
             for unified_script in list_unified_scripts:
                 file_type = find_type(unified_script)
-                if file_type == 'script':
+                if file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
                     self.script_uploader(unified_script)
             # Upload spliced scripts
             list_script = get_child_directories(path)

@@ -23,6 +23,9 @@ Supported content entities:
 - Layouts
 - Classifiers
 
+#### Limitation
+Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
+
 ### Arguments
 * **-i <PATH_IN_CONTENT>, --<PATH_IN_CONTENT>**
 

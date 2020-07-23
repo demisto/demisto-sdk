@@ -2,6 +2,7 @@ import os
 import shutil
 import unittest
 
+import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 
@@ -18,26 +19,38 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n### Integrations\n#### Hello World Integration\n- %%UPDATE_RN%%\n" \
-                          "\n### Playbooks\n#### Hello World Playbook\n- %%UPDATE_RN%%\n" \
-                          "\n### Scripts\n#### Hello World Script\n- %%UPDATE_RN%%\n" \
-                          "\n### IncidentFields\n#### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
-                          "\n### Classifiers\n#### Hello World Classifier\n- %%UPDATE_RN%%\n" \
-                          "\n### Layouts\n#### Hello World Layout\n- %%UPDATE_RN%%\n" \
-                          "\n### IncidentTypes\n#### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
-                          "\n### IndicatorTypes\n#### Hello World Indicator Type\n- %%UPDATE_RN%%\n"
+        expected_result = \
+            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
+            "\n#### Connections\n##### Hello World Connection\n- %%UPDATE_RN%%\n" \
+            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Fields\n##### Hello World IncidentField\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Types\n##### Hello World Incident Type\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Types\n##### Hello World Indicator Type\n- %%UPDATE_RN%%\n" \
+            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
+            "\n#### Layouts\n##### Hello World Layout\n- %%UPDATE_RN%%\n" \
+            "##### Second Hello World Layout\n- %%UPDATE_RN%%\n" \
+            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
+            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
+            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
+            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
+
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         changed_items = {
             "Hello World Integration": "Integration",
             "Hello World Playbook": "Playbook",
             "Hello World Script": "Script",
-            "Hello World IncidentField": "IncidentFields",
+            "Hello World IncidentField": "Incident Fields",
             "Hello World Classifier": "Classifiers",
             "N/A": "Integration",
             "Hello World Layout": "Layouts",
-            "Hello World Incident Type": "IncidentTypes",
-            "Hello World Indicator Type": "IndicatorTypes",
+            "Hello World Incident Type": "Incident Types",
+            "Hello World Indicator Type": "Indicator Types",
+            "Second Hello World Layout": "Layouts",
+            "Hello World Widget": "Widgets",
+            "Hello World Dashboard": "Dashboards",
+            "Hello World Connection": "Connections",
+            "Hello World Report": "Reports",
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -89,7 +102,7 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
-        version_number, _ = update_rn.bump_version_number(pre_release=False)
+        version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
@@ -110,7 +123,7 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
-        version_number, _ = update_rn.bump_version_number(pre_release=False)
+        version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
@@ -131,7 +144,31 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type='revision', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
-        version_number, _ = update_rn.bump_version_number(pre_release=False)
+        version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
+        assert version_number == expected_version
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
+
+    def test_bump_version_number_specific(self):
+        """
+            Given:
+                - a pack name and specific version
+            When:
+                - bumping the version number in the metadata.json
+            Then:
+                - return the correct bumped version number
+        """
+        shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
+                    dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
+        expected_version = '2.0.0'
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack="HelloWorld", update_type=None, specific_version='2.0.0',
+                             pack_files={'HelloWorld'}, added_files=set())
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH,
+                                               'fake_pack/pack_metadata.json')
+        version_number, _ = update_rn.bump_version_number(pre_release=False,
+                                                          specific_version='2.0.0')
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
@@ -220,68 +257,66 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="HelloWorld", update_type=None, pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        version, data = update_rn.bump_version_number()
-        assert version == '99.99.99'
+        self.assertRaises(ValueError, update_rn.bump_version_number)
 
 
 class TestRNUpdateUnit:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     CURRENT_RN = """
-### IncidentTypes
-#### Cortex XDR Incident
+#### Incident Types
+##### Cortex XDR Incident
 - %%UPDATE_RN%%
 
-### IncidentFields
-#### XDR Alerts
+#### Incident Fields
+##### XDR Alerts
 - %%UPDATE_RN%%
 """
     CHANGED_FILES = {
-        "Cortex XDR Incident": "IncidentType",
-        "XDR Alerts": "IncidentField",
-        "Sample IncidentField": "IncidentField",
+        "Cortex XDR Incident": "Incident Type",
+        "XDR Alerts": "Incident Field",
+        "Sample IncidentField": "Incident Field",
         "Cortex XDR - IR": "Integration",
         "Nothing": None,
         "Sample": "Integration",
     }
     EXPECTED_RN_RES = """
-### IncidentTypes
-#### Cortex XDR Incident
+#### Incident Types
+##### Cortex XDR Incident
 - %%UPDATE_RN%%
 
-### IncidentFields
-#### Sample IncidentField
+#### Incident Fields
+##### Sample IncidentField
 - %%UPDATE_RN%%
 
-#### XDR Alerts
+##### XDR Alerts
 - %%UPDATE_RN%%
 
-### Integration
-#### Sample
+#### Integration
+##### Sample
 - %%UPDATE_RN%%
 
-#### Cortex XDR - IR
+##### Cortex XDR - IR
 - %%UPDATE_RN%%
 """
 
-    def test_ident_changed_file_type_integration(self, mocker):
-        """
-            Given:
-                - a filepath of a changed file
-            When:
-                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
-            Then:
-                - return tuple where first value is the pack name, and second is the item type
-        """
-        expected_result = ('VulnDB', 'Integration')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Integration/VulnDB/VulnDB.py')
-        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.identify_changed_file_type(filepath)
-        assert expected_result == result
+    diff_package = [('Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layouts')),
+                    ('Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
+                    ('IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
+                    ('IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
+                    ('Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB', 'Playbook')),
+                    ('Script/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
+                    ('ReleaseNotes/1_0_1.md', ('N/A', None)),
+                    ('Integrations/VulnDB/VulnDB.yml', ('VulnDB', 'Integration')),
+                    ('Connections/VulnDB/VulnDB.yml', ('VulnDB', 'Connections')),
+                    ('Dashboards/VulnDB/VulnDB.yml', ('VulnDB', 'Dashboards')),
+                    ('Widgets/VulnDB/VulnDB.yml', ('VulnDB', 'Widgets')),
+                    ('Reports/VulnDB/VulnDB.yml', ('VulnDB', 'Reports')),
+                    ('IndicatorTypes/VulnDB/VulnDB.yml', ('VulnDB', 'Indicator Types')),
+                    ('TestPlaybooks/VulnDB/VulnDB.yml', ('VulnDB', None)),
+                    ]
 
-    def test_ident_changed_file_type_release_notes(self):
+    @pytest.mark.parametrize('path, expected_result', diff_package)
+    def test_ident_changed_file_type(self, path, expected_result, mocker):
         """
             Given:
                 - a filepath of a changed file
@@ -290,116 +325,9 @@ class TestRNUpdateUnit:
             Then:
                 - return tuple where first value is the pack name, and second is the item type
         """
-        expected_result = ('N/A', None)
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_0_1.md')
-        result = update_rn.identify_changed_file_type(filepath)
-        assert expected_result == result
-
-    def test_ident_changed_file_type_script(self, mocker):
-        """
-            Given:
-                - a filepath of a changed file
-            When:
-                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
-            Then:
-                - return tuple where first value is the pack name, and second is the item type
-        """
-        expected_result = ('VulnDB', 'Script')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Script/VulnDB/VulnDB.py')
-        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.identify_changed_file_type(filepath)
-        assert expected_result == result
-
-    def test_ident_changed_file_type_playbooks(self, mocker):
-        """
-            Given:
-                - a filepath of a changed file
-            When:
-                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
-            Then:
-                - return tuple where first value is the pack name, and second is the item type
-        """
-        expected_result = ('VulnDB', 'Playbook')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Playbooks/VulnDB/VulnDB_playbook.yml')
-        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.identify_changed_file_type(filepath)
-        assert expected_result == result
-
-    def test_ident_changed_file_type_incident_fields(self, mocker):
-        """
-            Given:
-                - a filepath of a changed file
-            When:
-                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
-            Then:
-                - return tuple where first value is the pack name, and second is the item type
-        """
-        expected_result = ('VulnDB', 'IncidentFields')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'IncidentFields/VulnDB/VulnDB.json')
-        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.identify_changed_file_type(filepath)
-        assert expected_result == result
-
-    def test_ident_changed_file_type_incident_types(self, mocker):
-        """
-            Given:
-                - a filepath of a changed file
-            When:
-                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
-            Then:
-                - return tuple where first value is the pack name, and second is the item type
-        """
-        expected_result = ('VulnDB', 'IncidentTypes')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'IncidentTypes/VulnDB/VulnDB.json')
-        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.identify_changed_file_type(filepath)
-        assert expected_result == result
-
-    def test_ident_changed_file_type_classifiers(self, mocker):
-        """
-            Given:
-                - a filepath of a changed file
-            When:
-                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
-            Then:
-                - return tuple where first value is the pack name, and second is the item type
-        """
-        expected_result = ('VulnDB', 'Classifiers')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Classifiers/VulnDB/VulnDB.json')
-        mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
-        result = update_rn.identify_changed_file_type(filepath)
-        assert expected_result == result
-
-    def test_ident_changed_file_type_layouts(self, mocker):
-        """
-            Given:
-                - a filepath of a changed file
-            When:
-                - determining the type of item changed (e.g. Integration, Script, Layout, etc.)
-            Then:
-                - return tuple where first value is the pack name, and second is the item type
-        """
-        expected_result = ('VulnDB', 'Layout')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, 'Layouts/VulnDB/VulnDB.json')
+        filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
         result = update_rn.identify_changed_file_type(filepath)
@@ -447,8 +375,7 @@ class TestRNUpdateUnit:
         update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
-        print(new_rn)
-        assert new_rn == self.EXPECTED_RN_RES
+        assert self.EXPECTED_RN_RES == new_rn
 
     def test_commit_to_bump(self):
         """

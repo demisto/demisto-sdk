@@ -68,10 +68,19 @@ class PlaybookYMLFormat(BaseUpdateYML):
         if 'sourceplaybookid' in self.data:
             self.data.pop('sourceplaybookid', None)
 
+    def remove_copy_and_dev_suffixes_from_subplaybook(self):
+        for task_id, task in self.data.get('tasks', {}).items():
+            if task['task'].get('playbookName'):
+                task['task']['playbookName'] = task['task'].get('playbookName').replace('_dev', '').\
+                    replace('_copy', '')
+                task['task']['name'] = task['task'].get('name').replace('_dev', ''). \
+                    replace('_copy', '')
+
     def run_format(self) -> int:
         try:
             super().update_yml()
             self.update_tests()
+            self.remove_copy_and_dev_suffixes_from_subplaybook()
             self.update_conf_json('playbook')
             self.add_description()
             self.delete_sourceplaybookid()

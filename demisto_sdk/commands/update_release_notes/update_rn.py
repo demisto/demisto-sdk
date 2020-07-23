@@ -15,12 +15,13 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_latest_release_notes_text,
                                                pack_name_to_path, print_color,
-                                               print_error, print_warning)
+                                               print_error, print_warning,
+                                               run_command)
 
 
 class UpdateRN:
     def __init__(self, pack: str, update_type: None, pack_files: set, added_files: set,
-                 pre_release: bool = False):
+                 specific_version: str = None, pre_release: bool = False):
 
         self.pack = pack
         self.update_type = update_type
@@ -30,6 +31,8 @@ class UpdateRN:
         self.pack_files = pack_files
         self.added_files = added_files
         self.pre_release = pre_release
+        self.specific_version = specific_version
+        self.existing_rn_changed = False
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -37,7 +40,15 @@ class UpdateRN:
                           f" is not versioned.")
         else:
             try:
-                new_version, new_metadata = self.bump_version_number(self.pre_release)
+                if self.is_bump_required():
+                    if self.update_type is None:
+                        self.update_type = "revision"
+                    new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
+                    print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
+                                LOG_COLORS.NATIVE)
+                else:
+                    new_metadata = self.get_pack_metadata()
+                    new_version = new_metadata.get('currentVersion', '99.99.99')
             except ValueError as e:
                 print_error(e)
                 sys.exit(1)
@@ -50,8 +61,21 @@ class UpdateRN:
                 changed_files[file_name] = file_type
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
-                self.commit_to_bump(new_metadata)
+                if self.is_bump_required():
+                    self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files)
+                if self.existing_rn_changed:
+                    print_color(f"Finished updating release notes for {self.pack}."
+                                f"\nNext Steps:\n - Please review the "
+                                f"created release notes found at {rn_path} and document any changes you "
+                                f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                                f"the new release notes to your branch.\nFor information regarding proper"
+                                f" format of the release notes, please refer to "
+                                f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
+                else:
+                    print_color("No changes to pack files were detected from the previous time "
+                                "this command was run. The release notes have not been "
+                                "changed.", LOG_COLORS.GREEN)
             else:
                 print_warning("No changes which would belong in release notes were detected.")
 
@@ -61,6 +85,16 @@ class UpdateRN:
             print_error(f'"{self.metadata_path}" file does not exist, create one in the root of the pack')
             return False
 
+        return True
+
+    def is_bump_required(self):
+        try:
+            diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
+            if "currentVersion" in diff:
+                return False
+        except RuntimeError:
+            print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "
+                          f"Please verify the pack exists and the pack name is correct.")
         return True
 
     def find_added_pack_files(self):
@@ -80,12 +114,16 @@ class UpdateRN:
     def get_display_name(file_path):
         struct = StructureValidator(file_path=file_path, is_new_file=True)
         file_data = struct.load_data_from_file()
-        if 'name' in file_data:
+        if 'display' in file_data:
+            name = file_data.get('display', None)
+        elif 'name' in file_data:
             name = file_data.get('name', None)
         elif 'TypeName' in file_data:
             name = file_data.get('TypeName', None)
         elif 'brandName' in file_data:
             name = file_data.get('brandName', None)
+        elif 'id' in file_data:
+            name = file_data.get('id', None)
         else:
             name = os.path.basename(file_path)
         return name
@@ -114,28 +152,44 @@ class UpdateRN:
                 _file_type = 'Script'
             # incident fields and indicator fields are using the same scheme.
             elif 'IncidentFields' in file_path:
-                _file_type = 'IncidentFields'
+                _file_type = 'Incident Fields'
             elif 'IndicatorTypes' in file_path:
-                _file_type = 'IndicatorTypes'
+                _file_type = 'Indicator Types'
             elif 'IncidentTypes' in file_path:
-                _file_type = 'IncidentTypes'
+                _file_type = 'Incident Types'
             elif 'Classifiers' in file_path:
                 _file_type = 'Classifiers'
             elif 'Layouts' in file_path:
-                _file_type = 'Layout'
+                _file_type = 'Layouts'
+            elif 'Reports' in file_path:
+                _file_type = 'Reports'
+            elif 'Widgets' in file_path:
+                _file_type = 'Widgets'
+            elif 'Dashboards' in file_path:
+                _file_type = 'Dashboards'
+            elif 'Connections' in file_path:
+                _file_type = 'Connections'
 
         return file_name, _file_type
 
-    def bump_version_number(self, pre_release: bool = False):
-        new_version = None  # This will never happen since we pre-validate the argument
+    def get_pack_metadata(self):
         try:
             data_dictionary = get_json(self.metadata_path)
         except FileNotFoundError:
             print_error(f"Pack {self.pack} was not found. Please verify the pack name is correct.")
             sys.exit(1)
-        if self.update_type is None:
-            new_version = data_dictionary.get('currentVersion', '99.99.99')
-            return new_version, data_dictionary
+        return data_dictionary
+
+    def bump_version_number(self, specific_version: str = None, pre_release: bool = False):
+        if self.update_type is None and specific_version is None:
+            raise ValueError("Received no update type when one was expected.")
+        new_version = ''  # This will never happen since we pre-validate the argument
+        data_dictionary = self.get_pack_metadata()
+        if specific_version:
+            print_color(f"Bumping {self.pack} to the version {specific_version}. If you need to update"
+                        f" the release notes a second time, please remove the -v flag.", LOG_COLORS.NATIVE)
+            data_dictionary['currentVersion'] = specific_version
+            return specific_version, data_dictionary
         elif self.update_type == 'major':
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
@@ -197,53 +251,76 @@ class UpdateRN:
         layout_header = False
         inc_types_header = False
         ind_types_header = False
-        for k, v in changed_items.items():
+        rep_types_header = False
+        widgets_header = False
+        dashboards_header = False
+        connections_header = False
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1] if x[1] is not None else ''):
             if k == 'N/A':
                 continue
             elif v == 'Integration':
                 if not integration_header:
-                    rn_string += '\n### Integrations\n'
+                    rn_string += '\n#### Integrations\n'
                     integration_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Playbook':
                 if not playbook_header:
-                    rn_string += '\n### Playbooks\n'
+                    rn_string += '\n#### Playbooks\n'
                     playbook_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Script':
                 if not script_header:
-                    rn_string += '\n### Scripts\n'
+                    rn_string += '\n#### Scripts\n'
                     script_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
-            elif v == 'IncidentFields':
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Incident Fields':
                 if not inc_flds_header:
-                    rn_string += '\n### IncidentFields\n'
+                    rn_string += '\n#### Incident Fields\n'
                     inc_flds_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Classifiers':
                 if not classifier_header:
-                    rn_string += '\n### Classifiers\n'
+                    rn_string += '\n#### Classifiers\n'
                     classifier_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
             elif v == 'Layouts':
                 if not layout_header:
-                    rn_string += '\n### Layouts\n'
+                    rn_string += '\n#### Layouts\n'
                     layout_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
-            elif v == 'IncidentTypes':
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Incident Types':
                 if not inc_types_header:
-                    rn_string += '\n### IncidentTypes\n'
+                    rn_string += '\n#### Incident Types\n'
                     inc_types_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
-            elif v == 'IndicatorTypes':
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Indicator Types':
                 if not ind_types_header:
-                    rn_string += '\n### IndicatorTypes\n'
+                    rn_string += '\n#### Indicator Types\n'
                     ind_types_header = True
-                rn_string += f'#### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Reports':
+                if not rep_types_header:
+                    rn_string += '\n#### Reports\n'
+                    rep_types_header = True
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Widgets':
+                if not widgets_header:
+                    rn_string += '\n#### Widgets\n'
+                    widgets_header = True
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Dashboards':
+                if not dashboards_header:
+                    rn_string += '\n#### Dashboards\n'
+                    dashboards_header = True
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+            elif v == 'Connections':
+                if not connections_header:
+                    rn_string += '\n#### Connections\n'
+                    connections_header = True
+                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
         return rn_string
 
-    @staticmethod
-    def update_existing_rn(current_rn, changed_files):
+    def update_existing_rn(self, current_rn, changed_files):
         new_rn = current_rn
         for k, v in sorted(changed_files.items(), reverse=True):
             if v is None:
@@ -253,33 +330,36 @@ class UpdateRN:
                 if k in current_rn:
                     continue
                 else:
+                    self.existing_rn_changed = True
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n#### {k}\n- %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
             else:
+                self.existing_rn_changed = True
                 if v in new_rn:
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n#### {k}\n- %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = f'\n### {v}\n#### {k}\n- %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n#### {v}\n##### {k}\n- %%UPDATE_RN%%\n'
                     new_rn += new_rn_part
         return new_rn
 
     def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict):
         if os.path.exists(release_notes_path) and self.update_type is not None:
             print_warning(f"Release notes were found at {release_notes_path}. Skipping")
-        elif self.update_type is None:
+        elif self.update_type is None and self.specific_version is None:
             current_rn = get_latest_release_notes_text(release_notes_path)
             updated_rn = self.update_existing_rn(current_rn, changed_files)
             with open(release_notes_path, 'w') as fp:
                 fp.write(updated_rn)
         else:
+            self.existing_rn_changed = True
             with open(release_notes_path, 'w') as fp:
                 fp.write(rn_string)

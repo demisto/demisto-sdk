@@ -9,6 +9,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
+from demisto_sdk.commands.format import update_generic
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -16,6 +17,7 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
+from TestSuite.test_tools import ChangeCWD
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
@@ -256,3 +258,112 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
         assert 'sourceplaybookid' not in yaml_content
 
     assert not result.exception
+
+
+def test_format_on_valid_py(mocker, repo):
+    """
+    Given
+    - A valid python file.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    valid_py = 'test\n'
+    integration.code.write(valid_py)
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=True)
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert valid_py == integration.code.read()
+    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_invalid_py_empty_lines(mocker, repo):
+    """
+    Given
+    - Invalid python file - empty lines at the end of file.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = 'test\n\n\n\n'
+    integration.code.write(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.code.read()
+    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_invalid_py_dict(mocker, repo):
+    """
+    Given
+    - Invalid python file - missing spaces in dict.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = "{'test':'testing','test1':'testing1'}"
+    integration.code.write(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.code.read()
+    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_invalid_py_long_dict(mocker, repo):
+    """
+    Given
+    - Invalid python file - long dict.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = "{'test':'testing','test1':'testing1','test2':'testing2','test3':'testing3'," \
+                 "'test4':'testing4','test5':'testing5','test6':'testing6'}"
+    integration.code.write(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+
+    assert '=======Starting updates for file:' in result.stdout
+    assert 'Running autopep8 on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.code.read()
+    assert '=======Finished updates for files:' in result.stdout

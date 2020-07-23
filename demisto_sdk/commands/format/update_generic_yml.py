@@ -59,7 +59,7 @@ class BaseUpdateYML(BaseUpdate):
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print(F'Saving output YML file to {self.output_file}')
+        print(F'Saving output YML file to {self.output_file} \n')
         with open(self.output_file, 'w') as f:
             ryaml.dump(self.data, f)  # ruamel preservers multilines
 
@@ -72,7 +72,7 @@ class BaseUpdateYML(BaseUpdate):
 
     def update_yml(self):
         """Manager function for the generic YML updates."""
-        print_color(F'=======Starting updates for file: {self.source_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
 
         self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
@@ -81,7 +81,7 @@ class BaseUpdateYML(BaseUpdate):
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
 
-        print_color(F'=======Finished updates for file: {self.output_file}=======', LOG_COLORS.YELLOW)
+        print_color(F'=======Finished updates for file: {self.output_file}=======\n', LOG_COLORS.WHITE)
 
     def update_tests(self) -> None:
         """

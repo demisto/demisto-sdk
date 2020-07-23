@@ -9,12 +9,13 @@ from tempfile import mkdtemp
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    find_duplicates, get_classifier_data, get_fields_by_script_argument,
-    get_incident_field_data, get_incident_fields_by_playbook_input,
-    get_incident_type_data, get_indicator_type_data, get_layout_data,
-    get_layoutscontainer_data, get_mapper_data, get_playbook_data,
-    get_script_data, get_values_for_keys_recursively, has_duplicate,
-    process_integration, process_playbook, process_script, re_create_id_set)
+    find_duplicates, get_fields_by_script_argument,
+    get_incident_fields_by_playbook_input, get_indicator_type_data,
+    get_playbook_data, get_script_data, get_values_for_keys_recursively,
+    has_duplicate, process_classifier, process_dashboards,
+    process_incident_fields, process_incident_types, process_integration,
+    process_layouts, process_layoutscontainer, process_mappers,
+    process_playbook, process_script, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -520,7 +521,7 @@ class TestPlaybooks:
 
 class TestLayouts:
     @staticmethod
-    def test_get_layout_data():
+    def test_process_layouts__sanity():
         """
         Given
             - A layout file called layout-to-test.json
@@ -531,8 +532,11 @@ class TestLayouts:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/layout-to-test.json'
-        result = get_layout_data(test_dir)
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'layout-to-test.json')
+        res = process_layouts(test_dir, True)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('urlRep')
         assert 'kind' in result.keys()
         assert 'name' in result.keys()
@@ -544,7 +548,7 @@ class TestLayouts:
         assert 'incident_and_indicator_fields' in result.keys()
 
     @staticmethod
-    def test_get_layout_data_no_incident_types_and_fields():
+    def test_process_layouts__no_incident_types_and_fields():
         """
         Given
             - A layout file called layout-to-test.json that doesnt have related incident fields and indicator fields
@@ -555,8 +559,11 @@ class TestLayouts:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/layout-to-test-no-types-fields.json'
-        result = get_layout_data(test_dir)
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'layout-to-test-no-types-fields.json')
+        res = process_layouts(test_dir, False)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('urlRep')
         assert 'kind' in result.keys()
         assert 'name' in result.keys()
@@ -568,7 +575,7 @@ class TestLayouts:
         assert 'incident_and_indicator_fields' not in result.keys()
 
     @staticmethod
-    def test_get_layoutscontainer_data():
+    def test_process_layoutscontainer__sanity():
         """
         Given
             - A layoutscontainer file called layoutscontainer-to-test.json
@@ -579,8 +586,11 @@ class TestLayouts:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/layoutscontainer-to-test.json'
-        result = get_layoutscontainer_data(test_dir)
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'layoutscontainer-to-test.json')
+        res = process_layoutscontainer(test_dir, True)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('layouts_container_test')
         assert 'detailsV2' in result.keys()
         assert 'name' in result.keys()
@@ -594,7 +604,7 @@ class TestLayouts:
 
 class TestIncidentFields:
     @staticmethod
-    def test_get_incident_fields_data():
+    def test_process_incident_fields__sanity():
         """
         Given
             - An incident field file called incidentfield-to-test.json
@@ -605,8 +615,11 @@ class TestIncidentFields:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidentfield-to-test.json'
-        result = get_incident_field_data(test_dir, [])
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'incidentfield-to-test.json')
+        res = process_incident_fields(test_dir, True, [])
+        assert len(res) == 1
+        result = res[0]
         result = result.get('incidentfield-test')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -616,7 +629,7 @@ class TestIncidentFields:
         assert 'scripts' in result.keys()
 
     @staticmethod
-    def test_get_incident_fields_data_no_types_scripts():
+    def test_process_incident_fields__no_types_scripts():
         """
         Given
             - An incident field file called incidentfield-to-test-no-types_scripts.json with no script or incident type
@@ -628,8 +641,11 @@ class TestIncidentFields:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidentfield-to-test-no-types_scripts.json'
-        result = get_incident_field_data(test_dir, [])
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'incidentfield-to-test-no-types_scripts.json')
+        res = process_incident_fields(test_dir, True, [])
+        assert len(res) == 1
+        result = res[0]
         result = result.get('incidentfield-test')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -641,7 +657,7 @@ class TestIncidentFields:
 
 class TestIndicatorType:
     @staticmethod
-    def test_get_indicator_type_data():
+    def test_process_indicator_type__sanity():
         """
         Given
             - An indicator type file called reputation-indicatortype.json.
@@ -692,7 +708,7 @@ class TestIndicatorType:
 
 class TestIncidentTypes:
     @staticmethod
-    def test_get_incident_types_data():
+    def test_process_incident_types__sanity():
         """
         Given
             - An incident type file called incidenttype-to-test.json
@@ -704,7 +720,9 @@ class TestIncidentTypes:
             - parsing all the data from file successfully
         """
         test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidenttype-to-test.json'
-        result = get_incident_type_data(test_dir)
+        res = process_incident_types(test_dir, True)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('dummy incident type')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -713,7 +731,7 @@ class TestIncidentTypes:
         assert 'scripts' in result.keys()
 
     @staticmethod
-    def test_get_incident_types_data_no_playbooks_scripts():
+    def test_process_incident_types__no_playbooks_scripts():
         """
         Given
             - An incident type file called incidenttype-to-test-no-playbook-script.json with no script or playbook
@@ -725,9 +743,12 @@ class TestIncidentTypes:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/incidenttype-to-test-no-playbook-script.json'
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set',
+                                'tests', 'test_data', 'incidenttype-to-test-no-playbook-script.json')
 
-        result = get_incident_type_data(test_dir)
+        res = process_incident_types(test_dir, False)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('dummy incident type')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -738,7 +759,7 @@ class TestIncidentTypes:
 
 class TestClassifiers:
     @staticmethod
-    def test_get_classifiers_data():
+    def test_process_classifiers__sanity():
         """
         Given
             - A classifier file called classifier-to-test.json
@@ -749,8 +770,11 @@ class TestClassifiers:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/classifier-to-test.json'
-        result = get_classifier_data(test_dir)
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'classifier-to-test.json')
+        res = process_classifier(test_dir, True)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('dummy classifier')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -761,7 +785,7 @@ class TestClassifiers:
         assert 'dummy incident type 3' in result['incident_types']
 
     @staticmethod
-    def test_get_classifiers_data_no_types_scripts():
+    def test_process_classifiers__no_types_scripts():
         """
         Given
             - An classifier file called classifier-to-test-no-incidenttypes.json with incident type
@@ -773,9 +797,12 @@ class TestClassifiers:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/classifier-to-test-no-incidenttypes.json'
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'classifier-to-test-no-incidenttypes.json')
 
-        result = get_classifier_data(test_dir)
+        res = process_classifier(test_dir, False)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('dummy classifier')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -786,7 +813,7 @@ class TestClassifiers:
 
 class TestMappers:
     @staticmethod
-    def test_get_mappers_data():
+    def test_process_mappers__sanity():
         """
         Given
             - A mapper file called classifier-mapper-to-test.json
@@ -797,8 +824,11 @@ class TestMappers:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/classifier-mapper-to-test.json'
-        result = get_mapper_data(test_dir)
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'classifier-mapper-to-test.json')
+        res = process_mappers(test_dir, True)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('dummy mapper')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -815,7 +845,7 @@ class TestMappers:
         assert 'occurred' not in result['incident_fields']
 
     @staticmethod
-    def test_get_mappers_data_no_types_fields():
+    def test_process_mappers__no_types_fields():
         """
         Given
             - An mapper file called classifier-mapper-to-test-no-types-fields.json with incident type
@@ -827,9 +857,12 @@ class TestMappers:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/classifier-mapper-to-test-no-types-fields.json'
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'classifier-mapper-to-test-no-types-fields.json')
 
-        result = get_mapper_data(test_dir)
+        res = process_mappers(test_dir, False)
+        assert len(res) == 1
+        result = res[0]
         result = result.get('dummy mapper')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -839,6 +872,23 @@ class TestMappers:
 
 
 class TestGenericFunctions:
+    @staticmethod
+    def test_process_dashboard__exception():
+        """
+        Given
+            - An invalid "dashboard" file located at invalid_file_structures where id is a list so it can't be used
+                as a dict key.
+
+        When
+            - parsing dashboard files
+
+        Then
+            - an exception will be raised
+        """
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'dashboard.json')
+        with pytest.raises(Exception):
+            process_dashboards(test_file_path, True)
+
     @staticmethod
     def test_get_values_for_keys_recursively():
         """

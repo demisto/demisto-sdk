@@ -573,7 +573,7 @@ class TestIsFeedParamsExist:
         (HIDDEN_TRUE, False),
         (HIDDEN_TRUE_AND_FALSE, False),
         (HIDDEN_ALLOWED_TRUE, True),
-        (HIDDEN_ALLOWED_FEED_REPUTATION, True)
+        (HIDDEN_ALLOWED_FEED_REPUTATION, True),
     ]
 
     @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)

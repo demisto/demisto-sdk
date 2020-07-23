@@ -389,8 +389,6 @@ class ValidateManager:
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
                                                                         changed_meta_files))
-        validation_results.add(self.validate_pack_dependencies(modified_files, added_files,
-                                                               id_set_path='Tests/id_set.json'))
 
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
@@ -541,7 +539,7 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return widget_validator.is_valid_file(validate_rn=False)
 
-    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict,
+    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict, id_set_path=None,
                                    should_version_raise=False) -> bool:
         """
         Runs validations on the following pack files:
@@ -549,7 +547,9 @@ class ValidateManager:
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
         * README.md file: Validates that the file exists
         * pack_metadata.json: Validates that the file exists and that it has a valid structure
+        Runs validation on the pack dependencies
         Args:
+            id_set_path (str): Path of the id_set. Optional.
             should_version_raise: Whether we should check if the version of the metadata was raised
             pack_error_ignore_list: A dictionary of all pack ignored errors
             pack_path: A path to a pack
@@ -560,7 +560,9 @@ class ValidateManager:
                                                                pack_path=pack_path,
                                                                ignored_errors=pack_error_ignore_list,
                                                                print_as_warnings=self.print_ignored_errors,
-                                                               should_version_raise=should_version_raise)
+                                                               should_version_raise=should_version_raise,
+                                                               validate_dependencies=self.use_git,
+                                                               id_set_path=id_set_path)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
@@ -585,45 +587,6 @@ class ValidateManager:
             valid_files.add(self.run_validations_on_file(file_path, self.get_error_ignore_list(pack_name),
                                                          is_modified=True, old_file_path=old_file_path))
         return all(valid_files)
-
-    def run_dependencies_validations_on_pack(self, pack, id_set_path=None):
-        core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
-        first_level_dependencies = PackDependencies.find_dependencies(
-            pack, id_set_path=id_set_path, silent_mode=False, exclude_ignored_dependencies=False,
-            update_pack_metadata=False)
-
-        for core_pack in core_pack_list:
-            first_level_dependencies.pop(core_pack, None)
-        if not first_level_dependencies:
-            return True
-
-        dependency_result = json.dumps(first_level_dependencies, indent=4)
-        click.echo(click.style(f"Found dependencies result for {pack} pack:", bold=True))
-        click.echo(click.style(dependency_result, bold=True))
-
-        if first_level_dependencies.get('NonSupported') or first_level_dependencies.get('DeprecatedContent'):
-            error_message, error_code = Errors.invalid_package_dependencies(pack)
-            if self.handle_error(error_message, error_code, file_path=tools.pack_name_to_path(pack)):
-                return False
-
-        return True
-
-    def validate_pack_dependencies(self, modified_files, added_files, id_set_path=None):
-        """
-        Args:
-            id_set_path (str): Path of the id_set. Optional.
-            modified_files (set): a set of modified files.
-            added_files (set): a set of files that were added.
-
-        Returns:
-            bool. True if pack does not depend on unsupported content , False otherwise
-        """
-        click.secho(f'\n================= Running pack dependencies validation =================',
-                    fg="bright_cyan")
-        changes_packs = {get_pack_name(file_path) for file_path in modified_files}
-        changes_packs.update(get_pack_name(file_path) for file_path in added_files)
-
-        return all(self.run_dependencies_validations_on_pack(pack, id_set_path) for pack in changes_packs)
 
     def validate_added_files(self, added_files, modified_files):
         click.secho(f'\n================= Running validation on newly added files =================',
@@ -653,11 +616,12 @@ class ValidateManager:
 
         for pack in changed_packs:
             raise_version = False
-            pack_path = os.path.join(PACKS_DIR, pack)
+            pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
                 raise_version = True
-            valid_pack_files.add(self.validate_pack_unique_files(pack_path, self.get_error_ignore_list(pack),
-                                                                 should_version_raise=raise_version))
+            valid_pack_files.add(self.validate_pack_unique_files(
+                pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
+                id_set_path='Tests/id_set.json'))
 
         return all(valid_pack_files)
 

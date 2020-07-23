@@ -148,13 +148,14 @@ class PackDependencies:
         return list(filter(lambda s: next(iter(s.values())).get('pack') == pack_id, items_list))
 
     @staticmethod
-    def _search_packs_by_items_names(items_names, items_list):
+    def _search_packs_by_items_names(items_names, items_list, exclude_ignored_dependencies=True):
         """
         Searches for implemented script/integration/playbook.
 
         Args:
             items_names (str or list): items names to search.
             items_list (list): specific section of id set.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set or None: found pack ids or None in case nothing was found.
@@ -169,19 +170,21 @@ class PackDependencies:
 
         if content_items:
             pack_names = list(map(lambda s: next(iter(s.values()))['pack'], content_items))
-
+            if not exclude_ignored_dependencies:
+                return set(pack_names)
             return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
         return None
 
     @staticmethod
-    def _search_packs_by_items_names_or_ids(items_names, items_list):
+    def _search_packs_by_items_names_or_ids(items_names, items_list, exclude_ignored_dependencies=True):
         """
         Searches for implemented packs of the given items.
 
         Args:
             items_names (str or list): items names to search.
             items_list (list): specific section of id set.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set or None: found pack ids or None in case nothing was found.
@@ -197,20 +200,21 @@ class PackDependencies:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
                 if (machine_name in item_possible_names or item_name == item_details.get('name')) \
-                        and item_details.get('pack'):
-                    if item_details.get('pack') not in constants.IGNORED_DEPENDENCY_CALCULATION:
-                        packs.add(item_details.get('pack'))
-
+                        and item_details.get('pack') \
+                        and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
+                             not exclude_ignored_dependencies):
+                    packs.add(item_details.get('pack'))
         return packs
 
     @staticmethod
-    def _search_packs_by_integration_command(command, id_set):
+    def _search_packs_by_integration_command(command, id_set, exclude_ignored_dependencies=True):
         """
         Filters packs by implementing integration commands.
 
         Args:
             command (str): integration command.
             id_set (dict): id set json.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: pack id without ignored packs.
@@ -221,7 +225,8 @@ class PackDependencies:
 
         if integrations:
             pack_names = [next(iter(i.values()))['pack'] for i in integrations]
-
+            if not exclude_ignored_dependencies:
+                return set(pack_names)
             return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
         return None
@@ -270,7 +275,7 @@ class PackDependencies:
         return [(p, False) for p in pack_ids]
 
     @staticmethod
-    def _collect_scripts_dependencies(pack_scripts, id_set, verbose_file):
+    def _collect_scripts_dependencies(pack_scripts, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Collects script pack dependencies.
 
@@ -278,6 +283,7 @@ class PackDependencies:
             pack_scripts (list): pack scripts collection.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -295,7 +301,8 @@ class PackDependencies:
 
             for command in dependencies_commands:
                 # try to search dependency by scripts first
-                pack_name = PackDependencies._search_packs_by_items_names(command, id_set['scripts'])
+                pack_name = PackDependencies._search_packs_by_items_names(command, id_set['scripts'],
+                                                                          exclude_ignored_dependencies)
 
                 if pack_name:  # found script dependency implementing pack name
                     pack_dependencies_data = PackDependencies._label_as_mandatory(pack_name)
@@ -303,7 +310,8 @@ class PackDependencies:
                     continue  # found dependency in script section, skipping to next depends on element
 
                 # try to search dependency by integration integration
-                pack_names = PackDependencies._search_packs_by_integration_command(command, id_set)
+                pack_names = PackDependencies._search_packs_by_integration_command(
+                    command, id_set, exclude_ignored_dependencies)
 
                 if pack_names:  # found integration dependency implementing pack name
                     pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(pack_names)
@@ -318,7 +326,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _differentiate_playbook_implementing_objects(implementing_objects, skippable_tasks, id_set_section):
+    def _differentiate_playbook_implementing_objects(implementing_objects, skippable_tasks, id_set_section,
+                                                     exclude_ignored_dependencies=True):
         """
         Differentiate implementing objects by skippable.
 
@@ -326,6 +335,7 @@ class PackDependencies:
             implementing_objects (list): playbook object collection.
             skippable_tasks (set): playbook skippable tasks.
             id_set_section (list): id set section corresponds to implementing_objects (scripts or playbooks).
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -335,14 +345,14 @@ class PackDependencies:
         mandatory_scripts = set(implementing_objects) - skippable_tasks
         optional_scripts = set(implementing_objects) - mandatory_scripts
 
-        optional_script_packs = PackDependencies._search_packs_by_items_names(list(optional_scripts),
-                                                                              id_set_section)
+        optional_script_packs = PackDependencies._search_packs_by_items_names(
+            list(optional_scripts), id_set_section, exclude_ignored_dependencies)
         if optional_script_packs:  # found packs of optional objects
             pack_dependencies_data = PackDependencies._label_as_optional(optional_script_packs)
             dependencies.update(pack_dependencies_data)
 
-        mandatory_script_packs = PackDependencies._search_packs_by_items_names(list(mandatory_scripts),
-                                                                               id_set_section)
+        mandatory_script_packs = PackDependencies._search_packs_by_items_names(
+            list(mandatory_scripts), id_set_section, exclude_ignored_dependencies)
         if mandatory_script_packs:  # found packs of mandatory objects
             pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_script_packs)
             dependencies.update(pack_dependencies_data)
@@ -350,7 +360,7 @@ class PackDependencies:
         return dependencies
 
     @staticmethod
-    def _collect_playbooks_dependencies(pack_playbooks, id_set, verbose_file):
+    def _collect_playbooks_dependencies(pack_playbooks, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Collects playbook pack dependencies.
 
@@ -358,6 +368,7 @@ class PackDependencies:
             pack_playbooks (list): collection of pack playbooks data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -376,9 +387,12 @@ class PackDependencies:
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
 
             for command, integration_name in implementing_commands_and_integrations.items():
-                packs_found_from_integration = PackDependencies._search_packs_by_items_names(integration_name,
-                                                                                             id_set['integrations']) \
-                    if integration_name else PackDependencies._search_packs_by_integration_command(command, id_set)
+                if integration_name:
+                    packs_found_from_integration = PackDependencies._search_packs_by_items_names(
+                        integration_name, id_set['integrations'], exclude_ignored_dependencies)
+                else:
+                    packs_found_from_integration = PackDependencies._search_packs_by_integration_command(
+                        command, id_set, exclude_ignored_dependencies)
 
                 if packs_found_from_integration:
                     if command in skippable_tasks:
@@ -392,20 +406,22 @@ class PackDependencies:
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('implementing_scripts', []),
                 skippable_tasks,
-                id_set['scripts']
+                id_set['scripts'],
+                exclude_ignored_dependencies
             ))
 
             # searching for packs of implementing playbooks
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('implementing_playbooks', []),
                 skippable_tasks,
-                id_set['playbooks']
+                id_set['playbooks'],
+                exclude_ignored_dependencies
             ))
 
             # ---- incident fields packs ----
             incident_fields = playbook_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                incident_fields, id_set['IncidentFields'])
+                incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
                 playbook_dependencies.update(pack_dependencies_data)
@@ -413,7 +429,7 @@ class PackDependencies:
             # ---- indicator fields packs ----
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                indicator_fields, id_set['IndicatorFields'])
+                indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies)
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
@@ -429,7 +445,7 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_layouts_dependencies(pack_layouts, id_set, verbose_file):
+    def _collect_layouts_dependencies(pack_layouts, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Collects layouts pack dependencies.
 
@@ -437,6 +453,7 @@ class PackDependencies:
             pack_layouts (list): collection of pack playbooks data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -451,7 +468,8 @@ class PackDependencies:
 
             related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
             packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
-                related_incident_and_indicator_types, id_set['IncidentTypes'] + id_set['IndicatorTypes'])
+                related_incident_and_indicator_types, id_set['IncidentTypes'] + id_set['IndicatorTypes'],
+                exclude_ignored_dependencies)
 
             if packs_found_from_incident_indicator_types:
                 pack_dependencies_data = PackDependencies. \
@@ -460,7 +478,8 @@ class PackDependencies:
 
             related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
             packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                related_incident_and_indicator_fields, id_set['IncidentFields'] + id_set['IndicatorFields'])
+                related_incident_and_indicator_fields, id_set['IncidentFields'] + id_set['IndicatorFields'],
+                exclude_ignored_dependencies)
 
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \
@@ -478,7 +497,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_fields_dependencies(pack_incidents_fields, id_set, verbose_file):
+    def _collect_incidents_fields_dependencies(pack_incidents_fields, id_set, verbose_file,
+                                               exclude_ignored_dependencies=True):
         """
         Collects in incidents fields dependencies.
 
@@ -486,6 +506,7 @@ class PackDependencies:
             pack_incidents_fields (list): collection of pack incidents fields data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -509,7 +530,7 @@ class PackDependencies:
 
             related_scripts = incident_field_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'])
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -527,7 +548,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_indicators_types_dependencies(pack_indicators_types, id_set, verbose_file):
+    def _collect_indicators_types_dependencies(pack_indicators_types, id_set, verbose_file,
+                                               exclude_ignored_dependencies=True):
         """
         Collects in indicators types dependencies.
 
@@ -535,6 +557,7 @@ class PackDependencies:
             pack_indicators_types (list): collection of pack indicators types data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -549,7 +572,7 @@ class PackDependencies:
 
             related_integrations = indicator_type_data.get('integrations', [])
             packs_found_from_integrations = PackDependencies._search_packs_by_items_names(
-                related_integrations, id_set['integrations'])
+                related_integrations, id_set['integrations'], exclude_ignored_dependencies)
 
             if packs_found_from_integrations:
                 pack_dependencies_data = PackDependencies. \
@@ -558,7 +581,7 @@ class PackDependencies:
 
             related_scripts = indicator_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'])
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -576,7 +599,7 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_integrations_dependencies(pack_integrations, id_set, verbose_file):
+    def _collect_integrations_dependencies(pack_integrations, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Collects integrations dependencies.
         Args:
@@ -596,7 +619,7 @@ class PackDependencies:
 
             related_classifiers = integration_data.get('classifiers', [])
             packs_found_from_classifiers = PackDependencies._search_packs_by_items_names_or_ids(
-                related_classifiers, id_set['Classifiers'])
+                related_classifiers, id_set['Classifiers'], exclude_ignored_dependencies)
 
             if packs_found_from_classifiers:
                 pack_dependencies_data = PackDependencies. \
@@ -605,7 +628,7 @@ class PackDependencies:
 
             related_mappers = integration_data.get('mappers', [])
             packs_found_from_mappers = PackDependencies._search_packs_by_items_names_or_ids(
-                related_mappers, id_set['Mappers'])
+                related_mappers, id_set['Mappers'], exclude_ignored_dependencies)
 
             if packs_found_from_mappers:
                 pack_dependencies_data = PackDependencies. \
@@ -614,7 +637,7 @@ class PackDependencies:
 
             related_incident_types = integration_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_incident_types, id_set['IncidentTypes'])
+                related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
@@ -639,7 +662,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_types_dependencies(pack_incidents_types, id_set, verbose_file):
+    def _collect_incidents_types_dependencies(pack_incidents_types, id_set, verbose_file,
+                                              exclude_ignored_dependencies=True):
         """
         Collects in incidents types dependencies.
 
@@ -647,6 +671,7 @@ class PackDependencies:
             pack_incidents_types (list): collection of pack incidents types data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -661,7 +686,7 @@ class PackDependencies:
 
             related_playbooks = incident_type_data.get('playbooks', [])
             packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(
-                related_playbooks, id_set['playbooks'])
+                related_playbooks, id_set['playbooks'], exclude_ignored_dependencies)
 
             if packs_found_from_playbooks:
                 pack_dependencies_data = PackDependencies. \
@@ -670,7 +695,7 @@ class PackDependencies:
 
             related_scripts = incident_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'])
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -688,7 +713,7 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_classifiers_dependencies(pack_classifiers, id_set, verbose_file):
+    def _collect_classifiers_dependencies(pack_classifiers, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Collects in classifiers dependencies.
 
@@ -696,6 +721,7 @@ class PackDependencies:
             pack_classifiers (list): collection of pack classifiers data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -710,7 +736,7 @@ class PackDependencies:
 
             related_incident_types = classifier_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_incident_types, id_set['IncidentTypes'])
+                related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
@@ -728,7 +754,7 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_mappers_dependencies(pack_mappers, id_set, verbose_file):
+    def _collect_mappers_dependencies(pack_mappers, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Collects in mappers dependencies.
 
@@ -736,6 +762,7 @@ class PackDependencies:
             pack_mappers (list): collection of pack mappers data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -750,7 +777,7 @@ class PackDependencies:
 
             related_incident_types = mapper_data.get('incident_types', [])
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_incident_types, id_set['IncidentTypes'])
+                related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
@@ -759,7 +786,7 @@ class PackDependencies:
 
             related_incident_fields = mapper_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                related_incident_fields, id_set['IncidentFields'])
+                related_incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
 
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies. \
@@ -803,7 +830,7 @@ class PackDependencies:
         return pack_items
 
     @staticmethod
-    def _find_pack_dependencies(pack_id, id_set, verbose_file):
+    def _find_pack_dependencies(pack_id, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Searches for specific pack dependencies.
 
@@ -811,6 +838,7 @@ class PackDependencies:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -821,47 +849,56 @@ class PackDependencies:
         scripts_dependencies = PackDependencies._collect_scripts_dependencies(
             pack_items['scripts'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         playbooks_dependencies = PackDependencies._collect_playbooks_dependencies(
             pack_items['playbooks'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         layouts_dependencies = PackDependencies._collect_layouts_dependencies(
             pack_items['layouts'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         incidents_fields_dependencies = PackDependencies._collect_incidents_fields_dependencies(
             pack_items['incidents_fields'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         indicators_types_dependencies = PackDependencies._collect_indicators_types_dependencies(
             pack_items['indicators_types'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         integrations_dependencies = PackDependencies._collect_integrations_dependencies(
             pack_items['integrations'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         incidents_types_dependencies = PackDependencies._collect_incidents_types_dependencies(
             pack_items['incidents_types'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         classifiers_dependencies = PackDependencies._collect_classifiers_dependencies(
             pack_items['classifiers'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
         mappers_dependencies = PackDependencies._collect_mappers_dependencies(
             pack_items['mappers'],
             id_set,
-            verbose_file
+            verbose_file,
+            exclude_ignored_dependencies
         )
 
         pack_dependencies = (
@@ -873,7 +910,7 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def build_dependency_graph(pack_id, id_set, verbose_file):
+    def build_dependency_graph(pack_id, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
         Builds all level of dependencies and returns dependency graph.
 
@@ -881,6 +918,7 @@ class PackDependencies:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             DiGraph: all level dependencies of given pack.
@@ -894,7 +932,8 @@ class PackDependencies:
             leaf_nodes = [n for n in graph.nodes() if graph.out_degree(n) == 0]
 
             for leaf in leaf_nodes:
-                leaf_dependencies = PackDependencies._find_pack_dependencies(leaf, id_set, verbose_file=verbose_file)
+                leaf_dependencies = PackDependencies._find_pack_dependencies(
+                    leaf, id_set, verbose_file=verbose_file, exclude_ignored_dependencies=exclude_ignored_dependencies)
 
                 if leaf_dependencies:
                     for dependency_name, is_mandatory in leaf_dependencies:
@@ -907,7 +946,8 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def find_dependencies(pack_name, id_set_path='', debug_file_path=''):
+    def find_dependencies(pack_name, id_set_path='', exclude_ignored_dependencies=True, update_pack_metadata=True,
+                          silent_mode=False, debug_file_path=''):
         """
         Main function for dependencies search and pack metadata update.
 
@@ -915,19 +955,29 @@ class PackDependencies:
             pack_name (str): pack id, currently pack folder name is in use.
             id_set_path (str): id set json.
             debug_file_path (str): path to dependency explanations file.
+            silent_mode (bool): Determines whether to echo the dependencies or not.
+            update_pack_metadata (bool): Determines whether to update to pack metadata or not.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            Dict: first level dependencies of a given pack.
 
         """
-        if not id_set_path:
+        if not id_set_path or not os.path.isfile(id_set_path):
             id_set = IDSetCreator(print_logs=False).create_id_set()
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
         with VerboseFile(debug_file_path) as verbose_file:
-            dependency_graph = PackDependencies.build_dependency_graph(pack_id=pack_name, id_set=id_set,
-                                                                       verbose_file=verbose_file)
+            dependency_graph = PackDependencies.build_dependency_graph(
+                pack_id=pack_name, id_set=id_set, verbose_file=verbose_file,
+                exclude_ignored_dependencies=exclude_ignored_dependencies)
         first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
-        update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
-        # print the found pack dependency results
-        click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
-        dependency_result = json.dumps(first_level_dependencies, indent=4)
-        click.echo(click.style(dependency_result, bold=True))
+        if update_pack_metadata:
+            update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
+        if not silent_mode:
+            # print the found pack dependency results
+            click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
+            dependency_result = json.dumps(first_level_dependencies, indent=4)
+            click.echo(click.style(dependency_result, bold=True))
+        return first_level_dependencies

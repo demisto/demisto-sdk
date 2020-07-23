@@ -10,6 +10,7 @@ import click
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
+from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -769,6 +770,33 @@ def generate_doc(**kwargs):
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()
+
+
+@main.command(name='merge-id-sets',
+              hidden=True,
+              short_help='Merge two id_sets')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i1', '--id-set1', help='First id_set.json file path', required=True
+)
+@click.option(
+    '-i2', '--id-set2', help='Second id_set.json file path', required=True
+)
+@click.option(
+    '-o', '--output', help='File path of the united id_set', required=True
+)
+def merge_id_sets_command(**kwargs):
+    first = kwargs['id_set1']
+    second = kwargs['id_set2']
+    output = kwargs['output']
+
+    merge_id_sets_from_files(
+        first_id_set_path=first,
+        second_id_set_path=second,
+        output_id_set_path=output
+    )
 
 
 # ====================== update-release-notes =================== #

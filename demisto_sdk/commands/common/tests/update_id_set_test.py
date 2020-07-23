@@ -11,11 +11,10 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_fields_by_script_argument,
     get_incident_field_data, get_incident_fields_by_playbook_input,
-    get_incident_type_data, get_indicator_type_data, get_integration_data,
-    get_layout_data, get_layoutscontainer_data, get_mapper_data,
-    get_playbook_data, get_script_data, get_values_for_keys_recursively,
-    has_duplicate, process_integration, process_playbook, process_script,
-    re_create_id_set)
+    get_incident_type_data, get_indicator_type_data, get_layout_data,
+    get_layoutscontainer_data, get_mapper_data, get_playbook_data,
+    get_script_data, get_values_for_keys_recursively, has_duplicate,
+    process_integration, process_playbook, process_script, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -241,24 +240,37 @@ class TestIntegrations:
         }
     }
 
-    def test_get_integration_data(self):
+    def test_process_integration__sanity(self):
         """
-        Test for getting all the integration data
-        """
-        non_unified_file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml'
-        unified_file_path = TESTS_DIR + '/test_files/DummyPack/Integrations/integration-DummyIntegration.yml'
+        Given
+            - A valid script package folder located at Packs/DummyPack/Scripts/DummyScript.
 
-        non_unified_integration_data = get_integration_data(non_unified_file_path)
-        unified_integration_data = get_integration_data(unified_file_path)
+        When
+            - parsing script files
+
+        Then
+            - integration data will be collected properly
+        """
+        non_unified_file_path = os.path.join(TESTS_DIR, 'test_files',
+                                             'DummyPack', 'Integrations', 'DummyIntegration')
+
+        res = process_integration(non_unified_file_path, True)
+        assert len(res) == 1
+        non_unified_integration_data = res[0]
+
+        unified_file_path = os.path.join(TESTS_DIR, 'test_files',
+                                         'DummyPack', 'Integrations', 'integration-DummyIntegration.yml')
+
+        res = process_integration(unified_file_path, True)
+        assert len(res) == 1
+        unified_integration_data = res[0]
 
         test_pairs = [
             (non_unified_integration_data, TestIntegrations.INTEGRATION_DATA),
             (unified_integration_data, TestIntegrations.UNIFIED_INTEGRATION_DATA)
         ]
 
-        for pair in test_pairs:
-            returned = pair[0]
-            constant = pair[1]
+        for returned, constant in test_pairs:
 
             assert IsEqualFunctions.is_lists_equal(list(returned.keys()), list(constant.keys()))
 
@@ -281,7 +293,7 @@ class TestIntegrations:
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         with pytest.raises(Exception):
-            process_integration(test_file_path, False)
+            process_integration(test_file_path, True)
 
 
 class TestScripts:
@@ -293,6 +305,13 @@ class TestScripts:
             "tests": [
                 "No test - no need to test widget"
             ]
+        }
+    }
+
+    PACK_SCRIPT_DATA = {
+        "DummyScript": {
+            "name": "DummyScript",
+            "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
         }
     }
 
@@ -312,6 +331,31 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
+    def test_process_script__sanity_package():
+        """
+        Given
+            - An invalid "script" file located at invalid_file_structures where commonfields object is not a dict.
+
+        When
+            - parsing script files
+
+        Then
+            - an exception will be raised
+        """
+        test_file_path = os.path.join(TESTS_DIR, 'test_files',
+                                      'Packs', 'DummyPack', 'Scripts', 'DummyScript')
+        res = process_script(test_file_path, True)
+        assert len(res) == 1
+        data = res[0]
+
+        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.PACK_SCRIPT_DATA.keys()))
+
+        const_data = TestScripts.PACK_SCRIPT_DATA.get('DummyScript')
+        returned_data = data.get('DummyScript')
+
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+
+    @staticmethod
     def test_process_script__exception():
         """
         Given
@@ -325,7 +369,7 @@ class TestScripts:
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'script.yml')
         with pytest.raises(Exception):
-            process_script(test_file_path, False)
+            process_script(test_file_path, True)
 
 
 class TestPlaybooks:
@@ -425,7 +469,7 @@ class TestPlaybooks:
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'playbook.yml')
         with pytest.raises(Exception):
-            process_playbook(test_file_path, False)
+            process_playbook(test_file_path, True)
 
     @staticmethod
     def test_get_playbook_data_bad_graph():

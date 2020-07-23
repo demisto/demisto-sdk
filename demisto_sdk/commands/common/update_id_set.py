@@ -21,12 +21,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_from_version, get_json,
-                                               get_pack_name, get_to_version,
-                                               get_yaml, print_color,
-                                               print_error, print_warning,
-                                               run_command)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
+                                               get_pack_name, get_yaml,
+                                               print_color, print_error,
+                                               print_warning)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -812,52 +810,6 @@ def get_depends_on(data_dict):
             command_to_integration[splitted_cmd[-1]] = splitted_cmd[0]
 
     return depends_on_list, command_to_integration
-
-
-def update_object_in_id_set(obj_id, obj_data, file_path, instances_set):
-    change_string = run_command("git diff HEAD {}".format(file_path))
-    is_added_from_version = True if re.search(r'\+fromversion: .*', change_string) else False
-    is_added_to_version = True if re.search(r'\+toversion: .*', change_string) else False
-
-    file_to_version = get_to_version(file_path)
-    file_from_version = get_from_version(file_path)
-
-    updated = False
-    for instance in instances_set:
-        instance_id = list(instance.keys())[0]
-        integration_to_version = instance[instance_id].get('toversion', '99.99.99')
-        integration_from_version = instance[instance_id].get('fromversion', '0.0.0')
-
-        if obj_id == instance_id:
-            if is_added_from_version or (not is_added_from_version and file_from_version == integration_from_version):
-                if is_added_to_version or (not is_added_to_version and file_to_version == integration_to_version):
-                    instance[obj_id] = obj_data[obj_id]
-                    updated = True
-                    break
-
-    if not updated:
-        # in case we didn't found then we need to create one
-        add_new_object_to_id_set(obj_id, obj_data, instances_set)
-
-
-def add_new_object_to_id_set(obj_id, obj_data, instances_set):
-    obj_in_set = False
-
-    dict_value = obj_data.values()[0]
-    file_to_version = dict_value.get('toversion', '99.99.99')
-    file_from_version = dict_value.get('fromversion', '0.0.0')
-
-    for instance in instances_set:
-        instance_id = instance.keys()[0]
-        integration_to_version = instance[instance_id].get('toversion', '99.99.99')
-        integration_from_version = instance[instance_id].get('fromversion', '0.0.0')
-        if obj_id == instance_id and file_from_version == integration_from_version and \
-                file_to_version == integration_to_version:
-            instance[obj_id] = obj_data[obj_id]
-            obj_in_set = True
-
-    if not obj_in_set:
-        instances_set.append(obj_data)
 
 
 def process_integration(file_path: str, print_logs: bool) -> list:

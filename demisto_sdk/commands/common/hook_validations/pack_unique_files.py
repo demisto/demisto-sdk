@@ -294,7 +294,7 @@ class PackUniqueFilesValidator(BaseValidator):
         core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
         first_level_dependencies = PackDependencies.find_dependencies(
-            self.pack, id_set_path=id_set_path, silent_mode=False, exclude_ignored_dependencies=False,
+            self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
             update_pack_metadata=False)
 
         for core_pack in core_pack_list:

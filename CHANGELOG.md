@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 * The **feedReputation** parameter can now be hidden in a feed integration.
 
 # 1.1.6

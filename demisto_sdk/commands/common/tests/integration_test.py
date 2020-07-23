@@ -551,6 +551,15 @@ class TestIsFeedParamsExist:
 
         assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'
 
+    def test_hidden_feed_reputation_field(self):
+        # the feed reputation param is hidden
+        configuration = self.validator.current_file['configuration']
+        for item in configuration:
+            if item.get('name') == 'feedReputation':
+                item['hidden'] = True
+        assert self.validator.all_feed_params_exist() is True, \
+            'all_feed_params_exist() returns False instead True for feedReputation param'
+
     NO_HIDDEN = {"configuration": [{"id": "new", "name": "new", "display": "test"}, {"d": "123", "n": "s", "r": True}]}
     HIDDEN_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"display": "123", "name": "serer"}]}
     HIDDEN_TRUE = {"configuration": [{"id": "n", "n": "n"}, {"display": "123", "required": "false", "hidden": True}]}

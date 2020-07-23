@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

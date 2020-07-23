@@ -41,11 +41,11 @@ mapping:
   description:
     type: str
     required: true
-  defaultMapperIn:
+  defaultmapperin:
     type: str
-  defaultMapperOut:
+  defaultmapperout:
     type: str
-  defaultClassifier:
+  defaultclassifier:
     type: str
   detaileddescription:
     type: str

@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 * Added the *--no-update* flag to the **find-dependencies** command.
 * Added the following validations in **validate** command:
    * Validating that a pack does not depend on unsupported content.

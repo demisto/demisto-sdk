@@ -2,7 +2,7 @@
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 * Added the *--no-update* flag to the **find-dependencies** command.
 * Added the following validations in **validate** command:
-   * Validating that a pack does not depend on unsupported content.
+   * Validating that a pack does not depend on NonSupported / Deprecated packs.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

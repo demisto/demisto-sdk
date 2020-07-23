@@ -135,6 +135,7 @@ ERROR_CODE = {
     "pack_metadata_missing_url_and_email": "PA113",
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
+    "invalid_package_dependencies": 'PA116',
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
@@ -920,6 +921,11 @@ class Errors:
         return 'You should update the following files to the package format, for further details please visit ' \
                'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_package_dependencies(pack_name):
+        return f'{pack_name} depends on NonSupported / Deprecated packs'
 
     @staticmethod
     @error_code_decorator

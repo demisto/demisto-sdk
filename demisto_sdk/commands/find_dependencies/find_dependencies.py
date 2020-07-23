@@ -200,12 +200,10 @@ class PackDependencies:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
                 if (machine_name in item_possible_names or item_name == item_details.get('name')) \
-                        and item_details.get('pack'):
-                    if exclude_ignored_dependencies and item_details.get('pack') not in \
-                            constants.IGNORED_DEPENDENCY_CALCULATION:
-                        packs.add(item_details.get('pack'))
-                    else:
-                        packs.add(item_details.get('pack'))
+                        and item_details.get('pack') \
+                        and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
+                             not exclude_ignored_dependencies):
+                    packs.add(item_details.get('pack'))
         return packs
 
     @staticmethod
@@ -389,10 +387,12 @@ class PackDependencies:
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
 
             for command, integration_name in implementing_commands_and_integrations.items():
-                packs_found_from_integration = PackDependencies._search_packs_by_items_names(
-                    integration_name, id_set['integrations'], exclude_ignored_dependencies) \
-                    if integration_name else PackDependencies._search_packs_by_integration_command(
-                    command, id_set, exclude_ignored_dependencies)
+                if integration_name:
+                    packs_found_from_integration = PackDependencies._search_packs_by_items_names(
+                        integration_name, id_set['integrations'], exclude_ignored_dependencies)
+                else:
+                    packs_found_from_integration = PackDependencies._search_packs_by_integration_command(
+                        command, id_set, exclude_ignored_dependencies)
 
                 if packs_found_from_integration:
                     if command in skippable_tasks:
@@ -946,8 +946,8 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def find_dependencies(pack_name, id_set_path='', debug_file_path='', echo_results=True,
-                          exclude_ignored_dependencies=True, update_pack_metadata=True):
+    def find_dependencies(pack_name, id_set_path='', exclude_ignored_dependencies=True, update_pack_metadata=True,
+                          silent_mode=True, debug_file_path=''):
         """
         Main function for dependencies search and pack metadata update.
 
@@ -955,7 +955,7 @@ class PackDependencies:
             pack_name (str): pack id, currently pack folder name is in use.
             id_set_path (str): id set json.
             debug_file_path (str): path to dependency explanations file.
-            echo_results (bool): Determines whether to echo the dependencies or not.
+            silent_mode (bool): Determines whether to echo the dependencies or not.
             update_pack_metadata (bool): Determines whether to update to pack metadata or not.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
@@ -963,7 +963,7 @@ class PackDependencies:
             Dict: first level dependencies of a given pack.
 
         """
-        if not id_set_path:
+        if not id_set_path or not os.path.isfile(id_set_path):
             id_set = IDSetCreator(print_logs=False).create_id_set()
         else:
             with open(id_set_path, 'r') as id_set_file:
@@ -975,7 +975,7 @@ class PackDependencies:
         first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
-        if echo_results:
+        if silent_mode:
             # print the found pack dependency results
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             dependency_result = json.dumps(first_level_dependencies, indent=4)

@@ -428,7 +428,7 @@ class TestValidators:
                 - return a True validation response
         """
         modified_files = {os.path.join('Packs', 'Slack',
-                                       'Integrations/Slack/Slack.yml')}
+                                       'Integrations', 'Slack', 'Slack.yml')}
         validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
@@ -445,7 +445,7 @@ class TestValidators:
                 - return a False validation response
         """
         modified_files = {os.path.join('Packs', 'ImpossibleTraveler',
-                                       'Integrations/ImpossibleTraveler/ImpossibleTraveler.yml')}
+                                       'Integrations', 'ImpossibleTraveler', 'ImpossibleTraveler.yml')}
         validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))

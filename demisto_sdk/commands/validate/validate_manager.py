@@ -8,8 +8,8 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, CORE_PACKS_LIST,
-    IGNORED_TYPES_REGEXES, KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
+    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
+    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX,
     FileType)
@@ -389,7 +389,8 @@ class ValidateManager:
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
                                                                         changed_meta_files))
-        validation_results.add(self.validate_pack_dependencies(modified_files, added_files))
+        validation_results.add(self.validate_pack_dependencies(modified_files, added_files,
+                                                               id_set_path='Tests/id_set.json'))
 
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
@@ -585,13 +586,13 @@ class ValidateManager:
                                                          is_modified=True, old_file_path=old_file_path))
         return all(valid_files)
 
-    @staticmethod
-    def run_dependencies_validations_on_pack(pack, id_set_path=None):
+    def run_dependencies_validations_on_pack(self, pack, id_set_path=None):
+        core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
         first_level_dependencies = PackDependencies.find_dependencies(
-            pack, id_set_path=id_set_path, echo_results=False, exclude_ignored_dependencies=False,
+            pack, id_set_path=id_set_path, silent_mode=False, exclude_ignored_dependencies=False,
             update_pack_metadata=False)
 
-        for core_pack in CORE_PACKS_LIST:
+        for core_pack in core_pack_list:
             first_level_dependencies.pop(core_pack, None)
         if not first_level_dependencies:
             return True
@@ -601,7 +602,9 @@ class ValidateManager:
         click.echo(click.style(dependency_result, bold=True))
 
         if first_level_dependencies.get('NonSupported') or first_level_dependencies.get('DeprecatedContent'):
-            click.echo(click.style(f"{pack} depends on unsupported content", bold=True))
+            error_message, error_code = Errors.invalid_package_dependencies(pack)
+            if self.handle_error(error_message, error_code, file_path=pack):
+                return False
             return False
 
         return True

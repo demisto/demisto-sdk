@@ -946,31 +946,3 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Classifiers',
     'Layouts'
 ]
-
-CORE_PACKS_LIST = ["Base",
-                   "rasterize",
-                   "DemistoRESTAPI",
-                   "DemistoLocking",
-                   "ImageOCR",
-                   "WhereIsTheEgg",
-                   "AutoFocus",
-                   "UrlScan",
-                   "Active_Directory_Query",
-                   "FeedTAXII",
-                   "VirusTotal",
-                   "Whois",
-                   "Phishing",
-                   "CommonScripts",
-                   "CommonPlaybooks",
-                   "CommonTypes",
-                   "CommonDashboards",
-                   "CommonReports",
-                   "CommonWidgets",
-                   "TIM_Processing",
-                   "TIM_SIEM",
-                   "HelloWorld",
-                   "ExportIndicators",
-                   "Malware",
-                   "DefaultPlaybook",
-                   "AccessInvestigation"
-                   ]  # cores packs list

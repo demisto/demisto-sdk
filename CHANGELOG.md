@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
+* The **feedReputation** parameter can now be hidden in a feed integration.
 * Added the *--no-update* flag to the **find-dependencies** command.
 * Added the following validations in **validate** command:
    * Validating that a pack does not depend on NonSupported / Deprecated packs.

@@ -468,7 +468,8 @@ class Uploader:
                 print_error(error)
 
     def _sort_directories_based_on_dependencies(self, dir_list: List) -> List:
-        """Sorts given list of directories based on logic order of content entities that depend on each other
+        """Sorts given list of directories based on logic order of content entities that depend on each other.
+        If a given directory does not appear in the CONTENT_ENTITY_UPLOAD_ORDER list it will be ignored
 
         Args:
             dir_list (List): List of directories to sort
@@ -477,6 +478,9 @@ class Uploader:
             List. The sorted list of directories.
         """
         srt = {item: index for index, item in enumerate(CONTENT_ENTITY_UPLOAD_ORDER)}
+        for dir_path in dir_list:
+            if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
+                dir_list.remove(dir_path)
         dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))
         return dir_list
 

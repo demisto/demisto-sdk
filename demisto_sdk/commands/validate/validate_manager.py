@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -60,8 +59,6 @@ from demisto_sdk.commands.common.tools import (checked_type,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
                                                run_command)
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
 
 
 class ValidateManager:

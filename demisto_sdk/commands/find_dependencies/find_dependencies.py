@@ -947,7 +947,7 @@ class PackDependencies:
 
     @staticmethod
     def find_dependencies(pack_name, id_set_path='', exclude_ignored_dependencies=True, update_pack_metadata=True,
-                          silent_mode=True, debug_file_path=''):
+                          silent_mode=False, debug_file_path=''):
         """
         Main function for dependencies search and pack metadata update.
 
@@ -975,7 +975,7 @@ class PackDependencies:
         first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
-        if silent_mode:
+        if not silent_mode:
             # print the found pack dependency results
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             dependency_result = json.dumps(first_level_dependencies, indent=4)

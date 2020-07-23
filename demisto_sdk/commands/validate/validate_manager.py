@@ -603,9 +603,8 @@ class ValidateManager:
 
         if first_level_dependencies.get('NonSupported') or first_level_dependencies.get('DeprecatedContent'):
             error_message, error_code = Errors.invalid_package_dependencies(pack)
-            if self.handle_error(error_message, error_code, file_path=pack):
+            if self.handle_error(error_message, error_code, file_path=tools.pack_name_to_path(pack), warning=True):
                 return False
-            return False
 
         return True
 

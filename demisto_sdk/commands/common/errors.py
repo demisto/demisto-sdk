@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
 
 
 PRESET_ERROR_TO_IGNORE = {
@@ -925,7 +925,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_package_dependencies(pack_name):
-        return f'{pack_name} depends on NonSupported / Deprecated packs'
+        return f'{pack_name} depends on NonSupported / DeprecatedContent packs.'
 
     @staticmethod
     @error_code_decorator

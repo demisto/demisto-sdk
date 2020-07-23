@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.layout import (
+    LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -41,19 +42,20 @@ from demisto_sdk.tests.constants_test import (
     INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
     INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
     INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
-    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
-    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_NO_HIDDEN_PARAMS,
-    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH,
+    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
+    INVALID_NO_HIDDEN_PARAMS, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET,
-    VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH,
-    VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
+    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
+    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_NO_HIDDEN_PARAMS, VALID_ONE_LINE_CHANGELOG_PATH,
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
@@ -88,6 +90,8 @@ class TestValidators:
     INPUTS_IS_VALID_VERSION = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),
         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False, LayoutValidator),
+        (VALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, True, LayoutsContainerValidator),
+        (INVALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, False, LayoutsContainerValidator),
         (VALID_WIDGET_PATH, WIDGET_TARGET, True, WidgetValidator),
         (INVALID_WIDGET_PATH, WIDGET_TARGET, False, WidgetValidator),
         (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True, DashboardValidator),
@@ -565,7 +569,7 @@ class TestValidators:
         """
         file_validator = FilesValidator()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
 
@@ -592,7 +596,7 @@ class TestValidators:
     def test_create_ignored_errors_list__validate_manager(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
 
@@ -845,6 +849,28 @@ class TestValidators:
 
         # check recognized deleted file
         assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
+
+    def test_setup_git_params(self, mocker):
+        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='20.0.7')
+        validate_manager = ValidateManager()
+        validate_manager.setup_git_params()
+
+        assert validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='master')
+        # resetting always_valid flag
+        validate_manager.always_valid = False
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '...'
 
 
 def test_content_release_identifier_exists():

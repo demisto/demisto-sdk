@@ -1,4 +1,9 @@
 # Changelog
+* Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
+* The **feedReputation** parameter can now be hidden in a feed integration.
+* Fixed an issue where running the **unify** command on JS package failed.
+
+# 1.1.6
 * Added the *--description* option to the **init** command.
 * Added the *--contribution* option to the **init** command which converts a contribution zip to proper pack format.
 * Improved **validate** command performance time and outputs.
@@ -12,6 +17,8 @@
 * Running `demisto-sdk validate` will run the **validate** command using git and only on committed files (same as using *-g --post-commit*).
 * Fixed an issue where release notes were not checked correctly in **validate** command.
 * Fixed an issue in the **create-id-set** command where optional playbook tasks were not taken into consideration.
+* Added a prompt to the `demisto-sdk update-release-notes` command to prompt users to commit changes before running the release notes command.
+* Added support to `layoutscontainer` in **validate** command.
 
 #### 1.1.5
 * Fixed an issue in **find-dependencies** command.

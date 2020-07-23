@@ -1388,8 +1388,8 @@ script:
   subtype: python3
   type: python
 fromversion: 4.1.0
-defaultClassifier: dummy-classifier
+defaultclassifier: dummy-classifier
 defaultIncidentType: dummy-incident-type
 feed: true
-defaultMapperIn: dummy-mapper-in
-defaultMapperOut: dummy-mapper-out
+defaultmapperin: dummy-mapper-in
+defaultmapperout: dummy-mapper-out

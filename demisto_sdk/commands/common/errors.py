@@ -164,7 +164,9 @@ ERROR_CODE = {
     "invalid_to_version_in_mapper": "MP101",
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
-    "invalid_type_in_mapper": "MP104"
+    "invalid_type_in_mapper": "MP104",
+    "invalid_version_in_layout": "LO100",
+    "invalid_version_in_layoutscontainer": "LO101",
 }
 
 
@@ -836,8 +838,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_version_should_be_raised(pack):
-        return f"The pack version needs to be raised - update the \"currentVersion\" field in the " \
+    def pack_metadata_version_should_be_raised(pack, old_version):
+        return f"The pack version (currently: {old_version}) needs to be raised - " \
+               f"make sure you are merged from master and " \
+               f"update the \"currentVersion\" field in the " \
                f"pack_metadata.json or in case release notes are required run:\n" \
                f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."
@@ -936,6 +940,16 @@ class Errors:
     @error_code_decorator
     def pykwalify_general_error(error):
         return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layout(version_field):
+        return f'{version_field} field in layout needs to be lower than 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_version_in_layoutscontainer(version_field):
+        return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
 
     @staticmethod
     @error_code_decorator

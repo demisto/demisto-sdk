@@ -58,3 +58,5 @@ mapping:
     type: str
   toVersion:
     type: str
+  layout:
+    type: str

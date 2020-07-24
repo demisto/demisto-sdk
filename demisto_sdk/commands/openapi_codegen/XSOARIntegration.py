@@ -124,10 +124,11 @@ class XSOARIntegration:
                     self.outputs = outputs
 
             class Argument:
-                def __init__(self, name, description, required, auto=None, predefined=None):
+                def __init__(self, name, description, required, auto=None, predefined=None, isArray=False):
                     self.name = name
                     self.description = description
                     self.required = required
+                    self.isArray = isArray
                     if auto:
                         self.auto = auto
                     if predefined:

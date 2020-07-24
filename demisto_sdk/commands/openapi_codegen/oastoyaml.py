@@ -17,7 +17,7 @@ from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegrati
 camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
 illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', '<para/>']
 illegal_func_chars = illegal_description_chars + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
-illegal_function_names = ['type', 'from']
+illegal_function_names = ['type', 'from', 'id', 'file']
 prepend_illegal = '_'
 output_types = {
     'string': 'String',
@@ -163,19 +163,33 @@ class OpenAPIIntegration:
         for arg in iter_item:
             refs = []
             if 'schema' in arg:
-
                 refs = self.extract_values(arg['schema'], '$ref')
                 for ref in refs:
                     ref = ref.split('/')[-1]
                     ref_args = []
+                    context = {}
                     if self.definitions:
                         ref_args = self.extract_values(self.definitions.get(ref, {}), 'properties')
+                        context = self.definitions
                     elif self.components:
                         ref_args = self.extract_values(self.components.get('schemas', {}).get(ref, {}), 'properties')
+                        context = self.components.get('schemas', {})
                     for ref_arg in ref_args:
                         for k, v in ref_arg.items():
                             new_ref_arg = {'name': k, 'in': arg.get('in')}
-                            new_ref_arg.update(v)
+                            new_ref_arg['required'] = True if k in context[ref].get('required', []) else False
+                            if '$ref' in ref_arg[k]:
+                                new_ref_arg['properties'] = {}
+                                c_ref = ref_arg[k]['$ref'].split('/')[-1]
+                                complex_refs = self.extract_values(context.get(c_ref, {}), 'properties')
+                                for complex_ref in complex_refs:
+                                    for ck, cv in complex_ref.items():
+                                        new_ref_arg['properties'][ck] = cv
+                                        new_ref_arg['properties'][ck]['required'] = True if ck in context.get(c_ref,
+                                                                                                              {}).get(
+                                            'required', []) else False
+                            else:
+                                new_ref_arg.update(v)
                             new_function['arguments'].append(self.init_arg(new_ref_arg))
             if not refs:
                 new_function['arguments'].append(self.init_arg(arg))
@@ -310,8 +324,9 @@ class OpenAPIIntegration:
                     'required': arg.get('required'),
                     'default': arg.get('default', ''),
                     'in': arg.get('in', ''),
-                    'type': arg_types.get(arg.get('type', 'string'), 'string'),
-                    'options': [str(x) for x in arg.get('enum')] if arg.get('enum', None) else []
+                    'type': arg.get('type', 'string'),
+                    'options': arg.get('enums'),
+                    'properties': arg.get('properties', {})
                 })
 
             for output in function['outputs']:
@@ -331,6 +346,7 @@ class OpenAPIIntegration:
         self.configuration = configuration
 
     def get_python_code(self):
+
         # Use the code from baseCode in py as the basis
         data = base_code
 
@@ -352,30 +368,36 @@ class OpenAPIIntegration:
 
             for arg in command['arguments']:
                 arguments_found = True
-                argument_default = ''
-                if not arg['required']:
-                    if arg['type'] == 'int':
-                        try:
-                            default = int(arg['default'])
-                        except Exception:
-                            default = 0
-                        argument_default = f', {default}'
-                    elif arg['type'] == 'bool':
-                        try:
-                            default = strtobool(arg['default'])
-                        except Exception:
-                            default = False
-                        argument_default = f', {default}'
-                    else:
-                        argument_default = f", '{arg['default']}'"
-                this_argument = f"{base_argument.replace('$DARGNAME$', arg['name'])}{argument_default}))"
                 new_arg_name = arg['name']
+                arg_type = arg.get('type')
+                arg_props = []
                 if new_arg_name in illegal_function_names:
-                    new_arg_name = f'{prepend_illegal}{new_arg_name}'
-                argument_names.append(new_arg_name)
-                this_argument = this_argument.replace('$SARGNAME$', new_arg_name)
-                this_argument = this_argument.replace('$ARGTYPE$', arg['type'])
+                    new_arg_name = f'{new_arg_name}{prepend_illegal}'
+                if arg['properties']:
+                    for k, v in arg['properties'].items():
+                        prop_default = self.get_arg_default(v)
+                        prop_arg_name = f'{new_arg_name}_{k}'
+                        if prop_arg_name in illegal_function_names:
+                            prop_arg_name = f'{prop_arg_name}{prepend_illegal}'
+                        this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default}))"
+                        this_prop_argument = this_prop_argument.replace('$SARGNAME$', prop_arg_name)
+                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', arg_types.get(v['type'], 'str'))
+                        arg_props.append(f"'{k}': {prop_arg_name}")
+                        arguments.append(this_prop_argument)
+                    all_props = ', '.join(arg_props)
+                    this_argument = f'{new_arg_name} = ' + '{' + all_props + '}'
+                else:
+                    if arg_type == 'array':
+                        argument_default = ', []'
+                        new_arg_type = 'argToList'
+                    else:
+                        argument_default = self.get_arg_default(arg)
+                        new_arg_type = arg_types.get(arg['type'], 'str')
+                    this_argument = f"{base_argument.replace('$DARGNAME$', arg['name'])}{argument_default}))"
+                    this_argument = this_argument.replace('$ARGTYPE$', new_arg_type)
 
+                this_argument = this_argument.replace('$SARGNAME$', new_arg_name)
+                argument_names.append(new_arg_name)
                 arguments.append(this_argument)
 
             if arguments_found:
@@ -493,22 +515,39 @@ class OpenAPIIntegration:
         commands = []
         for command in self.configuration['commands']:
             args = []
-            options = None
-            auto = None
             for arg in command['arguments']:
+                options = None
+                auto = None
                 arg_name = arg['name']
                 required = True if arg['required'] else False
                 description = arg.get('description', None)
+                is_array = True if arg['type'] == 'array' else False
                 if description:
                     description = self.clean_description(description)
                 else:
                     description = ''
+                if arg['properties']:
+                    for k, v in arg['properties'].items():
+                        prop_arg_name = f'{arg_name}_{k}'
+                        if description:
+                            prop_description = f'{description} - {k}'
+                        else:
+                            prop_description = f'{arg_name} {k}'
+                        prop_required = True if required is True and v.get('required') else False
+                        options = None
+                        auto = None
+                        if v.get('options'):
+                            auto = 'PREDEFINED'
+                            options = v['options']
+                        args.append(XSOARIntegration.Script.Command.Argument(prop_arg_name, prop_description,
+                                                                             prop_required, auto, options))
+                else:
+                    if arg['options']:
+                        auto = 'PREDEFINED'
+                        options = arg['options']
 
-                if arg['options']:
-                    auto = 'PREDEFINED'
-                    options = arg['options']
-
-                args.append(XSOARIntegration.Script.Command.Argument(arg_name, description, required, auto, options))
+                    args.append(XSOARIntegration.Script.Command.Argument(arg_name, description, required,
+                                                                         auto, options, is_array))
 
             outputs = []
             context_path = command['context_path']
@@ -664,18 +703,40 @@ class OpenAPIIntegration:
 
     def init_arg(self, arg):
         new_arg = {}
-        arg_name = str(arg.get('name', ''))
-        new_arg['name'] = arg_name
         arg_desc = arg.get('description', '')
         arg_desc = self.clean_description(arg_desc)
+        new_arg['name'] = arg.get('name', '')
         new_arg['description'] = arg_desc
         new_arg['required'] = arg.get('required')
         new_arg['default'] = arg.get('default', '')
         new_arg['in'] = arg.get('in', 'path')
         new_arg['type'] = arg.get('type', 'string')
+        new_arg['properties'] = arg.get('properties', {})
         new_arg['enums'] = [str(x) for x in arg.get('enum')] if arg.get('enum', None) else None
 
         return new_arg
+
+    @staticmethod
+    def get_arg_default(arg):
+        argument_default = ''
+        if not arg.get('required', False):
+            arg_type = arg_types.get(arg.get('type', 'string'), 'str')
+            arg_default = arg.get('default', '')
+            if arg_type == 'int':
+                try:
+                    default = int(arg_default)
+                except Exception:
+                    default = 0
+                argument_default = f', {default}'
+            elif arg_type == 'bool':
+                try:
+                    default = strtobool(arg_default)
+                except Exception:
+                    default = False
+                argument_default = f', {default}'
+            else:
+                argument_default = f", '{arg_default}'"
+        return argument_default
 
     @staticmethod
     def clean_description(description):

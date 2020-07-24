@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
+* Now playbook branches marked with *skipunavailable* are marked as an optional dependency in the **find-dependencies** command.
 * The **feedReputation** parameter can now be hidden in a feed integration.
 * Fixed an issue where running the **unify** command on JS package failed.
 * Added the *--no-update* flag to the **find-dependencies** command.

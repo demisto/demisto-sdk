@@ -536,7 +536,7 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return widget_validator.is_valid_file(validate_rn=False)
 
-    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict,
+    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict, id_set_path=None,
                                    should_version_raise=False) -> bool:
         """
         Runs validations on the following pack files:
@@ -544,7 +544,9 @@ class ValidateManager:
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
         * README.md file: Validates that the file exists
         * pack_metadata.json: Validates that the file exists and that it has a valid structure
+        Runs validation on the pack dependencies
         Args:
+            id_set_path (str): Path of the id_set. Optional.
             should_version_raise: Whether we should check if the version of the metadata was raised
             pack_error_ignore_list: A dictionary of all pack ignored errors
             pack_path: A path to a pack
@@ -555,7 +557,9 @@ class ValidateManager:
                                                                pack_path=pack_path,
                                                                ignored_errors=pack_error_ignore_list,
                                                                print_as_warnings=self.print_ignored_errors,
-                                                               should_version_raise=should_version_raise)
+                                                               should_version_raise=should_version_raise,
+                                                               validate_dependencies=self.use_git,
+                                                               id_set_path=id_set_path)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
@@ -609,11 +613,12 @@ class ValidateManager:
 
         for pack in changed_packs:
             raise_version = False
-            pack_path = os.path.join(PACKS_DIR, pack)
+            pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
                 raise_version = True
-            valid_pack_files.add(self.validate_pack_unique_files(pack_path, self.get_error_ignore_list(pack),
-                                                                 should_version_raise=raise_version))
+            valid_pack_files.add(self.validate_pack_unique_files(
+                pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
+                id_set_path='Tests/id_set.json'))
 
         return all(valid_pack_files)
 

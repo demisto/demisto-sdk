@@ -272,7 +272,7 @@ def get_integration_data(file_path):
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
-    default_classifier = data_dictionary.get('defaultClassifier')
+    default_classifier = data_dictionary.get('defaultclassifier')
     default_incident_type = data_dictionary.get('defaultIncidentType')
     is_feed = data_dictionary.get('feed')
     mappers = set()
@@ -282,7 +282,7 @@ def get_integration_data(file_path):
         if command.get('deprecated', False):
             deprecated_commands.append(command.get('name'))
 
-    for mapper in ['defaultMapperIn', 'defaultMapperOut']:
+    for mapper in ['defaultmapperin', 'defaultmapperout']:
         if data_dictionary.get(mapper):
             mappers.add(data_dictionary.get(mapper))
 

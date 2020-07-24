@@ -8,7 +8,9 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 
+import click
 from dateutil import parser
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CREATED,
     PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
@@ -22,6 +24,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
                                                pack_name_to_path)
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
@@ -31,7 +35,8 @@ class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
-    def __init__(self, pack, pack_path=None, ignored_errors=None, print_as_warnings=False, should_version_raise=False):
+    def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
+                 should_version_raise=False, id_set_path=None):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -43,8 +48,10 @@ class PackUniqueFilesValidator(BaseValidator):
         self.pack_ignore_file = PACKS_PACK_IGNORE_FILE_NAME
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.readme_file = PACKS_README_FILE_NAME
+        self.validate_dependencies = validate_dependencies
         self._errors = []
         self.should_version_raise = should_version_raise
+        self.id_set_path = id_set_path
 
     # error handling
     def _add_error(self, error, file_path):
@@ -176,7 +183,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if LooseVersion(old_version) < LooseVersion(current_version):
             return True
 
-        elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack), metadata_file_path):
+        elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
             return False
 
         return True
@@ -275,5 +282,34 @@ class PackUniqueFilesValidator(BaseValidator):
         # We don't want to check the metadata file for this pack
         if API_MODULES_PACK not in self.pack:
             self.validate_pack_meta_file()
-
+        # We only check pack dependencies for -g flag
+        if self.validate_dependencies:
+            self.validate_pack_dependencies(id_set_path=self.id_set_path)
         return self.get_errors()
+
+    # pack dependencies validation
+    def validate_pack_dependencies(self, id_set_path=None):
+        click.secho(f'\n================= Running pack dependencies validation on {self.pack}=================',
+                    fg="bright_cyan")
+        core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+
+        first_level_dependencies = PackDependencies.find_dependencies(
+            self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
+            update_pack_metadata=False)
+
+        for core_pack in core_pack_list:
+            first_level_dependencies.pop(core_pack, None)
+        if not first_level_dependencies:
+            return True
+
+        dependency_result = json.dumps(first_level_dependencies, indent=4)
+        click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
+        click.echo(click.style(dependency_result, bold=True))
+        non_supported_pack = first_level_dependencies.get('NonSupported', {})
+        deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
+
+        if (non_supported_pack.get('mandatory')) or (deprecated_pack.get('mandatory')):
+            error_message, error_code = Errors.invalid_package_dependencies(self.pack)
+            if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True

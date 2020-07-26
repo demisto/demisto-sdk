@@ -30,7 +30,7 @@ class Uploader:
         """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
-        self.path = input.strip('/')
+        self.path = input
         self.log_verbose = verbose
         self.client = demisto_client.configure(verify_ssl=not insecure)
         self.status_code = 0
@@ -94,8 +94,8 @@ class Uploader:
                 self.script_uploader(self.path)
 
             # Input is a content entity directory (Integrations/Scripts/Playbook etc...)
-            elif os.path.basename(self.path) in CONTENT_ENTITIES_DIRS:
-                self.directory_uploader(self.path)
+            elif os.path.basename(self.path.rstrip('/')) in CONTENT_ENTITIES_DIRS:
+                self.directory_uploader(self.path.rstrip('/'))
 
             # Input is a pack
             elif parent_dir_name == PACKS_DIR:

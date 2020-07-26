@@ -30,7 +30,7 @@ class Uploader:
         """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
-        self.path = input
+        self.path = input.strip('/')
         self.log_verbose = verbose
         self.client = demisto_client.configure(verify_ssl=not insecure)
         self.status_code = 0

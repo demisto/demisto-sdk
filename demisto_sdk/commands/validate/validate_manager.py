@@ -59,6 +59,7 @@ from demisto_sdk.commands.common.tools import (checked_type,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
                                                run_command)
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 class ValidateManager:
@@ -610,6 +611,9 @@ class ValidateManager:
                                                                                                changed_meta_packs)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
+
+        if not os.path.isfile('Tests/id_set.json'):
+            IDSetCreator(print_logs=False, output='Tests/id_set.json').create_id_set()
 
         for pack in changed_packs:
             raise_version = False

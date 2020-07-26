@@ -24,7 +24,7 @@ EMPTY_ID_SET = {
 }
 
 
-def test_integration_find_dependencies__sanity(repo):
+def test_integration_find_dependencies__sanity(mocker, repo):
     """
     Given
     - Valid pack folder
@@ -40,6 +40,9 @@ def test_integration_find_dependencies__sanity(repo):
     """
     pack = repo.create_pack('FindDependencyPack')
     integration = pack.create_integration('integration')
+    mocker.patch(
+        "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
+    )
 
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):

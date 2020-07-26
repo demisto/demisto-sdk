@@ -98,6 +98,47 @@ def test_integration_find_dependencies__sanity_with_id_set(repo):
     assert result.stderr == ""
 
 
+def test_integration_find_dependencies__not_a_pack(repo):
+    """
+    Given
+    - Valid pack folder
+
+    When
+    - Running find-dependencies on it.
+
+    Then
+    - Ensure find-dependencies passes.
+    - Ensure no error occurs.
+    """
+    pack = repo.create_pack('FindDependencyPack')
+    integration = pack.create_integration('integration')
+    id_set = EMPTY_ID_SET.copy()
+    id_set['integrations'].append({
+        'integration': {
+            'name': integration.name,
+            'file_path': integration.path,
+            'commands': [
+                'test-command',
+            ],
+            'pack': 'FindDependencyPack',
+        }
+    })
+
+    repo.id_set.write_json(id_set)
+
+    # Change working dir to repo
+    with ChangeCWD(integration.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
+                                      '-p', 'NotValidPack',
+                                      '-i', repo.id_set.path,
+                                      '--no-update',
+                                      ])
+    assert "Couldn't find any items for pack" in result.output
+    assert result.exit_code == 0
+    assert result.stderr == ""
+
+
 def test_integration_find_dependencies__with_dependency(repo):
     """
     Given

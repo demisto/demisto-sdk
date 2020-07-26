@@ -6,8 +6,25 @@ from TestSuite.test_tools import ChangeCWD
 
 FIND_DEPENDENCIES_CMD = "find-dependencies"
 
+EMPTY_ID_SET = {
+    'scripts': [],
+    'integrations': [],
+    'playbooks': [],
+    'TestPlaybooks': [],
+    'Classifiers': [],
+    'Dashboards': [],
+    'IncidentFields': [],
+    'IncidentTypes': [],
+    'IndicatorFields': [],
+    'IndicatorTypes': [],
+    'Layouts': [],
+    'Reports': [],
+    'Widgets': [],
+    'Mappers': [],
+}
 
-def test_integration_find_dependencies__sanity(mocker, repo):
+
+def test_integration_find_dependencies__sanity(repo):
     """
     Given
     - Valid pack folder
@@ -23,15 +40,14 @@ def test_integration_find_dependencies__sanity(mocker, repo):
     """
     pack = repo.create_pack('FindDependencyPack')
     integration = pack.create_integration('integration')
-    mocker.patch(
-        "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
-    )
+
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                       '-p', os.path.basename(repo.packs[0].path),
                                       '-v', os.path.join(repo.path, 'debug.md'),
+                                      '--no-update',
                                       ])
     assert 'Found dependencies result for FindDependencyPack pack:' in result.output
     assert "{}" in result.output
@@ -40,7 +56,7 @@ def test_integration_find_dependencies__sanity(mocker, repo):
     assert os.path.isfile(os.path.join(repo.path, 'debug.md'))
 
 
-def test_integration_find_dependencies__sanity_with_id_set(mocker, repo):
+def test_integration_find_dependencies__sanity_with_id_set(repo):
     """
     Given
     - Valid pack folder
@@ -54,9 +70,19 @@ def test_integration_find_dependencies__sanity_with_id_set(mocker, repo):
     """
     pack = repo.create_pack('FindDependencyPack')
     integration = pack.create_integration('integration')
-    mocker.patch(
-        "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
-    )
+    id_set = EMPTY_ID_SET.copy()
+    id_set['integrations'].append({
+        'integration': {
+            'name': integration.name,
+            'file_path': integration.path,
+            'commands': [
+                'test-command',
+            ],
+            'pack': 'FindDependencyPack',
+        }
+    })
+
+    repo.id_set.write_json(id_set)
 
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
@@ -64,6 +90,7 @@ def test_integration_find_dependencies__sanity_with_id_set(mocker, repo):
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                       '-p', os.path.basename(repo.packs[0].path),
                                       '-i', repo.id_set.path,
+                                      '--no-update',
                                       ])
     assert 'Found dependencies result for FindDependencyPack pack:' in result.output
     assert "{}" in result.output
@@ -71,7 +98,7 @@ def test_integration_find_dependencies__sanity_with_id_set(mocker, repo):
     assert result.stderr == ""
 
 
-def test_integration_find_dependencies__with_dependency(mocker, repo):
+def test_integration_find_dependencies__with_dependency(repo):
     """
     Given
     - Valid repo with 2 pack folders where pack2 (script) depends on pack1 (integration).
@@ -89,48 +116,30 @@ def test_integration_find_dependencies__with_dependency(mocker, repo):
     pack2 = repo.create_pack('FindDependencyPack2')
     script = pack2.create_script('script1')
     script.create_default_script()
-    repo.id_set.write_json({
-        'scripts': [
-            {
-                'Script1': {
-                    "name": script.name,
-                    'file_path': script.path,
-                    'deprecated': False,
-                    'depends_on': [
-                        'test-command'
-                    ],
-                    'pack': 'FindDependencyPack2',
-                }
-            },
-        ],
-        'integrations': [
-            {
-                'integration1': {
-                    'name': integration.name,
-                    'file_path': integration.path,
-                    'commands': [
-                        'test-command',
-                    ],
-                    'pack': 'FindDependencyPack1',
-                }
-            },
-        ],
-        'playbooks': [],
-        'TestPlaybooks': [],
-        'Classifiers': [],
-        'Dashboards': [],
-        'IncidentFields': [],
-        'IncidentTypes': [],
-        'IndicatorFields': [],
-        'IndicatorTypes': [],
-        'Layouts': [],
-        'Reports': [],
-        'Widgets': [],
-        'Mappers': [],
+    id_set = EMPTY_ID_SET.copy()
+    id_set['scripts'].append({
+        'Script1': {
+            "name": script.name,
+            'file_path': script.path,
+            'deprecated': False,
+            'depends_on': [
+                'test-command'
+            ],
+            'pack': 'FindDependencyPack2',
+        }
     })
-    mocker.patch(
-        "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
-    )
+    id_set['integrations'].append({
+        'integration1': {
+            'name': integration.name,
+            'file_path': integration.path,
+            'commands': [
+                'test-command',
+            ],
+            'pack': 'FindDependencyPack1',
+        }
+    })
+
+    repo.id_set.write_json(id_set)
 
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
@@ -138,6 +147,7 @@ def test_integration_find_dependencies__with_dependency(mocker, repo):
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                       '-p', os.path.basename(pack2.path),
                                       '-i', repo.id_set.path,
+                                      '--no-update',
                                       ])
     assert 'Found dependencies result for FindDependencyPack2 pack:' in result.output
     assert '"display_name": "FindDependencyPack1"' in result.output

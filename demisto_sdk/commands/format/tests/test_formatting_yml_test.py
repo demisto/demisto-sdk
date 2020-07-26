@@ -363,6 +363,23 @@ def test_set_feed_params_in_config(source, target, path, answer):
     assert res is answer
 
 
+def test_set_feed_params_in_config_with_default_value():
+    """
+    Given
+    - Integration yml with feed field labeled as true and all necessary params exist including defaultvalue fields.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensures the defaultvalue fields remain after the execution.
+    """
+    base_yml = IntegrationYMLFormat(FEED_INTEGRATION_VALID, path="schema_path")
+    base_yml.set_feed_params_in_config()
+    configuration_params = base_yml.data.get('configuration', [])
+    assert 'defaultvalue' in configuration_params[0]
+
+
 @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
 def test_playbook_task_name(source_path):
     schema_path = os.path.normpath(

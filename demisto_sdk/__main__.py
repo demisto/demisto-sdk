@@ -867,13 +867,18 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "-i", "--id_set_path", help="Path to id set json file.", required=False)
 @click.option(
+    "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
+    is_flag=True)
+@click.option(
     "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
     hidden=True, required=False)
 def find_dependencies_command(**kwargs):
     pack_name = kwargs.get('pack_folder_name', '')
     id_set_path = kwargs.get('id_set_path')
     verbose = kwargs.get('verbose')
-    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path, debug_file_path=verbose)
+    update_pack_metadata = not kwargs.get('no_update')
+    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path, debug_file_path=verbose,
+                                       update_pack_metadata=update_pack_metadata)
 
 
 @main.resultcallback()

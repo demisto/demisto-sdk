@@ -47,7 +47,6 @@ def test_integration_find_dependencies__sanity(repo):
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                       '-p', os.path.basename(repo.packs[0].path),
                                       '-v', os.path.join(repo.path, 'debug.md'),
-                                      '--no-update',
                                       ])
     assert 'Found dependencies result for FindDependencyPack pack:' in result.output
     assert "{}" in result.output

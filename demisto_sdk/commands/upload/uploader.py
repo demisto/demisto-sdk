@@ -478,9 +478,9 @@ class Uploader:
             List. The sorted list of directories.
         """
         srt = {item: index for index, item in enumerate(CONTENT_ENTITY_UPLOAD_ORDER)}
-        # for dir_path in dir_list:
-        #     if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
-        #         dir_list.remove(dir_path)
+        for dir_path in dir_list:
+            if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
+                dir_list.remove(dir_path)
         dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))
         return dir_list
 

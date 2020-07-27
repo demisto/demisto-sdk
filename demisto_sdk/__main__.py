@@ -15,8 +15,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name, print_error,
                                                print_warning)
-from demisto_sdk.commands.create_artifacts.content_artifact_creator import \
-    ContentArtifacts
+from demisto_sdk.commands.create_artifacts.content_artifact_creator import ArtifactsConfiguration, \
+    create_content_artifacts
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -295,36 +295,21 @@ def validate(config, **kwargs):
 # ====================== create-content-artifacts ====================== #
 @main.command(
     name="create-content-artifacts",
-    hidden=True,
-    short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-               'upload to your server in order to upload a whole new content version to your Demisto '
-               'instance.',
-)
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
-@click.option(
-    '-v', '--content_version', default='', help='The content version which you want to appear in CommonServerPython.')
-@click.option(
-    '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
-    help='Keep the bundles created in the process of making the content artifacts')
-@click.option(
-    '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
-)
-@click.option(
-    '-s', '--suffix', help='The added suffix to all files in the created artifacts', hidden=True)
-@click.option(
-    '--no-fromversion', is_flag=True, help='Whether to update fromversion on yml and json files or not.'
-)
-@click.option(
-    '--packs', is_flag=True,
-    help='If passed, will create only content_packs.zip'
-)
-def create(**kwargs):
-    content_creator = ContentArtifacts(**kwargs)
-    return content_creator.create_content_artifact()
+    short_help='Genereating the following artifacts:'
+               '1. content_new - Contain all content objects of type json,yaml (from_version < 6.0.0).'
+               '2. content_packs - Contain all packs from Packs - Ignoring internal files (to_version >= 6.0.0).'
+               '3. content_test - Contain all test scripts/playbooks (from_version < 6.0.0).')
+@click.help_option('-h', '--help')
+@click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
+              type=click.Path(file_okay=False, resolve_path=True))
+@click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
+@click.option('-v', '--content_version', help='The content version in CommonServerPython.')
+@click.option('-s', '--suffix', help='The added suffix to all files in the created artifacts')
+@click.option('--cpus', help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
+                             'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
+def create_arifacts(**kwargs) -> int:
+    artifacts_conf = ArtifactsConfiguration(**kwargs)
+    return create_content_artifacts(artifacts_conf)
 
 
 # ====================== secrets ====================== #
@@ -649,16 +634,16 @@ def generate_test_playbook(**kwargs):
     type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
     required=False,
     help="The path to the zip file downloaded via the Marketplace contribution UI. "
-    "This will format the contents of the zip file to a pack format ready for contribution "
-    "in the content repository on your local machine. The command should be executed from the "
-    "content repository's base directory. When this option is passed, the only other options "
-    "that are considered are \"name\" and \"description\" - all others are ignored.")
+         "This will format the contents of the zip file to a pack format ready for contribution "
+         "in the content repository on your local machine. The command should be executed from the "
+         "content repository's base directory. When this option is passed, the only other options "
+         "that are considered are \"name\" and \"description\" - all others are ignored.")
 @click.option(
     '-d', '--description',
     type=click.STRING,
     default='',
     help="The description to attach to the converted contribution pack. Used when the \"contribution\" "
-    "option is passed.")
+         "option is passed.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

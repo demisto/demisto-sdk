@@ -10,12 +10,12 @@ import yaml
 from distutils.util import strtobool
 from demisto_sdk.commands.common.tools import print_error, print_success
 from demisto_sdk.commands.openapi_codegen.base_code import (
-    base_argument, base_code, base_function, base_list_functions, base_params, base_data, base_headers, base_header,
+    base_argument, base_code, base_function, base_list_functions, base_params, base_data, base_props, base_header,
     base_credentials, base_token, base_basic_auth, base_client, base_request_function)
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegration
 
 camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
-illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', '<para/>']
+illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', '<para/>', '«', '»']
 illegal_func_chars = illegal_description_chars + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
 illegal_function_names = ['type', 'from', 'id', 'file']
 prepend_illegal = '_'
@@ -184,21 +184,31 @@ class OpenAPIIntegration:
                                 complex_refs = self.extract_values(context.get(c_ref, {}), 'properties')
                                 for complex_ref in complex_refs:
                                     for ck, cv in complex_ref.items():
-                                        new_ref_arg['properties'][ck] = cv
-                                        new_ref_arg['properties'][ck]['required'] = True if ck in context.get(c_ref,
-                                                                                                              {}).get(
-                                            'required', []) else False
+                                        new_ref_arg['properties'][ck] = {}
+                                        new_ref_arg['properties'][ck]['type'] = cv.get('type', 'string')
+                                        new_ref_arg['properties'][ck]['description'] = cv.get('description', '')
+                                        new_ref_arg['properties'][ck]['required'] = True \
+                                            if ck in context.get(c_ref, {}).get('required', []) else False
+                                        new_ref_arg['properties'][ck]['options'] = [str(x) for x in cv.get('enum')]\
+                                            if arg.get('enum', None) else None
                             else:
                                 new_ref_arg.update(v)
+                            new_ref_arg['ref'] = ref
                             new_function['arguments'].append(self.init_arg(new_ref_arg))
             if not refs:
+                if arg.get('schema', {}).get('type'):
+                    arg['type'] = arg['schema']['type']
                 new_function['arguments'].append(self.init_arg(arg))
         new_function['outputs'] = []
         new_function['responses'] = []
         for response_code, response in data.get('responses', {}).items():
             new_response = {}
-            if int(new_response.get('code', 200)) != 200:
-                continue
+            try:
+                if int(response_code) != 200:
+                    continue
+            except Exception:
+                pass
+
             new_response['description'] = response.get('description', None)
             all_items = []
             schemas = self.extract_values(response, 'schema')
@@ -213,7 +223,7 @@ class OpenAPIIntegration:
                         elif self.components:
                             all_items.extend(self.extract_values(self.components.get('schemas', {}).get(ref, {}),
                                                                  'properties'))
-                        new_function['context_path'] = ref
+                        new_function['context_path'] = self.clean_function_name(ref, False)
                 else:
                     all_items.extend(self.extract_values(schema, 'properties'))
                 data = self.extract_outputs(all_items, [])
@@ -324,6 +334,7 @@ class OpenAPIIntegration:
                     'required': arg.get('required'),
                     'default': arg.get('default', ''),
                     'in': arg.get('in', ''),
+                    'ref': arg.get('ref', ''),
                     'type': arg.get('type', 'string'),
                     'options': arg.get('enums'),
                     'properties': arg.get('properties', {})
@@ -346,7 +357,6 @@ class OpenAPIIntegration:
         self.configuration = configuration
 
     def get_python_code(self):
-
         # Use the code from baseCode in py as the basis
         data = base_code
 
@@ -359,8 +369,8 @@ class OpenAPIIntegration:
             function = base_function.replace('$FUNCTIONNAME$', function_name)
             req_function = base_request_function.replace('$FUNCTIONNAME$', function_name)
 
-            new_params = [x['name'] for x in command['arguments'] if 'query' in x['in']]
-            new_data = [x['name'] for x in command['arguments'] if x['in'] in ['formData', 'body']]
+            new_params = []
+            new_data = []
             arguments = []
             argument_names = []
             arguments_found = False
@@ -368,24 +378,37 @@ class OpenAPIIntegration:
 
             for arg in command['arguments']:
                 arguments_found = True
-                new_arg_name = arg['name']
+                code_arg_name = arg['name']
+                ref_arg_name = arg['name']
                 arg_type = arg.get('type')
                 arg_props = []
-                if new_arg_name in illegal_function_names:
-                    new_arg_name = f'{new_arg_name}{prepend_illegal}'
+                if arg.get('ref'):
+                    ref_arg_name = f'{arg["ref"]}_{ref_arg_name}'.lower()
+                    code_arg_name = f'{arg["ref"]}_{code_arg_name}'.lower()
+                if code_arg_name in illegal_function_names:
+                    code_arg_name = f'{code_arg_name}{prepend_illegal}'
                 if arg['properties']:
                     for k, v in arg['properties'].items():
                         prop_default = self.get_arg_default(v)
-                        prop_arg_name = f'{new_arg_name}_{k}'
+                        prop_arg_name = f'{code_arg_name}_{k}'.lower()
+                        prop_arg_type = arg_types.get(v.get('type', 'string'), 'str')
+                        if prop_arg_type == 'bool':
+                            prop_arg_type = 'argToBoolean'
                         if prop_arg_name in illegal_function_names:
                             prop_arg_name = f'{prop_arg_name}{prepend_illegal}'
-                        this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default}))"
+                        this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default})"
                         this_prop_argument = this_prop_argument.replace('$SARGNAME$', prop_arg_name)
-                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', arg_types.get(v['type'], 'str'))
-                        arg_props.append(f"'{k}': {prop_arg_name}")
+                        if 'None' not in prop_default:
+                            this_prop_argument = this_prop_argument.replace('$ARGTYPE$', f'{prop_arg_type}(') + ')'
+                        else:
+                            this_prop_argument = this_prop_argument.replace('$ARGTYPE$', '')
+                        # arg_props.append(f"'{k}': {prop_arg_name}")
+                        arg_props.append({k: prop_arg_name})
                         arguments.append(this_prop_argument)
-                    all_props = ', '.join(arg_props)
-                    this_argument = f'{new_arg_name} = ' + '{' + all_props + '}'
+                    all_props = self.format_params(arg_props, base_props, '$PROPS$')
+                    this_argument = f'{code_arg_name} = {all_props}'
+                    if arg_type == 'array':
+                        this_argument = f'argToList({this_argument})'
                 else:
                     if arg_type == 'array':
                         argument_default = ', []'
@@ -393,13 +416,26 @@ class OpenAPIIntegration:
                     else:
                         argument_default = self.get_arg_default(arg)
                         new_arg_type = arg_types.get(arg['type'], 'str')
-                    this_argument = f"{base_argument.replace('$DARGNAME$', arg['name'])}{argument_default}))"
-                    this_argument = this_argument.replace('$ARGTYPE$', new_arg_type)
+                        if new_arg_type == 'bool':
+                            new_arg_type = 'argToBoolean'
 
-                this_argument = this_argument.replace('$SARGNAME$', new_arg_name)
-                argument_names.append(new_arg_name)
+                    this_argument = f"{base_argument.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
+                    if 'None' not in argument_default:
+                        this_argument = this_argument.replace('$ARGTYPE$', f'{new_arg_type}(') + ')'
+                    else:
+                        this_argument = this_argument.replace('$ARGTYPE$', '')
+
+                this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
+                argument_names.append(code_arg_name)
                 arguments.append(this_argument)
-
+                if 'query' in arg['in']:
+                    new_params.append({
+                        arg['name']: ref_arg_name
+                    })
+                elif arg['in'] in ['formData', 'body']:
+                    new_data.append({
+                        arg['name']: ref_arg_name
+                    })
             if arguments_found:
                 function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
                 function = function.replace('$REQARGS$', ', '.join(argument_names))
@@ -414,6 +450,10 @@ class OpenAPIIntegration:
             req_function = req_function.replace('$METHOD$', command['method'])
             command['path'] = f"'{command['path']}'" if "'" not in command['path'] else command['path']
             command['path'] = f"f{command['path']}" if "{" in command['path'] else command['path']
+            for param in re.findall(r'{([^}]+)}', command['path']):  # get content inside curly brackets
+                if param in illegal_function_names:
+                    command['path'] = command['path'].replace(param, f'{param}{prepend_illegal}')
+
             req_function = req_function.replace('$PATH$', command['path'])
 
             if new_params:
@@ -436,7 +476,7 @@ class OpenAPIIntegration:
             else:
                 req_function = req_function.replace('$NEWPARAMS$', '')
             if new_data:
-                req_function = req_function.replace('$NEWDATA$', ', data=data')
+                req_function = req_function.replace('$NEWDATA$', ', json_data=data')
             else:
                 req_function = req_function.replace('$NEWDATA$', '')
 
@@ -519,6 +559,8 @@ class OpenAPIIntegration:
                 options = None
                 auto = None
                 arg_name = arg['name']
+                if arg.get('ref'):
+                    arg_name = f"{arg['ref']}_{arg_name}".lower()
                 required = True if arg['required'] else False
                 description = arg.get('description', None)
                 is_array = True if arg['type'] == 'array' else False
@@ -712,30 +754,30 @@ class OpenAPIIntegration:
         new_arg['in'] = arg.get('in', 'path')
         new_arg['type'] = arg.get('type', 'string')
         new_arg['properties'] = arg.get('properties', {})
+        new_arg['ref'] = arg.get('ref', '')
         new_arg['enums'] = [str(x) for x in arg.get('enum')] if arg.get('enum', None) else None
 
         return new_arg
 
     @staticmethod
     def get_arg_default(arg):
-        argument_default = ''
-        if not arg.get('required', False):
-            arg_type = arg_types.get(arg.get('type', 'string'), 'str')
-            arg_default = arg.get('default', '')
-            if arg_type == 'int':
-                try:
-                    default = int(arg_default)
-                except Exception:
-                    default = 0
-                argument_default = f', {default}'
-            elif arg_type == 'bool':
-                try:
-                    default = strtobool(arg_default)
-                except Exception:
-                    default = False
-                argument_default = f', {default}'
-            else:
-                argument_default = f", '{arg_default}'"
+        arg_type = arg_types.get(arg.get('type', 'string'), 'str')
+        arg_default = arg.get('default', '')
+        if arg_type == 'int':
+            try:
+                default = int(arg_default)
+            except Exception:
+                default = None
+            argument_default = f', {default}'
+        elif arg_type == 'bool':
+            try:
+                default = strtobool(arg_default)
+            except Exception:
+                default = False
+            argument_default = f', {default}'
+        else:
+            argument_default = f", '{arg_default}'"
+
         return argument_default
 
     @staticmethod
@@ -745,23 +787,23 @@ class OpenAPIIntegration:
         return description
 
     @staticmethod
-    def clean_function_name(name):
+    def clean_function_name(name, snakeify=True):
         for i in illegal_func_chars:
             name = name.replace(i, '')
 
-        name = camel_to_snake(name)
-        name = name.replace('-', '_').replace('__', '_').strip('_')
+        if snakeify:
+            name = camel_to_snake(name)
+            name = name.replace('-', '_').replace('__', '_').strip('_')
 
         return name
 
     @staticmethod
-    def format_params(new_params, base, base_string):
+    def format_params(params, base, base_string):
         modified_params = []
-        for p in new_params:
-            if p in illegal_function_names:
-                modified_params.append(f'\"{p}\": {p}{prepend_illegal}')
-            else:
-                modified_params.append(f'\"{p}\": {p}')
+        for p in params:
+            for name, code_name in p.items():
+                # modified_params.append(f'\"{name}\"={code_name}')
+                modified_params.append(f'{name}={code_name}')
         params = base.replace(base_string, ', '.join(modified_params))
         return params
 

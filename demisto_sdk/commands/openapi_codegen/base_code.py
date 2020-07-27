@@ -1,6 +1,7 @@
-base_argument = "$SARGNAME$ = $ARGTYPE$(args.get('$DARGNAME$'"
-base_params = """params={$PARAMS$}"""
-base_data = """data={$DATAOBJ$}"""
+base_argument = "$SARGNAME$ = $ARGTYPE$args.get('$DARGNAME$'"
+base_params = """params = assign_params($PARAMS$)"""
+base_data = """data = assign_params($DATAOBJ$)"""
+base_props = """assign_params($PROPS$)"""
 base_headers = """headers=headers"""
 base_header = """headers[$HEADERKEY$] = $HEADERVALUE$"""
 base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
@@ -20,7 +21,7 @@ base_function = """def $FUNCTIONNAME$_command(client, args):
         outputs=response
     )
     
-    return_results(command_results)
+    return command_results
 
 """
 base_request_function = """
@@ -28,15 +29,10 @@ base_request_function = """
         $PARAMETERS$
         $DATA$
         
-        headers = self.headers
+        headers = self._headers
         $HEADERSOBJ$
         
-        response = {}
-        try:
-            response = self._http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$, headers=headers)
-            response.raise_for_status()
-        except Exception as e:
-            return_error(f'Error in API call: {e}')
+        response = self._http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$, headers=headers)
         
         return response
     
@@ -60,6 +56,7 @@ def test_module(client):
 
 
 def main():
+
     params = demisto.params()
     args = demisto.args()
     url = params.get('url')
@@ -71,10 +68,10 @@ def main():
 
     command = demisto.command()
     LOG(f'Command being called is {command}')
-    headers['Accept'] = 'application/json'
-    headers['Content-Type'] = 'application/json'
     
     try:
+        # Disable insecure warnings
+        requests.packages.urllib3.disable_warnings()
         client = Client(urljoin(url, "$BASEURL$"), verify_certificate, proxy, headers=headers, auth=$BASEAUTH$)
         commands = {
     $COMMANDSLIST$
@@ -83,7 +80,7 @@ def main():
         if command == 'test-module':
             test_module(client)
         else:
-            commands[command](client, args)
+            return_results(commands[command](client, args))
 
     except Exception as e:
         return_error(str(e))

@@ -1,24 +1,31 @@
-from wcmatch.pathlib import Path
+from wcmatch.pathlib import Path, NEGATE
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR,
-                                                   DASHBOARDS_DIR, INCIDENT_FIELDS_DIR,
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, DOCUMENTATION_DIR,
+                                                   DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, DOC_FILES_DIR,
                                                    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
-from objects import (Integration, Script, Playbook, IncidentField, IncidentType, Classifier, Connection,
-                     IndicatorField, IndicatorType, Report, Dashboard, Layout, Widget)
-from demisto_sdk.commands.common.content.generic_objects.code_object import CodeObject
-from typing import Union, Iterator, Dict, Optional, Tuple
+                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, TOOLS_DIR)
+from demisto_sdk.commands.common.content import (Integration, Script, Playbook, IncidentField, IncidentType, Classifier,
+                                                 Connection, IndicatorField, IndicatorType, Report, Dashboard, Layout,
+                                                 Widget, ReleaseNote, PackMetaData, SecretIgnore, Readme, ChangeLog,
+                                                 PackIgnore, Tool, DocFile, Documentation)
+from demisto_sdk.commands.common.content.objects_factory import ContentObjectFacotry
+from typing import Union, Iterator, Optional, Tuple, Callable
 
 
 class Pack:
     def __init__(self, path: Union[str, Path]):
         self._path = Path(path)
 
-    def _content_files_list_generator_factory(self, content_object, dir_name, suffix: str) -> Tuple[str, object]:
-        objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"{self.path.name}/*{suffix}"])
+    def _content_files_list_generator_factory(self, dir_name, suffix: str) -> Tuple[str, object]:
+        objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
-            yield content_object(object_path)
+            yield ContentObjectFacotry.from_path(object_path)
+
+    def _content_dirs_list_generator_factory(self, dir_name) -> Tuple[str, object]:
+        objects_path = (self._path / dir_name).glob(patterns=[f"*/"])
+        for object_path in objects_path:
+            yield ContentObjectFacotry.from_path(object_path)
 
     @property
     def path(self) -> Path:
@@ -26,156 +33,185 @@ class Pack:
 
     @property
     def integrations(self) -> Iterator[Integration]:
-        return self._content_files_list_generator_factory(content_object=Integration,
-                                                          dir_name=INTEGRATIONS_DIR,
+        return self._content_files_list_generator_factory(dir_name=INTEGRATIONS_DIR,
                                                           suffix="yml")
 
     @property
     def scripts(self) -> Iterator[Script]:
-        return self._content_files_list_generator_factory(content_object=Script,
-                                                          dir_name=SCRIPTS_DIR,
+        return self._content_files_list_generator_factory(dir_name=SCRIPTS_DIR,
                                                           suffix="yml")
 
     @property
     def playbooks(self) -> Iterator[Playbook]:
-        return self._content_files_list_generator_factory(content_object=Playbook,
-                                                          dir_name=PLAYBOOKS_DIR,
+        return self._content_files_list_generator_factory(dir_name=PLAYBOOKS_DIR,
                                                           suffix="yml")
 
     @property
     def reports(self) -> Iterator[Report]:
-        return self._content_files_list_generator_factory(content_object=Report,
-                                                          dir_name=REPORTS_DIR,
+        return self._content_files_list_generator_factory(dir_name=REPORTS_DIR,
                                                           suffix="json")
 
     @property
     def dashboards(self) -> Iterator[Dashboard]:
-        return self._content_files_list_generator_factory(content_object=Dashboard,
-                                                          dir_name=DASHBOARDS_DIR,
+        return self._content_files_list_generator_factory(dir_name=DASHBOARDS_DIR,
                                                           suffix="json")
 
     @property
     def incident_types(self) -> Iterator[IncidentType]:
-        return self._content_files_list_generator_factory(content_object=IncidentType,
-                                                          dir_name=INCIDENT_TYPES_DIR,
+        return self._content_files_list_generator_factory(dir_name=INCIDENT_TYPES_DIR,
                                                           suffix="json")
 
     @property
     def incident_fields(self) -> Iterator[IncidentField]:
-        return self._content_files_list_generator_factory(content_object=IncidentField,
-                                                          dir_name=INCIDENT_FIELDS_DIR,
+        return self._content_files_list_generator_factory(dir_name=INCIDENT_FIELDS_DIR,
                                                           suffix="json")
 
     @property
     def layouts(self) -> Iterator[Layout]:
-        return self._content_files_list_generator_factory(content_object=Layout,
-                                                          dir_name=LAYOUTS_DIR,
+        return self._content_files_list_generator_factory(dir_name=LAYOUTS_DIR,
                                                           suffix="json")
 
     @property
     def classifiers(self) -> Iterator[Classifier]:
-        return self._content_files_list_generator_factory(content_object=Classifier,
-                                                          dir_name=CLASSIFIERS_DIR,
+        return self._content_files_list_generator_factory(dir_name=CLASSIFIERS_DIR,
                                                           suffix="json")
 
     @property
     def indicator_types(self) -> Iterator[IndicatorType]:
-        return self._content_files_list_generator_factory(content_object=IndicatorType,
-                                                          dir_name=INDICATOR_TYPES_DIR,
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
                                                           suffix="json")
 
     @property
     def indicator_fields(self) -> Iterator[IndicatorField]:
-        return self._content_files_list_generator_factory(content_object=IndicatorField,
-                                                          dir_name=INDICATOR_FIELDS_DIR,
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_FIELDS_DIR,
                                                           suffix="json")
 
     @property
     def connections(self) -> Iterator[Connection]:
-        return self._content_files_list_generator_factory(content_object=Connection,
-                                                          dir_name=CONNECTIONS_DIR,
+        return self._content_files_list_generator_factory(dir_name=CONNECTIONS_DIR,
                                                           suffix="json")
 
     @property
     def test_playbooks(self) -> Iterator[Playbook]:
-        return self._content_files_list_generator_factory(content_object=Playbook,
-                                                          dir_name=TEST_PLAYBOOKS_DIR,
+        return self._content_files_list_generator_factory(dir_name=TEST_PLAYBOOKS_DIR,
                                                           suffix="yml")
 
     @property
-    def widget(self) -> Iterator[Widget]:
-        return self._content_files_list_generator_factory(content_object=Widget,
-                                                          dir_name=WIDGETS_DIR,
+    def widgets(self) -> Iterator[Widget]:
+        return self._content_files_list_generator_factory(dir_name=WIDGETS_DIR,
                                                           suffix="json")
 
     @property
-    def release_notes(self) -> Iterator[Path]:
-        return self._path.glob(f"{RELEASE_NOTES_DIR}/*.md")
+    def release_notes(self) -> Iterator[ReleaseNote]:
+        return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR,
+                                                          suffix="md")
 
     @property
-    def pack_metadata(self) -> Optional[Path]:
-        return next(self._path.glob("pack_metadata.json"), None)
+    def tools(self) -> Iterator[Tool]:
+        return self._content_dirs_list_generator_factory(dir_name=TOOLS_DIR)
 
     @property
-    def secrets_ignore(self) -> Optional[Path]:
-        return next(self._path.glob(".secrets-ignore"), None)
+    def doc_files(self) -> Iterator[DocFile]:
+        return self._content_files_list_generator_factory(dir_name=DOC_FILES_DIR,
+                                                          suffix="*")
 
     @property
-    def readme(self) -> Optional[Path]:
-        return next(self._path.glob("README.md"), None)
+    def pack_metadata(self) -> Optional[PackMetaData]:
+        file = self._path / "pack_metadata.json"
+        if file.exists():
+            return PackMetaData(file)
 
     @property
-    def changelog(self) -> Optional[Path]:
-        return next(self._path.glob("CHANGELOG.md"), None)
+    def secrets_ignore(self) -> Optional[SecretIgnore]:
+        file = self._path / ".secrets-ignore"
+        if file.exists():
+            return SecretIgnore(file)
+
+    @property
+    def pack_ignore(self) -> Optional[PackIgnore]:
+        file = self._path / ".pack-ignore"
+        if file.exists():
+            return PackIgnore(file)
+
+    @property
+    def readme(self) -> Optional[Readme]:
+        file = self._path / "README.md"
+        if file.exists():
+            return Readme(file)
+
+    @property
+    def changelog(self) -> Optional[ChangeLog]:
+        file = self._path / "CHANGELOG.md"
+        if file.exists():
+            return ChangeLog(file)
 
     @staticmethod
-    def _dump_list(dest: Path, iterator: Iterator, change_log: bool, readme: bool):
+    def _dump_list(dest: Path, iterator: Iterator, **kwargs):
         for obj in iterator:
-            obj.dump(dest, change_log, readme)
+            obj.dump(dest, **kwargs)
 
-    def dump(self, dest: Union[str, Path], integrations: bool = True, scripts: bool = True,
+    def dump(self, dest_dir: Union[str, Path], integrations: bool = True, scripts: bool = True, unify: bool = True,
              playbooks: bool = True, reports: bool = True, dashboards: bool = True, incident_types: bool = True,
              incident_fields: bool = True, layouts: bool = True, classifiers: bool = True, indicator_types: bool = True,
-             indicator_fields: bool = True, connections: bool = True, test_playbooks: bool = True, widget: bool = True,
+             indicator_fields: bool = True, connections: bool = True, test_playbooks: bool = True, widgets: bool = True,
              release_notes: bool = True, pack_metadata: bool = True, secrets_ignore: bool = True, readme: bool = True,
-             change_log: bool = True):
-        dest = Path(dest) / self.path.name
+             tools: bool = True, change_log: bool = True, pack_ignore: bool = True, pre_hooks: Optional[Callable] = None,
+             post_hooks: Optional[Callable] = None, filter: Optional[Callable] = None):
+        dest = Path(dest_dir) / self.path.name
         dest.mkdir(parents=True, exist_ok=True)
         if integrations:
-            self._dump_list(dest / INTEGRATIONS_DIR, self.integrations, change_log, readme)
+            self._dump_list(dest=dest / INTEGRATIONS_DIR, iterator=self.integrations, change_log=change_log,
+                            readme=readme, unify=unify, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if scripts:
-            self._dump_list(dest / SCRIPTS_DIR, self.scripts, change_log, readme)
+            self._dump_list(dest=dest / SCRIPTS_DIR, iterator=self.scripts, change_log=change_log, readme=readme,
+                            unify=unify, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if playbooks:
-            self._dump_list(dest / PLAYBOOKS_DIR, self.playbooks, change_log, readme)
+            self._dump_list(dest=dest / PLAYBOOKS_DIR, iterator=self.playbooks, change_log=change_log, readme=readme,
+                            pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if reports:
-            self._dump_list(dest / REPORTS_DIR, self.reports, change_log, readme)
+            self._dump_list(dest=dest / REPORTS_DIR, iterator=self.reports, change_log=change_log, readme=readme,
+                            pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if dashboards:
-            self._dump_list(dest / DASHBOARDS_DIR, self.dashboards, change_log, readme)
+            self._dump_list(dest=dest / DASHBOARDS_DIR, iterator=self.dashboards, change_log=change_log, readme=readme,
+                            pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if incident_types:
-            self._dump_list(dest / INCIDENT_TYPES_DIR, self.incident_types, change_log, readme)
+            self._dump_list(dest=dest / INCIDENT_TYPES_DIR, iterator=self.incident_types, change_log=change_log,
+                            readme=readme, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if incident_fields:
-            self._dump_list(dest / INCIDENT_FIELDS_DIR, self.incident_fields, change_log, readme)
+            self._dump_list(dest=dest / INCIDENT_FIELDS_DIR, iterator=self.incident_fields, change_log=change_log,
+                            readme=readme, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if layouts:
-            self._dump_list(dest / LAYOUTS_DIR, self.layouts, change_log, readme)
+            self._dump_list(dest=dest / LAYOUTS_DIR, iterator=self.layouts, change_log=change_log, readme=readme,
+                            pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if classifiers:
-            self._dump_list(dest / CLASSIFIERS_DIR, self.classifiers, change_log, readme)
+            self._dump_list(dest=dest / CLASSIFIERS_DIR, iterator=self.classifiers, change_log=change_log,
+                            readme=readme, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if indicator_types:
-            self._dump_list(dest / INDICATOR_TYPES_DIR, self.indicator_types, change_log, readme)
+            self._dump_list(dest=dest / INDICATOR_TYPES_DIR, iterator=self.indicator_types, change_log=change_log,
+                            readme=readme, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if indicator_fields:
-            self._dump_list(dest / INCIDENT_FIELDS_DIR, self.indicator_fields, change_log, readme)
+            self._dump_list(dest=dest / INCIDENT_FIELDS_DIR, iterator=self.indicator_fields, change_log=change_log,
+                            readme=readme, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if connections:
-            self._dump_list(dest / CONNECTIONS_DIR, self.connections, change_log, readme)
+            self._dump_list(dest=dest / CONNECTIONS_DIR, iterator=self.connections, change_log=change_log,
+                            readme=readme, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
         if test_playbooks:
-            self._dump_list(dest / TEST_PLAYBOOKS_DIR, self.test_playbooks, change_log, readme)
-        if widget:
-            self._dump_list(dest / WIDGETS_DIR, self.widget, change_log, readme)
-        # if release_notes:
-        #     self._dump_list(dest / RELEASE_NOTES_DIR, self.release_notes)
-        # if pack_metadata:
-        #     self._dump_list(dest, self.pack_metadata)
-        # if secrets_ignore:
-        #     self._dump_list(dest, self.secrets_ignore)
-        # if readme:
-        #     self._dump_list(dest, self.readme)
-        # if changelog:
-        #     self._dump_list(dest, self.changelog)
+            self._dump_list(dest=dest / TEST_PLAYBOOKS_DIR, iterator=self.test_playbooks, change_log=change_log,
+                            readme=readme, pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
+        if widgets:
+            self._dump_list(dest=dest / WIDGETS_DIR, iterator=self.widgets, change_log=change_log, readme=readme,
+                            pre_hooks=pre_hooks, post_hooks=post_hooks, filter=filter)
+        if tools:
+            self._dump_list(dest=dest / TOOLS_DIR, iterator=self.tools)
+        if release_notes and self.release_notes:
+            self._dump_list(dest=dest / RELEASE_NOTES_DIR, iterator=self.release_notes)
+        if pack_metadata and self.pack_metadata:
+            self.pack_metadata.dump(dest_dir=dest)
+        if secrets_ignore and self.secrets_ignore:
+            self.secrets_ignore.dump(dest_dir=dest)
+        if pack_ignore and self.pack_ignore:
+            self.secrets_ignore.dump(dest_dir=dest)
+        if readme and self.readme:
+            self.readme.dump(dest_dir=dest)
+        if change_log and self.changelog:
+            self.changelog.dump(dest_dir=dest)

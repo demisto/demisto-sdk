@@ -9,8 +9,10 @@ import sys
 from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
+from shutil import copyfile, make_archive, rmtree
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+import time
 
 import click
 import colorama
@@ -100,6 +102,33 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
             return [project_dir]
         files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
     return files
+
+
+def safe_copyfile(src: Union[str, Path], dst: Union[str, Path], execution_start: float = time.time()) -> Path:
+    """Copy file to destination, If destination exists add suffix (i) to file stem.
+
+    Args:
+        src: src file path.
+        dst: dst file to create.
+        execution_start: Boundary of forcing rewrite the file, Saving only from rewriting the file in the same session.
+
+    Returns:
+        Path: file path of modified dst id needed.
+
+    Notes:
+        1. Could vunurable in race condition scenario - very rare.
+    """
+    dst = Path(dst)
+    if dst.exists() and dst.stat().st_mtime >= execution_start:
+        raise Exception(f"File allready exists src: {src}, dst: {dst}")
+
+    return copyfile(src=src, dst=dst)
+
+
+def zip_and_delete_origin(folder: Path):
+    """Archive folder and delete origin folder afterwards"""
+    make_archive(folder, 'zip', folder)
+    rmtree(folder)
 
 
 def print_error(error_str):
@@ -885,7 +914,8 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[
+        str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.

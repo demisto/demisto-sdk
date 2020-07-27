@@ -801,14 +801,11 @@ def update_pack_releasenotes(**kwargs):
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
 
-    _, _, _, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
-
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
-    modified, added, old, changed_meta_files = validate_manager.get_modified_and_added_files('...', 'origin/master')
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
 
     packs_existing_rn = set()
-
     for pf in added:
         if 'ReleaseNotes' in pf:
             pack_with_existing_rn = get_pack_name(pf)
@@ -816,7 +813,6 @@ def update_pack_releasenotes(**kwargs):
     if len(packs_existing_rn):
         existing_rns = ''.join(f"{p}, " for p in packs_existing_rn)
         print_warning(f"Found existing release notes for the following packs: {existing_rns.rstrip(', ')}")
-
     if len(_packs) > 1:
         pack_list = ''.join(f"{p}, " for p in _packs)
         if not is_all:
@@ -844,7 +840,6 @@ def update_pack_releasenotes(**kwargs):
         print_error("Please remove the --all flag when specifying only one pack.")
         sys.exit(0)
     else:
-        print(_pack)
         if _pack:
             if _pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
@@ -854,7 +849,6 @@ def update_pack_releasenotes(**kwargs):
                 update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
                                           pre_release=pre_release, added_files=added,
                                           specific_version=specific_version)
-
                 update_pack_rn.execute_update()
 
 

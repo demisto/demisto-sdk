@@ -99,7 +99,6 @@ class UpdateRN:
         return True
 
     def find_added_pack_files(self):
-        print(self.added_files)
         for a_file in self.added_files:
             if self.pack in a_file:
                 if any(item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST):

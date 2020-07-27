@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json, get_yaml,
                                                get_latest_release_notes_text,
                                                pack_name_to_path, print_color,
                                                print_error, print_warning,
@@ -58,7 +58,8 @@ class UpdateRN:
             self.find_added_pack_files()
             for packfile in self.pack_files:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                changed_files[file_name] = file_type
+                changed_files[file_name] = {'type': file_type, 'description': get_file_description(packfile, file_type)}
+
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 if self.is_bump_required():
@@ -98,6 +99,7 @@ class UpdateRN:
         return True
 
     def find_added_pack_files(self):
+        print(self.added_files)
         for a_file in self.added_files:
             if self.pack in a_file:
                 if any(item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
@@ -255,74 +257,82 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in sorted(changed_items.items(), key=lambda x: x[1] if x[1] is not None else ''):
+        for k, v in sorted(changed_items.items()):
+            desc = v.get('description', '')
+            v = v.get('type', '')
+            if not v:
+                continue
+
             if k == 'N/A':
                 continue
             elif v == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Playbook':
                 if not playbook_header:
                     rn_string += '\n#### Playbooks\n'
                     playbook_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Script':
                 if not script_header:
                     rn_string += '\n#### Scripts\n'
                     script_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Incident Fields':
                 if not inc_flds_header:
                     rn_string += '\n#### Incident Fields\n'
                     inc_flds_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Classifiers':
                 if not classifier_header:
                     rn_string += '\n#### Classifiers\n'
                     classifier_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Layouts':
                 if not layout_header:
                     rn_string += '\n#### Layouts\n'
                     layout_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Incident Types':
                 if not inc_types_header:
                     rn_string += '\n#### Incident Types\n'
                     inc_types_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Indicator Types':
                 if not ind_types_header:
                     rn_string += '\n#### Indicator Types\n'
                     ind_types_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Reports':
                 if not rep_types_header:
                     rn_string += '\n#### Reports\n'
                     rep_types_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Widgets':
                 if not widgets_header:
                     rn_string += '\n#### Widgets\n'
                     widgets_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Dashboards':
                 if not dashboards_header:
                     rn_string += '\n#### Dashboards\n'
                     dashboards_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
             elif v == 'Connections':
                 if not connections_header:
                     rn_string += '\n#### Connections\n'
                     connections_header = True
-                rn_string += f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_string += f'##### {k}\n- {desc}\n'
         return rn_string
 
     def update_existing_rn(self, current_rn, changed_files):
         new_rn = current_rn
         for k, v in sorted(changed_files.items(), reverse=True):
+            desc = v.get('description', '')
+            v = v.get('type', '')
+
             if v is None:
                 continue
             if v in current_rn:
@@ -332,7 +342,7 @@ class UpdateRN:
                 else:
                     self.existing_rn_changed = True
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- {desc}\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
@@ -341,13 +351,13 @@ class UpdateRN:
                 self.existing_rn_changed = True
                 if v in new_rn:
                     rn_parts = new_rn.split(v + 's')
-                    new_rn_part = f'\n##### {k}\n- %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n##### {k}\n- {desc}\n'
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = f'\n#### {v}\n##### {k}\n- %%UPDATE_RN%%\n'
+                    new_rn_part = f'\n#### {v}\n##### {k}\n- {desc}\n'
                     new_rn += new_rn_part
         return new_rn
 
@@ -363,3 +373,22 @@ class UpdateRN:
             self.existing_rn_changed = True
             with open(release_notes_path, 'w') as fp:
                 fp.write(rn_string)
+
+
+def get_file_description(path, file_type):
+    if not os.path.isfile(path):
+        print_error(f'Gets file description failed: "{path}" file does not exist')
+        return ''
+
+    elif file_type == 'Playbook' or file_type == 'Integration':
+        yml_file = get_yaml(path)
+        return yml_file.get('description', '')
+
+    elif file_type == 'Script':
+        yml_file = get_yaml(path)
+        return yml_file.get('comment', '')
+
+    elif file_type == 'Classifiers' or file_type == 'Reports' or file_type == 'Widgets' or file_type == 'Dashboards':
+        json_file = get_json(path)
+        return json_file.get('description', '')
+    return '%%UPDATE_RN%%'

@@ -1,18 +1,19 @@
-import argparse
-import autopep8
 import json
 import os
 import re
 import shutil
 import sys
-import yaml
-
 from distutils.util import strtobool
-from demisto_sdk.commands.common.tools import print_error, print_success
+
+import autopep8
+import yaml
+from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.openapi_codegen.base_code import (
-    base_argument, base_code, base_function, base_list_functions, base_params, base_data, base_props, base_header,
-    base_credentials, base_token, base_basic_auth, base_client, base_request_function)
-from demisto_sdk.commands.openapi_codegen.XSOARIntegration import XSOARIntegration
+    base_argument, base_basic_auth, base_client, base_code, base_credentials,
+    base_data, base_function, base_header, base_list_functions, base_params,
+    base_props, base_request_function, base_token)
+from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
+    XSOARIntegration
 
 camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
 illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', '<para/>', '«', '»']
@@ -279,7 +280,7 @@ class OpenAPIIntegration:
         for path, function in self.json['paths'].items():
             try:
                 for method, data in function.items():
-                    print(f'Adding command for the path: {path}')
+                    self.print_with_verbose(f'Adding command for the path: {path}')
                     self.add_function(path, method, data, function.get(
                         'parameters', []))
             except Exception as e:
@@ -352,7 +353,6 @@ class OpenAPIIntegration:
         configuration['code_type'] = 'python'
         configuration['code_subtype'] = 'python3'
         configuration['docker_image'] = 'demisto/python3:3.8.3.9324'
-        configuration['run_once'] = False
 
         self.configuration = configuration
 
@@ -364,149 +364,7 @@ class OpenAPIIntegration:
         functions = []
         req_functions = []
         for command in self.configuration['commands']:
-            function_name = command['name'].replace('-', '_')
-            print(f'Adding the function {function_name} to the code...')
-            function = base_function.replace('$FUNCTIONNAME$', function_name)
-            req_function = base_request_function.replace('$FUNCTIONNAME$', function_name)
-
-            new_params = []
-            new_data = []
-            arguments = []
-            argument_names = []
-            arguments_found = False
-            headers = command['headers']
-
-            for arg in command['arguments']:
-                arguments_found = True
-                code_arg_name = arg['name']
-                ref_arg_name = arg['name']
-                arg_type = arg.get('type')
-                arg_props = []
-                if arg.get('ref'):
-                    ref_arg_name = f'{arg["ref"]}_{ref_arg_name}'.lower()
-                    code_arg_name = f'{arg["ref"]}_{code_arg_name}'.lower()
-                if code_arg_name in illegal_function_names:
-                    code_arg_name = f'{code_arg_name}{prepend_illegal}'
-                if arg['properties']:
-                    for k, v in arg['properties'].items():
-                        prop_default = self.get_arg_default(v)
-                        prop_arg_name = f'{code_arg_name}_{k}'.lower()
-                        prop_arg_type = arg_types.get(v.get('type', 'string'), 'str')
-                        if prop_arg_type == 'bool':
-                            prop_arg_type = 'argToBoolean'
-                        if prop_arg_name in illegal_function_names:
-                            prop_arg_name = f'{prop_arg_name}{prepend_illegal}'
-                        this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default})"
-                        this_prop_argument = this_prop_argument.replace('$SARGNAME$', prop_arg_name)
-                        if 'None' not in prop_default:
-                            this_prop_argument = this_prop_argument.replace('$ARGTYPE$', f'{prop_arg_type}(') + ')'
-                        else:
-                            this_prop_argument = this_prop_argument.replace('$ARGTYPE$', '')
-                        # arg_props.append(f"'{k}': {prop_arg_name}")
-                        arg_props.append({k: prop_arg_name})
-                        arguments.append(this_prop_argument)
-                    all_props = self.format_params(arg_props, base_props, '$PROPS$')
-                    this_argument = f'{code_arg_name} = {all_props}'
-                    if arg_type == 'array':
-                        this_argument = f'argToList({this_argument})'
-                else:
-                    if arg_type == 'array':
-                        argument_default = ', []'
-                        new_arg_type = 'argToList'
-                    else:
-                        argument_default = self.get_arg_default(arg)
-                        new_arg_type = arg_types.get(arg['type'], 'str')
-                        if new_arg_type == 'bool':
-                            new_arg_type = 'argToBoolean'
-
-                    this_argument = f"{base_argument.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
-                    if 'None' not in argument_default:
-                        this_argument = this_argument.replace('$ARGTYPE$', f'{new_arg_type}(') + ')'
-                    else:
-                        this_argument = this_argument.replace('$ARGTYPE$', '')
-
-                this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
-                argument_names.append(code_arg_name)
-                arguments.append(this_argument)
-                if 'query' in arg['in']:
-                    new_params.append({
-                        arg['name']: ref_arg_name
-                    })
-                elif arg['in'] in ['formData', 'body']:
-                    new_data.append({
-                        arg['name']: ref_arg_name
-                    })
-            if arguments_found:
-                function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
-                function = function.replace('$REQARGS$', ', '.join(argument_names))
-                req_function = req_function.replace('$REQARGS$', ', $REQARGS$')
-                req_function = req_function.replace('$REQARGS$', ', '.join(argument_names))
-            else:
-                req_function = req_function.replace('$REQARGS$', '')
-                function = function.replace('$REQARGS$', '')
-                function = '\n'.join(
-                    [x for x in function.split('\n') if '$ARGUMENTS$' not in x])
-
-            req_function = req_function.replace('$METHOD$', command['method'])
-            command['path'] = f"'{command['path']}'" if "'" not in command['path'] else command['path']
-            command['path'] = f"f{command['path']}" if "{" in command['path'] else command['path']
-            for param in re.findall(r'{([^}]+)}', command['path']):  # get content inside curly brackets
-                if param in illegal_function_names:
-                    command['path'] = command['path'].replace(param, f'{param}{prepend_illegal}')
-
-            req_function = req_function.replace('$PATH$', command['path'])
-
-            if new_params:
-                params = self.format_params(new_params, base_params, '$PARAMS$')
-                req_function = req_function.replace('$PARAMETERS$', params)
-            else:
-                req_function = '\n'.join(
-                    [x for x in req_function.split('\n') if '$PARAMETERS$' not in x])
-
-            if new_data:
-                new_data = self.format_params(new_data, base_data, '$DATAOBJ$')
-                req_function = req_function.replace('$DATA$', new_data)
-            else:
-                req_function = '\n'.join(
-                    [x for x in req_function.split('\n') if '$DATA$' not in x])
-
-            if new_params:
-                req_function = req_function.replace(
-                    '$NEWPARAMS$', ', params=params')
-            else:
-                req_function = req_function.replace('$NEWPARAMS$', '')
-            if new_data:
-                req_function = req_function.replace('$NEWDATA$', ', json_data=data')
-            else:
-                req_function = req_function.replace('$NEWDATA$', '')
-
-            if headers:
-                new_headers = []
-                for header in headers:
-                    for k, v in header.items():
-                        new_headers.append(base_header.replace('$HEADERKEY$', f"'{k}'")
-                                           .replace('$HEADERVALUE$', f"'{v}'"))
-
-                req_function = req_function.replace('$HEADERSOBJ$', ' \n        '.join(new_headers))
-            else:
-                req_function = req_function.replace('$HEADERSOBJ$', '')
-
-            if self.configuration['context_path']:
-                context_name = self.context_path
-            else:
-                context_name = command['name'].title().replace('_', '')
-
-            if 'context_path' in command and command['context_path']:
-                function = function.replace('$CONTEXTPATH$', f'.{command["context_path"]}')
-            else:
-                function = function.replace('$CONTEXTPATH$', '')
-
-            if command['unique_key']:
-                function = function.replace('$UNIQUEKEY$', command['unique_key'])
-            else:
-                function = function.replace('$UNIQUEKEY$', '')
-
-            function = function.replace('$CONTEXTNAME$', context_name)
+            function, req_function = self.get_command_functions(command)
             functions.append(function)
             req_functions.append(req_function)
 
@@ -542,13 +400,146 @@ class OpenAPIIntegration:
             list_functions.append(function)
 
         data = data.replace('$COMMANDSLIST$', '\n\t'.join(list_functions))
-        print('Finished creating the python code.')
+        self.print_with_verbose('Finished creating the python code.')
 
         if self.fix_code:
-            print('Fixing the code with autopep8...')
+            self.print_with_verbose('Fixing the code with autopep8...')
             data = autopep8.fix_code(data)
 
         return data
+
+    def get_command_functions(self, command):
+        function_name = command['name'].replace('-', '_')
+        self.print_with_verbose(f'Adding the function {function_name} to the code...')
+        function = base_function.replace('$FUNCTIONNAME$', function_name)
+        req_function = base_request_function.replace('$FUNCTIONNAME$', function_name)
+        new_params = []
+        new_data = []
+        arguments = []
+        argument_names = []
+        arguments_found = False
+        headers = command['headers']
+        for arg in command['arguments']:
+            arguments_found = True
+            code_arg_name = arg['name']
+            ref_arg_name = arg['name']
+            arg_type = arg.get('type')
+            arg_props = []
+            if arg.get('ref'):
+                ref_arg_name = f'{arg["ref"]}_{ref_arg_name}'.lower()
+                code_arg_name = f'{arg["ref"]}_{code_arg_name}'.lower()
+            if code_arg_name in illegal_function_names:
+                code_arg_name = f'{code_arg_name}{prepend_illegal}'
+            if arg['properties']:
+                for k, v in arg['properties'].items():
+                    prop_default = self.get_arg_default(v)
+                    prop_arg_name = f'{code_arg_name}_{k}'.lower()
+                    prop_arg_type = arg_types.get(v.get('type', 'string'), 'str')
+                    if prop_arg_type == 'bool':
+                        prop_arg_type = 'argToBoolean'
+                    if prop_arg_name in illegal_function_names:
+                        prop_arg_name = f'{prop_arg_name}{prepend_illegal}'
+                    this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default})"
+                    this_prop_argument = this_prop_argument.replace('$SARGNAME$', prop_arg_name)
+                    if 'None' not in prop_default:
+                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', f'{prop_arg_type}(') + ')'
+                    else:
+                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', '')
+                    arg_props.append({k: prop_arg_name})
+                    arguments.append(this_prop_argument)
+                all_props = self.format_params(arg_props, base_props, '$PROPS$')
+                this_argument = f'{code_arg_name} = {all_props}'
+                if arg_type == 'array':
+                    this_argument = f'argToList({this_argument})'
+            else:
+                if arg_type == 'array':
+                    argument_default = ', []'
+                    new_arg_type = 'argToList'
+                else:
+                    argument_default = self.get_arg_default(arg)
+                    new_arg_type = arg_types.get(arg['type'], 'str')
+                    if new_arg_type == 'bool':
+                        new_arg_type = 'argToBoolean'
+
+                this_argument = f"{base_argument.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
+                if 'None' not in argument_default:
+                    this_argument = this_argument.replace('$ARGTYPE$', f'{new_arg_type}(') + ')'
+                else:
+                    this_argument = this_argument.replace('$ARGTYPE$', '')
+
+            this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
+            argument_names.append(code_arg_name)
+            arguments.append(this_argument)
+            if 'query' in arg['in']:
+                new_params.append({
+                    arg['name']: ref_arg_name
+                })
+            elif arg['in'] in ['formData', 'body']:
+                new_data.append({
+                    arg['name']: ref_arg_name
+                })
+        if arguments_found:
+            function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
+            function = function.replace('$REQARGS$', ', '.join(argument_names))
+            req_function = req_function.replace('$REQARGS$', ', $REQARGS$')
+            req_function = req_function.replace('$REQARGS$', ', '.join(argument_names))
+        else:
+            req_function = req_function.replace('$REQARGS$', '')
+            function = function.replace('$REQARGS$', '')
+            function = '\n'.join(
+                [x for x in function.split('\n') if '$ARGUMENTS$' not in x])
+        req_function = req_function.replace('$METHOD$', command['method'])
+        command['path'] = f"'{command['path']}'" if "'" not in command['path'] else command['path']
+        command['path'] = f"f{command['path']}" if "{" in command['path'] else command['path']
+        for param in re.findall(r'{([^}]+)}', command['path']):  # get content inside curly brackets
+            if param in illegal_function_names:
+                command['path'] = command['path'].replace(param, f'{param}{prepend_illegal}')
+        req_function = req_function.replace('$PATH$', command['path'])
+        if new_params:
+            params = self.format_params(new_params, base_params, '$PARAMS$')
+            req_function = req_function.replace('$PARAMETERS$', params)
+        else:
+            req_function = '\n'.join(
+                [x for x in req_function.split('\n') if '$PARAMETERS$' not in x])
+        if new_data:
+            new_data = self.format_params(new_data, base_data, '$DATAOBJ$')
+            req_function = req_function.replace('$DATA$', new_data)
+        else:
+            req_function = '\n'.join(
+                [x for x in req_function.split('\n') if '$DATA$' not in x])
+        if new_params:
+            req_function = req_function.replace(
+                '$NEWPARAMS$', ', params=params')
+        else:
+            req_function = req_function.replace('$NEWPARAMS$', '')
+        if new_data:
+            req_function = req_function.replace('$NEWDATA$', ', json_data=data')
+        else:
+            req_function = req_function.replace('$NEWDATA$', '')
+        if headers:
+            new_headers = []
+            for header in headers:
+                for k, v in header.items():
+                    new_headers.append(base_header.replace('$HEADERKEY$', f"'{k}'")
+                                       .replace('$HEADERVALUE$', f"'{v}'"))
+
+            req_function = req_function.replace('$HEADERSOBJ$', ' \n        '.join(new_headers))
+        else:
+            req_function = req_function.replace('$HEADERSOBJ$', '')
+        if self.configuration['context_path']:
+            context_name = self.context_path
+        else:
+            context_name = command['name'].title().replace('_', '')
+        if 'context_path' in command and command['context_path']:
+            function = function.replace('$CONTEXTPATH$', f'.{command["context_path"]}')
+        else:
+            function = function.replace('$CONTEXTPATH$', '')
+        if command['unique_key']:
+            function = function.replace('$UNIQUEKEY$', command['unique_key'])
+        else:
+            function = function.replace('$UNIQUEKEY$', '')
+        function = function.replace('$CONTEXTNAME$', context_name)
+        return function, req_function
 
     def get_yaml(self, no_code):
         # Create the commands section
@@ -686,15 +677,14 @@ class OpenAPIIntegration:
 
         int_script = XSOARIntegration.Script(script, self.configuration['code_type'],
                                              self.configuration['code_subtype'], self.configuration['docker_image'],
-                                             self.configuration['fetch_incidents'], self.configuration['run_once'],
-                                             commands)
+                                             self.configuration['fetch_incidents'], commands)
 
         integration = XSOARIntegration(commonfields, name, display, category, description, configuration=configurations,
                                        script=int_script)
         return integration
 
     def save_python_code(self, directory):
-        print('Creating python file...')
+        self.print_with_verbose('Creating python file...')
         filename = os.path.join(directory, f'{self.baseName}.py')
         try:
             with open(filename, 'w') as fp:
@@ -705,7 +695,7 @@ class OpenAPIIntegration:
             raise
 
     def save_yaml(self, directory, no_code=False):
-        print('Creating yaml file...')
+        self.print_with_verbose('Creating yaml file...')
         filename = os.path.join(directory, f'{self.baseName}.yml')
         try:
             with open(filename, 'w') as fp:
@@ -716,7 +706,7 @@ class OpenAPIIntegration:
             raise
 
     def save_config(self, config, directory):
-        print('Creating configuration file...')
+        self.print_with_verbose('Creating configuration file...')
         filename = os.path.join(directory, f'{self.baseName}.json')
         try:
             with open(filename, 'w') as fp:
@@ -726,8 +716,12 @@ class OpenAPIIntegration:
             print(f'Error writing {filename} - {err}')
             raise
 
+    def print_with_verbose(self, text):
+        if self.verbose:
+            print(text)
+
     def save_image_and_desc(self, directory):
-        print('Creating image and description files...')
+        self.print_with_verbose('Creating image and description files...')
         image_path = os.path.join(directory, f'{self.baseName}_image.png')
         desc_path = os.path.join(directory, f'{self.baseName}_description.md')
         try:
@@ -792,7 +786,7 @@ class OpenAPIIntegration:
             name = name.replace(i, '')
 
         if snakeify:
-            name = camel_to_snake(name)
+            name = OpenAPIIntegration.camel_to_snake(name)
             name = name.replace('-', '_').replace('__', '_').strip('_')
 
         return name
@@ -807,83 +801,7 @@ class OpenAPIIntegration:
         params = base.replace(base_string, ', '.join(modified_params))
         return params
 
-
-def camel_to_snake(camel):
-    snake = camel_to_snake_pattern.sub('_', camel).lower()
-    return snake
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input_file', metavar='input_file',
-                        help='The swagger file to load')
-    parser.add_argument('-cf', '--config_file', metavar='config_file',
-                        help='The integration configuration file')
-    parser.add_argument('-n', '--base_name', metavar='base_name',
-                        help='The base filename to use for the generated files')
-    parser.add_argument('-p', '--output_package', action='store_true',
-                        help='Output the integration as a package (separate code and yml files)')
-    parser.add_argument('-o', '--output_dir', metavar='output_dir',
-                        help='Directory to store the output to (default is current working directory)')
-    parser.add_argument('-t', '--command_prefix', metavar='command_prefix',
-                        help='Add an additional word to each commands text')
-    parser.add_argument('-c', '--context_path', metavar='context_path',
-                        help='Context output path')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Be verbose with the log output')
-    parser.add_argument('-f', '--fix_code', action='store_true',
-                        help='Fix the python code using autopep8.')
-    parser.add_argument('-a', '--use_default', action='store_true',
-                        help='Use the automatically generated integration configuration')
-
-    args = parser.parse_args()
-
-    if not args.output_dir:
-        directory = os.getcwd()
-    else:
-        directory = args.output_dir
-
-    # Check the directory exists and if not, try to create it
-    if not os.path.exists(directory):
-        try:
-            os.mkdir(directory)
-        except Exception as err:
-            print(f'Error creating directory {directory} - {err}')
-            sys.exit(1)
-    if not os.path.isdir(directory):
-        print(f'The directory provided "{directory}" is not a directory')
-        sys.exit(1)
-
-    configuration = None
-    if args.config_file:
-        try:
-            with open(args.config_file, 'r') as config_file:
-                configuration = json.load(config_file)
-        except Exception as e:
-            print_error(f'Failed to load configuration file: {e}')
-
-    print('Processing swagger file...')
-    integration = OpenAPIIntegration(args.input_file, args.base_name, args.command_prefix, args.context_path,
-                                     verbose=args.verbose, fix_code=args.fix_code, configuration=configuration)
-
-    if not args.config_file:
-        integration.save_config(integration.configuration, directory)
-        print_success(f'Created configuration file in {directory}')
-        if not args.use_default:
-            print('Run the command again with the created configuration file.')
-            sys.exit(0)
-
-    if args.output_package:
-        if integration.save_package(directory):
-            print_success(f'Created package in {directory}')
-        else:
-            print_error(f'There was an error creating the package in {directory}')
-    else:
-        python_file = integration.save_python_code(directory)
-        print_success(f'Created Python file {python_file}.py')
-        yaml_file = integration.save_yaml(directory)
-        print_success(f'Created YAML file {yaml_file}.yml')
-
-
-if __name__ in ['__main__', 'builtins', 'builtins']:
-    main()
+    @staticmethod
+    def camel_to_snake(camel):
+        snake = camel_to_snake_pattern.sub('_', camel).lower()
+        return snake

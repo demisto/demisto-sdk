@@ -104,13 +104,12 @@ class XSOARIntegration:
                 self.defaultvalue = defaultvalue
 
     class Script:
-        def __init__(self, script, type_, subtype, dockerimage, isfetch, runonce, commands=None):
+        def __init__(self, script, type_, subtype, dockerimage, isfetch, commands=None):
             self.script = script
             self.type = type_
             self.subtype = subtype
             self.dockerimage = dockerimage
             self.isfetch = isfetch
-            self.runonce = runonce
             if commands:
                 self.commands = commands
 

@@ -1,4 +1,5 @@
 # Site packages
+import json
 import os
 import re
 import sys
@@ -34,6 +35,8 @@ from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
     json_to_outputs
 from demisto_sdk.commands.lint.lint_manager import LintManager
+from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
+    OpenAPIIntegration
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -841,6 +844,83 @@ def find_dependencies_command(**kwargs):
     pack_name = kwargs.get('pack_folder_name', '')
     id_set_path = kwargs.get('id_set_path')
     PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
+
+
+# ====================== openapi-codegen ====================== #
+@main.command(name="openapi-codegen",
+              short_help='''Generate an XSOAR integration with the OpenAPI(Swagger) generator tool.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input_file', help='The swagger file to load', required=True)
+@click.option(
+    '-cf', '--config_file', help='The integration configuration file', required=False)
+@click.option(
+    '-n', '--base_name', help='The base filename to use for the generated files', required=True)
+@click.option(
+    '-p', '--output_package', is_flag=True, help='Output the integration as a package (separate code and yml files)')
+@click.option(
+    '-o', '--output_dir', help='Directory to store the output to (default is current working directory)',
+    required=False)
+@click.option(
+    '-pr', '--command_prefix', help='Add a prefix to each command in the code', required=False)
+@click.option(
+    '-c', '--context_path', help='Context output path', required=False)
+@click.option(
+    '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
+@click.option(
+    '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8')
+@click.option(
+    '-a', '--use_default', is_flag=True, help='Use the automatically generated integration configuration')
+def openapi_codegen_command(**kwargs):
+    if not kwargs.get('output_dir'):
+        directory = os.getcwd()
+    else:
+        directory = kwargs['output_dir']
+
+    # Check the directory exists and if not, try to create it
+    if not os.path.exists(directory):
+        try:
+            os.mkdir(directory)
+        except Exception as err:
+            print(f'Error creating directory {directory} - {err}')
+            sys.exit(1)
+    if not os.path.isdir(directory):
+        print(f'The directory provided "{directory}" is not a directory')
+        sys.exit(1)
+
+    configuration = None
+    if kwargs.get('config_file'):
+        try:
+            with open(kwargs['config_file'], 'r') as config_file:
+                configuration = json.load(config_file)
+        except Exception as e:
+            print_error(f'Failed to load configuration file: {e}')
+
+    print('Processing swagger file...')
+    integration = OpenAPIIntegration(kwargs['input_file'], kwargs.get('base_name', 'GeneratedIntegration'),
+                                     kwargs.get('command_prefix'), kwargs.get('context_path'),
+                                     verbose=kwargs.get('verbose', False), fix_code=kwargs.get('fix_code', False),
+                                     configuration=configuration)
+
+    if not kwargs.get('config_file'):
+        integration.save_config(integration.configuration, directory)
+        tools.print_success(f'Created configuration file in {directory}')
+        if not kwargs.get('use_default', False):
+            print('Run the command again with the created configuration file.')
+            sys.exit(0)
+
+    if kwargs.get('output_package', False):
+        if integration.save_package(directory):
+            tools.print_success(f'Created package in {directory}')
+        else:
+            tools.print_error(f'There was an error creating the package in {directory}')
+    else:
+        python_file = integration.save_python_code(directory)
+        tools.print_success(f'Created Python file {python_file}.py')
+        yaml_file = integration.save_yaml(directory)
+        tools.print_success(f'Created YAML file {yaml_file}.yml')
 
 
 @main.resultcallback()

@@ -388,8 +388,13 @@ class ContentCreator:
                     if not dpath.startswith('dashboard-'):
                         dpath = f'dashboard-{dpath}'
                 if dir_name == 'Layouts':
-                    if not dpath.startswith('layout-'):
-                        dpath = f'layout-{dpath}'
+                    file_type = tools.find_type(path)
+                    if file_type == FileType.LAYOUTS_CONTAINER:
+                        if not dpath.startswith('layoutscontainer-'):
+                            dpath = f'layoutscontainer-{dpath}'
+                    else:
+                        if not dpath.startswith('layout-'):
+                            dpath = f'layout-{dpath}'
                 new_path = dpath
                 if dir_name == 'IndicatorFields' and not dpath.startswith('incidentfield-indicatorfield-'):
                     new_path = dpath.replace('incidentfield-', 'incidentfield-indicatorfield-')

@@ -55,6 +55,9 @@ class LOG_COLORS:
 
 LOG_VERBOSE = False
 
+LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
+                           'indicatorsDetails'}
+
 
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
@@ -914,8 +917,7 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[
-        str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.

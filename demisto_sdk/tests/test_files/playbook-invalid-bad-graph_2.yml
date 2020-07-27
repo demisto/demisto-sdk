@@ -1,0 +1,119 @@
+id: InvalidPlaybook-BadGraph
+version: -1
+vcShouldKeepItemLegacyProdMachine: false
+name: InvalidPlaybook-BadGraph
+starttaskid: "5"
+tasks:
+  "0":
+    id: "0"
+    taskid: 6dc2c1e6-2079-4ccb-8a82-dde59ed572b2
+    type: start
+    task:
+      id: 6dc2c1e6-2079-4ccb-8a82-dde59ed572b2
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "1":
+    id: "1"
+    taskid: 5024d86f-526a-4562-8a69-ae0671194fdf
+    type: regular
+    task:
+      id: 5024d86f-526a-4562-8a69-ae0671194fdf
+      version: -1
+      name: Untitled Task
+      description: Checks the reputation of an IP address.
+      script: '|||ip'
+      type: regular
+      iscommand: true
+      brand: ""
+    nexttasks:
+      '#none#':
+        - "3"
+    scriptarguments:
+      fullResponse: {}
+      ip:
+        simple: 8.8.8.8
+      long: {}
+      retries: {}
+      sampleSize: {}
+      threshold: {}
+      wait: {}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 460,
+          "y": 180
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "2":
+    id: "2"
+    taskid: a6f996c6-1364-45e8-892d-74519fac3da8
+    type: regular
+    task:
+      id: a6f996c6-1364-45e8-892d-74519fac3da8
+      version: -1
+      name: Untitled Task
+      description: Checks the reputation of a domain.
+      script: '|||domain'
+      type: regular
+      iscommand: true
+      brand: ""
+    scriptarguments:
+      domain:
+        simple: example.com
+      fullResponse: {}
+      long: {}
+      retries: {}
+      sampleSize: {}
+      threshold: {}
+      wait: {}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 440,
+          "y": 390
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: true
+    quietmode: 0
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 435,
+        "width": 400,
+        "x": 440,
+        "y": 50
+      }
+    }
+  }
+inputs: []
+outputs: []

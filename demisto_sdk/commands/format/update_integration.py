@@ -93,7 +93,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
         format the feed integration yml so all required fields in feed integration will exist in the yml file.
         """
         if self.data.get("script", {}).get("feed"):
-            params = [_key for _key in self.data.get('configuration', [])]
+            # Creates a deep copy of the feed integration configuration so the 'defaultvalue` field would not get
+            # popped from the original configuration params.
+            params = [dict(config) for config in self.data.get('configuration', [])]
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param:
                     params[counter].pop('defaultvalue')

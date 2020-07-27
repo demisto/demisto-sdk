@@ -842,3 +842,26 @@ class TestDependencyGraph:
 
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
+
+    def test_build_dependency_graph_include_ignored_content(self, id_set):
+        """
+        Given
+            - A pack name which depends on unsupported content.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the pack dependencies with unsupported content.
+        """
+
+        pack_name = "ImpossibleTraveler"
+        found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name,
+                                                              id_set=id_set,
+                                                              verbose_file=VerboseFile(),
+                                                              exclude_ignored_dependencies=False
+                                                              )
+        root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
+        pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
+
+        assert root_of_graph == pack_name
+        assert len(pack_dependencies) > 0
+        assert 'NonSupported' in pack_dependencies

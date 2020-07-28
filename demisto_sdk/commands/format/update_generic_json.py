@@ -1,8 +1,8 @@
 import json
 
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
-from demisto_sdk.commands.format.format_constants import \
-    ARGUMENTS_DEFAULT_VALUES
+from demisto_sdk.commands.format.format_constants import (
+    ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 
@@ -39,3 +39,12 @@ class BaseUpdateJSON(BaseUpdate):
         self.set_fromVersion(from_version=self.from_version)
 
         print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
+
+    def set_toVersion(self):
+        """
+        Sets toVersion key in file
+        Relevant for old entities such as layouts and classifiers.
+        """
+        if self.data.get('toVersion') != TO_VERSION_5_9_9:
+            print('Setting toVersion field')
+            self.data['toVersion'] = TO_VERSION_5_9_9

@@ -827,6 +827,9 @@ class PackDependencies:
         pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
         pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
 
+        if not sum(pack_items.values(), []):
+            raise ValueError(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")
+
         return pack_items
 
     @staticmethod
@@ -968,6 +971,7 @@ class PackDependencies:
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
+
         with VerboseFile(debug_file_path) as verbose_file:
             dependency_graph = PackDependencies.build_dependency_graph(
                 pack_id=pack_name, id_set=id_set, verbose_file=verbose_file,

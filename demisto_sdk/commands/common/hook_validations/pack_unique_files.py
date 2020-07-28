@@ -28,6 +28,7 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
+SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
@@ -255,7 +256,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """Checks if email or url exist in contributed pack details."""
         try:
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            if pack_meta_file_content[PACK_METADATA_SUPPORT] in CONTRIBUTORS_LIST:
+            if pack_meta_file_content[PACK_METADATA_SUPPORT] in SUPPORTED_CONTRIBUTORS_LIST:
                 if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
                     if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
                         return False

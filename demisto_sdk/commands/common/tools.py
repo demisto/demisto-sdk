@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import sys
+import zipfile
 from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
@@ -133,6 +134,17 @@ def zip_and_delete_origin(folder: Path):
     make_archive(folder, 'zip', folder)
     rmtree(folder)
 
+
+def zip_tool(directory: Path, dest: Path):
+    """Archive folder and delete origin folder afterwards"""
+    zip_file = dest.with_suffix('.zip')
+    with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        zipf.comment = b'{ "system": true }'
+        for root, _, files in os.walk(directory):
+            for file_name in files:
+                zipf.write(os.path.join(root, file_name), file_name)
+
+    return zip_file
 
 def print_error(error_str):
     print_color(error_str, LOG_COLORS.RED)

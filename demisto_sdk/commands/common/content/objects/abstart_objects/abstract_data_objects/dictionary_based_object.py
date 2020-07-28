@@ -3,7 +3,8 @@ from typing import Any, Union, Optional
 
 from wcmatch.pathlib import Path
 
-from general_object import GeneralObject
+from demisto_sdk.commands.common.content.objects.abstart_objects.abstract_data_objects.general_object import \
+    GeneralObject
 
 
 class DictionaryBasedObject(GeneralObject):

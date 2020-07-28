@@ -56,8 +56,9 @@ Notes:
 import re
 import time
 from concurrent.futures import ProcessPoolExecutor, Future, as_completed
-from typing import Union, List
+from typing import Union, List, Dict, Optional
 from contextlib import contextmanager
+import textwrap
 # 3-rd party
 from wcmatch.pathlib import Path, EXTMATCH, SPLIT, BRACE, NODIR, NEGATE
 from packaging.version import parse, Version
@@ -69,6 +70,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
                                                    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, TOOLS_DIR)
+from demisto_sdk.commands.common.logger import logging_setup, Colors
 from demisto_sdk.commands.common.tools import safe_copyfile, zip_and_delete_origin
 
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
@@ -76,6 +78,7 @@ FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'  # Not the right one - Which could be ignored - ?
 ContentObject = Union[YAMLUnfiedObject, YAMLConentObject, JSONContentObject, TextObject]
+logger = logging_setup(3, False)
 
 
 class ArtifactsConfiguration:
@@ -87,6 +90,7 @@ class ArtifactsConfiguration:
             content_version:
             suffix: suffix to add all file we creates.
             zip: True for zip all content artifacts to 3 diffrent zip files in same structure else False.
+            cpus: Availble cpus in the computer.
         """
         self.suffix = suffix
         self.content_version = content_version
@@ -94,7 +98,7 @@ class ArtifactsConfiguration:
         self.artifacts_path = Path(artifacts_path)
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
-        self.contnet_packs_path = self.artifacts_path / 'content_packs'
+        self.content_packs_path = self.artifacts_path / 'content_packs'
         self.cpus = cpus
         self.execution_start = time.time()
         self.content = Content.from_cwd()
@@ -102,39 +106,37 @@ class ArtifactsConfiguration:
 
 def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
     start = time.time()
-
     # Create content artifacts direcotry
     create_artifacts_dirs(artifact_conf)
 
     with ProcessPoolExecutor(artifact_conf.cpus) as pool:
-        futures = []
+        futures = {}
         # Iterate over all packs in content/Packs
         for pack_name, pack in artifact_conf.content.packs.items():
             if pack_name not in IGNORED_PACKS:
-                futures.append(pool.submit(dump_pack, artifact_conf, pack_name, pack))
+                futures[pool.submit(dump_pack, artifact_conf, pack_name, pack)] = f'Pack {pack.path}'
         # Iterate over all test-playbooks in content/TestPlaybooks
         for test_playbook in artifact_conf.content.test_playbooks:
-            futures.append(pool.submit(dump_test_conditionally, artifact_conf, test_playbook))
+            futures[pool.submit(dump_test_conditionally, artifact_conf,
+                                test_playbook)] = f'TestPlaybooks {test_playbook.path}'
         # Dump content descriptor from content/content-descriptor.json
-        futures.append(pool.submit(dump_content_descriptor, artifact_conf))
+        futures[pool.submit(dump_content_descriptor, artifact_conf)] = 'descriptor.json'
         # Dump content documentation from content/Documentation
-        for documentation in artifact_conf.content.documentations:
-            futures.append(pool.submit(documentation.dump,
-                                       artifact_conf.contnet_packs_path / BASE_PACK / DOCUMENTATION_DIR))
+        futures[pool.submit(dump_content_documentations, artifact_conf)] = 'Documentation'
         # Wait for all future to be finished - catch exception if occurred - before zip
         wait_futures_complete(futures)
+        # Add suffix if suffix exists
+        if artifact_conf.suffix:
+            suffix_handler(artifact_conf)
         # Zip if not specified otherwise
         if artifact_conf.zip_artifacts:
             for artifact in [artifact_conf.content_test_path,
                              artifact_conf.content_new_path,
-                             artifact_conf.contnet_packs_path]:
-                pool.submit(zip_and_delete_origin, artifact)
+                             artifact_conf.content_packs_path]:
+                futures[pool.submit(zip_and_delete_origin, artifact)] = f'Zip {artifact}'
             # Wait for all future to be finished - catch exception if occurred
             wait_futures_complete(futures)
-
-    # Add suffix if suffix exists
-    if artifact_conf.suffix:
-        suffix_handler(artifact_conf)
+        log_results(artifact_conf)
 
     end = time.time()
     print(f"Total: {end - start} seconds")
@@ -142,7 +144,7 @@ def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
     return 0
 
 
-def wait_futures_complete(futures: List[Future]) -> list:
+def wait_futures_complete(futures: Dict[Future, str]) -> list:
     """Wait for all futures to complete, Raise exception if occured.
 
     Args:
@@ -151,8 +153,8 @@ def wait_futures_complete(futures: List[Future]) -> list:
     for future in as_completed(futures):
         try:
             future.result()
-        except Exception as exc:
-            raise Exception(str(exc))
+        except Exception:
+            logger.exception(futures[future])
 
 
 def create_artifacts_dirs(artifact_conf: ArtifactsConfiguration) -> None:
@@ -166,8 +168,30 @@ def create_artifacts_dirs(artifact_conf: ArtifactsConfiguration) -> None:
     """
     for artifact in [artifact_conf.content_test_path,
                      artifact_conf.content_new_path,
-                     artifact_conf.contnet_packs_path]:
+                     artifact_conf.content_packs_path]:
         artifact.mkdir(exist_ok=True, parents=True)
+
+
+def dump_content_documentations(artifact_conf: ArtifactsConfiguration):
+    """ Dumping content/content descriptor.json in to:
+            1. content_test
+            2. content_new
+
+    Args:
+        artifact_conf: Command line configuration.
+
+    Notes:
+        1. content_descriptor.json created during build run time.
+    """
+    for documentation in artifact_conf.content.documentations:
+        log_created(artifact_conf.content_packs_path,
+                    documentation.path,
+                    documentation.dump(artifact_conf.content_packs_path / BASE_PACK / DOCUMENTATION_DIR),
+                    artifact_conf.content.path)
+        log_created(artifact_conf.content_new_path,
+                    documentation.path,
+                    documentation.dump(artifact_conf.content_new_path),
+                    artifact_conf.content.path)
 
 
 def dump_content_descriptor(artifact_conf: ArtifactsConfiguration):
@@ -182,9 +206,13 @@ def dump_content_descriptor(artifact_conf: ArtifactsConfiguration):
         1. content_descriptor.json created during build run time.
     """
     if artifact_conf.content.content_descriptor:
+        descriptor = artifact_conf.content.content_descriptor
         for dest in [artifact_conf.content_test_path,
                      artifact_conf.content_new_path]:
-            artifact_conf.content.content_descriptor.dump(dest)
+            log_created(dest,
+                        descriptor.path,
+                        descriptor.dump(dest),
+                        artifact_conf.content.path)
 
 
 def dump_pack(artifact_conf: ArtifactsConfiguration, pack_name: str, pack: Pack) -> None:
@@ -228,15 +256,20 @@ def dump_pack(artifact_conf: ArtifactsConfiguration, pack_name: str, pack: Pack)
     for widget in pack.widgets:
         dump_pack_conditionally(artifact_conf, widget, pack_name, WIDGETS_DIR)
     for release_note in pack.release_notes:
-        release_note.dump(artifact_conf.contnet_packs_path / pack_name / RELEASE_NOTES_DIR)
+        created_files = release_note.dump(artifact_conf.content_packs_path / pack_name / RELEASE_NOTES_DIR)
+        log_created(artifact_conf.content_packs_path, release_note.path, created_files, artifact_conf.content.path)
     for tool in pack.tools:
-        created_files = tool.dump(artifact_conf.contnet_packs_path / pack_name / TOOLS_DIR)
-        for file in created_files:
-            safe_copyfile(file, artifact_conf.content_new_path / file.name, artifact_conf.execution_start)
+        packs_files = tool.dump(artifact_conf.content_packs_path / pack_name / TOOLS_DIR)
+        log_created(artifact_conf.content_packs_path, tool.path, packs_files, artifact_conf.content.path)
+        new_files = [safe_copyfile(file, artifact_conf.content_new_path / file.name, artifact_conf.execution_start)
+                     for file in packs_files]
+        log_created(artifact_conf.content_new_path, tool.path, new_files, artifact_conf.content.path)
     if pack.pack_metadata:
-        pack.pack_metadata.dump(artifact_conf.contnet_packs_path / pack_name)
+        created_files = pack.pack_metadata.dump(artifact_conf.content_packs_path / pack_name)
+        log_created(artifact_conf.content_packs_path, pack.pack_metadata.path, created_files, artifact_conf.content.path)
     if pack.readme:
-        pack.readme.dump(artifact_conf.contnet_packs_path / pack_name)
+        created_files = pack.readme.dump(artifact_conf.content_packs_path / pack_name)
+        log_created(artifact_conf.content_packs_path, pack.pack_metadata.path, created_files, artifact_conf.content.path)
 
 
 def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
@@ -257,53 +290,86 @@ def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_objec
         pack_name: Pack directory name (e.g. Akamai_WAF)
         pack_dir: interanl pack dir name (Integrations/Scripts etc... (Use constants).
     """
-    created_files: List[Path] = []
+    content_pack_files: List[Path] = []
+    content_new_files: List[Path] = []
     rm_files: List[Path] = []
     with content_files_handler(artifact_conf, pack_name, content_object, rm_files):
         # Content packs filter
         if content_object.to_version >= FIRST_MARKETPLACE_VERSION:
-            created_files.extend(content_object.dump(dest_dir=artifact_conf.contnet_packs_path / pack_name / pack_dir,
-                                                     change_log=False,
-                                                     readme=False))
-            rm_files.extend([created_file for created_file in created_files if created_file.name.endswith('_45.yml')])
+            content_pack_files.extend(
+                content_object.dump(dest_dir=artifact_conf.content_packs_path / pack_name / pack_dir,
+                                    change_log=False,
+                                    readme=False))
+            rm_files.extend(
+                [created_file for created_file in content_pack_files if created_file.name.endswith('_45.yml')])
+            real_pack_files = list(set(content_pack_files).difference(set(rm_files)))
+            log_created(artifact_conf.content_packs_path,
+                        content_object.path,
+                        real_pack_files,
+                        artifact_conf.content.path)
+        else:
+            log_ignored(artifact_conf.content_packs_path,
+                        content_object.path,
+                        artifact_conf.content.path,
+                        f'To version < {FIRST_MARKETPLACE_VERSION}')
 
         if TEST_PLAYBOOKS_DIR == pack_dir:
             # Content test filter
-            if content_object.from_version < FIRST_MARKETPLACE_VERSION:
-                if created_files:
-                    for file in created_files:
-                        safe_copyfile(src=file,
-                                      dst=artifact_conf.content_test_path / file.name,
-                                      execution_start=artifact_conf.execution_start)
-                else:
-                    dump_test_conditionally(artifact_conf, content_object)
+            dump_test_conditionally(artifact_conf, content_object, content_pack_files)
         else:
             # Content new filter
             if content_object.from_version < FIRST_MARKETPLACE_VERSION:
-                if created_files:
-                    for file in created_files:
-                        safe_copyfile(src=file,
-                                      dst=artifact_conf.content_new_path / file.name,
-                                      execution_start=artifact_conf.execution_start)
+                if content_pack_files:
+                    for file in content_pack_files:
+                        content_new_files.append(safe_copyfile(src=file,
+                                                               dst=artifact_conf.content_new_path / file.name,
+                                                               execution_start=artifact_conf.execution_start))
                 else:
-                    content_object.dump(dest_dir=artifact_conf.content_new_path,
-                                        readme=False,
-                                        change_log=False)
+                    content_new_files.extend(content_object.dump(dest_dir=artifact_conf.content_new_path,
+                                                                 readme=False,
+                                                                 change_log=False))
+                log_created(artifact_conf.content_new_path,
+                            content_object.path,
+                            content_new_files,
+                            artifact_conf.content.path)
+            else:
+                log_ignored(artifact_conf.content_new_path,
+                            content_object.path,
+                            artifact_conf.content.path,
+                            f"From version >= {FIRST_MARKETPLACE_VERSION}")
 
 
-def dump_test_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> None:
+def dump_test_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
+                            created_files: Optional[List[Path]] = None) -> None:
     """ Dump test scripts/playbooks conditionally by the following logic:
             1. If from_version/fromVersion value is stricly lower than SUPPORTED_BOUND_VERSION.
 
     Args:
+        created_files:
         artifact_conf: Command line configuration
         content_object: content_object (e.g. Integration/Script/Layout etc)
     """
+    content_test_files: List[Path] = []
     if IGNORED_TEST_PLAYBOOKS_DIR not in content_object.path.parts:
         if content_object.from_version < FIRST_MARKETPLACE_VERSION:
-            content_object.dump(dest_dir=artifact_conf.content_test_path,
-                                readme=False,
-                                change_log=False)
+            if created_files:
+                for file in created_files:
+                    content_test_files.append(safe_copyfile(src=file,
+                                                            dst=artifact_conf.content_test_path / file.name,
+                                                            execution_start=artifact_conf.execution_start))
+            else:
+                content_test_files = content_object.dump(dest_dir=artifact_conf.content_test_path,
+                                                         readme=False,
+                                                         change_log=False)
+            log_created(artifact_conf.content_test_path,
+                        content_object.path,
+                        content_test_files,
+                        artifact_conf.content.path)
+        else:
+            log_ignored(artifact_conf.content_test_path,
+                        content_object.path,
+                        artifact_conf.content.path,
+                        f"From version >= {FIRST_MARKETPLACE_VERSION}")
 
 
 def suffix_handler(artifact_conf: ArtifactsConfiguration):
@@ -320,7 +386,7 @@ def suffix_handler(artifact_conf: ArtifactsConfiguration):
     Args:
         artifact_conf: Command line configuration.
     """
-    files_content_packs = artifact_conf.contnet_packs_path.rglob("!README.md|!pack_metadata.json|*.{json,yml,yaml}",
+    files_content_packs = artifact_conf.content_packs_path.rglob("!README.md|!pack_metadata.json|*.{json,yml,yaml}",
                                                                  flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
     file_content_test = artifact_conf.content_test_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
                                                               flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
@@ -354,7 +420,7 @@ def content_files_handler(artifact_conf: ArtifactsConfiguration, pack_name: str,
         files_rm: files to be remove in close
     """
 
-    if pack_name == BASE_PACK and isinstance(content_object, Script) and\
+    if pack_name == BASE_PACK and isinstance(content_object, Script) and \
             content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
         # modify_common_server_parameters(content_object.code_path)
         modify_common_server_constants(content_object.code_path,
@@ -392,3 +458,26 @@ def modify_common_server_constants(code_path: Path, branch_name: str, content_ve
                               f"CONTENT_BRANCH_NAME = '{branch_name}'",
                               file_content_new)
     code_path.write_text(file_content_new)
+
+
+def log_created(target: Path, file_path: Path, new_files: List[Path], content_path: Path):
+    files = ", ".join([str(file.relative_to(target)) for file in new_files])
+    msg = f'{target.name} - {Colors.Fg.green}Add{Colors.reset} - {file_path.relative_to(content_path)}' \
+          f' {Colors.Fg.blue}to{Colors.reset} {files}'
+    logger.info(msg)
+
+
+def log_ignored(target: Path, file_path: Path, content_path: Path, reason: str):
+    msg = f'{target.name} - {Colors.Fg.red}Ignore{Colors.reset} - {file_path.relative_to(content_path)} - ' \
+          f'{Colors.Fg.red}Reason {reason}{Colors.reset}'
+    logger.info(msg)
+
+
+def log_results(artifact_conf: ArtifactsConfiguration):
+    for artifact in [artifact_conf.content_test_path,
+                     artifact_conf.content_new_path,
+                     artifact_conf.content_packs_path]:
+        if artifact_conf.zip_artifacts:
+            logger.info(f"Created - {Colors.Fg.blue}{artifact.with_suffix('.zip')}{Colors.reset}")
+        else:
+            logger.info(f"Created - {Colors.Fg.blue}{artifact}{Colors.reset}")

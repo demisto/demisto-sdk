@@ -1,8 +1,8 @@
 import zipfile
 from abc import ABC
-from shutil import copytree, make_archive
+from shutil import copytree
 from typing import Union, Optional
-from zipfile import ZipFile
+from demisto_sdk.commands.common.tools import zip_tool
 
 from wcmatch.pathlib import Path
 
@@ -16,11 +16,12 @@ class Tool(GeneralObject, ABC):
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None, zip_file: bool = True):
         created_files = []
+        self._create_target_dump_dir(dest_dir)
         if not dest_dir:
             dest_dir = self.path.parent
         normalize_dir_name = self._normalized_file_name()
         if zip_file:
-            created_files.append(Path(make_archive(dest_dir / normalize_dir_name, 'zip', self._path)))
+            created_files.append(zip_tool(self._path, dest_dir / normalize_dir_name))
         else:
             created_files.extend(Path(copytree(src=self.path, dst=dest_dir / normalize_dir_name)).iterdir())
 

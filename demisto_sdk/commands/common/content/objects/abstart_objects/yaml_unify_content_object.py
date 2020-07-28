@@ -1,13 +1,16 @@
 import copy
+import os
+import sys
+from contextlib import contextmanager
 from shutil import copyfile, move, copytree, rmtree
 from typing import Union, Optional, Callable, List
 from abc import abstractmethod
 
 from wcmatch.pathlib import Path, EXTMATCH
 
+from demisto_sdk.commands.common.content.objects.abstart_objects.yaml_content_object import YAMLConentObject
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.constants import FileType, SCRIPTS_DIR, INTEGRATIONS_DIR, TEST_PLAYBOOKS_DIR
-from yaml_content_object import YAMLConentObject
 
 
 class YAMLUnfiedObject(YAMLConentObject):
@@ -55,11 +58,13 @@ class YAMLUnfiedObject(YAMLConentObject):
     def _split_yaml_4_5_0(self, dest_dir):
         unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
         try:
-            unifier = Unifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name), force=True)
+            unifier = Unifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
+                              force=True)
             yaml_dict = self.to_dict()
             yaml_dict_copy = copy.deepcopy(yaml_dict)
             script_object = self.script
-            created_files = [Path(path) for path in unifier.write_yaml_with_docker(yaml_dict_copy, yaml_dict, script_object).keys()]
+            created_files = [Path(path) for path in
+                             unifier.write_yaml_with_docker(yaml_dict_copy, yaml_dict, script_object).keys()]
         except Exception as e:
             raise BaseException(f"Unable to unify integration {self.path}, Full error: {e}")
 

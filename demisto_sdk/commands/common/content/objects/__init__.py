@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.content.objects.incident_field.incident_field i
 from demisto_sdk.commands.common.content.objects.incident_type.incident_type import IncidentType
 from demisto_sdk.commands.common.content.objects.indicator_field.indicator_field import IndicatorField
 from demisto_sdk.commands.common.content.objects.indicator_type.indicator_type import IndicatorType
-from demisto_sdk.commands.common.content.objects.indicator_type.reputation import Reputation
+from demisto_sdk.commands.common.content.objects.indicator_type.reputation import Reputation, OldReputation
 from demisto_sdk.commands.common.content.objects.report.report import Report
 from demisto_sdk.commands.common.content.objects.change_log.change_log import ChangeLog
 from demisto_sdk.commands.common.content.objects.readme.readme import Readme

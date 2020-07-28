@@ -7,10 +7,10 @@ from demisto_sdk.commands.common.content import (Integration, Script, Playbook, 
                                                  Connection, IndicatorField, IndicatorType, Report, Dashboard, Layout,
                                                  Widget, ReleaseNote, PackMetaData, SecretIgnore, Readme, ChangeLog,
                                                  PackIgnore, Tool, LayoutContainer, Reputation, DocFile, Documentation,
-                                                 Canvas)
+                                                 Canvas, OldReputation)
 from demisto_sdk.commands.common.constants import (INTEGRATION, SCRIPT, PLAYBOOK, CANVAS,
                                                    CLASSIFIER, CONNECTION, REPORT, DASHBOARD,
-                                                   LAYOUT, WIDGET, LAYOUT_CONTAINER, REPUTATION)
+                                                   LAYOUT, WIDGET, LAYOUT_CONTAINER, REPUTATION, OLD_INDICATOR_TYPE)
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR, INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR, DOC_FILES_DIR, DOCUMENTATION_DIR,
@@ -58,6 +58,7 @@ type_conversion_by_prefix = {
     WIDGET: Widget,
     REPUTATION: Reputation,
     CANVAS: Canvas,
+    OLD_INDICATOR_TYPE: OldReputation,
 }
 
 type_conversion_by_dir = {
@@ -96,7 +97,7 @@ class ContentObjectFacotry:
     @staticmethod
     def _find_type_by_suffix(file_name: str):
         object_type = None
-        prefix_match = re.search(pattern=r'([a-z]+)-.*', string=file_name)
+        prefix_match = re.search(pattern=r'([a-z]+)-?.*', string=file_name)
         if prefix_match:
             object_type = type_conversion_by_prefix.get(prefix_match.group(1))
         elif type_conversion_by_file_name.get(file_name):

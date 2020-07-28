@@ -4,7 +4,7 @@ from typing import Union
 from wcmatch.pathlib import Path
 import ujson
 
-from dictionary_based_object import DictionaryBasedObject
+from demisto_sdk.commands.common.content.objects.abstart_objects.abstract_data_objects.dictionary_based_object import DictionaryBasedObject
 
 
 class JSONObject(DictionaryBasedObject, ABC):

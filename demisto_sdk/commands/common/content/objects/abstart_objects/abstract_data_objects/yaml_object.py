@@ -3,7 +3,8 @@ from typing import Union
 from ruamel.yaml import YAML
 from wcmatch.pathlib import Path
 
-from dictionary_based_object import DictionaryBasedObject
+from demisto_sdk.commands.common.content.objects.abstart_objects.abstract_data_objects.dictionary_based_object import \
+    DictionaryBasedObject
 
 
 class YAMLObject(DictionaryBasedObject):

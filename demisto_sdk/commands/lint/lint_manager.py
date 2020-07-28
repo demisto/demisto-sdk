@@ -48,7 +48,7 @@ class LintManager:
         global logger
         logger = logging_setup(verbose=verbose,
                                quiet=quiet,
-                               log_path=log_path)
+                               log_path=Path(log_path) / 'lint_debug_log.log')
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager

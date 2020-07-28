@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Union, Callable
+from typing import Optional, Union
 from shutil import copyfile
 
 from wcmatch.pathlib import Path
@@ -27,7 +27,7 @@ class GeneralObject(object):
         file_normalized_name = self._path.name
         if self._path.suffix:
             file_normalized_name = ".".join(file_normalized_name.split('.')[:-1])
-        if self._prefix and not file_normalized_name.startswith(f'{self._prefix}-'):
+        if self._prefix and not file_normalized_name.startswith(f'{self._prefix}'):
             file_normalized_name = f'{self._prefix}-{file_normalized_name}'
 
         return f'{file_normalized_name}{self._path.suffix}'

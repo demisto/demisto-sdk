@@ -438,12 +438,15 @@ class ContentCreator:
                 if not self.should_process_file_to_bundle(path, bundle):
                     continue
 
-                new_path = self.add_suffix_to_file_path(os.path.basename(path))
                 if dir_name == RELEASE_NOTES_DIR:
+                    new_path = path
                     if os.path.isfile(os.path.join(bundle, new_path)):
                         raise NameError(
                             f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'
                         )
+
+                else:
+                    new_path = self.add_suffix_to_file_path(os.path.basename(path))
 
                 if len(new_path) >= self.file_name_max_size:
                     self.long_file_names.append(os.path.basename(new_path))

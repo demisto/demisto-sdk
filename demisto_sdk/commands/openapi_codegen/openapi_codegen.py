@@ -16,7 +16,7 @@ from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
 
 camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
-illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', '<para/>', '«', '»']
+illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
 illegal_func_chars = illegal_description_chars + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
 illegal_function_names = ['type', 'from', 'id', 'file']
 prepend_illegal = '_'
@@ -43,7 +43,7 @@ CREDENTIALS_AUTH_TYPE = 'basic'
 
 
 class OpenAPIIntegration:
-    def __init__(self, file_path, base_name, command_prefix, context_path,
+    def __init__(self, file_path, base_name, command_prefix, context_path, unique_keys=None,
                  verbose=False, fix_code=False, configuration=None):
         self.json = None
         self.baseName = base_name
@@ -51,6 +51,7 @@ class OpenAPIIntegration:
         self.include_commands = []
         self.command_prefix = command_prefix
         self.context_path = context_path
+        self.unique_keys = unique_keys.split(',') if unique_keys is not None else []
         self.configuration = configuration
         self.file_load = False
         self.swagger = None
@@ -231,7 +232,7 @@ class OpenAPIIntegration:
                 for v in data:
                     description = v.get('description', '')
                     this_type = v.get('type', 'object')
-                    this_type = output_types.get(this_type)
+                    this_type = output_types.get(this_type, 'Unknown')
                     resp_name = v.get('name')
                     description = self.clean_description(description)
                     new_function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
@@ -268,7 +269,9 @@ class OpenAPIIntegration:
             self.host = ''
         self.base_path = self.json.get('basePath', '')
         self.name = self.json['info']['title']
-        self.description = self.json.get('info', {}).get('description', '')
+        self.description = self.clean_description(self.json.get('info', {}).get('description', ''))
+        if len(self.description) > 1000:
+            self.description = self.description[:1000] + '...'
         self.schemes = self.json.get('schemes', [])
         self.definitions = self.json.get('definitions', {})
         self.components = self.json.get('components', {})
@@ -304,7 +307,6 @@ class OpenAPIIntegration:
             'category': 'Utilities',
             'url': self.host or DEFAULT_HOST,
             'auth': security_types,
-            'fetch_incidents': False,
             'context_path': self.context_path or self.name,
             'commands': []
         }
@@ -314,7 +316,6 @@ class OpenAPIIntegration:
                 'path': function['path'],
                 'method': function['method'],
                 'description': function['description'],
-                'unique_key': '',
                 'arguments': [],
                 'outputs': [],
                 'context_path': function.get('context_path', '')
@@ -347,6 +348,12 @@ class OpenAPIIntegration:
                     'description': output['description'],
                     'type': output['type']
                 })
+
+                if output['name'] in self.unique_keys:
+                    command['unique_key'] = output['name']
+
+            if 'unique_key' not in command:
+                command['unique_key'] = ''
 
             configuration['commands'].append(command)
 
@@ -630,7 +637,7 @@ class OpenAPIIntegration:
                                                                  name='credentials',
                                                                  required=True,
                                                                  type_=9))
-        if self.configuration['fetch_incidents']:
+        if self.configuration.get('fetch_incidents', False):
             configurations.extend([
                 XSOARIntegration.Configuration(display='Fetch incidents',
                                                name='isFetch',
@@ -677,7 +684,7 @@ class OpenAPIIntegration:
 
         int_script = XSOARIntegration.Script(script, self.configuration['code_type'],
                                              self.configuration['code_subtype'], self.configuration['docker_image'],
-                                             self.configuration['fetch_incidents'], commands)
+                                             self.configuration.get('fetch_incidents', False), commands)
 
         integration = XSOARIntegration(commonfields, name, display, category, description, configuration=configurations,
                                        script=int_script)
@@ -710,7 +717,7 @@ class OpenAPIIntegration:
         filename = os.path.join(directory, f'{self.baseName}.json')
         try:
             with open(filename, 'w') as fp:
-                json.dump(config, fp)
+                json.dump(config, fp, indent=4)
             return filename
         except Exception as err:
             print(f'Error writing {filename} - {err}')

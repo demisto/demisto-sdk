@@ -857,9 +857,7 @@ def find_dependencies_command(**kwargs):
 @click.option(
     '-cf', '--config_file', help='The integration configuration file', required=False)
 @click.option(
-    '-n', '--base_name', help='The base filename to use for the generated files', required=True)
-@click.option(
-    '-p', '--output_package', is_flag=True, help='Output the integration as a package (separate code and yml files)')
+    '-n', '--base_name', help='The base filename to use for the generated files', required=False)
 @click.option(
     '-o', '--output_dir', help='Directory to store the output to (default is current working directory)',
     required=False)
@@ -867,6 +865,8 @@ def find_dependencies_command(**kwargs):
     '-pr', '--command_prefix', help='Add a prefix to each command in the code', required=False)
 @click.option(
     '-c', '--context_path', help='Context output path', required=False)
+@click.option(
+    '-u', '--unique_keys', help='Comma separated unique keys to use in context paths', required=False)
 @click.option(
     '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
 @click.option(
@@ -898,9 +898,11 @@ def openapi_codegen_command(**kwargs):
         except Exception as e:
             print_error(f'Failed to load configuration file: {e}')
 
+    base_name = kwargs.get('base_name', 'GeneratedIntegration')
     print('Processing swagger file...')
-    integration = OpenAPIIntegration(kwargs['input_file'], kwargs.get('base_name', 'GeneratedIntegration'),
-                                     kwargs.get('command_prefix'), kwargs.get('context_path'),
+    integration = OpenAPIIntegration(kwargs['input_file'], base_name,
+                                     kwargs.get('command_prefix', base_name.lower()),
+                                     kwargs.get('context_path', base_name), unique_keys=kwargs.get('unique_keys', ''),
                                      verbose=kwargs.get('verbose', False), fix_code=kwargs.get('fix_code', False),
                                      configuration=configuration)
 
@@ -911,16 +913,10 @@ def openapi_codegen_command(**kwargs):
             print('Run the command again with the created configuration file.')
             sys.exit(0)
 
-    if kwargs.get('output_package', False):
-        if integration.save_package(directory):
-            tools.print_success(f'Created package in {directory}')
-        else:
-            tools.print_error(f'There was an error creating the package in {directory}')
+    if integration.save_package(directory):
+        tools.print_success(f'Created package in {directory}')
     else:
-        python_file = integration.save_python_code(directory)
-        tools.print_success(f'Created Python file {python_file}.py')
-        yaml_file = integration.save_yaml(directory)
-        tools.print_success(f'Created YAML file {yaml_file}.yml')
+        tools.print_error(f'There was an error creating the package in {directory}')
 
 
 @main.resultcallback()

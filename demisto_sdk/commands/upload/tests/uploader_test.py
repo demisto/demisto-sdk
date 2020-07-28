@@ -329,7 +329,7 @@ def test_upload_incident_fields_directory(demisto_client_configure, mocker):
     """
     mocker.patch("builtins.print")
     dir_name = "IncidentFields"
-    incident_fields_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}"
+    incident_fields_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}/"
     uploader = Uploader(input=incident_fields_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     assert uploader.upload() == 0

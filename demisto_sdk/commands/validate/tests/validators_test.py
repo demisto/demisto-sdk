@@ -418,6 +418,38 @@ class TestValidators:
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
+    def test_validate_pack_dependencies__validate_manager(self, ):
+        """
+            Given:
+                - A file path with valid pack dependencies
+            When:
+                - checking validity of pack dependencies for added or modified files
+            Then:
+                - return a True validation response
+        """
+        validate_manager = ValidateManager(skip_conf_json=True)
+        id_set_path = os.path.normpath(
+            os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={},
+                                                             id_set_path=id_set_path)
+        assert result
+
+    def test_validate_invalid_pack_dependencies__validate_manager(self, ):
+        """
+            Given:
+                - A file path with invalid pack dependencies
+            When:
+                - checking validity of pack dependencies for added or modified files
+            Then:
+                - return a False validation response
+        """
+        validate_manager = ValidateManager(skip_conf_json=True)
+        id_set_path = os.path.normpath(
+            os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={},
+                                                             id_set_path=id_set_path)
+        assert not result
+
     FILE_PATH = [
         ([VALID_SCRIPT_PATH], 'script')
     ]
@@ -848,6 +880,28 @@ class TestValidators:
 
         # check recognized deleted file
         assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
+
+    def test_setup_git_params(self, mocker):
+        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='20.0.7')
+        validate_manager = ValidateManager()
+        validate_manager.setup_git_params()
+
+        assert validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='master')
+        # resetting always_valid flag
+        validate_manager.always_valid = False
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '...'
 
 
 def test_content_release_identifier_exists():

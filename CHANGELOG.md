@@ -1,4 +1,14 @@
 # Changelog
+* Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
+* Playbook branch marked with *skipunavailable* is now set as an optional dependency in the **find-dependencies** command.
+* The **feedReputation** parameter can now be hidden in a feed integration.
+* Fixed an issue where running the **unify** command on JS package failed.
+* Added the *--no-update* flag to the **find-dependencies** command.
+* Added the following validations in **validate** command:
+   * Validating that a pack does not depend on NonSupported / Deprecated packs.
+* Added new *githubUser* field in pack metadata init command.
+
+# 1.1.6
 * Added the *--description* option to the **init** command.
 * Added the *--contribution* option to the **init** command which converts a contribution zip to proper pack format.
 * Improved **validate** command performance time and outputs.

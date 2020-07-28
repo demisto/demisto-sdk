@@ -71,7 +71,7 @@ class Unifier:
         self.ryaml.preserve_quotes = True
         self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if self.yml_path:
-            with open(self.yml_path, 'r') as yml_file:
+            with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
                 self.yml_data = self.ryaml.load(yml_file)
         else:
             self.yml_data = {}
@@ -235,9 +235,9 @@ class Unifier:
                         r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
         if self.package_path.endswith('/'):
             self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
-        if self.package_path.endswith('Scripts/CommonServerPython'):
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPython')):
             return os.path.join(self.package_path, 'CommonServerPython.py')
-        if self.package_path.endswith('Scripts/CommonServerPowerShell'):
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPowerShell')):
             return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
@@ -260,8 +260,11 @@ class Unifier:
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)
-        if script_type == '.ps1':
+        elif script_type == '.ps1':
             clean_code = self.clean_pwsh_code(script_code)
+        else:
+            # for JS scripts
+            clean_code = script_code
 
         if self.is_script_package:
             if yml_data.get('script', '') not in ('', '-'):
@@ -293,7 +296,7 @@ class Unifier:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
         unifier = Unifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
-        with open(code_path, 'r') as code_file:
+        with io.open(code_path, 'r', encoding='utf-8') as code_file:
             code = code_file.read()
 
         return yml_path, code

@@ -10,6 +10,7 @@ from functools import partial
 from multiprocessing import Pool, cpu_count
 
 import click
+import networkx
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
@@ -137,6 +138,59 @@ def get_changed_files(files_string):
     return added_files_list, modified_files_list, added_script_list, modified_script_list
 
 
+def build_tasks_graph(playbook_data):
+    """
+    Builds tasks flow graph.
+
+    Args:
+        playbook_data (dict): playbook yml data.
+
+    Returns:
+        DiGraph: all tasks of given playbook.
+    """
+    initial_task = playbook_data.get('starttaskid', '')
+    tasks = playbook_data.get('tasks', {})
+
+    graph = networkx.DiGraph()
+    graph.add_node(initial_task, mandatory=True)  # add starting task as root of the direct graph
+
+    found_new_tasks = True
+    while found_new_tasks:
+        current_number_of_nodes = graph.number_of_nodes()
+        leaf_nodes = {node for node in graph.nodes() if graph.out_degree(node) == 0}
+
+        for leaf in leaf_nodes:
+            leaf_task = tasks.get(leaf)
+            leaf_mandatory = graph.nodes[leaf]['mandatory']
+
+            # In this case the playbook is invalid, starttaskid contains invalid task id.
+            if not leaf_task:
+                print_error(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
+                continue
+
+            leaf_next_tasks = sum(leaf_task.get('nexttasks', {}).values(), [])
+
+            for task_id in leaf_next_tasks:
+                task = tasks.get(task_id)
+                if not task:
+                    print_error(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
+                    continue
+
+                # If task can't be skipped and predecessor task is mandatory - set as mandatory.
+                mandatory = leaf_mandatory and not task.get('skipunavailable', False)
+                if task_id not in graph.nodes():
+                    graph.add_node(task_id, mandatory=mandatory)
+                else:
+                    # If task already in graph, update mandatory field.
+                    # If one of the paths to the task is mandatory - set as mandatory.
+                    graph.nodes[task_id]['mandatory'] = graph.nodes[task_id]['mandatory'] or mandatory
+                graph.add_edge(leaf, task_id)
+
+        found_new_tasks = graph.number_of_nodes() > current_number_of_nodes
+
+    return graph
+
+
 def get_integration_commands(file_path):
     cmd_list = []
     data_dictionary = get_yaml(file_path)
@@ -147,16 +201,21 @@ def get_integration_commands(file_path):
     return cmd_list
 
 
-def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict) -> tuple:
+def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict, graph: networkx.DiGraph) -> tuple:
     implementing_ids = set()
     implementing_ids_skippable = set()
     tasks = data_dict.get('tasks', {})
 
-    for task in tasks.values():
+    for task_id, task in tasks.items():
         task_details = task.get('task', {})
 
         enriched_id = task_details.get(param_to_enrich_by)
-        skippable = task.get('skipunavailable', False)
+        try:
+            skippable = not graph.nodes[task_id]['mandatory']
+        except KeyError:
+            # if task id not in the graph - the task is unreachable.
+            print_error(f'{data_dict["id"]}: task {task_id} is not connected')
+            continue
         if enriched_id:
             implementing_ids.add(enriched_id)
             if skippable:
@@ -165,10 +224,10 @@ def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict) -> tupl
     return list(implementing_ids), list(implementing_ids_skippable)
 
 
-def get_commmands_from_playbook(data_dict: dict) -> tuple:
+def get_commands_from_playbook(data_dict: dict) -> tuple:
     command_to_integration = {}
     command_to_integration_skippable = set()
-    tasks = data_dict.get('tasks', [])
+    tasks = data_dict.get('tasks', {})
 
     for task in tasks.values():
         task_details = task.get('task', {})
@@ -213,7 +272,7 @@ def get_integration_data(file_path):
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
-    default_classifier = data_dictionary.get('defaultClassifier')
+    default_classifier = data_dictionary.get('defaultclassifier')
     default_incident_type = data_dictionary.get('defaultIncidentType')
     is_feed = data_dictionary.get('feed')
     mappers = set()
@@ -223,7 +282,7 @@ def get_integration_data(file_path):
         if command.get('deprecated', False):
             deprecated_commands.append(command.get('name'))
 
-    for mapper in ['defaultMapperIn', 'defaultMapperOut']:
+    for mapper in ['defaultmapperin', 'defaultmapperout']:
         if data_dictionary.get(mapper):
             mappers.add(data_dictionary.get(mapper))
 
@@ -303,19 +362,19 @@ def get_fields_by_script_argument(task):
     return dependent_incident_fields
 
 
-def get_incident_fields_by_playbook_input(input):
+def get_incident_fields_by_playbook_input(playbook_input):
     """Searches for incident fields in a playbook input.
 
     Args:
-        input (dict): An input of the playbook
+        playbook_input (dict): An input of the playbook
 
     Returns:
         set. set of incident fields related to this task
     """
     dependent_incident_fields = set()
 
-    input_type = list(input.keys())[0]  # type can be `simple` or `complex`
-    input_value = list(input.values())[0]
+    input_type = list(playbook_input.keys())[0]  # type can be `simple` or `complex`
+    input_value = list(playbook_input.values())[0]
 
     # check if it is in the form 'simple: ${incident.field_name}'
     if input_type == 'simple' and str(input_value).startswith('${incident.'):
@@ -375,17 +434,24 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
 def get_playbook_data(file_path: str) -> dict:
     playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
+    graph = build_tasks_graph(data_dictionary)
+
     id_ = data_dictionary.get('id', '-')
     name = data_dictionary.get('name', '-')
-
     deprecated = data_dictionary.get('deprecated', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
-    implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook('scriptName', data_dictionary)
+
+    implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook('scriptName',
+                                                                                      data_dictionary,
+                                                                                      graph
+                                                                                      )
     implementing_playbooks, implementing_playbooks_skippable = get_task_ids_from_playbook('playbookName',
-                                                                                          data_dictionary)
-    command_to_integration, command_to_integration_skippable = get_commmands_from_playbook(data_dictionary)
+                                                                                          data_dictionary,
+                                                                                          graph
+                                                                                          )
+    command_to_integration, command_to_integration_skippable = get_commands_from_playbook(data_dictionary)
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
                        command_to_integration_skippable)
     pack = get_pack_name(file_path)

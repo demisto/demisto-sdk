@@ -49,7 +49,22 @@ class Repo:
         self.content_descriptor.write_json({})
 
         self.id_set = JSONBased(self._test_dir, 'id_set', '')
-        self.id_set.write_json({})
+        self.id_set.write_json({
+            'scripts': [],
+            'playbooks': [],
+            'integrations': [],
+            'TestPlaybooks': [],
+            'Classifiers': [],
+            'Dashboards': [],
+            'IncidentFields': [],
+            'IncidentTypes': [],
+            'IndicatorFields': [],
+            'IndicatorTypes': [],
+            'Layouts': [],
+            'Reports': [],
+            'Widgets': [],
+            'Mappers': [],
+        })
 
     def setup_one_pack(self, name):
         pack = self.create_pack(name)

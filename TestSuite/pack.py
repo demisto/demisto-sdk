@@ -300,7 +300,6 @@ class Pack:
             name: Optional[str] = None,
             yml: Optional[dict] = None,
             readme: Optional[str] = None,
-            changelog: Optional[str] = None,
     ) -> Playbook:
         if name is None:
             name = f'playbook-{len(self.playbooks)}.yml'
@@ -310,7 +309,6 @@ class Pack:
         playbook.build(
             yml,
             readme,
-            changelog,
         )
         self.playbooks.append(playbook)
         return playbook
@@ -330,7 +328,6 @@ class Pack:
         playbook.build(
             yml,
             readme,
-            changelog,
         )
         self.test_playbooks.append(playbook)
         return playbook

@@ -76,6 +76,11 @@ class PlaybookYMLFormat(BaseUpdateYML):
                 task['task']['name'] = task['task'].get('name').replace('_dev', ''). \
                     replace('_copy', '')
 
+    def update_id_to_equal_name(self):
+        # Relevant for new playbooks only
+        if not self.old_file:
+            super().update_id_to_equal_name()
+
     def run_format(self) -> int:
         try:
             super().update_yml()

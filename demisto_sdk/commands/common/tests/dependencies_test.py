@@ -29,12 +29,12 @@ class IntegrationDependencies:
     @staticmethod
     def make_integration_depend_on_mapper_in(integration: Integration, mapper: JSONBased):
         mapper_id = mapper.read_json_as_dict().get('id')
-        integration.yml.update({'defaultMapperIn': mapper_id})
+        integration.yml.update({'defaultmapperin': mapper_id})
 
     @staticmethod
     def make_integration_depend_on_mapper_out(integration: Integration, mapper: JSONBased):
         mapper_id = mapper.read_json_as_dict().get('id')
-        integration.yml.update({'defaultMapperOut': mapper_id})
+        integration.yml.update({'defaultmapperout': mapper_id})
 
     @staticmethod
     def make_integration_depend_on_incident_type(integration: Integration, incident_type: JSONBased):
@@ -111,18 +111,19 @@ class IndicatorTypeDependencies:
         script_id = script.yml.read_dict().get('commonfields').get('id')
         indicator_type.update({'enhancementScriptNames': [script_id]})
 
-    @staticmethod
-    def make_indicator_type_depend_on_integration(indicator_type: JSONBased, integration: Integration):
-        indicator_type.update({'reputationCommand': 'ip'})
-        integration.yml.update(
-            {
-                'script': {
-                    'commands': [{
-                        'name': 'ip'
-                    }]
-                }
-            }
-        )
+    # Optional dependency
+    # @staticmethod
+    # def make_indicator_type_depend_on_integration(indicator_type: JSONBased, integration: Integration):
+    #     indicator_type.update({'reputationCommand': 'ip'})
+    #     integration.yml.update(
+    #         {
+    #             'script': {
+    #                 'commands': [{
+    #                     'name': 'ip'
+    #                 }]
+    #             }
+    #         }
+    #     )
 
 
 class LayoutDependencies:
@@ -182,16 +183,17 @@ class LayoutDependencies:
 
 
 class IncidentFieldDependencies:
-    @staticmethod
-    def make_incident_field_depend_on_incident_type_associated(incident_field: JSONBased, incident_type: JSONBased):
-        incident_type_id = incident_type.read_json_as_dict().get('id')
-        incident_field.update({'associatedTypes': [incident_type_id]})
-
-    @staticmethod
-    def make_incident_field_depend_on_incident_type_system_associated(incident_field: JSONBased,
-                                                                      incident_type: JSONBased):
-        incident_type_id = incident_type.read_json_as_dict().get('id')
-        incident_field.update({'systemAssociatedTypes': [incident_type_id]})
+    # Ignored by yaakovi
+    # @staticmethod
+    # def make_incident_field_depend_on_incident_type_associated(incident_field: JSONBased, incident_type: JSONBased):
+    #     incident_type_id = incident_type.read_json_as_dict().get('id')
+    #     incident_field.update({'associatedTypes': [incident_type_id]})
+    #
+    # @staticmethod
+    # def make_incident_field_depend_on_incident_type_system_associated(incident_field: JSONBased,
+    #                                                                   incident_type: JSONBased):
+    #     incident_type_id = incident_type.read_json_as_dict().get('id')
+    #     incident_field.update({'systemAssociatedTypes': [incident_type_id]})
 
     @staticmethod
     def make_incident_field_depend_on_script(incident_field: JSONBased, script: Script):
@@ -256,7 +258,7 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
                      get_entity_by_pack_number_and_entity_type(repo, current_pack, inputs_arguments[0])}
 
     inputs_arguments = inputs_arguments[1:]
-    number_of_packs = len(repo.packs)
+    number_of_packs = len(repo.packs) - 1
 
     for arg in inputs_arguments:
         if arg in LIST_ARGUMENTS_TO_METHODS.keys():
@@ -298,6 +300,9 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
         all_dependencies = all_dependencies.union(dependencies)
         method(**args)
 
+        # print(dependencies)
+        # print(method.__name__)
+
     return all_dependencies
 
 
@@ -317,7 +322,7 @@ def test_dependencies(repo, test_number):
 
     number_of_packs = 10
     repo.setup_content_repo(number_of_packs)
-    repo.create_pack('CommonTypes')
+    repo.setup_one_pack('CommonTypes')
 
     pack_to_verify = random.sample(range(number_of_packs), 1)[0]
 
@@ -350,7 +355,7 @@ def test_specific_entity(repo, entity_class):
     """
     number_of_packs = 20
     repo.setup_content_repo(number_of_packs)
-    repo.create_pack('CommonTypes')
+    repo.setup_one_pack('CommonTypes')
 
     methods_pool: list = \
         [(method_name, entity_class) for method_name in list(entity_class.__dict__.keys())

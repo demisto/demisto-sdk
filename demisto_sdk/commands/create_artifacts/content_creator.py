@@ -141,7 +141,12 @@ class ContentCreator:
         return json_content
 
     def add_suffix_to_file_path(self, file_path):
-        return os.path.splitext(file_path)[0] + self.file_name_suffix + os.path.splitext(file_path)[1]
+        # do not add suffix to release notes
+        if 'ReleaseNotes' not in file_path:
+            return os.path.splitext(file_path)[0] + self.file_name_suffix + os.path.splitext(file_path)[1]
+
+        else:
+            file_path
 
     def check_from_version_not_above_6_0_0(self, file_path):
         if file_path.endswith('.yml'):

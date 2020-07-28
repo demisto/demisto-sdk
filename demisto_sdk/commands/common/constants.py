@@ -903,6 +903,13 @@ FEED_REQUIRED_PARAMS = [
         'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
                           ' This means that if an indicator from this feed is on the exclusion list,'
                           ' the indicator might still be added to the system.'
+    },
+    {
+        'additionalinfo': 'Supports CSV values.',
+        'display': 'Tags',
+        'name': 'feedTags',
+        'required': False,
+        'type': 0
     }
 ]
 

@@ -67,6 +67,12 @@ class Repo:
         })
 
     def setup_one_pack(self, name):
+        """Sets up a new pack in the repo, and includes one per each content entity.
+
+        Args:
+            name (string): Name of the desired pack.
+
+        """
         pack = self.create_pack(name)
 
         script = pack.create_script(f'{name}_script')
@@ -132,6 +138,12 @@ class Repo:
         test_playbook.yml.update({'name': f'{name}_test_playbook'})
 
     def setup_content_repo(self, number_of_packs):
+        """Creates a fully constructed content repository, where packs names will pack_<index>.
+
+        Args:
+            number_of_packs (int): Amount of packs to be created in the repo.
+
+        """
         for i in range(number_of_packs):
             self.setup_one_pack(f'pack_{i}')
 

@@ -12,8 +12,9 @@ from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_fields_by_script_argument,
     get_incident_field_data, get_incident_fields_by_playbook_input,
     get_incident_type_data, get_indicator_type_data, get_integration_data,
-    get_layout_data, get_mapper_data, get_playbook_data, get_script_data,
-    get_values_for_keys_recursively, has_duplicate, re_create_id_set)
+    get_layout_data, get_layoutscontainer_data, get_mapper_data,
+    get_playbook_data, get_script_data, get_values_for_keys_recursively,
+    has_duplicate, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -472,6 +473,28 @@ class TestLayouts:
         assert 'typeID' in result.keys()
         assert 'incident_and_indicator_types' in result.keys()
         assert 'incident_and_indicator_fields' not in result.keys()
+
+    @staticmethod
+    def test_get_layoutscontainer_data():
+        """
+        Given
+            - A layoutscontainer file called layoutscontainer-to-test.json
+        When
+            - parsing layoutscontainer files
+        Then
+            - parsing all the data from file successfully
+        """
+        test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/layoutscontainer-to-test.json'
+        result = get_layoutscontainer_data(test_dir)
+        result = result.get('layouts_container_test')
+        assert 'detailsV2' in result.keys()
+        assert 'name' in result.keys()
+        assert 'group' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'toversion' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'incident_and_indicator_types' in result.keys()
+        assert 'incident_and_indicator_fields' in result.keys()
 
 
 class TestIncidentFields:

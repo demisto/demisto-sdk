@@ -20,7 +20,6 @@ class Playbook:
 
         if not self.is_test_playbook:
             self.readme = File(tmpdir / 'README.md', self._repo.path)
-            self.changelog = File(tmpdir / 'CHANGELOG.md', self._repo.path)
 
         if not self.is_test_playbook:
             # build playbook
@@ -33,7 +32,6 @@ class Playbook:
             self,
             yml: Optional[dict] = None,
             readme: Optional[str] = None,
-            changelog: Optional[str] = None,
     ):
         """Writes not None objects to files.
         """
@@ -41,24 +39,15 @@ class Playbook:
             self.yml.write_dict(yml)
         if not self.is_test_playbook and readme is not None:
             self.readme.write(readme)
-        if not self.is_test_playbook and changelog is not None:
-            self.changelog.write(changelog)
 
     def create_default_playbook(self):
         default_playbook_dir = 'assets/default_playbook'
-        yml = open(suite_join_path(default_playbook_dir, 'playbook-sample.yml'))
-        changelog = open(suite_join_path(default_playbook_dir, 'playbook-sample_CHANGELOG.md'))
-        self.build(
-            yml=yaml.load(yml, Loader=yaml.FullLoader),
-            changelog=str(changelog.read()),
-        )
-        yml.close()
-        changelog.close()
+        with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml:
+            self.build(yml=yaml.load(yml, Loader=yaml.FullLoader))
 
     def create_default_test_playbook(self):
         default_test_playbook_dir = 'assets/default_playbook'
-        yml = open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml'))
-        self.build(
-            yml=yaml.load(yml, Loader=yaml.FullLoader),
-        )
-        yml.close()
+        with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml:
+            self.build(
+                yml=yaml.load(yml, Loader=yaml.FullLoader),
+            )

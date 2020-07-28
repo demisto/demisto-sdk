@@ -317,6 +317,7 @@ def test_dependencies(repo, test_number):
 
     number_of_packs = 10
     repo.setup_content_repo(number_of_packs)
+    repo.create_pack('CommonTypes')
 
     pack_to_verify = random.sample(range(number_of_packs), 1)[0]
 
@@ -349,6 +350,7 @@ def test_specific_entity(repo, entity_class):
     """
     number_of_packs = 20
     repo.setup_content_repo(number_of_packs)
+    repo.create_pack('CommonTypes')
 
     methods_pool: list = \
         [(method_name, entity_class) for method_name in list(entity_class.__dict__.keys())

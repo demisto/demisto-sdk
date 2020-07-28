@@ -439,7 +439,7 @@ class ContentCreator:
                     continue
 
                 if dir_name == RELEASE_NOTES_DIR:
-                    new_path = path
+                    new_path = os.path.basename(path)
                     if os.path.isfile(os.path.join(bundle, new_path)):
                         raise NameError(
                             f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'

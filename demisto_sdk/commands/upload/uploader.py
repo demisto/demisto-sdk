@@ -66,6 +66,8 @@ class Uploader:
                 self.classifier_uploader(self.path)
             elif file_type == FileType.LAYOUT:
                 self.layout_uploader(self.path)
+            elif file_type == FileType.LAYOUTS_CONTAINER:
+                self.layout_uploader(self.path)
             elif file_type == FileType.DASHBOARD:
                 self.dashboard_uploader(self.path)
             elif file_type == FileType.INCIDENT_FIELD:

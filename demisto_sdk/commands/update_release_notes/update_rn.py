@@ -257,7 +257,7 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in sorted(changed_items.items()):
+        for k, v in sorted(changed_items.items(), key=lambda x: x[1]['type'] if x[1] is not None else ''):
             desc = v.get('description', '')
             is_new_file = v.get('is_new_file', False)
             v = v.get('type', '')
@@ -344,7 +344,7 @@ class UpdateRN:
                 continue
 
             if v in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
-                rn_desc = f'- **{k}**\n'
+                rn_desc = f'\n- **{k}**'
             else:
                 rn_desc = f'\n##### {k}\n- {desc}\n' if is_new_file else f'\n##### {k}\n- %%UPDATE_RN%%\n'
 
@@ -370,7 +370,7 @@ class UpdateRN:
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = rn_desc
+                    new_rn_part = f'\n#### {v}{rn_desc}'
                     new_rn += new_rn_part
         return new_rn
 

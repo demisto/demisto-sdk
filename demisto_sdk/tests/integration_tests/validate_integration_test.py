@@ -1407,7 +1407,7 @@ class TestValidationUsingGit:
         added_files = {dashboard.get_path_from_pack(), script.yml_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set()))
+                                                                                           set(), set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -1459,7 +1459,7 @@ class TestValidationUsingGit:
         added_files = {dashboard.get_path_from_pack(), script.yml_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set()))
+                                                                                           set(), set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

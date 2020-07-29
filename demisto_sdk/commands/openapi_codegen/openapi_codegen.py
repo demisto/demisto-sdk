@@ -103,9 +103,13 @@ class OpenAPIIntegration:
                     extract(item, arr, context)
 
             elif isinstance(obj, dict):
-                if obj.get('type'):
+                if obj.get('type') and type(obj.get('type')) == str:
                     if obj.get('type') in ['array', 'object']:
-                        if obj.get('items'):
+                        refs = self.extract_values(obj, '$ref')
+                        if refs:
+                            ref = refs[0].split('/')[-1]
+                            arr = extract(self.extract_values(self.reference[ref], 'properties'), arr, context)
+                        elif obj.get('items'):
                             for k, v in obj.get('items', {}).items():
                                 arr = extract(v, arr, context)
                         elif obj.get('properties'):
@@ -148,6 +152,7 @@ class OpenAPIIntegration:
             if schemas:
                 schema = schemas[0]
                 refs = self.extract_values(schema, '$ref')
+                found_root = False
                 if refs:
                     for ref in refs:
                         ref = ref.split('/')[-1]
@@ -155,18 +160,22 @@ class OpenAPIIntegration:
                         if ref_props:
                             for k, v in ref_props[0].items():
                                 if k in self.root_objects:
+                                    # We found a root, we need the output of the root only
                                     new_function['root_object'] = k
+                                    all_items = [v]
                                     path = self.extract_values(v, '$ref')
                                     if path:
                                         new_function['context_path'] = self.clean_function_name(path[0].split('/')[-1],
                                                                                                 False)
-                            if not new_function.get('context_path'):
-                                new_function['context_path'] = self.clean_function_name(ref, False)
+                                    found_root = True
+                            if found_root:
+                                break
 
-                        all_items.extend(ref_props)
+                            all_items.extend(ref_props)
+                        if not new_function.get('context_path'):
+                            new_function['context_path'] = self.clean_function_name(ref, False)
                 else:
                     all_items.extend(self.extract_values(schema, 'properties'))
-                print(str(all_items))
                 data = self.extract_properties(all_items, [])
                 for v in data:
                     description = v.get('description', '')
@@ -277,8 +286,6 @@ class OpenAPIIntegration:
         self.base_path = self.json.get('basePath', '')
         self.name = self.json['info']['title']
         self.description = self.clean_description(self.json.get('info', {}).get('description', ''))
-        if len(self.description) > MAX_DESCRIPTION_WORDS:
-            self.description = self.description[:MAX_DESCRIPTION_WORDS] + '...'
         self.schemes = self.json.get('schemes', [])
         self.definitions = self.json.get('definitions', {})
         self.components = self.json.get('components', {})
@@ -797,8 +804,11 @@ class OpenAPIIntegration:
 
     @staticmethod
     def clean_description(description):
+        if len(description) > MAX_DESCRIPTION_WORDS:
+            description = description[:MAX_DESCRIPTION_WORDS] + '...'
         for i in illegal_description_chars:
             description = description.replace(i, ' ')
+
         return description
 
     @staticmethod

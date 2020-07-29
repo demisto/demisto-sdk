@@ -737,7 +737,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):  # noqa: C901
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):  # noqa: C901
     """
     returns the content file type
 
@@ -770,7 +770,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):  # n
 
     if file_type == 'yml':
         if 'category' in _dict:
-            if 'beta' in _dict:
+            if 'beta' in _dict and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION

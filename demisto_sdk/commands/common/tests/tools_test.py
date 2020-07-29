@@ -39,7 +39,8 @@ from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH)
+                                              VALID_WIDGET_PATH,
+                                              VALID_BETA_INTEGRATION_PATH)
 
 
 class TestGenericFunctions:
@@ -97,6 +98,15 @@ class TestGenericFunctions:
     def test_find_type(self, path, _type):
         output = find_type(str(path))
         assert output == _type, f'find_type({path}) returns: {output} instead {_type}'
+
+    def test_find_type_ignore_sub_categories(self):
+        output = find_type(VALID_BETA_INTEGRATION_PATH)
+        assert output == FileType.BETA_INTEGRATION,\
+            f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.BETA_INTEGRATION}'
+
+        output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
+        assert output == FileType.INTEGRATION,\
+            f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
     test_path_md = [
         VALID_MD

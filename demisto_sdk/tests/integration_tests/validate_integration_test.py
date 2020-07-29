@@ -25,11 +25,11 @@ TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files")
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure")
 AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureab")
 VALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureValid")
-VALID_PLAYBOOK_FILE_PATH = 'demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml'
-INVALID_PLAYBOOK_FILE_PATH = 'demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/' \
-                             'Cortex_XDR_Incident_Handling_invalid.yml'
-VALID_SCRIPT_PATH = 'demisto_sdk/tests/test_files/Packs/' \
-                    'CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'
+VALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, "Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml")
+INVALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, "Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling_invalid.yml")
+VALID_SCRIPT_PATH = join(TEST_FILES_PATH, "Packs/CortexXDR/Scripts/"
+                                          "EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml")
+
 CONF_JSON_MOCK = {
     "tests": [
         {

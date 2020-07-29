@@ -393,7 +393,7 @@ def get_file_description(path, file_type):
         print_error(f'Gets file description failed: "{path}" file does not exist')
         return ''
 
-    elif file_type in('Playbook', 'Integration'):
+    elif file_type in ('Playbook', 'Integration'):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 
@@ -401,7 +401,7 @@ def get_file_description(path, file_type):
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in('Classifiers', 'Reports', 'Widgets', 'Dashboards'):
+    elif file_type in ('Classifiers', 'Reports', 'Widgets', 'Dashboards'):
         json_file = get_json(path)
         return json_file.get('description', '')
     return '%%UPDATE_RN%%'

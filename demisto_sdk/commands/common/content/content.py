@@ -4,7 +4,7 @@ from typing import Union, Tuple, Iterator, Dict, Optional
 import git
 from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.content.objects_factory import ContentObjectFacotry
-from demisto_sdk.commands.common.content.objects import Playbook, ContentDescriptor, Documentation
+from demisto_sdk.commands.common.content import Playbook, ContentDescriptor, Documentation
 from demisto_sdk.commands.common.content.pack import Pack
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, PACKS_DIR, DOCUMENTATION_DIR, DOCUMENTATION
 

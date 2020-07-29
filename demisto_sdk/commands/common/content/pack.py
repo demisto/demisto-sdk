@@ -1,6 +1,6 @@
-from wcmatch.pathlib import Path, NEGATE
+from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, DOCUMENTATION_DIR,
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR, INCIDENT_FIELDS_DIR, DOC_FILES_DIR,
                                                    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
 from demisto_sdk.commands.common.content import (Integration, Script, Playbook, IncidentField, IncidentType, Classifier,
                                                  Connection, IndicatorField, IndicatorType, Report, Dashboard, Layout,
                                                  Widget, ReleaseNote, PackMetaData, SecretIgnore, Readme, ChangeLog,
-                                                 PackIgnore, Tool, DocFile, Documentation)
+                                                 PackIgnore, Tool, DocFile)
 from demisto_sdk.commands.common.content.objects_factory import ContentObjectFacotry
 from typing import Union, Iterator, Optional, Tuple, Callable
 

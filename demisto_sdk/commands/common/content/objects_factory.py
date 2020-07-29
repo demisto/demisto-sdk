@@ -4,13 +4,13 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content import (Integration, Script, Playbook, IncidentField, IncidentType, Classifier,
-                                                 Connection, IndicatorField, IndicatorType, Report, Dashboard, Layout,
-                                                 Widget, ReleaseNote, PackMetaData, SecretIgnore, Readme, ChangeLog,
-                                                 PackIgnore, Tool, LayoutContainer, Reputation, DocFile, Documentation,
-                                                 Canvas, OldReputation)
-from demisto_sdk.commands.common.constants import (INTEGRATION, SCRIPT, PLAYBOOK, CANVAS,
+                                                 Connection, IndicatorField, IndicatorType, OldIndicatorType, Report,
+                                                 Dashboard, Layout, Widget, ReleaseNote, PackMetaData, SecretIgnore,
+                                                 Readme, ChangeLog, PackIgnore, Tool, LayoutContainer, DocFile,
+                                                 Documentation)
+from demisto_sdk.commands.common.constants import (INTEGRATION, SCRIPT, PLAYBOOK, CANVAS, INCIDENT_TYPE,
                                                    CLASSIFIER, CONNECTION, REPORT, DASHBOARD,
-                                                   LAYOUT, WIDGET, LAYOUT_CONTAINER, REPUTATION, OLD_INDICATOR_TYPE)
+                                                   LAYOUT, WIDGET, LAYOUT_CONTAINER, INDICATOR_TYPE, OLD_INDICATOR_TYPE)
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR, INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR, DOC_FILES_DIR, DOCUMENTATION_DIR,
@@ -25,7 +25,7 @@ type_conversion_by_FileType = {
     FileType.SCRIPT: Script,
     FileType.WIDGET: Widget,
     FileType.MAPPER: Classifier,
-    FileType.REPUTATION: Reputation,
+    FileType.REPUTATION: IndicatorType,
     FileType.INTEGRATION: Integration,
     FileType.INCIDENT_FIELD: IncidentField,
     FileType.INCIDENT_TYPE: IncidentType,
@@ -56,9 +56,9 @@ type_conversion_by_prefix = {
     LAYOUT: Layout,
     LAYOUT_CONTAINER: LayoutContainer,
     WIDGET: Widget,
-    REPUTATION: Reputation,
-    CANVAS: Canvas,
-    OLD_INDICATOR_TYPE: OldReputation,
+    CANVAS: Connection,
+    INDICATOR_TYPE: IndicatorType,
+    INCIDENT_TYPE: IncidentType,
 }
 
 type_conversion_by_dir = {
@@ -84,12 +84,13 @@ type_conversion_by_file_name = {
     'pack_metadata.json': PackMetaData,
     '.secrets-ignore': SecretIgnore,
     '.pack-ignore': PackIgnore,
+    f'{OLD_INDICATOR_TYPE}.json': OldIndicatorType,
 }
 
 type_conversion_by_regex = {
     r'.*_CHANGELOG.md': ChangeLog,
     r'.*README.md': Readme,
-    r'\d+_\d+_\d+.md': ReleaseNote
+    r'\d+_\d+_\d+.md': ReleaseNote,
 }
 
 
@@ -97,7 +98,7 @@ class ContentObjectFacotry:
     @staticmethod
     def _find_type_by_suffix(file_name: str):
         object_type = None
-        prefix_match = re.search(pattern=r'([a-z]+)-?.*', string=file_name)
+        prefix_match = re.search(pattern=r'^([a-z]+)-.+', string=file_name)
         if prefix_match:
             object_type = type_conversion_by_prefix.get(prefix_match.group(1))
         elif type_conversion_by_file_name.get(file_name):

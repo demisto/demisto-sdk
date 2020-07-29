@@ -269,7 +269,7 @@ def dump_pack(artifact_conf: ArtifactsConfiguration, pack_name: str, pack: Pack)
         log_created(artifact_conf.content_packs_path, pack.pack_metadata.path, created_files, artifact_conf.content.path)
     if pack.readme:
         created_files = pack.readme.dump(artifact_conf.content_packs_path / pack_name)
-        log_created(artifact_conf.content_packs_path, pack.pack_metadata.path, created_files, artifact_conf.content.path)
+        log_created(artifact_conf.content_packs_path, pack.readme.path, created_files, artifact_conf.content.path)
 
 
 def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,

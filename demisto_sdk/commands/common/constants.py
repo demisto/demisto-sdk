@@ -46,7 +46,6 @@ OLD_INDICATOR_TYPE = 'reputations'
 WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
-REPUTATION = 'reputation'
 DOCUMENTATION = 'doc'
 CANVAS = 'canvas'
 

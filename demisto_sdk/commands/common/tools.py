@@ -580,7 +580,17 @@ def is_file_path_in_pack(file_path):
 
 
 def get_pack_name(file_path):
-    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
+    """
+    extract pack name (folder name) from file path
+
+    Arguments:
+        file_path (str): path of a file inside the pack
+
+    Returns:
+        pack name (str)
+    """
+    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
+    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]', file_path)
     return match.group(1) if match else None
 
 

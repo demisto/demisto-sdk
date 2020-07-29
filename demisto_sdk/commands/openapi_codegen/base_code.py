@@ -13,14 +13,15 @@ base_basic_auth = """(username, password)"""
 base_token = """headers['Authorization'] = [f'Bearer {params["api_key"]}']"""
 base_function = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
-    
+
     response = client.$FUNCTIONNAME$_request($REQARGS$)
     command_results = CommandResults(
         outputs_prefix='$CONTEXTNAME$$CONTEXTPATH$',
         outputs_key_field='$UNIQUEKEY$',
-        outputs=response
+        outputs=$OUTPUTS$,
+        raw_response=response
     )
-    
+
     return command_results
 
 """
@@ -28,19 +29,19 @@ base_request_function = """
     def $FUNCTIONNAME$_request(self$REQARGS$):
         $PARAMETERS$
         $DATA$
-        
+
         headers = self._headers
         $HEADERSOBJ$
-        
+
         response = self._http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$, headers=headers)
-        
+
         return response
-    
+
 """
 base_client = """class Client(BaseClient):
     def __init__(self, server_url, verify, proxy, headers, auth):
         super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
-        
+
         $REQUESTFUNCS$
 """
 base_code = """''' IMPORTS '''
@@ -68,7 +69,7 @@ def main():
 
     command = demisto.command()
     LOG(f'Command being called is {command}')
-    
+
     try:
         # Disable insecure warnings
         requests.packages.urllib3.disable_warnings()

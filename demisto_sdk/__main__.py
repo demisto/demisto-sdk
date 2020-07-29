@@ -868,6 +868,8 @@ def find_dependencies_command(**kwargs):
 @click.option(
     '-u', '--unique_keys', help='Comma separated unique keys to use in context paths', required=False)
 @click.option(
+    '-r', '--root_objects', help='Comma separated JSON root objects to use in command outputs', required=False)
+@click.option(
     '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
 @click.option(
     '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8')
@@ -901,8 +903,10 @@ def openapi_codegen_command(**kwargs):
     base_name = kwargs.get('base_name', 'GeneratedIntegration')
     print('Processing swagger file...')
     integration = OpenAPIIntegration(kwargs['input_file'], base_name,
-                                     kwargs.get('command_prefix', base_name.lower()),
-                                     kwargs.get('context_path', base_name), unique_keys=kwargs.get('unique_keys', ''),
+                                     kwargs.get('command_prefix', '-'.join(base_name.split(' ')).lower()),
+                                     kwargs.get('context_path', base_name.replace(' ', '')),
+                                     unique_keys=kwargs.get('unique_keys', ''),
+                                     root_objects=kwargs.get('root_objects', ''),
                                      verbose=kwargs.get('verbose', False), fix_code=kwargs.get('fix_code', False),
                                      configuration=configuration)
 

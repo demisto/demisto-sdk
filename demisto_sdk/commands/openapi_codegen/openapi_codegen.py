@@ -16,7 +16,7 @@ from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
 
 camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
-illegal_description_chars = ['\n', '<br>', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
+illegal_description_chars = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
 illegal_func_chars = illegal_description_chars + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
 illegal_function_names = ['type', 'from', 'id', 'file']
 prepend_illegal = '_'
@@ -40,10 +40,11 @@ JSON_TYPE_HEADER = 'application/json'
 DEFAULT_HOST = 'https://www.example.com/api'
 API_KEY_AUTH_TYPE = 'apiKey'
 CREDENTIALS_AUTH_TYPE = 'basic'
+MAX_DESCRIPTION_WORDS = 5000
 
 
 class OpenAPIIntegration:
-    def __init__(self, file_path, base_name, command_prefix, context_path, unique_keys=None,
+    def __init__(self, file_path, base_name, command_prefix, context_path, unique_keys=None, root_objects=None,
                  verbose=False, fix_code=False, configuration=None):
         self.json = None
         self.baseName = base_name
@@ -52,6 +53,7 @@ class OpenAPIIntegration:
         self.command_prefix = command_prefix
         self.context_path = context_path
         self.unique_keys = unique_keys.split(',') if unique_keys is not None else []
+        self.root_objects = root_objects.split(',') if root_objects is not None else []
         self.configuration = configuration
         self.file_load = False
         self.swagger = None
@@ -65,6 +67,7 @@ class OpenAPIIntegration:
         self.script = None
         self.definitions = None
         self.components = None
+        self.reference = None
         self.functions = []
         self.parameters = []
         self.verbose = verbose
@@ -90,7 +93,7 @@ class OpenAPIIntegration:
         results = extract(obj, arr, key)
         return results
 
-    def extract_outputs(self, obj, context):
+    def extract_properties(self, obj, context):
         arr = []
 
         def extract(obj, arr, context):
@@ -100,7 +103,7 @@ class OpenAPIIntegration:
                     extract(item, arr, context)
 
             elif isinstance(obj, dict):
-                if obj.get('type') and type(obj.get('type')) == str:
+                if obj.get('type'):
                     if obj.get('type') in ['array', 'object']:
                         if obj.get('items'):
                             for k, v in obj.get('items', {}).items():
@@ -114,13 +117,11 @@ class OpenAPIIntegration:
                     else:
                         arr.append({'name': '.'.join(context), 'type': obj.get('type', 'Unknown'),
                                     'description': obj.get('description', '')})
-
                 elif obj.get('type') and type(obj.get('type')) == dict:
                     for k, v in obj.items():
                         context.append(k)
                         arr = extract(v, arr, context)
                         context.pop()
-
                 else:
                     for k, v in obj.items():
                         context.append(k)
@@ -131,6 +132,84 @@ class OpenAPIIntegration:
 
         results = extract(obj, arr, context)
         return results
+
+    def extract_outputs(self, data, new_function):
+        for response_code, response in data.get('responses', {}).items():
+            new_response = {}
+            try:
+                if int(response_code) != 200:
+                    continue
+            except Exception:
+                pass
+
+            new_response['description'] = response.get('description', None)
+            all_items = []
+            schemas = self.extract_values(response, 'schema')
+            if schemas:
+                schema = schemas[0]
+                refs = self.extract_values(schema, '$ref')
+                if refs:
+                    for ref in refs:
+                        ref = ref.split('/')[-1]
+                        ref_props = self.extract_values(self.reference.get(ref, {}), 'properties')
+                        if ref_props:
+                            for k, v in ref_props[0].items():
+                                if k in self.root_objects:
+                                    new_function['root_object'] = k
+                                    path = self.extract_values(v, '$ref')
+                                    if path:
+                                        new_function['context_path'] = self.clean_function_name(path[0].split('/')[-1],
+                                                                                                False)
+                            if not new_function.get('context_path'):
+                                new_function['context_path'] = self.clean_function_name(ref, False)
+
+                        all_items.extend(ref_props)
+                else:
+                    all_items.extend(self.extract_values(schema, 'properties'))
+                print(str(all_items))
+                data = self.extract_properties(all_items, [])
+                for v in data:
+                    description = v.get('description', '')
+                    this_type = v.get('type', 'object')
+                    this_type = output_types.get(this_type, 'Unknown')
+                    resp_name = v.get('name')
+                    description = self.clean_description(description)
+                    new_function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
+            new_function['responses'].append(new_response)
+
+    def extract_args(self, arguments, new_function):
+        for arg in arguments:
+            refs = []
+            if 'schema' in arg:
+                refs = self.extract_values(arg['schema'], '$ref')
+                for ref in refs:
+                    ref = ref.split('/')[-1]
+                    ref_args = self.extract_values(self.reference.get(ref, {}), 'properties')
+                    for ref_arg in ref_args:
+                        for k, v in ref_arg.items():
+                            new_ref_arg = {'name': k, 'in': arg.get('in'),
+                                           'required': True if k in self.reference[ref].get('required', []) else False}
+                            if '$ref' in ref_arg[k]:
+                                new_ref_arg['properties'] = {}
+                                c_ref = ref_arg[k]['$ref'].split('/')[-1]
+                                complex_refs = self.extract_values(self.reference.get(c_ref, {}), 'properties')
+                                for complex_ref in complex_refs:
+                                    for ck, cv in complex_ref.items():
+                                        new_ref_arg['properties'][ck] = {}
+                                        new_ref_arg['properties'][ck]['type'] = cv.get('type', 'string')
+                                        new_ref_arg['properties'][ck]['description'] = cv.get('description', '')
+                                        new_ref_arg['properties'][ck]['required'] = True \
+                                            if ck in self.reference.get(c_ref, {}).get('required', []) else False
+                                        new_ref_arg['properties'][ck]['options'] = [str(x) for x in cv.get('enum')] \
+                                            if arg.get('enum', None) else None
+                            else:
+                                new_ref_arg.update(v)
+                            new_ref_arg['ref'] = ref
+                            new_function['arguments'].append(self.init_arg(new_ref_arg))
+            if not refs:
+                if arg.get('schema', {}).get('type'):
+                    arg['type'] = arg['schema']['type']
+                new_function['arguments'].append(self.init_arg(arg))
 
     def add_function(self, path, method, data, params):
         new_function = {}
@@ -157,89 +236,17 @@ class OpenAPIIntegration:
         new_function['parameters'] = data.get('parameters', None)
         new_function['consumes'] = data.get('consumes', [])
         new_function['produces'] = data.get('produces', [])
+        new_function['outputs'] = []
+        new_function['responses'] = []
         if not new_function['parameters']:
             new_function['parameters'] = params
             iter_item = params
         else:
             iter_item = data.get('parameters', [])
-        for arg in iter_item:
-            refs = []
-            if 'schema' in arg:
-                refs = self.extract_values(arg['schema'], '$ref')
-                for ref in refs:
-                    ref = ref.split('/')[-1]
-                    ref_args = []
-                    context = {}
-                    if self.definitions:
-                        ref_args = self.extract_values(self.definitions.get(ref, {}), 'properties')
-                        context = self.definitions
-                    elif self.components:
-                        ref_args = self.extract_values(self.components.get('schemas', {}).get(ref, {}), 'properties')
-                        context = self.components.get('schemas', {})
-                    for ref_arg in ref_args:
-                        for k, v in ref_arg.items():
-                            new_ref_arg = {'name': k, 'in': arg.get('in')}
-                            new_ref_arg['required'] = True if k in context[ref].get('required', []) else False
-                            if '$ref' in ref_arg[k]:
-                                new_ref_arg['properties'] = {}
-                                c_ref = ref_arg[k]['$ref'].split('/')[-1]
-                                complex_refs = self.extract_values(context.get(c_ref, {}), 'properties')
-                                for complex_ref in complex_refs:
-                                    for ck, cv in complex_ref.items():
-                                        new_ref_arg['properties'][ck] = {}
-                                        new_ref_arg['properties'][ck]['type'] = cv.get('type', 'string')
-                                        new_ref_arg['properties'][ck]['description'] = cv.get('description', '')
-                                        new_ref_arg['properties'][ck]['required'] = True \
-                                            if ck in context.get(c_ref, {}).get('required', []) else False
-                                        new_ref_arg['properties'][ck]['options'] = [str(x) for x in cv.get('enum')]\
-                                            if arg.get('enum', None) else None
-                            else:
-                                new_ref_arg.update(v)
-                            new_ref_arg['ref'] = ref
-                            new_function['arguments'].append(self.init_arg(new_ref_arg))
-            if not refs:
-                if arg.get('schema', {}).get('type'):
-                    arg['type'] = arg['schema']['type']
-                new_function['arguments'].append(self.init_arg(arg))
-        new_function['outputs'] = []
-        new_function['responses'] = []
-        for response_code, response in data.get('responses', {}).items():
-            new_response = {}
-            try:
-                if int(response_code) != 200:
-                    continue
-            except Exception:
-                pass
-
-            new_response['description'] = response.get('description', None)
-            all_items = []
-            schemas = self.extract_values(response, 'schema')
-            if schemas:
-                schema = schemas[0]
-                refs = self.extract_values(schema, '$ref')
-                if refs:
-                    for ref in refs:
-                        ref = ref.split('/')[-1]
-                        if self.definitions:
-                            all_items.extend(self.extract_values(self.definitions.get(ref, {}), 'properties'))
-                        elif self.components:
-                            all_items.extend(self.extract_values(self.components.get('schemas', {}).get(ref, {}),
-                                                                 'properties'))
-                        new_function['context_path'] = self.clean_function_name(ref, False)
-                else:
-                    all_items.extend(self.extract_values(schema, 'properties'))
-                data = self.extract_outputs(all_items, [])
-                for v in data:
-                    description = v.get('description', '')
-                    this_type = v.get('type', 'object')
-                    this_type = output_types.get(this_type, 'Unknown')
-                    resp_name = v.get('name')
-                    description = self.clean_description(description)
-                    new_function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
-            new_function['responses'].append(new_response)
+        self.extract_args(iter_item, new_function)
+        self.extract_outputs(data, new_function)
 
         self.functions.append(new_function)
-        self.functions = sorted(self.functions, key=lambda x: x['name'])
 
     def load_file(self, file_path):
         error = None
@@ -270,11 +277,12 @@ class OpenAPIIntegration:
         self.base_path = self.json.get('basePath', '')
         self.name = self.json['info']['title']
         self.description = self.clean_description(self.json.get('info', {}).get('description', ''))
-        if len(self.description) > 1000:
-            self.description = self.description[:1000] + '...'
+        if len(self.description) > MAX_DESCRIPTION_WORDS:
+            self.description = self.description[:MAX_DESCRIPTION_WORDS] + '...'
         self.schemes = self.json.get('schemes', [])
         self.definitions = self.json.get('definitions', {})
         self.components = self.json.get('components', {})
+        self.reference = self.definitions or self.components.get('schemas', {})
         self.security_definitions = self.json.get('securityDefinitions', {})
         self.functions = []
         if not self.command_prefix:
@@ -289,6 +297,7 @@ class OpenAPIIntegration:
             except Exception as e:
                 print_error(f'Failed adding the command for the path {path}: {e}')
 
+        self.functions = sorted(self.functions, key=lambda x: x['name'])
         if not self.configuration:
             self.generate_configuration()
 
@@ -307,7 +316,7 @@ class OpenAPIIntegration:
             'category': 'Utilities',
             'url': self.host or DEFAULT_HOST,
             'auth': security_types,
-            'context_path': self.context_path or self.name,
+            'context_path': self.context_path,
             'commands': []
         }
         for function in self.functions:
@@ -318,7 +327,8 @@ class OpenAPIIntegration:
                 'description': function['description'],
                 'arguments': [],
                 'outputs': [],
-                'context_path': function.get('context_path', '')
+                'context_path': function.get('context_path', ''),
+                'root_object': function.get('root_object', '')
             }
             headers = []
             if function['consumes']:
@@ -537,10 +547,14 @@ class OpenAPIIntegration:
             context_name = self.context_path
         else:
             context_name = command['name'].title().replace('_', '')
-        if 'context_path' in command and command['context_path']:
+        if command.get('context_path'):
             function = function.replace('$CONTEXTPATH$', f'.{command["context_path"]}')
         else:
             function = function.replace('$CONTEXTPATH$', '')
+        if command.get('root_object'):
+            function = function.replace('$OUTPUTS$', f"response.get('{command['root_object']}')")
+        else:
+            function = function.replace('$OUTPUTS$', 'response')
         if command['unique_key']:
             function = function.replace('$UNIQUEKEY$', command['unique_key'])
         else:

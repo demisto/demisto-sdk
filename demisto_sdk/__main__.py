@@ -137,7 +137,7 @@ def main(config, version):
 @pass_config
 def extract(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    if file_type not in [FileType.INTEGRATION, file_type.BETA_INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -178,7 +178,7 @@ def extract(config, **kwargs):
 @pass_config
 def extract_code(config, **kwargs):
     file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    if file_type not in [FileType.INTEGRATION, file_type.BETA_INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -608,7 +608,7 @@ def json_to_outputs_command(**kwargs):
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
     file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    if file_type not in [FileType.INTEGRATION, file_type.BETA_INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
     generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
@@ -734,7 +734,8 @@ def generate_doc(**kwargs):
             return 1
 
     file_type = find_type(kwargs.get('input', ''))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.TEST_SCRIPT]:
+    if file_type not in [FileType.INTEGRATION, file_type.BETA_INTEGRATION, FileType.SCRIPT,
+                         FileType.PLAYBOOK, FileType.TEST_SCRIPT]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 

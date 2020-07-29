@@ -776,7 +776,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.INTEGRATION
 
         if 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
+            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT

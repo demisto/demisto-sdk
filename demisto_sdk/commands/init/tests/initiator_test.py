@@ -26,7 +26,7 @@ PACK_AUTHOR = 'PackAuthor'
 PACK_URL = 'https://www.github.com/pack'
 PACK_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
-
+PACK_GITHUB_USERS = ''
 
 name_reformatting_test_examples = [
     ('PACKYAYOK', 'PACKYAYOK'),
@@ -117,7 +117,7 @@ def test_create_metadata(monkeypatch, initiator):
         generate_multiple_inputs(
             deque([
                 PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
-                PACK_URL, PACK_EMAIL, PACK_TAGS
+                PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
             ])
         )
     )
@@ -134,7 +134,8 @@ def test_create_metadata(monkeypatch, initiator):
         'tags': ['Tag1', 'Tag2'],
         'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
         'url': PACK_URL,
-        'useCases': []
+        'useCases': [],
+        'githubUser': []
     }
 
 
@@ -294,7 +295,8 @@ def test_format_pack_dir_name(initiator, input_name, expected_output_name):
     '''
     output_name = initiator.format_pack_dir_name(input_name)
     assert output_name == expected_output_name
-    assert not re.search(r'\s', output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
+    assert not re.search(r'\s',
+                         output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
     err_msg = 'Characters other than alphanumeric, underscore, and dash were found in the output'
     assert all([char.isalnum() or char in {'_', '-'} for char in output_name]), err_msg
     if len(output_name) > 1:

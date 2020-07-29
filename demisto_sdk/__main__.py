@@ -873,8 +873,15 @@ def find_dependencies_command(**kwargs):
     id_set_path = kwargs.get('id_set_path')
     verbose = kwargs.get('verbose')
     update_pack_metadata = not kwargs.get('no_update')
-    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path, debug_file_path=verbose,
-                                       update_pack_metadata=update_pack_metadata)
+
+    try:
+        PackDependencies.find_dependencies(pack_name=pack_name,
+                                           id_set_path=id_set_path,
+                                           debug_file_path=verbose,
+                                           update_pack_metadata=update_pack_metadata,
+                                           )
+    except ValueError as exp:
+        print_error(str(exp))
 
 
 @main.resultcallback()

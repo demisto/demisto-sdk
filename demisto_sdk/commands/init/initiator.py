@@ -424,6 +424,10 @@ class Initiator:
         tags_list = [t.strip() for t in tags.split(',') if t]
         pack_metadata['tags'] = tags_list
 
+        github_users = input("\nPack default reviewers, comma separated github username: ")
+        github_users_list = [u.strip() for u in github_users.split(',') if u]
+        pack_metadata['githubUser'] = github_users_list
+
         return pack_metadata
 
     @staticmethod

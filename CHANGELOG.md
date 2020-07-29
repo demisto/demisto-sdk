@@ -6,6 +6,7 @@
 * Added the *--no-update* flag to the **find-dependencies** command.
 * Added the following validations in **validate** command:
    * Validating that a pack does not depend on NonSupported / Deprecated packs.
+* Added new *githubUser* field in pack metadata init command.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

@@ -58,8 +58,7 @@ from demisto_sdk.commands.common.tools import (checked_type,
                                                get_pack_names_from_files,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
-                                               run_command,
-                                               is_file_path_in_pack)
+                                               run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 

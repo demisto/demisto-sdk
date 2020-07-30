@@ -6,7 +6,8 @@ from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
                                                print_warning)
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
-from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat
+from demisto_sdk.commands.format.update_classifier import (
+    ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
@@ -19,6 +20,7 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_layout import (
     LayoutJSONFormat, LayoutsContainerJSONFormat)
+from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
@@ -35,6 +37,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'layoutscontainer': LayoutsContainerJSONFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
+    'classifier_5_9_9': OldClassifierJSONFormat,
+    'mapper': MapperJSONFormat,
     'pythonfile': PythonFileFormat,
 }
 

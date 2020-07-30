@@ -8,10 +8,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
-    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
-LAYOUTS_CONTAINER_FROM_VERSION = '6.0.0'
 LAYOUTS_CONTAINER_KINDS = ['edit',
                            'indicatorsDetails',
                            'indicatorsQuickView',
@@ -37,11 +36,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         else:
             return format, self.initiate_file_validator(LayoutValidator)
 
-    def set_description(self):
-        """Add empty description to file root."""
-        if 'description' not in self.data:
-            print('Adding empty descriptions to root')
-            self.data['description'] = ''
+    def run_format(self):
+        self.update_json()
+        self.set_description()
+        self.save_json_to_destination_file()
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
@@ -49,15 +47,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         for key in arguments_to_remove:
             print(F'Removing unnecessary field: {key} from file')
             self.data.pop(key, None)
+
         for kind in layout_kind_args_to_remove:
             print(F'Removing unnecessary fields from {kind} field')
             for field in layout_kind_args_to_remove[kind]:
                 self.data[kind].pop(field, None)
-
-    def run_format(self):
-        self.set_description()
-        self.set_version_to_default()
-        self.save_json_to_destination_file()
 
 
 class LayoutJSONFormat(LayoutBaseFormat):
@@ -74,11 +68,8 @@ class LayoutJSONFormat(LayoutBaseFormat):
             self.set_layout_key()
             # version is both in layout key and in base dict
             self.set_version_to_default(self.data['layout'])
-            self.set_fromVersion(from_version=self.from_version)
             self.set_toVersion()
-            self.remove_unnecessary_keys()
             super().run_format()
-
             print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         except Exception:
@@ -118,13 +109,19 @@ class LayoutJSONFormat(LayoutBaseFormat):
 
 
 class LayoutsContainerJSONFormat(LayoutBaseFormat):
+    """LayoutsContainerJSONFormat class is designed to update layoutscontainer JSON file
+        according to Demisto's convention.
+
+        Attributes:
+            input (str): the path to the file we are updating at the moment.
+            output (str): the desired file name to save the updated version of the YML to.
+    """
+
     def run_format(self) -> int:
         try:
             print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
-            self.remove_null_kinds()
-            self.set_fromVersion(from_version=LAYOUTS_CONTAINER_FROM_VERSION)
+            self.set_fromVersion(from_version=VERSION_6_0_0)
             self.set_group_field()
-            self.remove_unnecessary_keys()
             super().run_format()
 
             print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
@@ -150,24 +147,6 @@ class LayoutsContainerJSONFormat(LayoutBaseFormat):
                 self.data['group'] = 'indicator'
             else:
                 print_error('Group is not valid')
-
-    def remove_null_kinds(self):
-        """
-        Remove layout kinds with null as value.
-        Layoutscontainer file which was downloaded from server contains all layouts kinds.
-        layout kinds:
-                edit,
-                indicatorsDetails,
-                indicatorsQuickView,
-                quickView,
-                close,
-                details,
-                detailsV2,
-                mobile
-        """
-        for kind in LAYOUTS_CONTAINER_KINDS:
-            if not self.data.get(kind):
-                self.data.pop(kind)
 
     def arguments_to_remove(self):
         """ Finds diff between keys in file and schema of file type

@@ -1,6 +1,5 @@
-import json
-
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+import ujson
+import yaml
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -28,17 +27,14 @@ class BaseUpdateJSON(BaseUpdate):
         """Save formatted JSON data to destination file."""
         print(F'Saving output JSON file to {self.output_file}')
         with open(self.output_file, 'w') as file:
-            json.dump(self.data, file, indent=4)
+            ujson.dump(self.data, file, indent=4)
 
     def update_json(self):
         """Manager function for the generic JSON updates."""
-        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
-
         self.set_version_to_default()
+        self.remove_null_fields()
         self.remove_unnecessary_keys()
         self.set_fromVersion(from_version=self.from_version)
-
-        print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
 
     def set_toVersion(self):
         """
@@ -48,3 +44,18 @@ class BaseUpdateJSON(BaseUpdate):
         if self.data.get('toVersion') != TO_VERSION_5_9_9:
             print('Setting toVersion field')
             self.data['toVersion'] = TO_VERSION_5_9_9
+
+    def set_description(self):
+        """Add an empty description to file root."""
+        if 'description' not in self.data:
+            print('Adding empty descriptions to root')
+            self.data['description'] = ''
+
+    def remove_null_fields(self):
+        """Remove empty fields from file root."""
+        with open(self.schema_path, 'r') as file_obj:
+            a = yaml.safe_load(file_obj)
+        schema_fields = a.get('mapping').keys()
+        fields_to_remove = [field for field in schema_fields if (not self.data.get(field) and field in self.data)]
+        for field in fields_to_remove:
+            self.data.pop(field, None)

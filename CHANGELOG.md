@@ -1,5 +1,6 @@
 # Changelog
 * Added new *githubUser* field in pack metadata init command.
+* Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

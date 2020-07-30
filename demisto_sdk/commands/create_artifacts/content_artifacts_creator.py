@@ -58,10 +58,9 @@ import time
 from concurrent.futures import ProcessPoolExecutor, Future, as_completed
 from typing import Union, List, Dict, Optional
 from contextlib import contextmanager
-import textwrap
 # 3-rd party
 from wcmatch.pathlib import Path, EXTMATCH, SPLIT, BRACE, NODIR, NEGATE
-from packaging.version import parse, Version
+from packaging.version import parse
 # Local
 from demisto_sdk.commands.common.content.content import Content, Pack
 from demisto_sdk.commands.common.content.content.objects.pack_objects import Script

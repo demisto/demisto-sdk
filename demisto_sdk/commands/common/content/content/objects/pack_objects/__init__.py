@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from .pack_metadata.pack_metadata import PackMetaData
 from .script.script import Script
 from .change_log.change_log import ChangeLog

@@ -1,5 +1,4 @@
 from filecmp import dircmp
-from shutil import rmtree
 
 from click.testing import CliRunner
 from wcmatch.pathlib import Path

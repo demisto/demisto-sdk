@@ -1,4 +1,3 @@
-import zipfile
 from abc import ABC
 from shutil import copytree
 from typing import Union, Optional

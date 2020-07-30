@@ -1,6 +1,5 @@
 import logging
 import os
-import colorama
 
 
 def logging_setup(verbose: int, quiet: bool, log_path: str = "") -> logging.Logger:

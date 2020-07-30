@@ -40,7 +40,7 @@ VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = None, no_validate: bool = None):
+def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = None):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -107,8 +107,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
     UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
-                                                         from_version=from_version, **kwargs)
-    format_res, validate_res = UpdateObject.format_file()
+                                                         from_version=from_version,
+                                                         **kwargs)
+    format_res, validate_res = UpdateObject.format_file()  # type: ignore
     return logger(input, format_res, validate_res)
 
 

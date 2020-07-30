@@ -53,6 +53,9 @@ class LOG_COLORS:
 
 LOG_VERBOSE = False
 
+LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
+                           'indicatorsDetails'}
+
 
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
@@ -577,7 +580,17 @@ def is_file_path_in_pack(file_path):
 
 
 def get_pack_name(file_path):
-    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
+    """
+    extract pack name (folder name) from file path
+
+    Arguments:
+        file_path (str): path of a file inside the pack
+
+    Returns:
+        pack name (str)
+    """
+    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
+    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]', file_path)
     return match.group(1) if match else None
 
 
@@ -734,7 +747,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):  # noqa: C901
     """
     returns the content file type
 
@@ -748,14 +761,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
         if 'README' in path:
             return FileType.README
 
-        elif RELEASE_NOTES_DIR in path:
+        if RELEASE_NOTES_DIR in path:
             return FileType.RELEASE_NOTES
 
-        elif 'description' in path:
+        if 'description' in path:
             return FileType.DESCRIPTION
 
-        else:
-            return FileType.CHANGELOG
+        return FileType.CHANGELOG
 
     if path.endswith('.png'):
         return FileType.IMAGE
@@ -768,63 +780,64 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
 
     if file_type == 'yml':
         if 'category' in _dict:
-            if 'beta' in _dict:
+            if 'beta' in _dict and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
 
-        elif 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
+        if 'script' in _dict:
+            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
-            else:
-                return FileType.SCRIPT
+            return FileType.SCRIPT
 
-        elif 'tasks' in _dict:
+        if 'tasks' in _dict:
             if TEST_PLAYBOOKS_DIR in path:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
 
-    elif file_type == 'json':
+    if file_type == 'json':
         if 'widgetType' in _dict:
             return FileType.WIDGET
 
-        elif 'orientation' in _dict:
+        if 'orientation' in _dict:
             return FileType.REPORT
 
-        elif 'preProcessingScript' in _dict:
+        if 'preProcessingScript' in _dict:
             return FileType.INCIDENT_TYPE
 
-        elif 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
+        if 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
             return FileType.REPUTATION
 
-        elif 'brandName' in _dict and 'transformer' in _dict:
+        if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER
 
-        elif 'transformer' in _dict and 'keyTypeMap' in _dict:
+        if 'transformer' in _dict and 'keyTypeMap' in _dict:
             return FileType.CLASSIFIER
 
-        elif 'canvasContextConnections' in _dict:
+        if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        elif 'mapping' in _dict:
+        if 'mapping' in _dict:
             return FileType.MAPPER
 
-        elif 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
-            else:
-                return FileType.DASHBOARD
+            return FileType.DASHBOARD
+
+        if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+            return FileType.LAYOUTS_CONTAINER
 
         # When using it for all files validation- sometimes 'id' can be integer
-        elif 'id' in _dict:
-            if isinstance(_dict.get('id'), str):
+        if 'id' in _dict:
+            if isinstance(_dict['id'], str):
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
                     return FileType.INCIDENT_FIELD
-                elif _id.startswith('indicator'):
+                if _id.startswith('indicator'):
                     return FileType.INDICATOR_FIELD
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
@@ -885,7 +898,8 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) ->\
+        Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
@@ -926,6 +940,22 @@ def pascal_case(st: str) -> str:
     """
     words = re.findall(r'[a-zA-Z0-9]+', st)
     return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
+
+
+def capital_case(st: str) -> str:
+    """Capitalize the first letter of each word of a string. The remaining characters are untouched.
+
+    Arguments:
+        st {str} -- string to convert
+
+    Returns:
+        str -- converted string
+    """
+    if len(st) >= 1:
+        words = st.split()
+        return ' '.join([f'{s[:1].upper()}{s[1:]}' for s in words if len(s) >= 1])
+    else:
+        return ''
 
 
 def get_last_release_version():
@@ -1222,3 +1252,21 @@ def get_code_lang(file_data: dict, file_entity: str) -> str:
     elif file_entity == SCRIPTS_DIR:
         return file_data.get('type', {})
     return ''
+
+
+def get_content_release_identifier(branch_name: str) -> Optional[str]:
+    """
+
+    Args:
+        branch_name: the branch name to get config.yml from
+
+    Returns:
+        GIT_SHA1 of latest content release if successfully returned from content repo.
+        else None.
+    """
+    try:
+        file_content = get_remote_file('.circleci/config.yml', tag=branch_name)
+    except Exception:
+        return None
+    else:
+        return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')

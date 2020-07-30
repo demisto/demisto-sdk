@@ -1,36 +1,49 @@
 import json
 import os
+import re
 import shutil
+import textwrap
+import traceback
+import zipfile
 from datetime import datetime
 from distutils.dir_util import copy_tree
-from typing import Dict, List
+from string import punctuation
+from typing import Dict, List, Union
 
+import click
 import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
+                                                   ENTITY_TYPE_TO_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
+                                                   INTEGRATION,
                                                    INTEGRATION_CATEGORIES,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
                                                    PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPTS_DIR,
+                                                   SCRIPT, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
+                                               find_type,
+                                               get_child_directories,
+                                               get_child_files,
                                                get_common_server_path,
-                                               print_color, print_error,
+                                               get_content_path, print_error,
                                                print_v)
+from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.split_yml.extractor import Extractor
 
 
 class Initiator:
@@ -43,10 +56,13 @@ class Initiator:
            integration (bool): Indicates whether to create an integration.
            script (bool): Indicates whether to create a script.
            full_output_path (str): The full path to the newly created pack/integration/script
+           contribution (str|Nonetype): The path to a contribution zip file
+           description (str): Description to attach to a converted contribution pack
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
-                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
+                 contribution: Union[str] = None, description: str = ''):
         self.output = output if output else ''
         self.id = id
 
@@ -56,6 +72,9 @@ class Initiator:
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.configuration = Configuration()
+        self.contribution = contribution
+        self.description = description
+        self.contrib_conversion_errs: List[str] = []
 
         # if no flag given automatically create a pack.
         if not integration and not script and not pack:
@@ -63,17 +82,19 @@ class Initiator:
 
         self.full_output_path = ''
 
+        self.name = name
         if name is not None and len(name) != 0:
-            while ' ' in name:
-                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+            if self.contribution:
+                self.name = self.format_pack_dir_name(name)
+            else:
+                while ' ' in name:
+                    name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
-    PACK_TEMPLATE_FOLDER = 'PackData'
-    PACK_METADATA_TEMPLATE = 'metadata_template.json'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
 
@@ -85,7 +106,9 @@ class Initiator:
         """Starts the init command process.
 
         """
-        if self.is_integration:
+        if self.contribution:
+            self.convert_contribution_to_pack()
+        elif self.is_integration:
             self.get_created_dir_name(created_object="integration")
             self.get_object_id(created_object="integration")
             return self.integration_init()
@@ -98,6 +121,153 @@ class Initiator:
         elif self.is_pack:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
+
+    @staticmethod
+    def format_pack_dir_name(name: str) -> str:
+        """Formats a (pack) name to a valid value
+
+        Specification:
+            A valid pack name does not contain any whitespace and may only contain alphanumeric, underscore, and
+            dash characters. The name must begin and end with an alphanumeric character. If it begins with an
+            alphabetical character, that character must be capitalized.
+
+        Behavior:
+            Individual words are titlecased, whitespace is stripped, and disallowed punctuation and space
+            characters are replaced with underscores.
+
+        Args:
+            name (str): The proposed pack name to convert to valid pack name format
+
+        Returns:
+            str: The reformatted pack name
+        """
+        temp = capital_case(name.strip().strip('-_'))
+        punctuation_to_replace = punctuation.replace('-', '').replace('_', '')
+        translation_dict = {x: '_' for x in punctuation_to_replace}
+        translation_table = str.maketrans(translation_dict)
+        temp = temp.translate(translation_table).strip('-_')
+        temp = re.sub(r'-+', '-', re.sub(r'_+', '_', temp))
+        comparator = capital_case(temp.replace('_', ' ').replace('-', ' '))
+        result = ''
+        i = j = 0
+        while i < len(temp):
+            temp_char = temp[i]
+            comp_char = comparator[j]
+            if temp_char.casefold() != comp_char.casefold():
+                while temp_char in {' ', '_', '-'}:
+                    result += f'{temp_char}'
+                    i += 1
+                    temp_char = temp[i]
+                while comp_char in {' '}:
+                    j += 1
+                    comp_char = comparator[j]
+            else:
+                result += comparator[j]
+                i += 1
+                j += 1
+        result = result.replace(' ', '')
+        result = re.sub(r'-+', '-', re.sub(r'_+', '_', result))
+        return result
+
+    def convert_contribution_to_pack(self):
+        """Create a Pack in the content repo from the contents of a contribution zipfile"""
+        try:
+            packs_dir = os.path.join(get_content_path(), 'Packs')
+            metadata_dict = {}
+            with zipfile.ZipFile(self.contribution) as zipped_contrib:
+                with zipped_contrib.open('metadata.json') as metadata_file:
+                    click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
+                    metadata = json.loads(metadata_file.read())
+                    # a name passed on the cmd line should take precedence over one pulled
+                    # from contribution metadata
+                    pack_name = self.name or self.format_pack_dir_name(metadata.get('name', 'ContributionPack'))
+                    # a description passed on the cmd line should take precedence over one pulled
+                    # from contribution metadata
+                    metadata_dict['description'] = self.description or metadata.get('description')
+                    metadata_dict['name'] = pack_name
+                    metadata_dict['author'] = metadata.get('author', '')
+                    metadata_dict['support'] = metadata.get('support', '')
+                    metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
+                    metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
+                    metadata_dict['categories'] = metadata.get('categories') if metadata.get('categories') else []
+                    metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
+                    metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []
+                    metadata_dict['keywords'] = metadata.get('keywords') if metadata.get('keywords') else []
+            while os.path.exists(os.path.join(packs_dir, pack_name)):
+                click.echo(
+                    f'Modifying pack name because pack {pack_name} already exists in the content repo',
+                    color=LOG_COLORS.NATIVE
+                )
+                if len(pack_name) >= 2 and pack_name[-2].lower() == 'v' and pack_name[-1].isdigit():
+                    # increment by one
+                    pack_name = pack_name[:-1] + str(int(pack_name[-1]) + 1)
+                else:
+                    pack_name += 'V2'
+                click.echo(f'New pack name is "{pack_name}"', color=LOG_COLORS.NATIVE)
+            pack_dir = os.path.join(packs_dir, pack_name)
+            os.mkdir(pack_dir)
+            shutil.unpack_archive(filename=self.contribution, extract_dir=pack_dir)
+            pack_subdirectories = get_child_directories(pack_dir)
+            for pack_subdir in pack_subdirectories:
+                basename = os.path.basename(pack_subdir)
+                if basename in ENTITY_TYPE_TO_DIR:
+                    dst_name = ENTITY_TYPE_TO_DIR.get(basename)
+                    src_path = os.path.join(pack_dir, basename)
+                    dst_path = os.path.join(pack_dir, dst_name)
+                    content_item_dir = shutil.move(src_path, dst_path)
+                    if basename in {SCRIPT, AUTOMATION, INTEGRATION}:
+                        self.content_item_to_package_format(content_item_dir, del_unified=True)
+            # create pack's base files
+            self.full_output_path = pack_dir
+            self.create_pack_base_files()
+            metadata_dict = Initiator.create_metadata(fill_manually=False, data=metadata_dict)
+            metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
+            with open(metadata_path, 'w') as pack_metadata_file:
+                json.dump(metadata_dict, pack_metadata_file, indent=4)
+            # remove metadata.json file
+            os.remove(os.path.join(pack_dir, 'metadata.json'))
+            click.echo(f'Executing \'format\' on the restructured contribution zip files at "{pack_dir}"')
+            format_manager(input=pack_dir)
+        except Exception as e:
+            click.echo(
+                f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
+                color=LOG_COLORS.RED
+            )
+        finally:
+            if self.contrib_conversion_errs:
+                click.echo(
+                    'The following errors occurred while converting unified content YAMLs to package structure:'
+                )
+                click.echo(
+                    textwrap.indent('\n'.join(self.contrib_conversion_errs), '\t')
+                )
+
+    def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
+        """
+        Iterate over the YAML files in a directory and create packages (a containing directory and
+        component files) from the YAMLs of integrations and scripts
+
+        Args:
+            content_item_dir (str): Path to the directory containing the content item YAML file(s)
+            del_unified (bool): Whether to delete the unified yaml the package was extracted from
+        """
+        child_files = get_child_files(content_item_dir)
+        content_item_file_path = ''
+        for child_file in child_files:
+            cf_name_lower = os.path.basename(child_file).lower()
+            if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith('yml'):
+                content_item_file_path = child_file
+                file_type = find_type(content_item_file_path)
+                file_type = file_type.value if file_type else file_type
+                try:
+                    extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
+                    extractor.extract_to_package_format()
+                except Exception as e:
+                    err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
+                              f'into its component parts.\nError: "{e}"'
+                    self.contrib_conversion_errs.append(err_msg)
+                if del_unified:
+                    os.remove(content_item_file_path)
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -150,16 +320,12 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
 
-        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
-        fp.close()
+        self.create_pack_base_files()
 
-        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
-        fp.close()
-
-        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
-        fp.close()
-
-        print_color(f"Successfully created the pack {self.dir_name} in: {self.full_output_path}", LOG_COLORS.GREEN)
+        click.echo(
+            f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
+            color=LOG_COLORS.GREEN
+        )
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
@@ -169,7 +335,7 @@ class Initiator:
             pack_metadata = Initiator.create_metadata(fill_manually)
             json.dump(pack_metadata, fp, indent=4)
 
-            print_color(f"Created pack metadata at path : {metadata_path}", LOG_COLORS.GREEN)
+            click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
@@ -180,12 +346,28 @@ class Initiator:
 
         return True
 
+    def create_pack_base_files(self):
+        """
+        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        to be in the base directory of a pack
+        """
+        click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
+        fp = open(os.path.join(self.full_output_path, 'README.md'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.full_output_path, '.secrets-ignore'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
+        fp.close()
+
     @staticmethod
-    def create_metadata(fill_manually: bool) -> Dict:
+    def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
             fill_manually (bool): Whether to interact with the user to fill in metadata details or not.
+            data (dict): Dictionary keys and value to insert into the pack metadata.
 
         Returns:
             Dict. Pack metadata JSON content.
@@ -204,6 +386,9 @@ class Initiator:
             'useCases': [],
             'keywords': []
         }
+
+        if data:
+            pack_metadata.update(data)
 
         if not fill_manually:
             return pack_metadata  # return xsoar template
@@ -238,6 +423,10 @@ class Initiator:
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',') if t]
         pack_metadata['tags'] = tags_list
+
+        github_users = input("\nPack default reviewers, comma separated github username: ")
+        github_users_list = [u.strip() for u in github_users.split(',') if u]
+        pack_metadata['githubUser'] = github_users_list
 
         return pack_metadata
 
@@ -302,7 +491,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(f"Finished creating integration: {self.full_output_path}.", LOG_COLORS.GREEN)
+        click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
         return True
 
@@ -340,7 +529,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        print_color(f"Finished creating script: {self.full_output_path}", LOG_COLORS.GREEN)
+        click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 
         return True
 

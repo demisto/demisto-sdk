@@ -31,6 +31,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                server_version_compare)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
+                                              VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
@@ -97,6 +98,15 @@ class TestGenericFunctions:
     def test_find_type(self, path, _type):
         output = find_type(str(path))
         assert output == _type, f'find_type({path}) returns: {output} instead {_type}'
+
+    def test_find_type_ignore_sub_categories(self):
+        output = find_type(VALID_BETA_INTEGRATION_PATH)
+        assert output == FileType.BETA_INTEGRATION,\
+            f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.BETA_INTEGRATION}'
+
+        output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
+        assert output == FileType.INTEGRATION,\
+            f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
     test_path_md = [
         VALID_MD
@@ -228,6 +238,17 @@ def test_pascal_case():
     assert res == "GoodLife"
     res = tools.pascal_case("good_life-here v2")
     assert res == "GoodLifeHereV2"
+
+
+def test_capital_case():
+    res = tools.capital_case("PowerShell Remoting")
+    assert res == "PowerShell Remoting"
+    res = tools.capital_case("good life")
+    assert res == "Good Life"
+    res = tools.capital_case("good_life-here v2")
+    assert res == "Good_life-here V2"
+    res = tools.capital_case("")
+    assert res == ""
 
 
 class TestPrintColor:

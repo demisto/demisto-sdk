@@ -37,7 +37,7 @@ class TestContentCreator:
                 except Exception as err:
                     print('Failed to delete {}. Reason: {}'.format(file_path, err))
 
-    def test_copy_dir_files(self):
+    def test_copy_dir_files(self, mocker):
         """
         Given
         - valid content dir, including Scripts, Integrations and TestPlaybooks sub-dirs
@@ -51,6 +51,8 @@ class TestContentCreator:
                                          content_bundle_path=self._bundle_dir,
                                          test_bundle_path=self._test_dir,
                                          preserve_bundles=False)
+        # not checking fromversion
+        mocker.patch.object(ContentCreator, 'add_from_version_to_yml', return_value='')
 
         # test Scripts repo copy
         content_creator.copy_dir_files(self.scripts_full_path, content_creator.content_bundle)
@@ -67,7 +69,7 @@ class TestContentCreator:
         assert filecmp.cmp(f'{self.TestPlaybooks_full_path}/script-Sleep-for-testplaybook.yml',
                            f'{self._test_dir}/script-Sleep-for-testplaybook.yml')
 
-    def test_indicator_types_and_fields(self):
+    def test_indicator_types_and_fields(self, mocker):
         """
         Given
         - Content dir with indicator types and fields
@@ -80,6 +82,9 @@ class TestContentCreator:
                                          content_bundle_path=self._bundle_dir,
                                          test_bundle_path=self._test_dir,
                                          preserve_bundles=False)
+
+        # not checking fromversion
+        mocker.patch.object(ContentCreator, 'add_from_version_to_json', return_value='')
 
         content_creator.copy_dir_files(self.indicator_fields_full_path, content_creator.content_bundle)
         assert filecmp.cmp(f'{self.indicator_fields_full_path}/field.json',
@@ -143,7 +148,7 @@ class TestContentCreator:
         assert yml_data50['script']['dockerimage'] == 'demisto/bs4:1.0.0.6538'
         assert yml_data45['script']['dockerimage'] == 'demisto/bs4'
 
-    def test_copy_packs_content_to_packs_bundle(self):
+    def test_copy_packs_content_to_packs_bundle(self, mocker):
         """
         Given
         - valid content dir, including Packs sub-dir
@@ -158,7 +163,10 @@ class TestContentCreator:
                                          content_bundle_path=self._bundle_dir,
                                          test_bundle_path=self._test_dir,
                                          preserve_bundles=False)
-        content_creator.copy_packs_content_to_old_bundles([f'{self.Packs_full_path}/FeedAzure'])
+        # not checking fromversion
+        mocker.patch.object(ContentCreator, 'add_from_version_to_yml', return_value='')
+
+        content_creator.copy_packs_to_content_bundles([f'{self.Packs_full_path}/FeedAzure'])
 
         # test Packs repo, TestPlaybooks repo copy without playbook- prefix
         assert filecmp.cmp(f'{self.Packs_full_path}/FeedAzure/TestPlaybooks/FeedAzure_test.yml',
@@ -229,3 +237,447 @@ class TestContentCreator:
                                f'{bundle_packs}/Test/ReleaseNotes/1_0_1.md')
             assert not os.path.isfile(f'{bundle_content}/incidentfield-city_README.md')
             assert not os.path.isfile(f'{bundle_content}/integration-OldIntegration_CHANGELOG.md')
+
+    def test_add_from_version_to_yml__no_fromversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with no fromversion in it
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
+
+    def test_add_from_version_to_yml__lower_fromversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with a fromversion which is lower than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "1.0.0"})
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
+
+    def test_add_from_version_to_yml__higher_fromversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with a fromversion which is higher than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml's fromversion is unchanged
+        """
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        integration.write_yml({"fromversion": higher_version})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == higher_version
+
+    def test_add_from_version_to_yml__lower_toversion_in_yml(self, repo):
+        """
+        Given
+        - An integration yml path with a toversion which is lower than LATEST_SUPPORTED_VERSION and no fromversion
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml does not have fromversion key
+        """
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration.write_yml({"toversion": "1.0.0"})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') is None
+
+    def test_add_from_version_to_yml__higher_toversion_in_yml__no_fromversion(self, repo):
+        """
+        Given
+        - An integration yml path with a toversion which is higher than LATEST_SUPPORTED_VERSION and no fromversion
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        integration.write_yml({"toversion": higher_version})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
+
+    def test_add_from_version_to_yml__higher_toversion_in_yml__with_fromversion(self, repo):
+        """
+        Given
+        - An integration yml path with a toversion which is higher than LATEST_SUPPORTED_VERSION and lower fromversion
+        When
+        - running add_from_version_to_yml method
+        Then
+        - the resulting yml has fromversion of LATEST_SUPPORTED_VERSION
+        """
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        integration.write_yml({"toversion": higher_version, "fromversion": "1.0.0"})
+
+        with ChangeCWD(repo.path):
+            unified_yml = content_creator.add_from_version_to_yml(file_path=integration.yml_path)
+            assert unified_yml.get('fromversion') == LATEST_SUPPORTED_VERSION
+
+    def test_add_from_version_to_json__no_fromversion_in_json(self, repo):
+        """
+        Given
+        - An json path with no fromVersion
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
+        """
+        pack = repo.create_pack('pack')
+        json_path = pack.create_dashboard("some_json", content={}).path
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
+
+    def test_add_from_version_to_json__with__lower_fromversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a fromVersion which is lower than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
+        """
+        pack = repo.create_pack('pack')
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "1.0.0"}).path
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
+
+    def test_add_from_version_to_json__with__higher_fromversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a fromVersion which is higher than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json's fromVersion is unchanged
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": higher_version}).path
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == higher_version
+
+    def test_add_from_version_to_json__with__lower_toversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a toVersion which is lower than LATEST_SUPPORTED_VERSION
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has no fromVersion
+        """
+        pack = repo.create_pack('pack')
+        json_path = pack.create_dashboard("some_json", content={"toVersion": "1.0.0"}).path
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') is None
+
+    def test_add_from_version_to_json__with__higher_toversion_in_json(self, repo):
+        """
+        Given
+        - An json path with a toVersion which is higher than LATEST_SUPPORTED_VERSION and no fromVersion
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json has fromVersion of LATEST_SUPPORTED_VERSION
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        json_path = pack.create_dashboard("some_json", content={"toVersion": higher_version}).path
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
+
+    def test_add_from_version_to_json__with__higher_toversion_in_json_and_lower_fromversion(self, repo):
+        """
+        Given
+        - An json path with a toVersion which is higher than LATEST_SUPPORTED_VERSION and lower fromVersion
+        When
+        - running add_from_version_to_json method
+        Then
+        - the resulting json's fromVersion is unchanged
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        higher_version = LATEST_SUPPORTED_VERSION.split('.')
+        higher_version[0] = str(int(higher_version[0]) + 1)
+        higher_version = '.'.join(higher_version)
+        json_path = pack.create_dashboard("some_json", content={"toVersion": higher_version,
+                                                                "fromVersion": "1.0.0"}).path
+
+        with ChangeCWD(repo.path):
+            json_content = content_creator.add_from_version_to_json(file_path=json_path)
+            assert json_content.get('fromVersion') == LATEST_SUPPORTED_VERSION
+
+    def test_should_process_file_to_bundle__yml_low_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - A yml path with a fromversion lower than 6.0.0
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "1.0.0"})
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__yml_no_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An yml path with no fromversion
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__yml_high_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An yml path with a fromversion higher than 6.0.0
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "6.0.0"})
+        with ChangeCWD(repo.path):
+            assert not content_creator.should_process_file_to_bundle(integration.yml_path,
+                                                                     content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__json_high_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An json path with a fromVersion higher than 6.0.0
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "6.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert not content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__json_low_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An json path with a fromVersion lower than 6.0.0
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "1.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__json_no_fromvesrion_content_bundle(self, repo):
+        """
+        Given
+        - An json path with no fromVersion
+        - creating content bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={}).path
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__yml_low_tovesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A yml path with a toversion lower than 6.0.0
+        - creating packs bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "1.0.0"})
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.packs_bundle)
+
+    def test_should_process_file_to_bundle__yml_no_tovesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A yml path with no toversion
+        - creating packs bundle
+        When
+        - running check_from_version method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.packs_bundle)
+
+    def test_should_process_file_to_bundle__yml_high_fromvesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A yml path with a fromversion higher than 6.0.0
+        - creating packs bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        integration = pack.create_integration('integration')
+        integration.write_yml({"fromversion": "6.0.0"})
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(integration.yml_path, content_creator.packs_bundle)
+
+    def test_should_process_file_to_bundle__json_high_fromvesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A json path with a fromVersion higher than 6.0.0
+        - creating packs bundle
+        When
+        - running check_from_version method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={"fromVersion": "6.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert not content_creator.should_process_file_to_bundle(json_path, content_creator.content_bundle)
+
+    def test_should_process_file_to_bundle__json_low_tovesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A json path with a toVersion lower than 6.0.0
+        - creating packs bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return False
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={"toVersion": "1.0.0"}).path
+        with ChangeCWD(repo.path):
+            assert not content_creator.should_process_file_to_bundle(json_path, content_creator.packs_bundle)
+
+    def test_should_process_file_to_bundle__json_no_tovesrion_packs_bundle(self, repo):
+        """
+        Given
+        - A json path with no toVersion
+        - creating packs bundle
+        When
+        - running should_process_file_to_bundle method
+        Then
+        - return True
+        """
+        pack = repo.create_pack('pack')
+        content_creator = ContentCreator(artifacts_path=self.content_repo)
+        json_path = pack.create_dashboard("some_json", content={}).path
+        with ChangeCWD(repo.path):
+            assert content_creator.should_process_file_to_bundle(json_path, content_creator.packs_bundle)
+
+    def test_add_suffix_to_file_path(self):
+        """
+        Given
+        - A file path
+        - content creator - with suffix and without
+        When
+        - running add_suffix_to_file_path method
+        Then
+        - if the suffix exists - add it to the file name
+        - if no suffix exists - leave the file name unchanged
+        """
+        content_creator = ContentCreator(artifacts_path='.', suffix='_suffix')
+        file_path = "some/path/to/file.yml"
+        file_path_with_suffix = "some/path/to/file_suffix.yml"
+        assert file_path_with_suffix == content_creator.add_suffix_to_file_path(file_path)
+
+        content_creator = ContentCreator(artifacts_path='.')
+        assert file_path == content_creator.add_suffix_to_file_path(file_path)

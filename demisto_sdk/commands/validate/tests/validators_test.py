@@ -3,7 +3,7 @@ import os
 import sys
 from io import StringIO
 from shutil import copyfile
-from typing import Any, Type
+from typing import Any, Type, Union
 
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.layout import (
+    LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -41,19 +42,20 @@ from demisto_sdk.tests.constants_test import (
     INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
     INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
     INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
-    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
-    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_NO_HIDDEN_PARAMS,
-    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH,
+    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
+    INVALID_NO_HIDDEN_PARAMS, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET,
-    VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH,
-    VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
+    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
+    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_NO_HIDDEN_PARAMS, VALID_ONE_LINE_CHANGELOG_PATH,
     VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
@@ -66,7 +68,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 class TestValidators:
-    CREATED_DIRS = list()
+    CREATED_DIRS = list()  # type: list[str]
 
     @classmethod
     def setup_class(cls):
@@ -88,6 +90,8 @@ class TestValidators:
     INPUTS_IS_VALID_VERSION = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),
         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False, LayoutValidator),
+        (VALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, True, LayoutsContainerValidator),
+        (INVALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, False, LayoutsContainerValidator),
         (VALID_WIDGET_PATH, WIDGET_TARGET, True, WidgetValidator),
         (INVALID_WIDGET_PATH, WIDGET_TARGET, False, WidgetValidator),
         (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True, DashboardValidator),
@@ -127,8 +131,8 @@ class TestValidators:
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
-            validator = validator(structure)
-            assert validator.is_valid_version() is answer
+            res_validator = validator(structure)
+            assert res_validator.is_valid_version() is answer
         finally:
             os.remove(target)
 
@@ -140,7 +144,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
     def test_is_condition_branches_handled(self, source, answer):
-        # type: (str, str, Any) -> None
+        # type: (str, str) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -167,8 +171,8 @@ class TestValidators:
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
-            validator = validator(structure)
-            assert validator.is_valid_file(validate_rn=False) is answer
+            res_validator = validator(structure)
+            assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
 
@@ -188,14 +192,14 @@ class TestValidators:
                              INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
     def test_is_release_notes_exists(self, source_dummy, target_dummy,
                                      source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
             mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
             mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
-            validator = OldReleaseNotesValidator(target_dummy)
-            assert validator.validate_file_release_notes_exists() is answer
+            res_validator = OldReleaseNotesValidator(target_dummy)
+            assert res_validator.validate_file_release_notes_exists() is answer
         finally:
             os.remove(target_dummy)
             os.remove(target_release_notes)
@@ -239,14 +243,14 @@ class TestValidators:
                              'validator, answer', test_package)
     def test_valid_release_notes_structure(self, source_dummy, target_dummy,
                                            source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any) -> None
+        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
             mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
             mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', side_effect=self.mock_get_master_diff)
-            validator = OldReleaseNotesValidator(target_dummy)
-            assert validator.is_valid_release_notes_structure() is answer
+            res_validator = OldReleaseNotesValidator(target_dummy)
+            assert res_validator.is_valid_release_notes_structure() is answer
         finally:
             os.remove(target_dummy)
             os.remove(target_release_notes)
@@ -266,12 +270,12 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
     def test_is_id_equals_name(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        # type: (str, str, Any, Type[Union[ScriptValidator, PlaybookValidator, IntegrationValidator]]) -> None
         try:
             copyfile(str(source), target)
             structure = StructureValidator(str(source))
-            validator = validator(structure)
-            assert validator.is_id_equals_name() is answer
+            res_validator = validator(structure)
+            assert res_validator.is_id_equals_name() is answer
         finally:
             os.remove(target)
 
@@ -282,7 +286,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, answer', INPUTS_IS_CONNECTED_TO_ROOT)
     def test_is_root_connected_to_all_tasks(self, source, answer):
-        # type: (str, str, Any) -> None
+        # type: (str, bool) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -413,6 +417,38 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
+
+    def test_validate_pack_dependencies__validate_manager(self, ):
+        """
+            Given:
+                - A file path with valid pack dependencies
+            When:
+                - checking validity of pack dependencies for added or modified files
+            Then:
+                - return a True validation response
+        """
+        validate_manager = ValidateManager(skip_conf_json=True)
+        id_set_path = os.path.normpath(
+            os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={},
+                                                             id_set_path=id_set_path)
+        assert result
+
+    def test_validate_invalid_pack_dependencies__validate_manager(self, ):
+        """
+            Given:
+                - A file path with invalid pack dependencies
+            When:
+                - checking validity of pack dependencies for added or modified files
+            Then:
+                - return a False validation response
+        """
+        validate_manager = ValidateManager(skip_conf_json=True)
+        id_set_path = os.path.normpath(
+            os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={},
+                                                             id_set_path=id_set_path)
+        assert not result
 
     FILE_PATH = [
         ([VALID_SCRIPT_PATH], 'script')
@@ -565,7 +601,7 @@ class TestValidators:
         """
         file_validator = FilesValidator()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = file_validator.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
 
@@ -592,7 +628,7 @@ class TestValidators:
     def test_create_ignored_errors_list__validate_manager(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
 
@@ -845,3 +881,36 @@ class TestValidators:
 
         # check recognized deleted file
         assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
+
+    def test_setup_git_params(self, mocker):
+        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='20.0.7')
+        validate_manager = ValidateManager()
+        validate_manager.setup_git_params()
+
+        assert validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='master')
+        # resetting always_valid flag
+        validate_manager.always_valid = False
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+
+        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
+        validate_manager.setup_git_params()
+        assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '...'
+
+
+def test_content_release_identifier_exists():
+    """
+    When running validate file, it should get a git sha1 from content repo.
+    This test assures that if someone changes the .circle/config.yml scheme, it'll fail.
+    """
+    fv = FilesValidator()
+    fv.branch_name = 'master'
+    sha1 = fv.get_content_release_identifier()
+    assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'

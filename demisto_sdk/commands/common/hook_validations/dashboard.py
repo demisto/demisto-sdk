@@ -15,7 +15,7 @@ class DashboardValidator(ContentEntityValidator):
         return widgets
 
     def is_valid_dashboard(self, validate_rn=True):
-        # type: () -> bool
+        # type: (bool) -> bool
         """Check whether the dashboard is valid or not.
 
         Returns:

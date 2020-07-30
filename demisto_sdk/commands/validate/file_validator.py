@@ -15,9 +15,11 @@ import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
 from glob import glob
+from typing import Optional
 
 import click
 import demisto_sdk.commands.common.constants as constants
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
@@ -25,13 +27,14 @@ from demisto_sdk.commands.common.constants import (
     IMAGE_REGEX, INTEGRATION_REGXES, JSON_ALL_CLASSIFIER_REGEXES,
     JSON_ALL_CLASSIFIER_REGEXES_5_9_9, JSON_ALL_DASHBOARDS_REGEXES,
     JSON_ALL_INCIDENT_TYPES_REGEXES, JSON_ALL_INDICATOR_TYPES_REGEXES,
-    JSON_ALL_LAYOUT_REGEXES, JSON_ALL_MAPPER_REGEXES,
-    JSON_INDICATOR_AND_INCIDENT_FIELDS, KNOWN_FILE_STATUSES,
-    OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES, PACKS_DIR,
-    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_RELEASE_NOTES_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
-    PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST, SCHEMA_REGEX, TEST_PLAYBOOK_REGEX,
-    YML_ALL_SCRIPTS_REGEXES, YML_INTEGRATION_REGEXES)
+    JSON_ALL_LAYOUT_REGEXES, JSON_ALL_LAYOUTS_CONTAINER_REGEXES,
+    JSON_ALL_MAPPER_REGEXES, JSON_INDICATOR_AND_INCIDENT_FIELDS,
+    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKAGE_SCRIPTS_REGEXES,
+    PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_RELEASE_NOTES_REGEX,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_REGEXES_LIST,
+    SCHEMA_REGEX, TEST_PLAYBOOK_REGEX, YML_ALL_SCRIPTS_REGEXES,
+    YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -54,7 +57,8 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
+from demisto_sdk.commands.common.hook_validations.layout import (
+    LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
@@ -70,8 +74,9 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
                                                filter_packagify_changes,
-                                               find_type, get_pack_name,
-                                               get_remote_file, get_yaml,
+                                               find_type,
+                                               get_content_release_identifier,
+                                               get_pack_name, get_yaml,
                                                has_remote_configured,
                                                is_file_path_in_pack,
                                                is_origin_content_repo,
@@ -475,6 +480,12 @@ class FilesValidator:
                 reputation_validator = ReputationValidator(structure_validator, ignored_errors=ignored_errors_list,
                                                            print_as_warnings=self.print_ignored_errors)
                 if not reputation_validator.is_valid_file(validate_rn=True):
+                    self._is_valid = False
+
+            elif checked_type(file_path, JSON_ALL_LAYOUTS_CONTAINER_REGEXES):
+                layout_validator = LayoutsContainerValidator(structure_validator, ignored_errors=ignored_errors_list,
+                                                             print_as_warnings=self.print_ignored_errors)
+                if not layout_validator.is_valid_layout(validate_rn=True):
                     self._is_valid = False
 
             elif checked_type(file_path, JSON_ALL_LAYOUT_REGEXES):
@@ -1088,7 +1099,7 @@ class FilesValidator:
             no_error (bool): If set to true will restore self._is_valid after run (will not return new errors)
         """
         if not self.prev_ver:
-            content_release_branch_id = self.get_content_release_identifier()
+            content_release_branch_id = get_content_release_identifier(self.branch_name)
             if not content_release_branch_id:
                 print_warning('could\'t get content\'s release branch ID. Skipping validation.')
                 return
@@ -1123,13 +1134,8 @@ class FilesValidator:
 
         return False
 
-    def get_content_release_identifier(self):
-        try:
-            file_content = get_remote_file('.circleci/config.yml', tag=self.branch_name)
-        except Exception:
-            return
-        else:
-            return file_content.get('jobs').get('build').get('environment').get('GIT_SHA1')
+    def get_content_release_identifier(self) -> Optional[str]:
+        return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
     def get_pack_ignore_file_path(pack_name):

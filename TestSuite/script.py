@@ -1,14 +1,17 @@
+import os
+import shutil
 from pathlib import Path
 
 import yaml
+from demisto_sdk.commands.unify.unifier import Unifier
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path
 
 
 class Script(Integration):
     # Im here just to have one!!!
-    def __init__(self, tmpdir: Path, name, repo):
-        super().__init__(tmpdir, name, repo)
+    def __init__(self, tmpdir: Path, name, repo, create_unified=False):
+        super().__init__(tmpdir, name, repo, create_unified)
 
     def create_default_script(self):
         default_script_dir = 'assets/default_script'
@@ -29,3 +32,7 @@ class Script(Integration):
         changelog.close()
         description.close()
         code.close()
+        if self.create_unified:
+            unifier = Unifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
+            unifier.merge_script_package_to_yml()
+            shutil.rmtree(self._tmpdir_integration_path)

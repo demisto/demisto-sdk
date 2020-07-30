@@ -18,8 +18,8 @@ class ContentEntityValidator(BaseValidator):
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False):
+        # type: (StructureValidator, dict, bool, bool) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
-        # type: (StructureValidator) -> None
         self.structure_validator = structure_validator
         self.current_file = structure_validator.current_file
         self.old_file = structure_validator.old_file

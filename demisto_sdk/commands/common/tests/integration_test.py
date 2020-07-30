@@ -29,7 +29,7 @@ class TestIntegrationValidator:
     SCRIPT_WITH_DOCKER_IMAGE_1 = {"script": {"dockerimage": "test"}}
     SCRIPT_WITH_DOCKER_IMAGE_2 = {"script": {"dockerimage": "test1"}}
     SCRIPT_WITH_NO_DOCKER_IMAGE = {"script": {"no": "dockerimage"}}
-    EMPTY_CASE = {}
+    EMPTY_CASE = {}  # type: dict[any, any]
     IS_DOCKER_IMAGE_CHANGED = [
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_NO_DOCKER_IMAGE, True),
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_DOCKER_IMAGE_2, True),
@@ -551,17 +551,29 @@ class TestIsFeedParamsExist:
 
         assert self.validator.all_feed_params_exist() is False, 'all_feed_params_exist() returns True instead False'
 
+    def test_hidden_feed_reputation_field(self):
+        # the feed reputation param is hidden
+        configuration = self.validator.current_file['configuration']
+        for item in configuration:
+            if item.get('name') == 'feedReputation':
+                item['hidden'] = True
+        assert self.validator.all_feed_params_exist() is True, \
+            'all_feed_params_exist() returns False instead True for feedReputation param'
+
     NO_HIDDEN = {"configuration": [{"id": "new", "name": "new", "display": "test"}, {"d": "123", "n": "s", "r": True}]}
     HIDDEN_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"display": "123", "name": "serer"}]}
     HIDDEN_TRUE = {"configuration": [{"id": "n", "n": "n"}, {"display": "123", "required": "false", "hidden": True}]}
     HIDDEN_TRUE_AND_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"ty": "0", "r": "true", "hidden": True}]}
     HIDDEN_ALLOWED_TRUE = {"configuration": [{"name": "longRunning", "required": "false", "hidden": True}]}
+    HIDDEN_ALLOWED_FEED_REPUTATION = {"configuration": [{"name": "feedReputation", "required": "false", "hidden": True}]}
+
     IS_VALID_HIDDEN_PARAMS = [
         (NO_HIDDEN, True),
         (HIDDEN_FALSE, True),
         (HIDDEN_TRUE, False),
         (HIDDEN_TRUE_AND_FALSE, False),
-        (HIDDEN_ALLOWED_TRUE, True)
+        (HIDDEN_ALLOWED_TRUE, True),
+        (HIDDEN_ALLOWED_FEED_REPUTATION, True),
     ]
 
     @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)

@@ -136,8 +136,8 @@ def main(config, version):
 )
 @pass_config
 def extract(config, **kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -177,8 +177,8 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -607,8 +607,8 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
     generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
@@ -733,8 +733,8 @@ def generate_doc(**kwargs):
             print_error("The `command` argument must be presented with existing `README.md` docs.")
             return 1
 
-    file_type = find_type(kwargs.get('input', ''))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
@@ -746,7 +746,7 @@ def generate_doc(**kwargs):
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command)
-    elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+    elif file_type == FileType.SCRIPT:
         return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:

@@ -14,5 +14,3 @@ class Integration(YAMLUnfiedObject, ABC):
     @property
     def script(self) -> dict:
         return self.get('script', {})
-
-

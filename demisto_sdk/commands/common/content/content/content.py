@@ -44,7 +44,7 @@ class Content:
             yield object_path.name, content_object(object_path)
 
     def _content_files_list_generator_factory(self, dir_name, prefix: str = "*", suffix: str = "*") -> Tuple[
-        str, object]:
+            str, object]:
         objects_path = (self._path / dir_name).glob(patterns=[f"{prefix}*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
             yield ContentObjectFacotry.from_path(object_path)

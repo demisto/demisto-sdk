@@ -146,6 +146,7 @@ def zip_tool(directory: Path, dest: Path):
 
     return zip_file
 
+
 def print_error(error_str):
     print_color(error_str, LOG_COLORS.RED)
 

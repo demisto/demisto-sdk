@@ -55,5 +55,3 @@ class TestInValidJSON:
             JSONObject('Not valid path')
 
         assert "Unable to find json file in path" in str(excinfo)
-
-

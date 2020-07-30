@@ -81,12 +81,12 @@ def incident_to_record(incident, time_field):
             return date_time_str
 
     occured_time = parse_time(incident[time_field])
-    return {'id': "[%s](#/Details/%s)" % (incident['id'], incident['id']),
+    return {'id': "[{}](#/Details/{})".format(incident['id'], incident['id']),
             'rawId': incident['id'],
             'name': incident['name'],
             'closedTime': parse_time(incident['closed']) if incident['closed'] != "0001-01-01T00:00:00Z" else "",
             'Time': occured_time,
-            'similarity': "{0:.2f}".format(incident['similarity'])
+            'similarity': "{:.2f}".format(incident['similarity'])
             }
 
 

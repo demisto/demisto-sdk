@@ -18,6 +18,7 @@ def same_folders(dcmp):
             return False
     return True
 
+
 @contextmanager
 def destroy_by_suffix(root_path: Path, suffix: str):
     file = next(root_path.glob(patterns=[rf"*/*/*/*.{suffix}", "!doc-*"], flags=NEGATE))

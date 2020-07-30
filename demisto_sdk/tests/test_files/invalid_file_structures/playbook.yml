@@ -1,0 +1,3 @@
+name: Invalid Playbook
+description: 'reason: "tasks" is supposed to be a dict object.'
+tasks: hello

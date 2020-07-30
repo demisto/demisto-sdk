@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 import pytest
 
-UNIT_TEST_DATA = Path(__file__).parent / 'test_content_artifacts_creator' / 'test_create_content_artifacts'
+UNIT_TEST_DATA = Path(__file__).parent / 'content_artifacts_creator_test' / 'test_create_content_artifacts'
 UNIT_TEST_CONTENT_REPO = UNIT_TEST_DATA / 'content'
 UNIT_TEST_PRIVATE_CONTENT_REPO = UNIT_TEST_DATA / 'private_content'
 

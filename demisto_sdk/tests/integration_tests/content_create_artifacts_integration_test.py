@@ -5,12 +5,12 @@ from wcmatch.pathlib import Path
 import pytest
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.create_artifacts.tests.test_content_artifacts_creator import temp_dir, destroy_by_suffix, duplicate_file
+from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import temp_dir, destroy_by_suffix, duplicate_file
 
 ARTIFACTS_CMD = 'create-content-artifacts'
 
 UNIT_TEST_DATA = (Path(__file__).parent.parent.parent / 'commands' / 'create_artifacts' / 'tests' /
-                  'test_content_artifacts_creator' / 'test_create_content_artifacts')
+                  'content_artifacts_creator_test' / 'test_create_content_artifacts')
 UNIT_TEST_CONTENT_REPO = UNIT_TEST_DATA / 'content'
 
 

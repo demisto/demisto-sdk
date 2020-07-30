@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.content.content.objects.pack_objects import Scr
                              ('documentations', (Documentation,), 2)
                          ])
 def test_generators_detection(attribute: str, content_type: tuple, items: int):
-    pack = Content(Path(__file__).parent / 'test_content')
+    pack = Content(Path(__file__).parent / 'content_test')
     generator_as_list = list(pack.__getattribute__(attribute))
     # Check detect all objects
     assert len(generator_as_list) == items
@@ -25,13 +25,13 @@ def test_generators_detection(attribute: str, content_type: tuple, items: int):
                              ('content_descriptor', ContentDescriptor)
                          ])
 def test_detection(attribute: str, content_type: object):
-    pack = Content(Path(__file__).parent / 'test_content')
+    pack = Content(Path(__file__).parent / 'content_test')
     assert isinstance(pack.__getattribute__(attribute), content_type)
 
 
 def test_detect_all_docs():
     expected = ['doc-CommonServer.json', 'doc-howto.json']
-    pack = Content(Path(__file__).parent / 'test_content')
+    pack = Content(Path(__file__).parent / 'content_test')
     documentations = pack.documentations
     for doc in documentations:
         assert doc.path.name in expected

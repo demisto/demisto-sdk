@@ -1033,7 +1033,7 @@ class ValidateManager:
             if isinstance(changed_file, tuple):
                 changed_file = changed_file[1]
             pack = get_pack_name(changed_file)
-            if pack and is_file_path_in_pack(changed_file):
+            if pack:
                 packs.add(pack)
 
         return packs

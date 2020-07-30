@@ -58,8 +58,12 @@ class UpdateRN:
             self.find_added_pack_files()
             for packfile in self.pack_files:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                changed_files[file_name] = {'type': file_type, 'description': get_file_description(packfile, file_type)}
-                changed_files[file_name]['is_new_file'] = True if packfile in self.added_files else False
+
+                changed_files[file_name] = {
+                    'type': file_type,
+                    'description': get_file_description(packfile, file_type),
+                    'is_new_file': True if packfile in self.added_files else False
+                }
 
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
@@ -257,76 +261,77 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for k, v in sorted(changed_items.items(), key=lambda x: x[1]['type'] if x[1] is not None else ''):
-            desc = v.get('description', '')
-            is_new_file = v.get('is_new_file', False)
-            v = v.get('type', '')
-            if not v:
+        for content_name, data in sorted(changed_items.items(), key=lambda x: x[1]['type'] if x[1] is not None else ''):
+            desc = data.get('description', '')
+            is_new_file = data.get('is_new_file', False)
+            _type = data.get('type', '')
+            if not _type:
                 continue
 
-            if v in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
-                rn_desc = f'- **{k}**\n'
+            if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
+                rn_desc = f'- **{content_name}**\n'
             else:
-                rn_desc = f'##### {k}\n- {desc}\n' if is_new_file else f'##### {k}\n- %%UPDATE_RN%%\n'
+                rn_desc = f'##### {content_name}\n- {desc}\n' if is_new_file \
+                    else f'##### {content_name}\n- %%UPDATE_RN%%\n'
 
-            if k == 'N/A':
+            if content_name == 'N/A':
                 continue
-            elif v == 'Integration':
+            elif _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True
                 rn_string += rn_desc
-            elif v == 'Playbook':
+            elif _type == 'Playbook':
                 if not playbook_header:
                     rn_string += '\n#### Playbooks\n'
                     playbook_header = True
                 rn_string += rn_desc
-            elif v == 'Script':
+            elif _type == 'Script':
                 if not script_header:
                     rn_string += '\n#### Scripts\n'
                     script_header = True
                 rn_string += rn_desc
-            elif v == 'Incident Fields':
+            elif _type == 'Incident Fields':
                 if not inc_flds_header:
                     rn_string += '\n#### Incident Fields\n'
                     inc_flds_header = True
                 rn_string += rn_desc
-            elif v == 'Classifiers':
+            elif _type == 'Classifiers':
                 if not classifier_header:
                     rn_string += '\n#### Classifiers\n'
                     classifier_header = True
                 rn_string += rn_desc
-            elif v == 'Layouts':
+            elif _type == 'Layouts':
                 if not layout_header:
                     rn_string += '\n#### Layouts\n'
                     layout_header = True
                 rn_string += rn_desc
-            elif v == 'Incident Types':
+            elif _type == 'Incident Types':
                 if not inc_types_header:
                     rn_string += '\n#### Incident Types\n'
                     inc_types_header = True
                 rn_string += rn_desc
-            elif v == 'Indicator Types':
+            elif _type == 'Indicator Types':
                 if not ind_types_header:
                     rn_string += '\n#### Indicator Types\n'
                     ind_types_header = True
                 rn_string += rn_desc
-            elif v == 'Reports':
+            elif _type == 'Reports':
                 if not rep_types_header:
                     rn_string += '\n#### Reports\n'
                     rep_types_header = True
                 rn_string += rn_desc
-            elif v == 'Widgets':
+            elif _type == 'Widgets':
                 if not widgets_header:
                     rn_string += '\n#### Widgets\n'
                     widgets_header = True
                 rn_string += rn_desc
-            elif v == 'Dashboards':
+            elif _type == 'Dashboards':
                 if not dashboards_header:
                     rn_string += '\n#### Dashboards\n'
                     dashboards_header = True
                 rn_string += rn_desc
-            elif v == 'Connections':
+            elif _type == 'Connections':
                 if not connections_header:
                     rn_string += '\n#### Connections\n'
                     connections_header = True
@@ -335,42 +340,43 @@ class UpdateRN:
 
     def update_existing_rn(self, current_rn, changed_files):
         new_rn = current_rn
-        for k, v in sorted(changed_files.items(), reverse=True):
-            is_new_file = v.get('is_new_file')
-            desc = v.get('description', '')
-            v = v.get('type', '')
+        for content_name, data in sorted(changed_files.items(), reverse=True):
+            is_new_file = data.get('is_new_file')
+            desc = data.get('description', '')
+            _type = data.get('type', '')
 
-            if v is None:
+            if _type is None:
                 continue
 
-            if v in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
-                rn_desc = f'\n- **{k}**'
+            if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
+                rn_desc = f'\n- **{content_name}**'
             else:
-                rn_desc = f'\n##### {k}\n- {desc}\n' if is_new_file else f'\n##### {k}\n- %%UPDATE_RN%%\n'
+                rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file\
+                    else f'\n##### {content_name}\n- %%UPDATE_RN%%\n'
 
-            if v in current_rn:
-                v = v[:-1] if v.endswith('s') else v
-                if k in current_rn:
+            if _type in current_rn:
+                _type = _type[:-1] if _type.endswith('s') else _type
+                if content_name in current_rn:
                     continue
                 else:
                     self.existing_rn_changed = True
-                    rn_parts = new_rn.split(v + 's')
+                    rn_parts = new_rn.split(_type + 's')
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
+                        new_rn = rn_parts[0] + _type + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
             else:
                 self.existing_rn_changed = True
-                if v in new_rn:
-                    rn_parts = new_rn.split(v + 's')
+                if _type in new_rn:
+                    rn_parts = new_rn.split(_type + 's')
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = rn_parts[0] + v + 's' + new_rn_part + rn_parts[1]
+                        new_rn = rn_parts[0] + _type + 's' + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:
-                    new_rn_part = f'\n#### {v}{rn_desc}'
+                    new_rn_part = f'\n#### {_type}{rn_desc}'
                     new_rn += new_rn_part
         return new_rn
 
@@ -390,7 +396,7 @@ class UpdateRN:
 
 def get_file_description(path, file_type):
     if not os.path.isfile(path):
-        print_error(f'Gets file description failed: "{path}" file does not exist')
+        print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
     elif file_type in ('Playbook', 'Integration'):
@@ -404,4 +410,5 @@ def get_file_description(path, file_type):
     elif file_type in ('Classifiers', 'Reports', 'Widgets', 'Dashboards'):
         json_file = get_json(path)
         return json_file.get('description', '')
+
     return '%%UPDATE_RN%%'

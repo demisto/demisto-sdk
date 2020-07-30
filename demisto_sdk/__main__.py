@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name, print_error,
                                                print_warning)
-from demisto_sdk.commands.create_artifacts.content_artifact_creator import ArtifactsConfiguration, \
+from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsConfiguration, \
     create_content_artifacts
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.download.downloader import Downloader
@@ -303,8 +303,9 @@ def validate(config, **kwargs):
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True))
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
+@click.option('--content-packs', help='Create only content_packs artifacts.', default=False)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.')
-@click.option('-s', '--suffix', help='The added suffix to all files in the created artifacts')
+@click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
 @click.option('--cpus', help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
                              'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
 def create_arifacts(**kwargs) -> int:

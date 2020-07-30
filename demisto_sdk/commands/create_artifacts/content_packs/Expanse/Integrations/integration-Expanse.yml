@@ -1,0 +1,1884 @@
+category: Data Enrichment & Threat Intelligence
+fromversion: 4.5.0
+commonfields:
+  id: Expanse
+  version: -1
+configuration:
+- display: API Key
+  name: api_key
+  required: true
+  type: 4
+- display: Fetch incidents
+  name: isFetch
+  required: false
+  type: 8
+- display: Incident type
+  name: incidentType
+  required: false
+  type: 13
+- display: Trust any certificate (not secure)
+  name: insecure
+  required: false
+  type: 8
+- display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+- display: Include Behavior data in incidents
+  name: behavior
+  required: false
+  type: 8
+- defaultvalue: '10'
+  display: How many events to pull from Expander per run
+  hidden: false
+  name: page_limit
+  required: false
+  type: 0
+- defaultvalue: '7'
+  display: How many days to pull past events on first run
+  hidden: false
+  name: first_run
+  required: false
+  type: 0
+- display: Minimum severity of Expanse Exposure to create an incident for
+  hidden: false
+  name: minimum_severity
+  required: false
+  type: 15
+  defaultvalue: WARNING
+  options:
+  - ROUTINE
+  - WARNING
+  - CRITICAL
+description: The Expanse App for Demisto leverages the Expander API to retrieve network exposures and risky flows to create incidents in Demisto.  This application also allows for IP, Domain, Certificate, Behavior, and Exposure enrichment, retrieving assets and exposures information drawn from Expanse’s unparalleled view of the Internet.
+display: Expanse (Partner Contribution)
+name: Expanse
+script:
+  commands:
+  - arguments:
+    - default: true
+      description: The IP address to search.
+      isArray: true
+      name: ip
+      required: true
+      secret: false
+    deprecated: false
+    description: Submits an IP address to check.
+    execution: false
+    name: ip
+    outputs:
+    - contextPath: IP.Address
+      description: The IP address.
+      type: String
+    - contextPath: IP.Geo.Location
+      description: 'The geolocation where the IP address is located, in the format: latitude:longitude.'
+      type: String
+    - contextPath: IP.Geo.Country
+      description: The country in which the IP address is located.
+      type: String
+    - contextPath: IP.Geo.Description
+      description: Additional information about the location.
+      type: String
+    - contextPath: DBotScore.Indicator
+      description: The indicator that was tested.
+      type: string
+    - contextPath: DBotScore.Type
+      description: The indicator type.
+      type: string
+    - contextPath: DBotScore.Vendor
+      description: The vendor used to calculate the score.
+      type: string
+    - contextPath: DBotScore.Score
+      description: The actual score.
+      type: Number
+    - contextPath: Expanse.IP.Address
+      description: The IP address.
+      type: String
+    - contextPath: Expanse.IP.Version
+      description: The IP address version.
+      type: String
+    - contextPath: Expanse.IP.BusinessUnits
+      description: Expanse Business Units this IP belongs to.
+      type: String
+    - contextPath: Expanse.IP.IPRange.StartAdress
+      description: The first IP address in the IP network this IP address belongs to.
+      type: String
+    - contextPath: Expanse.IP.IPRange.EndAddress
+      description: The last IP address in the IP network this IP address belongs to.
+      type: String
+    - contextPath: Expanse.IP.IPRange.RangeSize
+      description: The number of IP addresses in the IP network this IP address belongs to.
+      type: Number
+    - contextPath: Expanse.IP.IPRange.ResponsiveIPCount
+      description: Number of responsive IP addresses in IP network this IP address belongs to.
+      type: Number
+    - contextPath: Expanse.IP.IPRange.RangeIntroduced
+      description: Date the IP network this IP address belongs to was introduced to Expanse.
+      type: Date
+    - contextPath: Expanse.IP.IPRange.AttributionReasons
+      description: The reason why this IP belongs to the IP range.
+      type: String
+    - contextPath: Expanse.IP.Geo.Latitude
+      description: 'The latitude of the IP address.'
+      type: String
+    - contextPath: Expanse.IP.Geo.Longitude
+      description: 'The longitude of the IP address.'
+      type: String
+    - contextPath: Expanse.IP.Geo.City
+      description: The city in which the IP address is located.
+      type: String
+    - contextPath: Expanse.IP.Geo.RegionCode
+      description: The region code for this IP address.
+      type: String
+    - contextPath: Expanse.IP.Geo.CountryCode
+      description: The country code for this IP address.
+      type: String
+    - contextPath: Expanse.IP.Annotations.Tags
+      description: Customer defined Tags from Expanse related to this IP range.
+      type: String
+    - contextPath: Expanse.IP.Annotations.AdditionalNotes
+      description: Customer defined Notes from Expanse related to this IP range.
+      type: String
+    - contextPath: Expanse.IP.Annotations.PointsOfContact
+      description: Customer defined Points of Contact from Expanse related to this IP range.
+      type: String
+    - contextPath: Expanse.IP.SeverityCounts.CRITICAL
+      description: The number of CRITICAL Events for this IP address.
+      type: Number
+    - contextPath: Expanse.IP.SeverityCounts.ROUTINE
+      description: The number of ROUTINE Events for this IP address.
+      type: Number
+    - contextPath: Expanse.IP.SeverityCounts.WARNING
+      description: The number of WARNING Events for this IP address
+      type: Number
+    - contextPath: Expanse.IP.Geo.Description
+      description: Additional information about the location.
+      type: String
+    - contextPath: Expanse.IP.Geo.Country
+      description: The country in which the IP address is located.
+      type: String
+  - arguments:
+    - default: true
+      description: The domain to search.
+      isArray: true
+      name: domain
+      required: true
+      secret: false
+    deprecated: false
+    description: Submits a domain to check.
+    execution: false
+    name: domain
+    outputs:
+    - contextPath: Domain.Name
+      description: 'The domain name, for example: "google.com"'
+      type: String
+    - contextPath: Domain.DNS
+      description: A list of IP objects resolved by DNS
+      type: String
+    - contextPath: Domain.CreationDate
+      description: The date that the domain was created.
+      type: Date
+    - contextPath: Domain.DomainStatus
+      description: The status of the domain.
+      type: String
+    - contextPath: Domain.ExpirationDate
+      description: The expiration date of the domain.
+      type: Date
+    - contextPath: Domain.NameServers
+      description: Name servers of the domain.
+      type: String
+    - contextPath: Domain.Organization
+      description: The organization of the domain.
+      type: String
+    - contextPath: Domain.Admin.Country
+      description: The country of the domain administrator.
+      type: String
+    - contextPath: Domain.Admin.Email
+      description: The email address of the domain administrator.
+      type: String
+    - contextPath: Domain.Admin.Name
+      description: The name of the domain administrator.
+      type: String
+    - contextPath: Domain.Admin.Phone
+      description: The phone number of the domain administrator.
+      type: String
+    - contextPath: Domain.Registrant.Country
+      description: The country of the registrant.
+      type: String
+    - contextPath: Domain.Registrant.Email
+      description: The email address of the registrant.
+      type: String
+    - contextPath: Domain.Registrant.Name
+      description: The name of the registrant.
+      type: String
+    - contextPath: Domain.Registrant.Phone
+      description: The phone number of the registrant.
+      type: String
+    - contextPath: Domain.WHOIS.DomainStatus
+      description: The status of the domain.
+      type: String
+    - contextPath: Domain.WHOIS.NameServers
+      description: 'A list of name servers, for example: "ns1.bla.com, ns2.bla.com".'
+      type: String
+    - contextPath: Domain.WHOIS.CreationDate
+      description: The date that the domain was created.
+      type: Date
+    - contextPath: Domain.WHOIS.UpdatedDate
+      description: The date that the domain was last updated.
+      type: Date
+    - contextPath: Domain.WHOIS.ExpirationDate
+      description: The date that the domain expires.
+      type: Date
+    - contextPath: Domain.WHOIS.Registrant.Email
+      description: The email address of the registrant.
+      type: String
+    - contextPath: Domain.WHOIS.Registrant.Name
+      description: The name of the registrant.
+      type: String
+    - contextPath: Domain.WHOIS.Registrant.Phone
+      description: The phone of the registrant.
+      type: String
+    - contextPath: Domain.WHOIS.Registrar.Name
+      description: 'The name of the registrar, for example: "GoDaddy".'
+      type: String
+    - contextPath: Domain.WHOIS.Registrar.AbuseEmail
+      description: The email address of the contact for reporting abuse.
+      type: String
+    - contextPath: Domain.WHOIS.Registrar.AbusePhone
+      description: The phone number of contact for reporting abuse.
+      type: String
+    - contextPath: Domain.WHOIS.Admin.Name
+      description: The name of the domain administrator.
+      type: String
+    - contextPath: Domain.WHOIS.Admin.Email
+      description: The email address of the domain administrator.
+      type: String
+    - contextPath: Domain.WHOIS.Admin.Phone
+      description: The phone number of the domain administrator.
+      type: String
+    - contextPath: DBotScore.Indicator
+      description: The indicator that was tested.
+      type: string
+    - contextPath: DBotScore.Type
+      description: The indicator type.
+      type: string
+    - contextPath: DBotScore.Vendor
+      description: The vendor used to calculate the score.
+      type: string
+    - contextPath: DBotScore.Score
+      description: The actual score.
+      type: number
+    - contextPath: Expanse.Domain.Name
+      description: 'The domain name, for example: "google.com".'
+      type: String
+    - contextPath: Expanse.Domain.DateAdded
+      description: The date the domain was added to Expanse.
+      type: Date
+    - contextPath: Expanse.Domain.FirstObserved
+      description: The date that Expanse first observed the domain.
+      type: Date
+    - contextPath: Expanse.Domain.LastObserved
+      description: Date that Expanse last observed the domain.
+      type: Date
+    - contextPath: Expanse.Domain.HasLinkedCloudResources
+      description: Whether this domain has linked cloud resources.
+      type: Boolean
+    - contextPath: Expanse.Domain.SourceDomain
+      description: Top-level domain.
+      type: String
+    - contextPath: Expanse.Domain.Tenant
+      description: Customer defined Tenant from Expanse.
+      type: String
+    - contextPath: Expanse.Domain.BusinessUnits
+      description: Customer defined Business Units from Expanse.
+      type: String
+    - contextPath: Expanse.Domain.DNSSEC
+      description: DNSSEC information.
+      type: String
+    - contextPath: Expanse.Domain.RecentIPs
+      description: Any recent IP addresses that Expanse has seen for this domain.
+      type: String
+    - contextPath: Expanse.Domain.CloudResources
+      description: Any Cloud Resources that Expanse has seen for this domain.
+      type: String
+    - contextPath: Expanse.Domain.LastSubdomainMetadata
+      description: Any recent subdomain metadata that Expanse has seen for this domain.
+      type: String
+    - contextPath: Expanse.Domain.ServiceStatus
+      description: Service Status that Expanse sees for this domain.
+      type: String
+    - contextPath: Expanse.Domain.LastSampledIP
+      description: Last seen IP address for this domain
+      type: String
+    - contextPath: Expanse.Domain.DNS
+      description: A list of IP objects resolved by DNS
+      type: String
+    - contextPath: Expanse.Domain.CreationDate
+      description: The date that the domain was created.
+      type: Date
+    - contextPath: Expanse.Domain.DomainStatus
+      description: The status of the domain.
+      type: String
+    - contextPath: Expanse.Domain.ExpirationDate
+      description: The expiration date of the domain.
+      type: Date
+    - contextPath: Expanse.Domain.NameServers
+      description: Name servers of the domain.
+      type: String
+    - contextPath: Expanse.Domain.Organization
+      description: The organization of the domain.
+      type: String
+    - contextPath: Expanse.Domain.Admin.Country
+      description: The country of the domain administrator.
+      type: String
+    - contextPath: Expanse.Domain.Admin.Email
+      description: The email address of the domain administrator.
+      type: String
+    - contextPath: Expanse.Domain.Admin.Name
+      description: The name of the domain administrator.
+      type: String
+    - contextPath: Expanse.Domain.Admin.Phone
+      description: The phone number of the domain administrator.
+      type: String
+    - contextPath: Expanse.Domain.Registrant.Country
+      description: The country of the registrant.
+      type: String
+    - contextPath: Expanse.Domain.Registrant.Email
+      description: The email address of the registrant.
+      type: String
+    - contextPath: Expanse.Domain.Registrant.Name
+      description: The name of the registrant.
+      type: String
+    - contextPath: Expanse.Domain.Registrant.Phone
+      description: The phone number for receiving abuse reports.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.DomainStatus
+      description: The status of the domain.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.NameServers
+      description: 'A list of name servers, for example: "ns1.bla.com, ns2.bla.com".'
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.CreationDate
+      description: The date that the domain was created.
+      type: Date
+    - contextPath: Expanse.Domain.WHOIS.UpdatedDate
+      description: The date that the domain was last updated.
+      type: Date
+    - contextPath: Expanse.Domain.WHOIS.ExpirationDate
+      description: The date that the domain expires.
+      type: Date
+    - contextPath: Expanse.Domain.WHOIS.Registrant.Email
+      description: The email address of the registrant.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Registrant.Name
+      description: The name of the registrant.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Registrant.Phone
+      description: The phone number of the registrant.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Registrar.Name
+      description: 'The name of the registrar, for example: "GoDaddy".'
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Registrar.AbuseEmail
+      description: The email address of the contact for reporting abuse.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Registrar.AbusePhone
+      description: The phone number of contact for reporting abuse.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Admin.Name
+      description: The name of the domain administrator.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Admin.Email
+      description: The email address of the domain administrator.
+      type: String
+    - contextPath: Expanse.Domain.WHOIS.Admin.Phone
+      description: The phone number of the domain administrator.
+      type: String
+  - arguments:
+    - default: true
+      description: The domain to search.
+      isArray: true
+      name: common_name
+      required: true
+      secret: false
+    deprecated: false
+    description: Returns information about the domain certificate.
+    execution: false
+    name: expanse-get-certificate
+    outputs:
+    - contextPath: Expanse.Certificate.SearchTerm
+      description: The domain that was searched.
+      type: String
+    - contextPath: Expanse.Certificate.CommonName
+      description: The common name of the certificate.
+      type: String
+    - contextPath: Expanse.Certificate.FirstObserved
+      description: The date that the certificate was first observed.
+      type: Date
+    - contextPath: Expanse.Certificate.LastObserved
+      description: The date that the certificate was last observed.
+      type: Date
+    - contextPath: Expanse.Certificate.DateAdded
+      description: Certificate data added to Expanse.
+      type: Date
+    - contextPath: Expanse.Certificate.Provider
+      description: The certificate provider.
+      type: String
+    - contextPath: Expanse.Certificate.NotValidBefore
+      description: The not-valid-before date of the certificate.
+      type: Date
+    - contextPath: Expanse.Certificate.NotValidAfter
+      description: The not-valid-after date of the certificate.
+      type: Date
+    - contextPath: Expanse.Certificate.Properties
+      description: Certificate properties (expired).
+      type: String
+    - contextPath: Expanse.Certificate.MD5Hash
+      description: The MD5 hash of the certificate.
+      type: String
+    - contextPath: Expanse.Certificate.PublicKeyAlgorithm
+      description: Public Key Algorithm used.
+      type: String
+    - contextPath: Expanse.Certificate.PublicKeyBits
+      description: Public Key size.
+      type: String
+    - contextPath: Expanse.Certificate.BusinessUnits
+      description: Expanse Business units for the certificate.
+      type: String
+    - contextPath: Expanse.Certificate.CertificateAdvertisementStatus
+      description: Whether the certificate is advertised.
+      type: String
+    - contextPath: Expanse.Certificate.ServiceStatus
+      description: Any detected services for the certificate.
+      type: String
+    - contextPath: Expanse.Certificate.RecentIPs
+      description: Any IP addresses returning the certificate.
+      type: String
+    - contextPath: Expanse.Certificate.CloudResources
+      description: Any Cloud Resources returning the certificate.
+      type: String
+    - contextPath: Expanse.Certificate.PemSha1
+      description: The SHA1 hash of the certificate PEM.
+      type: String
+    - contextPath: Expanse.Certificate.PemSha256
+      description: The SHA256 hash of the certifiacte PEM.
+      type: String
+    - contextPath: Expanse.Certificate.Issuer.Name
+      description: Name of the certificate issuer.
+      type: String
+    - contextPath: Expanse.Certificate.Issuer.Email
+      description: Email address of the issuer.
+      type: String
+    - contextPath: Expanse.Certificate.Issuer.Country
+      description: Country of the certificate issuer.
+      type: String
+    - contextPath: Expanse.Certificate.Issuer.Org
+      description: Organization of the certificate issuer.
+      type: String
+    - contextPath: Expanse.Certificate.Issuer.Unit
+      description: Organizational Unit of the certificate issuer.
+      type: String
+    - contextPath: Expanse.Certificate.Issuer.AltNames
+      description: Alternative names from the certificate issuer.
+      type: String
+    - contextPath: Expanse.Certificate.Issuer.Raw
+      description: Raw issuer details.
+      type: String
+    - contextPath: Expanse.Certificate.Subject.Name
+      description: Name of the subject.
+      type: String
+    - contextPath: Expanse.Certificate.Subject.Email
+      description: Email address of the subject.
+      type: String
+    - contextPath: Expanse.Certificate.Subject.Country
+      description: Country of the subject.
+      type: String
+    - contextPath: Expanse.Certificate.Subject.Org
+      description: Organization of the subject.
+      type: String
+    - contextPath: Expanse.Certificate.Subject.Unit
+      description: Organizational Unit of subject
+      type: String
+    - contextPath: Expanse.Certificate.Subject.AltNames
+      description: Alternative names from the subject.
+      type: String
+    - contextPath: Expanse.Certificate.Subject.Raw
+      description: Raw subject details.
+      type: String
+  - arguments:
+    - default: true
+      description: The IP address to search.
+      isArray: true
+      name: ip
+      required: true
+      secret: false
+    - default: false
+      description: The timestamp denoting the earliest behavior data to fetch, in ISO-8601 UTC format.
+      isArray: false
+      name: start_time
+      required: false
+      secret: false
+    deprecated: false
+    description: Returns Risky Flows for the specified IP address. The maximum number of results is 20.
+    execution: false
+    name: expanse-get-behavior
+    outputs:
+    - contextPath: Expanse.Behavior.SearchTerm
+      description: The IP that was searched.
+      type: String
+    - contextPath: Expanse.Behavior.InternalAddress
+      description: The internal IP address.
+      type: String
+    - contextPath: Expanse.Behavior.InternalCountryCode
+      description: The internal IP country geolocation.
+      type: String
+    - contextPath: Expanse.Behavior.BusinessUnit
+      description: The buisness unit of the IP address.
+      type: String
+    - contextPath: Expanse.Behavior.InternalDomains
+      description: Known domains associated with the IP address.
+      type: String
+    - contextPath: Expanse.Behavior.InternalIPRanges
+      description: Known Internal IP ranges containing the IP address.
+      type: String
+    - contextPath: Expanse.Behavior.InternalExposureTypes
+      description: Known exposures for the IP address.
+      type: String
+    - contextPath: Expanse.Behavior.ExternalAddresses
+      description: External IP addresses with known communication to the IP address.
+      type: String
+    - contextPath: Expanse.Behavior.FlowSummaries
+      description: Summaries of most recent risky flows for the IP address.
+      type: String
+    - contextPath: Expanse.Behavior.Flows
+      description: Array of flow objects.
+      type: Unknown
+    - contextPath: Expanse.Behavior.Flows.InternalAddress
+      description: Internal IP address for flow
+      type: String
+    - contextPath: Expanse.Behavior.Flows.InternalPort
+      description: Internal port for the flow.
+      type: Number
+    - contextPath: Expanse.Behavior.Flows.InternalCountryCode
+      description: Internal country code for the flow.
+      type: String
+    - contextPath: Expanse.Behavior.Flows.ExternalAddress
+      description: External IP address for the flow.
+      type: String
+    - contextPath: Expanse.Behavior.Flows.ExternalPort
+      description: External port for the flow.
+      type: Number
+    - contextPath: Expanse.Behavior.Flows.ExternalCountryCode
+      description: External country code for the flow.
+      type: String
+    - contextPath: Expanse.Behavior.Flows.Timestamp
+      description: Timestamp of the flow.
+      type: Date
+    - contextPath: Expanse.Behavior.Flows.Protocol
+      description: Protocol of the flow (UDP, TCP).
+      type: String
+    - contextPath: Expanse.Behavior.Flows.Direction
+      description: Direction of the flow.
+      type: String
+    - contextPath: Expanse.Behavior.Flows.RiskRule
+      description: Risk rule violated by the flow.
+      type: String
+  - arguments:
+    - default: true
+      description: The ip to search.
+      isArray: true
+      name: ip
+      required: true
+      secret: false
+    deprecated: false
+    description: Returns exposure information about the ip.
+    execution: false
+    name: expanse-get-exposures
+    outputs:
+    - contextPath: Expanse.Exposures.SearchTerm
+      description: The ip that was searched.
+      type: String
+    - contextPath: Expanse.Exposures.TotalExposureCount
+      description: The total count of exposures for the IP
+      type: Number
+    - contextPath: Expanse.Exposures.CriticalExposureCount
+      description: The total count of CRITICAL exposures for the IP
+      type: Number
+    - contextPath: Expanse.Exposures.WarningExposureCount
+      description: The total count of WARNING exposures for the IP
+      type: Number
+    - contextPath: Expanse.Exposures.RoutineExposureCount
+      description: The total count of ROUTINE exposures for the IP
+      type: Number
+    - contextPath: Expanse.Exposures.UnknownExposureCount
+      description: The total count of UNKNOWN exposures for the IP
+      type: Number
+    - contextPath: Expanse.Exposures.ExposureSummaries
+      description: Summaries of exposures for the IP address
+      type: String
+    - contextPath: Expanse.Exposures.Exposures
+      description: Array of Exposures for the IP address
+      type: Unknown
+    - contextPath: Expanse.Exposures.Exposures.ExposureType
+      description: Exposure type of the Exposure
+      type: String
+    - contextPath: Expanse.Exposures.Exposures.BusinessUnit
+      description: Business Unit of the Exposure
+      type: String
+    - contextPath: Expanse.Exposures.Exposures.Ip
+      description: IP Address the Exposure was found on
+      type: String
+    - contextPath: Expanse.Exposures.Exposures.Port
+      description: Port the Exposure was found on
+      type: String
+    - contextPath: Expanse.Exposures.Exposures.Severity
+      description: Severity of the Exposure
+      type: String
+    - contextPath: Expanse.Exposures.Exposures.Certificate
+      description: Certificate details associated with Exposure
+      type: Unknown
+    - contextPath: Expanse.Exposures.Exposures.FirstObservsation
+      description: First Observation of the Exposure
+      type: Unknown
+    - contextPath: Expanse.Exposures.Exposures.LastObservsation
+      description: Last Observation of the Exposure
+      type: Unknown
+    - contextPath: Expanse.Exposures.Exposures.Status
+      description: Status details of the Exposure
+      type: Unknown
+    - contextPath: Expanse.Exposures.Exposures.Provider
+      description: Provider details of the Exposure
+      type: Unknown
+  - arguments:
+    - default: true
+      description: The certificate common name. Fuzzy matching is done on this name, however query times can grow quite large when searching for short strings. Ex. "*.myhost.com" is a better search term than "host"
+      isArray: false
+      name: common_name
+      required: true
+      secret: false
+    deprecated: false
+    description: Returns all domains which have been seen with the specified certificate.
+    execution: false
+    name: expanse-get-domains-for-certificate
+    outputs:
+    - contextPath: Expanse.IPDomains.SearchTerm
+      description: The common name that was searched.
+      type: String
+    - contextPath: Expanse.IPDomains.TotalDomainCount
+      description: The number of domains found matching the specified certificate.
+      type: Number
+    - contextPath: Expanse.IPDomains.FlatDomainList
+      description: An array of all domain names found. This is truncated at 50.
+      type: Unknown
+    - contextPath: Expanse.IPDomains.DomainList
+      description: An array of domain objects. This is truncated at 50.
+      type: Unknown
+  dockerimage: demisto/python3:3.8.3.9324
+  feed: false
+  isfetch: true
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: >2
+
+
+
+
+    ''' IMPORTS '''
+
+
+    import dateparser
+
+    import json
+
+    import re
+
+    import requests
+
+    import traceback
+
+    from datetime import datetime, timedelta
+
+
+    # Disable insecure warnings
+
+    requests.packages.urllib3.disable_warnings()
+
+
+    ''' GLOBALS/PARAMS '''
+
+
+
+    API_KEY = demisto.params().get('api_key')
+
+    PAGE_LIMIT = int(demisto.params().get('page_limit', '10'))
+
+    FIRST_RUN = int(demisto.params().get('first_run', '7'))
+
+    SERVER = 'https://expander.expanse.co'
+
+    VERIFY_CERTIFICATES = not demisto.params().get('insecure')
+
+    BEHAVIOR_ENABLED = demisto.params().get('behavior', False)
+
+    MINIMUM_SEVERITY = demisto.params().get('minimum_severity', 'WARNING')
+
+    BASE_URL = SERVER
+
+    EXPOSURE_EVENT_TYPES = "ON_PREM_EXPOSURE_APPEARANCE,ON_PREM_EXPOSURE_REAPPEARANCE," \
+                           "CLOUD_EXPOSURE_APPEARANCE,CLOUD_EXPOSURE_REAPPEARANCE"
+    API_ENDPOINTS = {
+        "exposures/ip-ports": {
+            "version": 2
+        },
+        "ip-range": {
+            "version": 2
+        },
+        "assets/domains": {
+            "version": 2
+        },
+        "IdToken": {
+            "version": 1
+        },
+        "events": {
+            "version": 1
+        },
+        "behavior/risky-flows": {
+            "version": 1
+        },
+        "assets/certificates": {
+            "version": 2
+        },
+        "assets/ips": {
+            "version": 2
+        }
+    }
+
+
+    EXPOSURE_SEVERITY_MAPPING = {
+        "NONE": 0,
+        "UNKNOWN": 0,
+        "CRITICAL": 3,
+        "ROUTINE": 1,
+        "WARNING": 2,
+        "UNCATEGORIZED": 1
+    }
+
+
+    ''' HELPER FUNCTIONS '''
+
+
+
+    def make_headers(endpoint, token):
+        """
+        provides proper headers for differing authentication methods to API
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Expanse_Demisto/1.1.0'
+        }
+        if endpoint == "IdToken":
+            headers['Authorization'] = 'Bearer ' + token
+        else:
+            headers['Authorization'] = 'JWT ' + token
+
+        return headers
+
+
+    def make_url(endpoint):
+        """
+        build URL based on endpoint
+        """
+        url = "{BASE_URL}/api/v{version}/{endpoint}".format(
+            BASE_URL=BASE_URL,
+            version=API_ENDPOINTS.get(endpoint, {}).get('version', 2),
+            endpoint=endpoint
+        )
+        return url
+
+
+    def get_page_token(url):
+        o = {'pagetoken': False}
+        for i in url.split("&"):
+            r = i.split("=")
+            o[r[0]] = r[1]
+        return o['pageToken']
+
+
+    def get_next_offset(url):
+        offset = 0
+        matches = re.findall(r'offset\]\=(\d+)', url)
+        if matches != []:
+            offset = matches[0]
+        return offset
+
+
+    def do_auth():
+        """
+        perform authentication using API_KEY,
+        stores token and stored timestamp in integration context,
+        retrieves new token when expired
+        """
+        auth = demisto.getIntegrationContext()
+        now_epoch = int(datetime.today().strftime('%s'))
+
+        if ("token" in auth or "stored" in auth) and int(auth['stored']) + (60 * 60 * 2) > int(now_epoch):
+            # if integration context contains token and stored and the token is not expired then return token
+            return auth['token']
+        else:
+            # fetch new token
+            r = http_request('GET', 'IdToken', token=API_KEY)
+            if r.get('token') is None:
+                return_error("Authorization failed")
+
+            demisto.setIntegrationContext({
+                'token': r['token'],
+                'stored': now_epoch
+            })
+            return r['token']
+
+
+    def http_request(method, endpoint, params=None, token=False):
+        """
+        make api call
+        """
+        if not token:
+            return_error("No authorization token provided")
+        head = make_headers(endpoint, token)
+        url = make_url(endpoint)
+        demisto.debug("Making request to {} with params: {}".format(url, params))
+        r = requests.request(
+            method,
+            url,
+            params=params,
+            headers=head,
+            verify=VERIFY_CERTIFICATES
+        )
+        if r.status_code != 200:
+            demisto.error(r.text)
+            return_error('Error in API call [%d] - %s' % (r.status_code, r.reason))
+
+        try:
+            res_json = r.json()
+            return res_json
+        except json.decoder.JSONDecodeError as err:
+            raise ValueError('Failed to parse response as JSON. Original response:\n{rtext}.\nError: {error}'
+                             .format(rtext=r.text, error=str(err)))
+
+
+    def parse_events(events):
+        """
+        build incidents from active exposures
+        """
+        incidents = []
+        for event in events['data']:
+            if EXPOSURE_SEVERITY_MAPPING[event['payload']['severity']] >= EXPOSURE_SEVERITY_MAPPING[MINIMUM_SEVERITY]:
+                incident = {
+                    'name': "{type} on {ip}:{port}/{protocol}".format(
+                        type=event['payload']['exposureType'],
+                        ip=event['payload']['ip'],
+                        protocol=event['payload']['portProtocol'],
+                        port=event['payload']['port']
+                    ),
+                    'occurred': event['eventTime'],
+                    'rawJSON': json.dumps(event),
+                    'type': 'Expanse Appearance',
+                    'CustomFields': {
+                        'expanserawjsonevent': json.dumps(event)
+                    },
+                    'severity': EXPOSURE_SEVERITY_MAPPING[event['payload']['severity']]
+                }
+                incidents.append(incident)
+        return incidents
+
+
+    def parse_behavior(risky_flows):
+        """
+        build incidents from risky flows
+        """
+        incidents = []
+        for flow in risky_flows['data']:
+            incident = {
+                'name': "{rule} {int_}:{int_port} : {ext}:{ext_port}".format(
+                    rule=flow['riskRule']['name'],
+                    int_=flow['internalAddress'],
+                    int_port=flow['internalPort'],
+                    ext=flow['externalAddress'],
+                    ext_port=flow['externalPort']
+                ),
+                'occurred': flow['observationTimestamp'],
+                'rawJSON': json.dumps(flow),
+                'type': 'Expanse Behavior',
+                'CustomFields': {
+                    'expanserawjsonevent': json.dumps(flow)
+                },
+                'severity': 2  # All behavior is cast to a warning, we can revisit if critically is added to flow data
+            }
+            incidents.append(incident)
+        return incidents
+
+
+    def is_not_empty_value(value):
+        """
+        Checks for empty response values. Demisto recommends returning the None type if a value is empty,
+        rather than an empty string/list.
+        """
+        return value != "" and value != [] and value != [""]
+
+
+    def get_ip_context(data):
+        """
+        provide custom context information about ip address with data from Expanse API
+        """
+        geo = {}
+        if len(data.get('locationInformation', [])) > 0:
+            if (data['locationInformation'][0].get('geolocation', {}).get('latitude') is not None
+               and data['locationInformation'][0].get('geolocation', {}).get('longitude') is not None):
+                geo["Location"] = "{0}:{1}".format(
+                    data['locationInformation'][0].get('geolocation', {}).get('latitude'),
+                    data['locationInformation'][0].get('geolocation', {}).get('longitude')
+                )
+            geo["Country"] = data['locationInformation'][0].get('geolocation', {}).get('countryCode')
+            geo["Description"] = data['locationInformation'][0].get('geolocation', {}).get('city')
+        return {
+            "Address": data['search'],
+            "Geo": geo,
+        }
+
+
+    def get_expanse_ip_context(data):
+        """
+        provide custom context information about ip address with data from Expanse API
+        """
+        c = {
+            "Address": data['search'],
+            "Version": data['ipVersion'],
+            "BusinessUnits": [],
+            "IPRange": {
+                "StartAddress": data['startAddress'],
+                "EndAddress": data['endAddress'],
+                "RangeSize": data['rangeSize'],
+                "ResponsiveIPCount": data['responsiveIpCount'],
+                "RangeIntroduced": data['rangeIntroduced'],
+                "AttributionReasons": []
+            },
+            "Annotations": {
+                "AdditionalNotes": data['annotations'].get('additionalNotes'),
+            },
+            "SeverityCounts": {
+                "CRITICAL": 0,
+                "ROUTINE": 0,
+                "WARNING": 0,
+            }
+        }
+        for i in data['severityCounts']:
+            if i['type'] == "CRITICAL":
+                c['SeverityCounts']['CRITICAL'] = i['count']
+            elif i['type'] == "ROUTINE":
+                c['SeverityCounts']['ROUTINE'] = i['count']
+            elif i['type'] == "WARNING":
+                c['SeverityCounts']['WARNING'] = i['count']
+        for i in data['businessUnits']:
+            c['BusinessUnits'].append(i['name'])
+        for i in data['attributionReasons']:
+            c['IPRange']['AttributionReasons'].append(i['reason'])
+
+        geo = {}
+        if len(data.get("locationInformation", [])) > 0:
+            geo = {
+                "Description": data['locationInformation'][0]['geolocation'].get('city'),
+                "Latitude": data['locationInformation'][0]['geolocation'].get('latitude'),
+                "Longitude": data['locationInformation'][0]['geolocation'].get('longitude'),
+                "City": data['locationInformation'][0]['geolocation'].get('city'),
+                "RegionCode": data['locationInformation'][0]['geolocation'].get('regionCode'),
+                "CountryCode": data['locationInformation'][0]['geolocation'].get('countryCode')
+            }
+            if (data['locationInformation'][0].get('geolocation', {}).get('latitude') is not None
+               and data['locationInformation'][0].get('geolocation', {}).get('longitude') is not None):
+                geo["Location"] = "{0}:{1}".format(
+                    data['locationInformation'][0].get('geolocation', {}).get('latitude'),
+                    data['locationInformation'][0].get('geolocation', {}).get('longitude')
+                )
+        c["Geo"] = geo
+
+        points_of_contact = ",".join([poc["email"] for poc in data['annotations'].get('pointsOfContact', [])])
+        c["Annotations"]["PointsOfContact"] = points_of_contact if is_not_empty_value(points_of_contact) else None
+
+        tags = ",".join([tag["name"] for tag in data['annotations'].get('tags', [])])
+        c["Annotations"]["Tags"] = tags if is_not_empty_value(tags) else None
+
+        return c
+
+
+    def get_domain_context(data):
+        """
+        provide standard context information about domain with data from Expanse API
+        """
+        return {
+            "Name": data['domain'],
+            "DNS": data['details'].get('recentIps') if is_not_empty_value(data['details'].get('recentIps')) else None,
+            "CreationDate": data['whois'][0]['creationDate'],
+            "DomainStatus": data['dnsResolutionStatus'],
+            "ExpirationDate": data['whois'][0]['registryExpiryDate'],
+            "NameServers": data['whois'][0]['nameServers'],
+            "Organization": data['whois'][0]['registrant']['organization'],
+            "Admin": {
+                "Country": data['whois'][0]['admin'].get('country'),
+                "Email": data['whois'][0]['admin'].get('emailAddress'),
+                "Name": data['whois'][0]['admin'].get('name'),
+                "Phone": data['whois'][0]['admin'].get('phoneNumber')
+            },
+            "Registrant": {
+                "Country": data['whois'][0]['registrant'].get('country'),
+                "Email": data['whois'][0]['registrant'].get('emailAddress'),
+                "Name": data['whois'][0]['registrant'].get('name'),
+                "Phone": data['whois'][0]['registrant'].get('phoneNumber')
+            },
+            "WHOIS": {
+                "DomainStatus": data['whois'][0]['domainStatuses'],
+                "NameServers": data['whois'][0]['nameServers'],
+                "CreationDate": (data['whois'][0].get('creationDate')
+                                 if is_not_empty_value(data['whois'][0].get('creationDate'))
+                                 else None),
+                "UpdatedDate": (data['whois'][0].get('updatedDate')
+                                if is_not_empty_value(data['whois'][0].get('updatedDate'))
+                                else None),
+                "ExpirationDate": (data['whois'][0].get('registryExpiryDate')
+                                   if is_not_empty_value(data['whois'][0].get('registryExpiryDate'))
+                                   else None),
+                "Registrant": {
+                    "Email": data['whois'][0]['registrant'].get('emailAddress'),
+                    "Name": data['whois'][0]['registrant'].get('name'),
+                    "Phone": data['whois'][0]['registrant'].get('phoneNumber')
+                },
+                "Registrar": {
+                    "Name": data['whois'][0]['registrar'].get('name'),
+                    "AbuseEmail": data['whois'][0]['registrar'].get('abuseContactEmail'),
+                    "AbusePhone": data['whois'][0]['registrar'].get('abuseContactPhone')
+                },
+                "Admin": {
+                    "Name": data['whois'][0]['admin'].get('name'),
+                    "Email": data['whois'][0]['admin'].get('emailAddress'),
+                    "Phone": data['whois'][0]['admin'].get('phoneNumber')
+                }
+            },
+        }
+
+
+    def get_expanse_domain_context(data):
+        """
+        provide custom context information about domain with data from Expanse API
+        """
+        c = {
+            "Name": data['domain'],
+            "DNS": data['details'].get('recentIps') if is_not_empty_value(data['details'].get('recentIps')) else None,
+            "CreationDate": data['whois'][0].get('creationDate'),
+            "DomainStatus": data.get('dnsResolutionStatus'),
+            "ExpirationDate": (data['whois'][0].get('registryExpiryDate')
+                               if is_not_empty_value(data['whois'][0].get('registryExpiryDate'))
+                               else None),
+            "NameServers": data['whois'][0].get('nameServers'),
+            "Organization": data['whois'][0]['registrant'].get('organization'),
+            "Admin": {
+                "Country": (data['whois'][0]['admin'].get('country')
+                            if is_not_empty_value(data['whois'][0]['admin'].get('country'))
+                            else None),
+                "Email": (data['whois'][0]['admin'].get('emailAddress')
+                          if is_not_empty_value(data['whois'][0]['admin'].get('emailAddress'))
+                          else None),
+                "Name": (data['whois'][0]['admin'].get('name')
+                         if is_not_empty_value(data['whois'][0]['admin'].get('name'))
+                         else None),
+                "Phone": (data['whois'][0]['admin'].get('phoneNumber')
+                          if is_not_empty_value(data['whois'][0]['admin'].get('phoneNumber'))
+                          else None)
+            },
+            "Registrant": {
+                "Country": (data['whois'][0]['registrant'].get('country')
+                            if is_not_empty_value(data['whois'][0]['registrant'].get('country'))
+                            else None),
+                "Email": (data['whois'][0]['registrant'].get('emailAddress')
+                          if is_not_empty_value(data['whois'][0]['registrant'].get('emailAddress'))
+                          else None),
+                "Name": (data['whois'][0]['registrant'].get('name')
+                         if is_not_empty_value(data['whois'][0]['registrant'].get('name'))
+                         else None),
+                "Phone": (data['whois'][0]['registrant'].get('phoneNumber')
+                          if is_not_empty_value(data['whois'][0]['registrant'].get('phoneNumber'))
+                          else None)
+            },
+            "WHOIS": {
+                "DomainStatus": (data['whois'][0].get('domainStatuses')
+                                 if is_not_empty_value(data['whois'][0].get('domainStatuses'))
+                                 else None),
+                "NameServers": (data['whois'][0].get('nameServers')
+                                if is_not_empty_value(data['whois'][0].get('nameServers'))
+                                else None),
+                "CreationDate": (data['whois'][0].get('creationDate')
+                                 if is_not_empty_value(data['whois'][0].get('creationDate'))
+                                 else None),
+                "UpdatedDate": (data['whois'][0].get('updatedDate')
+                                if is_not_empty_value(data['whois'][0].get('updatedDate'))
+                                else None),
+                "ExpirationDate": (data['whois'][0].get('registryExpiryDate')
+                                   if is_not_empty_value(data['whois'][0].get('registryExpiryDate'))
+                                   else None),
+                "Registrant": {
+                    "Email": (data['whois'][0]['registrant'].get('emailAddress')
+                              if is_not_empty_value(data['whois'][0]['registrant'].get('emailAddress'))
+                              else None),
+                    "Name": (data['whois'][0]['registrant'].get('name')
+                             if is_not_empty_value(data['whois'][0]['registrant'].get('name'))
+                             else None),
+                    "Phone": (data['whois'][0]['registrant'].get('phoneNumber')
+                              if is_not_empty_value(data['whois'][0]['registrant'].get('phoneNumber'))
+                              else None)
+                },
+                "Registrar": {
+                    "Name": (data['whois'][0]['registrar'].get('name')
+                             if is_not_empty_value(data['whois'][0]['registrar'].get('name'))
+                             else None),
+                    "AbuseEmail": (data['whois'][0]['registrar'].get('abuseContactEmail')
+                                   if is_not_empty_value(data['whois'][0]['registrar'].get('abuseContactEmail'))
+                                   else None),
+                    "AbusePhone": (data['whois'][0]['registrar'].get('abuseContactPhone')
+                                   if is_not_empty_value(data['whois'][0]['registrar'].get('abuseContactPhone'))
+                                   else None)
+                },
+                "Admin": {
+                    "Name": (data['whois'][0]['admin'].get('name')
+                             if is_not_empty_value(data['whois'][0]['admin'].get('name'))
+                             else None),
+                    "Email": (data['whois'][0]['admin'].get('emailAddress')
+                              if is_not_empty_value(data['whois'][0]['admin'].get('emailAddress'))
+                              else None),
+                    "Phone": (data['whois'][0]['admin'].get('phoneNumber')
+                              if is_not_empty_value(data['whois'][0]['admin'].get('phoneNumber'))
+                              else None)
+                }
+            },
+            "DateAdded": data['dateAdded'],
+            "FirstObserved": data['firstObserved'],
+            "LastObserved": data['lastObserved'],
+            "HasLinkedCloudResources": data['hasLinkedCloudResources'],
+            "SourceDomain": data.get('sourceDomain') if is_not_empty_value(data.get('sourceDomain')) else None,
+            "Tenant": data['tenant'].get('name') if is_not_empty_value(data['tenant'].get('name')) else None,
+            "BusinessUnits": [],
+            "DNSSEC": data['whois'][0].get('dnssec') if is_not_empty_value(data['whois'][0].get('dnssec')) else None,
+            "RecentIPs": data['details'].get('recentIps') if is_not_empty_value(data['details'].get('recentIps')) else None,
+            "CloudResources": (data['details'].get('cloudResources')
+                               if is_not_empty_value(data['details'].get('cloudResources'))
+                               else None),
+            "LastSubdomainMetadata": (data.get('lastSubdomainMetadata')
+                                      if is_not_empty_value(data.get('lastSubdomainMetadata'))
+                                      else None),
+            "ServiceStatus": data.get('serviceStatus') if is_not_empty_value(data.get('serviceStatus')) else None,
+            "LastSampledIP": data.get('lastSampledIp') if is_not_empty_value(data.get('lastSampledIp')) else None
+        }
+        for i in data['businessUnits']:
+            c['BusinessUnits'].append(i['name'])
+        return c
+
+
+    def get_expanse_certificate_context(data):
+        """
+        provide custom context information about certificate with data from Expanse API
+        """
+        return {
+            "SearchTerm": data['search'],
+            "CommonName": data['commonName'],
+            "FirstObserved": data['firstObserved'],
+            "LastObserved": data['lastObserved'],
+            "DateAdded": data['dateAdded'],
+            "Provider": data['providers'][0]['name'],
+            "NotValidBefore": data['certificate']['validNotBefore'],
+            "NotValidAfter": data['certificate']['validNotAfter'],
+            "Issuer": {
+                "Name": data['certificate']['issuerName'],
+                "Email": data['certificate']['issuerEmail'],
+                "Country": data['certificate']['issuerCountry'],
+                "Org": data['certificate']['issuerOrg'],
+                "Unit": data['certificate']['issuerOrgUnit'],
+                "AltNames": data['certificate']['issuerAlternativeNames'],
+                "Raw": data['certificate']['issuer']
+            },
+            "Subject": {
+                "Name": data['certificate']['subjectName'],
+                "Email": data['certificate']['subjectEmail'],
+                "Country": data['certificate']['subjectCountry'],
+                "Org": data['certificate']['subjectOrg'],
+                "Unit": data['certificate']['subjectOrgUnit'],
+                "AltNames": data['certificate']['subjectAlternativeNames'],
+                "Raw": data['certificate']['subject']
+            },
+            "Properties": data['properties'][0],
+            "MD5Hash": data['certificate']['md5Hash'],
+            "PublicKeyAlgorithm": data['certificate']['publicKeyAlgorithm'],
+            "PublicKeyBits": data['certificate']['publicKeyBits'],
+            "BusinessUnits": data['businessUnits'][0]['name'],
+            "CertificateAdvertisementStatus": data['certificateAdvertisementStatus'][0],
+            "ServiceStatus": ','.join(data['serviceStatus']),
+            "RecentIPs": ','.join(data['details']['recentIps']),
+            "CloudResources": ','.join(data['details']['cloudResources']),
+            "PemSha1": data['certificate']['pemSha1'],
+            "PemSha256": data['certificate']['pemSha256']
+        }
+
+
+    def get_expanse_behavior_context(data):
+        """
+        provides custom context information from the Expanse Behavior API
+        """
+
+        def flow_to_str(flow):
+            """
+            Reduces a risky flow to a summary string
+            """
+            return "{in_ip}:{in_port} ({in_co}) {direction} {ex_ip}:{ex_port} ({ex_co}) {pro} violates {rule} at {t}".format(
+                in_ip=flow['internalAddress'],
+                in_port=flow['internalPort'],
+                in_co=flow['internalCountryCode'],
+                direction="<-" if flow['flowDirection'] == "INBOUND" else "->",
+                ex_ip=flow['externalAddress'],
+                ex_port=flow['externalPort'],
+                ex_co=flow['externalCountryCode'],
+                pro=flow['protocol'],
+                rule=flow['riskRule']['name'],
+                t=flow['observationTimestamp']
+            )
+
+        def flow_to_obj(flow):
+            return {
+                "InternalAddress": flow['internalAddress'],
+                "InternalPort": flow['internalPort'],
+                "InternalCountryCode": flow['internalCountryCode'],
+                "ExternalAddress": flow['externalAddress'],
+                "ExternalPort": flow['externalPort'],
+                "ExternalCountryCode": flow['externalCountryCode'],
+                "Protocol": flow['protocol'],
+                "Timestamp": flow['observationTimestamp'],
+                "Direction": flow['flowDirection'],
+                "RiskRule": flow['riskRule']['name']
+            }
+
+        return {
+            "SearchTerm": data[0]['internalAddress'],
+            "InternalAddress": data[0]['internalAddress'],
+            "InternalCountryCode": data[0]['internalCountryCode'],
+            "BusinessUnit": data[0]['businessUnit']['name'],
+            "FlowSummaries": '\n'.join([flow_to_str(flow) for flow in data]),
+            "Flows": [flow_to_obj(flow) for flow in data],
+            "ExternalAddresses": ','.join(set([flow['externalAddress'] for flow in data])),
+            "InternalDomains": ','.join(data[0]['internalDomains']),
+            "InternalIPRanges": ','.join(data[0]['internalTags']['ipRange']),
+            "InternalExposureTypes": ','.join(data[0]['internalExposureTypes'])
+        }
+
+
+    def get_expanse_exposure_context(data):
+        """
+        provides custom context information from the Expanse Exposure API
+        """
+
+        def exposure_to_obj(exposure):
+            return {
+                "ExposureType": exposure['exposureType'],
+                "BusinessUnit": exposure['businessUnit']['name'],
+                "Ip": exposure['ip'],
+                "Port": exposure['port'],
+                "Severity": exposure['severity'],
+                "Certificate": exposure['certificate'],
+                "FirstObservsation": exposure['firstObservation'],
+                "LastObservsation": exposure['lastObservation'],
+                "Status": exposure['statuses'],
+                "Provider": exposure['provider']
+            }
+
+        def exposure_to_summary(exposure):
+            return "{exposureType} exposure on {ip}:{port}".format(**exposure)
+
+        def exposure_stats(exposures):
+            results = {
+                "CRITICAL": 0,
+                "WARNING": 0,
+                "ROUTINE": 0,
+                "UNKNOWN": 0
+            }
+            for exposure in exposures:
+                results[exposure['severity']] += 1
+
+            return results
+
+        counts = exposure_stats(data)
+        return {
+            "SearchTerm": data[0]['ip'],
+            "TotalExposureCount": len(data),
+            "CriticalExposureCount": counts['CRITICAL'],
+            "WarningExposureCount": counts['WARNING'],
+            "RoutineExposureCount": counts['ROUTINE'],
+            "UnknownExposureCount": counts['UNKNOWN'],
+            "ExposureSummaries": '\n'.join([exposure_to_summary(exposure) for exposure in data]),
+            "Exposures": [exposure_to_obj(exposure) for exposure in data]
+        }
+
+
+    def get_expanse_certificate_to_domain_context(common_name, data):
+        """
+        Provides custom context information for domains looked up via certificate.
+
+        :param common_name: The original search parameter
+        :param data: The data returned from the API query
+        :return: A dict of aggregated domain details
+        """
+        return {
+            "SearchTerm": common_name,
+            "TotalDomainCount": len(data),
+            "FlatDomainList": [domain.get('domain') for domain in data],
+            "DomainList": data
+        }
+
+
+    def fetch_events_incidents_command(start_date, end_date, token, next_=None):
+        """
+        retrieve active exposures from Expanse API and create incidents
+        """
+        params = {
+            'startDateUtc': start_date,
+            'endDateUtc': end_date,
+            'eventType': EXPOSURE_EVENT_TYPES
+        }
+
+        if next_:
+            params['pageToken'] = next_
+
+        events = http_request('GET', 'events', params=params, token=token)
+
+        if events['meta']['dataAvailable'] is True:
+
+            if events['pagination']['next']:
+                # will retrieve more data with pageToken next run
+                next_page_token = get_page_token(events['pagination']['next'])
+            else:
+                next_page_token = None
+
+            incidents = parse_events(events)
+            return (incidents, next_page_token, False)
+        return ([], None, True)
+
+
+    def fetch_behavior_incidents_command(start_date, token, offset=0):
+        """
+        retrieve risky flow details from Expanse Behavior API and create incidents
+        """
+        params = {
+            'filter[created-after]': start_date + 'T00:00:00.000Z',
+            'page[offset]': offset if offset is not None else 0
+        }
+
+        flows = http_request('GET', 'behavior/risky-flows', params=params, token=token)
+
+        if flows['meta']['totalCount'] is not None and flows['meta']['totalCount'] > 0:
+            if flows['pagination']['next']:
+                next_offset = get_next_offset(flows['pagination']['next'])
+            else:
+                next_offset = None
+
+            incidents = parse_behavior(flows)
+            return (incidents, next_offset)
+        return ([], None)
+
+
+    def fetch_incidents_command():
+        """
+        Parent command to wrap events and behavior fetch commands
+        """
+
+        # Check if it's been run
+        now = datetime.today()
+        yesterday = datetime.strftime(now - timedelta(days=1), "%Y-%m-%d")
+        last_run = demisto.getLastRun()
+        start_date = yesterday
+        end_date = yesterday
+
+        if "start_time" not in last_run or "complete_for_today" not in last_run:
+            # first time integration is running
+            start_date = datetime.strftime(now - timedelta(days=FIRST_RUN), "%Y-%m-%d")
+
+        if last_run.get('complete_for_today') is True and last_run.get('start_time') == yesterday:
+            # wait until tomorrow to try again
+            demisto.incidents([])
+            return
+
+        # Refresh JWT
+        token = do_auth()
+
+        # Fetch Events
+        more_events = True
+        no_events_found = True
+        page_token = None
+        incidents = []
+
+        # Check if we've stored any events in the integration cache
+        cache = demisto.getIntegrationContext()
+        stored_incidents = cache.get("incidents")
+
+        if stored_incidents is None:
+            demisto.debug("Did not detect any stored incidents")
+            while more_events:
+                event_incidents, page_token, no_events_found = fetch_events_incidents_command(start_date, end_date, token, page_token)
+                for incident in event_incidents:
+                    demisto.debug("Adding event incident name={name}, type={type}, severity={severity}".format(**incident))
+                incidents += event_incidents
+                if page_token is None:
+                    more_events = False
+
+            # Fetch Behavior
+            if BEHAVIOR_ENABLED:
+                more_behavior = True
+                next_offset = None
+
+                while more_behavior:
+                    behavior_incidents, next_offset = fetch_behavior_incidents_command(start_date, token, next_offset)
+                    for incident in behavior_incidents:
+                        demisto.debug("Adding behavior incident name={name}, type={type}, severity={severity}".format(**incident))
+                    incidents += behavior_incidents
+                    if next_offset is None:
+                        more_behavior = False
+
+            if len(incidents) == 0 and no_events_found:
+                # return and try again later, API may not have updated.
+                demisto.debug("Will retry - no events returned")
+                demisto.incidents([])
+                return
+            elif len(incidents) > PAGE_LIMIT:
+                incidents_to_send = incidents[:PAGE_LIMIT]
+                del incidents[:PAGE_LIMIT]
+                demisto.incidents(incidents_to_send)
+            else:
+                demisto.incidents(incidents)
+                incidents = []
+
+            # Add remaining incidents to cache
+            if len(incidents) > 0:
+                demisto.debug("Updating cache to store {} incidents".format(len(incidents)))
+                cache["incidents"] = incidents
+                demisto.setIntegrationContext(cache)
+                demisto.setLastRun({
+                    "complete_for_today": False,
+                    "start_time": yesterday
+                })
+            else:
+                cache["incidents"] = None
+                demisto.setIntegrationContext(cache)
+                demisto.setLastRun({
+                    "complete_for_today": True,
+                    "start_time": yesterday
+                })
+        else:
+            demisto.debug("Found {} stored incidents".format(len(stored_incidents)))
+            # Send next PAGE_LIMIT number of incidents to demisto
+            if len(stored_incidents) > PAGE_LIMIT:
+                incidents_to_send = stored_incidents[:PAGE_LIMIT]
+                del stored_incidents[:PAGE_LIMIT]
+                demisto.debug("Updating cache to store {} incidents".format(len(stored_incidents)))
+                demisto.setLastRun({
+                    "complete_for_today": False,
+                    "start_time": yesterday
+                })
+            else:
+                incidents_to_send = list(stored_incidents)
+                stored_incidents = None
+                demisto.debug("Updating cache to store 0 incidents")
+                demisto.setLastRun({
+                    "complete_for_today": True,
+                    "start_time": yesterday
+                })
+            demisto.incidents(incidents_to_send)
+
+            # Update Cache
+            cache["incidents"] = stored_incidents
+            demisto.setIntegrationContext(cache)
+
+
+    def ip_command():
+        """
+        searches by IP address in Expanse API for asset information
+        """
+        search = demisto.args()['ip']
+        params = {
+            "include": "annotations,severityCounts,attributionReasons,relatedRegistrationInformation,locationInformation",
+            "inet": search
+        }
+        token = do_auth()
+        results = http_request('GET', 'ip-range', params, token=token)
+        try:
+            ip = results['data'][0]
+        except Exception:
+            demisto.results("No data found")
+            return
+
+        ip['search'] = search
+
+        dbot_context = {
+            "Indicator": search,
+            "Type": "ip",
+            "Vendor": "Expanse",
+            "Score": 0
+        }
+        ip_context = get_ip_context(ip)
+        expanse_ip_context = get_expanse_ip_context(ip)
+
+        ec = {
+            'DBotScore': dbot_context,
+            'IP(val.Address == obj.Address)': ip_context,
+            'Expanse.IP(val.Address == obj.Address)': expanse_ip_context
+        }
+        human_readable = tableToMarkdown("IP information for: {search}".format(search=search), expanse_ip_context)
+
+        return_outputs(human_readable, ec, ip)
+
+
+    def domain_command():
+        """
+        searches Expanse IP for asset information for a domain
+        """
+        search = demisto.args()['domain']
+        params = {
+            'domainSearch': search
+        }
+        token = do_auth()
+        results = http_request('GET', "assets/domains", params, token=token)
+        try:
+            domain = results['data'][0]
+        except Exception:
+            # no results, exit gracefully
+            demisto.results("No data found")
+            return
+
+        dbot_context = {
+            "Indicator": search,
+            "Type": "url",
+            "Vendor": "Expanse",
+            "Score": 0
+        }
+        domain_context = get_domain_context(domain)
+        expanse_domain_context = get_expanse_domain_context(domain)
+
+        ec = {
+            'DBotScore': dbot_context,
+            'Domain(val.Name == obj.Name)': domain_context,
+            'Expanse.Domain(val.Name == obj.Name)': expanse_domain_context
+        }
+
+        human_readable = tableToMarkdown("Domain information for: {search}".format(search=search), expanse_domain_context)
+
+        return_outputs(human_readable, ec, domain)
+
+
+    def certificate_command():
+        """
+        searches by common name for certificate information
+        """
+        common_name = demisto.args()['common_name']
+
+        params = {
+            "commonNameSearch": common_name
+        }
+        token = do_auth()
+        certs = fetch_certificates(params=params, token=token)
+        if len(certs) == 0:
+            demisto.results("No data found")
+            return
+
+        cert = certs[0]  # just return the first one
+        cert['search'] = common_name
+
+        expanse_cert_context = get_expanse_certificate_context(cert)
+
+        ec = {
+            'Expanse.Certificate(val.SearchTerm == obj.SearchTerm)': expanse_cert_context
+        }
+        human_readable = tableToMarkdown("Certificate information for: {search}".format(search=common_name), expanse_cert_context)
+
+        return_outputs(human_readable, ec, cert)
+
+
+    def behavior_command():
+        """
+        searches by ip for behavior details from Expanse
+        """
+        search = demisto.args()['ip']
+        start_time = arg_to_timestamp(
+            demisto.args().get('start_time'),
+            arg_name='start_time',
+            required=False
+        )
+
+        now = datetime.today()
+        time_range = datetime.strftime(now - timedelta(days=FIRST_RUN), "%Y-%m-%d")
+        if start_time is None:
+            start_time = time_range + 'T00:00:00.000Z'
+        params = {
+            "filter[internal-ip-range]": search,
+            'page[limit]': 20,
+            'filter[created-after]': start_time,
+        }
+        token = do_auth()
+        results = http_request('GET', 'behavior/risky-flows', params, token=token)
+        try:
+            behaviors = results['data']
+            if len(behaviors) == 0:
+                demisto.results("No data found")
+                return
+        except Exception:
+            demisto.results("No data found")
+            return
+
+        expanse_behavior_context = get_expanse_behavior_context(behaviors)
+
+        ec = {
+            'Expanse.Behavior(val.SearchTerm == obj.SearchTerm)': expanse_behavior_context
+        }
+
+        raw_flows = expanse_behavior_context['Flows']
+        del expanse_behavior_context['Flows']  # Remove flow objects from human readable response
+        human_readable = tableToMarkdown("Expanse Behavior information for: {search}".format(search=search), expanse_behavior_context)
+        expanse_behavior_context['Flows'] = raw_flows
+        return_outputs(human_readable, ec, behaviors)
+
+
+    def exposures_command():
+        """
+        searches by ip for exposure data from Expanse
+        """
+        search = demisto.args()['ip']
+
+        params = {
+            "inet": search,
+            "activityStatus": "active"
+        }
+        token = do_auth()
+        results = http_request('GET', 'exposures/ip-ports', params, token=token)
+        try:
+            exposures = results['data']
+            if len(exposures) == 0:
+                demisto.results("No data found")
+                return
+        except Exception:
+            demisto.results("No data found")
+            return
+
+        expanse_exposure_context = get_expanse_exposure_context(exposures)
+
+        ec = {
+            'Expanse.Exposures(val.SearchTerm == obj.SearchTerm)': expanse_exposure_context
+        }
+
+        raw_exposures = expanse_exposure_context['Exposures']
+        del expanse_exposure_context['Exposures']  # Remove exposure objects from human readable response
+        human_readable = tableToMarkdown("Expanse Exposure information for: {search}".format(search=search), expanse_exposure_context)
+        expanse_exposure_context['Exposures'] = raw_exposures
+        return_outputs(human_readable, ec, exposures)
+
+
+    def domains_for_certificate_command():
+        """
+        Returns all domains that have resolved to IP addresses a certificate has been seen on. There is no direct way to
+        correlate between certificates and domains in Expanse this does so indirectly.
+        """
+        search = demisto.args()['common_name']
+        params = {
+            "commonNameSearch": search
+        }
+        token = do_auth()
+
+        matching_domains = []
+
+        certificates = fetch_certificates(params=params, token=token)
+        for certificate in certificates:
+            certificate_details = \
+                fetch_certificate(md5_hash=certificate.get('certificate', {}).get('md5Hash'), token=token)
+            for ip in certificate_details.get('details', {}).get('recentIps', []):
+                params = {
+                    'inetSearch': ip.get('ip'),
+                    'assetType': 'DOMAIN'
+                }
+                matching_domains += fetch_ips(params=params, token=token)
+
+        if len(matching_domains) == 0:
+            demisto.results("No data found")
+            return
+
+        context = get_expanse_certificate_to_domain_context(common_name=search, data=matching_domains)
+
+        ec = {
+            'Expanse.IPDomains(val.SearchTerm == obj.SearchTerm)': context
+        }
+
+        hr_context = context.copy()
+        del hr_context['DomainList']  # Remove full objects from human readable response
+        human_readable = tableToMarkdown("Expanse Domains matching Certificate Common Name: {search}".format(search=search),
+                                         hr_context)
+        return_outputs(human_readable, ec, matching_domains)
+
+
+    def fetch_certificates(params, token):
+        """
+        Fetches all certificates that match the provided params.
+
+        :param params: Search parameters
+        :param token: Expanse Refresh token
+        :return: List of certificate objects
+        """
+        certificates = []
+        results = http_request('GET', 'assets/certificates', params, token=token)
+        try:
+            if len(results.get('data', [])) > 0:
+                certificates += results.get('data', [])
+                next_page = results.get('pagination', {}).get('next', None)
+                while next_page is not None:
+                    params['pageToken'] = get_page_token(next_page)
+                    results = http_request('GET', 'assets/certificates', params, token=token)
+                    certificates += results['data']
+                    next_page = results.get('pagination', {}).get('next', None)
+            return certificates
+        except Exception as err:
+            demisto.error("Error fetching certificates: {}".format(err))
+            return []
+
+
+    def fetch_certificate(md5_hash, token):
+        """
+        Returns details for a single certificate.
+
+        :param md5_hash: Search term for certificates
+        :param token: Expanse Refresh token
+        :return: Certificate details objects
+        """
+        try:
+            return http_request('GET', 'assets/certificates/{}'.format(md5_hash), {}, token=token)
+        except Exception as err:
+            demisto.error("Error fetching certificate: {}".format(err))
+            return {}
+
+
+    def fetch_ips(params, token):
+        """
+        Returns all ip results matching search params.
+
+        :param params: Search parameters
+        :param token: Expanse Refresh token
+        :return: List of ip objects
+        """
+        ips = []
+        results = http_request('GET', 'assets/ips', params, token=token)
+        try:
+            if len(results.get('data', [])) > 0:
+                ips += results.get('data', [])
+                next_page = results.get('pagination', {}).get('next', None)
+                while next_page is not None:
+                    params['pageToken'] = get_page_token(next_page)
+                    results = http_request('GET', 'assets/ips', params, token=token)
+                    ips += results['data']
+                    next_page = results.get('pagination', {}).get('next', None)
+            return ips
+        except Exception as err:
+            demisto.error("Error fetching ips: {}".format(err))
+            return []
+
+
+    def arg_to_timestamp(arg, arg_name: str, required: bool = False):
+        if arg is None:
+            if required is True:
+                raise ValueError(f'Missing "{arg_name}"')
+            return None
+
+        if isinstance(arg, str) and arg.isdigit():
+            # timestamp that str - we just convert it to int
+            return int(arg)
+        if isinstance(arg, str):
+            # if the arg is string of date format 2019-10-23T00:00:00 or "3 days", etc
+            date = dateparser.parse(arg, settings={'TIMEZONE': 'UTC'})
+            if date is None:
+                # if d is None it means dateparser failed to parse it
+                raise ValueError(f'Invalid date: {arg_name}')
+
+            return int(date.timestamp())
+        if isinstance(arg, (int, float)):
+            return arg
+
+
+    def test_module():
+        token = do_auth()
+        now = datetime.today()
+        yesterday = datetime.strftime(now - timedelta(days=1), "%Y-%m-%d")
+
+        params = {
+            'startDateUtc': yesterday,
+            'endDateUtc': yesterday,
+            'eventType': EXPOSURE_EVENT_TYPES,
+            'limit': 1
+        }
+        events = http_request('GET', 'events', params=params, token=token)
+
+        parse_events(events)
+        return True
+
+
+    def main():
+        try:
+            handle_proxy()
+
+            active_command = demisto.command()
+
+            if active_command == 'test-module':
+                test_module()
+                demisto.results('ok')
+
+            elif active_command == 'fetch-incidents':
+                fetch_incidents_command()
+
+            elif active_command == 'ip':
+                ip_command()
+
+            elif active_command == 'domain':
+                domain_command()
+
+            elif active_command == 'expanse-get-certificate':
+                certificate_command()
+
+            elif active_command == 'expanse-get-behavior':
+                behavior_command()
+
+            elif active_command == 'expanse-get-exposures':
+                exposures_command()
+
+            elif active_command == 'expanse-get-domains-for-certificate':
+                domains_for_certificate_command()
+
+        # Log exceptions
+        except Exception as e:
+            demisto.error(str(e) + "\n\nTrace:\n" + traceback.format_exc())
+            return_error(str(e))
+
+
+    if __name__ == "__builtin__" or __name__ == "builtins":
+        main()
+  subtype: python3
+  type: python
+image: data:image/png;base64,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
+detaileddescription: >-
+  ### Partner Contributed Integration
+
+  #### Integration Author: Expanse
+
+  Support and maintenance for this integration are provided by the author. Please use the following contact details:
+
+  - **Email**: [help@expanseinc.com](mailto:help@expanseinc.com)
+
+  - **URL**: [https://www.expanse.co/](https://www.expanse.co/)
+
+  ***
+
+  API Key can be retrieved by contacting your technical account manager. 

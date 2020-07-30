@@ -1,0 +1,2265 @@
+category: Analytics & SIEM
+commonfields:
+  id: Cortex Data Lake
+  version: -1
+configuration:
+- display: Token
+  name: refresh_token
+  required: true
+  type: 4
+- display: ID
+  name: reg_id
+  required: true
+  type: 4
+- display: Key
+  name: auth_key
+  required: true
+  type: 4
+- display: Fetch incidents
+  name: isFetch
+  required: false
+  type: 8
+- defaultvalue: 24 hours
+  display: First fetch time (<number> <time unit>, e.g., 12 hours, 7 days, 3 months, 1 year)
+  name: first_fetch_timestamp
+  required: false
+  type: 0
+- display: Severity of events to fetch (Firewall)
+  name: firewall_severity
+  options:
+  - all
+  - Critical
+  - High
+  - Medium
+  - Low
+  - Informational
+  - Unused
+  required: false
+  type: 16
+- display: Subtype of events to fetch (Firewall)
+  name: firewall_subtype
+  options:
+  - all
+  - attack
+  - url
+  - virus
+  - spyware
+  - vulnerability
+  - file
+  - scan
+  - flood
+  - packet
+  - resource
+  - data
+  - url-content
+  - wildfire
+  - extpcap
+  - wildfire-virus
+  - http-hdr-insert
+  - http-hdr
+  - email-hdr
+  - spyware-dns
+  - spyware-wildfire-dns
+  - spyware-wpc-dns
+  - spyware-custom-dns
+  - spyware-cloud-dns
+  - spyware-raven
+  - spyware-wildfire-raven
+  - spyware-wpc-raven
+  - wpc-virus
+  - sctp
+  required: false
+  type: 16
+- display: Incident type
+  name: incidentType
+  required: false
+  type: 13
+- additionalinfo: |-
+    How many incidents will be fetched per query.
+    Caution: high number could create overload. Default is 10.
+  defaultvalue: '10'
+  display: Incidents fetched per query
+  hidden: false
+  name: limit
+  required: false
+  type: 0
+- defaultvalue: 'false'
+  display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+- defaultvalue: 'false'
+  display: Trust any certificate (not secure)
+  name: insecure
+  required: false
+  type: 8
+description: Palo Alto Networks Cortex Data Lake provides cloud-based, centralized log storage and aggregation for your on premise, virtual (private cloud and public cloud) firewalls, for Prisma Access, and for cloud-delivered services such as Cortex XDR
+display: Cortex Data Lake
+name: Cortex Data Lake
+script:
+  commands:
+  - arguments:
+    - default: false
+      defaultValue: SELECT * FROM `firewall.traffic` limit 10
+      description: 'A free-text SQL query. For example, query="SELECT * FROM `firewall.traffic` limit 10". There are multiple tables in Loggings, for example: threat, traffic, and so on. Refer to the Cortex Logging service schema reference for the full list.'
+      isArray: false
+      name: query
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '100'
+      description: The number of logs to return.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    deprecated: false
+    description: Runs a query on the Cortex logging service.
+    execution: true
+    name: cdl-query-logs
+    outputs:
+    - contextPath: CDL.Logging.Action
+      description: Identifies the action that the firewall took for the network traffic.
+      type: String
+    - contextPath: CDL.Logging.App
+      description: Application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Protocol
+      description: IP protocol associated with the session.
+      type: String
+    - contextPath: CDL.Logging.DestinationIP
+      description: Original destination IP address.
+      type: String
+    - contextPath: CDL.Logging.RuleMatched
+      description: Name of the security policy rule that the network traffic matched.
+      type: String
+    - contextPath: CDL.Logging.CharacteristicOfApp
+      description: Identifies the behaviorial characteristic of the application associated with the network traffic.
+      type: Number
+    - contextPath: CDL.Logging.LogSourceName
+      description: Name of the source of the log.
+      type: String
+    - contextPath: CDL.Logging.IsNat
+      description: Indicates if the firewall is performing network address translation (NAT) for the logged traffic.
+      type: number
+    - contextPath: CDL.Logging.NatDestinationPort
+      description: Post-NAT destination port.
+      type: Number
+    - contextPath: CDL.Logging.NatDestination
+      description: If destination NAT performed, the post-NAT destination IP address.
+      type: String
+    - contextPath: CDL.Logging.NatSource
+      description: If source NAT was performed, the post-NAT source IP address.
+      type: String
+    - contextPath: CDL.Logging.SourceIP
+      description: Original source IP address.
+      type: String
+    - contextPath: CDL.Logging.AppCategory
+      description: Identifies the high-level family of the application.
+      type: String
+    - contextPath: CDL.Logging.SourceLocation
+      description: Source country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.DestinationLocation
+      description: Destination country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.FileSHA256
+      description: The binary hash (SHA256) of the file sent for virus analysis.
+      type: String
+    - contextPath: CDL.Logging.FileName
+      description: The name of the infected file.
+      type: String
+    - contextPath: CDL.Logging.TimeGenerated
+      description: Time when the log was generated on the firewall's data plane.
+      type: Date
+  - arguments:
+    - default: false
+      defaultValue: '''1970-01-01 00:00:00'''
+      description: The query start time. For example, start_time="2018-04-26 00:00:00"
+      isArray: false
+      name: start_time
+      required: false
+      secret: false
+    - default: false
+      description: The query end time. For example, end_time="2018-04-26 00:00:00"
+      isArray: false
+      name: end_time
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '10'
+      description: The number of logs to return.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: First log time (<number> <time unit>, e.g., 12 hours, 7 days, 3 months, 1 year)
+      isArray: false
+      name: time_range
+      predefined:
+      - minutes
+      - days
+      - weeks
+      required: false
+      secret: false
+    deprecated: false
+    description: Runs a query on the Cortex logging service, according to preset queries.
+    execution: false
+    name: cdl-get-critical-threat-logs
+    outputs:
+    - contextPath: CDL.Logging.Threat.SessionID
+      description: Identifies the firewall's internal identifier for a specific network session.
+      type: String
+    - contextPath: CDL.Logging.Threat.Action
+      description: Identifies the action that the firewall took for the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Threat.App
+      description: Application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Threat.IsNat
+      description: Indicates whether the firewall is performing network address translation (NAT) for the logged traffic. If it is, this value is 1.
+      type: String
+    - contextPath: CDL.Logging.Threat.SubcategoryOfApp
+      description: Identifies the application's subcategory. The subcategoryis related to the application's category, which is identified in category_of_app.
+      type: String
+    - contextPath: CDL.Logging.Threat.PcapID
+      description: Packet capture (pcap) ID. This is used to correlate threat pcap files with extended pcaps taken as a part of the session flow. All threat logs will contain either a pcap_id of 0 (no associated pcap) , or an ID referencing the extended pcap file.
+      type: String
+    - contextPath: CDL.Logging.Threat.NatDestination
+      description: If destination NAT performed, the post-NAT destination IP address. The IP address is an IPv4/IPv6 address in hex format.
+      type: String
+    - contextPath: CDL.Logging.Threat.Flags
+      description: Bit field which provides details on the session, such as whether the session use IPv6, whether the session was denied due to a URL filtering rule, and/or whether the log corresponds to a transaction within an HTTP proxy session.
+      type: String
+    - contextPath: CDL.Logging.Threat.DestinationPort
+      description: Network traffic's destination port. If this value is 0, then the app is using its standard port.
+      type: String
+    - contextPath: CDL.Logging.Threat.ThreatID
+      description: Numerical identifier for the threat type. All threats encountered by Palo Alto Networks firewalls are assigned a unique identifier
+      type: String
+    - contextPath: CDL.Logging.Threat.NatSource
+      description: If source NAT was performed, the post-NAT source IP address. The IP address is an IPv4/IPv6 address in hex format.
+      type: String
+    - contextPath: CDL.Logging.Threat.IsURLDenied
+      description: Indicates whether the session was denied due to a URL filtering rule.
+      type: Boolean
+    - contextPath: CDL.Logging.Threat.Users
+      description: Source/Destination user. If neither is available, source_ip is used.
+      type: String
+    - contextPath: CDL.Logging.Threat.TimeGenerated
+      description: Time when the log was generated on the firewall's data plane.
+      type: Date
+    - contextPath: CDL.Logging.Threat.IsPhishing
+      description: ndicates whether enterprise credentials were submitted by an end user.
+      type: Boolean
+    - contextPath: CDL.Logging.Threat.AppCategory
+      description: Identifies the high-level family of the application.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourceLocation
+      description: Source country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Threat.DestinationLocation
+      description: Destination country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Threat.ToZone
+      description: Networking zone to which the traffic was sent.
+      type: String
+    - contextPath: CDL.Logging.Threat.RiskOfApp
+      description: Indicates how risky the application is from a network security perspective.
+      type: Number
+    - contextPath: CDL.Logging.Threat.NatSourcePort
+      description: Post-NAT source port.
+      type: Number
+    - contextPath: CDL.Logging.Threat.CharacteristicOfApp
+      description: Identifies the behaviorial characteristic of the application associated with the network traffic.
+      type: Unknown
+    - contextPath: CDL.Logging.Threat.FromZone
+      description: The networking zone from which the traffic originated.
+      type: String
+    - contextPath: CDL.Logging.Threat.Vsys
+      description: String representation of the unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: String
+    - contextPath: CDL.Logging.Threat.Protocol
+      description: IP protocol associated with the session.
+      type: String
+    - contextPath: CDL.Logging.Threat.NatDestinationPort
+      description: Post-NAT destination port.
+      type: Number
+    - contextPath: CDL.Logging.Threat.DestinationIP
+      description: Original destination IP address.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourceIP
+      description: Original source IP address.
+      type: String
+    - contextPath: CDL.Logging.Threat.RuleMatched
+      description: Unique identifier for the security policy rule that the network traffic matched.
+      type: String
+    - contextPath: CDL.Logging.Threat.ThreatCategory
+      description: Threat category of the detected threat.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogSourceName
+      description: Name of the source of the log.
+      type: String
+    - contextPath: CDL.Logging.Threat.Subtype
+      description: Identifies the log subtype.
+      type: String
+    - contextPath: CDL.Logging.Threat.Direction
+      description: Indicates the direction of the attack.
+      type: String
+    - contextPath: CDL.Logging.Threat.FileName
+      description: The name of the file that is blocked.
+      type: String
+    - contextPath: CDL.Logging.Threat.VendorSeverity
+      description: Severity associated with the event.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogTime
+      description: Time the log was received in Cortex Data Lake.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogSourceID
+      description: ID that uniquely identifies the source of the log. If the source is a firewall, this is its serial number.
+      type: String
+    - contextPath: CDL.Logging.Threat.VsysID
+      description: A unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: Number
+    - contextPath: CDL.Logging.Threat.URLDomain
+      description: The name of the internet domain that was visited in this session.
+      type: String
+    - contextPath: CDL.Logging.Threat.URLCategory
+      description: The URL category.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourcePort
+      description: Source port utilized by the session.
+      type: Number
+  - arguments:
+    - default: false
+      defaultValue: '''1970-01-01 00:00:00'''
+      description: Query start time. For example, start_time="2018-04-26 00:00:00"
+      isArray: false
+      name: start_time
+      required: false
+      secret: false
+    - default: false
+      description: Query end time. For example, end_time="2018-04-26 00:00:00"
+      isArray: false
+      name: end_time
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '10'
+      description: Amount of logs.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: First log time (<number> <time unit>, e.g., 12 hours, 7 days, 3 months, 1 year)
+      isArray: false
+      name: time_range
+      predefined:
+      - minutes
+      - days
+      - weeks
+      required: false
+      secret: false
+    deprecated: false
+    description: Runs a query on the Cortex logging service, according to preset queries.
+    execution: false
+    name: cdl-get-social-applications
+    outputs:
+    - contextPath: CDL.Logging.Traffic.Action
+      description: Identifies the action that the firewall took for the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.RiskOfApp
+      description: Indicates how risky the application is from a network security perspective.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatSourcePort
+      description: Post-NAT source port.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SessionID
+      description: Identifies the firewall's internal identifier for a specific network session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Packets
+      description: Number of total packets (transmit and receive) seen for the session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.CharacteristicOfApp
+      description: Identifies the behaviorial characteristic of the application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.App
+      description: Application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Vsys
+      description: Virtual system associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.IsNat
+      description: Indicates whether the firewall is performing network address translation (NAT) for the logged traffic. If it is, this value is 1.
+      type: String
+    - contextPath: CDL.Logging.Traffic.LogTime
+      description: Time the log was received in Cortex Data Lake.
+      type: date
+    - contextPath: CDL.Logging.Traffic.SubcategoryOfApp
+      description: Identifies the application's subcategory. The subcategory is related to the application's category,
+      type: String
+    - contextPath: CDL.Logging.Traffic.Protocol
+      description: IP protocol associated with the session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatDestinationPort
+      description: Post-NAT destination port.
+      type: String
+    - contextPath: CDL.Logging.Traffic.DestinationIP
+      description: Original destination IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatDestination
+      description: If destination NAT performed, the post-NAT destination IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.RuleMatched
+      description: Name of the security policy rule that the network traffic matched.
+      type: String
+    - contextPath: CDL.Logging.Traffic.DestinationPort
+      description: Network traffic's destination port. If this value is 0, then the app is using its standard port.
+      type: String
+    - contextPath: CDL.Logging.Traffic.TotalTimeElapsed
+      description: Total time taken for the network session to complete.
+      type: String
+    - contextPath: CDL.Logging.Traffic.LogSourceName
+      description: Device name of the source of the log
+      type: String
+    - contextPath: CDL.Logging.Traffic.Subtype
+      description: The log sub type.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Users
+      description: Source/Destination user. If neither is available, source_ip is used.
+      type: String
+    - contextPath: CDL.Logging.Traffic.TunneledApp
+      description: Is app tunneled.
+      type: String
+    - contextPath: CDL.Logging.Traffic.IsPhishing
+      description: Indicates whether enterprise credentials were submitted by an end user.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SessionEndReason
+      description: The reason a session terminated.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatSource
+      description: If source NAT was performed, the post-NAT source IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SourceIP
+      description: Original source IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SessionStartIP
+      description: Time when the session was established.
+      type: date
+    - contextPath: CDL.Logging.Traffic.TimeGenerated
+      description: Time when the log was generated on the firewall's data plane.
+      type: date
+    - contextPath: CDL.Logging.Traffic.AppCategory
+      description: Identifies the high-level family of the application.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SourceLocation
+      description: Source country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Traffic.DestinationLocation
+      description: Destination country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Traffic.LogSourceID
+      description: D that uniquely identifies the source of the log. If the source is a firewall, this is its serial number.
+      type: String
+    - contextPath: CDL.Logging.Traffic.TotalBytes
+      description: Number of total bytes (transmit and receive).
+      type: String
+    - contextPath: CDL.Logging.Traffic.VsysID
+      description: A unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: String
+    - contextPath: CDL.Logging.Traffic.ToZone
+      description: Networking zone to which the traffic was sent.
+      type: String
+    - contextPath: CDL.Logging.Traffic.URLCategory
+      description: The URL category.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SourcePort
+      description: Source port utilized by the session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Tunnel
+      description: Type of tunnel.
+      type: String
+  - arguments:
+    - default: false
+      defaultValue: '''1970-01-01 00:00:00'''
+      description: The query start time. For example, start_time="2018-04-26 00:00:00"
+      isArray: false
+      name: start_time
+      required: false
+      secret: false
+    - default: false
+      description: The query end time. For example, end_time="2018-04-26 00:00:00"
+      isArray: false
+      name: end_time
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '10'
+      description: The number of logs to return.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: First log time (<number> <time unit>, e.g., 12 hours, 7 days, 3 months, 1 year)
+      isArray: false
+      name: time_range
+      predefined:
+      - minutes
+      - days
+      - weeks
+      required: false
+      secret: false
+    - default: false
+      description: The SHA256 hash of the file for the query. For example, SHA256="503ca1a4fc0d48b18c0336f544ba0f0abf305ae3a3f49b3c2b86b8645d6572dc" would return all logs associated with this file.
+      isArray: false
+      name: SHA256
+      required: true
+      secret: false
+    deprecated: false
+    description: Runs a query on the threat table with the query 'SELECT * FROM `firewall.threat` WHERE file_sha_256 = <file_hash>'
+    execution: false
+    name: cdl-search-by-file-hash
+    outputs:
+    - contextPath: CDL.Logging.Threat.SessionID
+      description: Identifies the firewall's internal identifier for a specific network session.
+      type: String
+    - contextPath: CDL.Logging.Threat.Action
+      description: Identifies the action that the firewall took for the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Threat.App
+      description: Application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Threat.IsNat
+      description: Indicates whether the firewall is performing network address translation (NAT) for the logged traffic. If it is, this value is 1.
+      type: String
+    - contextPath: CDL.Logging.Threat.SubcategoryOfApp
+      description: Identifies the application's subcategory. The subcategoryis related to the application's category, which is identified in category_of_app.
+      type: String
+    - contextPath: CDL.Logging.Threat.PcapID
+      description: Packet capture (pcap) ID. This is used to correlate threat pcap files with extended pcaps taken as a part of the session flow. All threat logs will contain either a pcap_id of 0 (no associated pcap) , or an ID referencing the extended pcap file.
+      type: String
+    - contextPath: CDL.Logging.Threat.NatDestination
+      description: If destination NAT performed, the post-NAT destination IP address. The IP address is an IPv4/IPv6 address in hex format.
+      type: String
+    - contextPath: CDL.Logging.Threat.Flags
+      description: Bit field which provides details on the session, such as whether the session use IPv6, whether the session was denied due to a URL filtering rule, and/or whether the log corresponds to a transaction within an HTTP proxy session.
+      type: String
+    - contextPath: CDL.Logging.Threat.DestinationPort
+      description: Network traffic's destination port. If this value is 0, then the app is using its standard port.
+      type: String
+    - contextPath: CDL.Logging.Threat.ThreatID
+      description: Numerical identifier for the threat type. All threats encountered by Palo Alto Networks firewalls are assigned a unique identifier
+      type: String
+    - contextPath: CDL.Logging.Threat.NatSource
+      description: If source NAT was performed, the post-NAT source IP address. The IP address is an IPv4/IPv6 address in hex format.
+      type: String
+    - contextPath: CDL.Logging.Threat.IsURLDenied
+      description: Indicates whether the session was denied due to a URL filtering rule.
+      type: Boolean
+    - contextPath: CDL.Logging.Threat.Users
+      description: Source/Destination user. If neither is available, source_ip is used.
+      type: String
+    - contextPath: CDL.Logging.Threat.TimeGenerated
+      description: Time when the log was generated on the firewall's data plane.
+      type: Date
+    - contextPath: CDL.Logging.Threat.IsPhishing
+      description: ndicates whether enterprise credentials were submitted by an end user.
+      type: Boolean
+    - contextPath: CDL.Logging.Threat.AppCategory
+      description: Identifies the high-level family of the application.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourceLocation
+      description: Source country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Threat.DestinationLocation
+      description: Destination country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Threat.ToZone
+      description: Networking zone to which the traffic was sent.
+      type: String
+    - contextPath: CDL.Logging.Threat.RiskOfApp
+      description: Indicates how risky the application is from a network security perspective.
+      type: Number
+    - contextPath: CDL.Logging.Threat.NatSourcePort
+      description: Post-NAT source port.
+      type: Number
+    - contextPath: CDL.Logging.Threat.CharacteristicOfApp
+      description: Identifies the behaviorial characteristic of the application associated with the network traffic.
+      type: Unknown
+    - contextPath: CDL.Logging.Threat.FromZone
+      description: The networking zone from which the traffic originated.
+      type: String
+    - contextPath: CDL.Logging.Threat.Vsys
+      description: String representation of the unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: String
+    - contextPath: CDL.Logging.Threat.Protocol
+      description: IP protocol associated with the session.
+      type: String
+    - contextPath: CDL.Logging.Threat.NatDestinationPort
+      description: Post-NAT destination port.
+      type: Number
+    - contextPath: CDL.Logging.Threat.DestinationIP
+      description: Original destination IP address.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourceIP
+      description: Original source IP address.
+      type: String
+    - contextPath: CDL.Logging.Threat.RuleMatched
+      description: Unique identifier for the security policy rule that the network traffic matched.
+      type: String
+    - contextPath: CDL.Logging.Threat.ThreatCategory
+      description: Threat category of the detected threat.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogSourceName
+      description: Name of the source of the log.
+      type: String
+    - contextPath: CDL.Logging.Threat.Subtype
+      description: Identifies the log subtype.
+      type: String
+    - contextPath: CDL.Logging.Threat.Direction
+      description: Indicates the direction of the attack.
+      type: String
+    - contextPath: CDL.Logging.Threat.FileName
+      description: The name of the file that is blocked.
+      type: String
+    - contextPath: CDL.Logging.Threat.VendorSeverity
+      description: Severity associated with the event.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogTime
+      description: Time the log was received in Cortex Data Lake.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogSourceID
+      description: ID that uniquely identifies the source of the log. If the source is a firewall, this is its serial number.
+      type: String
+    - contextPath: CDL.Logging.Threat.VsysID
+      description: A unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: Number
+    - contextPath: CDL.Logging.Threat.URLDomain
+      description: The name of the internet domain that was visited in this session.
+      type: String
+    - contextPath: CDL.Logging.Threat.URLCategory
+      description: The URL category.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourcePort
+      description: Source port utilized by the session.
+      type: Number
+  - arguments:
+    - default: false
+      description: A source IP address or an array of source IPs addresses for which to search, for example 1.1.1.1,2.2.2.2.
+      isArray: false
+      name: source_ip
+      required: false
+      secret: false
+    - default: false
+      description: A rule name or an array of rule names to search.
+      isArray: false
+      name: rule
+      required: false
+      secret: false
+    - default: false
+      description: A source zone  name or an array of source zone names to search.
+      isArray: false
+      name: from_zone
+      required: false
+      secret: false
+    - default: false
+      description: A destination zone name or an array of zone names to search.
+      isArray: false
+      name: to_zone
+      required: false
+      secret: false
+    - default: false
+      description: Source port utilized by the session. Can be port number or an array of destination port numbers to search. For example '443' or '443,445'
+      isArray: false
+      name: source_port
+      required: false
+      secret: false
+    - default: false
+      description: An action name or an array of action names to search.
+      isArray: false
+      name: action
+      required: false
+      secret: false
+    - default: false
+      description: A free-text query for which to search. This forms the WHERE part of the query, for example, !cdl-query-traffic-logs query="source_ip.value LIKE '192.168.1.*' AND dest_ip.value='8.8.8.8' And dest_port=1234"
+      isArray: false
+      name: query
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: all
+      description: 'The fields that are selected in the query. Selection can be "all" (same as *) or a comma saparated list of specific fields in the table. '
+      isArray: false
+      name: fields
+      predefined:
+      - all
+      - vendor_name
+      - log_source
+      - log_source_id
+      - log_source_name
+      - customer_id
+      - log_time
+      - log_source_tz_offset
+      - log_type
+      - sub_type
+      - source_ip
+      - source_port
+      - dest_ip
+      - dest_port
+      - protocol
+      - action_source
+      - bytes_total
+      - bytes_received
+      - bytes_sent
+      - ep_assoc_id
+      - chunks_total
+      - chunks_received
+      - chunks_sent
+      - packets_total
+      - packets_received
+      - packets_sent
+      - session_start_time
+      - total_time_elapsed
+      - session_end_reason
+      - traffic_flags
+      - url_category
+      - action
+      - action_flags
+      - app
+      - app_category
+      - characteristics_of_app
+      - container_of_app
+      - dg_hier_level_1
+      - dg_hier_level_2
+      - dg_hier_level_3
+      - dg_hier_level_4
+      - dest_uuid
+      - dest_location
+      - dest_user
+      - dest_user_info
+      - is_exported
+      - is_forwarded
+      - from_zone
+      - http2_connection
+      - inbound_if
+      - inbound_if_details
+      - is_saas_app
+      - is_dup_log
+      - is_prisma_branch
+      - is_prisma_mobile
+      - log_set
+      - monitor_tag_imei
+      - nat_dest_port
+      - nat_dest
+      - nat_source_port
+      - nat_source
+      - non_standard_dest_port
+      - outbound_if
+      - outbound_if_details
+      - parent_session_id
+      - parent_start_time
+      - count_of_repeats
+      - risk_of_app
+      - rule_matched
+      - rule_matched_uuid
+      - sanctioned_state_of_app
+      - sequence_no
+      - session_id
+      - source_uuid
+      - source_location
+      - source_user
+      - source_user_info
+      - app_sub_category
+      - technology_of_app
+      - time_generated
+      - to_zone
+      - tunnel
+      - tunneled_app
+      - tunnelid_imsi
+      - users
+      - vsys_id
+      - vsys
+      - vsys_name
+      - flags
+      - is_decrypt_mirror
+      - is_sym_return
+      - is_container
+      - is_server_to_client
+      - is_client_to_server
+      - is_transaction
+      - is_non_std_dest_port
+      - is_captive_portal
+      - is_nat
+      - is_proxy
+      - is_packet_capture
+      - is_phishing
+      - is_mptcp_on
+      - is_recon_excluded
+      - is_url_denied
+      - is_tunnel_inspected
+      - is_source_x_fwded
+      - is_ipv6
+      - is_decrypted_payload_fwded
+      - is_decryption_log
+      - is_l7_inspection_b4_session
+      - sess_owner_rt_midx
+      - session_tracker
+      - container_id
+      - pod_namespace
+      - pod_name
+      - source_device_class
+      - source_device_vendor
+      - source_device_model
+      - source_device_os
+      - source_device_mac
+      - dest_device_class
+      - dest_device_vendor
+      - dest_device_model
+      - dest_device_os
+      - dest_device_mac
+      - link_change_count
+      - policy_id
+      - link_switches
+      - sdwan_cluster
+      - sdwan_device_type
+      - sdwan_cluster_type
+      - sdwan_site
+      - dynusergroup_name
+      - ingestion_time
+      - record_size
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '''1970-01-01 00:00:00'''
+      description: The query start time. For example, start_time="2018-04-26 00:00:00"
+      isArray: false
+      name: start_time
+      required: false
+      secret: false
+    - default: true
+      description: The query end time. For example, end_time="2018-04-26 00:00:00".
+      isArray: false
+      name: end_time
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: First log time (<number> <time unit>, e.g., 12 hours, 7 days, 3 months, 1 year)
+      isArray: false
+      name: time_range
+      predefined:
+      - minutes
+      - days
+      - weeks
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '5'
+      description: The number of logs to return. Default is 5.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - default: false
+      description: A destination IP address or an array of destination IPs addresses for which to search, for example 1.1.1.1,2.2.2.2.
+      isArray: false
+      name: dest_ip
+      required: false
+      secret: false
+    - default: false
+      description: Destination port utilized by the session. Can be port number or an array of destination port numbers to search. For example '443' or '443,445'
+      isArray: false
+      name: dest_port
+      required: false
+      secret: false
+    deprecated: false
+    description: Searches the Cortex firewall.traffic table. Traffic logs contain entries for the end of each network session
+    execution: false
+    name: cdl-query-traffic-logs
+    outputs:
+    - contextPath: CDL.Logging.Traffic.Action
+      description: Identifies the action that the firewall took for the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.RiskOfApp
+      description: Indicates how risky the application is from a network security perspective.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatSourcePort
+      description: Post-NAT source port.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SessionID
+      description: Identifies the firewall's internal identifier for a specific network session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Packets
+      description: Number of total packets (transmit and receive) seen for the session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.CharacteristicOfApp
+      description: Identifies the behaviorial characteristic of the application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.App
+      description: Application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Vsys
+      description: Virtual system associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Traffic.IsNat
+      description: Indicates whether the firewall is performing network address translation (NAT) for the logged traffic. If it is, this value is 1.
+      type: String
+    - contextPath: CDL.Logging.Traffic.LogTime
+      description: Time the log was received in Cortex Data Lake.
+      type: date
+    - contextPath: CDL.Logging.Traffic.SubcategoryOfApp
+      description: Identifies the application's subcategory. The subcategory is related to the application's category,
+      type: String
+    - contextPath: CDL.Logging.Traffic.Protocol
+      description: IP protocol associated with the session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatDestinationPort
+      description: Post-NAT destination port.
+      type: String
+    - contextPath: CDL.Logging.Traffic.DestinationIP
+      description: Original destination IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatDestination
+      description: If destination NAT performed, the post-NAT destination IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.RuleMatched
+      description: Name of the security policy rule that the network traffic matched.
+      type: String
+    - contextPath: CDL.Logging.Traffic.DestinationPort
+      description: Network traffic's destination port. If this value is 0, then the app is using its standard port.
+      type: String
+    - contextPath: CDL.Logging.Traffic.TotalTimeElapsed
+      description: Total time taken for the network session to complete.
+      type: String
+    - contextPath: CDL.Logging.Traffic.LogSourceName
+      description: Device name of the source of the log
+      type: String
+    - contextPath: CDL.Logging.Traffic.Subtype
+      description: The log sub type.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Users
+      description: Source/Destination user. If neither is available, source_ip is used.
+      type: String
+    - contextPath: CDL.Logging.Traffic.TunneledApp
+      description: Is app tunneled.
+      type: String
+    - contextPath: CDL.Logging.Traffic.IsPhishing
+      description: Indicates whether enterprise credentials were submitted by an end user.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SessionEndReason
+      description: The reason a session terminated.
+      type: String
+    - contextPath: CDL.Logging.Traffic.NatSource
+      description: If source NAT was performed, the post-NAT source IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SourceIP
+      description: Original source IP address.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SessionStartIP
+      description: Time when the session was established.
+      type: date
+    - contextPath: CDL.Logging.Traffic.TimeGenerated
+      description: Time when the log was generated on the firewall's data plane.
+      type: date
+    - contextPath: CDL.Logging.Traffic.AppCategory
+      description: Identifies the high-level family of the application.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SourceLocation
+      description: Source country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Traffic.DestinationLocation
+      description: Destination country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Traffic.LogSourceID
+      description: D that uniquely identifies the source of the log. If the source is a firewall, this is its serial number.
+      type: String
+    - contextPath: CDL.Logging.Traffic.TotalBytes
+      description: Number of total bytes (transmit and receive).
+      type: String
+    - contextPath: CDL.Logging.Traffic.VsysID
+      description: A unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: String
+    - contextPath: CDL.Logging.Traffic.ToZone
+      description: Networking zone to which the traffic was sent.
+      type: String
+    - contextPath: CDL.Logging.Traffic.URLCategory
+      description: The URL category.
+      type: String
+    - contextPath: CDL.Logging.Traffic.SourcePort
+      description: Source port utilized by the session.
+      type: String
+    - contextPath: CDL.Logging.Traffic.Tunnel
+      description: Type of tunnel.
+      type: String
+  - arguments:
+    - default: false
+      description: Original source IP address. Enter an IP address or an array of IP addresses for which to search, for example 1.1.1.1,2.2.2.2.
+      isArray: false
+      name: source_ip
+      required: false
+      secret: false
+    - default: false
+      description: Original destination IP address. Enter an IP address or an array of IP addresses for which to search, for example 1.1.1.1,2.2.2.2.
+      isArray: false
+      name: dest_ip
+      required: false
+      secret: false
+    - default: false
+      description: Name of the security policy rule that the network traffic matched. Enter a rule name or array of rule names to search.
+      isArray: false
+      name: rule_matched
+      required: false
+      secret: false
+    - default: false
+      description: The networking zone from which the traffic originated. Enter zone or array of zones to search.
+      isArray: false
+      name: from_zone
+      required: false
+      secret: false
+    - default: false
+      description: Networking zone to which the traffic was sent. Enter zone or array of zones to search.
+      isArray: false
+      name: to_zone
+      required: false
+      secret: false
+    - default: false
+      description: Source port utilized by the session. Enter a port or array of ports to search.
+      isArray: false
+      name: source_port
+      required: false
+      secret: false
+    - default: false
+      description: Network traffic's destination port. Enter a port or array of ports to search.
+      isArray: false
+      name: dest_port
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: The action that the firewall took for the network traffic. Enter an action or array of actions to search.
+      isArray: false
+      name: action
+      predefined:
+      - unknown
+      - n-a
+      - aged-out
+      - decoder
+      - tcp-reuse
+      - resources-unavailable
+      - tcp-fin
+      - tcp-rst-from-server
+      - tcp-rst-from-client
+      - policy-deny
+      - threat
+      - decrypt-error
+      - decrypt-unsupport-param
+      - decrypt-cert-validation
+      - request-timeout
+      - shutdown-from-endpoint
+      - abort-from-endpoint
+      - split-tunnel
+      required: false
+      secret: false
+    - default: false
+      description: The binary hash (SHA256) of the file. Enter a SHA256 hash or array of SHA256 hashes to search.
+      isArray: false
+      name: file_sha_256
+      required: false
+      secret: false
+    - default: false
+      description: The name of the file that is blocked. Enter a file name or array of file names to search.
+      isArray: false
+      name: file_name
+      required: false
+      secret: false
+    - default: false
+      description: Free input query to search. This is the WHERE part of the query. so an example will be !cdl-query-traffic-logs query="source_ip.value LIKE '192.168.1.*' AND dest_ip.value = '192.168.1.12'"
+      isArray: false
+      name: query
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: all
+      description: The fields that are selected in the query. Selection can be "all" (same as *) or listing of specific fields in the table. List of fields can be found after viewing all the outputed fields with all.
+      isArray: true
+      name: fields
+      predefined:
+      - vendor_name
+      - log_source
+      - log_source_id
+      - log_source_name
+      - customer_id
+      - log_time
+      - log_source_tz_offset
+      - log_type
+      - sub_type
+      - source_ip
+      - source_port
+      - dest_ip
+      - dest_port
+      - protocol
+      - threat_id
+      - threat_name
+      - threat_category
+      - cloud_hostname
+      - direction_of_attack
+      - url_domain
+      - url_idx
+      - file_name
+      - cloud
+      - file_sha_256
+      - file_type
+      - sender_of_virus
+      - recipient_of_virus
+      - subject_of_email
+      - report_id
+      - verdict
+      - vendor_severity
+      - severity
+      - pcap
+      - pcap_id
+      - sig_flags
+      - url_category
+      - action
+      - action_flags
+      - app
+      - app_category
+      - characteristics_of_app
+      - container_of_app
+      - dg_hier_level_1
+      - dg_hier_level_2
+      - dg_hier_level_3
+      - dg_hier_level_4
+      - dest_uuid
+      - dest_location
+      - dest_user
+      - dest_user_info
+      - is_exported
+      - is_forwarded
+      - from_zone
+      - http2_connection
+      - inbound_if
+      - inbound_if_details
+      - is_saas_app
+      - is_dup_log
+      - is_prisma_branch
+      - is_prisma_mobile
+      - log_set
+      - monitor_tag_imei
+      - nat_dest_port
+      - nat_dest
+      - nat_source_port
+      - nat_source
+      - non_standard_dest_port
+      - outbound_if
+      - outbound_if_details
+      - parent_session_id
+      - parent_start_time
+      - count_of_repeats
+      - risk_of_app
+      - rule_matched
+      - rule_matched_uuid
+      - sanctioned_state_of_app
+      - sequence_no
+      - session_id
+      - source_uuid
+      - source_location
+      - source_user
+      - source_user_info
+      - app_sub_category
+      - technology_of_app
+      - time_generated
+      - to_zone
+      - tunnel
+      - tunneled_app
+      - tunnelid_imsi
+      - users
+      - vsys_id
+      - vsys
+      - vsys_name
+      - flags
+      - is_decrypt_mirror
+      - is_sym_return
+      - is_container
+      - is_server_to_client
+      - is_client_to_server
+      - is_transaction
+      - is_non_std_dest_port
+      - is_captive_portal
+      - is_nat
+      - is_proxy
+      - is_packet_capture
+      - is_phishing
+      - is_mptcp_on
+      - is_recon_excluded
+      - is_url_denied
+      - is_tunnel_inspected
+      - is_source_x_fwded
+      - is_ipv6
+      - container_id
+      - pod_namespace
+      - pod_name
+      - source_device_class
+      - source_device_vendor
+      - source_device_model
+      - source_device_os
+      - source_device_mac
+      - dest_device_class
+      - dest_device_vendor
+      - dest_device_model
+      - dest_device_os
+      - dest_device_mac
+      - content_version
+      - dynusergroup_name
+      - ingestion_time
+      - record_size
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '''1970-01-01 00:00:00'''
+      description: The query start time. For example, start_time="2018-04-26 00:00:00"
+      isArray: false
+      name: start_time
+      required: false
+      secret: false
+    - default: true
+      description: The query end time. For example, end_time="2018-04-26 00:00:00"
+      isArray: false
+      name: end_time
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: First log time (<number> <time unit>, e.g., 12 hours, 7 days, 3 months, 1 year)
+      isArray: false
+      name: time_range
+      predefined:
+      - minutes
+      - days
+      - weeks
+      required: false
+      secret: false
+    - default: false
+      description: The number of logs to return. Default is 5.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    deprecated: false
+    description: Searches the Cortex panw.threat table, which is the threat logs table for PAN-OS/Panorama.
+    execution: false
+    name: cdl-query-threat-logs
+    outputs:
+    - contextPath: CDL.Logging.Threat.SessionID
+      description: Identifies the firewall's internal identifier for a specific network session.
+      type: String
+    - contextPath: CDL.Logging.Threat.Action
+      description: Identifies the action that the firewall took for the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Threat.App
+      description: Application associated with the network traffic.
+      type: String
+    - contextPath: CDL.Logging.Threat.IsNat
+      description: Indicates whether the firewall is performing network address translation (NAT) for the logged traffic. If it is, this value is 1.
+      type: String
+    - contextPath: CDL.Logging.Threat.SubcategoryOfApp
+      description: Identifies the application's subcategory. The subcategoryis related to the application's category, which is identified in category_of_app.
+      type: String
+    - contextPath: CDL.Logging.Threat.PcapID
+      description: Packet capture (pcap) ID. This is used to correlate threat pcap files with extended pcaps taken as a part of the session flow. All threat logs will contain either a pcap_id of 0 (no associated pcap) , or an ID referencing the extended pcap file.
+      type: String
+    - contextPath: CDL.Logging.Threat.NatDestination
+      description: If destination NAT performed, the post-NAT destination IP address. The IP address is an IPv4/IPv6 address in hex format.
+      type: String
+    - contextPath: CDL.Logging.Threat.Flags
+      description: Bit field which provides details on the session, such as whether the session use IPv6, whether the session was denied due to a URL filtering rule, and/or whether the log corresponds to a transaction within an HTTP proxy session.
+      type: String
+    - contextPath: CDL.Logging.Threat.DestinationPort
+      description: Network traffic's destination port. If this value is 0, then the app is using its standard port.
+      type: String
+    - contextPath: CDL.Logging.Threat.ThreatID
+      description: Numerical identifier for the threat type. All threats encountered by Palo Alto Networks firewalls are assigned a unique identifier
+      type: String
+    - contextPath: CDL.Logging.Threat.NatSource
+      description: If source NAT was performed, the post-NAT source IP address. The IP address is an IPv4/IPv6 address in hex format.
+      type: String
+    - contextPath: CDL.Logging.Threat.IsURLDenied
+      description: Indicates whether the session was denied due to a URL filtering rule.
+      type: Boolean
+    - contextPath: CDL.Logging.Threat.Users
+      description: Source/Destination user. If neither is available, source_ip is used.
+      type: String
+    - contextPath: CDL.Logging.Threat.TimeGenerated
+      description: Time when the log was generated on the firewall's data plane.
+      type: Date
+    - contextPath: CDL.Logging.Threat.IsPhishing
+      description: ndicates whether enterprise credentials were submitted by an end user.
+      type: Boolean
+    - contextPath: CDL.Logging.Threat.AppCategory
+      description: Identifies the high-level family of the application.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourceLocation
+      description: Source country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Threat.DestinationLocation
+      description: Destination country or internal region for private addresses.
+      type: String
+    - contextPath: CDL.Logging.Threat.ToZone
+      description: Networking zone to which the traffic was sent.
+      type: String
+    - contextPath: CDL.Logging.Threat.RiskOfApp
+      description: Indicates how risky the application is from a network security perspective.
+      type: Number
+    - contextPath: CDL.Logging.Threat.NatSourcePort
+      description: Post-NAT source port.
+      type: Number
+    - contextPath: CDL.Logging.Threat.CharacteristicOfApp
+      description: Identifies the behaviorial characteristic of the application associated with the network traffic.
+      type: Unknown
+    - contextPath: CDL.Logging.Threat.FromZone
+      description: The networking zone from which the traffic originated.
+      type: String
+    - contextPath: CDL.Logging.Threat.Vsys
+      description: String representation of the unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: String
+    - contextPath: CDL.Logging.Threat.Protocol
+      description: IP protocol associated with the session.
+      type: String
+    - contextPath: CDL.Logging.Threat.NatDestinationPort
+      description: Post-NAT destination port.
+      type: Number
+    - contextPath: CDL.Logging.Threat.DestinationIP
+      description: Original destination IP address.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourceIP
+      description: Original source IP address.
+      type: String
+    - contextPath: CDL.Logging.Threat.RuleMatched
+      description: Unique identifier for the security policy rule that the network traffic matched.
+      type: String
+    - contextPath: CDL.Logging.Threat.ThreatCategory
+      description: Threat category of the detected threat.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogSourceName
+      description: Name of the source of the log.
+      type: String
+    - contextPath: CDL.Logging.Threat.Subtype
+      description: Identifies the log subtype.
+      type: String
+    - contextPath: CDL.Logging.Threat.Direction
+      description: Indicates the direction of the attack.
+      type: String
+    - contextPath: CDL.Logging.Threat.FileName
+      description: The name of the file that is blocked.
+      type: String
+    - contextPath: CDL.Logging.Threat.VendorSeverity
+      description: Severity associated with the event.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogTime
+      description: Time the log was received in Cortex Data Lake.
+      type: String
+    - contextPath: CDL.Logging.Threat.LogSourceID
+      description: ID that uniquely identifies the source of the log. If the source is a firewall, this is its serial number.
+      type: String
+    - contextPath: CDL.Logging.Threat.VsysID
+      description: A unique identifier for a virtual system on a Palo Alto Networks firewall.
+      type: Number
+    - contextPath: CDL.Logging.Threat.URLDomain
+      description: The name of the internet domain that was visited in this session.
+      type: String
+    - contextPath: CDL.Logging.Threat.URLCategory
+      description: The URL category.
+      type: String
+    - contextPath: CDL.Logging.Threat.SourcePort
+      description: Source port utilized by the session.
+      type: Number
+  dockerimage: demisto/python_pancloud_v2:1.0.0.8888
+  feed: false
+  isfetch: true
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: >
+    """ IMPORTS """
+
+
+    import os
+
+    import requests
+
+    import json
+
+    from pancloud import QueryService, Credentials, exceptions
+
+    import base64
+
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+    from typing import Dict, Any, List, Tuple, Callable
+
+    from tempfile import gettempdir
+
+    from dateutil import parser
+
+
+    # disable insecure warnings
+
+    requests.packages.urllib3.disable_warnings()
+
+
+    ''' GLOBAL CONSTS '''
+
+    ACCESS_TOKEN_CONST = 'access_token'  # guardrails-disable-line
+
+    REFRESH_TOKEN_CONST = 'refresh_token'  # guardrails-disable-line
+
+    EXPIRES_IN = 'expires_in'
+
+    INSTANCE_ID_CONST = 'instance_id'
+
+    API_URL_CONST = 'api_url'
+
+    REGISTRATION_ID_CONST = 'reg_id'
+
+    ENCRYPTION_KEY_CONST = 'auth_key'
+
+    DEFAULT_API_URL = 'https://api.us.cdl.paloaltonetworks.com'
+
+    MINUTES_60 = 60 * 60
+
+    SECONDS_30 = 30
+
+
+
+    class Client(BaseClient):
+        """
+        Client will implement the service API, and should not contain any Demisto logic.
+        Should only do requests and return data.
+        """
+
+        def __init__(self, token_retrieval_url, registration_id, use_ssl, proxy, refresh_token, enc_key):
+            headers = {
+                'Authorization': registration_id,
+                'Accept': 'application/json'
+            }
+            super().__init__(base_url=token_retrieval_url, headers=headers, verify=use_ssl, proxy=proxy)
+            self.refresh_token = refresh_token
+            self.enc_key = enc_key
+            self.use_ssl = use_ssl
+            # Trust environment settings for proxy configuration
+            self.trust_env = proxy
+            self._get_access_token()
+
+        def _get_access_token(self):
+            """
+            Checks if access token exists in the integration context and return it if it exists, if not, a new token
+            is generated and saved in the integration context along with the query api_url and the instance_id
+            Returns:
+                The access token from the integration context or from the request.
+            """
+            integration_context = demisto.getIntegrationContext()
+            access_token = integration_context.get(ACCESS_TOKEN_CONST)
+            valid_until = integration_context.get(EXPIRES_IN)
+            if access_token and valid_until:
+                if int(time.time()) < valid_until:
+                    self.access_token = access_token
+                    self.api_url = integration_context.get(API_URL_CONST, DEFAULT_API_URL)
+                    self.instance_id = integration_context.get(INSTANCE_ID_CONST)
+            access_token, api_url, instance_id, refresh_token, expires_in = self._oproxy_authorize()
+            updated_integration_context = {
+                ACCESS_TOKEN_CONST: access_token,
+                EXPIRES_IN: int(time.time()) + expires_in - SECONDS_30,
+                API_URL_CONST: api_url,
+                INSTANCE_ID_CONST: instance_id
+            }
+            if refresh_token:
+                updated_integration_context.update({REFRESH_TOKEN_CONST: refresh_token})
+            demisto.setIntegrationContext(updated_integration_context)
+            self.access_token = access_token
+            self.api_url = api_url
+            self.instance_id = instance_id
+
+        def _oproxy_authorize(self) -> Tuple[str, str, str, str, int]:
+            oproxy_response = self._http_request('POST',
+                                                 '/cdl-token',
+                                                 json_data={'token': get_encrypted(self.refresh_token, self.enc_key)},
+                                                 timeout=(60 * 3, 60 * 3),
+                                                 retries=3,
+                                                 backoff_factor=10,
+                                                 status_list_to_retry=[400])
+            access_token = oproxy_response.get(ACCESS_TOKEN_CONST)
+            api_url = oproxy_response.get('url')
+            refresh_token = oproxy_response.get(REFRESH_TOKEN_CONST)
+            instance_id = oproxy_response.get(INSTANCE_ID_CONST)
+            expires_in = int(oproxy_response.get(EXPIRES_IN, MINUTES_60))
+            if not access_token or not api_url or not instance_id:
+                raise DemistoException(f'Missing attribute in response: access_token, instance_id or api are missing.\n'
+                                       f'Oproxy response: {oproxy_response}')
+            return access_token, api_url, instance_id, refresh_token, expires_in
+
+        def query_loggings(self, query: str) -> Tuple[List[dict], list]:
+            """
+            This function handles all the querying of Cortex Logging service
+
+            Args:
+                query: The sql string query.
+
+            Returns:
+                A list of records according to the query
+            """
+            query_data = {'query': self.add_instance_id_to_query(query),
+                          'language': 'csql'}
+            query_service = self.initial_query_service()
+            response = query_service.create_query(query_params=query_data, enforce_json=True)
+            query_result = response.json()
+
+            if not response.ok:
+                status_code = response.status_code
+                try:
+                    # For some error responses the messages are in 'query_result['errors'] and for some they are simply
+                    # in 'query_result
+                    errors = query_result.get('errors', query_result)
+                    error_message = ''.join([message.get('message') for message in errors])
+                except AttributeError:
+                    error_message = query_result
+
+                raise DemistoException(f'Error in query to Cortex Data Lake [{status_code}] - {error_message}')
+
+            try:
+                raw_results = [r.json() for r in query_service.iter_job_results(job_id=query_result.get('jobId'),
+                                                                                result_format='valuesDictionary',
+                                                                                max_wait=2000)]
+            except exceptions.HTTPError as e:
+                raise DemistoException(f'Received error {str(e)} when querying logs.')
+
+            extended_results: List[Dict] = []
+            for result in raw_results:
+                page = result.get('page', {})
+                data = page.get('result', {}).get('data', [])
+                if data:
+                    extended_results.extend(data)
+
+            return extended_results, raw_results
+
+        def initial_query_service(self) -> QueryService:
+            credentials = Credentials(
+                access_token=self.access_token,
+                verify=self.use_ssl
+            )
+            query_service = QueryService(
+                url=self.api_url,
+                credentials=credentials,
+                trust_env=self.trust_env
+            )
+            return query_service
+
+        def add_instance_id_to_query(self, query: str) -> str:
+            """
+            On apollo v2 all table names must have the instance_id at the top of their hierarchy.
+            This function adds the instance_id to the query.
+            For example:
+            For the query "SELECT * FROM `test`" with instance_id=1234 this function will return "SELECT * FROM `1234.test`"
+            Args:
+                query: A query for CDL
+            Returns:
+                A query with instance_id
+            """
+            FIND_FROM_STATEMENT_REGEX_PATTERN = r'(?i)FROM `'
+            query = re.sub(FIND_FROM_STATEMENT_REGEX_PATTERN, f'FROM `{self.instance_id}.', query)
+            return query
+
+
+    ''' HELPER FUNCTIONS '''
+
+
+
+    def human_readable_time_from_epoch_time(epoch_time: int, utc_time: bool = False):
+        """
+        Divides the epoch time by 1e6 since the epoch format has 6 trailing zeroes
+        Since incidents need the time in utc format (ends in 'Z') but the SQL syntax cannot parse a UTC formatted date well
+        it is parameterized
+        Args:
+            utc_time: A boolean that states weather to add the 'Z' at the end of the date string
+            epoch_time: Epoch time as it is in the raw_content
+        Returns:
+            human readable time in the format of '1970-01-01T02:00:00'
+        """
+        result = datetime.fromtimestamp(epoch_time / 1e6).isoformat() if epoch_time else None
+        if result:
+            result += 'Z' if utc_time else ''
+        return result
+
+
+    def common_context_transformer(row_content):
+        """
+            This function retrieves data from a row of raw data into context path locations
+
+            Args:
+                row_content: a dict representing raw data of a row
+
+            Returns:
+                a dict with context paths and their corresponding value
+            """
+        return {
+            'Action': row_content.get('action', {}).get('value'),
+            'App': row_content.get('app'),
+            'Protocol': row_content.get('protocol', {}).get('value'),
+            'DestinationIP': row_content.get('dest_ip', {}).get('value'),
+            'RuleMatched': row_content.get('rule_matched'),
+            'CharacteristicOfApp': row_content.get('characteristics_of_app'),
+            'LogSourceName': row_content.get('log_source_name'),
+            'IsNat': row_content.get('is_nat'),
+            'NatDestinationPort': row_content.get('nat_dest_port'),
+            'NatDestination': row_content.get('nat_dest', {}).get('value'),
+            'NatSource': row_content.get('nat_source', {}).get('value'),
+            'SourceIP': row_content.get('source_ip', {}).get('value'),
+            'AppCategory': row_content.get('app_category'),
+            'SourceLocation': row_content.get('source_location'),
+            'DestinationLocation': row_content.get('dest_location'),
+            'FileSHA256': row_content.get('file_sha_256'),
+            'FileName': row_content.get('file_name'),
+            'TimeGenerated': human_readable_time_from_epoch_time(row_content.get('time_generated', 0))
+        }
+
+
+    def traffic_context_transformer(row_content: dict) -> dict:
+        """
+        This function retrieves data from a row of raw data into context path locations
+
+        Args:
+            row_content: a dict representing raw data of a row
+
+        Returns:
+            a dict with context paths and their corresponding value
+        """
+
+        return {
+            'Action': row_content.get('action', {}).get('value'),
+            'RiskOfApp': row_content.get('risk_of_app'),
+            'NatSourcePort': row_content.get('nat_source_port'),
+            'SessionID': row_content.get('session_id'),
+            'Packets': row_content.get('packets_total'),
+            'CharacteristicOfApp': row_content.get('characteristics_of_app'),
+            'App': row_content.get('app'),
+            'Vsys': row_content.get('vsys'),
+            'IsNat': row_content.get('is_nat'),
+            'LogTime': human_readable_time_from_epoch_time(row_content.get('log_time', 0)),
+            'SubcategoryOfApp': row_content.get('app_sub_category'),
+            'Protocol': row_content.get('protocol', {}).get('value'),
+            'NatDestinationPort': row_content.get('nat_dest_port'),
+            'DestinationIP': row_content.get('dest_ip', {}).get('value'),
+            'NatDestination': row_content.get('nat_dest', {}).get('value'),
+            'RuleMatched': row_content.get('rule_matched'),
+            'DestinationPort': row_content.get('dest_port'),
+            'TotalTimeElapsed': row_content.get('total_time_elapsed'),
+            'LogSourceName': row_content.get('log_source_name'),
+            'Subtype': row_content.get('sub_type', {}).get('value'),
+            'Users': row_content.get('users'),
+            'TunneledApp': row_content.get('tunneled_app'),
+            'IsPhishing': row_content.get('is_phishing'),
+            'SessionEndReason': row_content.get('session_end_reason', {}).get('value'),
+            'NatSource': row_content.get('nat_source', {}).get('value'),
+            'SourceIP': row_content.get('source_ip', {}).get('value'),
+            'SessionStartIP': human_readable_time_from_epoch_time(row_content.get('session_start_time', 0)),
+            'TimeGenerated': human_readable_time_from_epoch_time(row_content.get('time_generated', 0)),
+            'AppCategory': row_content.get('app_category'),
+            'SourceLocation': row_content.get('source_location'),
+            'DestinationLocation': row_content.get('dest_location'),
+            'LogSourceID': row_content.get('log_source_id'),
+            'TotalBytes': row_content.get('bytes_total'),
+            'VsysID': row_content.get('vsys_id'),
+            'ToZone': row_content.get('to_zone'),
+            'URLCategory': row_content.get('url_category', {}).get('value'),
+            'SourcePort': row_content.get('source_port'),
+            'Tunnel': row_content.get('tunnel', {}).get('value')
+        }
+
+
+    def threat_context_transformer(row_content: dict) -> dict:
+        """
+        This function retrieves data from a row of raw data into context path locations
+
+        Args:
+            row_content: a dict representing raw data of a row
+
+        Returns:
+            a dict with context paths and their corresponding value
+        """
+        return {
+            'SessionID': row_content.get('session_id'),
+            'Action': row_content.get('action', {}).get('value'),
+            'App': row_content.get('app'),
+            'IsNat': row_content.get('is_nat'),
+            'SubcategoryOfApp': row_content.get('app_sub_category'),
+            'PcapID': row_content.get('pcap_id'),
+            'NatDestination': row_content.get('nat_dest', {}).get('value'),
+            'Flags': row_content.get('flags'),
+            'DestinationPort': row_content.get('dest_port'),
+            'ThreatID': row_content.get('threat_id'),
+            'NatSource': row_content.get('nat_source', {}).get('value'),
+            'IsURLDenied': row_content.get('is_url_denied'),
+            'Users': row_content.get('users'),
+            'TimeGenerated': human_readable_time_from_epoch_time(row_content.get('time_generated', 0)),
+            'IsPhishing': row_content.get('is_phishing'),
+            'AppCategory': row_content.get('app_category'),
+            'SourceLocation': row_content.get('source_location'),
+            'DestinationLocation': row_content.get('dest_location'),
+            'ToZone': row_content.get('to_zone'),
+            'RiskOfApp': row_content.get('risk_of_app'),
+            'NatSourcePort': row_content.get('nat_source_port'),
+            'CharacteristicOfApp': row_content.get('characteristics_of_app'),
+            'FromZone': row_content.get('from_zone'),
+            'Vsys': row_content.get('vsys'),
+            'Protocol': row_content.get('protocol', {}).get('value'),
+            'NatDestinationPort': row_content.get('nat_dest_port'),
+            'DestinationIP': row_content.get('dest_ip', {}).get('value'),
+            'SourceIP': row_content.get('source_ip', {}).get('value'),
+            'RuleMatched': row_content.get('rule_matched'),
+            'ThreatCategory': row_content.get('threat_category', {}).get('value'),
+            'LogSourceName': row_content.get('log_source_name'),
+            'Subtype': row_content.get('sub_type', {}).get('value'),
+            'Direction': row_content.get('direction_of_attack', {}).get('value'),
+            'FileName': row_content.get('file_name'),
+            'VendorSeverity': row_content.get('vendor_severity', {}).get('value'),
+            'LogTime': human_readable_time_from_epoch_time(row_content.get('log_time', 0)),
+            'LogSourceID': row_content.get('log_source_id'),
+            'VsysID': row_content.get('vsys_id'),
+            'URLDomain': row_content.get('url_domain'),
+            'URLCategory': row_content.get('url_category', {}).get('value'),
+            'SourcePort': row_content.get('source_port'),
+            'FileSHA256': row_content.get('file_sha_256')
+        }
+
+
+    def records_to_human_readable_output(fields: str, table_name: str, results: list) -> str:
+        """
+        This function gets all relevant data for the human readable output of a specific table.
+        By design if the user queries all fields of the table (i.e. enters '*' in the query) than the outputs
+        shown in the war room will be the same for each query - the outputs will be the headers list in the code.
+        If the user selects different fields in the query than those fields will be shown to the user.
+
+        Args:
+            fields: The field of the table named table_name
+            table_name: The name of the table
+            results: The results needs to be shown
+
+        Returns:
+            A markdown table of the outputs
+        """
+        filtered_results: list = []
+
+        if fields == '*':
+            for result in results:
+                filtered_result = {
+                    'Source Address': result.get('source_ip', {}).get('value'),
+                    'Destination Address': result.get('dest_ip', {}).get('value'),
+                    'Application': result.get('app'),
+                    'Action': result.get('action', {}).get('value'),
+                    'RuleMatched': result.get('rule_matched'),
+                    'TimeGenerated': human_readable_time_from_epoch_time(result.get('time_generated')),
+                }
+                filtered_results.append(filtered_result)
+        else:
+            for result in results:
+                filtered_result = {}
+                for root in result.keys():
+                    parsed_tree: dict = parse_tree_by_root_to_leaf_paths(root, result[root])
+                    filtered_result.update(parsed_tree)
+                filtered_results.append(filtered_result)
+
+        return tableToMarkdown(f'Logs {table_name} table', filtered_results, removeNull=True)
+
+
+    def parse_tree_by_root_to_leaf_paths(root: str, body) -> dict:
+        """
+        This function receives a dict (root and a body) and parses it according to the upcoming example:
+        Input: root = 'a', body = {'b': 2, 'c': 3, 'd': {'e': 5, 'f': 6, 'g': {'h': 8, 'i': 9}}}.
+        So the dict is {'a': {'b': 2, 'c': 3, 'd': {'e': 5, 'f': 6, 'g': {'h': 8, 'i': 9}}}}
+        The expected output is {'a.b': 2, 'a.c': 3, 'a.d.e': 5, 'a.d.f': 6, 'a.d.g.h': 8, 'a.d.g.i': 9}
+        Basically what this function does is when it gets a tree it creates a dict from it which it's keys are all
+        root to leaf paths and the corresponding values are the values in the leafs
+        Please note that the implementation is similar to DFS on trees (which means we don't have to check for visited
+        nodes since there are no cycles)
+
+        Args:
+            root: The root string
+            body: The body of the root
+
+        Returns:
+            The parsed tree
+        """
+        parsed_tree: dict = {}
+        help_stack: list = [(root, body)]
+
+        while help_stack:
+            node: tuple = help_stack.pop()
+            root_to_node_path: str = node[0]
+            body = node[1]
+            if isinstance(body, dict):
+                for key, value in body.items():
+                    # for each node we append a tuple of it's body and the path from the root to it
+                    help_stack.append((root_to_node_path + '.' + key, value))
+            elif isinstance(body, list):
+                for element in body:
+                    help_stack.append((root_to_node_path, element))
+            else:
+                parsed_tree[root_to_node_path] = body
+        return parsed_tree
+
+
+    def build_where_clause(args: dict) -> str:
+        """
+        This function transforms the relevant entries of dict into the where part of a SQL query
+
+        Args:
+            args: The arguments dict
+
+        Returns:
+            A string represents the where part of a SQL query
+        """
+
+        args_dict = {
+            'source_ip': 'source_ip.value',
+            'dest_ip': 'dest_ip.value',
+            'rule_matched': 'rule_matched',
+            'from_zone': 'from_zone',
+            'to_zone': 'to_zone',
+            'source_port': 'source_port',
+            'dest_port': 'dest_port',
+            'action': 'action.value',
+            'file_sha_256': 'file_sha_256',
+            'file_name': 'file_name',
+        }
+        non_string_keys = {'dest_port', 'source_port'}
+        if 'query' in args:
+            # if query arg is supplied than we just need to parse it and only it
+            return args['query'].strip()
+
+        # We want to add only keys that are part of the query
+        string_query_fields = {key: value for key, value in args.items() if key in args_dict and key not in non_string_keys}
+        or_statements = []
+        for key, values in string_query_fields.items():
+            string_values_list: list = argToList(values)
+            field = args_dict[key]
+            or_statements.append(' OR '.join([f'{field} = "{value}"' for value in string_values_list]))
+        # ports are digested as ints and cannot be sent as strings
+        non_string_query_fields = {key: value for key, value in args.items() if key in non_string_keys}
+        for key, values in non_string_query_fields.items():
+            non_string_values_list: list = argToList(values)
+            field = args_dict[key]
+            or_statements.append(' OR '.join([f'{field} = {value}' for value in non_string_values_list]))
+        where_clause = ' AND '.join([f'({or_statement})' for or_statement in or_statements if or_statement])
+        return where_clause
+
+
+    def get_encrypted(auth_id: str, key: str) -> str:
+        """
+
+        Args:
+            auth_id (str): auth_id from oproxy
+            key (str): key from oproxy
+
+        Returns:
+            The encrypted auth_id with the time it was encrypted using AESGCM algorithm
+        """
+
+        def create_nonce() -> bytes:
+            return os.urandom(12)
+
+        def encrypt(string: str, enc_key: str) -> bytes:
+            """
+
+            Args:
+                enc_key (str):
+                string (str):
+
+            Returns:
+                bytes:
+            """
+            # String to bytes
+            decoded_key = base64.b64decode(enc_key)
+            # Create key
+            aes_gcm = AESGCM(decoded_key)
+            # Create nonce
+            nonce = create_nonce()
+            # Create ciphered data
+            data = string.encode()
+            ct = aes_gcm.encrypt(nonce, data, None)
+            return base64.b64encode(nonce + ct)
+
+        now = int(time.time())
+        return encrypt(f'{now}:{auth_id}', key).decode('utf-8')
+
+
+    def prepare_fetch_incidents_query(fetch_timestamp: str,
+                                      fetch_severity: list,
+                                      fetch_subtype: list,
+                                      fetch_limit: str) -> str:
+        """
+        Prepares the SQL query for fetch incidents command
+        Args:
+            fetch_limit: Indicates how many incidents should be queried
+            fetch_timestamp: The date from which threat logs should be queried
+            fetch_severity: Severity associated with the incident.
+            fetch_subtype: Identifies the log subtype.
+
+        Returns:
+            SQL query that matches the arguments
+        """
+        query = 'SELECT * FROM `firewall.threat` '  # guardrails-disable-line
+        query += f'WHERE (TIME(time_generated) Between TIME(TIMESTAMP("{fetch_timestamp}")) ' \
+                 f'AND TIME(CURRENT_TIMESTAMP))'
+        if fetch_subtype and 'all' not in fetch_subtype:
+            sub_types = [f'sub_type.value = "{sub_type}"' for sub_type in fetch_subtype]
+            query += f' AND ({" OR ".join(sub_types)})'
+        if fetch_severity and 'all' not in fetch_severity:
+            severities = [f'vendor_severity.value = "{severity}"' for severity in fetch_severity]
+            query += f' AND ({" OR ".join(severities)})'
+        query += f' ORDER BY time_generated ASC LIMIT {fetch_limit}'
+        return query
+
+
+    def convert_log_to_incident(log: dict) -> dict:
+        time_generated = log.get('time_generated', 0)
+        occurred = human_readable_time_from_epoch_time(time_generated, utc_time=True)
+        incident = {
+            'name': 'Cortex Firewall Threat',
+            'rawJSON': json.dumps(log, ensure_ascii=False),
+            'occurred': occurred
+        }
+        return incident
+
+
+    ''' COMMANDS FUNCTIONS '''
+
+
+
+    def test_module(client: Client):
+        query = 'SELECT * FROM `firewall.traffic` limit 1'
+        client.query_loggings(query)
+        return_outputs('ok')
+
+
+    def query_logs_command(args: dict, client: Client) -> Tuple[str, Dict[str, List[dict]], List[Dict[str, Any]]]:
+        """
+        Return the result of querying the Logging service
+        """
+        query = args.get('query', '')
+        limit = args.get('limit', '')
+
+        if 'limit' not in query.lower():
+            query += f' LIMIT {limit}'
+
+        records, raw_results = client.query_loggings(query)
+
+        table_name = get_table_name(query)
+        transformed_results = [common_context_transformer(record) for record in records]
+        human_readable = tableToMarkdown('Logs ' + table_name + ' table', transformed_results, removeNull=True)
+        ec = {
+            'CDL.Logging': transformed_results
+        }
+        return human_readable, ec, raw_results
+
+
+    def get_table_name(query: str) -> str:
+        """
+        Table name is stored in log_type attribute of the records
+        Args:
+            query: Query string, i.e SELECT * FROM firewall.threat LIMIT 1
+
+        Returns:
+            The query's table name
+        """
+        find_table_name_from_query = r'(FROM `)(\w+.\w+)(`)'
+        search_result = re.search(find_table_name_from_query, query)
+        if search_result:
+            return search_result.group(2)
+        return "Unrecognized table name"
+
+
+    def get_critical_logs_command(args: dict, client: Client) -> Tuple[str, Dict[str, List[dict]], List[Dict[str, Any]]]:
+        """
+        Queries Cortex Logging according to a pre-set query
+        """
+        logs_amount = args.get('limit')
+        query_start_time, query_end_time = query_timestamp(args)
+        query = 'SELECT * FROM `firewall.threat` WHERE severity = "Critical" '  # guardrails-disable-line
+        query += f'AND (TIME(time_generated) BETWEEN TIME(TIMESTAMP("{query_start_time}")) AND ' \
+                 f'TIME(TIMESTAMP("{query_end_time}"))) LIMIT {logs_amount}'
+
+        records, raw_results = client.query_loggings(query)
+
+        transformed_results = [threat_context_transformer(record) for record in records]
+
+        human_readable = tableToMarkdown('Logs threat table', transformed_results, removeNull=True)
+        ec = {
+            'CDL.Logging.Threat': transformed_results
+        }
+        return human_readable, ec, raw_results
+
+
+    def query_timestamp(args: dict) -> Tuple[datetime, datetime]:
+        start_time = args.get('start_time', '')
+        end_time = args.get('end_time', '')
+        time_range = args.get('time_range', '')
+        if time_range:
+            query_start_time, query_end_time = parse_date_range(time_range)
+        else:
+            # parses user input to datetime object
+            query_start_time = parser.parse(start_time)
+            # if end_time is not given- will be replaced with current time
+            query_end_time = parser.parse(end_time) if end_time else datetime.fromtimestamp(time.time())
+        return query_start_time.replace(microsecond=0), query_end_time.replace(microsecond=0)
+
+
+    def get_social_applications_command(args: dict,
+                                        client: Client) -> Tuple[str, Dict[str, List[dict]], List[Dict[str, Any]]]:
+        """ Queries Cortex Logging according to a pre-set query """
+        logs_amount = args.get('limit')
+        query_start_time, query_end_time = query_timestamp(args)
+        query = 'SELECT * FROM `firewall.traffic` WHERE app_sub_category = "social-networking" '  # guardrails-disable-line
+        query += f' AND (TIME(time_generated) BETWEEN TIME(TIMESTAMP("{query_start_time}")) AND ' \
+                 f'TIME(TIMESTAMP("{query_end_time}"))) LIMIT {logs_amount}'
+
+        records, raw_results = client.query_loggings(query)
+
+        transformed_results = [traffic_context_transformer(record) for record in records]
+
+        human_readable = tableToMarkdown('Logs traffic table', transformed_results, removeNull=True)
+        ec = {
+            'CDL.Logging.Traffic': transformed_results
+        }
+        return human_readable, ec, raw_results
+
+
+    def search_by_file_hash_command(args: dict, client: Client) -> Tuple[str, Dict[str, List[dict]], List[Dict[str, Any]]]:
+        """
+        Queries Cortex Logging according to a pre-set query
+        """
+        logs_amount = args.get('limit')
+        file_hash = args.get('SHA256')
+
+        query_start_time, query_end_time = query_timestamp(args)
+        query = f'SELECT * FROM `firewall.threat` WHERE file_sha_256 = "{file_hash}" '  # guardrails-disable-line
+        query += f'AND (TIME(time_generated) BETWEEN TIME(TIMESTAMP("{query_start_time}")) AND ' \
+                 f'TIME(TIMESTAMP("{query_end_time}"))) LIMIT {logs_amount}'
+
+        records, raw_results = client.query_loggings(query)
+
+        transformed_results = [threat_context_transformer(record) for record in records]
+
+        human_readable = tableToMarkdown('Logs threat table', transformed_results, removeNull=True)
+        ec = {
+            'CDL.Logging.Threat': transformed_results
+        }
+        return human_readable, ec, raw_results
+
+
+    def query_traffic_logs_command(args: dict, client: Client) -> Tuple[str, dict, List[Dict[str, Any]]]:
+        """
+        The function of the command that queries firewall.traffic table
+
+            Returns: a Demisto's entry with all the parsed data
+        """
+        table_name: str = 'traffic'
+        context_transformer_function = traffic_context_transformer
+        table_context_path: str = 'CDL.Logging.Traffic'
+        return query_table_logs(args, client, table_name, context_transformer_function, table_context_path)
+
+
+    def query_threat_logs_command(args: dict, client: Client) -> Tuple[str, dict, List[Dict[str, Any]]]:
+        """
+        The function of the command that queries firewall.threat table
+
+            Returns: a Demisto's entry with all the parsed data
+        """
+        query_table_name: str = 'threat'
+        context_transformer_function = threat_context_transformer
+        table_context_path: str = 'CDL.Logging.Threat'
+        return query_table_logs(args, client, query_table_name, context_transformer_function, table_context_path)
+
+
+    def query_table_logs(args: dict,
+                         client: Client,
+                         table_name: str,
+                         context_transformer_function: Callable[[dict], dict],
+                         table_context_path: str) -> Tuple[str, dict, List[Dict[str, Any]]]:
+        """
+        This function is a generic function that get's all the data needed for a specific table of Cortex and acts as a
+        regular command function
+
+        Args:
+            args: demisto args
+            client: The client
+            table_name: the name of the table in Cortex
+            context_transformer_function:  the context transformer function to parse the data
+            table_context_path: the context path where the parsed data should be located
+        """
+        fields, query = build_query(args, table_name)
+        results, raw_results = client.query_loggings(query)
+        outputs = [context_transformer_function(record) for record in results]
+        human_readable = records_to_human_readable_output(fields, table_name, results)
+
+        context_outputs: dict = {table_context_path: outputs}
+        return human_readable, context_outputs, raw_results
+
+
+    def build_query(args, table_name):
+        fields = args.get('fields', 'all')
+        fields = '*' if 'all' in fields else fields
+        where = build_where_clause(args)
+        query_start_time, query_end_time = query_timestamp(args)
+        timestamp_limitation = f'(TIME(time_generated) BETWEEN TIME(TIMESTAMP("{query_start_time}")) AND ' \
+                               f'TIME(TIMESTAMP("{query_end_time}"))) '
+        limit = args.get('limit', '5')
+        where += f' AND {timestamp_limitation}' if where else timestamp_limitation
+        query = f'SELECT {fields} FROM `firewall.{table_name}` WHERE {where} LIMIT {limit}'
+        return fields, query
+
+
+    def fetch_incidents(client: Client,
+                        first_fetch_timestamp: str,
+                        fetch_severity: list,
+                        fetch_subtype: list,
+                        fetch_limit: str,
+                        last_run: dict) -> Tuple[Dict[str, str], list]:
+        last_fetched_event_timestamp = last_run.get('lastRun')
+
+        if last_fetched_event_timestamp:
+            last_fetched_event_timestamp = parser.parse(last_fetched_event_timestamp)
+        else:
+            last_fetched_event_timestamp, _ = parse_date_range(first_fetch_timestamp)
+            last_fetched_event_timestamp = last_fetched_event_timestamp.replace(microsecond=0)
+        query = prepare_fetch_incidents_query(last_fetched_event_timestamp, fetch_severity, fetch_subtype, fetch_limit)
+        demisto.debug('Query being fetched: {}'.format(query))
+        records, _ = client.query_loggings(query)
+        if not records:
+            return {'lastRun': str(last_fetched_event_timestamp)}, []
+
+        incidents = [convert_log_to_incident(record) for record in records]
+        max_fetched_event_timestamp = max(records, key=lambda record: record.get('time_generated', 0)).get('time_generated',
+                                                                                                           0)
+        next_run = {'lastRun': human_readable_time_from_epoch_time(max_fetched_event_timestamp)}
+        return next_run, incidents
+
+
+    ''' EXECUTION CODE '''
+
+
+
+    def main():
+        os.environ['PAN_CREDENTIALS_DBFILE'] = os.path.join(gettempdir(), 'pancloud_credentials.json')
+        params = demisto.params()
+        registration_id_and_url = params.get(REGISTRATION_ID_CONST).split('@')
+        if len(registration_id_and_url) != 2:
+            token_retrieval_url = "https://oproxy.demisto.ninja"  # guardrails-disable-line
+        else:
+            token_retrieval_url = registration_id_and_url[1]
+        registration_id = registration_id_and_url[0]
+        # If there's a stored token in integration context, it's newer than current
+        refresh_token = demisto.getIntegrationContext().get(REFRESH_TOKEN_CONST) or params.get(REFRESH_TOKEN_CONST)
+        enc_key = params.get(ENCRYPTION_KEY_CONST)
+        use_ssl = not params.get('insecure', False)
+        proxy = params.get('proxy', False)
+        client = Client(token_retrieval_url, registration_id, use_ssl, proxy, refresh_token, enc_key)
+        args = demisto.args()
+        command = demisto.command()
+        LOG(f'command is {command}')
+        try:
+            if command == 'test-module':
+                test_module(client)
+            elif command == 'cdl-query-logs':
+                return_outputs(*query_logs_command(args, client))
+            elif command == 'cdl-get-critical-threat-logs':
+                return_outputs(*get_critical_logs_command(args, client))
+            elif command == 'cdl-get-social-applications':
+                return_outputs(*get_social_applications_command(args, client))
+            elif command == 'cdl-search-by-file-hash':
+                return_outputs(*search_by_file_hash_command(args, client))
+            elif command == 'cdl-query-traffic-logs':
+                return_outputs(*query_traffic_logs_command(args, client))
+            elif command == 'cdl-query-threat-logs':
+                return_outputs(*query_threat_logs_command(args, client))
+            elif command == 'fetch-incidents':
+                first_fetch_timestamp = params.get('first_fetch_timestamp', '24 hours').strip()
+                fetch_severity = params.get('firewall_severity')
+                fetch_subtype = params.get('firewall_subtype')
+                fetch_limit = params.get('limit')
+                last_run = demisto.getLastRun()
+                next_run, incidents = fetch_incidents(client,
+                                                      first_fetch_timestamp,
+                                                      fetch_severity,
+                                                      fetch_subtype,
+                                                      fetch_limit,
+                                                      last_run)
+                demisto.setLastRun(next_run)
+                demisto.incidents(incidents)
+        except Exception as e:
+            error_message = str(e)
+            return_error(error_message)
+
+
+    if __name__ in ('__main__', 'builtins'):
+        main()
+  subtype: python3
+  type: python
+tests:
+- Cortex Data Lake Test
+fromversion: 4.5.0
+image: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAyCAYAAACXpx/YAAAACXBIWXMAAAsSAAALEgHS3X78AAAD6klEQVR4nO2cS24bMQyGyaL75AbJCeo5QIH6BnVPkOkN3BPER8gN4tzA3XQbB+gBHHTbRbzq1kH3ZaGA4ygUNaPxxBOA4AcIqPWgHv9QosZOkYjAscs719Y2LrBxXGDjuMDGcYGN4wIbxwU2jgtsHBfYOC6wcVxg47jAxnGBjeMCG+f9W04PEacAENIDES2TCs7wNR77+2BEPAeABQBcRNl3RDRNKjuDGdWDEbEGgCsAOEkKnaPQW2BErHhbPY2ydwCwJqJN0uCluNdJQf/+Q79VUiAgonWS+WyjEuMvIRwjDwPs7OL14eMpJrGfm2+YGyLOAeAPAPwloh9Jb1HlogQAQaAwAGpJD5otfiC0dksuW/LnYH+u2SiwpaVg91SxsVbqdqXFQDtr0bYW5cFJKlEniLsR9eZc9hsA/gHAL22d9ja0TKWT4olkbMgHYxNPhs9kWZ4Ic4DAT7YUG28ucMm8owd/7xBR2UdOH7R1alLJFh06+STybnhyQbhz3kJmAHCmbDG1yH8MdbXtKGICACsWs4tvvDDNw1ixdzR9TsJ2KLbsJY8/5jL6951Snt3ymS3bzZHMl4gWHHQ2Aed+3ogoA9EbIqqjtj8z/SSdZBMvVvwEPQnaUn+m5MmnUPME+SQ3aarUlR5cUifpU2nTq77iwYmH9jj+5BrJneFg210ePBOf6zbPI6JVkpl64VVSI8+swHM0kgBGqfPanLPXSTrv+MEzOWCbcFa8Y94rOhTTK4pui0xbeLFtE9EuXzWhM1oODwwixjYrcQ175G3v2JyJbb7hrmPrbpjyUSOPs2nPNXtBL4FDyD6ksyMxaTE7eIFGRIthTnjHqw8dRte7aLkw86RGN9u4BgcVpWTv1RH37CVbkf+d44USG69BeBuHSuoMFDveEVxw+UF0CbxkL2i4DOcMX77jAZ6GQSCidtbJbb3PYEu21jkvYsViN3wecnaNBSLOhLhhvb+Idb8+WGQt8hIRnryQxxH1Wl7EC9vLC70WRa8y48lG0XxN2rX1lUuvEEUfcg+uxHj3LzuUMuIgNxlHW2otFCLJztSUaS9fdOyEMFLgdY8XHdPSRWtLYwusjDN5GBXnKJpLn2tS4+VLRFxxhzMlUt3yZHNRdmh3G30ObW8RsYkwm3M5bLFXHdeKHZ+58ed4rBt+zxtfxxYF23VsUztqNPqc77LuQuQtZbzA6w7iWAtHZF0aOI72dWFHIOFfFx6J0X7RwV75VQQPjhWB4Vnkit9lOyPwpn/h7z/ZOT7+XzgYx39VaRwX2DgusHFcYOO4wMZxgY3jAhvHBTaOC2wcF9g4LrBxXGDjuMDGcYEtAwD/AbjPSozwVJX9AAAAAElFTkSuQmCC
+detaileddescription: >
+  ## Overview
+
+  ---
+
+
+  Palo Alto Networks Cortex Data Lake provides cloud-based, centralized log storage and aggregation for your on premise, virtual (private cloud and public cloud) firewalls, for Prisma Access, and for cloud-delivered services such as Cortex XDR
+
+  This integration was integrated and tested with version 2 of Cortex Data Lake
+
+
+
+
+  ---
+
+
+  ## Configure Cortex Data Lake on Demisto
+
+
+  ---
+
+
+  1. Go to the [HUB](https://apps.paloaltonetworks.com/apps) and select the `Cortex™ XSOAR` app
+
+  2. In the War Room, run the command `!GetLicenseID` to get the `license ID`.
+
+  3. Go to __Settings__ > __ABOUT__ > __License__ to get the `Customer Name`.
+
+  4. Insert the `license ID` and the `Customer Name` in the required fields and complete the authentication process in order  
+
+  to get the __Authentication Token__  __Registration ID__ __Encryption Key__
+
+  5. Navigate to __Settings__ > __Integrations__ > __Servers & Services__.
+
+  6. Search for Palo Alto Networks Cortex v2.
+
+  7. Click __Add instance__ to create and configure a new integration instance.
+      * __Name__: a textual name for the integration instance.
+      * __Authentication Token__: From the authentication process
+      * __Registration ID__: From the authentication process
+      * __Encryption Key__: From the authentication process
+      * __proxy__: Use system proxy settings
+      * __insecure__: Trust any certificate (not secure)
+      * __Fetch incidents__: Whether to fetch incidents or not
+      * __first_fetch_timestamp__: First fetch time (<number> <time unit>, e.g., 12 hours, 7 days, 3 months, 1 year)
+      * __Severity of events to fetch (Firewall)__: Select from all,Critical,High,Medium,Low,Informational,Unused
+      * __Subtype of events to fetch (Firewall)__: Select from all,attack,url,virus,spyware,vulnerability,file,scan,flood,packet,resource,data,url-content,wildfire,extpcap,wildfire-virus,http-hdr-insert,http-hdr,email-hdr,spyware-dns,spyware-wildfire-dns,spyware-wpc-dns,spyware-custom-dns,spyware-cloud-dns,spyware-raven,spyware-wildfire-raven,spyware-wpc-raven,wpc-virus,sctp
+  8. Click __Test__ to validate the URLs, token, and connection.

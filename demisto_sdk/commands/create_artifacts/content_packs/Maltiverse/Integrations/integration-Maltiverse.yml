@@ -1,0 +1,993 @@
+category: Data Enrichment & Threat Intelligence
+commonfields:
+  id: Maltiverse
+  version: -1
+configuration:
+- defaultvalue: https://api.maltiverse.com
+  display: Server URL
+  name: server_url
+  required: false
+  type: 0
+- display: API Key
+  name: api_key
+  required: false
+  type: 4
+- display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+- display: Trust any certificate (not secure)
+  hidden: false
+  name: insecure
+  required: false
+  type: 8
+description: Use the Maltiverse integration to analyze suspicious hashes, URLs, domains and IP addresses.
+display: Maltiverse
+name: Maltiverse
+script:
+  commands:
+  - arguments:
+    - default: true
+      description: IP address to check
+      isArray: false
+      name: ip
+      required: true
+      secret: false
+    - default: true
+      defaultValue: '5'
+      description: If the number of positives is higher than the threshold, the IP address will be considered malicious. If the threshold is not specified, the default IP threshold, as configured in the instance settings, will be used.
+      isArray: false
+      name: threshold
+      required: false
+      secret: false
+    - default: false
+      defaultValue: 'false'
+      description: Whether to return all results. Note that there can be thousands of results. It is advised that you do not set to "true" in playbooks. The default value is "false".
+      isArray: false
+      name: fullResponse
+      required: false
+      secret: false
+    deprecated: false
+    description: Checks the reputation of an IP address.
+    execution: false
+    name: ip
+    outputs:
+    - contextPath: IP.Address
+      description: The checked IP address.
+      type: String
+    - contextPath: IP.Geo.Country
+      description: The country code of the IP address.
+      type: String
+    - contextPath: IP.Malicious.Description
+      description: Describes the reason why the IP address is in the blacklist.
+      type: Unknown
+    - contextPath: IP.PositiveDetections
+      description: The number of sources that positively reported the indicator as blacklist.
+      type: Number
+    - contextPath: DBotScore.Score
+      description: The DBot score.
+      type: Number
+    - contextPath: DBotScore.Type
+      description: The type of indicator.
+      type: String
+    - contextPath: DBotScore.Vendor
+      description: The vendor used to calculate the score.
+      type: String
+    - contextPath: DBotScore.Indicator
+      description: The indicator that was tested.
+      type: String
+    - contextPath: Maltiverse.IP.Address
+      description: The checked IP address.
+      type: String
+    - contextPath: Maltiverse.IP.Classification
+      description: Qualitative maliciousness classification for an IoC. Possible values are malicious, suspicious, neutral, and whitelisted.
+      type: Unknown
+    - contextPath: Maltiverse.IP.Blacklist.FirstSeen
+      description: First time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.IP.Blacklist.LastSeen
+      description: Last time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.IP.Blacklist.Description
+      description: Describes the reason why the IP is in the blacklist.
+      type: String
+    - contextPath: Maltiverse.IP.Blacklist.Source
+      description: The name of sources that reported the indicator.
+      type: String
+    - contextPath: Maltiverse.IP.Tags
+      description: The type of indicator.
+      type: String
+    - contextPath: IP.ThreatTypes
+      description: A list with the description of the elements in the blacklist.
+      type: Unknown
+    - contextPath: IP.Tags
+      description: The type of indicator.
+      type: String
+  - arguments:
+    - default: true
+      description: Domain address to check.
+      isArray: false
+      name: domain
+      required: true
+      secret: false
+    - default: true
+      defaultValue: '5'
+      description: If the number of positives is higher than the threshold, the domain will be considered malicious. If the threshold is not specified, the default domain threshold, as configured in the instance settings, will be used.
+      isArray: false
+      name: threshold
+      required: false
+      secret: false
+    - default: true
+      defaultValue: 'false'
+      description: Whether to return all results. Note that there can be thousands of results. It is advised that you do not set to "true" in playbooks. The default value is "false".
+      isArray: false
+      name: fullResponse
+      required: false
+      secret: false
+    deprecated: false
+    description: Checks the reputation of a domain.
+    execution: false
+    name: domain
+    outputs:
+    - contextPath: Domain.Name
+      description: The domain name.
+      type: String
+    - contextPath: Domain.CreationDate
+      description: Date when the IoC was created in the system.
+      type: Date
+    - contextPath: Domain.ModificationDate
+      description: Date when the IoC was last updated.
+      type: Date
+    - contextPath: Domain.TLD
+      description: Top Level Domain of the hostname
+      type: Number
+    - contextPath: Domain.ASName
+      description: Autonomous system name of the domain.
+      type: String
+    - contextPath: DBotScore.Score
+      description: The DBot score.
+      type: Number
+    - contextPath: DBotScore.Type
+      description: The type of indicator.
+      type: String
+    - contextPath: DBotScore.Vendor
+      description: The vendor used to calculate the score.
+      type: String
+    - contextPath: DBotScore.Indicator
+      description: The indicator that was tested.
+      type: String
+    - contextPath: Maltiverse.Domain.Address
+      description: The domain name.
+      type: String
+    - contextPath: Maltiverse.Domain.Classification
+      description: Qualitative maliciousness classification for an IoC. Possible value are malicious, suspicious, neutral, and whitelist.
+      type: String
+    - contextPath: Maltiverse.Domain.Blacklist.Firstseen
+      description: First time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.Domain.Blacklist.LastSeen
+      description: Last time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.Domain.Blacklist.Description
+      description: Describes the reason why the domain is in the blacklist.
+      type: Unknown
+    - contextPath: Maltiverse.Domain.Blacklist.Source
+      description: The name of sources that reported the indicator.
+      type: String
+    - contextPath: Maltiverse.Domain.Tags
+      description: Attribute to label an IoC.
+      type: String
+    - contextPath: Maltiverse.Domain.ModificationTime
+      description: Date when the IoC was last updated.
+      type: Date
+    - contextPath: Maltiverse.Domain.CreationTime
+      description: Date when the IoC was created in the system.
+      type: Date
+    - contextPath: Maltiverse.Domain.TLD
+      description: Top-level domain of the hostname.
+      type: String
+    - contextPath: Maltiverse.Domain.ResolvedIP.IP
+      description: Stores an IP that was resolved by the domain.
+      type: String
+    - contextPath: Maltiverse.Domain.ResolvedIP.Timestamp
+      description: Stores a timestamp when an IP address has been resolved by the domain.
+      type: Date
+    - contextPath: Domain.ThreatTypes
+      description: A list with the description of the elements in the blacklist.
+      type: Unknown
+    - contextPath: Domain.Tags
+      description: Attribute to label an IoC.
+      type: String
+  - arguments:
+    - default: true
+      description: URL address to check.
+      isArray: false
+      name: url
+      required: true
+      secret: false
+    - default: true
+      defaultValue: '5'
+      description: If the number of positives is higher than the threshold, the URL address will be considered malicious. If the threshold is not specified, the default URL threshold, as configured in the instance settings, will be used.
+      isArray: false
+      name: threshold
+      required: false
+      secret: false
+    - default: true
+      defaultValue: 'false'
+      description: Whether to return all results. Note that there can be thousands of results. It is advised that you do not set to "true" in playbooks. The default value is "false".
+      isArray: false
+      name: fullResponse
+      required: false
+      secret: false
+    deprecated: false
+    description: Checks the reputation of an URL.
+    execution: false
+    name: url
+    outputs:
+    - contextPath: URL.Data
+      description: The URL that was checked.
+      type: String
+    - contextPath: URL.Malicious.Description
+      description: Describes the reason why the URL is in the blacklist.
+      type: String
+    - contextPath: URL.Malicious.Vendor
+      description: The vendor that sends the indicator for reputation check.
+      type: String
+    - contextPath: URL.PositiveDetections
+      description: The number of sources that positively reported the indicator as blacklist.
+      type: Number
+    - contextPath: DBotScore.Score
+      description: The DBot score
+      type: Number
+    - contextPath: DBotScore.Type
+      description: The type of indicator.
+      type: String
+    - contextPath: DBotScore.Vendor
+      description: The vendor used to calculate the score.
+      type: String
+    - contextPath: DBotScore.Indicator
+      description: The indicator that was tested.
+      type: String
+    - contextPath: Maltiverse.URL.Address
+      description: The checked URL.
+      type: String
+    - contextPath: Maltiverse.URL.Classification
+      description: Qualitative maliciousness classification for an IoC. Possible values are malicious, suspicious, neutral, and whitelist.
+      type: String
+    - contextPath: Maltiverse.URL.Blacklist.FirstSeen
+      description: First time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.URL.Blacklist.LastSeen
+      description: Last time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.URL.Blacklist.Description
+      description: Describes the reason why the URL is in the blacklist.
+      type: Date
+    - contextPath: Maltiverse.URL.Blacklist.Source
+      description: The name of sources that reported the indicator.
+      type: String
+    - contextPath: Maltiverse.URL.Tags
+      description: Attribute to label an IoC.
+      type: String
+    - contextPath: Maltiverse.URL.ModificationTime
+      description: Date when the IOC was last updated.
+      type: Date
+    - contextPath: Maltiverse.URL.CreationTime
+      description: Date when the IOC was created in the system.
+      type: Date
+    - contextPath: Maltiverse.URL.Hostname
+      description: Stores the hostname to which the URL belongs.
+      type: String
+    - contextPath: Maltiverse.URL.Domain
+      description: Stores the domain to which the hostname belongs. Hostname and domain can match on level 2 hostnames
+      type: String
+    - contextPath: Maltiverse.URL.TLD
+      description: Top-level domain of the hostname.
+      type: String
+    - contextPath: URL.ThreatTypes
+      description: A list with the description of the elements in the blacklist.
+      type: Unknown
+    - contextPath: URL.Tags
+      description: Attribute to label an IoC.
+      type: String
+  - arguments:
+    - default: true
+      description: SHA256 hash to check.
+      isArray: false
+      name: file
+      required: true
+      secret: false
+    - default: true
+      defaultValue: '5'
+      description: If the number of positives AV detection is higher than the threshold, the file will be considered malicious. If the threshold is not specified, the default file threshold, as configured in the instance settings, will be used.
+      isArray: false
+      name: threshold
+      required: false
+      secret: false
+    - default: true
+      defaultValue: 'false'
+      description: Whether to return all results. Note that there can be thousands of results. It is advised that you do not set to "true" in playbooks. The default value is "false".
+      isArray: false
+      name: fullResponse
+      required: false
+      secret: false
+    deprecated: false
+    description: Checks the reputation of a file by file hash.
+    execution: false
+    name: file
+    outputs:
+    - contextPath: File.Name
+      description: The full file name (including file extension).
+      type: String
+    - contextPath: File.MD5
+      description: The MD5 hash of the file.
+      type: String
+    - contextPath: File.SHA1
+      description: The SHA1 hash of the file.
+      type: String
+    - contextPath: File.SHA256
+      description: The SHA256 hash of the file.
+      type: String
+    - contextPath: File.Size
+      description: The size of the file in bytes.
+      type: Number
+    - contextPath: File.Extension
+      description: The extension of the file.
+      type: String
+    - contextPath: File.Type
+      description: Description of the file type based on its magic numbers.
+      type: String
+    - contextPath: File.Path
+      description: The path of the file.
+      type: String
+    - contextPath: DBotScore.Score
+      description: The DBot score.
+      type: Number
+    - contextPath: DBotScore.Type
+      description: The type of indicator.
+      type: String
+    - contextPath: DBotScore.Vendor
+      description: The vendor used to calculate the score.
+      type: String
+    - contextPath: DBotScore.Indicator
+      description: The indicator that was tested.
+      type: String
+    - contextPath: Maltiverse.File.Score
+      description: Qualitative scoring of the maliciousness of the file. Values from 0 to 100.
+      type: Number
+    - contextPath: Maltiverse.File.Tags
+      description: Attribute to label an IOC.
+      type: String
+    - contextPath: Maltiverse.File.Malicious.Vendor
+      description: For malicious files, the vendor that made the decision.
+      type: String
+    - contextPath: Maltiverse.File.Malicious.Description
+      description: For malicious files, describes the reason for the file to be malicious.
+      type: String
+    - contextPath: Maltiverse.File.PositiveDetections
+      description: The number of sources that positively reported the indicator as blacklist.
+      type: Number
+    - contextPath: Maltiverse.File.Name
+      description: The file name.
+      type: String
+    - contextPath: Maltiverse.File.Classification
+      description: Qualitative maliciousness classification for an IoC. Possible values are malicious, suspicious, neutral, and whitelist.
+      type: String
+    - contextPath: Maltiverse.File.Blacklist.FirstSeen
+      description: First time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.File.Blacklist.LastSeen
+      description: Last time that the IoC was seen.
+      type: Date
+    - contextPath: Maltiverse.File.Blacklist.Description
+      description: Describes the reason why the URL is in the blacklist.
+      type: String
+    - contextPath: Maltiverse.File.Blacklist.Source
+      description: The name of sources that reported the indicator.
+      type: String
+    - contextPath: Maltiverse.File.ModificationTime
+      description: Date when the IOC was last updated.
+      type: Date
+    - contextPath: Maltiverse.File.CreationTime
+      description: Date when the IOC was created in the system.
+      type: Date
+    - contextPath: Maltiverse.File.Size
+      description: Size of the file in bytes.
+      type: Number
+    - contextPath: Maltiverse.File.ProcessList
+      description: List of processes raised by the file in runtime.
+      type: String
+    - contextPath: Maltiverse.File.ContactedHost
+      description: List of the IP addresses contacted by the sample in runtime.
+      type: String
+    - contextPath: Maltiverse.File.DNSRequest
+      description: List of hostnames resolved by the sample in runtime.
+      type: String
+    - contextPath: File.ThreatTypes
+      description: A list with the description of the elements in the blacklist.
+      type: Unknown
+    - contextPath: File.Tags
+      description: Attribute to label an IoC.
+      type: String
+  dockerimage: demisto/python3:3.8.2.6981
+  feed: false
+  isfetch: false
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: >2
+
+
+
+
+    ''' IMPORTS '''
+
+    from typing import Tuple, Dict, Any
+
+    from _collections import defaultdict
+
+    import requests
+
+    import hashlib
+
+
+    # Disable insecure warnings
+
+    requests.packages.urllib3.disable_warnings()
+
+
+    ''' CONSTANTS '''
+
+    SERVER_URL = 'https://api.maltiverse.com'
+
+    DBOT_SCORE_KEY = 'DBotScore(val.Indicator == obj.Indicator && val.Vendor == obj.Vendor)'
+
+    DEFAULT_THRESHOLD = 5
+
+
+
+    class Error(Exception):
+        """Base class for exceptions in this module."""
+        pass
+
+
+    class NotFoundError(Error):
+        """Exception raised for 404 - Page Not Found errors.
+
+        Attributes:
+            message -- explanation of the error
+        """
+
+        def __init__(self, message):
+            self.message = message
+
+
+    class Client(BaseClient):
+        """
+        Client will implement the service API, and should not contain any Demisto logic.
+        Should only do requests and return data.
+        """
+
+        def __init__(self, url: str, use_ssl: bool, use_proxy: bool, auth_token=None):
+            self.auth_token = auth_token
+            super().__init__(url, verify=use_ssl, proxy=use_proxy, headers={'Accept': 'application/json'})
+            if self.auth_token:
+                self._headers.update({'Authorization': 'Bearer ' + self.auth_token})
+
+        def http_request(self, method, url_suffix):
+            ok_codes = (200, 401, 403, 404, 500)  # includes responses that are ok (200) and error responses that should be
+            # handled by the client and not in the BaseClient
+            try:
+                res = self._http_request(method, url_suffix, resp_type='response', ok_codes=ok_codes)
+                if res.status_code == 200:
+                    try:
+                        return res.json()
+                    except ValueError as exception:
+                        raise DemistoException('Failed to parse json object from response: {}'
+                                               .format(res.content), exception)
+
+                if res.status_code in [401, 403, 500]:
+                    try:
+                        err_msg = str(res.json())
+                        if self.auth_token:
+                            err_msg = f'Check server URL and API key \n{err_msg}'
+                        else:
+                            err_msg = f'Check server URL or try using an API key \n{err_msg}'
+                    except ValueError:
+                        err_msg = 'Check server URL or API key -\n' + str(res)
+                    raise DemistoException(err_msg)
+
+                if res.status_code == 404:
+                    raise NotFoundError('Page Not Found')
+
+            except Exception as e:
+                if '<requests.exceptions.ConnectionError>' in e.args[0]:
+                    raise DemistoException('Connection error - Verify that the server URL parameter is correct and that '
+                                           'you have access to the server from your host.\n')
+                raise e
+
+        def ip_report(self, ip: str) -> dict:
+            if not is_ip_valid(ip):
+                raise DemistoException('The given IP was invalid')
+            return self.http_request('GET', f'/ip/{ip}')
+
+        def url_report(self, url: str) -> dict:
+            sha256_url = urlToSHA256(url)
+            try:
+                report = self.http_request('GET', f'/url/{sha256_url}')
+                return report
+            except NotFoundError:
+                LOG(f'URL {url} was not found')
+                return {'NotFound': True}
+            except Exception as e:
+                raise e
+
+        def domain_report(self, domain: str) -> dict:
+            return self.http_request('GET', f'/hostname/{domain}')
+
+        def file_report(self, sha256: str) -> dict:
+            try:
+                report = self.http_request('GET', f'/sample/{sha256}')
+                return report
+            except NotFoundError:
+                LOG(f'file {sha256} was not found')
+                return {'NotFound': True}
+            except Exception as e:
+                raise e
+
+
+    def test_module(client=None):
+        """
+        Returning 'ok' indicates that the integration works like it is supposed to. Connection to the service is successful.
+
+        Args:
+            client: Maltiverse client
+
+        Returns:
+            'ok' if test passed, anything else will fail the test.
+        """
+        try:
+            client.http_request('GET', '/ip/8.8.8.8')
+            return 'ok'
+        except NotFoundError as e:
+            return_error('Check server URL - ' + e.message)
+        except Exception as e:
+            raise e
+
+
+    def calculate_score(positive_detections: int, classification: str, threshold: int, anti_virus: int = 0) -> int:
+        """
+        Calculates Demisto score based on the classification of Maltiverse and number of positive detections in the blacklist.
+
+        Args:
+            positive_detections (int): the number of items in the blacklist
+            classification (str): the classification given to the IoC by Maltiverse. Can be one of: neutral, whitelist,
+            suspicious, malicious
+            threshold (int): the score threshold configured by the user.
+            anti_virus (int) - optional: used to calculate the score only in the case that the IoC is a file. Indicates the
+            number of items in the list of antivirus detections.
+
+        Returns:
+            int - Demisto's score for the indicator
+        """
+        if positive_detections == 0 and classification == 'neutral':
+            return 0
+        elif classification == 'whitelist':
+            return 1
+        elif positive_detections <= threshold and classification != 'malicious':
+            if anti_virus > 1:
+                return 3
+            return 2
+        elif positive_detections > threshold or classification == 'malicious':
+            return 3
+        else:  # if reached this line there is a problem with the logic
+            return -1
+
+
+    def urlToSHA256(url: str) -> str:
+        """
+        Converts a url into its SHA256 hash.
+
+        Args:
+            url (str): the url that should be converted into  SHA256
+
+        Returns:
+            str - the SHA256 hash of the url
+        """
+        return hashlib.sha256(url.encode('utf-8')).hexdigest()
+
+
+    def create_blacklist_keys(blacklist):
+        """
+        Converts the Blacklist keys into context keys format.
+
+        Args:
+        blacklist (list): a list of dictionaries, where each dictionary is a positive detection of the IoC
+
+        Returns:
+        A new blacklist in which the keys are context keys
+        """
+        if not blacklist:
+            return []
+        new_blacklist = []
+        for detection in blacklist:
+            detection_keys = {}
+            for key in detection.keys():
+                detection_keys[string_to_context_key(key)] = detection[key]
+            new_blacklist.append(detection_keys)
+        return new_blacklist
+
+
+    def create_tags(tags: list) -> list:
+        """
+        Removes all urls from the tags list
+
+        Args:
+        tags (list): a list of tags as returned by Maltiverse
+
+        Returns:
+        A new list that includes all the tags given by Maltiverse without urls
+        """
+        clean_tags = []
+        if tags:
+            for tag in tags:
+                if not re.match(urlRegex, tag):
+                    clean_tags.append(tag)
+        return clean_tags
+
+
+    def ip_command(client: Client, args: Dict[str, str]) -> Tuple[str, dict, Any]:
+        """
+        Executes IP enrichment against Maltiverse.
+
+        Args:
+            client (Client): Maltiverse client.
+            args (Dict[str, str]): the arguments for the command.
+        Returns:
+            str: human readable presentation of the IP report.
+            dict: the results to return into Demisto's context.
+            Any: the raw data from Maltiverse client (used for debugging).
+        """
+
+        threshold = int(args.get('threshold', DEFAULT_THRESHOLD))
+        markdown = ''
+        context: dict = defaultdict(list)
+        reports = []
+
+        for ip in argToList(args.get('ip')):
+            report = client.ip_report(ip)
+            positive_detections = len(report.get('blacklist', []))
+
+            blacklist_context = {'Blacklist': report.get('blacklist', [])}
+            blacklist_context['Blacklist'] = create_blacklist_keys(blacklist_context['Blacklist'])
+            blacklist_description = [blacklist_context['Blacklist'][i]['Description'] for i in
+                                     range(len(report.get('blacklist', [])))]
+
+            outputs = {
+                'Address': report.get('ip_addr', ''),
+                'Geo': {'Country': report.get('country_code', '')},
+                'PositiveDetections': positive_detections,
+                'Malicious': {'Description': blacklist_description},
+                'Tags': create_tags(report.get('tag', '')),
+                'ThreatTypes': {'threatcategory': blacklist_description}
+            }
+
+            additional_info = {'Tags': create_tags(report.get('tag', '')),
+                               'Classification': report.get('classification', ''),
+                               'Address': report.get('ip_addr', '')}
+
+            dbot_score = {'Indicator': report.get('ip_addr', ''), 'Type': 'ip', 'Vendor': 'Maltiverse',
+                          'Score': calculate_score(positive_detections, report.get('classification', ''), threshold)}
+
+            maltiverse_ip = {**blacklist_context, **additional_info}
+
+            context[outputPaths['ip']].append(outputs)
+            context[f'Maltiverse.{outputPaths["ip"]}'].append(maltiverse_ip)
+            context[DBOT_SCORE_KEY].append(dbot_score)
+
+            markdown = f'## Maltiverse IP reputation for: {report["ip_addr"]}\n'
+            markdown += f'IP Address: **{report.get("ip_addr", "")}**\n'
+            markdown += f'Country: **{report.get("country_code", "")}**\n'
+            markdown += f'Positive Detections: **{positive_detections}**\n'
+            markdown += f'Maltiverse Classification: **{report.get("classification", "")}**\n'
+            if positive_detections:
+                markdown += tableToMarkdown('Blacklist', blacklist_context['Blacklist'], removeNull=True,
+                                            headers=['Source', 'Description', 'FirstSeen', 'LastSeen'])
+
+            reports.append(report)
+
+        return markdown, context, reports
+
+
+    def url_command(client: Client, args: Dict[str, str]) -> Tuple[str, dict, Any]:
+        """
+         Executes URL enrichment against Maltiverse.
+
+         Args:
+             client (Client): Maltiverse client.
+             args (Dict[str, str]): the arguments for the command.
+         Returns:
+             str: human readable presentation of the URL report.
+             dict: the results to return into Demisto's context.
+             Any: the raw data from Maltiverse client (used for debugging).
+         """
+
+        threshold = int(args.get('threshold', DEFAULT_THRESHOLD))
+        markdown = ''
+        context: dict = defaultdict(list)
+        reports = []
+
+        for url in argToList(args.get('url', '')):
+            report = client.url_report(url)
+            if 'NotFound' in report:
+                markdown += f'No results found for {url}'
+                dbot_score = {'Indicator': url, 'Type': 'Url', 'Vendor': 'Maltiverse',
+                              'Score': 0}
+                context[DBOT_SCORE_KEY].append(dbot_score)
+                break
+            positive_detections = len(report.get('blacklist', []))
+            blacklist_context = {'Blacklist': report.get('blacklist', [])}
+            blacklist_context['Blacklist'] = create_blacklist_keys(blacklist_context['Blacklist'])
+
+            outputs = {'Data': report.get('url', ''),
+                       'PositiveDetections': positive_detections,
+                       'Tags': create_tags(report.get('tag', '')),
+                       'ThreatTypes': {'threatcategory': [blacklist_context['Blacklist'][i]['Description'] for i in
+                                                          range(len(report.get('blacklist', [])))]}
+                       }
+
+            dbot_score = {'Indicator': url, 'Type': 'Url', 'Vendor': 'Maltiverse',
+                          'Score': calculate_score(positive_detections, report.get('classification', ''), threshold)}
+
+            maltiverse_url = {string_to_context_key(field): report.get(field, '') for field in
+                              ['classification', 'modification_time', 'creation_time', 'hostname', 'domain', 'tld']}
+            maltiverse_url['Address'] = report.get('url', '')
+            maltiverse_url['Tags'] = create_tags(report.get('tag', ''))
+            maltiverse_url = {**maltiverse_url, **blacklist_context}
+
+            markdown = f'## Maltiverse URL reputation for: {url}\n'
+            markdown += f'URL: {url}\n'
+            markdown += f'URL Domain: **{report.get("domain", "")}**\n'
+            markdown += f'URL Creation Time: **{report.get("creation_time", "")}**\n'
+            markdown += f'URL Modification Time: **{report.get("modification_time", "")}**\n'
+            markdown += f'Positive Detections: **{positive_detections}**\n'
+            markdown += f'Maltiverse Classification: **{report.get("classification", "")}**\n'
+
+            if positive_detections:
+                malicious_info = {
+                    'Malicious': {
+                        'Description': [blacklist_context['Blacklist'][i]['Description'] for i in
+                                        range(len(report.get('blacklist', [])))],
+                        'Vendor': 'Maltiverse'
+                    }
+                }
+                outputs = {**outputs, **malicious_info}
+                markdown += 'URL Malicious Vendor: **Maltiverse**\n'
+                markdown += tableToMarkdown('Blacklist', blacklist_context['Blacklist'], removeNull=True,
+                                            headers=['Source', 'Description', 'FirstSeen', 'LastSeen'])
+
+            context[outputPaths['url']].append(outputs)
+            context[DBOT_SCORE_KEY].append(dbot_score)
+            context[f'Maltiverse.{outputPaths["url"]}'].append(maltiverse_url)
+
+            reports.append(report)
+
+        return markdown, context, reports
+
+
+    def domain_command(client: Client, args: Dict[str, str]) -> Tuple[str, dict, Any]:
+        """
+         Executes domain enrichment against Maltiverse.
+
+         Args:
+             client (Client): Maltiverse client.
+             args (Dict[str, str]): the arguments for the command.
+         Returns:
+             str: human readable presentation of the domain report.
+             dict: the results to return into Demisto's context.
+             Any: the raw data from Maltiverse client (used for debugging).
+         """
+        threshold = int(args.get('threshold', DEFAULT_THRESHOLD))
+        markdown = ''
+        context: dict = defaultdict(list)
+        reports = []
+
+        for domain in argToList(args.get('domain', '')):
+            report = client.domain_report(domain)
+            positive_detections = len(report.get('blacklist', []))
+
+            blacklist_context = {'Blacklist': report.get('blacklist', [])}
+            blacklist_context['Blacklist'] = create_blacklist_keys(blacklist_context['Blacklist'])
+
+            outputs = {string_to_context_key(field): report.get(field, '') for field in
+                       ['creation_time', 'modification_time']
+                       }
+            outputs['Tags'] = create_tags(report.get('tag', ''))
+            outputs['TLD'] = report.get('tld', '')
+            outputs['Name'] = report.get('hostname', '')
+            outputs['ASName'] = report.get('as_name', '')
+            outputs['ThreatTypes'] = {'threatcategory': [blacklist_context['Blacklist'][i]['Description'] for i in
+                                                         range(len(report.get('blacklist', [])))]}
+
+            dbot_score = {'Indicator': domain, 'Type': 'Domain', 'Vendor': 'Maltiverse',
+                          'Score': calculate_score(positive_detections, report.get('classification', ''), threshold)}
+
+            resolvedIP_info = {
+                'ResolvedIP':
+                    {
+                        'IP': [report['resolved_ip'][i]['ip_addr'] for i in range(len(report['resolved_ip']))],
+                        'Timestamp': [report['resolved_ip'][i]['timestamp'] for i in range(len(report['resolved_ip']))]
+                    }
+            }
+
+            maltiverse_domain = {string_to_context_key(field): report.get(field, '') for field in
+                                 ['creation_time', 'modification_time', 'classification']
+                                 }
+            maltiverse_domain['TLD'] = report.get('tld', '')
+            maltiverse_domain['Tags'] = create_tags(report.get('tag', ''))
+            maltiverse_domain['Address'] = report.get('hostname', '')
+            maltiverse_domain = {**maltiverse_domain, **blacklist_context}
+            maltiverse_domain = {**maltiverse_domain, **resolvedIP_info}
+
+            context[outputPaths['domain']].append(outputs)
+            context[DBOT_SCORE_KEY].append(dbot_score)
+            context[f'Maltiverse.{outputPaths["domain"]}'].append(maltiverse_domain)
+
+            markdown = f'## Maltiverse Domain reputation for: {report.get("hostname", "")}\n'
+            markdown += f'Domain Name: {report.get("hostname", "")}\n'
+            markdown += f'Domain Creation Time: **{report.get("creation_time", "")}**\n'
+            markdown += f'Domain Modification Time: **{report.get("modification_time", "")}**\n'
+            markdown += f'Maltiverse Classification: **{report.get("classification", "")}**\n'
+            markdown += f'Doamin Resolved IP: {[report["resolved_ip"][i]["ip_addr"] for i in range(len(report["resolved_ip"]))]}'
+
+            reports.append(report)
+
+        return markdown, context, reports
+
+
+    def file_command(client: Client, args: Dict[str, str]) -> Tuple[str, dict, Any]:
+        """
+        Executes file hash enrichment against Maltiverse.
+
+        Args:
+            client (Client): Maltiverse client.
+            args (Dict[str, str]): the arguments for the command.
+
+        Returns:
+             str: human readable presentation of the file hash report.
+             dict: the results to return into Demisto's context.
+             Any: the raw data from Maltiverse client (used for debugging).
+        """
+        threshold = int(args.get('threshold', DEFAULT_THRESHOLD))
+        markdown = ''
+        context: dict = defaultdict(list)
+        reports = []
+
+        for file in argToList(args.get('file', '')):
+            report = client.file_report(file)
+            if 'NotFound' in report:
+                markdown += f'No results found for file hash {file}'
+                dbot_score = {'Indicator': file, 'Type': 'File', 'Vendor': 'Maltiverse',
+                              'Score': 0}
+                context[DBOT_SCORE_KEY].append(dbot_score)
+                break
+            positive_detections = len(report.get('blacklist', []))
+
+            blacklist_context = {'Blacklist': report.get('blacklist', [])}
+            blacklist_context['Blacklist'] = create_blacklist_keys(blacklist_context['Blacklist'])
+
+            outputs = {'Name': report['filename'][0],
+                       'MD5': report.get('md5', ''),
+                       'SHA1': report.get('sha1', ''),
+                       'SHA256': report.get('sha256', ''),
+                       'Size': report.get('size', ''),
+                       'Type': report.get('type', ''),
+                       'Extension': (report['filename'][0]).split('.')[-1],
+                       'Path': report['process_list'][0]['normalizedpath'],
+                       'Tags': create_tags(report.get('tag', '')),
+                       'ThreatTypes': {'threatcategory': [blacklist_context['Blacklist'][i]['Description'] for i in
+                                                          range(len(report.get('blacklist', [])))]}
+                       }
+
+            dbot_score = {'Indicator': file, 'Type': 'File', 'Vendor': 'Maltiverse',
+                          'Score': calculate_score(positive_detections, report.get('classification', ''), threshold,
+                                                   len(report.get('antivirus', [])))}
+
+            process_list = {
+                'ProcessList': {
+                    string_to_context_key(field): report['process_list'][0][field] for field in
+                    ['name', 'normalizedpath', 'sha256', 'uid']
+                }
+            }
+            file_malicious = {
+                'Malicious': {
+                    'Vendor': 'Maltiverse',
+                    'Description': [blacklist_context['Blacklist'][i]['Description'] for i in
+                                    range(len(report.get('blacklist', [])))],
+                }
+            }
+
+            maltiverse_file = {string_to_context_key(field): report.get(field, '') for field in
+                               ['score', 'classification', 'modification_time', 'creation_time', 'size', 'contacted_host',
+                                'dns_request']}
+            maltiverse_file['PositiveDetections'] = positive_detections
+            maltiverse_file['Name'] = report['filename'][0]
+            maltiverse_file['Tags'] = create_tags(report.get('tag', ''))
+
+            maltiverse_file = {**maltiverse_file, **process_list}
+            maltiverse_file = {**maltiverse_file, **blacklist_context}
+            if positive_detections > 0:
+                maltiverse_file = {**maltiverse_file, **file_malicious}
+
+            context[outputPaths['file']].append(outputs)
+            context[DBOT_SCORE_KEY].append(dbot_score)
+            context[f'Maltiverse.{outputPaths["file"]}'].append(maltiverse_file)
+
+            markdown = f'## Maltiverse File reputation for: {report["filename"][0]}\n'
+            markdown += f'File Name: {report["filename"][0]}\n'
+            markdown += f'File SHA256: **{report.get("sha256", "")}**\n'
+            markdown += f'File Type: **{report.get("type", "")}**\n'
+            markdown += f'Positive Detections: **{positive_detections}**\n'
+            markdown += f'Maltiverse Classification: **{report.get("classification", "")}**\n'
+
+            reports.append(report)
+
+        return markdown, context, reports
+
+
+    def main():
+        params = demisto.params()
+        server_url = params.get('server_url') if params.get('server_url') else SERVER_URL
+
+        client = Client(url=server_url,
+                        use_ssl=not params.get('insecure', False),
+                        use_proxy=params.get('proxy', False),
+                        auth_token=params.get('api_key', None))
+
+        commands = {
+            'ip': ip_command,
+            'url': url_command,
+            'domain': domain_command,
+            'file': file_command,
+        }
+
+        command = demisto.command()
+        LOG(f'Command being called is {command}')
+
+        try:
+            if command == 'test-module':
+                demisto.results(test_module(client))
+            elif command in commands:
+                return_outputs(*commands[command](client, demisto.args()))
+            else:
+                return_error('Command not found.')
+        except Exception as e:
+            return_error(f'Failed to execute {command} command. Error: {e}')
+
+
+    if __name__ in ('__main__', '__builtin__', 'builtins'):
+        main()
+  subtype: python3
+  type: python
+tests:
+- Maltiverse Test
+image: data:image/png;base64,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6MfsuMBHP2THBT76IfFrsNBvGv++a34NFvohOy4NFvpdfPJ/tshHX8cFPvrwa7DQ13H91GD5lo9+uI7LIh/9kGt+8NEPiV+DlSYr9NvquDRYqXKGfksdl0/8dDlHv52OS3WLfhz7P+DXYKEfsuPSYKEfLXePHZd9psfcmJ/8G/DRD/rR7/EWffQFffRFm4u+oI++oI++oI++oI++oI8++uijjz766KOPPvroo48++uijjz766KOPPvroo48++oJ+rfH2NfTRRx999NFHH3300UcfffTR74T+J/TR96mPPvroo48++uijjz766KOPPvroo48++uijjyr66Av66Av66Av66Av66Av66Av66Av66KMv6KMv6KMv6KMv6KMv6KMv6KMv6KOPPvroo48++uijjz766KOPPvroo48++uijjz766KOPvqCPvqCPvqCPvqCPvqCPvqCPvqCPPvqCPvqCPvqCPvqCPvqCPvqCPvqCPvqCPvroo48++uijjz766KOPPvroo48++uijjz766KMv6KMv6KMv6KMv6KMv6KMv6KMv6KMv6KOPviTLCn300UcffV940EcfffTRRx999NFHH3300UcfffTRR1/QR1/QR1/QR1/QR1/QR1/QR1/QRx999NFHX9BHX9BHX9BHX9BHv3we0G9D1D936CfM+uET+m2Aelh/bgN/E/TX06e7hr6Zxaa/ntbrLy3gb0DUFn5TDyXR6U9b/Hd36B8K/+spNvY8jv6/Y0P/EPh3t+g3R///f1mjvzf8718a0W9ub1I5/opFrX9aFaDf4Mpw/VAx/mpFrX/ZkaHf5rb8odplT62i1r8eGfpt0l9Xu+avU9QTf1Gi32pHWiv+GkU9+XiEfrvXA+rEX5+oZ/YC6Ld8M6bGjqs2UevpmSoE/bYvhdXXcdUl6oXzQb9t+vWt+WsS9eK1J/Rbp18b/npE/eFZCP326T+xs0b/z0sA9HugXxP+SkT9+UDQ74N+PfirEDXnqgf6vdCvZc1fgah5Dz/od0O/EvyLi5r71I9+R/Sr6LgWFjW/6EC/K/qPow9Mf5f/9dHvjP7ia/4FRe32w330u6O/MP7FRO36pIN+h/QX3XQuJGr3R3z0u6S/IP5lRO3xn4t+p/S/alhm07mEqL1+rIx+t/QXWvOXF7Xnow36/dJfBn9pUXs/06PfM/3Hfd/7u47pP/sb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
+detaileddescription: >-
+  # Configure API Key (optional)
+
+
+  In order to generate an API key, you must have a Maltiverse Account.
+
+  Then, follow the steps below:
+
+
+  1. Log in to the Maltiverse website.
+
+  2. Click on your username at the top corner.
+
+  3. Press the Generate API Key button.
+
+  4. Copy your API key and enter it inside the API key field.
+
+
+  **Note** For more details about API call limits and plans please visit: https://maltiverse.com/plans

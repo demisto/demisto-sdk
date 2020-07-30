@@ -1,0 +1,618 @@
+category: Network Security
+commonfields:
+  id: IronDefense
+  version: -1
+configuration:
+- display: IronAPI Host/IP
+  name: ironAPIHost
+  required: true
+  type: 0
+- defaultvalue: '6942'
+  display: IronAPI Port
+  name: ironAPIPort
+  required: true
+  type: 0
+- display: Username
+  name: credentials
+  required: true
+  type: 9
+- defaultvalue: '60'
+  display: Request Timeout (Sec)
+  name: requestTimeout
+  required: false
+  type: 0
+description: The IronDefense Integration allows users to interact with IronDefense alerts within Demisto. The Integration provides the ability to rate alerts, update alert statuses, add comments to alerts, and to report observed bad activity.
+display: IronDefense
+name: IronDefense
+script:
+  commands:
+  - arguments:
+    - default: false
+      description: The ID of the IronDefense alert.
+      isArray: false
+      name: alert_id
+      required: true
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: 'The severity rating of the alert. Can be: "Undecided", "Benign", "Suspicious", "Malicious".'
+      isArray: false
+      name: severity
+      predefined:
+      - Undecided
+      - Benign
+      - Suspicious
+      - Malicious
+      required: true
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: 'Determines whether the rating was expected. Can be: "Unknown", "Expected", "Unexpected". Use "Unknown" if the rating is undecided.'
+      isArray: false
+      name: expectation
+      predefined:
+      - Unknown
+      - Expected
+      - Unexpected
+      required: true
+      secret: false
+    - default: false
+      description: Explains the rating of the alert.
+      isArray: false
+      name: comments
+      required: true
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: Whether to share the comment with IronDome.
+      isArray: false
+      name: share_comment_with_irondome
+      predefined:
+      - 'True'
+      - 'False'
+      required: true
+      secret: false
+    deprecated: false
+    description: Rates an IronDefense alert.
+    execution: false
+    name: irondefense-rate-alert
+  - arguments:
+    - default: false
+      description: The ID of the IronDefense alert.
+      isArray: false
+      name: alert_id
+      required: true
+      secret: false
+    - default: false
+      description: Explains the rating of the alert.
+      isArray: false
+      name: comment
+      required: true
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: Whether to share the comment with IronDome.
+      isArray: false
+      name: share_comment_with_irondome
+      predefined:
+      - 'True'
+      - 'False'
+      required: true
+      secret: false
+    deprecated: false
+    description: Adds a comment to an IronDefense alert.
+    execution: false
+    name: irondefense-comment-alert
+  - arguments:
+    - default: false
+      description: The ID of the IronDefense alert.
+      isArray: false
+      name: alert_id
+      required: true
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: 'The alert status to set. Can be: "Awaiting Review", "Under Review", "Closed".'
+      isArray: false
+      name: status
+      predefined:
+      - Awaiting Review
+      - Under Review
+      - Closed
+      required: true
+      secret: false
+    - default: false
+      description: Explains the status of the alert.
+      isArray: false
+      name: comments
+      required: true
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: Whether to share the comment with IronDome.
+      isArray: false
+      name: share_comment_with_irondome
+      predefined:
+      - 'True'
+      - 'False'
+      required: true
+      secret: false
+    deprecated: false
+    description: Sets the status of an IronDefense alert.
+    execution: false
+    name: irondefense-set-alert-status
+  - arguments:
+    - default: false
+      description: The name of the Threat Intelligence Rule (TIR) to be created.
+      isArray: false
+      name: name
+      required: true
+      secret: false
+    - default: false
+      description: A description of the observed bad endpoint.
+      isArray: false
+      name: description
+      required: true
+      secret: false
+    - default: false
+      description: The IP address of the observed bad endpoint.
+      isArray: false
+      name: ip
+      required: false
+      secret: false
+    - default: false
+      description: The domain name of the observed bad endpoint.
+      isArray: false
+      name: domain
+      required: false
+      secret: false
+    - default: false
+      description: The start time of the observed bad activity in RFC 3339 format.
+      isArray: false
+      name: activity_start_time
+      required: true
+      secret: false
+    - default: false
+      description: The end time of the observed bad activity in RFC 3339 format.
+      isArray: false
+      name: activity_end_time
+      required: true
+      secret: false
+    deprecated: false
+    description: Submits an observed bad endpoint to IronDefense to create Threat Intelligence Rules (TIR).
+    execution: false
+    name: irondefense-report-observed-bad-activity
+  dockerimage: demisto/python3:3.7.5.4002
+  isfetch: false
+  runonce: false
+  script: >2
+
+
+
+    import json
+
+    import requests
+
+    import traceback
+
+    from http.client import HTTPException
+
+
+    # Disable insecure warnings
+
+    requests.packages.urllib3.disable_warnings()
+
+
+
+    class DemistoLogger:
+        """Wrapper class to add a prefix to all logging statements so they can be located more easily in the logs"""
+
+        def __init__(self, d, log_prefix=''):
+            self.demisto = d
+            self.log_prefix = log_prefix
+
+        def debug(self, msg):
+            demisto.debug(self.log_prefix + msg)
+
+        def error(self, msg):
+            demisto.error(self.log_prefix + msg)
+
+
+    class IronDefense:
+        """Main class for performing plugin actions"""
+
+        def __init__(self, demisto, session, host, port, credentials, logger, request_timeout=60.0):
+            self.demisto = demisto
+            self.session = session
+            self.host = host
+            self.base_url = 'https://{}:{}/IronApi'.format(host, port)
+            self.credentials = credentials
+            self.request_timeout = request_timeout
+            self.logger = logger
+
+            self.session.headers.update({'Content-Type': 'application/json'})
+            self._configure_session_auth(self.demisto.getIntegrationContext())
+
+        ''' HELPER FUNCTIONS '''
+        def _get_jwt(self, context):
+            if context is None:
+                return None
+
+            try:
+                return context.get('JWT')
+            except KeyError:
+                return None
+
+        def _configure_session_auth(self, data):
+            self.logger.debug('Getting jwt...')
+
+            jwt = self._get_jwt(data)
+            if jwt:
+                # set the auth token if it exists
+                self.session.headers.update({'Authorization': 'Bearer ' + jwt})
+
+        def _http_request(self, method, uri, body='{}', headers={}, params={}, auth=None, files=None):
+            # Makes an API call with the given arguments
+            resp = self.session.request(
+                method,
+                self.base_url + uri,
+                data=body,
+                headers=headers,
+                verify=False,
+                params=params,
+                files=files,
+                timeout=self.request_timeout,
+                auth=auth,
+            )
+            if resp.status_code == 401:
+                if auth is not None:
+                    # incorrect creds have been provided
+                    return resp
+
+                # the session has expired so we need to log in again
+                self.logger.debug('Login required!')
+
+                username = self.credentials.get('identifier')
+                password = self.credentials.get('password')
+
+                # retry the original request with basic auth credentials
+                return self._http_request(method, uri,
+                                          body=body,
+                                          params=params,
+                                          files=files,
+                                          auth=(username, password))
+            elif resp.status_code >= 500:
+                self.logger.error('A server error has occurred. The response is: ' + json.dumps(resp.json()))
+
+            if auth is not None:
+                # persist the jwt
+                jwt = resp.headers.get('auth-token')
+                self.demisto.setIntegrationContext({
+                    'JWT': jwt
+                })
+
+            return resp
+
+        def _get_error_msg_from_response(self, resp):
+            err_msg = resp.json().get('msg')
+            if err_msg is None:
+                err_msg = resp.text
+            return err_msg
+
+        '''MAIN FUNCTIONS'''
+
+        # This function will be completed at a later date
+        # def fetch_incidents(self):
+        #     last_run = self.demisto.getLastRun()
+        #     now = time.time()
+        #     # update the last run time
+        #     last_run['last_run_time'] = now
+        #     self.demisto.setLastRun(last_run)
+        #     self.logger.debug('Fetching incidents...')
+
+        #     # last_run_time = last_run.get('last_run_time')
+        #     self.logger.debug('Last run time was: ' + str(last_run.get('last_run_time')))
+
+        #     if last_run_time:
+        #         self.logger.debug('No new incidents')
+        #         # we already ran. This is for testing only so the integration does not flood demisto with test incidents.
+        #         # In the near future this block will be removed.
+        #         return []
+        #     else:
+        #         resp = self._http_request('GET', '/Alert')
+        #         if resp.status_code == 200:
+        #             self.logger.debug('json response is: ' + json.dumps(resp.json()))
+        #             alert = {
+        #                 'name': '',
+        #                 'details': '',
+        #                 'occurred': '',
+        #                 'rawJSON': json.dumps(resp.json())
+        #             }
+        #             self.logger.debug('1 incident fetched')
+        #             return [alert]
+        #         else:
+        #             raise Exception('Fetch failed. Status code was ' + str(resp.status_code))
+        #     return []
+
+        def test_module(self):
+            self.logger.debug('Testing module...')
+            username = self.credentials.get('identifier')
+            password = self.credentials.get('password')
+            resp = self._http_request('POST', '/Login', auth=(username, password))
+            if resp.status_code == 200:
+                self.logger.debug('Success!')
+                return 'ok'
+            else:
+                return 'Test failed ({}): {}'.format(str(resp.status_code), resp.json()['msg'])
+
+        def update_analyst_ratings(self, alert_id, severity='SEVERITY_UNDECIDED', expectation='EXP_UNKNOWN', comments='',
+                                   share_irondome=False):
+            self.logger.debug('Submitting analyst rating: Alert ID={} Severity={} Expected={} Comments={} Share '
+                              'w/IronDome={}'.format(alert_id, severity, expectation, comments, share_irondome))
+
+            req_body = {
+                'alert_id': alert_id,
+                'analyst_severity': 'SEVERITY_' + severity.upper(),
+                'analyst_expectation': 'EXP_' + expectation.upper(),
+                'comment': comments,
+                'share_comment_with_irondome': share_irondome
+            }
+            response = self._http_request('POST', '/RateAlert', body=json.dumps(req_body))
+            if response.status_code != 200:
+                err_msg = self._get_error_msg_from_response(response)
+                self.logger.error('Failed to rate alert ({}). The response failed with status code {}. The response was: '
+                                  '{}'.format(alert_id, response.status_code, response.text))
+                raise HTTPException('Failed to rate alert {} ({}): {}'.format(alert_id, response.status_code, err_msg))
+            else:
+                self.logger.debug('Successfully submitted rating for alert ({})'.format(alert_id))
+                return 'Submitted analyst rating to IronDefense!'
+
+        def add_comment_to_alert(self, alert_id, comment='', share_irondome=False):
+            self.logger.debug('Submitting comment: Alert ID={} Comment={} Share '
+                              'w/IronDome={}'.format(alert_id, comment, share_irondome))
+
+            req_body = {
+                'alert_id': alert_id,
+                'comment': comment,
+                'share_comment_with_irondome': share_irondome
+            }
+            response = self._http_request('POST', '/CommentOnAlert', body=json.dumps(req_body))
+            if response.status_code != 200:
+                err_msg = self._get_error_msg_from_response(response)
+                self.logger.error('Failed to add comment to alert ({}). The response failed with status code {}. The '
+                                  'response was: {}'.format(alert_id, response.status_code, response.text))
+                raise HTTPException('Failed to add comment to alert {} ({}): {}'.format(alert_id, response.status_code,
+                                    err_msg))
+            else:
+                self.logger.debug('Successfully added comment to alert ({})'.format(alert_id))
+                return 'Submitted comment to IronDefense!'
+
+        def set_alert_status(self, alert_id, status='STATUS_NONE', comments='', share_irondome=False):
+            self.logger.debug('Submitting status: Alert ID={} Status={} Comments={} Share '
+                              'w/IronDome={}'.format(alert_id, status, comments, share_irondome))
+
+            req_body = {
+                'alert_id': alert_id,
+                'status': 'STATUS_' + status.upper().replace(" ", "_"),
+                'comment': comments,
+                'share_comment_with_irondome': share_irondome
+            }
+            response = self._http_request('POST', '/SetAlertStatus', body=json.dumps(req_body))
+            if response.status_code != 200:
+                err_msg = self._get_error_msg_from_response(response)
+                self.logger.error('Failed to set status for alert ({}). The response failed with status code {}. The '
+                                  'response was: {}'.format(alert_id, response.status_code, response.text))
+                raise HTTPException('Failed to set status for alert {} ({}): {}'.format(alert_id, response.status_code,
+                                    err_msg))
+            else:
+                self.logger.debug('Successfully submitted status for alert ({})'.format(alert_id))
+                return 'Submitted status to IronDefense!'
+
+        def report_observed_bad_activity(self, name, description='', ip='', domain='',
+                                         activity_start_time='1970-01-01T00:00:00Z',
+                                         activity_end_time='1970-01-01T00:00:00Z'):
+            self.logger.debug('Submitting observed bad activity: Name={} Description={} IP={} Domain={} '
+                              'Activity Start Time={} Activity End Time={}'.format(name, description, ip, domain,
+                                                                                   activity_start_time, activity_end_time))
+
+            req_body = {
+                'name': name,
+                'description': description,
+                'ip': ip,
+                'domain': domain,
+                'activity_start_time': activity_start_time,
+                'activity_end_time': activity_end_time
+            }
+            response = self._http_request('POST', '/ReportObservedBadActivity', body=json.dumps(req_body))
+            if response.ok:
+                self.logger.debug('Successfully submitted observed bad activity for IP={} and Domain={}'.format(ip, domain))
+                return 'Submitted observed bad activity to IronDefense!'
+            else:
+                err_msg = self._get_error_msg_from_response(response)
+                self.logger.error('Failed to submit observed bad activity for IP={} and Domain={}. The response failed with'
+                                  ' status code {}. The response was: {}'
+                                  .format(ip, domain, response.status_code, response.text))
+                raise HTTPException('Failed to submit observed bad activity for IP={} and Domain={} ({}): {}'
+                                    .format(ip, domain, response.status_code, err_msg))
+
+
+    ''' COMMANDS MANAGER / SWITCH PANEL '''
+
+
+
+    # This will be enabled at a later date.
+
+    # def fetch_incidents_command():
+
+    #     incidents = IRON_DEFENSE.fetch_incidents()
+
+    #     demisto.incidents(incidents)
+
+
+
+    def test_module_command():
+        results = IRON_DEFENSE.test_module()
+        demisto.results(results)
+
+
+    def update_analyst_ratings_command():
+        alert_id = demisto.getArg('alert_id')
+        severity = demisto.getArg('severity')
+        expectation = demisto.getArg('expectation')
+        comments = demisto.getArg('comments')
+        share_irondome_arg = demisto.getArg('share_comment_with_irondome')
+        share_irondome = True if share_irondome_arg.lower() == 'true' else False
+        results = IRON_DEFENSE.update_analyst_ratings(alert_id, severity=severity, expectation=expectation, comments=comments,
+                                                      share_irondome=share_irondome)
+        demisto.results(results)
+
+
+    def add_comment_to_alert_command():
+        alert_id = demisto.getArg('alert_id')
+        comment = demisto.getArg('comment')
+        share_irondome_arg = demisto.getArg('share_comment_with_irondome')
+        share_irondome = True if share_irondome_arg.lower() == 'true' else False
+        results = IRON_DEFENSE.add_comment_to_alert(alert_id, comment=comment, share_irondome=share_irondome)
+        demisto.results(results)
+
+
+    def set_alert_status_command():
+        alert_id = demisto.getArg('alert_id')
+        status = demisto.getArg('status')
+        comments = demisto.getArg('comments')
+        share_irondome_arg = demisto.getArg('share_comment_with_irondome')
+        share_irondome = True if share_irondome_arg.lower() == 'true' else False
+        results = IRON_DEFENSE.set_alert_status(alert_id, status=status, comments=comments,
+                                                share_irondome=share_irondome)
+        demisto.results(results)
+
+
+    def report_observed_bad_activity_command():
+        name = demisto.getArg('name')
+        description = demisto.getArg('description')
+        ip = demisto.getArg('ip')
+        domain = demisto.getArg('domain')
+        activity_start_time = demisto.getArg('activity_start_time')
+        activity_end_time = demisto.getArg('activity_end_time')
+        results = IRON_DEFENSE.report_observed_bad_activity(name, description=description, ip=ip, domain=domain,
+                                                            activity_start_time=activity_start_time,
+                                                            activity_end_time=activity_end_time)
+        demisto.results(results)
+
+
+    COMMANDS = {
+        'test-module': test_module_command,
+        # For now, we will not support fetching of incidents
+        # 'fetch-incidents': fetch_incidents_command,
+        'irondefense-rate-alert': update_analyst_ratings_command,
+        'irondefense-comment-alert': add_comment_to_alert_command,
+        'irondefense-set-alert-status': set_alert_status_command,
+        'irondefense-report-observed-bad-activity': report_observed_bad_activity_command,
+    }
+
+    COOKIE_KEY = 'user_sid'
+
+    LOG_PREFIX = 'IronDefense Integration: '
+
+
+    '''EXECUTION'''
+
+
+    if __name__ == 'builtins':
+        try:
+            # Globals
+            PARAMS = demisto.params()
+            CREDENTIALS = PARAMS.get('credentials')
+            HOST = PARAMS.get('ironAPIHost', 'localhost')
+            PORT = PARAMS.get('ironAPIPort', 443)
+            REQUEST_TIMEOUT = float(PARAMS.get('requestTimeout', 60))
+            LOGGER = DemistoLogger(demisto, LOG_PREFIX)
+
+            # initialize the IronDefense object
+            IRON_DEFENSE = IronDefense(demisto, requests.Session(), HOST, PORT, CREDENTIALS, LOGGER,
+                                       request_timeout=REQUEST_TIMEOUT)
+
+            LOGGER.debug('Invoking integration with Command: ' + demisto.command())
+            if demisto.command() in COMMANDS.keys():
+                COMMANDS[demisto.command()]()
+            else:
+                LOGGER.error('Command not found: ' + demisto.command())
+                return_error('Command not found: ' + demisto.command())  # type: ignore[name-defined]
+
+        except Exception as e:
+            demisto.error(traceback.format_exc())
+            return_error(str(e))  # type: ignore[name-defined]
+  type: python
+  subtype: python3
+tests:
+- IronDefenseTest
+image: data:image/png;base64,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
+detaileddescription: >
+  # IronDefense Integration for Demisto
+
+  The IronDefense Integration allows users to interact with IronDefense alerts within Demisto. The 
+
+  Integration provides the ability to rate alerts, update alert statuses, add comments to alerts, and to report 
+
+  observed bad activity.
+
+  ## Setup
+
+  The following table describes all the parameters required to setup the Integration.
+
+
+  | Parameter             | Description                                                                                       | Example                  |
+
+  |-----------------------|---------------------------------------------------------------------------------------------------|--------------------------|
+
+  | IronAPI Host/IP       | The hostname or IP where IronAPI is hosted. This is supplied by your IronNet Representative.      | example.ironapi.hostname |
+
+  | IronAPI Port          | The port number IronAPI communicates on. This is supplied by your IronNet Representative.         | 1234                     |
+
+  | Username              | An IronVue user belonging to the "IronAPI Access" user group.                                     | demisto_user@company.net |
+
+  | Password              | The password for the IronVue user.                                                                | my_secret_password       |
+
+  | Request Timeout (Sec) | The number of seconds before requests to IronAPI times out. The default value is 60 seconds.      | 60                       |
+
+
+  ## Fetching Incidents
+
+  The Integration does not currently support fetching IronDefense Alerts as incidents. This feature will be supported 
+
+  in a later version of the Integration. 
+
+
+  However, you can still create incidents by using the Demisto Add-on for Splunk to create incidents for IronDefense 
+
+  alerts ingested into Splunk. Download the Demisto Add-on for Splunk [here](https://splunkbase.splunk.com/app/3448/).
+
+  ## Test Playbook
+
+  An test playbook containing all commands defined by this integration is provided for reference. Search for the 
+
+  **IronDefense Test** playbook in your content repository.
+
+  ## Troubleshooting
+
+  ### Logging
+
+  Log entries for the integration can be found in **/var/log/demisto/server.log**. All entries are prefixed with "IronDefense Integration:"
+
+  ### Common Issues
+
+  Common errors and resolutions are described in the table below.
+
+
+  | Error Message                                                                                                                                                                                                           | Possible Reasons                                                                                                          | Resolution                                                                                                                                 |
+
+  |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+
+  | HTTPSConnectionPool(host='example.ironapi.net', port=6944): Max retries exceeded with url: /IronApi/Login (Caused by ConnectTimeoutError(, 'Connection to example.ironapi.net timed out. (connect timeout=60.0)')) (85) | <ul><li>Port number is incorrect.</li><li>IronAPI is not running.</li></ul>                                               | <ul><li>Check if the port number is correct.</li><li>Ask your IronNet representative to check the health of the IronAPI service.</li></ul> |
+
+  | ('Connection aborted.', error(104, 'Connection reset by peer')) (85)                                                                                                                                                    | <ul><li>A firewall is blocking the connection.</li></ul>                                                                   | <ul><li>Ensure your firewall allows connections to the specified host and port.</li></ul>                                                  |
+
+  | Test failed (403): This user does not have permission to access IronAPI. (85)                                                                                                                                           | <ul><li>The IronVue user does not belong to the "IronAPI Access" group.</li></ul>                                         | <ul><li>Add the user to the "IronAPI Access" group in IronVue or login with another user belonging to that group.</li></ul>                |
+
+  | Test failed (401): Not authenticated - Failed Login: Username and/or password is incorrect (85)                                                                                                                         | <ul><li>The username/password is incorrect.</li><li>The IronVue user account has been locked or needs to reset.</li></ul> | <ul><li>Correct the username/password.</li><li>Unlock/reset the user in IronVue.</li></ul>                                                 | 
+                                             |

@@ -2,7 +2,8 @@ from typing import Tuple
 
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+                                               print_error)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -31,10 +32,12 @@ class DashboardJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
+            print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
             super().update_json()
             self.default_description()
             self.update_id()
-            super().save_json_to_destination_file()
+            self.save_json_to_destination_file()
+            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE

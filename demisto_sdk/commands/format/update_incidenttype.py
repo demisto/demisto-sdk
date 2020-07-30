@@ -2,7 +2,8 @@ from typing import Tuple
 
 from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+                                               print_error)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -18,7 +19,8 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
 
     def update_id(self):
@@ -32,10 +34,12 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
+            print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
             super().update_json()
-            super().set_default_values_as_needed()
+            self.set_default_values_as_needed()
             self.update_id()
-            super().save_json_to_destination_file()
+            self.save_json_to_destination_file()
+            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE

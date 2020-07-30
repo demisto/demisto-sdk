@@ -123,6 +123,20 @@ DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY = "Layouts/formatted_layoutscontainer-
 LAYOUTS_CONTAINER_PATH = "Layouts"
 LAYOUTS_CONTAINER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layoutscontainer.yml"
 
+SOURCE_FORMAT_CLASSIFIER_5_9_9 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_classifier_5_9_9.json"
+DESTINATION_FORMAT_CLASSIFIER_5_9_9 = "Classifiers/formatted_classifier_5_9_9.json"
+CLASSIFIER_5_9_9_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/classifier_5_9_9.yml"
+
+SOURCE_FORMAT_CLASSIFIER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_new_classifier.json"
+DESTINATION_FORMAT_CLASSIFIER = "Classifiers/formatted_classifier.json"
+CLASSIFIER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/classifier.yml"
+CLASSIFIER_PATH = "Classifiers"
+
+SOURCE_FORMAT_MAPPER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_mapper.json"
+DESTINATION_FORMAT_MAPPER = "Classifiers/formatted_mapper.json"
+MAPPER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/mapper.yml"
+MAPPER_PATH = "Classifiers"
+
 SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_dashboard-copy.json"
 DESTINATION_FORMAT_DASHBOARD_COPY = "Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = "Dashboards"

@@ -310,7 +310,8 @@ def validate(config, **kwargs):
                              'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
 def create_arifacts(**kwargs) -> int:
     artifacts_conf = ArtifactsConfiguration(**kwargs)
-    return create_content_artifacts(artifacts_conf)
+    x = create_content_artifacts(artifacts_conf)
+    return x
 
 
 # ====================== secrets ====================== #

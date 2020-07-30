@@ -109,7 +109,8 @@ class ArtifactsConfiguration:
 
 
 def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
-    start = time.time()
+    exit_code = 0
+
     # Create content artifacts direcotry
     create_artifacts_dirs(artifact_conf)
 
@@ -120,15 +121,16 @@ def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
             if pack_name not in IGNORED_PACKS:
                 futures[pool.submit(dump_pack, artifact_conf, pack_name, pack)] = f'Pack {pack.path}'
         # Iterate over all test-playbooks in content/TestPlaybooks
-        for test_playbook in artifact_conf.content.test_playbooks:
-            futures[pool.submit(dump_test_conditionally, artifact_conf,
-                                test_playbook)] = f'TestPlaybooks {test_playbook.path}'
+        if not artifact_conf.only_content_packs:
+            for test_playbook in artifact_conf.content.test_playbooks:
+                futures[pool.submit(dump_test_conditionally, artifact_conf,
+                                    test_playbook)] = f'TestPlaybooks {test_playbook.path}'
         # Dump content descriptor from content/content-descriptor.json
         futures[pool.submit(dump_content_descriptor, artifact_conf)] = 'descriptor.json'
         # Dump content documentation from content/Documentation
         futures[pool.submit(dump_content_documentations, artifact_conf)] = 'Documentation'
         # Wait for all future to be finished - catch exception if occurred - before zip
-        wait_futures_complete(futures)
+        exit_code |= wait_futures_complete(futures)
         # Add suffix if suffix exists
         if artifact_conf.suffix:
             suffix_handler(artifact_conf)
@@ -139,26 +141,27 @@ def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
                              artifact_conf.content_packs_path]:
                 futures[pool.submit(zip_and_delete_origin, artifact)] = f'Zip {artifact}'
             # Wait for all future to be finished - catch exception if occurred
-            wait_futures_complete(futures)
+            exit_code |= wait_futures_complete(futures)
         log_results(artifact_conf)
 
-    end = time.time()
-    print(f"Total: {end - start} seconds")
-
-    return 0
+    return exit_code
 
 
-def wait_futures_complete(futures: Dict[Future, str]) -> list:
+def wait_futures_complete(futures: Dict[Future, str]) -> int:
     """Wait for all futures to complete, Raise exception if occured.
 
     Args:
         futures: futures to wait for.
     """
+    exit_code = 0
     for future in as_completed(futures):
         try:
             future.result()
-        except Exception:
+        except (BaseException, Exception):
             logger.exception(futures[future])
+            exit_code = 1
+
+    return exit_code
 
 
 def create_artifacts_dirs(artifact_conf: ArtifactsConfiguration) -> None:
@@ -368,9 +371,14 @@ def dump_test_conditionally(artifact_conf: ArtifactsConfiguration, content_objec
                                                             dst=artifact_conf.content_test_path / file.name,
                                                             execution_start=artifact_conf.execution_start))
             else:
-                content_test_files = content_object.dump(dest_dir=artifact_conf.content_test_path,
-                                                         readme=False,
-                                                         change_log=False)
+                target = artifact_conf.content_test_path / content_object.path.name
+
+                if target.exists() and target.stat().st_mtime >= artifact_conf.execution_start:
+                    raise BaseException(f"Duplicate file in content repo: {content_object.path.name}")
+                else:
+                    content_test_files = content_object.dump(dest_dir=artifact_conf.content_test_path,
+                                                             readme=False,
+                                                             change_log=False)
             log_created(artifact_conf.content_test_path,
                         content_object.path,
                         content_test_files,

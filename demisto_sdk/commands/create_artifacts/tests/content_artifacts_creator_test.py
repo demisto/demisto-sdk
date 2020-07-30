@@ -1,11 +1,12 @@
 from wcmatch.pathlib import Path, NEGATE
 from filecmp import cmp, dircmp
-from shutil import rmtree, copyfile
+from shutil import rmtree, copyfile, copytree
 from contextlib import contextmanager
 
 import pytest
 
 from demisto_sdk.commands.common.tools import path_test_files, src_root
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 
 
 TEST_DATA = path_test_files()
@@ -13,6 +14,8 @@ TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
 UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'content_artifacts_creator_test'
                   / 'test_create_content_artifacts')
+EXPECTED_ARTIFACT_CONTENT = UNIT_TEST_DATA / 'content_expected_artifact'
+EXPECTED_ARTIFACT_PRIVATE_CONTENT = UNIT_TEST_DATA / 'content_private_expected_artifact'
 
 
 def same_folders(dcmp):
@@ -45,6 +48,7 @@ def duplicate_file():
 @contextmanager
 def temp_dir():
     temp = TEST_DATA / '.temp'
+    temp.mkdir(parents=True, exist_ok=True)
     yield temp
     rmtree(temp)
 
@@ -54,8 +58,17 @@ def mock_git(mocker):
     from demisto_sdk.commands.common.content.content import Content
     # Mock git working directory
     mocker.patch.object(Content, 'git')
-    Content.git().working_tree_dir = UNIT_TEST_CONTENT_REPO
+    Content.git().working_tree_dir = TEST_CONTENT_REPO
     yield
+
+
+@pytest.fixture()
+def private_repo():
+    copytree(TEST_CONTENT_REPO, TEST_PRIVATE_CONTENT_REPO)
+    test_playbook_dir = TEST_PRIVATE_CONTENT_REPO / TEST_PLAYBOOKS_DIR
+    rmtree(test_playbook_dir)
+    yield TEST_PRIVATE_CONTENT_REPO
+    rmtree(TEST_PRIVATE_CONTENT_REPO)
 
 
 def test_modify_common_server_constants(datadir):
@@ -86,20 +99,21 @@ def test_create_content_artifacts(mock_git):
         assert same_folders(dircmp(temp, expected_artifacts_path))
 
 
-def test_create_private_content_artifacts(mock_git):
+def test_create_private_content_artifacts(private_repo):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
                                                                                  create_content_artifacts)
+    from demisto_sdk.commands.common.content.content import Content
 
     with temp_dir() as temp:
-        expected_artifacts_path = UNIT_TEST_DATA / 'content_expected_artifact'
         config = ArtifactsConfiguration(artifacts_path=temp,
                                         content_version='6.0.0',
                                         zip=False,
                                         suffix='',
                                         cpus=1,
                                         content_packs=False)
+        config.content = Content(private_repo)
         exit_code = create_content_artifacts(artifact_conf=config)
-        assert not dircmp(temp, expected_artifacts_path).diff_files
+        assert not dircmp(temp, private_repo).diff_files
 
     assert exit_code == 0
 
@@ -109,7 +123,6 @@ def test_malformed_file_failue(suffix: str, mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
                                                                                  create_content_artifacts)
     with temp_dir() as temp:
-        content_repo = UNIT_TEST_DATA / 'content'
         config = ArtifactsConfiguration(artifacts_path=temp,
                                         content_version='6.0.0',
                                         zip=False,
@@ -117,7 +130,7 @@ def test_malformed_file_failue(suffix: str, mock_git):
                                         cpus=1,
                                         content_packs=False)
 
-        with destroy_by_suffix(content_repo, suffix):
+        with destroy_by_suffix(TEST_CONTENT_REPO, suffix):
             exit_code = create_content_artifacts(artifact_conf=config)
 
     assert exit_code == 1

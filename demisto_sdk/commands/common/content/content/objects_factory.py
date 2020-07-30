@@ -124,7 +124,7 @@ class ContentObjectFacotry:
     def from_path(path: Union[Path, str]):
         path = Path(path)
         object_type = None
-        if path.suffix in ['.yaml', '.json', '.yml']:
+        if path.suffix in ['.yaml', '.json', '.yml'] or path.name.startswith('.'):
             object_type = ContentObjectFacotry._find_type_by_suffix(file_name=path.name)
         if not object_type:
             file_type = find_type(str(path))

@@ -1,13 +1,13 @@
-from pathlib import Path
-
-import pytest
-
+from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.content.objects.abstract_objects import YAMLObject
 from demisto_sdk.commands.common.tools import path_test_files
 
+import pytest
+
+
 TEST_DATA = path_test_files()
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-TEST_VALID_YAML = TEST_CONTENT_REPO / 'Packs' / 'Sample01' / 'Scripts' / 'script-sample_new.yml'
+TEST_VALID_YAML = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PLAYBOOKS_DIR / 'playbook-sample_new.yml'
 TEST_NOT_VALID_YAML = path_test_files() / 'malformed.yaml'
 
 

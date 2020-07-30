@@ -1,13 +1,14 @@
-from pathlib import Path
-import pytest
-
+from demisto_sdk.commands.common.constants import PACKS_DIR, INDICATOR_TYPES_DIR
 from demisto_sdk.commands.common.content.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.tools import path_test_files
 
+import pytest
+
+
 TEST_DATA = path_test_files()
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-TEST_VALID_JSON = TEST_CONTENT_REPO / 'Packs' / 'Sample01' / 'Classifiers' / 'classifier-sample_new.json'
-TEST_NOT_VALID_JSON = path_test_files() / 'malformed.json'
+TEST_VALID_JSON = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / INDICATOR_TYPES_DIR / 'reputation-sample_new.json'
+TEST_NOT_VALID_JSON = TEST_DATA / 'malformed.json'
 
 
 class TestValidJSON:

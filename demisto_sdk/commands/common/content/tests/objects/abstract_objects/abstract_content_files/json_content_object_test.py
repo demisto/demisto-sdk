@@ -1,12 +1,11 @@
-from pathlib import Path
-
+from demisto_sdk.commands.common.constants import PACKS_DIR, CLASSIFIERS_DIR
 from demisto_sdk.commands.common.content.content.objects.abstract_objects import JSONContentObject
 from demisto_sdk.commands.common.tools import path_test_files
 
 TEST_DATA = path_test_files()
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-TEST_JSON_NO_FROM_VERSION = TEST_CONTENT_REPO / 'Packs' / 'Sample01' / 'Classifiers' / 'classifier-sample_new.json'
-TEST_JSON_NO_TO_VERSION = TEST_CONTENT_REPO / 'Packs' / 'Sample01' / 'Classifiers' / 'classifier-sample_packs.json'
+TEST_JSON_NO_FROM_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / CLASSIFIERS_DIR / 'classifier-sample_new.json'
+TEST_JSON_NO_TO_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / CLASSIFIERS_DIR / 'classifier-sample_packs.json'
 
 
 def test_from_version_no_to_version(datadir):

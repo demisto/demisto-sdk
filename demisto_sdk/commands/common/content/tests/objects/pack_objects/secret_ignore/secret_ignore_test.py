@@ -1,15 +1,18 @@
+from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.content.objects.pack_objects import SecretIgnore
 from demisto_sdk.commands.common.content.content.objects_factory import ContentObjectFacotry
-import pytest
+from demisto_sdk.commands.common.tools import path_test_files
+
+TEST_DATA = path_test_files()
+TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
+SECRETS_IGNORE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / ".secrets-ignore"
 
 
-@pytest.mark.parametrize(argnames="file", argvalues=[".secrets-ignore"])
-def test_objects_factory(datadir, file: str):
-    obj = ContentObjectFacotry.from_path(datadir[file])
+def test_objects_factory():
+    obj = ContentObjectFacotry.from_path(SECRETS_IGNORE)
     assert isinstance(obj, SecretIgnore)
 
 
-@pytest.mark.parametrize(argnames="file", argvalues=[".secrets-ignore"])
-def test_prefix(datadir, file: str):
-    obj = SecretIgnore(datadir[file])
-    assert obj._normalized_file_name() == ".secrets-ignore"
+def test_prefix():
+    obj = SecretIgnore(SECRETS_IGNORE)
+    assert obj._normalized_file_name() == SECRETS_IGNORE.name

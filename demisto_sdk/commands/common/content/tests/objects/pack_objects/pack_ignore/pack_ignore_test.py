@@ -1,15 +1,19 @@
+from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.content.objects.pack_objects import PackIgnore
 from demisto_sdk.commands.common.content.content.objects_factory import ContentObjectFacotry
-import pytest
+from demisto_sdk.commands.common.tools import path_test_files
 
 
-@pytest.mark.parametrize(argnames="file", argvalues=[".pack-ignore"])
-def test_objects_factory(datadir, file: str):
-    obj = ContentObjectFacotry.from_path(datadir[file])
+TEST_DATA = path_test_files()
+TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
+PACK_IGNORE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / '.pack-ignore'
+
+
+def test_objects_factory():
+    obj = ContentObjectFacotry.from_path(PACK_IGNORE)
     assert isinstance(obj, PackIgnore)
 
 
-@pytest.mark.parametrize(argnames="file", argvalues=[".pack-ignore"])
-def test_prefix(datadir, file: str):
-    obj = PackIgnore(datadir[file])
-    assert obj._normalized_file_name() == ".pack-ignore"
+def test_prefix():
+    obj = PackIgnore(PACK_IGNORE)
+    assert obj._normalized_file_name() == PACK_IGNORE.name

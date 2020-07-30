@@ -33,7 +33,7 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
 
        Attributes:
             input (str): the path to the file we are updating at the moment.
-            output (str): the desired file name to save the updated version of the YML to.
+            output (str): the desired file name to save the updated version of the JSON to.
     """
 
     def run_format(self) -> int:

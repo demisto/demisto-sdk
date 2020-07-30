@@ -14,7 +14,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
         Attributes:
             input (str): the path to the file we are updating at the moment.
-            output (str): the desired file name to save the updated version of the YML to.
+            output (str): the desired file name to save the updated version of the JSON to.
     """
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):

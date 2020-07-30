@@ -24,6 +24,7 @@ from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
@@ -39,6 +40,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,
     'mapper': MapperJSONFormat,
+    'widget': WidgetJSONFormat,
     'pythonfile': PythonFileFormat,
 }
 

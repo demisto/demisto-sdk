@@ -15,6 +15,7 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_layout import (
     LayoutJSONFormat, LayoutsContainerJSONFormat)
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
     CLASSIFIER_5_9_9_SCHEMA_PATH, CLASSIFIER_PATH, CLASSIFIER_SCHEMA_PATH,
     DASHBOARD_PATH, DESTINATION_FORMAT_CLASSIFIER,
@@ -24,15 +25,16 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INDICATORFIELD_COPY,
     DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_MAPPER,
-    INCIDENTFIELD_PATH, INCIDENTTYPE_PATH, INDICATORFIELD_PATH,
-    INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
-    LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, MAPPER_PATH,
-    MAPPER_SCHEMA_PATH, SOURCE_FORMAT_CLASSIFIER,
+    DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH, INCIDENTTYPE_PATH,
+    INDICATORFIELD_PATH, INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH,
+    LAYOUT_SCHEMA_PATH, LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH,
+    MAPPER_PATH, MAPPER_SCHEMA_PATH, SOURCE_FORMAT_CLASSIFIER,
     SOURCE_FORMAT_CLASSIFIER_5_9_9, SOURCE_FORMAT_DASHBOARD_COPY,
     SOURCE_FORMAT_INCIDENTFIELD_COPY, SOURCE_FORMAT_INCIDENTTYPE_COPY,
     SOURCE_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY,
     SOURCE_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_LAYOUTS_CONTAINER,
-    SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_MAPPER)
+    SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_MAPPER,
+    SOURCE_FORMAT_WIDGET, WIDGET_PATH)
 from mock import patch
 
 
@@ -47,7 +49,8 @@ class TestFormattingJson:
         (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, DASHBOARD_PATH, 0),
         (SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER, MAPPER_PATH, 0),
         (SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER, CLASSIFIER_PATH, 0),
-        (SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9, CLASSIFIER_PATH, 0)
+        (SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9, CLASSIFIER_PATH, 0),
+        (SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET, WIDGET_PATH, 0)
     ]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
@@ -460,9 +463,47 @@ class TestFormattingMapper:
         Given
             - A mapper file without a fromVersion field
         When
-            - Run format on mapper_formatter file
+            - Run format on mapper file
         Then
             - Ensure that fromVersion field was updated successfully with '6.0.0' value
         """
         mapper_formatter.set_fromVersion('6.0.0')
         assert mapper_formatter.data.get('fromVersion') == '6.0.0'
+
+
+class TestFormattingWidget:
+
+    @pytest.fixture(autouse=True)
+    def widget_copy(self):
+        os.makedirs(WIDGET_PATH, exist_ok=True)
+        yield shutil.copyfile(SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET)
+        os.remove(DESTINATION_FORMAT_WIDGET)
+        os.rmdir(WIDGET_PATH)
+
+    @pytest.fixture(autouse=True)
+    def widget_formatter(self, widget_copy):
+        yield WidgetJSONFormat(input=widget_copy, output=DESTINATION_FORMAT_WIDGET)
+
+    def test_set_description(self, widget_formatter):
+        """
+        Given
+            - A widget file without a description field
+        When
+            - Run format on mapper file
+        Then
+            - Ensure that a description field was updated successfully with "" value
+        """
+        widget_formatter.set_description()
+        assert 'description' in widget_formatter.data
+
+    def test_set_isPredefined(self, widget_formatter):
+        """
+        Given
+            - A mapper file without a fromVersion field
+        When
+            - Run format on mapper file
+        Then
+            - Ensure that fromVersion field was updated successfully with '6.0.0' value
+        """
+        widget_formatter.set_isPredefined()
+        assert widget_formatter.data.get('isPredefined') is True

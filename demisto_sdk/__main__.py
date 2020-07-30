@@ -421,7 +421,7 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
 # ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
-                         "incidenttype/indicatortype/layout/dashboard file. ")
+                         "incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget file. ")
 @click.help_option(
     '-h', '--help')
 @click.option(

@@ -141,6 +141,10 @@ SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_
 DESTINATION_FORMAT_DASHBOARD_COPY = "Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = "Dashboards"
 
+SOURCE_FORMAT_WIDGET = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_widget.json"
+DESTINATION_FORMAT_WIDGET = "Widgets/formatted-widget.json"
+WIDGET_PATH = "Widgets"
+
 SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook.yml"
 DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"
 PLAYBOOK_PATH = "Playbook"

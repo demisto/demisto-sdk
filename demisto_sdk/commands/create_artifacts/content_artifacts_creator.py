@@ -65,7 +65,7 @@ from packaging.version import parse
 from demisto_sdk.commands.common.content.content import Content, Pack
 from demisto_sdk.commands.common.content.content.objects.pack_objects import Script
 from demisto_sdk.commands.common.content.content.objects.abstract_objects import (
-    YAMLConentObject, YAMLUnfiedObject, JSONContentObject, TextObject)
+    YAMLContentObject, YAMLUnfiedObject, JSONContentObject, TextObject)
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, DOCUMENTATION_DIR, BASE_PACK,
                                                    DASHBOARDS_DIR, INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
@@ -78,7 +78,7 @@ FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
-ContentObject = Union[YAMLUnfiedObject, YAMLConentObject, JSONContentObject, TextObject]
+ContentObject = Union[YAMLUnfiedObject, YAMLContentObject, JSONContentObject, TextObject]
 logger = logging_setup(3, False)
 
 

@@ -6,12 +6,14 @@ import pytest
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import temp_dir, destroy_by_suffix, duplicate_file
+from demisto_sdk.commands.common.tools import path_test_files, src_root
 
 ARTIFACTS_CMD = 'create-content-artifacts'
 
-UNIT_TEST_DATA = (Path(__file__).parent.parent.parent / 'commands' / 'create_artifacts' / 'tests' /
-                  'content_artifacts_creator_test' / 'test_create_content_artifacts')
-UNIT_TEST_CONTENT_REPO = UNIT_TEST_DATA / 'content'
+TEST_DATA = path_test_files()
+TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
+UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'content_artifacts_creator_test'
+                  / 'test_create_content_artifacts')
 
 
 @pytest.fixture()
@@ -19,7 +21,7 @@ def mock_git(mocker):
     from demisto_sdk.commands.common.content.content import Content
     # Mock git working directory
     mocker.patch.object(Content, 'git')
-    Content.git().working_tree_dir = UNIT_TEST_CONTENT_REPO
+    Content.git().working_tree_dir = TEST_CONTENT_REPO
     yield
 
 
@@ -49,7 +51,7 @@ def test_integration_create_content_artifacts_zip(mock_git):
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failure(mock_git, suffix: str):
 
-    with destroy_by_suffix(UNIT_TEST_CONTENT_REPO, suffix), temp_dir() as temp:
+    with destroy_by_suffix(TEST_CONTENT_REPO, suffix), temp_dir() as temp:
         runner = CliRunner()
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '--no-zip'])
 

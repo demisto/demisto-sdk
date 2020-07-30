@@ -123,7 +123,9 @@ class ContentObjectFacotry:
     @staticmethod
     def from_path(path: Union[Path, str]):
         path = Path(path)
-        object_type = ContentObjectFacotry._find_type_by_suffix(file_name=path.name)
+        object_type = None
+        if path.suffix in ['.yaml', '.json', '.yml']:
+            object_type = ContentObjectFacotry._find_type_by_suffix(file_name=path.name)
         if not object_type:
             file_type = find_type(str(path))
             object_type = type_conversion_by_FileType.get(file_type)

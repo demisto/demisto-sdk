@@ -4,12 +4,12 @@ from typing import Union, Optional, List
 from abc import abstractmethod
 
 from wcmatch.pathlib import Path, EXTMATCH
-from .. import YAMLConentObject
+from .. import YAMLContentObject
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.common.constants import FileType, SCRIPTS_DIR, INTEGRATIONS_DIR
 
 
-class YAMLUnfiedObject(YAMLConentObject):
+class YAMLUnfiedObject(YAMLContentObject):
     def __init__(self, path: Union[Path, str], content_type: FileType, file_name_prefix: str):
         super().__init__(path, file_name_prefix)
         self._content_type = content_type

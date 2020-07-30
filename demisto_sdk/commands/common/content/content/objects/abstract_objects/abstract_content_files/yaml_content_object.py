@@ -9,7 +9,7 @@ from ...pack_objects.readme.readme import Readme
 from ...pack_objects.change_log.change_log import ChangeLog
 
 
-class YAMLConentObject(YAMLObject):
+class YAMLContentObject(YAMLObject):
     def __init__(self, path: Union[Path, str], file_name_prefix: str):
         super().__init__(self._fix_path(path), file_name_prefix=file_name_prefix)
         self._readme: Optional[Readme] = None

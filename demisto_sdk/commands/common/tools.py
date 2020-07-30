@@ -9,7 +9,7 @@ import sys
 import zipfile
 from distutils.version import LooseVersion
 from functools import partial
-from pathlib import Path
+from wcmatch.pathlib import Path
 from shutil import copyfile, make_archive, rmtree
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
@@ -145,6 +145,17 @@ def zip_tool(directory: Path, dest: Path):
                 zipf.write(os.path.join(root, file_name), file_name)
 
     return zip_file
+
+
+def src_root() -> Path:
+    git_dir = git.Repo(Path.cwd(),
+                       search_parent_directories=True).working_tree_dir
+
+    return Path(git_dir) / 'demisto_sdk'
+
+
+def path_test_files() -> Path:
+    return src_root() / 'tests' / 'test_files'
 
 
 def print_error(error_str):

@@ -5,9 +5,14 @@ from contextlib import contextmanager
 
 import pytest
 
-UNIT_TEST_DATA = Path(__file__).parent / 'content_artifacts_creator_test' / 'test_create_content_artifacts'
-UNIT_TEST_CONTENT_REPO = UNIT_TEST_DATA / 'content'
-UNIT_TEST_PRIVATE_CONTENT_REPO = UNIT_TEST_DATA / 'private_content'
+from demisto_sdk.commands.common.tools import path_test_files, src_root
+
+
+TEST_DATA = path_test_files()
+TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
+TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
+UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'content_artifacts_creator_test'
+                  / 'test_create_content_artifacts')
 
 
 def same_folders(dcmp):
@@ -30,8 +35,8 @@ def destroy_by_suffix(root_path: Path, suffix: str):
 
 @contextmanager
 def duplicate_file():
-    file = UNIT_TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_new.yml"
-    new_file = UNIT_TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample_new.yml"
+    file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_new.yml"
+    new_file = TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample_new.yml"
     copyfile(file, new_file)
     yield
     new_file.unlink()
@@ -39,7 +44,7 @@ def duplicate_file():
 
 @contextmanager
 def temp_dir():
-    temp = UNIT_TEST_DATA / 'temp'
+    temp = TEST_DATA / '.temp'
     yield temp
     rmtree(temp)
 

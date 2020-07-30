@@ -1,15 +1,18 @@
 from demisto_sdk.commands.common.content.content.objects.pack_objects import IncidentType
 from demisto_sdk.commands.common.content.content.objects_factory import ContentObjectFacotry
-import pytest
+from demisto_sdk.commands.common.constants import INCIDENT_TYPES_DIR, PACKS_DIR
+from demisto_sdk.commands.common.tools import path_test_files
+
+TEST_DATA = path_test_files()
+TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
+INCIDENT_TYPE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / INCIDENT_TYPES_DIR / 'incidenttype-sample_new.json'
 
 
-@pytest.mark.parametrize(argnames="file", argvalues=["incidenttype-Prisma_Cloud_Compute_Audit.json"])
-def test_objects_factory(datadir, file: str):
-    obj = ContentObjectFacotry.from_path(datadir[file])
+def test_objects_factory():
+    obj = ContentObjectFacotry.from_path(INCIDENT_TYPE)
     assert isinstance(obj, IncidentType)
 
 
-@pytest.mark.parametrize(argnames="file", argvalues=["incidenttype-Prisma_Cloud_Compute_Audit.json"])
-def test_prefix(datadir, file: str):
-    obj = IncidentType(datadir[file])
-    assert obj._normalized_file_name() == "incidenttype-Prisma_Cloud_Compute_Audit.json"
+def test_prefix():
+    obj = IncidentType(INCIDENT_TYPE)
+    assert obj._normalized_file_name() == INCIDENT_TYPE.name

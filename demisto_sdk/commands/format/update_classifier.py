@@ -16,7 +16,6 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
 
     def run_format(self):
         super().update_json()
-        self.save_json_to_destination_file()
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
@@ -39,8 +38,9 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
     def run_format(self) -> int:
         try:
             print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
-            self.set_toVersion()
             super().run_format()
+            self.set_toVersion()
+            self.save_json_to_destination_file()
             print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
 
@@ -59,11 +59,12 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
     def run_format(self) -> int:
         try:
             print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
+            super().run_format()
             self.set_fromVersion(VERSION_6_0_0)
             self.set_description()
             self.set_keyTypeMap()
             self.set_transformer()
-            super().run_format()
+            self.save_json_to_destination_file()
             print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
 

@@ -426,7 +426,8 @@ class OpenAPIIntegration:
             list_functions.append(function)
 
         data = data.replace('$COMMANDSLIST$', '\n\t'.join(list_functions))
-        self.print_with_verbose('Finished creating the python code.')
+        self.print_with_verbose('Finished generating the Python code.')
+
 
         if self.fix_code:
             self.print_with_verbose('Fixing the code with autopep8...')

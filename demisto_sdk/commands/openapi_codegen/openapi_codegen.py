@@ -413,7 +413,8 @@ class OpenAPIIntegration:
 
         # Add the command mappings:
         for command in self.functions:
-            prefix = ''
+            prefix = f'{self.command_prefix}-' if self.command_prefix else ''
+
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
 

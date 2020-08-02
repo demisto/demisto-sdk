@@ -10,7 +10,6 @@ from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
-# TODO: find better name
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 
 

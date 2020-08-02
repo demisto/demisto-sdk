@@ -885,7 +885,7 @@ def find_dependencies_command(**kwargs):
 
 # ====================== openapi-codegen ====================== #
 @main.command(name="openapi-codegen",
-              short_help='''Generate an XSOAR integration with the OpenAPI(Swagger) generator tool.''')
+              short_help='''Generates a Cortex XSOAR integration given an OpenAPI Specification.''')
 @click.help_option(
     '-h', '--help'
 )

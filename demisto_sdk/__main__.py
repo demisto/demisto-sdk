@@ -955,7 +955,7 @@ def openapi_codegen_command(**kwargs):
             sys.exit(0)
 
     if integration.save_package(directory):
-        tools.print_success(f'Created package in {directory}')
+        tools.print_success(f'Successfully finished generating integration code and saved it in {directory}')
     else:
         tools.print_error(f'There was an error creating the package in {directory}')
 

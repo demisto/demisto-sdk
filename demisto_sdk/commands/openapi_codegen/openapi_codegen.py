@@ -238,7 +238,8 @@ class OpenAPIIntegration:
         func_desc = data.get('summary', None)
         if not func_desc:
             func_desc = data.get('description', '')
-        func_desc = self.clean_description(func_desc)
+        new_function['description'] = self.clean_description(func_desc)
+
         new_function['description'] = func_desc
         new_function['execution'] = False
         new_function['arguments'] = []

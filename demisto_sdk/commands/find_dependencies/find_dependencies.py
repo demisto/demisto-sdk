@@ -162,7 +162,7 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set or None: found pack ids or None in case nothing was found.
+            set: found pack ids.
 
         """
         if not isinstance(items_names, list):
@@ -190,7 +190,7 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set or None: found pack ids or None in case nothing was found.
+            set: found pack ids.
 
         """
         packs = set()

@@ -232,7 +232,8 @@ class OpenAPIIntegration:
             except Exception:
                 name = None
         if not name:
-            name = '_'.join([re.sub(r'\{[^)]*\}', '', x) for x in path.split('/')])
+            name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in path.split('/')])
+
         name = self.clean_function_name(name)
         new_function['name'] = name
         func_desc = data.get('summary', None)

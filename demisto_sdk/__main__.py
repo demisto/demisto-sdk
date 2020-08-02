@@ -885,7 +885,7 @@ def find_dependencies_command(**kwargs):
 
 # ====================== openapi-codegen ====================== #
 @main.command(name="openapi-codegen",
-              short_help='''Generate an XSOAR integration with the OpenAPI(Swagger) generator tool.''')
+              short_help='''Generates a Cortex XSOAR integration given an OpenAPI Specification.''')
 @click.help_option(
     '-h', '--help'
 )
@@ -973,7 +973,7 @@ def openapi_codegen_command(**kwargs):
             sys.exit(0)
 
     if integration.save_package(output_dir):
-        tools.print_success(f'Created package in {output_dir}')
+        tools.print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
     else:
         tools.print_error(f'There was an error creating the package in {output_dir}')
         sys.exit(1)

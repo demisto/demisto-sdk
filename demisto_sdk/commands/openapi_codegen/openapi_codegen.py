@@ -204,13 +204,15 @@ class OpenAPIIntegration:
             name = data.get('summary', '').lower()
             name = name.replace(' ', '-')
         if not name:
-            name = '_'.join([re.sub(r'\{[^)]*\}', '', x) for x in path.split('/')])
+            name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in path.split('/')])
+
         name = self.clean_function_name(name)
         new_function['name'] = name
         func_desc = data.get('summary', None)
         if not func_desc:
             func_desc = data.get('description', '')
-        func_desc = self.clean_description(func_desc)
+        new_function['description'] = self.clean_description(func_desc)
+
         new_function['description'] = func_desc
         new_function['arguments'] = []
         new_function['parameters'] = data.get('parameters', None)
@@ -371,7 +373,8 @@ class OpenAPIIntegration:
 
         # Add the command mappings:
         for command in self.functions:
-            prefix = ''
+            prefix = f'{self.command_prefix}-' if self.command_prefix else ''
+
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
 
@@ -382,7 +385,8 @@ class OpenAPIIntegration:
             list_functions.append(function)
 
         data = data.replace('$COMMANDSLIST$', '\n\t'.join(list_functions))
-        self.print_with_verbose('Finished creating the python code.')
+        self.print_with_verbose('Finished generating the Python code.')
+
 
         if self.fix_code:
             self.print_with_verbose('Fixing the code with autopep8...')

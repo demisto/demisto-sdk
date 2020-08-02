@@ -890,7 +890,7 @@ def find_dependencies_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input_file', help='The swagger file to load', required=True)
+    '-i', '--input_file', help='The swagger file to load in JSON format', required=True)
 @click.option(
     '-cf', '--config_file', help='The integration configuration file', required=False)
 @click.option(
@@ -903,9 +903,10 @@ def find_dependencies_command(**kwargs):
 @click.option(
     '-c', '--context_path', help='Context output path', required=False)
 @click.option(
-    '-u', '--unique_keys', help='Comma separated unique keys to use in context paths', required=False)
+    '-u', '--unique_keys', help='Comma separated unique keys to use in context paths (case sensitive)', required=False)
 @click.option(
-    '-r', '--root_objects', help='Comma separated JSON root objects to use in command outputs', required=False)
+    '-r', '--root_objects', help='Comma separated JSON root objects to use in command outputs (case sensitive)',
+    required=False)
 @click.option(
     '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
 @click.option(
@@ -914,20 +915,29 @@ def find_dependencies_command(**kwargs):
     '-a', '--use_default', is_flag=True, help='Use the automatically generated integration configuration')
 def openapi_codegen_command(**kwargs):
     if not kwargs.get('output_dir'):
-        directory = os.getcwd()
+        output_dir = os.getcwd()
     else:
-        directory = kwargs['output_dir']
+        output_dir = kwargs['output_dir']
 
     # Check the directory exists and if not, try to create it
-    if not os.path.exists(directory):
+    if not os.path.exists(output_dir):
         try:
-            os.mkdir(directory)
+            os.mkdir(output_dir)
         except Exception as err:
-            print(f'Error creating directory {directory} - {err}')
+            tools.print_error(f'Error creating directory {output_dir} - {err}')
             sys.exit(1)
-    if not os.path.isdir(directory):
-        print(f'The directory provided "{directory}" is not a directory')
+    if not os.path.isdir(output_dir):
+        tools.print_error(f'The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
+
+    input_file = kwargs['input_file']
+    base_name = kwargs.get('base_name', 'GeneratedIntegration')
+    command_prefix = kwargs.get('command_prefix', '-'.join(base_name.split(' ')).lower())
+    context_path = kwargs.get('context_path', base_name.replace(' ', ''))
+    unique_keys = kwargs.get('unique_keys', '')
+    root_objects = kwargs.get('root_objects', '')
+    verbose = kwargs.get('verbose', False)
+    fix_code = kwargs.get('fix_code', False)
 
     configuration = None
     if kwargs.get('config_file'):
@@ -937,27 +947,36 @@ def openapi_codegen_command(**kwargs):
         except Exception as e:
             print_error(f'Failed to load configuration file: {e}')
 
-    base_name = kwargs.get('base_name', 'GeneratedIntegration')
-    print('Processing swagger file...')
-    integration = OpenAPIIntegration(kwargs['input_file'], base_name,
-                                     kwargs.get('command_prefix', '-'.join(base_name.split(' ')).lower()),
-                                     kwargs.get('context_path', base_name.replace(' ', '')),
-                                     unique_keys=kwargs.get('unique_keys', ''),
-                                     root_objects=kwargs.get('root_objects', ''),
-                                     verbose=kwargs.get('verbose', False), fix_code=kwargs.get('fix_code', False),
-                                     configuration=configuration)
+    click.echo('Processing swagger file...')
+    integration = OpenAPIIntegration(input_file, base_name, command_prefix, context_path,
+                                     unique_keys=unique_keys, root_objects=root_objects,
+                                     verbose=verbose, fix_code=fix_code, configuration=configuration)
 
+    integration.load_file()
     if not kwargs.get('config_file'):
-        integration.save_config(integration.configuration, directory)
-        tools.print_success(f'Created configuration file in {directory}')
+        integration.save_config(integration.configuration, output_dir)
+        tools.print_success(f'Created configuration file in {output_dir}')
         if not kwargs.get('use_default', False):
-            print('Run the command again with the created configuration file.')
+            config_path = os.path.join(output_dir, f'{base_name}.json')
+            command_to_run = f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" ' \
+                             f'-o "{output_dir}" -pr "{command_prefix}" -c "{context_path}"'
+            if unique_keys:
+                command_to_run = command_to_run + f' -u "{unique_keys}"'
+            if root_objects:
+                command_to_run = command_to_run + f' -r "{root_objects}"'
+            if verbose:
+                command_to_run = command_to_run + f' -v'
+            if fix_code:
+                command_to_run = command_to_run + f' -f'
+
+            click.echo(f'Run the command again with the created configuration file: {command_to_run}')
             sys.exit(0)
 
-    if integration.save_package(directory):
-        tools.print_success(f'Created package in {directory}')
+    if integration.save_package(output_dir):
+        tools.print_success(f'Created package in {output_dir}')
     else:
-        tools.print_error(f'There was an error creating the package in {directory}')
+        tools.print_error(f'There was an error creating the package in {output_dir}')
+        sys.exit(1)
 
 
 @main.resultcallback()

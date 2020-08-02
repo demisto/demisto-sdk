@@ -44,7 +44,7 @@ base_client = """class Client(BaseClient):
 
         $REQUESTFUNCS$
 """
-base_code = """''' IMPORTS '''
+base_code = """
 import demistomock as demisto
 from CommonServerPython import *
 
@@ -71,7 +71,6 @@ def main():
     LOG(f'Command being called is {command}')
 
     try:
-        # Disable insecure warnings
         requests.packages.urllib3.disable_warnings()
         client = Client(urljoin(url, "$BASEURL$"), verify_certificate, proxy, headers=headers, auth=$BASEAUTH$)
         commands = {

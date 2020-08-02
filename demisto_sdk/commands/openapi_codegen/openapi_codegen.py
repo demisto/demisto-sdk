@@ -7,7 +7,8 @@ from distutils.util import strtobool
 
 import autopep8
 import yaml
-from demisto_sdk.commands.common.tools import print_error
+
+from demisto_sdk.commands.common.tools import camel_to_snake, print_error
 from demisto_sdk.commands.openapi_codegen.base_code import (
     base_argument, base_basic_auth, base_client, base_code, base_credentials,
     base_data, base_function, base_header, base_list_functions, base_params,
@@ -15,19 +16,18 @@ from demisto_sdk.commands.openapi_codegen.base_code import (
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
 
-camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
-illegal_description_chars = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
-illegal_func_chars = illegal_description_chars + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
-illegal_function_names = ['type', 'from', 'id', 'file']
-prepend_illegal = '_'
-output_types = {
+ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
+ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
+ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
+NAME_FIX = '_'
+OUTPUT_TYPES = {
     'string': 'String',
     'integer': 'Number',
     'object': 'Unknown',
     'array': 'Unknown',
     'boolean': 'Boolean',
 }
-arg_types = {
+ARGUMENT_TYPES = {
     'string': 'str',
     'integer': 'int',
     'boolean': 'bool',
@@ -35,36 +35,29 @@ arg_types = {
     'int': 'int',
     'str': 'str',
 }
-removed_names = ['.properties', '.items']
 JSON_TYPE_HEADER = 'application/json'
 DEFAULT_HOST = 'https://www.example.com/api'
-API_KEY_AUTH_TYPE = 'apiKey'
-CREDENTIALS_AUTH_TYPE = 'basic'
-MAX_DESCRIPTION_WORDS = 5000
+BEARER_AUTH_TYPE = 'apiKey'
+BASIC_AUTH_TYPE = 'basic'
+MAX_DESCRIPTION_WORDS = 3000
 
 
 class OpenAPIIntegration:
     def __init__(self, file_path, base_name, command_prefix, context_path, unique_keys=None, root_objects=None,
                  verbose=False, fix_code=False, configuration=None):
         self.json = None
-        self.baseName = base_name
-        self.filter_commands = False
-        self.include_commands = []
+        self.file_path = file_path
+        self.base_name = base_name
         self.command_prefix = command_prefix
         self.context_path = context_path
         self.unique_keys = unique_keys.split(',') if unique_keys is not None else []
         self.root_objects = root_objects.split(',') if root_objects is not None else []
         self.configuration = configuration
-        self.file_load = False
-        self.swagger = None
-        self.openapi = None
         self.security_definitions = None
         self.host = None
         self.base_path = None
-        self.schemes = None
         self.name = None
         self.description = None
-        self.script = None
         self.definitions = None
         self.components = None
         self.reference = None
@@ -72,67 +65,49 @@ class OpenAPIIntegration:
         self.parameters = []
         self.verbose = verbose
         self.fix_code = fix_code
-        self.load_file(file_path)
-
-    def extract_values(self, obj, key):
-        arr = []
-
-        def extract(obj, arr, key):
-            if isinstance(obj, dict):
-                for k, v in obj.items():
-                    if k == key:
-                        arr.append(v)
-                    elif isinstance(v, (dict, list)):
-                        extract(v, arr, key)
-
-            elif isinstance(obj, list):
-                for item in obj:
-                    extract(item, arr, key)
-            return arr
-
-        results = extract(obj, arr, key)
-        return results
 
     def extract_properties(self, obj, context):
         arr = []
 
-        def extract(obj, arr, context):
+        def extract(extracted_object, prop_arr, current_context):
 
-            if isinstance(obj, list):
-                for item in obj:
-                    extract(item, arr, context)
+            if isinstance(extracted_object, list):
+                for item in extracted_object:
+                    extract(item, prop_arr, current_context)
 
-            elif isinstance(obj, dict):
-                if obj.get('type') and type(obj.get('type')) == str:
-                    if obj.get('type') in ['array', 'object']:
-                        refs = self.extract_values(obj, '$ref')
+            elif isinstance(extracted_object, dict):
+                if extracted_object.get('type') and type(extracted_object.get('type')) == str:
+                    if extracted_object.get('type') in ['array', 'object']:
+                        refs = self.extract_values(extracted_object, '$ref')
                         if refs:
                             ref = refs[0].split('/')[-1]
-                            arr = extract(self.extract_values(self.reference[ref], 'properties'), arr, context)
-                        elif obj.get('items'):
-                            for k, v in obj.get('items', {}).items():
-                                arr = extract(v, arr, context)
-                        elif obj.get('properties'):
-                            arr = extract(
-                                obj.get('properties', {}), arr, context)
-                        elif obj.get('allOf'):
-                            for item in obj.get('allOf', []):
-                                arr = extract(item, arr, context)
+                            prop_arr = extract(self.extract_values(self.reference[ref], 'properties'), prop_arr,
+                                               current_context)
+                        elif extracted_object.get('items'):
+                            for k, v in extracted_object.get('items', {}).items():
+                                prop_arr = extract(v, prop_arr, current_context)
+                        elif extracted_object.get('properties'):
+                            prop_arr = extract(
+                                extracted_object.get('properties', {}), prop_arr, current_context)
+                        elif extracted_object.get('allOf'):
+                            for item in extracted_object.get('allOf', []):
+                                prop_arr = extract(item, prop_arr, current_context)
                     else:
-                        arr.append({'name': '.'.join(context), 'type': obj.get('type', 'Unknown'),
-                                    'description': obj.get('description', '')})
-                elif obj.get('type') and type(obj.get('type')) == dict:
-                    for k, v in obj.items():
-                        context.append(k)
-                        arr = extract(v, arr, context)
-                        context.pop()
+                        prop_arr.append({'name': '.'.join(current_context), 'type': extracted_object.get('type',
+                                                                                                         'Unknown'),
+                                         'description': extracted_object.get('description', '')})
+                elif extracted_object.get('type') and type(extracted_object.get('type')) == dict:
+                    for k, v in extracted_object.items():
+                        current_context.append(k)
+                        prop_arr = extract(v, prop_arr, current_context)
+                        current_context.pop()
                 else:
-                    for k, v in obj.items():
-                        context.append(k)
-                        arr = extract(v, arr, context)
-                        context.pop()
+                    for k, v in extracted_object.items():
+                        current_context.append(k)
+                        prop_arr = extract(v, prop_arr, current_context)
+                        current_context.pop()
 
-            return arr
+            return prop_arr
 
         results = extract(obj, arr, context)
         return results
@@ -144,6 +119,7 @@ class OpenAPIIntegration:
                 if int(response_code) != 200:
                     continue
             except Exception:
+                self.print_with_verbose(f'Could not get the code for the response {response}')
                 pass
 
             new_response['description'] = response.get('description', None)
@@ -158,12 +134,12 @@ class OpenAPIIntegration:
                         ref = ref.split('/')[-1]
                         ref_props = self.extract_values(self.reference.get(ref, {}), 'properties')
                         if ref_props:
-                            for k, v in ref_props[0].items():
+                            for k, prop in ref_props[0].items():
                                 if k in self.root_objects:
                                     # We found a root, we need the output of the root only
                                     new_function['root_object'] = k
-                                    all_items = [v]
-                                    path = self.extract_values(v, '$ref')
+                                    all_items = [prop]
+                                    path = self.extract_values(prop, '$ref')
                                     if path:
                                         new_function['context_path'] = self.clean_function_name(path[0].split('/')[-1],
                                                                                                 False)
@@ -176,12 +152,13 @@ class OpenAPIIntegration:
                             new_function['context_path'] = self.clean_function_name(ref, False)
                 else:
                     all_items.extend(self.extract_values(schema, 'properties'))
-                data = self.extract_properties(all_items, [])
-                for v in data:
-                    description = v.get('description', '')
-                    this_type = v.get('type', 'object')
-                    this_type = output_types.get(this_type, 'Unknown')
-                    resp_name = v.get('name')
+
+                properties = self.extract_properties(all_items, [])
+                for prop in properties:
+                    description = prop.get('description', '')
+                    this_type = prop.get('type', 'object')
+                    this_type = OUTPUT_TYPES.get(this_type, 'Unknown')
+                    resp_name = prop.get('name')
                     description = self.clean_description(description)
                     new_function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
             new_function['responses'].append(new_response)
@@ -221,16 +198,11 @@ class OpenAPIIntegration:
                 new_function['arguments'].append(self.init_arg(arg))
 
     def add_function(self, path, method, data, params):
-        new_function = {}
-        new_function['path'] = '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/')
-        new_function['method'] = method
+        new_function = {'path': '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/'), 'method': method}
         name = data.get('operationId', None)
         if not name:
-            try:
-                name = data.get('summary', None)
-                name = name.replace(" ", "-")
-            except Exception:
-                name = None
+            name = data.get('summary', '').lower()
+            name = name.replace(' ', '-')
         if not name:
             name = '_'.join([re.sub(r'\{[^)]*\}', '', x) for x in path.split('/')])
         name = self.clean_function_name(name)
@@ -240,7 +212,6 @@ class OpenAPIIntegration:
             func_desc = data.get('description', '')
         func_desc = self.clean_description(func_desc)
         new_function['description'] = func_desc
-        new_function['execution'] = False
         new_function['arguments'] = []
         new_function['parameters'] = data.get('parameters', None)
         new_function['consumes'] = data.get('consumes', [])
@@ -257,26 +228,14 @@ class OpenAPIIntegration:
 
         self.functions.append(new_function)
 
-    def load_file(self, file_path):
-        error = None
+    def load_file(self):
         try:
-            self.json = json.load(open(file_path, 'rb'))
-            self.file_load = True
-        except Exception as err:
-            error = err
-        if not self.file_load:
-            try:
-                stream = open(file_path, 'rb')
-                self.json = yaml.safe_load(stream)
-                self.file_load = True
-            except Exception as err:
-                error = err
-        if not self.file_load:
-            print_error(f'Failed to load the swagger file: {error}')
+            with open(self.file_path, 'rb') as json_file:
+                self.json = json.load(json_file)
+        except Exception as e:
+            print_error(f'Failed to load the swagger file: {e}')
             sys.exit(1)
 
-        self.swagger = str(self.json.get('swagger', None))
-        self.openapi = str(self.json.get('openapi', None))
         if self.json.get('host', None):
             self.host = self.json.get('host', None)
         elif self.json.get('servers', None):
@@ -286,23 +245,23 @@ class OpenAPIIntegration:
         self.base_path = self.json.get('basePath', '')
         self.name = self.json['info']['title']
         self.description = self.clean_description(self.json.get('info', {}).get('description', ''))
-        self.schemes = self.json.get('schemes', [])
         self.definitions = self.json.get('definitions', {})
         self.components = self.json.get('components', {})
         self.reference = self.definitions or self.components.get('schemas', {})
         self.security_definitions = self.json.get('securityDefinitions', {})
         self.functions = []
-        if not self.command_prefix:
-            self.command_prefix = '-'.join(self.name.split(' ')).lower()
 
         for path, function in self.json['paths'].items():
             try:
                 for method, data in function.items():
+                    if isinstance(data, list):
+                        data = data[0]
                     self.print_with_verbose(f'Adding command for the path: {path}')
                     self.add_function(path, method, data, function.get(
                         'parameters', []))
             except Exception as e:
                 print_error(f'Failed adding the command for the path {path}: {e}')
+                raise
 
         self.functions = sorted(self.functions, key=lambda x: x['name'])
         if not self.configuration:
@@ -312,9 +271,9 @@ class OpenAPIIntegration:
         security_types = []
         if self.security_definitions:
             all_security_types = [s.get('type') for s in self.security_definitions.values()]
-            security_types = [t for t in all_security_types if t in [API_KEY_AUTH_TYPE, CREDENTIALS_AUTH_TYPE]]
+            security_types = [t for t in all_security_types if t in [BEARER_AUTH_TYPE, BASIC_AUTH_TYPE]]
         if not security_types:
-            security_types = [API_KEY_AUTH_TYPE]
+            security_types = [BEARER_AUTH_TYPE]
 
         configuration = {
             'name': self.name or 'GeneratedIntegration',
@@ -337,18 +296,17 @@ class OpenAPIIntegration:
                 'root_object': function.get('root_object', '')
             }
             headers = []
-            if function['consumes']:
-                headers.append({'Content-Type': JSON_TYPE_HEADER
-                                if JSON_TYPE_HEADER in function['consumes'] else function['consumes'][0]})
-            if function['produces']:
-                headers.append({'Accept': JSON_TYPE_HEADER
-                                if JSON_TYPE_HEADER in function['produces'] else function['produces'][0]})
+            if function['consumes'] and JSON_TYPE_HEADER not in function['consumes']:
+                headers.append({'Content-Type': function['consumes'][0]})
+
+            if function['produces'] and JSON_TYPE_HEADER not in function['produces']:
+                headers.append({'Accept': function['produces'][0]})
 
             command['headers'] = headers
             for arg in function['arguments']:
                 command['arguments'].append({
                     'name': str(arg.get('name', '')),
-                    'description': self.clean_description(arg.get('description', '')),
+                    'description': arg.get('description', ''),
                     'required': arg.get('required'),
                     'default': arg.get('default', ''),
                     'in': arg.get('in', ''),
@@ -375,6 +333,7 @@ class OpenAPIIntegration:
 
         configuration['code_type'] = 'python'
         configuration['code_subtype'] = 'python3'
+        # TODO: get latest docker image
         configuration['docker_image'] = 'demisto/python3:3.8.3.9324'
 
         self.configuration = configuration
@@ -387,7 +346,7 @@ class OpenAPIIntegration:
         functions = []
         req_functions = []
         for command in self.configuration['commands']:
-            function, req_function = self.get_command_functions(command)
+            function, req_function = self.get_python_command_and_request_functions(command)
             functions.append(function)
             req_functions.append(req_function)
 
@@ -396,12 +355,12 @@ class OpenAPIIntegration:
         client = base_client.replace('$REQUESTFUNCS$', '\n'.join(req_functions))
         data = data.replace('$CLIENT$', client)
 
-        if API_KEY_AUTH_TYPE in self.configuration['auth']:
+        if BEARER_AUTH_TYPE in self.configuration['auth']:
             data = data.replace('$BEARERAUTHPARAMS$', base_token)
         else:
             data = data.replace('$BEARERAUTHPARAMS$', '')
 
-        if CREDENTIALS_AUTH_TYPE in self.configuration['auth']:
+        if BASIC_AUTH_TYPE in self.configuration['auth']:
             data = data.replace('$BASEAUTHPARAMS$', base_credentials)
             data = data.replace('$BASEAUTH$', base_basic_auth)
         else:
@@ -431,76 +390,13 @@ class OpenAPIIntegration:
 
         return data
 
-    def get_command_functions(self, command):
+    def get_python_command_and_request_functions(self, command):
         function_name = command['name'].replace('-', '_')
+        headers = command['headers']
         self.print_with_verbose(f'Adding the function {function_name} to the code...')
         function = base_function.replace('$FUNCTIONNAME$', function_name)
         req_function = base_request_function.replace('$FUNCTIONNAME$', function_name)
-        new_params = []
-        new_data = []
-        arguments = []
-        argument_names = []
-        arguments_found = False
-        headers = command['headers']
-        for arg in command['arguments']:
-            arguments_found = True
-            code_arg_name = arg['name']
-            ref_arg_name = arg['name']
-            arg_type = arg.get('type')
-            arg_props = []
-            if arg.get('ref'):
-                ref_arg_name = f'{arg["ref"]}_{ref_arg_name}'.lower()
-                code_arg_name = f'{arg["ref"]}_{code_arg_name}'.lower()
-            if code_arg_name in illegal_function_names:
-                code_arg_name = f'{code_arg_name}{prepend_illegal}'
-            if arg['properties']:
-                for k, v in arg['properties'].items():
-                    prop_default = self.get_arg_default(v)
-                    prop_arg_name = f'{code_arg_name}_{k}'.lower()
-                    prop_arg_type = arg_types.get(v.get('type', 'string'), 'str')
-                    if prop_arg_type == 'bool':
-                        prop_arg_type = 'argToBoolean'
-                    if prop_arg_name in illegal_function_names:
-                        prop_arg_name = f'{prop_arg_name}{prepend_illegal}'
-                    this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default})"
-                    this_prop_argument = this_prop_argument.replace('$SARGNAME$', prop_arg_name)
-                    if 'None' not in prop_default:
-                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', f'{prop_arg_type}(') + ')'
-                    else:
-                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', '')
-                    arg_props.append({k: prop_arg_name})
-                    arguments.append(this_prop_argument)
-                all_props = self.format_params(arg_props, base_props, '$PROPS$')
-                this_argument = f'{code_arg_name} = {all_props}'
-                if arg_type == 'array':
-                    this_argument = f'argToList({this_argument})'
-            else:
-                if arg_type == 'array':
-                    argument_default = ', []'
-                    new_arg_type = 'argToList'
-                else:
-                    argument_default = self.get_arg_default(arg)
-                    new_arg_type = arg_types.get(arg['type'], 'str')
-                    if new_arg_type == 'bool':
-                        new_arg_type = 'argToBoolean'
-
-                this_argument = f"{base_argument.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
-                if 'None' not in argument_default:
-                    this_argument = this_argument.replace('$ARGTYPE$', f'{new_arg_type}(') + ')'
-                else:
-                    this_argument = this_argument.replace('$ARGTYPE$', '')
-
-            this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
-            argument_names.append(code_arg_name)
-            arguments.append(this_argument)
-            if 'query' in arg['in']:
-                new_params.append({
-                    arg['name']: ref_arg_name
-                })
-            elif arg['in'] in ['formData', 'body']:
-                new_data.append({
-                    arg['name']: ref_arg_name
-                })
+        argument_names, arguments, arguments_found, body_data, params_data = self.process_command_arguments(command)
         if arguments_found:
             function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
             function = function.replace('$REQARGS$', ', '.join(argument_names))
@@ -515,27 +411,27 @@ class OpenAPIIntegration:
         command['path'] = f"'{command['path']}'" if "'" not in command['path'] else command['path']
         command['path'] = f"f{command['path']}" if "{" in command['path'] else command['path']
         for param in re.findall(r'{([^}]+)}', command['path']):  # get content inside curly brackets
-            if param in illegal_function_names:
-                command['path'] = command['path'].replace(param, f'{param}{prepend_illegal}')
+            if param in ILLEGAL_CODE_NAMES:
+                command['path'] = command['path'].replace(param, f'{param}{NAME_FIX}')
         req_function = req_function.replace('$PATH$', command['path'])
-        if new_params:
-            params = self.format_params(new_params, base_params, '$PARAMS$')
+        if params_data:
+            params = self.format_params(params_data, base_params, '$PARAMS$')
             req_function = req_function.replace('$PARAMETERS$', params)
         else:
             req_function = '\n'.join(
                 [x for x in req_function.split('\n') if '$PARAMETERS$' not in x])
-        if new_data:
-            new_data = self.format_params(new_data, base_data, '$DATAOBJ$')
-            req_function = req_function.replace('$DATA$', new_data)
+        if body_data:
+            body_data = self.format_params(body_data, base_data, '$DATAOBJ$')
+            req_function = req_function.replace('$DATA$', body_data)
         else:
             req_function = '\n'.join(
                 [x for x in req_function.split('\n') if '$DATA$' not in x])
-        if new_params:
+        if params_data:
             req_function = req_function.replace(
                 '$NEWPARAMS$', ', params=params')
         else:
             req_function = req_function.replace('$NEWPARAMS$', '')
-        if new_data:
+        if body_data:
             req_function = req_function.replace('$NEWDATA$', ', json_data=data')
         else:
             req_function = req_function.replace('$NEWDATA$', '')
@@ -568,8 +464,158 @@ class OpenAPIIntegration:
         function = function.replace('$CONTEXTNAME$', context_name)
         return function, req_function
 
-    def get_yaml(self, no_code):
+    def process_command_arguments(self, command: dict) -> tuple:
+        params_data = []
+        body_data = []
+        arguments = []
+        argument_names = []
+        arguments_found = False
+        for arg in command['arguments']:
+            arguments_found = True
+            code_arg_name = arg['name']
+            ref_arg_name = arg['name']
+            arg_type = arg.get('type')
+            arg_props = []
+            if arg.get('ref'):
+                ref_arg_name = f'{arg["ref"]}_{ref_arg_name}'.lower()
+                code_arg_name = f'{arg["ref"]}_{code_arg_name}'.lower()
+            if code_arg_name in ILLEGAL_CODE_NAMES:
+                code_arg_name = f'{code_arg_name}{NAME_FIX}'
+            if arg['properties']:
+                for k, v in arg['properties'].items():
+                    prop_default = self.get_arg_default(v)
+                    prop_arg_name = f'{code_arg_name}_{k}'.lower()
+                    prop_arg_type = ARGUMENT_TYPES.get(v.get('type', 'string'), 'str')
+                    if prop_arg_type == 'bool':
+                        prop_arg_type = 'argToBoolean'
+                    if prop_arg_name in ILLEGAL_CODE_NAMES:
+                        prop_arg_name = f'{prop_arg_name}{NAME_FIX}'
+                    this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default})"
+                    this_prop_argument = this_prop_argument.replace('$SARGNAME$', prop_arg_name)
+                    if 'None' not in prop_default:
+                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', f'{prop_arg_type}(') + ')'
+                    else:
+                        this_prop_argument = this_prop_argument.replace('$ARGTYPE$', '')
+                    arg_props.append({k: prop_arg_name})
+                    arguments.append(this_prop_argument)
+                all_props = self.format_params(arg_props, base_props, '$PROPS$')
+                this_argument = f'{code_arg_name} = {all_props}'
+                if arg_type == 'array':
+                    this_argument = f'argToList({this_argument})'
+            else:
+                if arg_type == 'array':
+                    argument_default = ', []'
+                    new_arg_type = 'argToList'
+                else:
+                    argument_default = self.get_arg_default(arg)
+                    new_arg_type = ARGUMENT_TYPES.get(arg['type'], 'str')
+                    if new_arg_type == 'bool':
+                        new_arg_type = 'argToBoolean'
+
+                this_argument = f"{base_argument.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
+                if 'None' not in argument_default:
+                    this_argument = this_argument.replace('$ARGTYPE$', f'{new_arg_type}(') + ')'
+                else:
+                    this_argument = this_argument.replace('$ARGTYPE$', '')
+
+            this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
+            argument_names.append(code_arg_name)
+            arguments.append(this_argument)
+            if 'query' in arg['in']:
+                params_data.append({
+                    arg['name']: ref_arg_name
+                })
+            elif arg['in'] in ['formData', 'body']:
+                body_data.append({
+                    arg['name']: ref_arg_name
+                })
+
+        return argument_names, arguments, arguments_found, body_data, params_data
+
+    def get_yaml(self):
         # Create the commands section
+        commands = self.get_yaml_commands()
+        script = self.get_python_code()
+        commonfields = XSOARIntegration.CommonFields(self.configuration['name'], -1)
+        name = self.configuration['name']
+        display = self.configuration['name']
+        category = self.configuration['category']
+        description = self.configuration['description']
+        configurations = self.get_yaml_params()
+
+        int_script = XSOARIntegration.Script(script, self.configuration['code_type'],
+                                             self.configuration['code_subtype'], self.configuration['docker_image'],
+                                             self.configuration.get('fetch_incidents', False), commands)
+
+        integration = XSOARIntegration(commonfields, name, display, category, description, configuration=configurations,
+                                       script=int_script)
+        return integration
+
+    def get_yaml_params(self) -> list:
+        url = self.configuration['url']
+        configurations = [XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
+                                                         name='url',
+                                                         defaultvalue=url,
+                                                         type_=0,
+                                                         required=True)]
+        if not isinstance(self.configuration['auth'], list):
+            self.configuration['auth'] = [self.configuration['auth']]
+        if BEARER_AUTH_TYPE in self.configuration['auth']:
+            configurations.append(XSOARIntegration.Configuration(display='API Key',
+                                                                 name='api_key',
+                                                                 required=True,
+                                                                 type_=4))
+        if BASIC_AUTH_TYPE in self.configuration['auth']:
+            configurations.append(XSOARIntegration.Configuration(display='Username',
+                                                                 name='credentials',
+                                                                 required=True,
+                                                                 type_=9))
+        if self.configuration.get('fetch_incidents', False):
+            configurations.extend([
+                XSOARIntegration.Configuration(display='Fetch incidents',
+                                               name='isFetch',
+                                               type_=8,
+                                               required=False),
+                XSOARIntegration.Configuration(display='Incident type',
+                                               name='incidentType',
+                                               type_=13,
+                                               required=False),
+                XSOARIntegration.Configuration(display='Maximum number of incidents per fetch',
+                                               name='max_fetch',
+                                               defaultvalue='10',
+                                               type_=0,
+                                               required=False),
+                XSOARIntegration.Configuration(display='API Key',
+                                               name='apikey',
+                                               type_=4,
+                                               required=True),
+                XSOARIntegration.Configuration(display='Fetch alerts with status (ACTIVE, CLOSED)',
+                                               name='alert_status',
+                                               defaultvalue='ACTIVE',
+                                               type_=15,
+                                               required=False,
+                                               options=['ACTIVE', 'CLOSED']),
+                XSOARIntegration.Configuration(display='Fetch alerts with type',
+                                               name='alert_type',
+                                               type_=0,
+                                               required=False),
+                XSOARIntegration.Configuration(display='Minimum severity of alerts to fetch',
+                                               name='min_severity',
+                                               defaultvalue='Low',
+                                               type_=15,
+                                               required=True,
+                                               options=['Low', 'Medium', 'High', 'Critical'])])
+        configurations.extend([XSOARIntegration.Configuration(display='Trust any certificate (not secure)',
+                                                              name='insecure',
+                                                              type_=8,
+                                                              required=False),
+                               XSOARIntegration.Configuration(display='Use system proxy settings',
+                                                              name='proxy',
+                                                              type_=8,
+                                                              required=False)])
+        return configurations
+
+    def get_yaml_commands(self) -> list:
         commands = []
         for command in self.configuration['commands']:
             args = []
@@ -580,12 +626,8 @@ class OpenAPIIntegration:
                 if arg.get('ref'):
                     arg_name = f"{arg['ref']}_{arg_name}".lower()
                 required = True if arg['required'] else False
-                description = arg.get('description', None)
+                description = arg.get('description', '')
                 is_array = True if arg['type'] == 'array' else False
-                if description:
-                    description = self.clean_description(description)
-                else:
-                    description = ''
                 if arg['properties']:
                     for k, v in arg['properties'].items():
                         prop_arg_name = f'{arg_name}_{k}'
@@ -629,118 +671,39 @@ class OpenAPIIntegration:
             command_description = command['description']
             commands.append(XSOARIntegration.Script.Command(command_name, command_description, args, outputs))
 
-        script = ''
-        if not no_code:
-            script = self.get_python_code()
-
-        commonfields = XSOARIntegration.CommonFields(self.configuration['name'], -1)
-        name = self.configuration['name']
-        display = self.configuration['name']
-        category = self.configuration['category']
-        description = self.configuration['description']
-        url = self.configuration['url']
-        configurations = [XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
-                                                         name='url',
-                                                         defaultvalue=url,
-                                                         type_=0,
-                                                         required=True)]
-        if not isinstance(self.configuration['auth'], list):
-            self.configuration['auth'] = [self.configuration['auth']]
-
-        if API_KEY_AUTH_TYPE in self.configuration['auth']:
-            configurations.append(XSOARIntegration.Configuration(display='API Key',
-                                                                 name='api_key',
-                                                                 required=True,
-                                                                 type_=4))
-        if CREDENTIALS_AUTH_TYPE in self.configuration['auth']:
-            configurations.append(XSOARIntegration.Configuration(display='Username',
-                                                                 name='credentials',
-                                                                 required=True,
-                                                                 type_=9))
-        if self.configuration.get('fetch_incidents', False):
-            configurations.extend([
-                XSOARIntegration.Configuration(display='Fetch incidents',
-                                               name='isFetch',
-                                               type_=8,
-                                               required=False),
-                XSOARIntegration.Configuration(display='Incident type',
-                                               name='incidentType',
-                                               type_=13,
-                                               required=False),
-                XSOARIntegration.Configuration(display='Maximum number of incidents per fetch',
-                                               name='max_fetch',
-                                               defaultvalue='10',
-                                               type_=0,
-                                               required=False),
-                XSOARIntegration.Configuration(display='API Key',
-                                               name='apikey',
-                                               type_=4,
-                                               required=True),
-                XSOARIntegration.Configuration(display='Fetch alerts with status (ACTIVE, CLOSED)',
-                                               name='alert_status',
-                                               defaultvalue='ACTIVE',
-                                               type_=15,
-                                               required=False,
-                                               options=['ACTIVE', 'CLOSED']),
-                XSOARIntegration.Configuration(display='Fetch alerts with type',
-                                               name='alert_type',
-                                               type_=0,
-                                               required=False),
-                XSOARIntegration.Configuration(display='Minimum severity of alerts to fetch',
-                                               name='min_severity',
-                                               defaultvalue='Low',
-                                               type_=15,
-                                               required=True,
-                                               options=['Low', 'Medium', 'High', 'Critical'])])
-
-        configurations.extend([XSOARIntegration.Configuration(display='Trust any certificate (not secure)',
-                                                              name='insecure',
-                                                              type_=8,
-                                                              required=False),
-                               XSOARIntegration.Configuration(display='Use system proxy settings',
-                                                              name='proxy',
-                                                              type_=8,
-                                                              required=False)])
-
-        int_script = XSOARIntegration.Script(script, self.configuration['code_type'],
-                                             self.configuration['code_subtype'], self.configuration['docker_image'],
-                                             self.configuration.get('fetch_incidents', False), commands)
-
-        integration = XSOARIntegration(commonfields, name, display, category, description, configuration=configurations,
-                                       script=int_script)
-        return integration
+        return commands
 
     def save_python_code(self, directory):
         self.print_with_verbose('Creating python file...')
-        filename = os.path.join(directory, f'{self.baseName}.py')
+        filename = os.path.join(directory, f'{self.base_name}.py')
         try:
             with open(filename, 'w') as fp:
                 fp.write(self.get_python_code())
                 return filename
         except Exception as err:
-            print(f'Error writing {filename} - {err}')
+            print_error(f'Error writing {filename} - {err}')
             raise
 
-    def save_yaml(self, directory, no_code=False):
+    def save_yaml(self, directory):
         self.print_with_verbose('Creating yaml file...')
-        filename = os.path.join(directory, f'{self.baseName}.yml')
+        filename = os.path.join(directory, f'{self.base_name}.yml')
         try:
             with open(filename, 'w') as fp:
-                fp.write(yaml.dump(self.get_yaml(no_code).to_yaml()))
+                fp.write(yaml.dump(self.get_yaml().to_yaml()))
             return filename
         except Exception as err:
-            print(f'Error writing {filename} - {err}')
+            print_error(f'Error writing {filename} - {err}')
             raise
 
     def save_config(self, config, directory):
         self.print_with_verbose('Creating configuration file...')
-        filename = os.path.join(directory, f'{self.baseName}.json')
+        filename = os.path.join(directory, f'{self.base_name}.json')
         try:
             with open(filename, 'w') as fp:
                 json.dump(config, fp, indent=4)
             return filename
         except Exception as err:
-            print(f'Error writing {filename} - {err}')
+            print_error(f'Error writing {filename} - {err}')
             raise
 
     def print_with_verbose(self, text):
@@ -749,18 +712,18 @@ class OpenAPIIntegration:
 
     def save_image_and_desc(self, directory):
         self.print_with_verbose('Creating image and description files...')
-        image_path = os.path.join(directory, f'{self.baseName}_image.png')
-        desc_path = os.path.join(directory, f'{self.baseName}_description.md')
+        image_path = os.path.join(directory, f'{self.base_name}_image.png')
+        desc_path = os.path.join(directory, f'{self.base_name}_description.md')
         try:
-            shutil.copy(os.path.join(os.path.dirname(__file__), 'Generated_image.png'), image_path)
-            shutil.copy(os.path.join(os.path.dirname(__file__), 'Generated_description.md'), desc_path)
+            shutil.copy(os.path.join(os.path.dirname(__file__), 'resources', 'Generated_image.png'), image_path)
+            shutil.copy(os.path.join(os.path.dirname(__file__), 'resources', 'Generated_description.md'), desc_path)
             return image_path, desc_path
         except Exception as err:
-            print(f'Error copying image and description files - {err}')
+            print_error(f'Error copying image and description files - {err}')
 
     def save_package(self, directory):
         code_path = self.save_python_code(directory)
-        yml_path = self.save_yaml(directory, no_code=True)
+        yml_path = self.save_yaml(directory)
         image_path, desc_path = self.save_image_and_desc(directory)
         return code_path, yml_path, image_path, desc_path
 
@@ -781,8 +744,28 @@ class OpenAPIIntegration:
         return new_arg
 
     @staticmethod
+    def extract_values(obj, key):
+        arr = []
+
+        def extract(obj, arr, key):
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if k == key:
+                        arr.append(v)
+                    elif isinstance(v, (dict, list)):
+                        extract(v, arr, key)
+
+            elif isinstance(obj, list):
+                for item in obj:
+                    extract(item, arr, key)
+            return arr
+
+        results = extract(obj, arr, key)
+        return results
+
+    @staticmethod
     def get_arg_default(arg):
-        arg_type = arg_types.get(arg.get('type', 'string'), 'str')
+        arg_type = ARGUMENT_TYPES.get(arg.get('type', 'string'), 'str')
         arg_default = arg.get('default', '')
         if arg_type == 'int':
             try:
@@ -805,18 +788,18 @@ class OpenAPIIntegration:
     def clean_description(description):
         if len(description) > MAX_DESCRIPTION_WORDS:
             description = description[:MAX_DESCRIPTION_WORDS] + '...'
-        for i in illegal_description_chars:
+        for i in ILLEGAL_DESCRIPTION_CHARS:
             description = description.replace(i, ' ')
 
         return description
 
     @staticmethod
     def clean_function_name(name, snakeify=True):
-        for i in illegal_func_chars:
+        for i in ILLEGAL_CODE_CHARS:
             name = name.replace(i, '')
 
         if snakeify:
-            name = OpenAPIIntegration.camel_to_snake(name)
+            name = camel_to_snake(name)
             name = name.replace('-', '_').replace('__', '_').strip('_')
 
         return name
@@ -826,12 +809,6 @@ class OpenAPIIntegration:
         modified_params = []
         for p in params:
             for name, code_name in p.items():
-                # modified_params.append(f'\"{name}\"={code_name}')
                 modified_params.append(f'{name}={code_name}')
         params = base.replace(base_string, ', '.join(modified_params))
         return params
-
-    @staticmethod
-    def camel_to_snake(camel):
-        snake = camel_to_snake_pattern.sub('_', camel).lower()
-        return snake

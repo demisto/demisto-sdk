@@ -280,13 +280,19 @@ class FilesValidator:
         if not self.is_circle:
             remote_configured = has_remote_configured()
             is_origin_demisto = is_origin_content_repo()
-            if remote_configured and not is_origin_demisto:
-                files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
+            is_external_repo = tools.is_external_repository()
+
+            repo = 'upstream'
+            if is_external_repo:
+                repo = 'origin'
+
+            if (remote_configured and not is_origin_demisto) or is_external_repo:
+                files_string = run_command(f'git diff --name-status --no-merges {repo}/master...HEAD')
                 nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files = \
                     self.get_modified_files(files_string, print_ignored_files=self.print_ignored_files)
 
                 all_changed_files_string = run_command(
-                    'git diff --name-status upstream/master...HEAD')
+                    f'git diff --name-status {repo}/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _ = \
                     self.get_modified_files(all_changed_files_string,
                                             print_ignored_files=self.print_ignored_files)

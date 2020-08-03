@@ -1251,7 +1251,14 @@ class IDSetType(Enum):
     TEST_PLAYBOOK = 'TestPlaybooks'
     WIDGET = 'Widgets'
     CLASSIFIER = 'Classifiers'
+    MAPPER = 'Mappers'
     REPORT = 'Reports'
+    DASHBOARD = 'Dashboards'
+    INCIDENT_FIELD = 'IncidentFields'
+    INCIDENT_TYPE = 'IncidentTypes'
+    INDICATOR_FIELD = 'IndicatorFields'
+    INDICATOR_TYPE = 'IndicatorTypes'
+    LAYOUTS = 'Layouts'
 
     @classmethod
     def has_value(cls, value):
@@ -1292,7 +1299,7 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
 
     if unified_id_set:
         with open(output_id_set_path, mode='w', encoding='utf-8') as f:
-            json.dump(unified_id_set, f)
+            json.dump(unified_id_set.get_dict(), f, indent=4)
 
     return unified_id_set, has_duplicates, duplicates
 

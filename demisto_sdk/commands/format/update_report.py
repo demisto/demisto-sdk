@@ -1,4 +1,3 @@
-import re
 from typing import Tuple
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
@@ -57,12 +56,8 @@ class ReportJSONFormat(BaseUpdateJSON):
 
             print_color('Please specify the desired type: pdf | csv | docx', LOG_COLORS.YELLOW)
             user_desired_type = input()
-            if re.match(r'(^pdf$)', user_desired_type, re.IGNORECASE):
-                self.data['type'] = 'pdf'
-            elif re.match(r'(^csv$)', user_desired_type, re.IGNORECASE):
-                self.data['type'] = 'csv'
-            elif re.match(r'(^docx$)', user_desired_type, re.IGNORECASE):
-                self.data['type'] = 'docx'
+            if user_desired_type.lower() in ('pdf', 'csv', 'docx'):
+                self.data['type'] = user_desired_type.lower()
             else:
                 print_error('type is not valid')
 
@@ -83,10 +78,8 @@ class ReportJSONFormat(BaseUpdateJSON):
 
             print_color('Please specify the desired orientation: landscape | portrait ', LOG_COLORS.YELLOW)
             user_desired_orientation = input()
-            if re.match(r'(^landscape$)', user_desired_orientation, re.IGNORECASE):
-                self.data['orientation'] = 'landscape'
-            elif re.match(r'(^portrait$)', user_desired_orientation, re.IGNORECASE):
-                self.data['orientation'] = 'portrait'
+            if user_desired_orientation.lower() in ('landscape', 'portrait'):
+                self.data['orientation'] = user_desired_orientation.lower()
             else:
                 self.data['orientation'] = ''
 

@@ -1,14 +1,8 @@
 # Changelog
 * Added new *githubUser* field in pack metadata init command.
 * Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
-* Fixed an issue were **find-dependencies** ignored *toversion* field in content items.
-
-* **Format** command:
-    * Added support for `layoutscontainer`.
-    * Added support for `classifier_5_9_9`.
-    * Added support for `mappers`.
-    * Added support for `widget`
-    * Running **Format** on playbooks will set the `ID` field to be equal to `name` field for new playbooks only.
+* Added support for *layoutscontainer*, *classifier_5_9_9*, *mapper*, and *widget* in the **Format** command.
+* Fixed an issue where **Format** will set the `ID` field to be equal to the `name` field in modified playbooks.
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 * Playbook branch marked with *skipunavailable* is now set as an optional dependency in the **find-dependencies** command.

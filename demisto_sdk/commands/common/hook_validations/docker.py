@@ -220,7 +220,7 @@ class DockerImageValidator(BaseValidator):
         return latest_tag_name
 
     @staticmethod
-    def get_docker_image_latest_tag_request(docker_image_name):
+    def get_docker_image_latest_tag_request(docker_image_name: str) -> str:
         """
         Get the latest tag for a docker image by request to docker hub.
         Args:

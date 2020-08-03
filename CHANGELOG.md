@@ -2,6 +2,9 @@
 * Added new *githubUser* field in pack metadata init command.
 * Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
 * Fixed an issue were **find-dependencies** ignored *toversion* field in content items.
+* Improved **update-release-notes** command:
+    * Write content description to release notes for new items.
+    * Update format for file types without description: Connections, Incident Types, Indicator Types, Layouts, Incident Fields.
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

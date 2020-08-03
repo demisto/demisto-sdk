@@ -1279,10 +1279,7 @@ class IDSet:
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
 
-        if object_type not in self._id_set_dict:
-            self._id_set_dict[object_type] = []
-
-        self._id_set_dict[object_type].append(obj)
+        self._id_set_dict.setdefault(object_type, []).append(obj)
 
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):

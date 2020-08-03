@@ -165,7 +165,7 @@ class ContentCreator:
 
     def add_suffix_to_file_path(self, file_path):
         # do not add suffix to release notes
-        if 'ReleaseNotes' not in file_path:
+        if 'ReleaseNotes' not in file_path and 'reputations.json' not in file_path:
             return os.path.splitext(file_path)[0] + self.file_name_suffix + os.path.splitext(file_path)[1]
 
         else:

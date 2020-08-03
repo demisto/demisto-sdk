@@ -178,6 +178,41 @@ class TestDependsOnScriptAndIntegration:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_scripts__filter_toversion(self, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on QRadar command.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should ignore the Deprecated pack due to toversion settings of old QRadar integration.
+        """
+        expected_result = {('QRadar', True)}
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "DummyScript",
+                    "file_path": "dummy_path",
+                    "depends_on": [
+                        "qradar-searches",
+                    ],
+                    "pack": "dummy_pack"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      exclude_ignored_dependencies=False
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
     def test_collect_scripts_depends_on_two_integrations(self, id_set):
         expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
 
@@ -568,6 +603,46 @@ class TestDependsOnLayout:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_layouts_dependencies_filter_toversion(self, id_set):
+        """
+        Given
+            - A layout entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+            - Should ignore the NonSupported pack due to toversion settings of both indicator type and field.
+        """
+        expected_result = {("CommonTypes", True)}
+
+        test_input = [
+            {
+                "Dummy Layout": {
+                    "typeID": "dummy_layout",
+                    "name": "Dummy Layout",
+                    "pack": "dummy_pack",
+                    "kind": "edit",
+                    "path": "dummy_path",
+                    "incident_and_indicator_types": [
+                        "accountRep",
+                    ],
+                    "incident_and_indicator_fields": [
+                        "indicator_tags",
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      exclude_ignored_dependencies=False,
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnIncidentField:
     def test_collect_incident_field_dependencies(self, id_set):
@@ -842,3 +917,26 @@ class TestDependencyGraph:
 
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
+
+    def test_build_dependency_graph_include_ignored_content(self, id_set):
+        """
+        Given
+            - A pack name which depends on unsupported content.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the pack dependencies with unsupported content.
+        """
+
+        pack_name = "ImpossibleTraveler"
+        found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name,
+                                                              id_set=id_set,
+                                                              verbose_file=VerboseFile(),
+                                                              exclude_ignored_dependencies=False
+                                                              )
+        root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
+        pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
+
+        assert root_of_graph == pack_name
+        assert len(pack_dependencies) > 0
+        assert 'NonSupported' not in pack_dependencies

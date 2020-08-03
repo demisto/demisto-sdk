@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
 
 
 PRESET_ERROR_TO_IGNORE = {
@@ -135,6 +135,7 @@ ERROR_CODE = {
     "pack_metadata_missing_url_and_email": "PA113",
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
+    "invalid_package_dependencies": 'PA116',
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
@@ -920,6 +921,11 @@ class Errors:
         return 'You should update the following files to the package format, for further details please visit ' \
                'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_package_dependencies(pack_name):
+        return f'{pack_name} depends on NonSupported / DeprecatedContent packs.'
 
     @staticmethod
     @error_code_decorator

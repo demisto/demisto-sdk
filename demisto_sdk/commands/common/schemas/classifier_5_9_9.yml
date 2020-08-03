@@ -24,11 +24,7 @@ mapping:
     required: True
   fromVersion:
     type: str
-  fromversion:
-    type: str
   toVersion:
-    type: str
-  toversion:
     type: str
   brandName:
     type: str

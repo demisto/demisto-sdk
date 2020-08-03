@@ -10,12 +10,12 @@ import click
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name, print_error,
                                                print_warning)
+from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -43,7 +43,6 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -137,8 +136,8 @@ def main(config, version):
 )
 @pass_config
 def extract(config, **kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -178,8 +177,8 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -422,11 +421,13 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
 # ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
-                         "incidenttype/indicatortype/layout/dashboard file. ")
+                         "incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file. ")
 @click.help_option(
     '-h', '--help')
 @click.option(
-    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
+    "-i", "--input", help="The path of the script yml file\n"
+                          "If no input is specified, the format will be executed on all new/changed files.",
+    type=click.Path(exists=True, resolve_path=True))
 @click.option(
     "-o", "--output", help="The path where the formatted file will be saved to",
     type=click.Path(resolve_path=True))
@@ -608,8 +609,8 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
     generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
@@ -734,8 +735,8 @@ def generate_doc(**kwargs):
             print_error("The `command` argument must be presented with existing `README.md` docs.")
             return 1
 
-    file_type = find_type(kwargs.get('input', ''))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
@@ -747,7 +748,7 @@ def generate_doc(**kwargs):
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command)
-    elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+    elif file_type == FileType.SCRIPT:
         return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
@@ -828,7 +829,11 @@ def update_pack_releasenotes(**kwargs):
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
-    modified, added, old, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
+
+    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+    validate_manager.setup_git_params()
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -887,13 +892,25 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "-i", "--id_set_path", help="Path to id set json file.", required=False)
 @click.option(
+    "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
+    is_flag=True)
+@click.option(
     "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
     hidden=True, required=False)
 def find_dependencies_command(**kwargs):
     pack_name = kwargs.get('pack_folder_name', '')
     id_set_path = kwargs.get('id_set_path')
     verbose = kwargs.get('verbose')
-    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path, debug_file_path=verbose)
+    update_pack_metadata = not kwargs.get('no_update')
+
+    try:
+        PackDependencies.find_dependencies(pack_name=pack_name,
+                                           id_set_path=id_set_path,
+                                           debug_file_path=verbose,
+                                           update_pack_metadata=update_pack_metadata,
+                                           )
+    except ValueError as exp:
+        print_error(str(exp))
 
 
 @main.resultcallback()

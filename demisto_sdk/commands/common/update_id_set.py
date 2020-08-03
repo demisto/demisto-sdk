@@ -1242,20 +1242,19 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     with open(second_id_set_path, mode='r') as f2:
         second_id_set = json.load(f2)
 
-    unified_id_set, has_duplicates, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
+    unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
 
     if unified_id_set:
         with open(output_id_set_path, mode='w', encoding='utf-8') as f:
             json.dump(unified_id_set.get_dict(), f, indent=4)
 
-    return unified_id_set, has_duplicates, duplicates
+    return unified_id_set, duplicates
 
 
 def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs: bool = True):
     """
     Merged two id_set dictionaries into single id_set. Returns the unified id_set dict.
     """
-    has_duplicates = False
     duplicates = []
     united_id_set = IDSet(copy.deepcopy(first_id_set_dict))
 
@@ -1263,20 +1262,21 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
     second_id_set = IDSet(second_id_set_dict)
 
     for object_type, object_list in second_id_set.get_dict().items():
+        subset = first_id_set.get_list(object_type)
+
         for obj in object_list:
             obj_id = list(obj.keys())[0]
-            is_duplicate = has_duplicate(first_id_set.get_list(object_type), obj_id, object_type, print_logs,
+            is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
                                          external_object=obj)
             if is_duplicate:
-                has_duplicates = True
                 duplicates.append(obj_id)
             else:
                 united_id_set.add_to_list(object_type, obj)
 
-    if has_duplicates:
-        return None, has_duplicates, duplicates
+    if len(duplicates) > 0:
+        return None, duplicates
 
-    return united_id_set, False, []
+    return united_id_set, []
 
 
 def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,  # noqa: C901

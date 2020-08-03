@@ -1315,7 +1315,7 @@ def test_merge_id_sets(tmp_path):
         ]
     }
 
-    output_id_set, has_duplicates, duplicates = merge_id_sets(first_id_set, second_id_set)
+    output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
 
     assert output_id_set.get_dict() == {
         'playbooks': [
@@ -1344,7 +1344,6 @@ def test_merge_id_sets(tmp_path):
         ]
     }
 
-    assert has_duplicates is False
     assert not duplicates
 
 
@@ -1400,8 +1399,7 @@ def test_merged_id_sets_with_duplicates(caplog):
         ]
     }
 
-    output_id_set, has_duplicates, duplicates = merge_id_sets(first_id_set, second_id_set)
+    output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
 
     assert output_id_set is None
-    assert has_duplicates is True
     assert duplicates == ['ScriptFoo']

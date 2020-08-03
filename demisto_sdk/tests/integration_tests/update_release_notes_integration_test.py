@@ -15,6 +15,7 @@ TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests')
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')
 RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 
+
 @pytest.fixture
 def demisto_client(mocker):
     mocker.patch(
@@ -191,7 +192,7 @@ def test_test_update_release_notes_existing(demisto_client, mocker):
     assert result.exit_code == 0
     assert os.path.exists(rn_path)
     assert not result.exception
-    assert f'Finished updating release notes for FeedAzureValid.' in result.stdout
+    assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
 
     with open(rn_path, 'r') as f:
         rn = f.read()

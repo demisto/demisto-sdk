@@ -45,7 +45,7 @@ class BaseUpdateJSON(BaseUpdate):
         Sets toVersion key in file
         Relevant for old entities such as layouts and classifiers.
         """
-        if not self.data.get('toVersion') or LooseVersion(self.data.get('toVersion')) >= TO_VERSION_5_9_9:
+        if not self.data.get('toVersion') or LooseVersion(self.data.get('toVersion', '99.99.99')) >= TO_VERSION_5_9_9:
             print('Setting toVersion field')
             self.data['toVersion'] = TO_VERSION_5_9_9
 

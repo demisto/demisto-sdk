@@ -49,6 +49,16 @@ class TestOpenAPICodeGen:
         return integration
 
     def test_config_file(self, mocker):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+            - A swagger file
+        When
+            - Generating the integration configuration file for the swagger file
+        Then
+            - Ensure the configuration file is generated correctly
+        """
         from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
@@ -62,6 +72,17 @@ class TestOpenAPICodeGen:
         assert json.dumps(config) == json.dumps(integration.configuration)
 
     def test_yaml_file(self):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+           - A swagger file
+           - A generated integration configuration file
+        When
+           - Generating the integration yaml
+        Then
+           - Ensure the yaml file is generated correctly
+       """
         import yaml
         integration = self.init_integration()
 
@@ -72,9 +93,19 @@ class TestOpenAPICodeGen:
 
         assert yaml.dump(expected_yaml) == yaml.dump(yaml_obj)
 
-
-
     def test_get_command_function(self):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+           - A swagger file
+           - A generated integration configuration file
+           - Generated commands from the configuration file
+        When
+           - Generating a command function and a request function for a command
+        Then
+           - Ensure the commands are generated correctly
+        """
         integration = self.init_integration()
         command = [c for c in integration.configuration['commands'] if c['name'] == 'get-pet-by-id'][0]
 
@@ -84,6 +115,18 @@ class TestOpenAPICodeGen:
         assert expected_request_function == req_function
 
     def test_command_body_args(self):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+           - A swagger file
+           - A generated integration configuration file
+           - Generated commands from the configuration file
+        When
+           - Generating arguments for the command request body
+        Then
+           - Ensure the arguments are generated correctly
+        """
         from demisto_sdk.commands.openapi_codegen.openapi_codegen import base_data
         integration = self.init_integration()
         command = [c for c in integration.configuration['commands'] if c['name'] == 'create-user'][0]
@@ -96,6 +139,18 @@ class TestOpenAPICodeGen:
         assert expected_args == body_args
 
     def test_command_headers(self):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+           - A swagger file
+           - A generated integration configuration file
+           - Generated commands from the configuration file
+        When
+           - Generating headers for the command request
+        Then
+           - Ensure the headers are generated correctly
+        """
         integration = self.init_integration()
         command = [c for c in integration.configuration['commands'] if c['name'] == 'upload-file'][0]
 

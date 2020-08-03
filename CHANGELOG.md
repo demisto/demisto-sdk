@@ -1,4 +1,9 @@
 # Changelog
+* Added new *githubUser* field in pack metadata init command.
+* Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
+* Fixed an issue were **find-dependencies** ignored *toversion* field in content items.
+
+# 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 * Playbook branch marked with *skipunavailable* is now set as an optional dependency in the **find-dependencies** command.
 * The **feedReputation** parameter can now be hidden in a feed integration.
@@ -6,7 +11,6 @@
 * Added the *--no-update* flag to the **find-dependencies** command.
 * Added the following validations in **validate** command:
    * Validating that a pack does not depend on NonSupported / Deprecated packs.
-* Added new *githubUser* field in pack metadata init command.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

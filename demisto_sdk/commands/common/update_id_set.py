@@ -1266,8 +1266,8 @@ class IDSetType(Enum):
 
 
 class IDSet:
-    def __init__(self, id_set_dict={}):
-        self._id_set_dict = id_set_dict
+    def __init__(self, id_set_dict=None):
+        self._id_set_dict = id_set_dict if id_set_dict else {}
 
     def get_dict(self):
         return self._id_set_dict

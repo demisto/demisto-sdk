@@ -15,6 +15,7 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_layout import (
     LayoutJSONFormat, LayoutsContainerJSONFormat)
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
     CLASSIFIER_5_9_9_SCHEMA_PATH, CLASSIFIER_PATH, CLASSIFIER_SCHEMA_PATH,
@@ -25,16 +26,17 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INDICATORFIELD_COPY,
     DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_MAPPER,
-    DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH, INCIDENTTYPE_PATH,
-    INDICATORFIELD_PATH, INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH,
-    LAYOUT_SCHEMA_PATH, LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH,
-    MAPPER_PATH, MAPPER_SCHEMA_PATH, SOURCE_FORMAT_CLASSIFIER,
+    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
+    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
+    INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
+    LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, MAPPER_PATH,
+    MAPPER_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
     SOURCE_FORMAT_CLASSIFIER_5_9_9, SOURCE_FORMAT_DASHBOARD_COPY,
     SOURCE_FORMAT_INCIDENTFIELD_COPY, SOURCE_FORMAT_INCIDENTTYPE_COPY,
     SOURCE_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY,
     SOURCE_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_LAYOUTS_CONTAINER,
     SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_MAPPER,
-    SOURCE_FORMAT_WIDGET, WIDGET_PATH)
+    SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
 from mock import patch
 
 
@@ -489,7 +491,7 @@ class TestFormattingWidget:
         Given
             - A widget file without a description field
         When
-            - Run format on mapper file
+            - Run format on widget file
         Then
             - Ensure that a description field was updated successfully with "" value
         """
@@ -499,11 +501,74 @@ class TestFormattingWidget:
     def test_set_isPredefined(self, widget_formatter):
         """
         Given
-            - A mapper file without a fromVersion field
+            - A widget file without a isPredefined field
         When
-            - Run format on mapper file
+            - Run format on widget file
         Then
-            - Ensure that fromVersion field was updated successfully with '6.0.0' value
+            - Ensure that isPredefined field was updated successfully with to True
         """
         widget_formatter.set_isPredefined()
         assert widget_formatter.data.get('isPredefined') is True
+
+
+class TestFormattingReport:
+    @pytest.fixture(autouse=True)
+    def report_copy(self):
+        os.makedirs(REPORT_PATH, exist_ok=True)
+        yield shutil.copyfile(SOURCE_FORMAT_REPORT, DESTINATION_FORMAT_REPORT)
+        os.remove(DESTINATION_FORMAT_REPORT)
+        os.rmdir(REPORT_PATH)
+
+    @pytest.fixture(autouse=True)
+    def report_formatter(self, report_copy):
+        yield ReportJSONFormat(input=report_copy, output=DESTINATION_FORMAT_REPORT)
+
+    def test_set_description(self, report_formatter):
+        """
+        Given
+            - A report file without a description field
+        When
+            - Run format on report file
+        Then
+            - Ensure that a description field was updated successfully with "" value
+        """
+        report_formatter.set_description()
+        assert 'description' in report_formatter.data
+
+    def test_set_recipients(self, report_formatter):
+        """
+        Given
+            - A report file without a recipients field
+        When
+            - Run format on report file
+        Then
+            - Ensure that a description field was updated successfully with [] value
+        """
+        report_formatter.set_recipients()
+        assert 'recipients' in report_formatter.data
+
+    @patch('builtins.input', lambda *args: 'pdf')
+    def test_set_type(self, report_formatter):
+        """
+        Given
+            - A Report file with empty type field
+        When
+            - Run format on report file
+        Then
+            - Ensure type field was updated successfully with 'pdf' value
+        """
+        report_formatter.set_type()
+        assert report_formatter.data.get('type') == 'pdf'
+
+    @patch('builtins.input', lambda *args: 'landscape')
+    def test_set_orientation(self, report_formatter):
+        """
+        Given
+            - A Report file with empty orientation field
+        When
+            - Run format on report file
+        Then
+            - Ensure type field was updated successfully with 'landscape' value
+        """
+        report_formatter.set_orientation()
+        assert report_formatter.data.get('orientation') == 'landscape'

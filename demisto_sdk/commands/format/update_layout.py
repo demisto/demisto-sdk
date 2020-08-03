@@ -29,7 +29,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         super().__init__(input, output, path, from_version, no_validate)
 
     def format_file(self) -> Tuple[int, int]:
-        """Manager function for the integration YML updater."""
+        """Manager function for the Layout JSON updater."""
         format = self.run_format()
         if format:
             return format, SKIP_RETURN_CODE
@@ -64,13 +64,12 @@ class LayoutJSONFormat(LayoutBaseFormat):
 
     def run_format(self) -> int:
         try:
-            print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
+            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
             self.set_layout_key()
             # version is both in layout key and in base dict
             self.set_version_to_default(self.data['layout'])
             self.set_toVersion()
             super().run_format()
-            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE
@@ -119,12 +118,10 @@ class LayoutsContainerJSONFormat(LayoutBaseFormat):
 
     def run_format(self) -> int:
         try:
-            print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
+            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
             self.set_fromVersion(from_version=VERSION_6_0_0)
             self.set_group_field()
             super().run_format()
-
-            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         except Exception:
             return ERROR_RETURN_CODE
@@ -140,10 +137,10 @@ class LayoutsContainerJSONFormat(LayoutBaseFormat):
                 return
 
             print_color('Please specify the desired group: incident or indicator', LOG_COLORS.YELLOW)
-            user_desired_version = input()
-            if re.match(r'(^incident$)', user_desired_version, re.IGNORECASE):
+            user_desired_group = input()
+            if re.match(r'(^incident$)', user_desired_group, re.IGNORECASE):
                 self.data['group'] = 'incident'
-            elif re.match(r'(^indicator$)', user_desired_version, re.IGNORECASE):
+            elif re.match(r'(^indicator$)', user_desired_group, re.IGNORECASE):
                 self.data['group'] = 'indicator'
             else:
                 print_error('Group is not valid')

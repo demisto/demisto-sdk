@@ -21,8 +21,10 @@ from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_layout import (
     LayoutJSONFormat, LayoutsContainerJSONFormat)
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
-from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
+from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
+                                                         TestPlaybookYMLFormat)
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
+from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 
@@ -30,6 +32,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
     'script': ScriptYMLFormat,
     'playbook': PlaybookYMLFormat,
+    'testplaybook': TestPlaybookYMLFormat,
     'incidentfield': IncidentFieldJSONFormat,
     'incidenttype': IncidentTypesJSONFormat,
     'indicatorfield': IndicatorFieldJSONFormat,
@@ -42,7 +45,16 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'mapper': MapperJSONFormat,
     'widget': WidgetJSONFormat,
     'pythonfile': PythonFileFormat,
+    'report': ReportJSONFormat,
 }
+UNFORMATTED_FILES = ['canvas-context-connections',
+                     'readme',
+                     'releasenotes',
+                     'description',
+                     'changelog',
+                     'image',
+                     'javascriptfile',
+                     'powershellfile']
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
@@ -74,7 +86,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path)
-            if file_type:
+            if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
                 info_res, err_res, skip_res = run_format_on_file(input=file_path, file_type=file_type,
                                                                  from_version=from_version, output=output,

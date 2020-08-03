@@ -145,6 +145,10 @@ SOURCE_FORMAT_WIDGET = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_widget.j
 DESTINATION_FORMAT_WIDGET = "Widgets/formatted-widget.json"
 WIDGET_PATH = "Widgets"
 
+SOURCE_FORMAT_REPORT = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_report.json"
+DESTINATION_FORMAT_REPORT = "Reports/formatted-Reports.json"
+REPORT_PATH = "Reports"
+
 SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook.yml"
 DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"
 PLAYBOOK_PATH = "Playbook"

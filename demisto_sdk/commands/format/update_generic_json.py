@@ -1,5 +1,9 @@
+from distutils.version import LooseVersion
+
 import ujson
 import yaml
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+                                               print_error)
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -25,7 +29,7 @@ class BaseUpdateJSON(BaseUpdate):
 
     def save_json_to_destination_file(self):
         """Save formatted JSON data to destination file."""
-        print(F'Saving output JSON file to {self.output_file}')
+        print_color(f'Saving output JSON file to {self.output_file}', LOG_COLORS.WHITE)
         with open(self.output_file, 'w') as file:
             ujson.dump(self.data, file, indent=4)
 
@@ -41,7 +45,7 @@ class BaseUpdateJSON(BaseUpdate):
         Sets toVersion key in file
         Relevant for old entities such as layouts and classifiers.
         """
-        if self.data.get('toVersion') != TO_VERSION_5_9_9:
+        if not self.data.get('toVersion') or LooseVersion(self.data.get('toVersion')) >= TO_VERSION_5_9_9:
             print('Setting toVersion field')
             self.data['toVersion'] = TO_VERSION_5_9_9
 
@@ -59,3 +63,12 @@ class BaseUpdateJSON(BaseUpdate):
         fields_to_remove = [field for field in schema_fields if (not self.data.get(field) and field in self.data)]
         for field in fields_to_remove:
             self.data.pop(field, None)
+
+    def update_id(self, field='name'):
+        """Updates the id to be the same as the provided field ."""
+
+        print('Updating ID')
+        if field not in self.data:
+            print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
+            return
+        self.data['id'] = self.data[field]

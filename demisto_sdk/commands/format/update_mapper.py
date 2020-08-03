@@ -22,22 +22,19 @@ class MapperJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
-
+            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
             self.set_fromVersion(VERSION_6_0_0)
             self.update_json()
             self.set_description()
             self.set_mapping()
             self.save_json_to_destination_file()
-
-            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
 
         except Exception:
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
-        """Manager function for the integration YML updater."""
+        """Manager function for the mapper JSON updater."""
         format = self.run_format()
         if format:
             return format, SKIP_RETURN_CODE

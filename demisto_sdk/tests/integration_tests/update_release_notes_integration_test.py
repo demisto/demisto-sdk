@@ -56,7 +56,7 @@ def test_test_update_release_notes_new_integration(demisto_client, mocker, repo)
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-p", 'FeedAzureValid'])
 
     assert result.exit_code == 0
-    assert os.path.exists(rn_path)
+    assert os.path.isfile(rn_path)
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
@@ -99,7 +99,7 @@ def test_test_update_release_notes_modified_integration(demisto_client, mocker, 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-p", 'FeedAzureValid'])
 
     assert result.exit_code == 0
-    assert os.path.exists(rn_path)
+    assert os.path.isfile(rn_path)
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
@@ -140,7 +140,7 @@ def test_test_update_release_notes_incident_field(demisto_client, mocker, repo):
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-p", 'FeedAzureValid'])
 
     assert result.exit_code == 0
-    assert os.path.exists(rn_path)
+    assert os.path.isfile(rn_path)
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
@@ -175,7 +175,7 @@ def test_test_update_release_notes_existing(demisto_client, mocker, repo):
 
     rn_path = join(AZURE_FEED_PACK_PATH, 'ReleaseNotes', '1_0_0.md')
     modified_files = {join(AZURE_FEED_PACK_PATH, 'IncidentFields', 'incidentfield-city.json')}
-    f = open(rn_path, "x")
+    f = open(rn_path, "w")
     f.write(input_rn)
     f.close()
 

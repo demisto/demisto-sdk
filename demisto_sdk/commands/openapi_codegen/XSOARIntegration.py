@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import yaml
 
@@ -13,11 +14,11 @@ class XSOARIntegration:
         self.configuration = configuration
         self.script = script
 
-    def to_json(self):
+    def to_json(self) -> str:
         return json.dumps(self, default=lambda o: o.__dict__,
                           sort_keys=True, indent=4)
 
-    def to_yaml(self):
+    def to_yaml(self) -> dict:
         return yaml.safe_load(self.to_json())
 
     @classmethod
@@ -87,12 +88,13 @@ class XSOARIntegration:
                    script)
 
     class CommonFields:
-        def __init__(self, id_, version):
+        def __init__(self, id_: str, version: int = -1):
             self.id = id_
             self.version = version
 
     class Configuration:
-        def __init__(self, name, display, type_, required, defaultvalue='', options=None):
+        def __init__(self, name: str, display: str, type_: int, required: bool, defaultvalue: str = '',
+                     options: Optional[list] = None):
             self.name = name
             self.display = display
             self.defaultvalue = defaultvalue
@@ -104,7 +106,8 @@ class XSOARIntegration:
                 self.defaultvalue = defaultvalue
 
     class Script:
-        def __init__(self, script, type_, subtype, dockerimage, isfetch, commands=None):
+        def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,
+                     commands: list = None):
             self.script = script
             self.type = type_
             self.subtype = subtype
@@ -114,7 +117,8 @@ class XSOARIntegration:
                 self.commands = commands
 
         class Command:
-            def __init__(self, name, description, arguments=None, outputs=None):
+            def __init__(self, name: str, description: str, arguments: Optional[list] = None,
+                         outputs: Optional[list] = None):
                 self.name = name
                 self.description = description
                 if arguments:
@@ -123,18 +127,19 @@ class XSOARIntegration:
                     self.outputs = outputs
 
             class Argument:
-                def __init__(self, name, description, required, auto=None, predefined=None, isArray=False):
+                def __init__(self, name: str, description: str, required: bool, auto: Optional[str] = None,
+                             predefined: Optional[str] = None, is_array: bool = False):
                     self.name = name
                     self.description = description
                     self.required = required
-                    self.isArray = isArray
+                    self.isArray = is_array
                     if auto:
                         self.auto = auto
                     if predefined:
                         self.predefined = predefined
 
             class Output:
-                def __init__(self, type_, context_path, description):
+                def __init__(self, type_: str, context_path: str, description: str):
                     self.type = type_
                     self.contextPath = context_path
                     self.description = description

@@ -15,6 +15,7 @@ from demisto_sdk.commands.openapi_codegen.base_code import (
     base_props, base_request_function, base_token)
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
+from typing import Optional, Union, Any
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
 ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
@@ -43,8 +44,9 @@ MAX_DESCRIPTION_WORDS = 3000
 
 
 class OpenAPIIntegration:
-    def __init__(self, file_path, base_name, command_prefix, context_path, unique_keys=None, root_objects=None,
-                 verbose=False, fix_code=False, configuration=None):
+    def __init__(self, file_path: str, base_name: str, command_prefix: str, context_path: str,
+                 unique_keys: Optional[str] = None, root_objects: Optional[str] = None,
+                 verbose: bool = False, fix_code: bool = False, configuration: Optional[dict] = None):
         self.json = None
         self.file_path = file_path
         self.base_name = base_name
@@ -52,185 +54,25 @@ class OpenAPIIntegration:
         self.context_path = context_path
         self.unique_keys = unique_keys.split(',') if unique_keys is not None else []
         self.root_objects = root_objects.split(',') if root_objects is not None else []
-        self.configuration = configuration
+        self.configuration = configuration if configuration else {}
         self.security_definitions = None
-        self.host = None
-        self.base_path = None
-        self.name = None
-        self.description = None
+        self.host = ''
+        self.base_path = ''
+        self.name = ''
+        self.description = ''
         self.definitions = None
         self.components = None
-        self.reference = None
-        self.functions = []
-        self.parameters = []
+        self.reference: dict = {}
+        self.functions: list = []
+        self.parameters: list = []
         self.verbose = verbose
         self.fix_code = fix_code
 
-    def extract_properties(self, obj, context):
-        arr = []
-
-        def extract(extracted_object, prop_arr, current_context):
-
-            if isinstance(extracted_object, list):
-                for item in extracted_object:
-                    extract(item, prop_arr, current_context)
-
-            elif isinstance(extracted_object, dict):
-                if extracted_object.get('type') and type(extracted_object.get('type')) == str:
-                    if extracted_object.get('type') in ['array', 'object']:
-                        refs = self.extract_values(extracted_object, '$ref')
-                        if refs:
-                            ref = refs[0].split('/')[-1]
-                            prop_arr = extract(self.extract_values(self.reference[ref], 'properties'), prop_arr,
-                                               current_context)
-                        elif extracted_object.get('items'):
-                            for k, v in extracted_object.get('items', {}).items():
-                                prop_arr = extract(v, prop_arr, current_context)
-                        elif extracted_object.get('properties'):
-                            prop_arr = extract(
-                                extracted_object.get('properties', {}), prop_arr, current_context)
-                        elif extracted_object.get('allOf'):
-                            for item in extracted_object.get('allOf', []):
-                                prop_arr = extract(item, prop_arr, current_context)
-                    else:
-                        prop_arr.append({'name': '.'.join(current_context), 'type': extracted_object.get('type',
-                                                                                                         'Unknown'),
-                                         'description': extracted_object.get('description', '')})
-                elif extracted_object.get('type') and type(extracted_object.get('type')) == dict:
-                    for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
-                else:
-                    for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
-
-            return prop_arr
-
-        results = extract(obj, arr, context)
-        return results
-
-    def extract_outputs(self, data, new_function):
-        for response_code, response in data.get('responses', {}).items():
-            new_response = {}
-            try:
-                if int(response_code) != 200:
-                    continue
-            except Exception:
-                self.print_with_verbose(f'Could not get the code for the response {response}')
-                pass
-
-            new_response['description'] = response.get('description', None)
-            all_items = []
-            schemas = self.extract_values(response, 'schema')
-            if schemas:
-                schema = schemas[0]
-                refs = self.extract_values(schema, '$ref')
-                found_root = False
-                if refs:
-                    for ref in refs:
-                        ref = ref.split('/')[-1]
-                        ref_props = self.extract_values(self.reference.get(ref, {}), 'properties')
-                        if ref_props:
-                            for k, prop in ref_props[0].items():
-                                if k in self.root_objects:
-                                    # We found a root, we need the output of the root only
-                                    new_function['root_object'] = k
-                                    all_items = [prop]
-                                    path = self.extract_values(prop, '$ref')
-                                    if path:
-                                        new_function['context_path'] = self.clean_function_name(path[0].split('/')[-1],
-                                                                                                False)
-                                    found_root = True
-                            if found_root:
-                                break
-
-                            all_items.extend(ref_props)
-                        if not new_function.get('context_path'):
-                            new_function['context_path'] = self.clean_function_name(ref, False)
-                else:
-                    all_items.extend(self.extract_values(schema, 'properties'))
-
-                properties = self.extract_properties(all_items, [])
-                for prop in properties:
-                    description = prop.get('description', '')
-                    this_type = prop.get('type', 'object')
-                    this_type = OUTPUT_TYPES.get(this_type, 'Unknown')
-                    resp_name = prop.get('name')
-                    description = self.clean_description(description)
-                    new_function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
-            new_function['responses'].append(new_response)
-
-    def extract_args(self, arguments, new_function):
-        for arg in arguments:
-            refs = []
-            if 'schema' in arg:
-                refs = self.extract_values(arg['schema'], '$ref')
-                for ref in refs:
-                    ref = ref.split('/')[-1]
-                    ref_args = self.extract_values(self.reference.get(ref, {}), 'properties')
-                    for ref_arg in ref_args:
-                        for k, v in ref_arg.items():
-                            new_ref_arg = {'name': k, 'in': arg.get('in'),
-                                           'required': True if k in self.reference[ref].get('required', []) else False}
-                            if '$ref' in ref_arg[k]:
-                                new_ref_arg['properties'] = {}
-                                c_ref = ref_arg[k]['$ref'].split('/')[-1]
-                                complex_refs = self.extract_values(self.reference.get(c_ref, {}), 'properties')
-                                for complex_ref in complex_refs:
-                                    for ck, cv in complex_ref.items():
-                                        new_ref_arg['properties'][ck] = {}
-                                        new_ref_arg['properties'][ck]['type'] = cv.get('type', 'string')
-                                        new_ref_arg['properties'][ck]['description'] = cv.get('description', '')
-                                        new_ref_arg['properties'][ck]['required'] = True \
-                                            if ck in self.reference.get(c_ref, {}).get('required', []) else False
-                                        new_ref_arg['properties'][ck]['options'] = [str(x) for x in cv.get('enum')] \
-                                            if arg.get('enum', None) else None
-                            else:
-                                new_ref_arg.update(v)
-                            new_ref_arg['ref'] = ref
-                            new_function['arguments'].append(self.init_arg(new_ref_arg))
-            if not refs:
-                if arg.get('schema', {}).get('type'):
-                    arg['type'] = arg['schema']['type']
-                new_function['arguments'].append(self.init_arg(arg))
-
-    def add_function(self, path, method, data, params):
-        new_function = {'path': '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/'), 'method': method}
-        name = data.get('operationId', None)
-        if not name:
-            name = data.get('summary', '').lower()
-            name = name.replace(' ', '-')
-        if not name:
-            name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in path.split('/')])
-
-        name = self.clean_function_name(name)
-        new_function['name'] = name
-        func_desc = data.get('summary', None)
-        if not func_desc:
-            func_desc = data.get('description', '')
-        new_function['description'] = self.clean_description(func_desc)
-
-        new_function['description'] = func_desc
-        new_function['arguments'] = []
-        new_function['parameters'] = data.get('parameters', None)
-        new_function['consumes'] = data.get('consumes', [])
-        new_function['produces'] = data.get('produces', [])
-        new_function['outputs'] = []
-        new_function['responses'] = []
-        if not new_function['parameters']:
-            new_function['parameters'] = params
-            iter_item = params
-        else:
-            iter_item = data.get('parameters', [])
-        self.extract_args(iter_item, new_function)
-        self.extract_outputs(data, new_function)
-
-        self.functions.append(new_function)
-
     def load_file(self):
+        """
+        Loads a swagger file and parses it into a functions list.
+        """
+
         try:
             with open(self.file_path, 'rb') as json_file:
                 self.json = json.load(json_file)
@@ -249,7 +91,7 @@ class OpenAPIIntegration:
         self.description = self.clean_description(self.json.get('info', {}).get('description', ''))
         self.definitions = self.json.get('definitions', {})
         self.components = self.json.get('components', {})
-        self.reference = self.definitions or self.components.get('schemas', {})
+        self.reference = self.definitions or self.components.get('schemas', {}) or {}
         self.security_definitions = self.json.get('securityDefinitions', {})
         self.functions = []
 
@@ -270,7 +112,11 @@ class OpenAPIIntegration:
             self.generate_configuration()
 
     def generate_configuration(self):
-        security_types = []
+        """
+        Generates an integration configuration file according to parsed functions from a swagger file.
+        """
+
+        security_types: list = []
         if self.security_definitions:
             all_security_types = [s.get('type') for s in self.security_definitions.values()]
             security_types = [t for t in all_security_types if t in [BEARER_AUTH_TYPE, BASIC_AUTH_TYPE]]
@@ -340,34 +186,41 @@ class OpenAPIIntegration:
 
         self.configuration = configuration
 
-    def get_python_code(self):
-        # Use the code from baseCode in py as the basis
-        data = base_code
+    def generate_python_code(self) -> str:
+        """
+        Generate python code from the base template with the commands from the integration configuration file.
+
+        Returns:
+            code: The integration python code.
+        """
+
+        # Use the code from base_code in py as the basis
+        code: str = base_code
 
         # Build the functions from configuration file
-        functions = []
-        req_functions = []
+        functions: list = []
+        req_functions: list = []
         for command in self.configuration['commands']:
             function, req_function = self.get_python_command_and_request_functions(command)
             functions.append(function)
             req_functions.append(req_function)
 
-        data = data.replace('$FUNCTIONS$', '\n'.join(functions))
-        data = data.replace('$BASEURL$', self.base_path)
+        code = code.replace('$FUNCTIONS$', '\n'.join(functions))
+        code = code.replace('$BASEURL$', self.base_path)
         client = base_client.replace('$REQUESTFUNCS$', '\n'.join(req_functions))
-        data = data.replace('$CLIENT$', client)
+        code = code.replace('$CLIENT$', client)
 
         if BEARER_AUTH_TYPE in self.configuration['auth']:
-            data = data.replace('$BEARERAUTHPARAMS$', base_token)
+            code = code.replace('$BEARERAUTHPARAMS$', base_token)
         else:
-            data = data.replace('$BEARERAUTHPARAMS$', '')
+            code = code.replace('$BEARERAUTHPARAMS$', '')
 
         if BASIC_AUTH_TYPE in self.configuration['auth']:
-            data = data.replace('$BASEAUTHPARAMS$', base_credentials)
-            data = data.replace('$BASEAUTH$', base_basic_auth)
+            code = code.replace('$BASEAUTHPARAMS$', base_credentials)
+            code = code.replace('$BASEAUTH$', base_basic_auth)
         else:
-            data = data.replace('$BASEAUTHPARAMS$', '')
-            data = data.replace('$BASEAUTH$', 'None')
+            code = code.replace('$BASEAUTHPARAMS$', '')
+            code = code.replace('$BASEAUTH$', 'None')
 
         list_functions = []
 
@@ -384,17 +237,27 @@ class OpenAPIIntegration:
             function = function.replace('$FUNCTIONCOMMAND$', f'{fn}_command')
             list_functions.append(function)
 
-        data = data.replace('$COMMANDSLIST$', '\n\t'.join(list_functions))
+        code = code.replace('$COMMANDSLIST$', '\n\t'.join(list_functions))
         self.print_with_verbose('Finished generating the Python code.')
-
 
         if self.fix_code:
             self.print_with_verbose('Fixing the code with autopep8...')
-            data = autopep8.fix_code(data)
+            code = autopep8.fix_code(code)
 
-        return data
+        return code
 
-    def get_python_command_and_request_functions(self, command):
+    def get_python_command_and_request_functions(self, command: dict) -> tuple:
+        """
+        Generates a command function and a request function in python
+        according to a given command in the integration configuration file.
+
+        Args:
+            command: The integration command from the configuration file.
+
+        Returns:
+            function:  The command function in python according to the command.
+            req_function: The request function in python according to the command.
+        """
         function_name = command['name'].replace('-', '_')
         headers = command['headers']
         self.print_with_verbose(f'Adding the function {function_name} to the code...')
@@ -469,6 +332,19 @@ class OpenAPIIntegration:
         return function, req_function
 
     def process_command_arguments(self, command: dict) -> tuple:
+        """
+        Processes the arguments for a command and set them up to paste in the python code.
+        Args:
+            command: The command from the integration configuration file.
+
+        Returns:
+            argument_names: A list of processed argument names.
+            arguments: A list of the processed arguments to paste in the python code, e.g.:
+            >>> str(args.get('accountId', ''))
+            arguments_found: Whether any arguments were found for the command.
+            body_data: The arguments to set in the body of the request.
+            params_data: The arguments to set in the query of the request.
+        """
         params_data = []
         body_data = []
         arguments = []
@@ -536,11 +412,18 @@ class OpenAPIIntegration:
 
         return argument_names, arguments, arguments_found, body_data, params_data
 
-    def get_yaml(self):
+    def generate_yaml(self) -> XSOARIntegration:
+        """
+        Generates the yaml structure of the integration.
+
+        Returns:
+            integration: An object representation of the integration yaml structure.
+
+        """
         # Create the commands section
         commands = self.get_yaml_commands()
-        script = self.get_python_code()
-        commonfields = XSOARIntegration.CommonFields(self.configuration['name'], -1)
+        script = self.generate_python_code()
+        commonfields = XSOARIntegration.CommonFields(self.configuration['name'])
         name = self.configuration['name']
         display = self.configuration['name']
         category = self.configuration['category']
@@ -556,8 +439,14 @@ class OpenAPIIntegration:
         return integration
 
     def get_yaml_params(self) -> list:
+        """
+        Gets the configuration params for the integration.
+
+        Returns:
+            params: A list of integration params.
+        """
         url = self.configuration['url']
-        configurations = [XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
+        params = [XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
                                                          name='url',
                                                          defaultvalue=url,
                                                          type_=0,
@@ -565,17 +454,17 @@ class OpenAPIIntegration:
         if not isinstance(self.configuration['auth'], list):
             self.configuration['auth'] = [self.configuration['auth']]
         if BEARER_AUTH_TYPE in self.configuration['auth']:
-            configurations.append(XSOARIntegration.Configuration(display='API Key',
+            params.append(XSOARIntegration.Configuration(display='API Key',
                                                                  name='api_key',
                                                                  required=True,
                                                                  type_=4))
         if BASIC_AUTH_TYPE in self.configuration['auth']:
-            configurations.append(XSOARIntegration.Configuration(display='Username',
+            params.append(XSOARIntegration.Configuration(display='Username',
                                                                  name='credentials',
                                                                  required=True,
                                                                  type_=9))
         if self.configuration.get('fetch_incidents', False):
-            configurations.extend([
+            params.extend([
                 XSOARIntegration.Configuration(display='Fetch incidents',
                                                name='isFetch',
                                                type_=8,
@@ -609,17 +498,23 @@ class OpenAPIIntegration:
                                                type_=15,
                                                required=True,
                                                options=['Low', 'Medium', 'High', 'Critical'])])
-        configurations.extend([XSOARIntegration.Configuration(display='Trust any certificate (not secure)',
+        params.extend([XSOARIntegration.Configuration(display='Trust any certificate (not secure)',
                                                               name='insecure',
                                                               type_=8,
                                                               required=False),
-                               XSOARIntegration.Configuration(display='Use system proxy settings',
+                       XSOARIntegration.Configuration(display='Use system proxy settings',
                                                               name='proxy',
                                                               type_=8,
                                                               required=False)])
-        return configurations
+        return params
 
     def get_yaml_commands(self) -> list:
+        """
+        Gets the integration commands in yaml format (in object representation) according to the configuration.
+
+        Returns:
+            commands: A list of integration commands in yaml format.
+        """
         commands = []
         for command in self.configuration['commands']:
             args = []
@@ -677,44 +572,266 @@ class OpenAPIIntegration:
 
         return commands
 
-    def save_python_code(self, directory):
+    def extract_properties(self, obj: Union[dict, list], context: list) -> list:
+        """
+        Extracts properties recursively from an object in the swagger file.
+        Args:
+            obj: The swagger file object.
+            context: The context of the object in the swagger file.
+
+        Returns:
+            results: A list of the object's properties.
+        """
+        arr: list = []
+
+        def extract(extracted_object: Union[dict, list], prop_arr: list, current_context: list) -> list:
+
+            if isinstance(extracted_object, list):
+                for item in extracted_object:
+                    extract(item, prop_arr, current_context)
+
+            elif isinstance(extracted_object, dict):
+                if extracted_object.get('type') and type(extracted_object.get('type')) == str:
+                    if extracted_object.get('type') in ['array', 'object']:
+                        refs = self.extract_values(extracted_object, '$ref')
+                        if refs:
+                            ref = refs[0].split('/')[-1]
+                            prop_arr = extract(self.extract_values(self.reference[ref], 'properties'), prop_arr,
+                                               current_context)
+                        elif extracted_object.get('items'):
+                            for k, v in extracted_object.get('items', {}).items():
+                                prop_arr = extract(v, prop_arr, current_context)
+                        elif extracted_object.get('properties'):
+                            prop_arr = extract(
+                                extracted_object.get('properties', {}), prop_arr, current_context)
+                        elif extracted_object.get('allOf'):
+                            for item in extracted_object.get('allOf', []):
+                                prop_arr = extract(item, prop_arr, current_context)
+                    else:
+                        prop_arr.append({'name': '.'.join(current_context), 'type': extracted_object.get('type',
+                                                                                                         'Unknown'),
+                                         'description': extracted_object.get('description', '')})
+                elif extracted_object.get('type') and type(extracted_object.get('type')) == dict:
+                    for k, v in extracted_object.items():
+                        current_context.append(k)
+                        prop_arr = extract(v, prop_arr, current_context)
+                        current_context.pop()
+                else:
+                    for k, v in extracted_object.items():
+                        current_context.append(k)
+                        prop_arr = extract(v, prop_arr, current_context)
+                        current_context.pop()
+
+            return prop_arr
+
+        results = extract(obj, arr, context)
+        return results
+
+    def extract_outputs(self, data: dict, function: dict):
+        """
+        Extracts outputs from a function(path) in a swagger file.
+        Args:
+            data: The data of the swagger function.
+            function: The current function we are creating from the swagger data.
+        """
+        for response_code, response in data.get('responses', {}).items():
+            new_response = {}
+            try:
+                if int(response_code) != 200:
+                    continue
+            except Exception:
+                self.print_with_verbose(f'Could not get the code for the response {response}')
+                pass
+
+            new_response['description'] = response.get('description', None)
+            all_items = []
+            schemas = self.extract_values(response, 'schema')
+            if schemas:
+                schema = schemas[0]
+                refs = self.extract_values(schema, '$ref')
+                found_root = False
+                if refs:
+                    for ref in refs:
+                        ref = ref.split('/')[-1]
+                        ref_props = self.extract_values(self.reference.get(ref, {}), 'properties')
+                        if ref_props:
+                            for k, prop in ref_props[0].items():
+                                if k in self.root_objects:
+                                    # We found a root, we need the output of the root only
+                                    function['root_object'] = k
+                                    all_items = [prop]
+                                    path = self.extract_values(prop, '$ref')
+                                    if path:
+                                        function['context_path'] = self.clean_function_name(path[0].split('/')[-1],
+                                                                                            False)
+                                    found_root = True
+                            if found_root:
+                                break
+
+                            all_items.extend(ref_props)
+                        if not function.get('context_path'):
+                            function['context_path'] = self.clean_function_name(ref, False)
+                else:
+                    all_items.extend(self.extract_values(schema, 'properties'))
+
+                properties = self.extract_properties(all_items, [])
+                for prop in properties:
+                    description = prop.get('description', '')
+                    this_type = prop.get('type', 'object')
+                    this_type = OUTPUT_TYPES.get(this_type, 'Unknown')
+                    resp_name = prop.get('name')
+                    description = self.clean_description(description)
+                    function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
+            function['responses'].append(new_response)
+
+    def extract_args(self, arguments: list, function: dict):
+        """
+        Extracts arguments from a function(path) in a swagger file.
+        Args:
+            arguments: The list of arguments from a function(path) in the swagger file.
+            function: The current function we are creating from the swagger data.
+        """
+        for arg in arguments:
+            refs = []
+            if 'schema' in arg:
+                refs = self.extract_values(arg['schema'], '$ref')
+                for ref in refs:
+                    ref = ref.split('/')[-1]
+                    ref_args = self.extract_values(self.reference.get(ref, {}), 'properties')
+                    for ref_arg in ref_args:
+                        for k, v in ref_arg.items():
+                            new_ref_arg = {'name': k, 'in': arg.get('in'),
+                                           'required': True if k in self.reference[ref].get('required', []) else False}
+                            if '$ref' in ref_arg[k]:
+                                new_ref_arg['properties'] = {}
+                                c_ref = ref_arg[k]['$ref'].split('/')[-1]
+                                complex_refs = self.extract_values(self.reference.get(c_ref, {}), 'properties')
+                                for complex_ref in complex_refs:
+                                    for ck, cv in complex_ref.items():
+                                        new_ref_arg['properties'][ck] = {}
+                                        new_ref_arg['properties'][ck]['type'] = cv.get('type', 'string')
+                                        new_ref_arg['properties'][ck]['description'] = cv.get('description', '')
+                                        new_ref_arg['properties'][ck]['required'] = True \
+                                            if ck in self.reference.get(c_ref, {}).get('required', []) else False
+                                        new_ref_arg['properties'][ck]['options'] = [str(x) for x in cv.get('enum')] \
+                                            if arg.get('enum', None) else None
+                            else:
+                                new_ref_arg.update(v)
+                            new_ref_arg['ref'] = ref
+                            function['arguments'].append(self.init_arg(new_ref_arg))
+            if not refs:
+                if arg.get('schema', {}).get('type'):
+                    arg['type'] = arg['schema']['type']
+                function['arguments'].append(self.init_arg(arg))
+
+    def add_function(self, path: str, method: str, data: dict, params: list):
+        """
+        Adds a function parsed from the swagger data.
+        Args:
+            path: The function path.
+            method: The function request method.
+            data: The function data.
+            params: The function parameters.
+
+        """
+        new_function: dict = {'path': '/'.join(x.split(' ')[0] for x in path.split('/')).strip('/'), 'method': method}
+        name = data.get('operationId', None)
+        if not name:
+            name = data.get('summary', '').lower()
+            name = name.replace(' ', '-')
+        if not name:
+            name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in path.split('/')])
+
+        name = self.clean_function_name(name)
+        new_function['name'] = name
+        func_desc = data.get('summary', None)
+        if not func_desc:
+            func_desc = data.get('description', '')
+        new_function['description'] = self.clean_description(func_desc)
+        new_function['arguments'] = []
+        new_function['parameters'] = data.get('parameters', None)
+        new_function['consumes'] = data.get('consumes', [])
+        new_function['produces'] = data.get('produces', [])
+        new_function['outputs'] = []
+        new_function['responses'] = []
+        if not new_function['parameters']:
+            new_function['parameters'] = params
+            iter_item = params
+        else:
+            iter_item = data.get('parameters', [])
+        self.extract_args(iter_item, new_function)
+        self.extract_outputs(data, new_function)
+
+        self.functions.append(new_function)
+
+    def save_python_code(self, directory: str) -> str:
+        """
+        Writes the python code to a file.
+        Args:
+            directory: The directory to save the file to.
+
+        Returns:
+            python_file: The path to the python file.
+        """
         self.print_with_verbose('Creating python file...')
-        filename = os.path.join(directory, f'{self.base_name}.py')
+        python_file = os.path.join(directory, f'{self.base_name}.py')
         try:
-            with open(filename, 'w') as fp:
-                fp.write(self.get_python_code())
-                return filename
+            with open(python_file, 'w') as fp:
+                fp.write(self.generate_python_code())
+                return python_file
         except Exception as err:
-            print_error(f'Error writing {filename} - {err}')
+            print_error(f'Error writing {python_file} - {err}')
             raise
 
-    def save_yaml(self, directory):
+    def save_yaml(self, directory: str) -> str:
+        """
+        Writes the yaml to a file.
+        Args:
+            directory: The directory to save the file to.
+
+        Returns:
+            yaml_file: The path to the yaml file.
+        """
         self.print_with_verbose('Creating yaml file...')
-        filename = os.path.join(directory, f'{self.base_name}.yml')
+        yaml_file = os.path.join(directory, f'{self.base_name}.yml')
         try:
-            with open(filename, 'w') as fp:
-                fp.write(yaml.dump(self.get_yaml().to_yaml()))
-            return filename
+            with open(yaml_file, 'w') as fp:
+                fp.write(yaml.dump(self.generate_yaml().to_yaml()))
+            return yaml_file
         except Exception as err:
-            print_error(f'Error writing {filename} - {err}')
+            print_error(f'Error writing {yaml_file} - {err}')
             raise
 
-    def save_config(self, config, directory):
+    def save_config(self, config: dict, directory: str) -> str:
+        """
+        Writes the integration configuration to a file in JSON format.
+        Args:
+            config: The integration configuration.
+            directory: The directory to save the file to.
+
+        Returns:
+            config_file: The path to the configuration file.
+        """
         self.print_with_verbose('Creating configuration file...')
-        filename = os.path.join(directory, f'{self.base_name}.json')
+        config_file = os.path.join(directory, f'{self.base_name}.json')
         try:
-            with open(filename, 'w') as fp:
+            with open(config_file, 'w') as fp:
                 json.dump(config, fp, indent=4)
-            return filename
+            return config_file
         except Exception as err:
-            print_error(f'Error writing {filename} - {err}')
+            print_error(f'Error writing {config_file} - {err}')
             raise
 
-    def print_with_verbose(self, text):
-        if self.verbose:
-            print(text)
+    def save_image_and_desc(self, directory: str) -> tuple:
+        """
+        Writes template image and description.
+        Args:
+            directory: The directory to save the file to.
 
-    def save_image_and_desc(self, directory):
+        Returns:
+            image_path: The path to the image file.
+            desc_path: The path to the description file.
+        """
         self.print_with_verbose('Creating image and description files...')
         image_path = os.path.join(directory, f'{self.base_name}_image.png')
         desc_path = os.path.join(directory, f'{self.base_name}_description.md')
@@ -724,14 +841,43 @@ class OpenAPIIntegration:
             return image_path, desc_path
         except Exception as err:
             print_error(f'Error copying image and description files - {err}')
+            return '', ''
 
-    def save_package(self, directory):
+    def save_package(self, directory: str) -> tuple:
+        """
+        Creates a package for the integration including python, yaml, image and description files.
+        Args:
+            directory: The directory to create the package in.
+
+        Returns:
+            code_path: The path to the python code file.
+            yml_path: the path to the yaml file.
+            image_path: The path to the image file.
+            desc_path: The path to the description file.
+        """
         code_path = self.save_python_code(directory)
         yml_path = self.save_yaml(directory)
         image_path, desc_path = self.save_image_and_desc(directory)
         return code_path, yml_path, image_path, desc_path
 
-    def init_arg(self, arg):
+    def print_with_verbose(self, text: str):
+        """
+        Prints a text verbose is set to true.
+        Args:
+            text: The text to print.
+        """
+        if self.verbose:
+            print(text)
+
+    def init_arg(self, arg: dict):
+        """
+        Parses an argument.
+        Args:
+            arg: The argument to parse.
+
+        Returns:
+            new_arg: The parsed argument.
+        """
         new_arg = {}
         arg_desc = arg.get('description', '')
         arg_desc = self.clean_description(arg_desc)
@@ -743,34 +889,54 @@ class OpenAPIIntegration:
         new_arg['type'] = arg.get('type', 'string')
         new_arg['properties'] = arg.get('properties', {})
         new_arg['ref'] = arg.get('ref', '')
-        new_arg['enums'] = [str(x) for x in arg.get('enum')] if arg.get('enum', None) else None
+        new_arg['enums'] = [str(x) for x in arg.get('enum', [])] if arg.get('enum', None) else None
 
         return new_arg
 
     @staticmethod
-    def extract_values(obj, key):
-        arr = []
+    def extract_values(obj: Union[dict, list], key: str) -> list:
+        """
+        Extracts values from an object by a provided key.
+        Args:
+            obj: The object to extract.
+            key: The key to extract by.
 
-        def extract(obj, arr, key):
-            if isinstance(obj, dict):
-                for k, v in obj.items():
-                    if k == key:
-                        arr.append(v)
+        Returns:
+            results: The extracted values.
+        """
+        arr: list = []
+
+        def extract(extracted_object: Union[dict, list], values: list, key_to_extract: str) -> list:
+            if isinstance(extracted_object, dict):
+                for k, v in extracted_object.items():
+                    if k == key_to_extract:
+                        values.append(v)
                     elif isinstance(v, (dict, list)):
-                        extract(v, arr, key)
+                        extract(v, values, key_to_extract)
 
-            elif isinstance(obj, list):
-                for item in obj:
-                    extract(item, arr, key)
-            return arr
+            elif isinstance(extracted_object, list):
+                for item in extracted_object:
+                    extract(item, values, key_to_extract)
+            return values
 
         results = extract(obj, arr, key)
         return results
 
     @staticmethod
-    def get_arg_default(arg):
+    def get_arg_default(arg: dict):
+        """
+        Gets the format for an argument default value, e.g.:
+        >>> , ''
+        >>> , False
+        Args:
+            arg: The argument to get the default format for.
+
+        Returns:
+            argument_default: The default format for the argument.
+        """
         arg_type = ARGUMENT_TYPES.get(arg.get('type', 'string'), 'str')
         arg_default = arg.get('default', '')
+        default: Optional[Any]
         if arg_type == 'int':
             try:
                 default = int(arg_default)
@@ -789,7 +955,15 @@ class OpenAPIIntegration:
         return argument_default
 
     @staticmethod
-    def clean_description(description):
+    def clean_description(description: str) -> str:
+        """
+        Cleans a description string.
+        Args:
+            description: The description string to clean.
+
+        Returns:
+            description: The clean description.
+        """
         if len(description) > MAX_DESCRIPTION_WORDS:
             description = description[:MAX_DESCRIPTION_WORDS] + '...'
         for i in ILLEGAL_DESCRIPTION_CHARS:
@@ -798,7 +972,16 @@ class OpenAPIIntegration:
         return description
 
     @staticmethod
-    def clean_function_name(name, snakeify=True):
+    def clean_function_name(name: str, snakeify: bool = True) -> str:
+        """
+        Cleans a function name.
+        Args:
+            name: The function name to clean.
+            snakeify: Whether to format the name to snake-case.
+
+        Returns:
+            name: The clean name.
+        """
         for i in ILLEGAL_CODE_CHARS:
             name = name.replace(i, '')
 
@@ -809,10 +992,21 @@ class OpenAPIIntegration:
         return name
 
     @staticmethod
-    def format_params(params, base, base_string):
+    def format_params(params: list, base: str, base_string: str) -> str:
+        """
+        Formats a list of params to a string of params assignment, e.g. param1=param_name, param2=param_name2
+        Args:
+            params: The list of params to parse
+            base: The base code to use
+            base_string: The base string to replace with the params
+
+        Returns:
+            params: Formatted params string
+        """
         modified_params = []
         for p in params:
             for name, code_name in p.items():
                 modified_params.append(f'{name}={code_name}')
-        params = base.replace(base_string, ', '.join(modified_params))
-        return params
+
+        params_string = base.replace(base_string, ', '.join(modified_params))
+        return params_string

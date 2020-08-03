@@ -173,7 +173,7 @@ def test_test_update_release_notes_existing(demisto_client, mocker):
                '##### New: Azure Feed\n' + \
                '- Azure.CloudIPs Feed Integration.\n'
 
-    rn_path = join(AZURE_FEED_PACK_PATH, 'ReleaseNotes', '1_0_0.md')
+    rn_path = join(RN_FOLDER, '1_0_0.md')
     modified_files = {join(AZURE_FEED_PACK_PATH, 'IncidentFields', 'incidentfield-city.json')}
     f = open(rn_path, "w")
     f.write(input_rn)
@@ -186,12 +186,12 @@ def test_test_update_release_notes_existing(demisto_client, mocker):
                                                                                        set(), set(), set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-p", AZURE_FEED_PACK_PATH])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-p", 'FeedAzureValid'])
 
     assert result.exit_code == 0
     assert os.path.exists(rn_path)
     assert not result.exception
-    assert f'Finished updating release notes for {AZURE_FEED_PACK_PATH}.' in result.stdout
+    assert f'Finished updating release notes for FeedAzureValid.' in result.stdout
 
     with open(rn_path, 'r') as f:
         rn = f.read()

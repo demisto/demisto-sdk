@@ -64,7 +64,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### Hello World Playbook\n- Hello World Playbook description\n" \
+        expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n" \
 
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN

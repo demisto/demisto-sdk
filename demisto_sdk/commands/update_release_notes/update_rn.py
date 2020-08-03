@@ -271,7 +271,7 @@ class UpdateRN:
             if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
                 rn_desc = f'- **{content_name}**\n'
             else:
-                rn_desc = f'##### {content_name}\n- {desc}\n' if is_new_file \
+                rn_desc = f'##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'##### {content_name}\n- %%UPDATE_RN%%\n'
 
             if content_name == 'N/A':

@@ -5,6 +5,9 @@
 * Added support for *layoutscontainer*, *classifier_5_9_9*, *mapper*, *report*, and *widget* in the **Format** command.
 * Fixed an issue where **Format** will set the `ID` field to be equal to the `name` field in modified playbooks.
 * Fixed an issue where **Format** did not work for test playbooks.
+* Improved **update-release-notes** command:
+    * Write content description to release notes for new items.
+    * Update format for file types without description: Connections, Incident Types, Indicator Types, Layouts, Incident Fields.
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

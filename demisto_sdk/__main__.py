@@ -42,7 +42,6 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -802,7 +801,11 @@ def update_pack_releasenotes(**kwargs):
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
-    modified, added, old, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
+
+    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+    validate_manager.setup_git_params()
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:

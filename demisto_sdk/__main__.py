@@ -7,14 +7,14 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
-import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
-                                               print_warning)
+                                               get_pack_name,
+                                               is_external_repository,
+                                               print_error, print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -274,7 +274,7 @@ def validate(config, **kwargs):
         print_error(f'File {file_path} was not found')
         return 1
     else:
-        is_external_repo = tools.is_external_repository()
+        is_external_repo = is_external_repository()
 
         validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
                                     only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],

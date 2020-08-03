@@ -298,6 +298,7 @@ def get_last_remote_release_version():
                 exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n' \
                           f'This may happen if you are not connected to the internet.'
             print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+
     return ''
 
 

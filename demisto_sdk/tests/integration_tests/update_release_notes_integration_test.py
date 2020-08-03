@@ -3,7 +3,6 @@ from os.path import join
 
 import pytest
 from click.testing import CliRunner
-
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN

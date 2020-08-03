@@ -1316,14 +1316,11 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
     second_id_set = IDSet(second_id_set_dict)
 
     for object_type, object_list in second_id_set.get_dict().items():
-        # logging.debug(f'object_type: {object_type}')
         for obj in object_list:
             obj_id = list(obj.keys())[0]
-            # logging.debug(f'obj_id: {obj_id}')
             is_duplicate = has_duplicate(first_id_set.get_list(object_type), obj_id, object_type, print_logs,
                                          external_object=obj)
             if is_duplicate:
-                # logging.debug(f'{obj_id} has duplicate')
                 has_duplicates = True
                 duplicates.append(obj_id)
             else:

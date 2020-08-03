@@ -16,8 +16,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_incident_type_data, get_indicator_type_data, get_integration_data,
     get_layout_data, get_layoutscontainer_data, get_mapper_data,
     get_playbook_data, get_script_data, get_values_for_keys_recursively,
-    has_duplicate, re_create_id_set,
-    merge_id_sets)
+    has_duplicate, merge_id_sets, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -155,19 +154,6 @@ class TestDuplicates:
     @pytest.mark.parametrize('id_set, id_to_check, result', MOCKED_DATA)
     def test_had_duplicates(id_set, id_to_check, result):
         assert result == has_duplicate(id_set, id_to_check)
-    #
-    # ID_SET = [
-    #     {'Access': {'typeID': 'Access', 'kind': 'edit', 'path': 'Layouts/layout-edit-Access.json'}},
-    #     {'Access': {'typeID': 'Access', 'fromversion': '4.1.0', 'kind': 'details', 'path': 'layout-Access.json'}},
-    #     {'urlRep': {'typeID': 'urlRep', 'kind': 'Details', 'path': 'Layouts/layout-Details-url.json'}},
-    #     {'urlRep': {'typeID': 'urlRep', 'fromversion': '5.0.0', 'kind': 'Details',
-    #                 'path': 'layout-Details-url_5.4.9.json'}}
-    # ]
-    #
-    # INPUT_TEST_HAS_DUPLICATE = [
-    #     ('Access', False),
-    #     ('urlRep', True)
-    # ]
 
     @staticmethod
     def test_has_duplicate():

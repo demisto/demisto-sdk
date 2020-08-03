@@ -7,14 +7,14 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name,
-                                               is_external_repository,
-                                               print_error, print_warning)
+                                               get_pack_name, print_error,
+                                               print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -274,7 +274,7 @@ def validate(config, **kwargs):
         print_error(f'File {file_path} was not found')
         return 1
     else:
-        is_external_repo = is_external_repository()
+        is_external_repo = tools.is_external_repository()
 
         validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
                                     only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
@@ -353,18 +353,23 @@ def create(**kwargs):
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
-                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'],
-                               input_path=kwargs.get('input'))
-    return secrets.run()
+    secrets_validator = SecretsValidator(
+        configuration=config.configuration,
+        is_circle=kwargs['post_commit'],
+        ignore_entropy=kwargs['ignore_entropy'],
+        white_list_path=kwargs['whitelist'],
+        input_path=kwargs.get('input')
+    )
+    return secrets_validator.run()
 
 
 # ====================== lint ====================== #
 @main.command(name="lint",
               short_help="Lint command will perform:\n 1. Package in host checks - flake8, bandit, mypy, vulture.\n 2. "
                          "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
-                         "Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what"
-                         "docker image to use and will setup the dev dependencies and file in the target folder. ")
+                         "Meant to be used with integrations/scripts that use the folder (package) structure. "
+                         "Will lookup up what docker image to use and will setup the dev dependencies and "
+                         "file in the target folder. ")
 @click.help_option('-h', '--help')
 @click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
                                                                                                resolve_path=True))

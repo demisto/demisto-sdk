@@ -38,6 +38,7 @@ class ReadMeValidator(BaseValidator):
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
             return self.is_mdx_file()
         else:
+            print_warning(f"Skipping README validation of {self.file_path}")
             return True
 
     def is_mdx_file(self) -> bool:

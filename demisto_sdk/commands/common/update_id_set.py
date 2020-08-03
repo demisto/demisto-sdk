@@ -1,13 +1,13 @@
+import copy
 import glob
 import itertools
 import json
 import os
 import re
-from enum import Enum
-import copy
 import time
 from collections import OrderedDict
 from distutils.version import LooseVersion
+from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
 

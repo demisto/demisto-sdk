@@ -2,12 +2,15 @@ import glob
 import json
 import os
 import sys
+from distutils.version import LooseVersion
 
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+
+MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 
 
 class VerboseFile:
@@ -158,23 +161,22 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set or None: found pack ids or None in case nothing was found.
+            set: found pack ids.
 
         """
         if not isinstance(items_names, list):
             items_names = [items_names]
 
-        content_items = list(
-            filter(lambda s: list(s.values())[0].get('name', '') in items_names and 'pack' in list(s.values())[0],
-                   items_list))
+        pack_names = set()
+        for item in items_list:
+            item_details = list(item.values())[0]
+            if item_details.get('name', '') in items_names and 'pack' in item_details and \
+                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                pack_names.add(item_details.get('pack'))
 
-        if content_items:
-            pack_names = list(map(lambda s: next(iter(s.values()))['pack'], content_items))
-            if not exclude_ignored_dependencies:
-                return set(pack_names)
-            return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
-
-        return None
+        if not exclude_ignored_dependencies:
+            return set(pack_names)
+        return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
     @staticmethod
     def _search_packs_by_items_names_or_ids(items_names, items_list, exclude_ignored_dependencies=True):
@@ -187,7 +189,7 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set or None: found pack ids or None in case nothing was found.
+            set: found pack ids.
 
         """
         packs = set()
@@ -201,6 +203,7 @@ class PackDependencies:
                 item_details = list(item_from_id_set.values())[0]
                 if (machine_name in item_possible_names or item_name == item_details.get('name')) \
                         and item_details.get('pack') \
+                        and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
                              not exclude_ignored_dependencies):
                     packs.add(item_details.get('pack'))
@@ -219,17 +222,16 @@ class PackDependencies:
         Returns:
             set: pack id without ignored packs.
         """
-        integrations = list(
-            filter(lambda i: command in list(i.values())[0].get('commands', []) and 'pack' in list(i.values())[0],
-                   id_set['integrations']))
+        pack_names = set()
+        for item in id_set['integrations']:
+            item_details = list(item.values())[0]
+            if command in item_details.get('commands', []) and 'pack' in item_details and \
+                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                pack_names.add(item_details.get('pack'))
 
-        if integrations:
-            pack_names = [next(iter(i.values()))['pack'] for i in integrations]
-            if not exclude_ignored_dependencies:
-                return set(pack_names)
-            return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
-
-        return None
+        if not exclude_ignored_dependencies:
+            return set(pack_names)
+        return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
     @staticmethod
     def _detect_generic_commands_dependencies(pack_ids):

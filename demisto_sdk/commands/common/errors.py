@@ -929,8 +929,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_readme_file_missing(pack_name):
-        return f'{pack_name} is missing README.md file.'
+    def pack_readme_file_missing(file_name):
+        return f'{file_name} file does not exist, create one in the root of the pack'
 
     @staticmethod
     @error_code_decorator

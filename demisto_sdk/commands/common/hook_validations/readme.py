@@ -48,8 +48,9 @@ class ReadMeValidator(BaseValidator):
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             # run the java script mdx parse validator
-            _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path, env=os.environ)
-            if is_valid:
+            _, stderr, is_not_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path,
+                                                     env=os.environ)
+            if is_not_valid:
                 error_message, error_code = Errors.readme_error(stderr)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False

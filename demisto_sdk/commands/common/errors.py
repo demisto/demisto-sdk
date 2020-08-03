@@ -11,9 +11,8 @@ FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
 
-
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', "RM"],
+    'community': ['BC', 'CJ', 'DS', 'PA117'],
     'non-certified-partner': ['CJ']
 }
 
@@ -135,7 +134,8 @@ ERROR_CODE = {
     "pack_metadata_missing_url_and_email": "PA113",
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
-    "invalid_package_dependencies": 'PA116',
+    "invalid_package_dependencies": "PA116",
+    "pack_readme_file_missing": "PA117",
     "readme_error": "RM100",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
@@ -926,6 +926,11 @@ class Errors:
     @error_code_decorator
     def invalid_package_dependencies(pack_name):
         return f'{pack_name} depends on NonSupported / DeprecatedContent packs.'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_readme_file_missing(pack_name):
+        return f'{pack_name} is missing README.md file.'
 
     @staticmethod
     @error_code_decorator

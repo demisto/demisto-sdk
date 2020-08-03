@@ -13,7 +13,7 @@ UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests')
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')
-
+RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 
 @pytest.fixture
 def demisto_client(mocker):
@@ -23,7 +23,7 @@ def demisto_client(mocker):
     )
 
 
-def test_test_update_release_notes_new_integration(demisto_client, mocker, repo):
+def test_test_update_release_notes_new_integration(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.
@@ -42,7 +42,7 @@ def test_test_update_release_notes_new_integration(demisto_client, mocker, repo)
                   '- Azure.CloudIPs Feed Integration.\n'
 
     added_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
-    rn_path = join(TEST_FILES_PATH, 'integration_tests/Packs/FeedAzureValid/ReleaseNotes/1_0_1.md')
+    rn_path = join(RN_FOLDER, '1_0_1.md')
     runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
@@ -66,7 +66,7 @@ def test_test_update_release_notes_new_integration(demisto_client, mocker, repo)
     assert expected_rn == rn
 
 
-def test_test_update_release_notes_modified_integration(demisto_client, mocker, repo):
+def test_test_update_release_notes_modified_integration(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.
@@ -84,7 +84,7 @@ def test_test_update_release_notes_modified_integration(demisto_client, mocker, 
                   '##### Azure Feed\n' + \
                   '- %%UPDATE_RN%%\n'
     modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
-    rn_path = join(TEST_FILES_PATH, 'integration_tests/Packs/FeedAzureValid/ReleaseNotes/1_0_1.md')
+    rn_path = join(RN_FOLDER, '1_0_1.md')
 
     runner = CliRunner(mix_stderr=False)
 
@@ -109,7 +109,7 @@ def test_test_update_release_notes_modified_integration(demisto_client, mocker, 
     assert expected_rn == rn
 
 
-def test_test_update_release_notes_incident_field(demisto_client, mocker, repo):
+def test_test_update_release_notes_incident_field(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.
@@ -128,7 +128,7 @@ def test_test_update_release_notes_incident_field(demisto_client, mocker, repo):
 
     runner = CliRunner(mix_stderr=False)
     modified_files = {join(AZURE_FEED_PACK_PATH, 'IncidentFields', 'incidentfield-city.json')}
-    rn_path = join(TEST_FILES_PATH, 'integration_tests/Packs/FeedAzureValid/ReleaseNotes/1_0_1.md')
+    rn_path = join(RN_FOLDER, '1_0_1.md')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
                                                                                        set(), set(), set()))
@@ -150,7 +150,7 @@ def test_test_update_release_notes_incident_field(demisto_client, mocker, repo):
     assert expected_rn == rn
 
 
-def test_test_update_release_notes_existing(demisto_client, mocker, repo):
+def test_test_update_release_notes_existing(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.

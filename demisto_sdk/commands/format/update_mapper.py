@@ -36,10 +36,7 @@ class MapperJSONFormat(BaseUpdateJSON):
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the mapper JSON updater."""
         format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
-        else:
-            return format, SKIP_RETURN_CODE
+        return format, SKIP_RETURN_CODE
 
     def set_mapping(self):
         """

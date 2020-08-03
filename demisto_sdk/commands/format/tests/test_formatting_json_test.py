@@ -88,7 +88,7 @@ def test_update_id_indicatortype_positive(mocker, tmpdir):
 
     indicator_formater = IndicatorTypeJSONFormat(input='test', output=tmpdir)
     indicator_formater.data = {'id': '1234', 'details': '12345'}
-    indicator_formater.update_id()
+    indicator_formater.update_id(field='details')
     assert indicator_formater.data['id'] == indicator_formater.data['details']
 
 

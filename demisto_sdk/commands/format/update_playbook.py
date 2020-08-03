@@ -27,9 +27,8 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
     def update_fromversion_by_user(self):
         """If no fromversion is specified, asks the user for it's value and updates the playbook."""
-        print('Updating fromversion tag')
 
-        if not self.data.get('fromVersion', ''):
+        if not self.data.get('fromversion', ''):
             print_color('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
                         LOG_COLORS.RED)
             user_answer = input()
@@ -42,7 +41,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 print_color('Please specify the desired version X.X.X', LOG_COLORS.YELLOW)
                 user_desired_version = input()
                 if re.match(r'\d+\.\d+\.\d+', user_desired_version):
-                    self.data['fromVersion'] = user_desired_version
+                    self.data['fromversion'] = user_desired_version
                     is_input_version_valid = True
                 else:
                     print_error('Version format is not valid')

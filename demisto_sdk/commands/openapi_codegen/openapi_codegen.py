@@ -4,10 +4,13 @@ import re
 import shutil
 import sys
 from distutils.util import strtobool
+from typing import Any, Optional, Union
 
 import autopep8
 import yaml
 
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
 from demisto_sdk.commands.openapi_codegen.base_code import (
     base_argument, base_basic_auth, base_client, base_code, base_credentials,
@@ -15,7 +18,6 @@ from demisto_sdk.commands.openapi_codegen.base_code import (
     base_props, base_request_function, base_token)
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
-from typing import Optional, Union, Any
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
 ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
@@ -181,8 +183,12 @@ class OpenAPIIntegration:
 
         configuration['code_type'] = 'python'
         configuration['code_subtype'] = 'python3'
-        # TODO: get latest docker image
-        configuration['docker_image'] = 'demisto/python3:3.8.3.9324'
+
+        try:
+            latest_tag = DockerImageValidator.get_docker_image_latest_tag_request('demisto/python3')
+            configuration['docker_image'] = f'demisto/python3:{latest_tag}'
+        except Exception as e:
+            self.print_with_verbose(f'Failed getting latest docker image for demisto/python3: {e}')
 
         self.configuration = configuration
 
@@ -637,7 +643,6 @@ class OpenAPIIntegration:
                     continue
             except Exception:
                 self.print_with_verbose(f'Could not get the code for the response {response}')
-                pass
 
             new_response['description'] = response.get('description', None)
             all_items = []

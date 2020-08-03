@@ -221,6 +221,14 @@ class DockerImageValidator(BaseValidator):
 
     @staticmethod
     def get_docker_image_latest_tag_request(docker_image_name):
+        """
+        Get the latest tag for a docker image by request to docker hub.
+        Args:
+            docker_image_name: The docker image name.
+
+        Returns:
+            The latest tag for the docker image.
+        """
         tag = ''
         auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
         headers = ACCEPT_HEADER.copy()

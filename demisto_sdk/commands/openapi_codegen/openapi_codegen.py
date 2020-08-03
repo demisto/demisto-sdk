@@ -428,7 +428,6 @@ class OpenAPIIntegration:
         """
         # Create the commands section
         commands = self.get_yaml_commands()
-        script = self.generate_python_code()
         commonfields = XSOARIntegration.CommonFields(self.configuration['name'])
         name = self.configuration['name']
         display = self.configuration['name']
@@ -436,7 +435,7 @@ class OpenAPIIntegration:
         description = self.configuration['description']
         configurations = self.get_yaml_params()
 
-        int_script = XSOARIntegration.Script(script, self.configuration['code_type'],
+        int_script = XSOARIntegration.Script('', self.configuration['code_type'],
                                              self.configuration['code_subtype'], self.configuration['docker_image'],
                                              self.configuration.get('fetch_incidents', False), commands)
 
@@ -629,13 +628,20 @@ class OpenAPIIntegration:
         results = extract(obj, arr, context)
         return results
 
-    def extract_outputs(self, data: dict, function: dict):
+    def extract_outputs(self, data: dict) -> tuple:
         """
         Extracts outputs from a function(path) in a swagger file.
         Args:
             data: The data of the swagger function.
-            function: The current function we are creating from the swagger data.
+
+        Returns:
+            outputs: The extracted outputs.
+            root_object: The root object of the command output.
+            context_path: The context path of the command output.
         """
+        outputs: list = []
+        root_object: str = ''
+        context_path: str = ''
         for response_code, response in data.get('responses', {}).items():
             new_response = {}
             try:
@@ -659,19 +665,18 @@ class OpenAPIIntegration:
                             for k, prop in ref_props[0].items():
                                 if k in self.root_objects:
                                     # We found a root, we need the output of the root only
-                                    function['root_object'] = k
+                                    root_object = k
                                     all_items = [prop]
                                     path = self.extract_values(prop, '$ref')
                                     if path:
-                                        function['context_path'] = self.clean_function_name(path[0].split('/')[-1],
-                                                                                            False)
+                                        context_path = self.clean_function_name(path[0].split('/')[-1], False)
                                     found_root = True
                             if found_root:
                                 break
 
                             all_items.extend(ref_props)
-                        if not function.get('context_path'):
-                            function['context_path'] = self.clean_function_name(ref, False)
+                        if not context_path:
+                            context_path = self.clean_function_name(ref, False)
                 else:
                     all_items.extend(self.extract_values(schema, 'properties'))
 
@@ -682,16 +687,20 @@ class OpenAPIIntegration:
                     this_type = OUTPUT_TYPES.get(this_type, 'Unknown')
                     resp_name = prop.get('name')
                     description = self.clean_description(description)
-                    function['outputs'].append({'name': resp_name, 'type': this_type, 'description': description})
-            function['responses'].append(new_response)
+                    outputs.append({'name': resp_name, 'type': this_type, 'description': description})
 
-    def extract_args(self, arguments: list, function: dict):
+        return outputs, root_object, context_path
+
+    def extract_args(self, arguments: list) -> list:
         """
         Extracts arguments from a function(path) in a swagger file.
         Args:
             arguments: The list of arguments from a function(path) in the swagger file.
-            function: The current function we are creating from the swagger data.
+
+        Returns:
+            extracted_arguments: The extracted arguments.
         """
+        extracted_arguments: list = []
         for arg in arguments:
             refs = []
             if 'schema' in arg:
@@ -719,11 +728,13 @@ class OpenAPIIntegration:
                             else:
                                 new_ref_arg.update(v)
                             new_ref_arg['ref'] = ref
-                            function['arguments'].append(self.init_arg(new_ref_arg))
+                            extracted_arguments.append(self.init_arg(new_ref_arg))
             if not refs:
                 if arg.get('schema', {}).get('type'):
                     arg['type'] = arg['schema']['type']
-                function['arguments'].append(self.init_arg(arg))
+                extracted_arguments.append(self.init_arg(arg))
+
+        return extracted_arguments
 
     def add_function(self, path: str, method: str, data: dict, params: list):
         """
@@ -754,14 +765,16 @@ class OpenAPIIntegration:
         new_function['consumes'] = data.get('consumes', [])
         new_function['produces'] = data.get('produces', [])
         new_function['outputs'] = []
-        new_function['responses'] = []
         if not new_function['parameters']:
             new_function['parameters'] = params
             iter_item = params
         else:
             iter_item = data.get('parameters', [])
-        self.extract_args(iter_item, new_function)
-        self.extract_outputs(data, new_function)
+        new_function['arguments'] = self.extract_args(iter_item)
+        outputs, root_object, context_path = self.extract_outputs(data)
+        new_function['outputs'] = outputs
+        new_function['root_object'] = root_object
+        new_function['context_path'] = context_path
 
         self.functions.append(new_function)
 
@@ -997,7 +1010,7 @@ class OpenAPIIntegration:
         """
         Formats a list of params to a string of params assignment, e.g. param1=param_name, param2=param_name2
         Args:
-            params: The list of params to parse
+            params: A list of params with mapping of name to code name
             base: The base code to use
             base_string: The base string to replace with the params
 

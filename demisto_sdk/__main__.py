@@ -931,11 +931,26 @@ def openapi_codegen_command(**kwargs):
         sys.exit(1)
 
     input_file = kwargs['input_file']
-    base_name = kwargs.get('base_name', 'GeneratedIntegration')
-    command_prefix = kwargs.get('command_prefix', '-'.join(base_name.split(' ')).lower())
-    context_path = kwargs.get('context_path', base_name.replace(' ', ''))
+    base_name = kwargs.get('base_name')
+    if base_name is None:
+        base_name = 'GeneratedIntegration'
+
+    command_prefix = kwargs.get('command_prefix')
+    if command_prefix is None:
+        command_prefix = '-'.join(base_name.split(' ')).lower()
+
+    context_path = kwargs.get('context_path')
+    if context_path is None:
+        context_path = base_name.replace(' ', '')
+
     unique_keys = kwargs.get('unique_keys', '')
+    if unique_keys is None:
+        unique_keys = ''
+
     root_objects = kwargs.get('root_objects', '')
+    if root_objects is None:
+        root_objects = ''
+
     verbose = kwargs.get('verbose', False)
     fix_code = kwargs.get('fix_code', False)
 

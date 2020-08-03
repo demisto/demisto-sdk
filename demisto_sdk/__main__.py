@@ -420,11 +420,13 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
 # ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
-                         "incidenttype/indicatortype/layout/dashboard file. ")
+                         "incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file. ")
 @click.help_option(
     '-h', '--help')
 @click.option(
-    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
+    "-i", "--input", help="The path of the script yml file\n"
+                          "If no input is specified, the format will be executed on all new/changed files.",
+    type=click.Path(exists=True, resolve_path=True))
 @click.option(
     "-o", "--output", help="The path where the formatted file will be saved to",
     type=click.Path(resolve_path=True))

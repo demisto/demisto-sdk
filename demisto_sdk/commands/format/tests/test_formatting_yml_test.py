@@ -19,6 +19,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
     SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
     SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY)
+from mock import patch
 from ruamel.yaml import YAML
 
 ryaml = YAML()
@@ -161,6 +162,7 @@ EQUAL_TEST = [
 
 
 @pytest.mark.parametrize('input, output, path', EQUAL_TEST)
+@patch('builtins.input', lambda *args: '5.0.0')
 def test_eqaul_value_in_file(input, output, path):
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(input, output)
@@ -235,6 +237,7 @@ FORMAT_FILES = [
 
 
 @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
+@patch('builtins.input', lambda *args: '5.0.0')
 def test_format_file(source, target, path, answer):
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)

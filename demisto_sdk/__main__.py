@@ -885,18 +885,23 @@ def find_dependencies_command(**kwargs):
 
 # ====================== openapi-codegen ====================== #
 @main.command(name="openapi-codegen",
-              short_help='''Generates a Cortex XSOAR integration given an OpenAPI Specification.''')
+              short_help='''Generates a Cortex XSOAR integration given an OpenAPI specification file.''',
+              help='''Generates a Cortex XSOAR integration given an OpenAPI specification file.
+               In the first run of the command, an integration configuration file is created, which can be modified.
+               Then, the command is run a second time with the integration configuration to
+               generate the actual integration files.''')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
     '-i', '--input_file', help='The swagger file to load in JSON format', required=True)
 @click.option(
-    '-cf', '--config_file', help='The integration configuration file', required=False)
+    '-cf', '--config_file', help='The integration configuration file. It is created in the first run of the command',
+    required=False)
 @click.option(
     '-n', '--base_name', help='The base filename to use for the generated files', required=False)
 @click.option(
-    '-o', '--output_dir', help='Directory to store the output to (default is current working directory)',
+    '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
     required=False)
 @click.option(
     '-pr', '--command_prefix', help='Add a prefix to each command in the code', required=False)
@@ -912,7 +917,8 @@ def find_dependencies_command(**kwargs):
 @click.option(
     '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8')
 @click.option(
-    '-a', '--use_default', is_flag=True, help='Use the automatically generated integration configuration')
+    '-a', '--use_default', is_flag=True, help='Use the automatically generated integration configuration'
+                                              ' (Skip the second run).')
 def openapi_codegen_command(**kwargs):
     if not kwargs.get('output_dir'):
         output_dir = os.getcwd()
@@ -984,7 +990,7 @@ def openapi_codegen_command(**kwargs):
             if fix_code:
                 command_to_run = command_to_run + ' -f'
 
-            click.echo(f'Run the command again with the created configuration file: {command_to_run}')
+            click.echo(f'Run the command again with the created configuration file(after a review): {command_to_run}')
             sys.exit(0)
 
     if integration.save_package(output_dir):

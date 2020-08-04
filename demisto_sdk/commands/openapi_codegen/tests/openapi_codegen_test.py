@@ -91,6 +91,27 @@ class TestOpenAPICodeGen:
 
         assert yaml.dump(yaml_obj) == yaml.dump(expected_yaml)
 
+    def test_python_file(self):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+           - A swagger file
+           - A generated integration configuration file
+        When
+           - Generating the integration python code
+        Then
+           - Ensure the python file is generated correctly
+       """
+        integration = self.init_integration()
+
+        with open(os.path.join(self.test_files_path, 'swagger_python.txt'), 'r') as py_file:
+            expected_py = py_file.read()
+
+        py = integration.generate_python_code()
+
+        assert py == expected_py
+
     def test_get_command_function(self):
         """
         Scenario: Generating an integration from a swagger file

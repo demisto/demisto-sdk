@@ -212,19 +212,21 @@ class OpenAPIIntegration:
 
         code = code.replace('$FUNCTIONS$', '\n'.join(functions))
         code = code.replace('$BASEURL$', self.base_path)
-        client = base_client.replace('$REQUESTFUNCS$', '\n'.join(req_functions))
+        client = base_client.replace('$REQUESTFUNCS$', ''.join(req_functions))
         code = code.replace('$CLIENT$', client)
 
         if BEARER_AUTH_TYPE in self.configuration['auth']:
             code = code.replace('$BEARERAUTHPARAMS$', base_token)
         else:
-            code = code.replace('$BEARERAUTHPARAMS$', '')
+            code = '\n'.join(
+                [x for x in code.split('\n') if '$BEARERAUTHPARAMS$' not in x])
 
         if BASIC_AUTH_TYPE in self.configuration['auth']:
             code = code.replace('$BASEAUTHPARAMS$', base_credentials)
             code = code.replace('$BASEAUTH$', base_basic_auth)
         else:
-            code = code.replace('$BASEAUTHPARAMS$', '')
+            code = '\n'.join(
+                [x for x in code.split('\n') if '$BASEAUTHPARAMS$' not in x])
             code = code.replace('$BASEAUTH$', 'None')
 
         list_functions = []
@@ -317,7 +319,7 @@ class OpenAPIIntegration:
             req_function = req_function.replace('$HEADERSOBJ$', ' \n        '.join(new_headers))
         else:
             req_function = '\n'.join([x for x in req_function.split('\n') if '$HEADERSOBJ$' not in x])
-            # req_function = req_function.replace('$HEADERSOBJ$', '')
+
         if self.configuration['context_path']:
             context_name = self.context_path
         else:

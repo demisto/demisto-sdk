@@ -42,11 +42,11 @@ base_client = """class Client(BaseClient):
     def __init__(self, server_url, verify, proxy, headers, auth):
         super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
 
-        $REQUESTFUNCS$
+$REQUESTFUNCS$
 """
-base_code = """
-import demistomock as demisto
+base_code = """import demistomock as demisto
 from CommonServerPython import *
+
 
 $CLIENT$
 
@@ -87,4 +87,5 @@ def main():
 
 
 if __name__ in ['__main__', 'builtin', 'builtins']:
-    main()"""
+    main()
+"""

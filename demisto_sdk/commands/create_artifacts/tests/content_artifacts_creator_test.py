@@ -12,10 +12,10 @@ from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 TEST_DATA = path_test_files()
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
-UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'content_artifacts_creator_test'
-                  / 'test_create_content_artifacts')
-EXPECTED_ARTIFACT_CONTENT = UNIT_TEST_DATA / 'content_expected_artifact'
-EXPECTED_ARTIFACT_PRIVATE_CONTENT = UNIT_TEST_DATA / 'content_private_expected_artifact'
+UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data')
+COMMON_SERVER = UNIT_TEST_DATA / 'modify_common_server_constants_test'
+EXPECTED_ARTIFACT_CONTENT = UNIT_TEST_DATA / 'create_content_artifacts_test' / 'content_expected_artifact'
+EXPECTED_ARTIFACT_PRIVATE_CONTENT = UNIT_TEST_DATA / 'create_content_artifacts_test' / 'content_private_expected_artifact'
 
 
 def same_folders(dcmp):
@@ -73,8 +73,8 @@ def private_repo():
 
 def test_modify_common_server_constants(datadir):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import modify_common_server_constants
-    path_before = Path(datadir['CommonServerPython.py'])
-    path_excepted = Path(datadir['CommonServerPython_modified.py'])
+    path_before = COMMON_SERVER / 'CommonServerPython.py'
+    path_excepted = COMMON_SERVER / 'CommonServerPython_modified.py'
     old_data = path_before.read_text()
     modify_common_server_constants(path_before, 'test', '6.0.0')
     assert cmp(path_before, path_excepted)
@@ -85,7 +85,7 @@ def test_create_content_artifacts(mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
                                                                                  create_content_artifacts)
 
-    expected_artifacts_path = UNIT_TEST_DATA / 'content_expected_artifact'
+    expected_artifacts_path = TEST_CONTENT_REPO
     with temp_dir() as temp:
         config = ArtifactsConfiguration(artifacts_path=temp,
                                         content_version='6.0.0',

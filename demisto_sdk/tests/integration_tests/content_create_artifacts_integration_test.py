@@ -12,8 +12,7 @@ ARTIFACTS_CMD = 'create-content-artifacts'
 
 TEST_DATA = path_test_files()
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'content_artifacts_creator_test'
-                  / 'test_create_content_artifacts')
+UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data' / 'create_content_artifacts_test')
 
 
 @pytest.fixture()

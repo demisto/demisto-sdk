@@ -1,4 +1,5 @@
 # Changelog
+* Fixed a regression where **upload** command failed on test playbooks.
 * Added new *githubUser* field in pack metadata init command.
 * Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
 * Fixed an issue were **find-dependencies** ignored *toversion* field in content items.

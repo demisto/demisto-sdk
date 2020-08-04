@@ -857,6 +857,7 @@ FEED_REQUIRED_PARAMS = [
         'display': 'Fetch indicators',
         'name': 'feed',
         'type': 8,
+        'defaultvalue': True,
         'required': False
     },
     {

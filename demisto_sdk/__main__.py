@@ -7,7 +7,7 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
-import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import FileType
@@ -353,18 +353,23 @@ def create(**kwargs):
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
-                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'],
-                               input_path=kwargs.get('input'))
-    return secrets.run()
+    secrets_validator = SecretsValidator(
+        configuration=config.configuration,
+        is_circle=kwargs['post_commit'],
+        ignore_entropy=kwargs['ignore_entropy'],
+        white_list_path=kwargs['whitelist'],
+        input_path=kwargs.get('input')
+    )
+    return secrets_validator.run()
 
 
 # ====================== lint ====================== #
 @main.command(name="lint",
               short_help="Lint command will perform:\n 1. Package in host checks - flake8, bandit, mypy, vulture.\n 2. "
                          "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
-                         "Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what"
-                         "docker image to use and will setup the dev dependencies and file in the target folder. ")
+                         "Meant to be used with integrations/scripts that use the folder (package) structure. "
+                         "Will lookup up what docker image to use and will setup the dev dependencies and "
+                         "file in the target folder. ")
 @click.help_option('-h', '--help')
 @click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
                                                                                                resolve_path=True))

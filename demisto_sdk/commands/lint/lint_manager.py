@@ -209,8 +209,11 @@ class LintManager:
               f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                     content_repo.remote().refs.master)
+        if content_repo.active_branch != content_repo.heads.master:
+            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                         content_repo.remote().refs.master)
+        else:
+            last_common_commit = content_repo.remote().refs.master.commit.parents[0]
         changed_from_master = {content_repo.working_dir / Path(item.b_path).parent for item in
                                content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_master)

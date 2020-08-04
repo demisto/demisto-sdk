@@ -854,10 +854,10 @@ IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONT
 
 FEED_REQUIRED_PARAMS = [
     {
+        'defaultvalue': 'true',
         'display': 'Fetch indicators',
         'name': 'feed',
         'type': 8,
-        'defaultvalue': True,
         'required': False
     },
     {

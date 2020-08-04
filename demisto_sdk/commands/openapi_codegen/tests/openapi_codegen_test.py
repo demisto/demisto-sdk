@@ -20,17 +20,16 @@ expected_command_function = '''def get_pet_by_id_command(client, args):
 
 '''
 
-expected_request_function = '''
-    def get_pet_by_id_request(self, petId):
-
-        headers = self._headers
-        
-
-        response = self._http_request('get', f'pet/{petId}', headers=headers)
-
-        return response
-
-'''
+expected_request_function = ('\n'
+                             '    def get_pet_by_id_request(self, petId):\n'
+                             '\n'
+                             '        headers = self._headers\n'
+                             '        \n'
+                             '\n'
+                             '        response = self._http_request(\'get\', f\'pet/{petId}\', headers=headers)\n'
+                             '\n'
+                             '        return response\n'
+                             '\n')
 
 
 class TestOpenAPICodeGen:
@@ -157,5 +156,3 @@ class TestOpenAPICodeGen:
         expected_headers = [{'Content-Type': 'multipart/form-data'}]
 
         assert expected_headers == command['headers']
-
-

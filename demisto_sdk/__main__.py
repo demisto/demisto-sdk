@@ -980,9 +980,9 @@ def openapi_codegen_command(**kwargs):
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
             if verbose:
-                command_to_run = command_to_run + f' -v'
+                command_to_run = command_to_run + ' -v'
             if fix_code:
-                command_to_run = command_to_run + f' -f'
+                command_to_run = command_to_run + ' -f'
 
             click.echo(f'Run the command again with the created configuration file: {command_to_run}')
             sys.exit(0)

@@ -8,7 +8,6 @@ from typing import Any, Optional, Union
 
 import autopep8
 import yaml
-
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
@@ -317,7 +316,8 @@ class OpenAPIIntegration:
 
             req_function = req_function.replace('$HEADERSOBJ$', ' \n        '.join(new_headers))
         else:
-            req_function = req_function.replace('$HEADERSOBJ$', '')
+            req_function = '\n'.join([x for x in req_function.split('\n') if '$HEADERSOBJ$' not in x])
+            # req_function = req_function.replace('$HEADERSOBJ$', '')
         if self.configuration['context_path']:
             context_name = self.context_path
         else:

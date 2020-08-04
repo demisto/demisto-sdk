@@ -24,7 +24,6 @@ expected_request_function = ('\n'
                              '    def get_pet_by_id_request(self, petId):\n'
                              '\n'
                              '        headers = self._headers\n'
-                             '        \n'
                              '\n'
                              '        response = self._http_request(\'get\', f\'pet/{petId}\', headers=headers)\n'
                              '\n'
@@ -68,7 +67,7 @@ class TestOpenAPICodeGen:
         with open(os.path.join(self.test_files_path, 'swagger_config.json'), 'rb') as config_path:
             config = json.load(config_path)
 
-        assert json.dumps(config) == json.dumps(integration.configuration)
+        assert json.dumps(integration.configuration) == json.dumps(config)
 
     def test_yaml_file(self):
         """
@@ -90,7 +89,7 @@ class TestOpenAPICodeGen:
 
         yaml_obj = integration.generate_yaml().to_yaml()
 
-        assert yaml.dump(expected_yaml) == yaml.dump(yaml_obj)
+        assert yaml.dump(yaml_obj) == yaml.dump(expected_yaml)
 
     def test_get_command_function(self):
         """
@@ -110,8 +109,8 @@ class TestOpenAPICodeGen:
 
         command_function, req_function = integration.get_python_command_and_request_functions(command)
 
-        assert expected_command_function == command_function
-        assert expected_request_function == req_function
+        assert command_function == expected_command_function
+        assert req_function == expected_request_function
 
     def test_command_body_args(self):
         """

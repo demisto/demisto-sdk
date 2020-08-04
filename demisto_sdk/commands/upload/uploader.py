@@ -54,7 +54,7 @@ class Uploader:
                 self.integration_uploader(self.path)
             elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
                 self.script_uploader(self.path)
-            elif file_type == FileType.PLAYBOOK:
+            elif file_type in (FileType.PLAYBOOK, FileType.TEST_PLAYBOOK):
                 self.playbook_uploader(self.path)
             elif file_type == FileType.WIDGET:
                 self.widget_uploader(self.path)

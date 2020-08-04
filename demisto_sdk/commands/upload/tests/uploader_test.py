@@ -24,6 +24,7 @@ if not hasattr(inspect, '_orig_findsource'):
             return inspect._orig_findsource(*args, **kwargs)
         except IndexError:
             raise IOError("Invalid line")
+
     inspect._orig_findsource = inspect.findsource
     inspect.findsource = findsource
 
@@ -355,11 +356,11 @@ def test_upload_pack(demisto_client_configure, mocker):
     mocker.patch.object(uploader, 'client')
     status_code = uploader.upload()
     expected_entities = ['DummyIntegration.yml', 'integration-UploadTest.yml', 'DummyScriptUnified.yml',
-                         'script-DummyScript.yml', 'DummyPlaybook.yml', 'incidenttype-Hello_World_Alert.json',
-                         'incidentfield-Hello_World_ID.json', 'incidentfield-Hello_World_Type.json',
-                         'incidentfield-Hello_World_Status.json', 'classifier-aws_sns_test_classifier.json',
-                         'widget-ActiveIncidentsByRole.json', 'layout-details-test_bla-V2.json',
-                         'upload_test_dashboard.json']
+                         'script-DummyScript.yml', 'DummyPlaybook.yml', 'DummyTestPlaybook.yml',
+                         'incidenttype-Hello_World_Alert.json', 'incidentfield-Hello_World_ID.json',
+                         'incidentfield-Hello_World_Type.json', 'incidentfield-Hello_World_Status.json',
+                         'classifier-aws_sns_test_classifier.json', 'widget-ActiveIncidentsByRole.json',
+                         'layout-details-test_bla-V2.json', 'upload_test_dashboard.json']
     assert status_code == 0
     for entity in expected_entities:
         assert entity in print.call_args_list[-1][0][0]

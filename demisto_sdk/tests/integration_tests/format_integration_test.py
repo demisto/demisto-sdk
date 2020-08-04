@@ -250,7 +250,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
-    assert '=======Starting updates for file: ' in result.stdout
+    assert '======= Updating file: ' in result.stdout
     assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
     with open(playbook_path, 'r') as f:
         content = f.read()
@@ -280,11 +280,10 @@ def test_format_on_valid_py(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=True)
-    assert '=======Starting updates for file:' in result.stdout
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert valid_py == integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout
 
 
 def test_format_on_invalid_py_empty_lines(mocker, repo):
@@ -307,11 +306,10 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
-    assert '=======Starting updates for file:' in result.stdout
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout
 
 
 def test_format_on_invalid_py_dict(mocker, repo):
@@ -334,11 +332,10 @@ def test_format_on_invalid_py_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
-    assert '=======Starting updates for file:' in result.stdout
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout
 
 
 def test_format_on_invalid_py_long_dict(mocker, repo):
@@ -362,8 +359,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
-    assert '=======Starting updates for file:' in result.stdout
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout

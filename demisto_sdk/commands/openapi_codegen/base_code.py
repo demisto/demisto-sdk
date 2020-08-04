@@ -10,7 +10,7 @@ base_credentials = """
     password = params['credentials']['password']
 """
 base_basic_auth = """(username, password)"""
-base_token = """headers['Authorization'] = [f'Bearer {params["api_key"]}']"""
+base_token = """headers['Authorization'] = f'Bearer {params["api_key"]}'"""
 base_function = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
 

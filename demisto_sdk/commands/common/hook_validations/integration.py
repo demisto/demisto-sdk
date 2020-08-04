@@ -79,6 +79,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_feed(),
+            self.is_valid_fetch_in_feed(),
             self.is_valid_fetch(),
             self.is_valid_display_name(),
             self.is_valid_hidden_params(),
@@ -694,6 +695,13 @@ class IntegrationValidator(ContentEntityValidator):
                     params_exist = False
 
         return params_exist
+
+    def is_valid_fetch_in_feed(self):
+        fetch = True
+        if self.current_file.get("script", {}).get("feed"):
+            if self.current_file.get('script', {}).get('isfetch') is False:
+                fetch = False
+        return fetch
 
     def is_valid_display_name(self):
         # type: () -> bool

@@ -125,7 +125,7 @@ class SecretsValidator(object):
 
             changed_files_string = run_command(f"git diff --name-status {self.prev_ver}...{branch_name}")
         else:
-            print(f"Running secrets validation on all changes")
+            print("Running secrets validation on all changes")
             changed_files_string = run_command("git diff --name-status --no-merges HEAD")
         return list(self.get_diff_text_files(changed_files_string))
 

@@ -357,7 +357,7 @@ def test_set_feed_params_in_config(source, target, path, answer):
         yaml_content = yaml.load(content)
         params = yaml_content['configuration']
         for counter, param in enumerate(params):
-            if 'defaultvalue' in param:
+            if 'defaultvalue' in param and param['name'] != 'feed':
                 params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             assert param in params

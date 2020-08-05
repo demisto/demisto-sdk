@@ -2,6 +2,7 @@
 * Added new *githubUser* field in pack metadata init command.
 * Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
 * Fixed an issue were **find-dependencies** ignored *toversion* field in content items.
+* Fixed readme validation issue in community support packs.
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

@@ -18,8 +18,7 @@ from glob import glob
 from typing import Optional
 
 import click
-import demisto_sdk.commands.common.constants as constants
-from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common import constants, tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,

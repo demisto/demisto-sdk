@@ -1,4 +1,3 @@
-import copy
 import json
 import logging
 import os
@@ -22,13 +21,6 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
-ID_SET = [
-    {'Access': {'typeID': 'Access', 'kind': 'edit', 'path': 'Layouts/layout-edit-Access.json'}},
-    {'Access': {'typeID': 'Access', 'fromversion': '4.1.0', 'kind': 'details', 'path': 'layout-Access.json'}},
-    {'urlRep': {'typeID': 'urlRep', 'kind': 'Details', 'path': 'Layouts/layout-Details-url.json'}},
-    {'urlRep': {'typeID': 'urlRep', 'fromversion': '5.0.0', 'kind': 'Details',
-                'path': 'layout-Details-url_5.4.9.json'}}
-]
 
 
 class TestIDSetCreator:
@@ -152,11 +144,6 @@ class TestDuplicates:
     ]
 
     @staticmethod
-    @pytest.mark.parametrize('id_set, id_to_check, result', MOCKED_DATA)
-    def test_had_duplicates(id_set, id_to_check, result):
-        assert result == has_duplicate(id_set, id_to_check)
-
-    @staticmethod
     def test_has_duplicate():
         """
         Given
@@ -170,7 +157,9 @@ class TestDuplicates:
         Then
             - Ensure duplicates found
         """
-        id_set = copy.deepcopy(ID_SET)
+        id_set = {
+            'Layouts': []
+        }
         id_set['Layouts'].append({
             'urlRep': {
                 'typeID': 'urlRep',
@@ -188,7 +177,7 @@ class TestDuplicates:
             }
         })
 
-        has_duplicates = has_duplicate(ID_SET, ['urlRep'], 'Layouts', False)
+        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
         assert has_duplicates is True
 
     @staticmethod
@@ -203,7 +192,9 @@ class TestDuplicates:
         Then
             - Ensure duplicates not found
         """
-        id_set = copy.deepcopy(ID_SET)
+        id_set = {
+            'Layouts': []
+        }
         id_set['Layouts'].append({
             'urlRep': {
                 'typeID': 'urlRep',
@@ -220,7 +211,7 @@ class TestDuplicates:
             }
         })
 
-        has_duplicates = has_duplicate(ID_SET, ['urlRep'], 'Layouts', False)
+        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
         assert has_duplicates is False
 
 

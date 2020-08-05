@@ -120,7 +120,7 @@ class SecretsValidator(object):
         """
         if is_circle:
             print(f"Running secrets validation against {self.prev_ver}")
-            changed_files_string = run_command(f"git diff --name-status {self.prev_ver}...{branch_name}")
+            changed_files_string = run_command(f"git diff --name-status origin/{self.prev_ver}...{branch_name}")
         else:
             print(f"Running secrets validation on all changes")
             changed_files_string = run_command("git diff --name-status --no-merges HEAD")

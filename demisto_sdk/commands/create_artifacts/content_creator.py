@@ -165,7 +165,7 @@ class ContentCreator:
 
     def add_suffix_to_file_path(self, file_path):
         # do not add suffix to release notes
-        if 'ReleaseNotes' not in file_path:
+        if 'ReleaseNotes' not in file_path and 'reputations.json' not in file_path:
             return os.path.splitext(file_path)[0] + self.file_name_suffix + os.path.splitext(file_path)[1]
 
         else:
@@ -439,7 +439,7 @@ class ContentCreator:
                     continue
 
                 if dir_name == RELEASE_NOTES_DIR:
-                    new_path = path
+                    new_path = os.path.basename(path)
                     if os.path.isfile(os.path.join(bundle, new_path)):
                         raise NameError(
                             f'Failed while trying to create {os.path.join(bundle, new_path)}. File already exists.'

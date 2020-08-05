@@ -252,7 +252,6 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
         yield
     except Exception as e:
         logger.error(str(e))
-        pass
     finally:
         # If we want to change handling of files after finishing - do it here
         pass

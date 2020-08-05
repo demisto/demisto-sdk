@@ -378,7 +378,7 @@ class ValidateManager:
         if not self.no_configuration_prints:
             click.echo(f"Validating against {self.prev_ver}")
 
-        modified_files, added_files, old_format_files, changed_meta_files = \
+        modified_files, added_files, old_format_files, changed_meta_files, _ = \
             self.get_modified_and_added_files(self.compare_type, self.prev_ver)
 
         validation_results = set()
@@ -806,7 +806,8 @@ class ValidateManager:
             added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        return modified_files, added_files, old_format_files, changed_meta_files
+        packs = self.get_packs(modified_files)
+        return modified_files, added_files, old_format_files, changed_meta_files, packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
         """Get lists of the modified files in your branch according to the files string.
@@ -1023,3 +1024,15 @@ class ValidateManager:
         })
 
         return changed_meta_packs.union(modified_packs_that_should_have_version_raised)
+
+    @staticmethod
+    def get_packs(changed_files):
+        packs = set()
+        for changed_file in changed_files:
+            if isinstance(changed_file, tuple):
+                changed_file = changed_file[1]
+            pack = get_pack_name(changed_file)
+            if pack:
+                packs.add(pack)
+
+        return packs

@@ -220,7 +220,7 @@ class Extractor:
                 code_file.write("import demistomock as demisto\n")
             if common_server:
                 if lang_type == TYPE_PYTHON:
-                    code_file.write("from CommonServerPython import *\n")
+                    code_file.write("from CommonServerPython import *  # noqa: F401\n")
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
             code_file.write(script)

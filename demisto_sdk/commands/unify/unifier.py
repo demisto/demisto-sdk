@@ -353,12 +353,13 @@ class Unifier:
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):
-        script_code = script_code.replace("import demistomock as demisto", "")
-        script_code = script_code.replace("from CommonServerPython import *", "")
-        script_code = script_code.replace("from CommonServerUserPython import *", "")
+        # we use '[ \t]' and not \s as we don't want to match newline
+        script_code = re.sub(r'import demistomock as demisto[ \t]*(#.*)?', "", script_code)
+        script_code = re.sub(r'from CommonServerPython import \*[ \t]*(#.*)?', "", script_code)
+        script_code = re.sub(r'from CommonServerUserPython import \*[ \t]*(#.*)?', "", script_code)
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
-            script_code = script_code.replace("from __future__ import print_function", "")
+            script_code = re.sub(r'from __future__ import print_function[ \t]*(#.*)?', "", script_code)
         return script_code
 
     @staticmethod

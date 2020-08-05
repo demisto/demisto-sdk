@@ -342,3 +342,10 @@ accessdata-get-processing-case-id
 ##### Human Readable Output
 
 2
+
+##### Invalid images paths check
+<img width="500" src="https://github.com/demisto/content/blob/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png" />
+![Playbook Image](https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png)
+
+##### Valid image path
+<img width="500" src="https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png" />

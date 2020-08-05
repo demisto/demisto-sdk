@@ -137,6 +137,7 @@ ERROR_CODE = {
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": 'PA116',
     "readme_error": "RM100",
+    "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
@@ -857,6 +858,11 @@ class Errors:
     @error_code_decorator
     def readme_error(stderr):
         return f'Failed verifying README.md Error Message is: {stderr}'
+
+    @staticmethod
+    @error_code_decorator
+    def image_path_error():
+        return 'Invalid image path.'
 
     @staticmethod
     @error_code_decorator

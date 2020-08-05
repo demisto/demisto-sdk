@@ -40,6 +40,7 @@ class ReadMeValidator(BaseValidator):
             return (self.is_image_path_valid() and
                     self.is_mdx_file())
         else:
+            print_warning(f"Skipping README validation of {self.file_path}")
             return True
 
     def is_mdx_file(self) -> bool:

@@ -6,7 +6,8 @@ from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
                                                print_warning)
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
-from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat
+from demisto_sdk.commands.format.update_classifier import (
+    ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
@@ -17,24 +18,43 @@ from demisto_sdk.commands.format.update_indicatorfields import \
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_layout import LayoutJSONFormat
-from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
+from demisto_sdk.commands.format.update_layout import (
+    LayoutJSONFormat, LayoutsContainerJSONFormat)
+from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
+                                                         TestPlaybookYMLFormat)
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
+from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
     'script': ScriptYMLFormat,
     'playbook': PlaybookYMLFormat,
+    'testplaybook': TestPlaybookYMLFormat,
     'incidentfield': IncidentFieldJSONFormat,
     'incidenttype': IncidentTypesJSONFormat,
     'indicatorfield': IndicatorFieldJSONFormat,
     'reputation': IndicatorTypeJSONFormat,
     'layout': LayoutJSONFormat,
+    'layoutscontainer': LayoutsContainerJSONFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
+    'classifier_5_9_9': OldClassifierJSONFormat,
+    'mapper': MapperJSONFormat,
+    'widget': WidgetJSONFormat,
     'pythonfile': PythonFileFormat,
+    'report': ReportJSONFormat,
 }
+UNFORMATTED_FILES = ['canvas-context-connections',
+                     'readme',
+                     'releasenotes',
+                     'description',
+                     'changelog',
+                     'image',
+                     'javascriptfile',
+                     'powershellfile']
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
@@ -66,7 +86,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path)
-            if file_type:
+            if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
                 info_res, err_res, skip_res = run_format_on_file(input=file_path, file_type=file_type,
                                                                  from_version=from_version, output=output,

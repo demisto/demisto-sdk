@@ -21,15 +21,16 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
-TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files")
-AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure")
-AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureab")
-VALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureValid")
-VALID_PLAYBOOK_FILE_PATH = 'demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml'
-INVALID_PLAYBOOK_FILE_PATH = 'demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/' \
-                             'Cortex_XDR_Incident_Handling_invalid.yml'
-VALID_SCRIPT_PATH = 'demisto_sdk/tests/test_files/Packs/' \
-                    'CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'
+TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests', 'test_files')
+AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAzure')
+AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAzureab')
+VALID_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAzureValid')
+VALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks', 'Cortex_XDR_Incident_Handling.yml')
+INVALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
+                                  'Cortex_XDR_Incident_Handling_invalid.yml')
+VALID_SCRIPT_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Scripts', 'EntryWidgetNumberHostsXDR',
+                         'EntryWidgetNumberHostsXDR.yml')
+
 CONF_JSON_MOCK = {
     "tests": [
         {
@@ -1407,7 +1408,7 @@ class TestValidationUsingGit:
         added_files = {dashboard.get_path_from_pack(), script.yml_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set()))
+                                                                                           set(), set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -1459,7 +1460,7 @@ class TestValidationUsingGit:
         added_files = {dashboard.get_path_from_pack(), script.yml_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set()))
+                                                                                           set(), set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

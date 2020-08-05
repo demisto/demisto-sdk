@@ -161,6 +161,11 @@ configuration:
   name: polling_timeout
   required: false
   type: 0
+- additionalinfo: Supports CSV values.
+  display: Tags
+  name: feedTags
+  required: false
+  type: 0
 description: Azure.CloudIPs Feed Integration.
 display: Azure Feed
 name: AzureFeed

@@ -1,11 +1,12 @@
 import os
+import re
 from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
-                                               run_command_os)
+from demisto_sdk.commands.common.tools import (get_content_path, print_error,
+                                               print_warning, run_command_os)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -36,7 +37,8 @@ class ReadMeValidator(BaseValidator):
             bool: True if env configured else Fale.
         """
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
-            return self.is_mdx_file()
+            return (self.is_image_path_valid() and
+                    self.is_mdx_file())
         else:
             return True
 
@@ -48,7 +50,8 @@ class ReadMeValidator(BaseValidator):
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             # run the java script mdx parse validator
-            _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path, env=os.environ)
+            _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path,
+                                                 env=os.environ)
             if is_valid:
                 error_message, error_code = Errors.readme_error(stderr)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -93,3 +96,22 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return txt.startswith('<p>') or ('<thead>' in txt and '<tbody>' in txt)
+
+    def is_image_path_valid(self) -> bool:
+        with open(self.file_path) as f:
+            readme_content = f.read()
+            invalid_paths = re.findall(
+                r'(\!\[.*?\]|src\=)((\(|\")https://github.com/demisto/content/(?!raw).*?(\)|\"))', readme_content,
+                re.IGNORECASE)
+            if invalid_paths:
+                for path in invalid_paths:
+                    # Grabbing only url and removing " " or ( ) url wrapper
+                    path = path[1][1:-1]
+                    alternative_path = path.replace('blob', 'raw')
+                    print_error(f'============ Detected following image url: ============\n{path} \n'
+                                f'Which is not the raw link. You probably want to use the following raw image url:\n'
+                                f'{alternative_path}\n')
+                error_message, error_code = Errors.image_path_error()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+            return True

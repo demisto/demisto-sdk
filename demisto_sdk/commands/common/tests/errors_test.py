@@ -127,3 +127,14 @@ class TestErrors(unittest.TestCase):
         param_display = "ParamDisplay"
         result = Errors.wrong_display_name(param_name, param_display)
         assert result == expected_result
+
+    def test_image_path_error(self):
+        """
+        Given: None
+        When: Returning an error message
+        Then: Return error message with the input value as a tuple containing error and error code.
+        """
+        error_statement = "Invalid image path."
+        expected_result = (error_statement, "RM101")
+        result = Errors.image_path_error()
+        assert result == expected_result

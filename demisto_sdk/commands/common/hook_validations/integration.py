@@ -132,7 +132,7 @@ class IntegrationValidator(ContentEntityValidator):
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                if configuration_param.get('defaultvalue', '') not in ('false', ''):
+                if configuration_param.get('defaultvalue', '') not in ('false', '') and configuration_param.get('name') != 'feed':
                     error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
                     formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                           should_print=False)

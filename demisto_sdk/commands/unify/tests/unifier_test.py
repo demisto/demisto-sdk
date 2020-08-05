@@ -81,14 +81,14 @@ TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
 def test_clean_python_code():
     unifier = Unifier("test_files/VulnDB")
-    script_code = "import demistomock as demistofrom CommonServerPython import *" \
-                  "from CommonServerUserPython import *from __future__ import print_function"
+    script_code = "import demistomock as demisto\nfrom CommonServerPython import *  # test comment being removed\n" \
+                  "from CommonServerUserPython import *\nfrom __future__ import print_function"
     # Test remove_print_future is False
     script_code = unifier.clean_python_code(script_code, remove_print_future=False)
-    assert script_code == "from __future__ import print_function"
+    assert script_code == "\n\n\nfrom __future__ import print_function"
     # Test remove_print_future is True
     script_code = unifier.clean_python_code(script_code)
-    assert script_code == ""
+    assert script_code.strip() == ""
 
 
 def test_get_code_file():

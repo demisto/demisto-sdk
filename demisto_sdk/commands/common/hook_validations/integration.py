@@ -85,6 +85,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
+            self.is_valid_deprecated_integration()
         ]
 
         if not skip_test_conf:
@@ -723,6 +724,19 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     ans = False
 
+        return ans
+
+    def is_valid_deprecated_integration(self) -> bool:
+        print('hi')
+        ans = True
+        deprecated = self.current_file.get('deprecated')
+        display_name = self.current_file.get('display')
+        description = self.current_file.get('description')
+        if deprecated == 'true':
+            if not display_name.startwith('Deprecated -') or not description.startwith('Deprecated -'):
+                error_message, error_code = Errors.invalid_deprecated_integration()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    ans = False
         return ans
 
     def is_valid_image(self) -> bool:

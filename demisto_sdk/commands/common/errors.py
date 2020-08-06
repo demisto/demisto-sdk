@@ -1043,3 +1043,7 @@ class Errors:
     @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
+
+    @staticmethod
+    def invalid_deprecated_integration():
+        return "The display_name (display) and description of your integration should start with 'Deprecates -'"

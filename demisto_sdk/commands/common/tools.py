@@ -1279,7 +1279,7 @@ def camel_to_snake(camel: str) -> str:
         camel: The camel case string.
 
     Returns:
-        snake: The snake case string.
+        str: The snake case string.
     """
     camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
     snake = camel_to_snake_pattern.sub('_', camel).lower()

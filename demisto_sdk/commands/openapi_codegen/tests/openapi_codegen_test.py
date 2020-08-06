@@ -69,7 +69,7 @@ class TestOpenAPICodeGen:
 
         assert json.dumps(integration.configuration) == json.dumps(config)
 
-    def test_yaml_file(self):
+    def test_yaml_file(self, mocker):
         """
         Scenario: Generating an integration from a swagger file
 
@@ -82,6 +82,9 @@ class TestOpenAPICodeGen:
            - Ensure the yaml file is generated correctly
        """
         import yaml
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+
+        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
         integration = self.init_integration()
 
         with open(os.path.join(self.test_files_path, 'swagger_yaml.yml'), 'rb') as yaml_file:

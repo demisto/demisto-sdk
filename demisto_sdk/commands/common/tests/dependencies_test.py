@@ -330,7 +330,7 @@ def test_dependencies(repo, test_number):
     dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
 
     with ChangeCWD(repo.path):
-        PackDependencies.find_dependencies(f'pack_{pack_to_verify}')
+        PackDependencies.find_dependencies(f'pack_{pack_to_verify}', silent_mode=True)
 
     dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get(
         'dependencies').keys()
@@ -364,7 +364,7 @@ def test_specific_entity(repo, entity_class):
     dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool) - 1)
 
     with ChangeCWD(repo.path):
-        PackDependencies.find_dependencies('pack_0')
+        PackDependencies.find_dependencies('pack_0', silent_mode=True)
 
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
 

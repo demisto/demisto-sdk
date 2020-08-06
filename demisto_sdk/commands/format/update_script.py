@@ -2,6 +2,7 @@ from typing import Tuple
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -23,6 +24,7 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
+            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
             super().update_yml()
             self.update_tests()
             self.save_yml_to_destination_file()

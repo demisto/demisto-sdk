@@ -15,6 +15,7 @@ VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integrat
 INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK = 'demisto_sdk/tests/test_files/integration-test-with-no-test-playbook.yml'
 VALID_INTEGRATION_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-id-test.yml"
 INVALID_INTEGRATION_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-id-test.yml"
+VALID_BETA_INTEGRATION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test-beta.yml"
 INVALID_PLAYBOOK_PATH_FROM_ROOT = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-disconnected_from_root.yml"
 VALID_PLAYBOOK_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-valid-id-test.yml"
 INVALID_PLAYBOOK_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-invalid-id-test.yml"
@@ -114,10 +115,39 @@ INDICATORTYPE_PATH = "Packs/Base/Misc"
 SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
 DESTINATION_FORMAT_LAYOUT_COPY = "Layouts/layout-copy.json"
 LAYOUT_PATH = "Layouts"
+LAYOUT_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layout.yml"
+
+SOURCE_FORMAT_LAYOUTS_CONTAINER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-for-class-test.json"
+SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-test.json"
+DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY = "Layouts/formatted_layoutscontainer-test.json"
+LAYOUTS_CONTAINER_PATH = "Layouts"
+LAYOUTS_CONTAINER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layoutscontainer.yml"
+
+SOURCE_FORMAT_CLASSIFIER_5_9_9 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_classifier_5_9_9.json"
+DESTINATION_FORMAT_CLASSIFIER_5_9_9 = "Classifiers/formatted_classifier_5_9_9.json"
+CLASSIFIER_5_9_9_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/classifier_5_9_9.yml"
+
+SOURCE_FORMAT_CLASSIFIER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_new_classifier.json"
+DESTINATION_FORMAT_CLASSIFIER = "Classifiers/formatted_classifier.json"
+CLASSIFIER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/classifier.yml"
+CLASSIFIER_PATH = "Classifiers"
+
+SOURCE_FORMAT_MAPPER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_mapper.json"
+DESTINATION_FORMAT_MAPPER = "Classifiers/formatted_mapper.json"
+MAPPER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/mapper.yml"
+MAPPER_PATH = "Classifiers"
 
 SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_dashboard-copy.json"
 DESTINATION_FORMAT_DASHBOARD_COPY = "Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = "Dashboards"
+
+SOURCE_FORMAT_WIDGET = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_widget.json"
+DESTINATION_FORMAT_WIDGET = "Widgets/formatted-widget.json"
+WIDGET_PATH = "Widgets"
+
+SOURCE_FORMAT_REPORT = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_report.json"
+DESTINATION_FORMAT_REPORT = "Reports/formatted-Reports.json"
+REPORT_PATH = "Reports"
 
 SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook.yml"
 DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"

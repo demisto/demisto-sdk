@@ -270,10 +270,11 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack README.md validation
     def validate_readme_file(self):
         """Validate everything related to README.md file"""
-        if self._is_pack_file_exists(self.readme_file):
-            return True
+        if not os.path.isfile(self._get_pack_file_path(self.readme_file)):
+            if self._add_error(Errors.pack_readme_file_missing(self.readme_file), self.readme_file):
+                return False
 
-        return False
+        return True
 
     def validate_pack_unique_files(self):
         """Main Execution Method"""

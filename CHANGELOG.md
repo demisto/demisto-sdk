@@ -1,4 +1,18 @@
 # Changelog
+* Fixed a regression where **upload** command failed on test playbooks.
+* Added new *githubUser* field in pack metadata init command.
+* Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
+* Fixed an issue were **find-dependencies** ignored *toversion* field in content items.
+* Added support for *layoutscontainer*, *classifier_5_9_9*, *mapper*, *report*, and *widget* in the **Format** command.
+* Fixed an issue where **Format** will set the `ID` field to be equal to the `name` field in modified playbooks.
+* Fixed an issue where **Format** did not work for test playbooks.
+* Improved **update-release-notes** command:
+    * Write content description to release notes for new items.
+    * Update format for file types without description: Connections, Incident Types, Indicator Types, Layouts, Incident Fields.
+* Added a validation for feedTags param in feeds in **validate** command.
+* Fixed readme validation issue in community support packs.
+
+# 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 * Playbook branch marked with *skipunavailable* is now set as an optional dependency in the **find-dependencies** command.
 * The **feedReputation** parameter can now be hidden in a feed integration.
@@ -6,7 +20,6 @@
 * Added the *--no-update* flag to the **find-dependencies** command.
 * Added the following validations in **validate** command:
    * Validating that a pack does not depend on NonSupported / Deprecated packs.
-* Added new *githubUser* field in pack metadata init command.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

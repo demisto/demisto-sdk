@@ -1273,6 +1273,14 @@ def get_content_release_identifier(branch_name: str) -> Optional[str]:
 
 
 def camel_to_snake(camel: str) -> str:
+    """
+    Converts camel case (CamelCase) strings to snake case (snake_case) strings.
+    Args:
+        camel: The camel case string.
+
+    Returns:
+        snake: The snake case string.
+    """
     camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
     snake = camel_to_snake_pattern.sub('_', camel).lower()
     return snake

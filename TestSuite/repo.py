@@ -124,6 +124,7 @@ class Repo:
         dashboard = pack.create_dashboard(f'{name}_dashboard')
         dashboard.write_json({'id': f'{name} - dashboard'})
         dashboard.update({'name': f'{name} - dashboard'})
+        dashboard.update({'layout': ''})
 
         report = pack.create_report(f'{name}_report')
         report.write_json({'id': f'{name} - report'})

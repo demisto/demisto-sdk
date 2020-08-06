@@ -1276,7 +1276,7 @@ def camel_to_snake(camel: str) -> str:
     """
     Converts camel case (CamelCase) strings to snake case (snake_case) strings.
     Args:
-        camel: The camel case string.
+        camel (str): The camel case string.
 
     Returns:
         str: The snake case string.

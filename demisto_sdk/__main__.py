@@ -7,7 +7,7 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
-import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import FileType
@@ -42,7 +42,6 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -136,8 +135,8 @@ def main(config, version):
 )
 @pass_config
 def extract(config, **kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -177,8 +176,8 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
     extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
@@ -314,6 +313,11 @@ def validate(config, **kwargs):
     '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
 )
 @click.option(
+    '-s', '--suffix', help='The added suffix to all files in the created artifacts', hidden=True)
+@click.option(
+    '--no-fromversion', is_flag=True, help='Whether to update fromversion on yml and json files or not.'
+)
+@click.option(
     '--packs', is_flag=True,
     help='If passed, will create only content_packs.zip'
 )
@@ -349,18 +353,23 @@ def create(**kwargs):
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
-                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'],
-                               input_path=kwargs.get('input'))
-    return secrets.run()
+    secrets_validator = SecretsValidator(
+        configuration=config.configuration,
+        is_circle=kwargs['post_commit'],
+        ignore_entropy=kwargs['ignore_entropy'],
+        white_list_path=kwargs['whitelist'],
+        input_path=kwargs.get('input')
+    )
+    return secrets_validator.run()
 
 
 # ====================== lint ====================== #
 @main.command(name="lint",
               short_help="Lint command will perform:\n 1. Package in host checks - flake8, bandit, mypy, vulture.\n 2. "
                          "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
-                         "Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what"
-                         "docker image to use and will setup the dev dependencies and file in the target folder. ")
+                         "Meant to be used with integrations/scripts that use the folder (package) structure. "
+                         "Will lookup up what docker image to use and will setup the dev dependencies and "
+                         "file in the target folder. ")
 @click.help_option('-h', '--help')
 @click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
                                                                                                resolve_path=True))
@@ -416,11 +425,13 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
 # ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
-                         "incidenttype/indicatortype/layout/dashboard file. ")
+                         "incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file. ")
 @click.help_option(
     '-h', '--help')
 @click.option(
-    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
+    "-i", "--input", help="The path of the script yml file\n"
+                          "If no input is specified, the format will be executed on all new/changed files.",
+    type=click.Path(exists=True, resolve_path=True))
 @click.option(
     "-o", "--output", help="The path where the formatted file will be saved to",
     type=click.Path(resolve_path=True))
@@ -602,8 +613,8 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    file_type = find_type(kwargs.get('input'))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
     generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
@@ -639,6 +650,21 @@ def generate_test_playbook(**kwargs):
 @click.option(
     '--common_server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
+@click.option(
+    '-c', '--contribution',
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
+    required=False,
+    help="The path to the zip file downloaded via the Marketplace contribution UI. "
+    "This will format the contents of the zip file to a pack format ready for contribution "
+    "in the content repository on your local machine. The command should be executed from the "
+    "content repository's base directory. When this option is passed, the only other options "
+    "that are considered are \"name\" and \"description\" - all others are ignored.")
+@click.option(
+    '-d', '--description',
+    type=click.STRING,
+    default='',
+    help="The description to attach to the converted contribution pack. Used when the \"contribution\" "
+    "option is passed.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
@@ -713,8 +739,8 @@ def generate_doc(**kwargs):
             print_error("The `command` argument must be presented with existing `README.md` docs.")
             return 1
 
-    file_type = find_type(kwargs.get('input', ''))
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.TEST_SCRIPT]:
+    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
@@ -726,7 +752,7 @@ def generate_doc(**kwargs):
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command)
-    elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+    elif file_type == FileType.SCRIPT:
         return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
@@ -780,7 +806,11 @@ def update_pack_releasenotes(**kwargs):
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
-    modified, added, old, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
+
+    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+    validate_manager.setup_git_params()
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -800,7 +830,8 @@ def update_pack_releasenotes(**kwargs):
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1):
-        print_warning('No changes were detected.')
+        print_warning('No changes were detected. If changes were made, please commit the changes '
+                      'and rerun the command')
         sys.exit(0)
     if is_all and not _pack:
         packs = list(_packs - packs_existing_rn)
@@ -837,10 +868,26 @@ def update_pack_releasenotes(**kwargs):
     "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
 @click.option(
     "-i", "--id_set_path", help="Path to id set json file.", required=False)
+@click.option(
+    "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
+    is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
+    hidden=True, required=False)
 def find_dependencies_command(**kwargs):
     pack_name = kwargs.get('pack_folder_name', '')
     id_set_path = kwargs.get('id_set_path')
-    PackDependencies.find_dependencies(pack_name=pack_name, id_set_path=id_set_path)
+    verbose = kwargs.get('verbose')
+    update_pack_metadata = not kwargs.get('no_update')
+
+    try:
+        PackDependencies.find_dependencies(pack_name=pack_name,
+                                           id_set_path=id_set_path,
+                                           debug_file_path=verbose,
+                                           update_pack_metadata=update_pack_metadata,
+                                           )
+    except ValueError as exp:
+        print_error(str(exp))
 
 
 @main.resultcallback()

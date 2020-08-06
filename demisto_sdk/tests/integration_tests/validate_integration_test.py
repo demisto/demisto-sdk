@@ -16,19 +16,21 @@ from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
-    LAYOUT, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
+    LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
+    REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
-TEST_FILES_PATH = join(git_path(), "demisto_sdk/tests/test_files")
-AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzure")
-AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureab")
-VALID_PACK_PATH = join(TEST_FILES_PATH, "content_repo_example/Packs/FeedAzureValid")
-VALID_PLAYBOOK_FILE_PATH = 'demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml'
-INVALID_PLAYBOOK_FILE_PATH = 'demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/' \
-                             'Cortex_XDR_Incident_Handling_invalid.yml'
-VALID_SCRIPT_PATH = 'demisto_sdk/tests/test_files/Packs/' \
-                    'CortexXDR/Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'
+TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests', 'test_files')
+AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAzure')
+AZURE_FEED_INVALID_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAzureab')
+VALID_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAzureValid')
+VALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks', 'Cortex_XDR_Incident_Handling.yml')
+INVALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
+                                  'Cortex_XDR_Incident_Handling_invalid.yml')
+VALID_SCRIPT_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Scripts', 'EntryWidgetNumberHostsXDR',
+                         'EntryWidgetNumberHostsXDR.yml')
+
 CONF_JSON_MOCK = {
     "tests": [
         {
@@ -907,14 +909,107 @@ class TestLayoutValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         layout_copy = LAYOUT.copy()
-        layout_copy['layout']['version'] = 2
-        layout = pack._create_json_based(name='layout', prefix='', content=LAYOUT)
+        layout_copy['version'] = 2
+        layout = pack._create_json_based(name='layout', prefix='', content=layout_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
         assert f'Validating {layout.path} as layout' in result.stdout
         assert 'BA100' in result.stdout
         assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_valid_layoutscontainer(self, mocker, repo):
+        """
+        Given
+        - a valid Layout_Container.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a layout.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout = pack._create_json_based(name='layoutscontainer', prefix='', content=LAYOUTS_CONTAINER)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layoutscontainer' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_layoutscontainer(self, mocker, repo):
+        """
+        Given
+        - an invalid Layout_Container (wrong version).
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on - BA100 wrong version error.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout_copy = LAYOUTS_CONTAINER.copy()
+        layout_copy['version'] = 2
+        layout = pack._create_json_based(name='layoutscontainer', prefix='', content=layout_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layoutscontainer' in result.stdout
+        assert 'BA100' in result.stdout
+        assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_from_version_in_layoutscontaier(self, mocker, repo):
+        """
+        Given
+        - Layout_container with invalid from version
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate found errors.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
+        layoutscontainer_copy['fromVersion'] = '5.0.0'
+
+        layoutscontainer = pack._create_json_based(name='layoutscontainer', prefix='', content=layoutscontainer_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layoutscontainer.path], catch_exceptions=False)
+        assert f"Validating {layoutscontainer.path} as layoutscontainer" in result.stdout
+        assert 'fromVersion field in layoutscontainer needs to be higher or equal to 6.0.0' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_to_version_in_layout(self, mocker, repo):
+        """
+        Given
+        - Layout_container with invalid to version
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate found errors.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout_copy = LAYOUT.copy()
+        layout_copy['toVersion'] = '6.0.0'
+
+        layout = pack._create_json_based(name='layout', prefix='', content=layout_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f"Validating {layout.path} as layout" in result.stdout
+        assert 'toVersion field in layout needs to be lower than 6.0.0' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1313,7 +1408,7 @@ class TestValidationUsingGit:
         added_files = {dashboard.get_path_from_pack(), script.yml_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set()))
+                                                                                           set(), set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -1365,7 +1460,7 @@ class TestValidationUsingGit:
         added_files = {dashboard.get_path_from_pack(), script.yml_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set()))
+                                                                                           set(), set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

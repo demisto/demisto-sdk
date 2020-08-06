@@ -71,7 +71,7 @@ class Unifier:
         self.ryaml.preserve_quotes = True
         self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
         if self.yml_path:
-            with open(self.yml_path, 'r') as yml_file:
+            with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
                 self.yml_data = self.ryaml.load(yml_file)
         else:
             self.yml_data = {}
@@ -143,12 +143,16 @@ class Unifier:
 
         return output_map
 
-    def merge_script_package_to_yml(self):
+    def merge_script_package_to_yml(self, file_name_suffix=None):
         """Merge the various components to create an output yml file
         """
         print("Merging package: {}".format(self.package_path))
         package_dir_name = os.path.basename(self.package_path)
         output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+
+        if file_name_suffix:
+            # append suffix to output file name
+            output_filename = file_name_suffix.join(os.path.splitext(output_filename))
 
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
@@ -231,9 +235,9 @@ class Unifier:
                         r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')
         if self.package_path.endswith('/'):
             self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
-        if self.package_path.endswith('Scripts/CommonServerPython'):
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPython')):
             return os.path.join(self.package_path, 'CommonServerPython.py')
-        if self.package_path.endswith('Scripts/CommonServerPowerShell'):
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPowerShell')):
             return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
@@ -256,8 +260,11 @@ class Unifier:
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)
-        if script_type == '.ps1':
+        elif script_type == '.ps1':
             clean_code = self.clean_pwsh_code(script_code)
+        else:
+            # for JS scripts
+            clean_code = script_code
 
         if self.is_script_package:
             if yml_data.get('script', '') not in ('', '-'):
@@ -288,7 +295,7 @@ class Unifier:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
         unifier = Unifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
-        with open(code_path, 'r') as code_file:
+        with io.open(code_path, 'r', encoding='utf-8') as code_file:
             code = code_file.read()
 
         return yml_path, code
@@ -346,12 +353,13 @@ class Unifier:
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):
-        script_code = script_code.replace("import demistomock as demisto", "")
-        script_code = script_code.replace("from CommonServerPython import *", "")
-        script_code = script_code.replace("from CommonServerUserPython import *", "")
+        # we use '[ \t]' and not \s as we don't want to match newline
+        script_code = re.sub(r'import demistomock as demisto[ \t]*(#.*)?', "", script_code)
+        script_code = re.sub(r'from CommonServerPython import \*[ \t]*(#.*)?', "", script_code)
+        script_code = re.sub(r'from CommonServerUserPython import \*[ \t]*(#.*)?', "", script_code)
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
-            script_code = script_code.replace("from __future__ import print_function", "")
+            script_code = re.sub(r'from __future__ import print_function[ \t]*(#.*)?', "", script_code)
         return script_code
 
     @staticmethod

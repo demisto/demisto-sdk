@@ -19,6 +19,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
     SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
     SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY)
+from mock import patch
 from ruamel.yaml import YAML
 
 ryaml = YAML()
@@ -161,6 +162,7 @@ EQUAL_TEST = [
 
 
 @pytest.mark.parametrize('input, output, path', EQUAL_TEST)
+@patch('builtins.input', lambda *args: '5.0.0')
 def test_eqaul_value_in_file(input, output, path):
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(input, output)
@@ -235,6 +237,7 @@ FORMAT_FILES = [
 
 
 @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
+@patch('builtins.input', lambda *args: '5.0.0')
 def test_format_file(source, target, path, answer):
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
@@ -361,6 +364,23 @@ def test_set_feed_params_in_config(source, target, path, answer):
     os.remove(target)
     os.rmdir(path)
     assert res is answer
+
+
+def test_set_feed_params_in_config_with_default_value():
+    """
+    Given
+    - Integration yml with feed field labeled as true and all necessary params exist including defaultvalue fields.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensures the defaultvalue fields remain after the execution.
+    """
+    base_yml = IntegrationYMLFormat(FEED_INTEGRATION_VALID, path="schema_path")
+    base_yml.set_feed_params_in_config()
+    configuration_params = base_yml.data.get('configuration', [])
+    assert 'defaultvalue' in configuration_params[0]
 
 
 @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])

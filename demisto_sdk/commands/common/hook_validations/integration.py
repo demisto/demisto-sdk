@@ -25,7 +25,7 @@ class IntegrationValidator(ContentEntityValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental'}
+    ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
     def is_valid_version(self):
         # type: () -> bool
@@ -686,6 +686,8 @@ class IntegrationValidator(ContentEntityValidator):
         for counter, param in enumerate(params):
             if 'defaultvalue' in param:
                 params[counter].pop('defaultvalue')
+            if 'hidden' in param:
+                params[counter].pop('hidden')
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
                 error_message, error_code = Errors.parameter_missing_for_feed(param.get('name'), yaml.dump(param))

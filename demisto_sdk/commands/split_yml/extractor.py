@@ -100,7 +100,8 @@ class Extractor:
 
         if self.file_type == 'integration':
             script_obj = yaml_obj['script']
-            del yaml_obj['image']
+            if 'image' in yaml_obj:
+                del yaml_obj['image']
             if 'detaileddescription' in yaml_obj:
                 del yaml_obj['detaileddescription']
         script_obj['script'] = SingleQuotedScalarString('')
@@ -219,7 +220,7 @@ class Extractor:
                 code_file.write("import demistomock as demisto\n")
             if common_server:
                 if lang_type == TYPE_PYTHON:
-                    code_file.write("from CommonServerPython import *\n")
+                    code_file.write("from CommonServerPython import *  # noqa: F401\n")
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
             code_file.write(script)
@@ -237,9 +238,11 @@ class Extractor:
         if self.file_type == 'script':
             return 0  # no image in script type
         self.print_logs("Extracting image to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
-        image_b64 = self.yml_data['image'].split(',')[1]
-        with open(output_path, 'wb') as image_file:
-            image_file.write(base64.decodebytes(image_b64.encode('utf-8')))
+        im_field = self.yml_data.get('image')
+        if im_field and len(im_field.split(',')) >= 2:
+            image_b64 = self.yml_data['image'].split(',')[1]
+            with open(output_path, 'wb') as image_file:
+                image_file.write(base64.decodebytes(image_b64.encode('utf-8')))
         return 0
 
     def extract_long_description(self, output_path) -> int:

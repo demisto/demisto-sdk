@@ -37,8 +37,10 @@ class ReadMeValidator(BaseValidator):
             bool: True if env configured else Fale.
         """
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
-            return (self.is_image_path_valid() and
-                    self.is_mdx_file())
+            return all([
+                self.is_image_path_valid(),
+                self.is_mdx_file()
+            ])
         else:
             print_warning(f"Skipping README validation of {self.file_path}")
             return True
@@ -101,18 +103,18 @@ class ReadMeValidator(BaseValidator):
     def is_image_path_valid(self) -> bool:
         with open(self.file_path) as f:
             readme_content = f.read()
-            invalid_paths = re.findall(
-                r'(\!\[.*?\]|src\=)((\(|\")https://github.com/demisto/content/(?!raw).*?(\)|\"))', readme_content,
-                re.IGNORECASE)
-            if invalid_paths:
-                for path in invalid_paths:
-                    # Grabbing only url and removing " " or ( ) url wrapper
-                    path = path[1][1:-1]
-                    alternative_path = path.replace('blob', 'raw')
-                    print_error(f'============ Detected following image url: ============\n{path} \n'
-                                f'Which is not the raw link. You probably want to use the following raw image url:\n'
-                                f'{alternative_path}\n')
-                error_message, error_code = Errors.image_path_error()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return False
-            return True
+        invalid_paths = re.findall(
+            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', readme_content,
+            re.IGNORECASE)
+        if invalid_paths:
+            for path in invalid_paths:
+                # Grabbing only url and removing " " or ( ) url wrapper
+                path = path[2]
+                alternative_path = path.replace('blob', 'raw')
+                print_error(f'============ Detected following image url: ============\n{path} \n'
+                            f'Which is not the raw link. You probably want to use the following raw image url:\n'
+                            f'{alternative_path}\n')
+            error_message, error_code = Errors.image_path_error()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True

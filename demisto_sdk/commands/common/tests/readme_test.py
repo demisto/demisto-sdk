@@ -47,6 +47,7 @@ def test_is_image_path_valid():
         "https://github.com/demisto/content/raw/123/Packs/FeedOffice365/doc_files/test.png"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.is_image_path_valid()
+    sys.stdout = sys.__stdout__   # reset stdout.
     assert not result
     assert images_paths[0] and alternative_images_paths[0] in captured_output.getvalue()
     assert images_paths[1] and alternative_images_paths[1] in captured_output.getvalue()

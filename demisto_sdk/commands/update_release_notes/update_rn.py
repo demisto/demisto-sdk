@@ -145,12 +145,13 @@ class UpdateRN:
     def identify_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
-        if 'ReleaseNotes' in file_path:
+        if 'ReleaseNotes' in file_path or 'TestPlaybooks' in file_path:
             return file_name, _file_type
+
         if self.pack in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
-            if 'Playbooks' in file_path and ('TestPlaybooks' not in file_path):
+            if 'Playbooks' in file_path:
                 _file_type = 'Playbook'
             elif 'Integration' in file_path:
                 _file_type = 'Integration'

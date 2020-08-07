@@ -1273,7 +1273,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
             else:
                 united_id_set.add_to_list(object_type, obj)
 
-    if len(duplicates) > 0:
+    if duplicates:
         return None, duplicates
 
     return united_id_set, []

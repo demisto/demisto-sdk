@@ -19,7 +19,7 @@ EXPECTED_ARTIFACT_PRIVATE_CONTENT = UNIT_TEST_DATA / 'create_content_artifacts_t
 
 
 def same_folders(dcmp):
-    if dcmp.diff_files:
+    if dcmp.diff_files or dcmp.left_only or dcmp.right_only:
         return False
     for sub_dcmp in dcmp.subdirs.values():
         if not same_folders(sub_dcmp):
@@ -47,7 +47,7 @@ def duplicate_file():
 
 @contextmanager
 def temp_dir():
-    temp = TEST_DATA / '.temp'
+    temp = UNIT_TEST_DATA / 'temp'
     temp.mkdir(parents=True, exist_ok=True)
     yield temp
     rmtree(temp)
@@ -84,8 +84,6 @@ def test_modify_common_server_constants(datadir):
 def test_create_content_artifacts(mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
                                                                                  create_content_artifacts)
-
-    expected_artifacts_path = TEST_CONTENT_REPO
     with temp_dir() as temp:
         config = ArtifactsConfiguration(artifacts_path=temp,
                                         content_version='6.0.0',
@@ -96,7 +94,7 @@ def test_create_content_artifacts(mock_git):
         exit_code = create_content_artifacts(artifact_conf=config)
 
         assert exit_code == 0
-        assert same_folders(dircmp(temp, expected_artifacts_path))
+        assert same_folders(dircmp(temp, EXPECTED_ARTIFACT_CONTENT))
 
 
 def test_create_private_content_artifacts(private_repo):

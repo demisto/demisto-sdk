@@ -294,14 +294,14 @@ def is_in_content_packs(content_object: ContentObject) -> bool:
 
 
 def is_in_content_test(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> bool:
-    return (artifact_conf.only_content_packs and
+    return (not artifact_conf.only_content_packs and
             TEST_PLAYBOOKS_DIR in content_object.path.parts and
             content_object.from_version < FIRST_MARKETPLACE_VERSION and
             IGNORED_TEST_PLAYBOOKS_DIR not in content_object.path.parts)
 
 
 def is_in_content_new(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> bool:
-    return (artifact_conf.only_content_packs and
+    return (not artifact_conf.only_content_packs and
             TEST_PLAYBOOKS_DIR not in content_object.path.parts and
             content_object.from_version < FIRST_MARKETPLACE_VERSION)
 
@@ -324,13 +324,12 @@ def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_objec
     pack_files: List[Path] = []
     rel_pack_path = content_object.path.relative_to(artifact_conf.content.path / PACKS_DIR)
     pack_name = rel_pack_path.parts[0]
-    pack_dir = rel_pack_path.parts[1]
 
     with content_files_handler(artifact_conf, pack_name, content_object) as rm_files:
         # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
         if is_in_content_packs(content_object):
             pack_files.extend(dump_copy_files(artifact_conf, content_object,
-                                              artifact_conf.content_packs_path / pack_name / pack_dir))
+                                              artifact_conf.content_packs_path / rel_pack_path.parent))
             rm_files.extend([created_file for created_file in pack_files if created_file.name.endswith('_45.yml')])
             real_packs = list(set(pack_files).difference(set(rm_files)))
 

@@ -150,9 +150,10 @@ class UpdateRN:
             return file_name, _file_type
 
         if self.pack in file_path and ('README' not in file_path):
-            file_path = file_path.replace(self.pack_path, '')
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
+            file_path = file_path.replace(self.pack_path, '')
+
             if 'Playbooks' in file_path:
                 _file_type = 'Playbook'
             elif 'Integrations' in file_path:

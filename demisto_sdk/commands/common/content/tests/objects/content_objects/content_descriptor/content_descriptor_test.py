@@ -8,4 +8,4 @@ CONTENT_DESCRIPTOR = TEST_CONTENT_REPO / 'content-descriptor.json'
 
 def test_changelog_prefix():
     obj = ContentDescriptor(CONTENT_DESCRIPTOR)
-    assert obj._normalized_file_name() == CONTENT_DESCRIPTOR.name
+    assert obj.normalized_file_name() == CONTENT_DESCRIPTOR.name

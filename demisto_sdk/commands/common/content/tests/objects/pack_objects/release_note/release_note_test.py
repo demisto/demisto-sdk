@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = ReleaseNote(RELEASE_NOTE)
-    assert obj._normalized_file_name() == RELEASE_NOTE.name
+    assert obj.normalized_file_name() == RELEASE_NOTE.name

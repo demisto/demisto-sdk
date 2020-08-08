@@ -70,9 +70,11 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
                                                    DASHBOARDS_DIR, INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, TOOLS_DIR)
+                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, TOOLS_DIR,
+                                                   PACKS_DIR)
 from demisto_sdk.commands.common.logger import logging_setup, Colors
 from demisto_sdk.commands.common.tools import safe_copyfile, zip_and_delete_origin
+from .artifacts_report import FileReport, ArtifactsReport
 
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 
@@ -118,7 +120,7 @@ def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
         # Iterate over all packs in content/Packs
         for pack_name, pack in artifact_conf.content.packs.items():
             if pack_name not in IGNORED_PACKS:
-                futures[pool.submit(dump_pack, artifact_conf, pack_name, pack)] = f'Pack {pack.path}'
+                futures[pool.submit(dump_pack, artifact_conf, pack)] = f'Pack {pack.path}'
         # Iterate over all test-playbooks in content/TestPlaybooks
         if not artifact_conf.only_content_packs:
             for test_playbook in artifact_conf.content.test_playbooks:
@@ -141,7 +143,6 @@ def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
                 futures[pool.submit(zip_and_delete_origin, artifact)] = f'Zip {artifact}'
             # Wait for all future to be finished - catch exception if occurred
             exit_code |= wait_futures_complete(futures)
-        log_results(artifact_conf)
 
     return exit_code
 
@@ -193,15 +194,9 @@ def dump_content_documentations(artifact_conf: ArtifactsConfiguration):
         1. content_descriptor.json created during build run time.
     """
     for documentation in artifact_conf.content.documentations:
-        log_created(artifact_conf.content_packs_path,
-                    documentation.path,
-                    documentation.dump(artifact_conf.content_packs_path / BASE_PACK / DOCUMENTATION_DIR),
-                    artifact_conf.content.path)
+        documentation.dump(artifact_conf.content_packs_path / BASE_PACK / DOCUMENTATION_DIR)
         if not artifact_conf.only_content_packs:
-            log_created(artifact_conf.content_new_path,
-                        documentation.path,
-                        documentation.dump(artifact_conf.content_new_path),
-                        artifact_conf.content.path)
+            documentation.dump(artifact_conf.content_new_path)
 
 
 def dump_content_descriptor(artifact_conf: ArtifactsConfiguration):
@@ -219,13 +214,10 @@ def dump_content_descriptor(artifact_conf: ArtifactsConfiguration):
         descriptor = artifact_conf.content.content_descriptor
         for dest in [artifact_conf.content_test_path,
                      artifact_conf.content_new_path]:
-            log_created(dest,
-                        descriptor.path,
-                        descriptor.dump(dest),
-                        artifact_conf.content.path)
+            descriptor.dump(dest)
 
 
-def dump_pack(artifact_conf: ArtifactsConfiguration, pack_name: str, pack: Pack) -> None:
+def dump_pack(artifact_conf: ArtifactsConfiguration, pack: Pack) -> None:
     """ Iterate on all required pack object and dump them conditionally, The following Pack object are excluded:
             1. Change_log files (Deprecated).
             2. Integration/Script/Playbook readme (Used for website documentation deployment).
@@ -234,57 +226,87 @@ def dump_pack(artifact_conf: ArtifactsConfiguration, pack_name: str, pack: Pack)
 
     Args:
         artifact_conf: Command line configuration.
-        pack_name: Pack directory name.
         pack: Pack object.
     """
     for integration in pack.integrations:
-        dump_pack_conditionally(artifact_conf, integration, pack_name, INTEGRATIONS_DIR)
+        dump_pack_conditionally(artifact_conf, integration)
     for script in pack.scripts:
-        dump_pack_conditionally(artifact_conf, script, pack_name, SCRIPTS_DIR)
+        dump_pack_conditionally(artifact_conf, script)
     for playbook in pack.playbooks:
-        dump_pack_conditionally(artifact_conf, playbook, pack_name, PLAYBOOKS_DIR)
+        dump_pack_conditionally(artifact_conf, playbook)
     for test_playbook in pack.test_playbooks:
-        dump_pack_conditionally(artifact_conf, test_playbook, pack_name, TEST_PLAYBOOKS_DIR)
+        dump_pack_conditionally(artifact_conf, test_playbook)
     for report in pack.reports:
-        dump_pack_conditionally(artifact_conf, report, pack_name, REPORTS_DIR)
+        dump_pack_conditionally(artifact_conf, report)
     for layout in pack.layouts:
-        dump_pack_conditionally(artifact_conf, layout, pack_name, LAYOUTS_DIR)
+        dump_pack_conditionally(artifact_conf, layout)
     for dashboard in pack.dashboards:
-        dump_pack_conditionally(artifact_conf, dashboard, pack_name, DASHBOARDS_DIR)
+        dump_pack_conditionally(artifact_conf, dashboard)
     for incident_field in pack.incident_fields:
-        dump_pack_conditionally(artifact_conf, incident_field, pack_name, INCIDENT_FIELDS_DIR)
+        dump_pack_conditionally(artifact_conf, incident_field)
     for incident_type in pack.incident_types:
-        dump_pack_conditionally(artifact_conf, incident_type, pack_name, INCIDENT_TYPES_DIR)
+        dump_pack_conditionally(artifact_conf, incident_type)
     for indicator_field in pack.indicator_fields:
-        dump_pack_conditionally(artifact_conf, indicator_field, pack_name, INDICATOR_FIELDS_DIR)
+        dump_pack_conditionally(artifact_conf, indicator_field)
     for indicator_type in pack.indicator_types:
-        dump_pack_conditionally(artifact_conf, indicator_type, pack_name, INDICATOR_TYPES_DIR)
+        dump_pack_conditionally(artifact_conf, indicator_type)
     for connection in pack.connections:
-        dump_pack_conditionally(artifact_conf, connection, pack_name, CONNECTIONS_DIR)
+        dump_pack_conditionally(artifact_conf, connection)
     for classifier in pack.classifiers:
-        dump_pack_conditionally(artifact_conf, classifier, pack_name, CLASSIFIERS_DIR)
+        dump_pack_conditionally(artifact_conf, classifier)
     for widget in pack.widgets:
-        dump_pack_conditionally(artifact_conf, widget, pack_name, WIDGETS_DIR)
+        dump_pack_conditionally(artifact_conf, widget)
     for release_note in pack.release_notes:
-        created_files = release_note.dump(artifact_conf.content_packs_path / pack_name / RELEASE_NOTES_DIR)
-        log_created(artifact_conf.content_packs_path, release_note.path, created_files, artifact_conf.content.path)
+        release_note.dump(artifact_conf.content_packs_path / pack.name / RELEASE_NOTES_DIR)
     for tool in pack.tools:
-        packs_files = tool.dump(artifact_conf.content_packs_path / pack_name / TOOLS_DIR)
-        log_created(artifact_conf.content_packs_path, tool.path, packs_files, artifact_conf.content.path)
+        packs_files = tool.dump(artifact_conf.content_packs_path / pack.name / TOOLS_DIR)
         if not artifact_conf.only_content_packs:
-            new_files = [safe_copyfile(file, artifact_conf.content_new_path / file.name, artifact_conf.execution_start)
-                         for file in packs_files]
-            log_created(artifact_conf.content_new_path, tool.path, new_files, artifact_conf.content.path)
+            [safe_copyfile(file, artifact_conf.content_new_path / file.name, artifact_conf.execution_start)
+             for file in packs_files]
     if pack.pack_metadata:
-        created_files = pack.pack_metadata.dump(artifact_conf.content_packs_path / pack_name)
-        log_created(artifact_conf.content_packs_path, pack.pack_metadata.path, created_files, artifact_conf.content.path)
+        pack.pack_metadata.dump(artifact_conf.content_packs_path / pack.name)
     if pack.readme:
-        created_files = pack.readme.dump(artifact_conf.content_packs_path / pack_name)
-        log_created(artifact_conf.content_packs_path, pack.readme.path, created_files, artifact_conf.content.path)
+        pack.readme.dump(artifact_conf.content_packs_path / pack.name)
 
 
-def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
-                            pack_name: str, pack_dir: str) -> None:
+def dump_copy_files(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
+                    target_dir: Path, created_files: Optional[List[Path]] = None) -> List[Path]:
+    new_created_files = []
+    if created_files:
+        for file in created_files:
+            new_created_files.append(safe_copyfile(src=file,
+                                                   dst=target_dir / file.name,
+                                                   execution_start=artifact_conf.execution_start))
+    else:
+        target = target_dir / content_object.normalized_file_name()
+        if target.exists() and target.stat().st_mtime >= artifact_conf.execution_start:
+            raise BaseException(f"Duplicate file in content repo: {content_object.path.name}")
+        else:
+            new_created_files.extend(content_object.dump(dest_dir=target_dir,
+                                                         readme=False,
+                                                         change_log=False))
+
+    return new_created_files
+
+
+def is_in_content_packs(content_object: ContentObject) -> bool:
+    return content_object.to_version >= FIRST_MARKETPLACE_VERSION
+
+
+def is_in_content_test(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> bool:
+    return (artifact_conf.only_content_packs and
+            TEST_PLAYBOOKS_DIR in content_object.path.parts and
+            content_object.from_version < FIRST_MARKETPLACE_VERSION and
+            IGNORED_TEST_PLAYBOOKS_DIR not in content_object.path.parts)
+
+
+def is_in_content_new(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> bool:
+    return (artifact_conf.only_content_packs and
+            TEST_PLAYBOOKS_DIR not in content_object.path.parts and
+            content_object.from_version < FIRST_MARKETPLACE_VERSION)
+
+
+def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> None:
     """ Dump pack object by the following logic:
             1. content_packs:
                 a. If to_version/toVersion value is bigger from SUPPORTED_BOUND_VERSION.
@@ -298,57 +320,26 @@ def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_objec
     Args:
         artifact_conf: Command line configuration.
         content_object: content_object (e.g. Integration/Script/Layout etc)
-        pack_name: Pack directory name (e.g. Sample)
-        pack_dir: interanl pack dir name (Integrations/Scripts etc... (Use constants).
     """
-    content_pack_files: List[Path] = []
-    content_new_files: List[Path] = []
-    rm_files: List[Path] = []
-    with content_files_handler(artifact_conf, pack_name, content_object, rm_files):
-        # Content packs filter
-        if content_object.to_version >= FIRST_MARKETPLACE_VERSION:
-            content_pack_files.extend(
-                content_object.dump(dest_dir=artifact_conf.content_packs_path / pack_name / pack_dir,
-                                    change_log=False,
-                                    readme=False))
-            rm_files.extend(
-                [created_file for created_file in content_pack_files if created_file.name.endswith('_45.yml')])
-            real_pack_files = list(set(content_pack_files).difference(set(rm_files)))
-            log_created(artifact_conf.content_packs_path,
-                        content_object.path,
-                        real_pack_files,
-                        artifact_conf.content.path)
-        else:
-            log_ignored(artifact_conf.content_packs_path,
-                        content_object.path,
-                        artifact_conf.content.path,
-                        f'To version < {FIRST_MARKETPLACE_VERSION}')
+    pack_files: List[Path] = []
+    rel_pack_path = content_object.path.relative_to(artifact_conf.content.path / PACKS_DIR)
+    pack_name = rel_pack_path.parts[0]
+    pack_dir = rel_pack_path.parts[1]
 
-        if not artifact_conf.only_content_packs:
-            if TEST_PLAYBOOKS_DIR == pack_dir:
-                # Content test filter
-                dump_test_conditionally(artifact_conf, content_object, content_pack_files)
-            else:
-                # Content new filter
-                if content_object.from_version < FIRST_MARKETPLACE_VERSION:
-                    if content_pack_files:
-                        for file in content_pack_files:
-                            content_new_files.append(safe_copyfile(src=file,
-                                                                   dst=artifact_conf.content_new_path / file.name,
-                                                                   execution_start=artifact_conf.execution_start))
-                    else:
-                        content_new_files.extend(content_object.dump(dest_dir=artifact_conf.content_new_path,
-                                                                     readme=False,
-                                                                     change_log=False))
-                    log_created(artifact_conf.content_new_path,
-                                content_object.path,
-                                content_new_files,
-                                artifact_conf.content.path)
-                else:
-                    log_ignored(artifact_conf.content_new_path,
-                                content_object.path,
-                                artifact_conf.content.path,
-                                f"From version >= {FIRST_MARKETPLACE_VERSION}")
+    with content_files_handler(artifact_conf, pack_name, content_object) as rm_files:
+        # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
+        if is_in_content_packs(content_object):
+            pack_files.extend(dump_copy_files(artifact_conf, content_object,
+                                              artifact_conf.content_packs_path / pack_name / pack_dir))
+            rm_files.extend([created_file for created_file in pack_files if created_file.name.endswith('_45.yml')])
+            real_packs = list(set(pack_files).difference(set(rm_files)))
+
+        # Content test fileter
+        dump_test_conditionally(artifact_conf, content_object, pack_files)
+
+        # Content new filter
+        if is_in_content_new(artifact_conf, content_object):
+            dump_copy_files(artifact_conf, content_object, artifact_conf.content_new_path, pack_files)
 
 
 def dump_test_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
@@ -361,32 +352,8 @@ def dump_test_conditionally(artifact_conf: ArtifactsConfiguration, content_objec
         artifact_conf: Command line configuration
         content_object: content_object (e.g. Integration/Script/Layout etc)
     """
-    content_test_files: List[Path] = []
-    if IGNORED_TEST_PLAYBOOKS_DIR not in content_object.path.parts:
-        if content_object.from_version < FIRST_MARKETPLACE_VERSION:
-            if created_files:
-                for file in created_files:
-                    content_test_files.append(safe_copyfile(src=file,
-                                                            dst=artifact_conf.content_test_path / file.name,
-                                                            execution_start=artifact_conf.execution_start))
-            else:
-                target = artifact_conf.content_test_path / content_object.path.name
-
-                if target.exists() and target.stat().st_mtime >= artifact_conf.execution_start:
-                    raise BaseException(f"Duplicate file in content repo: {content_object.path.name}")
-                else:
-                    content_test_files = content_object.dump(dest_dir=artifact_conf.content_test_path,
-                                                             readme=False,
-                                                             change_log=False)
-            log_created(artifact_conf.content_test_path,
-                        content_object.path,
-                        content_test_files,
-                        artifact_conf.content.path)
-        else:
-            log_ignored(artifact_conf.content_test_path,
-                        content_object.path,
-                        artifact_conf.content.path,
-                        f"From version >= {FIRST_MARKETPLACE_VERSION}")
+    if is_in_content_test(artifact_conf, content_object):
+        dump_copy_files(artifact_conf, content_object, artifact_conf.content_test_path, created_files)
 
 
 def suffix_handler(artifact_conf: ArtifactsConfiguration):
@@ -418,8 +385,7 @@ def suffix_handler(artifact_conf: ArtifactsConfiguration):
 
 
 @contextmanager
-def content_files_handler(artifact_conf: ArtifactsConfiguration, pack_name: str, content_object: ContentObject,
-                          files_rm: List[Path]):
+def content_files_handler(artifact_conf: ArtifactsConfiguration, pack_name: str, content_object: ContentObject):
     """ Pre-processing pack, perform the following:
             1. Change content/Packs/Base/Scripts/CommonServerPython.py global variables:
                 a. CONTENT_RELEASE_VERSION to given content version flag.
@@ -434,8 +400,8 @@ def content_files_handler(artifact_conf: ArtifactsConfiguration, pack_name: str,
         artifact_conf: Command line configuration.
         content_object: content_object (e.g. Integration/Script/Layout etc)
         pack_name: Pack directory name (e.g. Sample)
-        files_rm: files to be remove in close
     """
+    rm_files = []
 
     if pack_name == BASE_PACK and isinstance(content_object, Script) and \
             content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
@@ -443,7 +409,7 @@ def content_files_handler(artifact_conf: ArtifactsConfiguration, pack_name: str,
         modify_common_server_constants(content_object.code_path,
                                        content_version=artifact_conf.content_version,
                                        branch_name=artifact_conf.content.git().active_branch)
-    yield
+    yield rm_files
 
     if pack_name == BASE_PACK and isinstance(content_object, Script) and \
             content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
@@ -453,7 +419,7 @@ def content_files_handler(artifact_conf: ArtifactsConfiguration, pack_name: str,
                                        branch_name='master')
 
     # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
-    for file_path in files_rm:
+    for file_path in rm_files:
         file_path.unlink()
 
 
@@ -475,26 +441,3 @@ def modify_common_server_constants(code_path: Path, branch_name: str, content_ve
                               f"CONTENT_BRANCH_NAME = '{branch_name}'",
                               file_content_new)
     code_path.write_text(file_content_new)
-
-
-def log_created(target: Path, file_path: Path, new_files: List[Path], content_path: Path):
-    files = ", ".join([str(file.relative_to(target)) for file in new_files])
-    msg = f'{target.name} - {Colors.Fg.green}Add{Colors.reset} - {file_path.relative_to(content_path)}' \
-          f' {Colors.Fg.blue}to{Colors.reset} {files}'
-    logger.info(msg)
-
-
-def log_ignored(target: Path, file_path: Path, content_path: Path, reason: str):
-    msg = f'{target.name} - {Colors.Fg.red}Ignore{Colors.reset} - {file_path.relative_to(content_path)} - ' \
-          f'{Colors.Fg.red}Reason {reason}{Colors.reset}'
-    logger.info(msg)
-
-
-def log_results(artifact_conf: ArtifactsConfiguration):
-    for artifact in [artifact_conf.content_test_path,
-                     artifact_conf.content_new_path,
-                     artifact_conf.content_packs_path]:
-        if artifact_conf.zip_artifacts:
-            logger.info(f"Created - {Colors.Fg.blue}{artifact.with_suffix('.zip')}{Colors.reset}")
-        else:
-            logger.info(f"Created - {Colors.Fg.blue}{artifact}{Colors.reset}")

@@ -15,7 +15,7 @@ class OldIndicatorType(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, OLD_INDICATOR_TYPE)
 
-    def _normalized_file_name(self):
+    def normalized_file_name(self):
         file_normalized_name = self._path.name
         if self._path.suffix:
             file_normalized_name = ".".join(file_normalized_name.split('.')[:-1])

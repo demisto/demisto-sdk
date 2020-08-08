@@ -11,7 +11,7 @@ class TestNotUnifiedIntegration:
 
     def test_prefix(self, datadir):
         obj = Integration(datadir["sample.yml"])
-        assert obj._normalized_file_name() == "integration-sample.yml"
+        assert obj.normalized_file_name() == "integration-sample.yml"
 
     def test_files_detection(self, datadir):
         obj = Integration(datadir["sample.yml"])
@@ -33,7 +33,7 @@ class TestUnifiedIntegration:
 
     def test_prefix(self, datadir):
         obj = Integration(datadir["integration-sample.yml"])
-        assert obj._normalized_file_name() == "integration-sample.yml"
+        assert obj.normalized_file_name() == "integration-sample.yml"
 
     def test_files_detection(self, datadir):
         obj = Integration(datadir["integration-sample.yml"])

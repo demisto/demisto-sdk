@@ -17,7 +17,7 @@ class TestLayout:
 
     def test_prefix(self):
         obj = Layout(LAYOUT)
-        assert obj._normalized_file_name() == LAYOUT.name
+        assert obj.normalized_file_name() == LAYOUT.name
 
 
 class TestLayoutContainer:
@@ -29,4 +29,4 @@ class TestLayoutContainer:
     @pytest.mark.parametrize(argnames="file", argvalues=["layoutscontainer-Zimperium_event.json"])
     def test_prefix(self, datadir, file: str):
         obj = LayoutContainer(datadir[file])
-        assert obj._normalized_file_name() == "layoutscontainer-Zimperium_event.json"
+        assert obj.normalized_file_name() == "layoutscontainer-Zimperium_event.json"

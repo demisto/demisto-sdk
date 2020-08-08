@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = IncidentField(INCIDENT_FIELD)
-    assert obj._normalized_file_name() == INCIDENT_FIELD.name
+    assert obj.normalized_file_name() == INCIDENT_FIELD.name

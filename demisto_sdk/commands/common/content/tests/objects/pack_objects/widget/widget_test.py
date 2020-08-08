@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = Widget(WIDGET)
-    assert obj._normalized_file_name() == WIDGET.name
+    assert obj.normalized_file_name() == WIDGET.name

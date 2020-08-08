@@ -10,7 +10,7 @@ class IndicatorField(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, INDICATOR_FIELD)
 
-    def _normalized_file_name(self, file_name_suffix: str = ""):
+    def normalized_file_name(self, file_name_suffix: str = ""):
         file_normalized_name = self._path.name
         if self._path.suffix:
             file_normalized_name = ".".join(file_normalized_name.split('.')[:-1])

@@ -11,7 +11,7 @@ class TestNotUnifiedScript:
 
     def test_prefix(self, datadir):
         obj = Script(datadir["FindSimilarIncidentsByText.yml"])
-        assert obj._normalized_file_name() == "script-FindSimilarIncidentsByText.yml"
+        assert obj.normalized_file_name() == "script-FindSimilarIncidentsByText.yml"
 
     def test_files_detection(self, datadir):
         obj = Script(datadir["FindSimilarIncidentsByText.yml"])
@@ -34,7 +34,7 @@ class TestUnifiedScript:
 
     def test_prefix(self, datadir):
         obj = Script(datadir["script-FindSimilarIncidentsByText.yml"])
-        assert obj._normalized_file_name() == "script-FindSimilarIncidentsByText.yml"
+        assert obj.normalized_file_name() == "script-FindSimilarIncidentsByText.yml"
 
     def test_files_detection(self, datadir):
         obj = Script(datadir["script-FindSimilarIncidentsByText.yml"])

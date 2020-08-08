@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = ChangeLog(CHNAGELOG)
-    assert obj._normalized_file_name() == CHNAGELOG.name
+    assert obj.normalized_file_name() == CHNAGELOG.name

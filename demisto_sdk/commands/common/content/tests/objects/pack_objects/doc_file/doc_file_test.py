@@ -16,4 +16,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = DocFile(DOC_FILE)
-    assert obj._normalized_file_name() == DOC_FILE.name
+    assert obj.normalized_file_name() == DOC_FILE.name

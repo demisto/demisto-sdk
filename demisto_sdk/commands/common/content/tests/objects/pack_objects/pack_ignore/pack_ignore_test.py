@@ -16,4 +16,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = PackIgnore(PACK_IGNORE)
-    assert obj._normalized_file_name() == PACK_IGNORE.name
+    assert obj.normalized_file_name() == PACK_IGNORE.name

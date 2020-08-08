@@ -9,4 +9,4 @@ INDICATOR_FIELD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / INDICATOR_FIELDS_
 
 def test_prefix():
     obj = IndicatorField(INDICATOR_FIELD)
-    assert obj._normalized_file_name() == f"incidentfield-indicatorfield-sample.json"
+    assert obj.normalized_file_name() == f"incidentfield-indicatorfield-sample.json"

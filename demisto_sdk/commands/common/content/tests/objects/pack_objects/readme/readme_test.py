@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = Readme(README)
-    assert obj._normalized_file_name() == README.name
+    assert obj.normalized_file_name() == README.name

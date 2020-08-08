@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = PackMetaData(PACK_METADATA)
-    assert obj._normalized_file_name() == PACK_METADATA.name
+    assert obj.normalized_file_name() == PACK_METADATA.name

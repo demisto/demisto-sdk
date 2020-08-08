@@ -17,7 +17,7 @@ class TestIndicatorType:
 
     def test_prefix(self):
         obj = IndicatorType(INDICATOR_TYPE)
-        assert obj._normalized_file_name() == INDICATOR_TYPE.name
+        assert obj.normalized_file_name() == INDICATOR_TYPE.name
 
 
 class TestOldIndicatorType:
@@ -29,4 +29,4 @@ class TestOldIndicatorType:
     @pytest.mark.parametrize(argnames="file", argvalues=["reputations.json"])
     def test_prefix(self, datadir, file: str):
         obj = OldIndicatorType(datadir[file])
-        assert obj._normalized_file_name() == "reputations.json"
+        assert obj.normalized_file_name() == "reputations.json"

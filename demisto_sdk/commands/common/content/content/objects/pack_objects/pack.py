@@ -29,6 +29,10 @@ class Pack:
             yield ContentObjectFacotry.from_path(object_path)
 
     @property
+    def name(self) -> str:
+        return self._path.parts[-1]
+
+    @property
     def path(self) -> Path:
         return self._path
 

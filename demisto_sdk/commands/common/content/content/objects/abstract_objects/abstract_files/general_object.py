@@ -18,7 +18,7 @@ class GeneralObject(object):
     def _unserialize(self):
         pass
 
-    def _normalized_file_name(self) -> str:
+    def normalized_file_name(self) -> str:
         file_normalized_name = self._path.name
         if self._path.suffix:
             file_normalized_name = ".".join(file_normalized_name.split('.')[:-1])
@@ -40,6 +40,6 @@ class GeneralObject(object):
         return dest_dir
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
-        dest_file = self._create_target_dump_dir(dest_dir) / self._normalized_file_name()
+        dest_file = self._create_target_dump_dir(dest_dir) / self.normalized_file_name()
 
         return [copyfile(src=self.path, dst=dest_file)]

@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = Report(REPORT)
-    assert obj._normalized_file_name() == REPORT.name
+    assert obj.normalized_file_name() == REPORT.name

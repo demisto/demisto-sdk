@@ -20,7 +20,7 @@ class Tool(GeneralObject, ABC):
         dest_dir = self._create_target_dump_dir(dest_dir)
         if not dest_dir:
             dest_dir = self.path.parent
-        normalize_dir_name = self._normalized_file_name()
+        normalize_dir_name = self.normalized_file_name()
         if zip_file:
             created_files.append(zip_tool(self._path, dest_dir / normalize_dir_name))
         else:

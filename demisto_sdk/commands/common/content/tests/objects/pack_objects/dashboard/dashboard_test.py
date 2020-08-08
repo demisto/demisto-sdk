@@ -16,4 +16,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = Dashboard(DASHBOARD)
-    assert obj._normalized_file_name() == DASHBOARD.name
+    assert obj.normalized_file_name() == DASHBOARD.name

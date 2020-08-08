@@ -18,4 +18,4 @@ def test_objects_factory():
 
 def test_changelog_prefix():
     obj = Connection(CONNECTION)
-    assert obj._normalized_file_name() == CONNECTION.name
+    assert obj.normalized_file_name() == CONNECTION.name

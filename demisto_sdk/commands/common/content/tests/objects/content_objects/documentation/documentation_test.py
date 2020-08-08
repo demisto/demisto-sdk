@@ -9,4 +9,4 @@ DOC = TEST_CONTENT_REPO / DOCUMENTATION_DIR / 'doc-howto.json'
 
 def test_prefix(datadir):
     obj = Documentation(DOC)
-    assert obj._normalized_file_name() == DOC.name
+    assert obj.normalized_file_name() == DOC.name

@@ -15,4 +15,4 @@ def test_objects_factory():
 
 def test_prefix():
     obj = Classifier(CLASSIFIER)
-    assert obj._normalized_file_name() == CLASSIFIER.name
+    assert obj.normalized_file_name() == CLASSIFIER.name

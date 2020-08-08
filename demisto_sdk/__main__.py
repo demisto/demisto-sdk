@@ -1,4 +1,5 @@
 # Site packages
+import json
 import os
 import re
 import sys
@@ -7,7 +8,7 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
-import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import FileType
@@ -34,6 +35,8 @@ from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
     json_to_outputs
 from demisto_sdk.commands.lint.lint_manager import LintManager
+from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
+    OpenAPIIntegration
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -42,7 +45,6 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.validate.file_validator import FilesValidator
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -341,18 +343,23 @@ def create_arifacts(**kwargs) -> int:
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
-    secrets = SecretsValidator(configuration=config.configuration, is_circle=kwargs['post_commit'],
-                               ignore_entropy=kwargs['ignore_entropy'], white_list_path=kwargs['whitelist'],
-                               input_path=kwargs.get('input'))
-    return secrets.run()
+    secrets_validator = SecretsValidator(
+        configuration=config.configuration,
+        is_circle=kwargs['post_commit'],
+        ignore_entropy=kwargs['ignore_entropy'],
+        white_list_path=kwargs['whitelist'],
+        input_path=kwargs.get('input')
+    )
+    return secrets_validator.run()
 
 
 # ====================== lint ====================== #
 @main.command(name="lint",
               short_help="Lint command will perform:\n 1. Package in host checks - flake8, bandit, mypy, vulture.\n 2. "
                          "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
-                         "Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what"
-                         "docker image to use and will setup the dev dependencies and file in the target folder. ")
+                         "Meant to be used with integrations/scripts that use the folder (package) structure. "
+                         "Will lookup up what docker image to use and will setup the dev dependencies and "
+                         "file in the target folder. ")
 @click.help_option('-h', '--help')
 @click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
                                                                                                resolve_path=True))
@@ -408,11 +415,13 @@ def lint(input: str, git: str, all_packs: bool, verbose: int, quiet: bool, paral
 # ====================== format ====================== #
 @main.command(name="format",
               short_help="Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/"
-                         "incidenttype/indicatortype/layout/dashboard file. ")
+                         "incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file. ")
 @click.help_option(
     '-h', '--help')
 @click.option(
-    "-i", "--input", help="The path of the script yml file", type=click.Path(exists=True, resolve_path=True))
+    "-i", "--input", help="The path of the script yml file\n"
+                          "If no input is specified, the format will be executed on all new/changed files.",
+    type=click.Path(exists=True, resolve_path=True))
 @click.option(
     "-o", "--output", help="The path where the formatted file will be saved to",
     type=click.Path(resolve_path=True))
@@ -787,7 +796,11 @@ def update_pack_releasenotes(**kwargs):
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
-    modified, added, old, _packs = FilesValidator(use_git=True, silence_init_prints=True).get_modified_and_added_files()
+
+    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+    validate_manager.setup_git_params()
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -865,6 +878,123 @@ def find_dependencies_command(**kwargs):
                                            )
     except ValueError as exp:
         print_error(str(exp))
+
+
+# ====================== openapi-codegen ====================== #
+@main.command(name="openapi-codegen",
+              short_help='''Generates a Cortex XSOAR integration given an OpenAPI specification file.''',
+              help='''Generates a Cortex XSOAR integration given an OpenAPI specification file.
+               In the first run of the command, an integration configuration file is created, which can be modified.
+               Then, the command is run a second time with the integration configuration to
+               generate the actual integration files.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input_file', help='The swagger file to load in JSON format', required=True)
+@click.option(
+    '-cf', '--config_file', help='The integration configuration file. It is created in the first run of the command',
+    required=False)
+@click.option(
+    '-n', '--base_name', help='The base filename to use for the generated files', required=False)
+@click.option(
+    '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
+    required=False)
+@click.option(
+    '-pr', '--command_prefix', help='Add a prefix to each command in the code', required=False)
+@click.option(
+    '-c', '--context_path', help='Context output path', required=False)
+@click.option(
+    '-u', '--unique_keys', help='Comma separated unique keys to use in context paths (case sensitive)', required=False)
+@click.option(
+    '-r', '--root_objects', help='Comma separated JSON root objects to use in command outputs (case sensitive)',
+    required=False)
+@click.option(
+    '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
+@click.option(
+    '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8')
+@click.option(
+    '-a', '--use_default', is_flag=True, help='Use the automatically generated integration configuration'
+                                              ' (Skip the second run).')
+def openapi_codegen_command(**kwargs):
+    if not kwargs.get('output_dir'):
+        output_dir = os.getcwd()
+    else:
+        output_dir = kwargs['output_dir']
+
+    # Check the directory exists and if not, try to create it
+    if not os.path.exists(output_dir):
+        try:
+            os.mkdir(output_dir)
+        except Exception as err:
+            tools.print_error(f'Error creating directory {output_dir} - {err}')
+            sys.exit(1)
+    if not os.path.isdir(output_dir):
+        tools.print_error(f'The directory provided "{output_dir}" is not a directory')
+        sys.exit(1)
+
+    input_file = kwargs['input_file']
+    base_name = kwargs.get('base_name')
+    if base_name is None:
+        base_name = 'GeneratedIntegration'
+
+    command_prefix = kwargs.get('command_prefix')
+    if command_prefix is None:
+        command_prefix = '-'.join(base_name.split(' ')).lower()
+
+    context_path = kwargs.get('context_path')
+    if context_path is None:
+        context_path = base_name.replace(' ', '')
+
+    unique_keys = kwargs.get('unique_keys', '')
+    if unique_keys is None:
+        unique_keys = ''
+
+    root_objects = kwargs.get('root_objects', '')
+    if root_objects is None:
+        root_objects = ''
+
+    verbose = kwargs.get('verbose', False)
+    fix_code = kwargs.get('fix_code', False)
+
+    configuration = None
+    if kwargs.get('config_file'):
+        try:
+            with open(kwargs['config_file'], 'r') as config_file:
+                configuration = json.load(config_file)
+        except Exception as e:
+            print_error(f'Failed to load configuration file: {e}')
+
+    click.echo('Processing swagger file...')
+    integration = OpenAPIIntegration(input_file, base_name, command_prefix, context_path,
+                                     unique_keys=unique_keys, root_objects=root_objects,
+                                     verbose=verbose, fix_code=fix_code, configuration=configuration)
+
+    integration.load_file()
+    if not kwargs.get('config_file'):
+        integration.save_config(integration.configuration, output_dir)
+        tools.print_success(f'Created configuration file in {output_dir}')
+        if not kwargs.get('use_default', False):
+            config_path = os.path.join(output_dir, f'{base_name}.json')
+            command_to_run = f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" ' \
+                             f'-o "{output_dir}" -pr "{command_prefix}" -c "{context_path}"'
+            if unique_keys:
+                command_to_run = command_to_run + f' -u "{unique_keys}"'
+            if root_objects:
+                command_to_run = command_to_run + f' -r "{root_objects}"'
+            if verbose:
+                command_to_run = command_to_run + ' -v'
+            if fix_code:
+                command_to_run = command_to_run + ' -f'
+
+            click.echo(f'Run the command again with the created configuration file(after a review): {command_to_run}')
+            sys.exit(0)
+
+    if integration.save_package(output_dir):
+        tools.print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
+    else:
+        tools.print_error(f'There was an error creating the package in {output_dir}')
+        sys.exit(1)
 
 
 @main.resultcallback()

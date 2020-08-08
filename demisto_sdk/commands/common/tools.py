@@ -17,7 +17,6 @@ import time
 
 import click
 import colorama
-import demisto_sdk.commands.common.tools as tools
 import git
 import requests
 import urllib3
@@ -42,7 +41,7 @@ urllib3.disable_warnings()
 colorama.init()
 
 ryaml = YAML()
-ryaml.preserve_quotes = True  # type: ignore
+ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
 
 
@@ -349,8 +348,10 @@ def get_last_remote_release_version():
         except Exception as exc:
             exc_msg = str(exc)
             if isinstance(exc, requests.exceptions.ConnectionError):
-                exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\nThis may happen if you are not connected to the internet.'
+                exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n' \
+                          f'This may happen if you are not connected to the internet.'
             print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+
     return ''
 
 
@@ -931,7 +932,7 @@ def get_content_path() -> str:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = 'content' in remote_url
-        is_external_repo = tools.is_external_repository()
+        is_external_repo = is_external_repository()
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
@@ -1026,7 +1027,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
                         search_parent_directories=True)
     remote_url = git_repo.remote().urls.__next__()
     is_fork_repo = 'content' in remote_url
-    is_external_repo = tools.is_external_repository()
+    is_external_repo = is_external_repository()
 
     if not is_fork_repo and not is_external_repo:
         return False, ''
@@ -1098,7 +1099,6 @@ def is_test_config_match(test_config: dict, test_playbook_id: str = '', integrat
     If file type is not an integration- will return True if the test_playbook id matches playbookID.
     Args:
         test_config: A test configuration from conf.json file under 'tests' key.
-        file_type: The file type. can be 'integration', 'playbook'.
         test_playbook_id: A test playbook ID.
         integration_id: An integration ID.
     If both test_playbook_id and integration_id are given will look for a match of both, else will look for match
@@ -1313,3 +1313,17 @@ def get_content_release_identifier(branch_name: str) -> Optional[str]:
         return None
     else:
         return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')
+
+
+def camel_to_snake(camel: str) -> str:
+    """
+    Converts camel case (CamelCase) strings to snake case (snake_case) strings.
+    Args:
+        camel (str): The camel case string.
+
+    Returns:
+        str: The snake case string.
+    """
+    camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
+    snake = camel_to_snake_pattern.sub('_', camel).lower()
+    return snake

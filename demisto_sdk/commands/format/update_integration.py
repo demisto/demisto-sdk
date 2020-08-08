@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    TYPE_PWSH)
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -105,6 +106,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
+            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
             super().update_yml()
             self.update_tests()
             self.update_conf_json('integration')

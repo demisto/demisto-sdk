@@ -1,5 +1,5 @@
 import os
-from typing import List, Union
+from typing import Set, Union
 
 import yaml
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -70,7 +70,7 @@ class BaseUpdate:
 
     def set_version_to_default(self, location=None):
         """Replaces the version of the YML to default."""
-        print(F'Setting JSON version to default: {DEFAULT_VERSION}')
+        print(f'Setting JSON version to default: {DEFAULT_VERSION}')
         if location:
             location['version'] = DEFAULT_VERSION
         else:
@@ -79,8 +79,8 @@ class BaseUpdate:
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove = self.arguments_to_remove()
+        print('Removing Unnecessary fields from file')
         for key in arguments_to_remove:
-            print(F'Removing Unnecessary fields {key} from file')
             self.data.pop(key, None)
 
     def set_fromVersion(self, from_version=None):
@@ -119,19 +119,15 @@ class BaseUpdate:
                 else:
                     self.data[self.from_version_key] = OLD_FILE_DEFAULT_1_FROMVERSION
 
-    def arguments_to_remove(self) -> List[str]:
+    def arguments_to_remove(self) -> Set[str]:
         """ Finds diff between keys in file and schema of file type
         Returns:
             List of keys that should be deleted in file
         """
-        arguments_to_remove = []
         with open(self.schema_path, 'r') as file_obj:
             a = yaml.safe_load(file_obj)
         schema_fields = a.get('mapping').keys()
-        file_fields = self.data.keys()
-        for field in file_fields:
-            if field not in schema_fields:
-                arguments_to_remove.append(field)
+        arguments_to_remove = set(self.data.keys()) - set(schema_fields)
         return arguments_to_remove
 
     def set_from_version_key_name(self) -> Union[str, None]:
@@ -142,7 +138,8 @@ class BaseUpdate:
             return 'fromVersion'
         return None
 
-    def is_old_file(self, path: str) -> dict:
+    @staticmethod
+    def is_old_file(path: str) -> dict:
         """Check whether the file is in git repo or new file.  """
         if path:
             data = get_remote_file(path)

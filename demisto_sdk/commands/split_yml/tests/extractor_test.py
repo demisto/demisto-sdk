@@ -52,7 +52,7 @@ def test_extract_code(tmpdir):
     with open(extractor.output, 'rb') as temp_code:
         file_data = temp_code.read().decode('utf-8')
         assert 'import demistomock as demisto\n' in file_data
-        assert 'from CommonServerPython import *\n' in file_data
+        assert 'from CommonServerPython import *  #' in file_data
         assert file_data[-1] == '\n'
     os.remove(extractor.output)
 
@@ -62,7 +62,7 @@ def test_extract_code(tmpdir):
     with open(extractor.output, 'rb') as temp_code:
         file_data = temp_code.read().decode('utf-8')
         assert 'import demistomock as demisto\n' not in file_data
-        assert 'from CommonServerPython import *\n' not in file_data
+        assert 'from CommonServerPython import *  #' not in file_data
         assert file_data[-1] == '\n'
 
 

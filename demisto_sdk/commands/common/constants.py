@@ -620,6 +620,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_INDICATOR_FIELD_JSON_REGEX,
     PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_LAYOUT_JSON_REGEX,
+    PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
     PACKS_WIDGET_JSON_REGEX,
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
@@ -908,6 +909,13 @@ FEED_REQUIRED_PARAMS = [
         'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
                           ' This means that if an indicator from this feed is on the exclusion list,'
                           ' the indicator might still be added to the system.'
+    },
+    {
+        'additionalinfo': 'Supports CSV values.',
+        'display': 'Tags',
+        'name': 'feedTags',
+        'required': False,
+        'type': 0
     }
 ]
 

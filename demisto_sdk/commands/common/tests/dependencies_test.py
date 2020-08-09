@@ -1,14 +1,18 @@
 import inspect
 import random
+import shutil
 from typing import List
 
 import pytest
+from _pytest.fixtures import FixtureRequest
+from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
+from TestSuite.repo import Repo
 from TestSuite.script import Script
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
@@ -307,7 +311,7 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
 
 
 @pytest.mark.parametrize('test_number', range(10))
-def test_dependencies(mocker, repo, test_number):
+def test_dependencies(mocker, request: FixtureRequest, tmp_path_factory: TempPathFactory, test_number):
     """ This test will run 10 times, when each time it will randomly generate dependencies in the repo and verify that
         the expected dependencies has been updated in the pack metadata correctly.
 
@@ -319,6 +323,9 @@ def test_dependencies(mocker, repo, test_number):
         - Update packs dependencies in pack metadata
     """
     print(f'Starting test number {test_number} for find_dependencies flow')
+
+    tmp_dir = _mk_tmp(request, tmp_path_factory)
+    repo = Repo(tmp_dir)
 
     number_of_packs = 10
     repo.setup_content_repo(number_of_packs)
@@ -342,9 +349,11 @@ def test_dependencies(mocker, repo, test_number):
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
 
+    shutil.rmtree(str(tmp_dir))
+
 
 @pytest.mark.parametrize('entity_class', CLASSES)
-def test_specific_entity(mocker, repo, entity_class):
+def test_specific_entity(mocker, request: FixtureRequest, tmp_path_factory: TempPathFactory, entity_class):
     """ This test will run for each entity in the repo, when each time it will randomly generate dependencies
         in the repo and verify that the expected dependencies has been updated in the pack metadata correctly.
 
@@ -355,6 +364,9 @@ def test_specific_entity(mocker, repo, entity_class):
         Then
         - Update packs dependencies in pack metadata
     """
+    tmp_dir = _mk_tmp(request, tmp_path_factory)
+    repo = Repo(tmp_dir)
+
     number_of_packs = 20
     repo.setup_content_repo(number_of_packs)
     repo.setup_one_pack('CommonTypes')
@@ -376,3 +388,5 @@ def test_specific_entity(mocker, repo, entity_class):
         dependencies.remove('pack_0')
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
+
+    shutil.rmtree(str(tmp_dir))

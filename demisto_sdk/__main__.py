@@ -13,7 +13,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
+                                               get_pack_name,
+                                               pack_name_to_path, print_error,
                                                print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
@@ -784,7 +785,7 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack", help="Name of the pack."
+    "-i", "--input", help="The path of the content pack."
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
@@ -800,7 +801,7 @@ def id_set_command(**kwargs):
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 def update_pack_releasenotes(**kwargs):
-    _pack = kwargs.get('pack')
+    _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
@@ -838,7 +839,7 @@ def update_pack_releasenotes(**kwargs):
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
+            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified,
                                       pre_release=pre_release, added_files=added,
                                       specific_version=specific_version)
             update_pack_rn.execute_update()
@@ -847,12 +848,17 @@ def update_pack_releasenotes(**kwargs):
         sys.exit(0)
     else:
         if _pack:
-            if _pack in packs_existing_rn and update_type is not None:
+
+            packs_existing_rn_abs_path = set()
+            for item in packs_existing_rn:
+                packs_existing_rn_abs_path.add(os.path.abspath(pack_name_to_path(item)))
+
+            if _pack in packs_existing_rn_abs_path and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-p {_pack}` without specifying the update_type.")
             else:
-                update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
+                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
                                           pre_release=pre_release, added_files=added,
                                           specific_version=specific_version)
                 update_pack_rn.execute_update()

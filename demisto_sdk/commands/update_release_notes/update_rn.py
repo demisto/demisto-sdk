@@ -20,10 +20,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: None, pack_files: set, added_files: set,
+    def __init__(self, pack_path: str, update_type: None, pack_files: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False):
 
-        self.pack = pack
+        self.pack = pack_path.split('/')[-1]
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)

@@ -926,7 +926,7 @@ class Errors:
     @error_code_decorator
     def invalid_package_structure(invalid_files):
         return 'You should update the following files to the package format, for further details please visit ' \
-               'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
+               'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
 
     @staticmethod

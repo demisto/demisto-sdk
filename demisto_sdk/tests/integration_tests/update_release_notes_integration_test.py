@@ -23,7 +23,7 @@ def demisto_client(mocker):
     )
 
 
-def test_test_update_release_notes_new_integration(demisto_client, mocker):
+def test_update_release_notes_new_integration(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.
@@ -66,7 +66,7 @@ def test_test_update_release_notes_new_integration(demisto_client, mocker):
     assert expected_rn == rn
 
 
-def test_test_update_release_notes_modified_integration(demisto_client, mocker):
+def test_update_release_notes_modified_integration(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.
@@ -109,7 +109,7 @@ def test_test_update_release_notes_modified_integration(demisto_client, mocker):
     assert expected_rn == rn
 
 
-def test_test_update_release_notes_incident_field(demisto_client, mocker):
+def test_update_release_notes_incident_field(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.
@@ -150,7 +150,7 @@ def test_test_update_release_notes_incident_field(demisto_client, mocker):
     assert expected_rn == rn
 
 
-def test_test_update_release_notes_existing(demisto_client, mocker):
+def test_update_release_notes_existing(demisto_client, mocker):
     """
     Given
     - Azure feed pack path.
@@ -175,9 +175,8 @@ def test_test_update_release_notes_existing(demisto_client, mocker):
 
     rn_path = join(RN_FOLDER, '1_0_0.md')
     modified_files = {join(AZURE_FEED_PACK_PATH, 'IncidentFields', 'incidentfield-city.json')}
-    f = open(rn_path, "w")
-    f.write(input_rn)
-    f.close()
+    with open(rn_path, 'w') as file_:
+        file_.write(input_rn)
 
     runner = CliRunner(mix_stderr=False)
 

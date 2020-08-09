@@ -360,7 +360,7 @@ def dump_copy_files(artifact_conf: ArtifactsConfiguration, content_object: Conte
             if new_file.exists() and new_file.stat().st_mtime >= artifact_conf.execution_start:
                 raise BaseException(f"Duplicate file in content repo: {content_object.path.name}")
             else:
-                Path(file).link_to(new_file)
+                os.link(file, new_file)
                 new_created_files.append(new_file)
     else:
         target = target_dir / content_object.normalized_file_name()

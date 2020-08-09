@@ -683,7 +683,7 @@ class IntegrationValidator(ContentEntityValidator):
         params_exist = True
         params = [_key for _key in self.current_file.get('configuration', [])]
         for counter, param in enumerate(params):
-            if 'defaultvalue' in param:
+            if 'defaultvalue' in param and param['name'] != 'feed':
                 params[counter].pop('defaultvalue')
             if 'hidden' in param:
                 params[counter].pop('hidden')

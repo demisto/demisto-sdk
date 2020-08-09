@@ -137,6 +137,7 @@ ERROR_CODE = {
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
     "readme_error": "RM100",
+    "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
@@ -857,6 +858,12 @@ class Errors:
     @error_code_decorator
     def readme_error(stderr):
         return f'Failed verifying README.md Error Message is: {stderr}'
+
+    @staticmethod
+    @error_code_decorator
+    def image_path_error(path, alternative_path):
+        return f'Detected following image url:\n{path}\n' \
+               f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
 
     @staticmethod
     @error_code_decorator

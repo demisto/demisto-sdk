@@ -1,56 +1,59 @@
-from typing import List, Tuple, Optional
-
+from typing import List, Tuple, Optional, Union
+import pandas as pd
+from tabulate import tabulate
 from wcmatch.pathlib import Path
 
+from demisto_sdk.commands.common.content.content.objects.abstract_objects import (
+    YAMLContentObject, YAMLUnfiedObject, JSONContentObject, TextObject)
 from demisto_sdk.commands.common.logger import Colors
 
+ContentObject = Union[YAMLUnfiedObject, YAMLContentObject, JSONContentObject, TextObject]
 
-class FileReport:
-    def __init__(self, src: Path, dst: Path, reason: Optional[str] = None):
-        self.src = src
-        self.dst = dst
-        self.reason = reason
+
+class ObjectReport:
+    def __init__(self, content_object: ContentObject, content_test: bool = False, content_packs: bool = False,
+                 content_new: bool = False):
+        self._content_object_src = content_object.path
+        self._content_packs = content_packs
+        self._content_test = content_test
+        self._content_new = content_new
+
+    def to_dict(self):
+        return {
+            "source": self._content_object_src,
+            "packs": self._content_packs,
+            "test": self._content_test,
+            "new": self._content_new
+        }
+
+    def set_content_new(self):
+        self._content_new = True
+
+    def set_content_packs(self):
+        self._content_packs = True
+
+    def set_content_test(self):
+        self._content_test = True
 
 
 class ArtifactsReport:
     def __init__(self, header: str):
-        self.header = header
-        self.content_test: List[FileReport] = list()
-        self.content_packs: List[FileReport] = list()
-        self.content_new: List[FileReport] = list()
+        self._header = header
+        self._content_objects: List[dict] = []
 
+    def append(self, object_report: ObjectReport):
+        self._content_objects.append(object_report.to_dict())
 
-def generate_report(artifact_report: ArtifactsReport) -> str:
-    report = ""
-    report += Colors.Fg.cyan + artifact_report.header + Colors.reset
+    def __iadd__(self, object_report: ObjectReport):
+        self._content_objects.append(object_report.to_dict())
 
-    report += Colors.underline + "content_new" + Colors.reset
-    report += generate_files_report(artifact_report.content_new)
+        return self
 
-    report += Colors.underline + "content_packs" + Colors.reset
-    report += generate_files_report(artifact_report.content_packs)
+    def to_markdown(self, src_relative_to: Path = None):
+        if src_relative_to:
+            for item in self._content_objects:
+                item['source'] = str(item['source'].relative_to(src_relative_to))
+        table = pd.DataFrame(data=self._content_objects,
+                             columns=["source", "packs", "new", "test"])
 
-    report += Colors.underline + "content_test" + Colors.reset
-    report += generate_files_report(artifact_report.content_test)
-
-    return report
-
-
-def generate_files_report(files: List[FileReport]):
-    files_bullet_add, files_bullet_ignore = generate_files_bullets(files)
-
-    return f'Collected files:\n{files_bullet_add}Ignored files:\n{files_bullet_ignore}'
-
-
-def generate_files_bullets(files: List[FileReport]) -> Tuple[str, str]:
-    files_bullet_add = ""
-    files_bullet_ignore = ""
-
-    for file in files:
-        if file.reason:
-            files_bullet_add += f'\t- {file} - {file.reason}\n'
-        else:
-            files_bullet_add += f'\t- {file}\n'
-
-    return files_bullet_add, files_bullet_ignore
-
+        return Colors.Fg.cyan + f'\n{self._header}\n' + Colors.reset + tabulate(table, headers='keys', tablefmt='psql')

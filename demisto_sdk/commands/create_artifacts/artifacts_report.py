@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List, Tuple, Optional, Union
 import pandas as pd
 from tabulate import tabulate
@@ -50,10 +51,11 @@ class ArtifactsReport:
         return self
 
     def to_markdown(self, src_relative_to: Path = None):
+        objects = deepcopy(self._content_objects)
         if src_relative_to:
-            for item in self._content_objects:
+            for item in objects:
                 item['source'] = str(item['source'].relative_to(src_relative_to))
-        table = pd.DataFrame(data=self._content_objects,
+        table = pd.DataFrame(data=objects,
                              columns=["source", "packs", "new", "test"])
 
         return Colors.Fg.cyan + f'\n{self._header}\n' + Colors.reset + tabulate(table, headers='keys', tablefmt='psql')

@@ -5,8 +5,8 @@ from pathlib import Path
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_content_path, print_error,
-                                               print_warning, run_command_os)
+from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
+                                               run_command_os)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -108,13 +108,9 @@ class ReadMeValidator(BaseValidator):
             re.IGNORECASE)
         if invalid_paths:
             for path in invalid_paths:
-                # Grabbing only url and removing " " or ( ) url wrapper
                 path = path[2]
                 alternative_path = path.replace('blob', 'raw')
-                print_error(f'============ Detected following image url: ============\n{path} \n'
-                            f'Which is not the raw link. You probably want to use the following raw image url:\n'
-                            f'{alternative_path}\n')
-            error_message, error_code = Errors.image_path_error()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+                error_message, error_code = Errors.image_path_error(path, alternative_path)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+            return False
         return True

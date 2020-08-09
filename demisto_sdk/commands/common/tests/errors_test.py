@@ -130,11 +130,15 @@ class TestErrors(unittest.TestCase):
 
     def test_image_path_error(self):
         """
-        Given: None
+        Given: Invalid image path and an alternative valid image path
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        error_statement = "Invalid image path."
+        path = "https://github.com/demisto/content/blob/123/Packs/TestPack/doc_files/test.png"
+        alternative_path = "https://github.com/demisto/content/raw/123/Packs/TestPack/doc_files/test.png"
+        error_statement = f'Detected following image url:\n{path}\n' \
+                          f'Which is not the raw link. You probably want to use the following raw image url:\n' \
+                          f'{alternative_path}'
         expected_result = (error_statement, "RM101")
-        result = Errors.image_path_error()
+        result = Errors.image_path_error(path, alternative_path)
         assert result == expected_result

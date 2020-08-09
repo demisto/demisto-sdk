@@ -861,8 +861,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def image_path_error():
-        return 'Invalid image path.'
+    def image_path_error(path, alternative_path):
+        return f'Detected following image url:\n{path}\n' \
+               f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
 
     @staticmethod
     @error_code_decorator

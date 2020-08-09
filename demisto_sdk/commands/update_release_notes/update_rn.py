@@ -6,6 +6,7 @@ import errno
 import json
 import os
 import sys
+from typing import Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, IGNORED_PACK_NAMES,
@@ -20,7 +21,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: None, pack_files: set, added_files: set,
+    def __init__(self, pack: str, update_type: Union[str, None], pack_files: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False):
 
         self.pack = pack
@@ -145,16 +146,19 @@ class UpdateRN:
     def identify_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
-        if 'ReleaseNotes' in file_path:
+        if 'ReleaseNotes' in file_path or 'TestPlaybooks' in file_path:
             return file_name, _file_type
+
         if self.pack in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
-            if 'Playbooks' in file_path and ('TestPlaybooks' not in file_path):
+            file_path = file_path.replace(self.pack_path, '')
+
+            if 'Playbooks' in file_path:
                 _file_type = 'Playbook'
-            elif 'Integration' in file_path:
+            elif 'Integrations' in file_path:
                 _file_type = 'Integration'
-            elif 'Script' in file_path:
+            elif 'Scripts' in file_path:
                 _file_type = 'Script'
             # incident fields and indicator fields are using the same scheme.
             elif 'IncidentFields' in file_path:

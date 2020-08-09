@@ -92,7 +92,11 @@ class ValidateManager:
         self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
-        self.skipped_file_types = (FileType.CHANGELOG, FileType.DESCRIPTION, FileType.TEST_PLAYBOOK)
+        self.skipped_file_types = (FileType.CHANGELOG,
+                                   FileType.DESCRIPTION,
+                                   FileType.TEST_PLAYBOOK,
+                                   FileType.TEST_SCRIPT,
+                                   )
 
         if is_external_repo:
             if not self.no_configuration_prints:

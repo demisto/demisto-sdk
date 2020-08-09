@@ -48,6 +48,7 @@ BETA_INTEGRATION = 'betaintegration'
 class FileType(Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
+    TEST_SCRIPT = 'testscript'
     PLAYBOOK = 'playbook'
     TEST_PLAYBOOK = 'testplaybook'
     BETA_INTEGRATION = 'betaintegration'
@@ -72,7 +73,6 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
-    TEST_SCRIPT = 'script'
 
 
 ENTITY_TYPE_TO_DIR = {

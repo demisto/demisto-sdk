@@ -13,6 +13,7 @@
 * Fixed readme validation issue in community support packs.
 * Added the **openapi-codegen** command to generate integrations from OpenAPI specification files.
 * Added validation for image links in README files in **validate** command.
+* Added a validation for default value of fetch param in feeds in **validate** command.
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

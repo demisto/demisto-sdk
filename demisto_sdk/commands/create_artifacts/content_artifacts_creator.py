@@ -163,7 +163,9 @@ def wait_futures_complete(futures: Dict[Future, str], artifact_conf: ArtifactsCo
     exit_code = 0
     for future in as_completed(futures):
         try:
-            print(future.result().to_markdown(artifact_conf.content.path))
+            result = future.result()
+            if isinstance(result, ArtifactsReport):
+                print(result.to_str(artifact_conf.content.path))
         except (BaseException, Exception):
             logger.exception(futures[future])
             exit_code = 1

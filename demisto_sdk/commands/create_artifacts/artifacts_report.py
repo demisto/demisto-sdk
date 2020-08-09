@@ -50,7 +50,7 @@ class ArtifactsReport:
 
         return self
 
-    def to_markdown(self, src_relative_to: Path = None):
+    def to_str(self, src_relative_to: Path = None):
         objects = deepcopy(self._content_objects)
         if src_relative_to:
             for item in objects:

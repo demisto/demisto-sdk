@@ -11,8 +11,8 @@ from typing import List
 
 from pkg_resources import parse_version
 
-import demisto_sdk.commands.common.tools as tools
 import ujson
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,

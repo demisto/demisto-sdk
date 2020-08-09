@@ -287,7 +287,7 @@ def dump_pack(artifact_conf: ArtifactsConfiguration, pack: Pack) -> None:
         if not artifact_conf.only_content_packs:
             object_report.set_content_new()
             for file in created_files:
-                file.link_to(artifact_conf.content_new_path / file.name)
+                os.link(file, artifact_conf.content_new_path / file.name)
         term_report += object_report
     if pack.pack_metadata:
         term_report += ObjectReport(pack.pack_metadata, content_packs=True)

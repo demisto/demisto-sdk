@@ -98,8 +98,11 @@ class Initiator:
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
     HELLO_WORLD_SCRIPT_FILES = ['HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py']
     HELLO_WORLD_INTEGRATION_FILES = ['HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
-                                     'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock']
-
+                                     'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock',
+                                     'test_data/domain_reputation.json', 'test_data/get_alert.json',
+                                     'test_data/ip_reputation.json', 'test_data/scan_results.json',
+                                     'test_data/search_alerts.json', 'test_data/update_alert_status.json']
+    TEST_DATA_DIR = 'test_data'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
 
@@ -482,10 +485,11 @@ class Initiator:
 
         if not self.create_new_directory():
             return False
-        are_templates_valid = self.get_remote_templates(self.HELLO_WORLD_INTEGRATION_FILES)
-        if not are_templates_valid:
+
+        if not self.get_remote_templates(self.HELLO_WORLD_INTEGRATION_FILES):
             hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_INTEGRATION))
             copy_tree(str(hello_world_path), self.full_output_path)
+
         if self.id != self.HELLO_WORLD_INTEGRATION:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
@@ -520,10 +524,10 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        are_templates_valid = self.get_remote_templates(self.HELLO_WORLD_SCRIPT_FILES)
-        if not are_templates_valid:
+        if not self.get_remote_templates(self.HELLO_WORLD_SCRIPT_FILES):
             hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_SCRIPT))
             copy_tree(str(hello_world_path), self.full_output_path)
+
         if self.id != self.HELLO_WORLD_SCRIPT:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
@@ -640,15 +644,19 @@ class Initiator:
         Returns:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
-        path = os.path.join('Packs', 'HelloWorld')
-        path = os.path.join(path, 'Scripts', 'HelloWorldScript') if self.is_script \
-            else os.path.join(path, 'Integrations', 'HelloWorld')
+        if self.is_integration:
+            path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorld')
+            os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
+        else:
+            path = os.path.join('Packs', 'HelloWorld', 'Scripts', 'HelloWorldScript')
+
         for file in files_list:
             try:
                 file_content = tools.get_remote_file(os.path.join(path, file), return_content=True)
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception:
-                print("Could not use remote templates. Using local templates instead.")
+                print(f"Could not fetch remote template - {file}. Using local templates instead.")
                 return False
+
         return True

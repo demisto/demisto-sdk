@@ -20,6 +20,7 @@ EXPECTED_ARTIFACT_PRIVATE_CONTENT = UNIT_TEST_DATA / 'create_content_artifacts_t
 
 def same_folders(dcmp):
     if dcmp.diff_files or dcmp.left_only or dcmp.right_only:
+        print(dcmp.diff_files, dcmp.left_only, dcmp.right_only)
         return False
     for sub_dcmp in dcmp.subdirs.values():
         if not same_folders(sub_dcmp):

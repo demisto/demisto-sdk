@@ -644,7 +644,7 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
 
     packs = set()
     for path in file_paths:
-        # in renamed files are in tuples - the second element is the new file name
+        # renamed files are in a tuples - the second element is the new file name
         if isinstance(path, tuple):
             path = path[1]
 

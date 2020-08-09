@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
@@ -36,7 +37,10 @@ class ReadMeValidator(BaseValidator):
             bool: True if env configured else Fale.
         """
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
-            return self.is_mdx_file()
+            return all([
+                self.is_image_path_valid(),
+                self.is_mdx_file()
+            ])
         else:
             print_warning(f"Skipping README validation of {self.file_path}")
             return True
@@ -95,3 +99,18 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return txt.startswith('<p>') or ('<thead>' in txt and '<tbody>' in txt)
+
+    def is_image_path_valid(self) -> bool:
+        with open(self.file_path) as f:
+            readme_content = f.read()
+        invalid_paths = re.findall(
+            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', readme_content,
+            re.IGNORECASE)
+        if invalid_paths:
+            for path in invalid_paths:
+                path = path[2]
+                alternative_path = path.replace('blob', 'raw')
+                error_message, error_code = Errors.image_path_error(path, alternative_path)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+            return False
+        return True

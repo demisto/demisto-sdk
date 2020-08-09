@@ -1270,3 +1270,17 @@ def get_content_release_identifier(branch_name: str) -> Optional[str]:
         return None
     else:
         return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')
+
+
+def camel_to_snake(camel: str) -> str:
+    """
+    Converts camel case (CamelCase) strings to snake case (snake_case) strings.
+    Args:
+        camel (str): The camel case string.
+
+    Returns:
+        str: The snake case string.
+    """
+    camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
+    snake = camel_to_snake_pattern.sub('_', camel).lower()
+    return snake

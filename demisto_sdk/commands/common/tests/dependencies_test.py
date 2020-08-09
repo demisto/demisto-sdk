@@ -306,8 +306,8 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
     return all_dependencies
 
 
-@pytest.mark.parametrize('test_number', range(10))
-def test_dependencies(repo, test_number):
+@pytest.mark.parametrize('test_number', range(1))
+def test_dependencies(mocker, repo, test_number):
     """ This test will run 10 times, when each time it will randomly generate dependencies in the repo and verify that
         the expected dependencies has been updated in the pack metadata correctly.
 
@@ -330,6 +330,8 @@ def test_dependencies(repo, test_number):
     dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
 
     with ChangeCWD(repo.path):
+        from multiprocessing import Pool
+        mocker.patch('demisto_sdk.commands.common.update_id_set.create_pool', return_value=Pool(processes=2))
         PackDependencies.find_dependencies(f'pack_{pack_to_verify}', silent_mode=True)
 
     dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get(

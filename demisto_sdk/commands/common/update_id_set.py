@@ -1192,6 +1192,10 @@ def get_general_paths(path):
     return files
 
 
+def create_pool(num_of_processes):
+    return Pool(processes=num_of_processes)
+
+
 def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,  # noqa: C901
                      print_logs: bool = True):
     if objects_to_create is None:
@@ -1214,7 +1218,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     widgets_list = []
     mappers_list = []
 
-    pool = Pool(processes=cpu_count() * 2)
+    pool = create_pool(cpu_count() * 2)
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 

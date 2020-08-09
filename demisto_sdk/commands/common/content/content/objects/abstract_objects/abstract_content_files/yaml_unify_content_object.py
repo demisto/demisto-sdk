@@ -75,8 +75,8 @@ class YAMLUnfiedObject(YAMLContentObject):
 
         return created_files
 
-    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = True,
-             readme: Optional[bool] = True, unify: bool = True):
+    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
+             readme: Optional[bool] = False, unify: bool = True):
         created_files = []
         dest_dir = self._create_target_dump_dir(dest_dir)
         if unify:

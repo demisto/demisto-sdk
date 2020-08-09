@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Tuple, Optional, Union
+from typing import List, Union
 import pandas as pd
 from tabulate import tabulate
 from wcmatch.pathlib import Path
@@ -18,23 +18,27 @@ class ObjectReport:
         self._content_packs = content_packs
         self._content_test = content_test
         self._content_new = content_new
+        self._content_all = content_new or content_test
 
     def to_dict(self):
         return {
             "source": self._content_object_src,
             "packs": self._content_packs,
             "test": self._content_test,
-            "new": self._content_new
+            "new": self._content_new,
+            "all": self._content_all
         }
 
     def set_content_new(self):
         self._content_new = True
+        self._content_all = True
 
     def set_content_packs(self):
         self._content_packs = True
 
     def set_content_test(self):
         self._content_test = True
+        self._content_all = True
 
 
 class ArtifactsReport:
@@ -55,7 +59,6 @@ class ArtifactsReport:
         if src_relative_to:
             for item in objects:
                 item['source'] = str(item['source'].relative_to(src_relative_to))
-        table = pd.DataFrame(data=objects,
-                             columns=["source", "packs", "new", "test"])
+        table = pd.DataFrame(data=objects)
 
         return Colors.Fg.cyan + f'\n{self._header}\n' + Colors.reset + tabulate(table, headers='keys', tablefmt='psql')

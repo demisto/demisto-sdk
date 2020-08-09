@@ -107,6 +107,7 @@ class ArtifactsConfiguration:
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
         self.content_packs_path = self.artifacts_path / 'content_packs'
+        self.content_all_path = self.artifacts_path / 'content_all'
         self.cpus = cpus
         self.execution_start = time.time()
         self.content = Content.from_cwd()
@@ -143,7 +144,8 @@ def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
         if artifact_conf.zip_artifacts:
             for artifact in [artifact_conf.content_test_path,
                              artifact_conf.content_new_path,
-                             artifact_conf.content_packs_path]:
+                             artifact_conf.content_packs_path,
+                             artifact_conf.content_all_path]:
                 futures[pool.submit(zip_and_delete_origin, artifact)] = f'Zip {artifact}'
             # Wait for all future to be finished - catch exception if occurred
             exit_code |= wait_futures_complete(futures, artifact_conf)
@@ -188,7 +190,8 @@ def create_artifacts_dirs(artifact_conf: ArtifactsConfiguration) -> None:
     else:
         for artifact in [artifact_conf.content_test_path,
                          artifact_conf.content_new_path,
-                         artifact_conf.content_packs_path]:
+                         artifact_conf.content_packs_path,
+                         artifact_conf.content_all_path]:
             if artifact.exists():
                 rmtree(artifact)
             artifact.mkdir(exist_ok=True, parents=True)
@@ -208,10 +211,12 @@ def dump_content_documentations(artifact_conf: ArtifactsConfiguration):
     term_report = ArtifactsReport("Documentations:")
     for documentation in artifact_conf.content.documentations:
         object_report = ObjectReport(documentation, content_packs=True)
-        documentation.dump(artifact_conf.content_packs_path / BASE_PACK / DOCUMENTATION_DIR)
+        created_files = documentation.dump(artifact_conf.content_packs_path / BASE_PACK / DOCUMENTATION_DIR)
         if not artifact_conf.only_content_packs:
-            documentation.dump(artifact_conf.content_new_path)
             object_report.set_content_new()
+            for dest in [artifact_conf.content_new_path,
+                         artifact_conf.content_all_path]:
+                created_files = dump_link_files(artifact_conf, documentation, dest, created_files)
         term_report.append(object_report)
 
     return term_report
@@ -232,9 +237,11 @@ def dump_content_descriptor(artifact_conf: ArtifactsConfiguration):
     if not artifact_conf.only_content_packs and artifact_conf.content.content_descriptor:
         descriptor = artifact_conf.content.content_descriptor
         object_report = ObjectReport(descriptor, content_test=True, content_new=True)
+        created_files = []
         for dest in [artifact_conf.content_test_path,
-                     artifact_conf.content_new_path]:
-            descriptor.dump(dest)
+                     artifact_conf.content_new_path,
+                     artifact_conf.content_all_path]:
+            created_files = dump_link_files(artifact_conf, descriptor, dest, created_files)
         term_report.append(object_report)
 
     return term_report
@@ -288,8 +295,8 @@ def dump_pack(artifact_conf: ArtifactsConfiguration, pack: Pack) -> None:
         created_files = tool.dump(artifact_conf.content_packs_path / pack.name / TOOLS_DIR)
         if not artifact_conf.only_content_packs:
             object_report.set_content_new()
-            for file in created_files:
-                os.link(file, artifact_conf.content_new_path / file.name)
+            dump_link_files(artifact_conf, tool, artifact_conf.content_new_path, created_files)
+            dump_link_files(artifact_conf, tool, artifact_conf.content_all_path, created_files)
         term_report += object_report
     if pack.pack_metadata:
         term_report += ObjectReport(pack.pack_metadata, content_packs=True)
@@ -315,7 +322,7 @@ def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_objec
         # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
         if is_in_content_packs(content_object):
             object_report.set_content_packs()
-            pack_created_files.extend(dump_copy_files(artifact_conf, content_object,
+            pack_created_files.extend(dump_link_files(artifact_conf, content_object,
                                                       artifact_conf.content_packs_path /
                                                       calc_relative_packs_dir(artifact_conf, content_object)))
             rm_files.extend(
@@ -325,12 +332,15 @@ def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_objec
         # Content test fileter
         if is_in_content_test(artifact_conf, content_object):
             object_report.set_content_test()
-            dump_copy_files(artifact_conf, content_object, artifact_conf.content_test_path, pack_created_files)
+            test_created_files = dump_link_files(artifact_conf, content_object, artifact_conf.content_test_path,
+                                                 pack_created_files)
+            dump_link_files(artifact_conf, content_object, artifact_conf.content_all_path, test_created_files)
 
         # Content new filter
         if is_in_content_new(artifact_conf, content_object):
             object_report.set_content_new()
-            dump_copy_files(artifact_conf, content_object, artifact_conf.content_new_path, pack_created_files)
+            new_created_files = dump_link_files(artifact_conf, content_object, artifact_conf.content_new_path, pack_created_files)
+            dump_link_files(artifact_conf, content_object, artifact_conf.content_all_path, new_created_files)
 
     return object_report
 
@@ -347,13 +357,14 @@ def dump_tests_conditionally(artifact_conf: ArtifactsConfiguration) -> ObjectRep
         object_report = ObjectReport(test)
         if is_in_content_test(artifact_conf, test):
             object_report.set_content_test()
-            dump_copy_files(artifact_conf, test, artifact_conf.content_test_path)
+            test_created_files = dump_link_files(artifact_conf, test, artifact_conf.content_test_path)
+            dump_link_files(artifact_conf, test, artifact_conf.content_all_path, test_created_files)
         term_report += object_report
 
     return term_report
 
 
-def dump_copy_files(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
+def dump_link_files(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
                     target_dir: Path, created_files: Optional[List[Path]] = None) -> List[Path]:
     new_created_files = []
     if created_files:
@@ -369,9 +380,7 @@ def dump_copy_files(artifact_conf: ArtifactsConfiguration, content_object: Conte
         if target.exists() and target.stat().st_mtime >= artifact_conf.execution_start:
             raise BaseException(f"Duplicate file in content repo: {content_object.path.name}")
         else:
-            new_created_files.extend(content_object.dump(dest_dir=target_dir,
-                                                         readme=False,
-                                                         change_log=False))
+            new_created_files.extend(content_object.dump(dest_dir=target_dir))
 
     return new_created_files
 

@@ -43,8 +43,8 @@ class JSONContentObject(JSONObject):
     def to_version(self) -> Version:
         return parse(self.get('toVersion', '99.99.99'))
 
-    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = True,
-             readme: Optional[bool] = True):
+    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
+             readme: Optional[bool] = False):
         created_files = []
         created_files.extend(super().dump(dest_dir=dest_dir))
         # Dump changelog if requested and availble

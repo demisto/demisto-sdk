@@ -44,7 +44,7 @@ class YAMLContentObject(YAMLObject):
         return parse(self.get('toversion', '99.99.99'))
 
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, yaml: Optional[bool] = True,
-             change_log: Optional[bool] = True, readme: Optional[bool] = True):
+             change_log: Optional[bool] = False, readme: Optional[bool] = False):
         created_files = []
         if yaml:
             created_files.extend(super().dump(dest_dir=dest_dir))

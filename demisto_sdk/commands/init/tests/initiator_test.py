@@ -8,6 +8,7 @@ from typing import Callable
 import pytest
 import yaml
 import yamlordereddictloader
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
@@ -153,7 +154,7 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
     mocker.patch.object(os, 'mkdir', return_value=None)
     assert initiator.create_new_directory()
 
-    mocker.patch.object(os, 'mkdir', side_effect=FileExistsError())
+    mocker.patch.object(os, 'mkdir', side_effect=FileExistsError)
     # override dir successfully
     monkeypatch.setattr('builtins.input', lambda _: 'Y')
     with pytest.raises(FileExistsError):
@@ -305,3 +306,54 @@ def test_format_pack_dir_name(initiator, input_name, expected_output_name):
             assert first_char.isupper(), 'The output\'s first character should be capitalized'
     assert not output_name.startswith(('-', '_')), 'The output\'s first character must be alphanumeric'
     assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'
+
+
+def test_get_remote_templates__valid(mocker, initiator):
+    """
+    Tests get_remote_template function.
+    Configures mocker instance and patches the tools's get_remote_file to return a file content.
+
+    Given
+        - A list of files to download from remote repo
+    When
+        - Initiating an object - Script or Integration
+    Then
+        - Ensure file with Test.py name was created in PackName folder
+        - Ensure the file's content is the same as the one we got from get_remote_file return value
+    """
+    mocker.patch.object(tools, 'get_remote_file', return_value=b'Test im in file')
+    initiator.full_output_path = PACK_NAME
+    os.makedirs(PACK_NAME, exist_ok=True)
+    res = initiator.get_remote_templates(['Test.py'])
+    file_path = os.path.join(PACK_NAME, 'Test.py')
+    with open(file_path, 'r') as f:
+        file_content = f.read()
+
+    assert res
+    assert "Test im in file" in file_content
+
+    os.remove(os.path.join(PACK_NAME, 'Test.py'))
+    os.rmdir(PACK_NAME)
+
+
+def test_get_remote_templates__invalid(mocker, initiator):
+    """
+    Tests get_remote_template function.
+    Configures mocker instance and patches the tools's get_remote_file to return an empty file content.
+
+    Given
+        - An unreachable file to download from remote repo
+    When
+        - Initiating an object - Script or Integration
+    Then
+        - Ensure get_remote_templates returns False and doesn't raise an exception
+    """
+    mocker.patch.object(tools, 'get_remote_file', return_value={})
+    initiator.full_output_path = PACK_NAME
+    os.makedirs(PACK_NAME, exist_ok=True)
+    res = initiator.get_remote_templates(['Test.py'])
+
+    assert not res
+
+    os.remove(os.path.join(PACK_NAME, 'Test.py'))
+    os.rmdir(PACK_NAME)

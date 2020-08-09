@@ -144,7 +144,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-def get_remote_file(full_file_path, tag='master'):
+def get_remote_file(full_file_path, tag='master', return_content=False):
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.lstrip('origin/')
 
@@ -158,7 +158,8 @@ def get_remote_file(full_file_path, tag='master'):
                       'please make sure that you did not break backward compatibility. '
                       'Reason: {}'.format(github_path, exc))
         return {}
-
+    if return_content:
+        return res.content
     if full_file_path.endswith('json'):
         details = json.loads(res.content)
     elif full_file_path.endswith('yml'):

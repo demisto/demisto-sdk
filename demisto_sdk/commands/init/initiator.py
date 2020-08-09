@@ -13,6 +13,7 @@ from typing import Dict, List, Union
 import click
 import yaml
 import yamlordereddictloader
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
@@ -95,6 +96,10 @@ class Initiator:
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+    HELLO_WORLD_SCRIPT_FILES = ['HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py']
+    HELLO_WORLD_INTEGRATION_FILES = ['HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
+                                     'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock']
+
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
 
@@ -477,11 +482,10 @@ class Initiator:
 
         if not self.create_new_directory():
             return False
-
-        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'init', 'templates',
-                                                         self.HELLO_WORLD_INTEGRATION))
-
-        copy_tree(str(hello_world_path), self.full_output_path)
+        are_templates_valid = self.get_remote_templates(self.HELLO_WORLD_INTEGRATION_FILES)
+        if not are_templates_valid:
+            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_INTEGRATION))
+            copy_tree(str(hello_world_path), self.full_output_path)
         if self.id != self.HELLO_WORLD_INTEGRATION:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
@@ -516,10 +520,10 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'init', 'templates',
-                                                         self.HELLO_WORLD_SCRIPT))
-
-        copy_tree(str(hello_world_path), self.full_output_path)
+        are_templates_valid = self.get_remote_templates(self.HELLO_WORLD_SCRIPT_FILES)
+        if not are_templates_valid:
+            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_SCRIPT))
+            copy_tree(str(hello_world_path), self.full_output_path)
         if self.id != self.HELLO_WORLD_SCRIPT:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
@@ -564,13 +568,13 @@ class Initiator:
         """
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}.py"),
                   os.path.join(self.full_output_path, f"{self.dir_name}.py"))
-        os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
-                  os.path.join(self.full_output_path, f"{self.dir_name}_description.md"))
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
                   os.path.join(self.full_output_path, f"{self.dir_name}_test.py"))
         if self.is_integration:
             os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
                       os.path.join(self.full_output_path, f"{self.dir_name}_image.png"))
+            os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
+                      os.path.join(self.full_output_path, f"{self.dir_name}_description.md"))
 
     def create_new_directory(self, ) -> bool:
         """Creates a new directory for the integration/script/pack.
@@ -627,3 +631,24 @@ class Initiator:
                 shutil.copy(f'{self.configuration.env_dir}/Tests/demistomock/demistomock.py', self.full_output_path)
             except Exception as err:
                 print_v(f'Could not copy demistomock: {str(err)}')
+
+    def get_remote_templates(self, files_list):
+        """
+        Downloading the object related template-files and saving them in the output path.
+        Args:
+            files_list: List of files to download.
+        Returns:
+            bool. True if the files were downloaded and saved successfully, False otherwise.
+        """
+        path = os.path.join('Packs', 'HelloWorld')
+        path = os.path.join(path, 'Scripts', 'HelloWorldScript') if self.is_script \
+            else os.path.join(path, 'Integrations', 'HelloWorld')
+        for file in files_list:
+            try:
+                file_content = tools.get_remote_file(os.path.join(path, file), return_content=True)
+                with open(os.path.join(self.full_output_path, file), 'wb') as f:
+                    f.write(file_content)
+            except Exception:
+                print("Could not use remote templates. Using local templates instead.")
+                return False
+        return True

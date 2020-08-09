@@ -147,6 +147,11 @@ class TestGetRemoteFile:
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
+    def test_get_remote_file_content_sanity(self):
+        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+                                               return_content=True)
+        assert hello_world_py
+
     def test_get_remote_file_origin(self):
         hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
         assert hello_world_yml

@@ -6,13 +6,13 @@ import click
 from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
                                                    PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME)
+                                                   PACKS_PACK_META_FILE_NAME, FileType)
 from demisto_sdk.commands.common.errors import (ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE)
-from demisto_sdk.commands.common.tools import get_pack_name, get_yaml
+from demisto_sdk.commands.common.tools import get_pack_name, get_yaml, find_type
 
 
 class BaseValidator:
@@ -94,11 +94,10 @@ class BaseValidator:
             self.checked_files.add(file_name)
 
     def check_deprecated(self, file_path):
-        file_name = os.path.basename(file_path)
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
             if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
-                    (file_name.startswith('playbook') and 'hidden' in yml_dict and
+                    (find_type(file_path) == FileType.PLAYBOOK and 'hidden' in yml_dict and
                      yml_dict['hidden'] is True):
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 

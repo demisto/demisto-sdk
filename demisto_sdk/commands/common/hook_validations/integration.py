@@ -729,14 +729,18 @@ class IntegrationValidator(ContentEntityValidator):
         return ans
 
     def is_valid_deprecated_integration(self) -> bool:
-        print('hi')
         ans = True
-        deprecated = self.current_file.get('deprecated')
-        display_name = self.current_file.get('display')
-        description = self.current_file.get('description')
-        if deprecated == 'true':
-            if not display_name.startwith('Deprecated -') or not description.startwith('Deprecated -'):
-                error_message, error_code = Errors.invalid_deprecated_integration()
+        deprecated = self.current_file.get('deprecated', False)
+        display_name = self.current_file.get('display', '')
+        description = self.current_file.get('description', '')
+        if deprecated:
+            list_commands = []
+            for command in self.current_file.get('script').get('commands'):
+                if not command.get('deprecated'):
+                    list_commands.append(command.get('name'))
+            if not display_name.startswith('Deprecated.') or not description.startswith('Deprecated.') or list_commands:
+                error_message, error_code = \
+                    Errors.invalid_deprecated_integration(display_name, description, list_commands)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     ans = False
         return ans

@@ -17,7 +17,7 @@ PRESET_ERROR_TO_IGNORE = {
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA'],
+    "deprecated": ['ST', 'BC', 'BA', 'IN125'],
 }
 
 ERROR_CODE = {
@@ -51,6 +51,7 @@ ERROR_CODE = {
     "parameter_missing_for_feed": "IN122",
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
+    "invalid_deprecated_integration": "IN125",
     "invalid_v2_script_name": "SC100",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
@@ -365,6 +366,18 @@ class Errors:
     @error_code_decorator
     def found_hidden_param(parameter_name):
         return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration(display_name, description, list_commands):
+        ans = ''
+        if not display_name.startswith('Deprecated'):
+            ans += 'The display_name (display) of your integration should start with "Deprecated.".\n'
+        if not description.startswith('Deprecated'):
+            ans += 'The description of your integration should start with "Deprecated.".\n'
+        if list_commands:
+            ans += f'The commands {list_commands} have to be a field "deprecated: true".'
+        return ans
 
     @staticmethod
     @error_code_decorator
@@ -1069,6 +1082,4 @@ class Errors:
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
 
-    @staticmethod
-    def invalid_deprecated_integration():
-        return "The display_name (display) and description of your integration should start with 'Deprecates -'"
+
